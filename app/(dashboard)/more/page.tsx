@@ -11,6 +11,7 @@ export default async function MorePage() {
 
       <div className="flex flex-col divide-y divide-border overflow-hidden rounded-xl border border-border bg-surface">
         <MenuLink href="/customers" label="Customers" sub="Sales ledger & credit" />
+        <MenuLink href="/reminders" label="Udhaar reminders" sub="One-tap WhatsApp follow-ups" />
         <MenuLink href="/vendors" label="Vendors" sub="Purchases & payables" />
         <MenuLink href="/products" label="Products" sub="Catalog, HSN codes, GST%" />
         {session.role === "owner" && (

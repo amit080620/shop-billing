@@ -49,6 +49,7 @@ export function NewBillClient({
   const [discountType, setDiscountType] = useState<"percent" | "flat">("flat");
   const [discountValue, setDiscountValue] = useState(0);
   const [paidAmount, setPaidAmount] = useState<number | "">("");
+  const [paymentMethod, setPaymentMethod] = useState<"cash" | "card" | "upi" | "online" | "other">("cash");
 
   const supplyType = useMemo(
     () =>
@@ -254,6 +255,7 @@ export function NewBillClient({
     discountType,
     discountValue,
     paidAmount: typeof paidAmount === "number" ? paidAmount : 0,
+    paymentMethod,
   });
 
   return (
@@ -345,6 +347,26 @@ export function NewBillClient({
         )}
         <div className="my-1 h-px bg-border" />
         <Row label="Total" value={formatMoney(totals.total)} bold />
+      </section>
+
+      <section className="flex flex-col gap-2 rounded-xl border border-border bg-surface p-4">
+        <p className="text-sm font-medium text-foreground">Paid via</p>
+        <div className="flex flex-wrap gap-2">
+          {(["cash", "card", "upi", "online", "other"] as const).map((m) => (
+            <button
+              key={m}
+              type="button"
+              onClick={() => setPaymentMethod(m)}
+              className={`rounded-full border px-3.5 py-1.5 text-xs font-medium capitalize ${
+                paymentMethod === m
+                  ? "border-brand bg-brand-soft text-brand-dark"
+                  : "border-border text-muted"
+              }`}
+            >
+              {m}
+            </button>
+          ))}
+        </div>
       </section>
 
       <section className="flex flex-col gap-2 rounded-xl border border-border bg-surface p-4">

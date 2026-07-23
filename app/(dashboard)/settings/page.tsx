@@ -9,7 +9,7 @@ export default async function SettingsPage() {
   const { data: shop } = await admin
     .from("shops")
     .select(
-      "name, legal_name, gstin, gst_scheme, address_line1, address_line2, city, state_code, pincode, invoice_prefix",
+      "name, legal_name, gstin, gst_scheme, address_line1, address_line2, city, state_code, pincode, invoice_prefix, logo_url",
     )
     .eq("id", session.shopId)
     .single();
@@ -27,6 +27,7 @@ export default async function SettingsPage() {
         stateCode: shop?.state_code ?? "",
         pincode: shop?.pincode ?? "",
         invoicePrefix: shop?.invoice_prefix ?? "INV",
+        logoUrl: shop?.logo_url ?? null,
       }}
     />
   );

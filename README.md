@@ -74,6 +74,27 @@ Visit `/signup` to create your shop and owner login.
   at the time of sale, so it stays accurate even if you edit the product
   later — and rolls up into GSTR-1's mandatory Table 12.
 
+## Invoicing extras
+
+- **Shop logo**: More → GST & shop profile → upload a PNG/JPG/WEBP/SVG (under
+  2MB). Shows in the dashboard header and on every printed invoice.
+- **Payment method**: chosen on the Complete Ticket screen (Cash/Card/UPI/
+  Online/Other), saved per bill, shown on the printed invoice next to "Paid."
+- **Send invoice on WhatsApp**: right after generating an invoice, a green
+  "Send invoice on WhatsApp" button sits above Print — opens WhatsApp with
+  the invoice summary (number, total, paid, balance due) pre-filled to the
+  customer's number. Requires the customer to have a phone on file; walk-in
+  sales won't show this button.
+- **Udhaar reminders** (More → Udhaar reminders, or tap "Outstanding credit"
+  on the dashboard): every customer with a balance, sorted highest-first,
+  each with a one-tap WhatsApp reminder link. This is a **manual, one-tap-
+  per-customer** workflow, not automatic sending — WhatsApp's `wa.me` links
+  can only pre-fill text; a human still has to tap Send inside WhatsApp. Truly
+  automatic recurring reminders (no tap required) need the paid WhatsApp
+  Business Platform (Meta Business verification + per-conversation pricing),
+  which is a separate business/infra decision, not something addable in code
+  alone.
+
 ## Reports (Reports tab)
 
 - **GSTR-1** — B2B, B2C Large, B2C Small (consolidated), HSN summary, and

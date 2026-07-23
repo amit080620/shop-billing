@@ -25,6 +25,7 @@ create table if not exists shops (
   pincode text,
   gst_scheme text not null default 'regular' check (gst_scheme in ('regular', 'composition')),
   invoice_prefix text not null default 'INV',
+  logo_url text,
   created_at timestamptz not null default now()
 );
 alter table shops add column if not exists legal_name text;
@@ -37,6 +38,7 @@ alter table shops add column if not exists state_code text;
 alter table shops add column if not exists pincode text;
 alter table shops add column if not exists gst_scheme text not null default 'regular';
 alter table shops add column if not exists invoice_prefix text not null default 'INV';
+alter table shops add column if not exists logo_url text;
 
 create table if not exists staff (
   id uuid primary key references auth.users(id) on delete cascade,
@@ -123,6 +125,7 @@ create table if not exists bills (
   sgst_amount numeric(12, 2) not null default 0,
   igst_amount numeric(12, 2) not null default 0,
   gst_amount numeric(12, 2) not null default 0, -- cgst+sgst+igst, kept for quick totals
+  payment_method text not null default 'cash' check (payment_method in ('cash', 'card', 'upi', 'online', 'other')),
   total numeric(12, 2) not null default 0,
   paid_amount numeric(12, 2) not null default 0,
   credit_amount numeric(12, 2) not null default 0,
@@ -136,6 +139,7 @@ alter table bills add column if not exists supply_type text not null default 'in
 alter table bills add column if not exists cgst_amount numeric(12,2) not null default 0;
 alter table bills add column if not exists sgst_amount numeric(12,2) not null default 0;
 alter table bills add column if not exists igst_amount numeric(12,2) not null default 0;
+alter table bills add column if not exists payment_method text not null default 'cash' check (payment_method in ('cash', 'card', 'upi', 'online', 'other'));
 
 create table if not exists bill_items (
   id uuid primary key default uuid_generate_v4(),
@@ -266,3 +270,10 @@ alter table purchase_items enable row level security;
 alter table purchase_payments enable row level security;
 
 NOTIFY pgrst, 'reload schema';
+
+-- Public storage bucket for shop logos. Public read (logos need to display
+-- on invoices/print pages without auth), writes only via the service-role
+-- client from server actions — never directly from the browser.
+insert into storage.buckets (id, name, public)
+values ('shop-logos', 'shop-logos', true)
+on conflict (id) do nothing;

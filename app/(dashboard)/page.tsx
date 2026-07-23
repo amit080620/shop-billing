@@ -82,6 +82,7 @@ export default async function DashboardPage() {
           label="Outstanding credit"
           value={formatMoney(outstanding)}
           tone="credit"
+          href="/reminders"
         />
         <StatCard
           label="Payable to vendors"
@@ -172,18 +173,19 @@ function StatCard({
   value,
   tone = "default",
   className = "",
+  href,
 }: {
   label: string;
   value: string;
   tone?: "default" | "credit";
   className?: string;
+  href?: string;
 }) {
-  return (
-    <div
-      className={`rounded-xl border border-border p-4 ${
-        tone === "credit" ? "bg-credit-soft" : "bg-surface"
-      } ${className}`}
-    >
+  const cardClassName = `rounded-xl border border-border p-4 ${
+    tone === "credit" ? "bg-credit-soft" : "bg-surface"
+  } ${className}`;
+  const content = (
+    <>
       <p className={`text-xs ${tone === "credit" ? "text-credit" : "text-muted"}`}>
         {label}
       </p>
@@ -194,8 +196,18 @@ function StatCard({
       >
         {value}
       </p>
-    </div>
+    </>
   );
+
+  if (href) {
+    return (
+      <Link href={href} className={cardClassName}>
+        {content}
+      </Link>
+    );
+  }
+
+  return <div className={cardClassName}>{content}</div>;
 }
 
 function sum(values: number[] | undefined) {

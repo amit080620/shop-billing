@@ -60,6 +60,9 @@ export type CustomerInput = z.infer<typeof customerSchema>;
 export const vendorSchema = partySchema;
 export type VendorInput = z.infer<typeof vendorSchema>;
 
+export const LOGO_MAX_BYTES = 2 * 1024 * 1024; // 2MB
+export const LOGO_ALLOWED_TYPES = ["image/png", "image/jpeg", "image/webp", "image/svg+xml"];
+
 export const shopSettingsSchema = z.object({
   name: z.string().trim().min(1, "Shop name is required").max(120),
   legalName: optionalText(160),
@@ -83,12 +86,15 @@ const lineItemSchema = z.object({
   gstPercent: z.coerce.number().min(0).max(100),
 });
 
+export const paymentMethods = ["cash", "card", "upi", "online", "other"] as const;
+
 export const billSchema = z.object({
   customerId: z.string().uuid().nullable(),
   items: z.array(lineItemSchema).min(1, "Add at least one product"),
   discountType: z.enum(["percent", "flat"]),
   discountValue: z.coerce.number().min(0).default(0),
   paidAmount: z.coerce.number().min(0),
+  paymentMethod: z.enum(paymentMethods).default("cash"),
 });
 export type BillInput = z.infer<typeof billSchema>;
 

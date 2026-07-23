@@ -23,6 +23,7 @@ export interface Database {
           pincode: string | null;
           gst_scheme: "regular" | "composition";
           invoice_prefix: string;
+          logo_url: string | null;
           created_at: string;
         };
         Insert: {
@@ -38,6 +39,7 @@ export interface Database {
           pincode?: string | null;
           gst_scheme?: "regular" | "composition";
           invoice_prefix?: string;
+          logo_url?: string | null;
           created_at?: string;
         };
         Update: {
@@ -53,6 +55,7 @@ export interface Database {
           pincode?: string | null;
           gst_scheme?: "regular" | "composition";
           invoice_prefix?: string;
+          logo_url?: string | null;
           created_at?: string;
         };
         Relationships: [];
@@ -192,6 +195,7 @@ export interface Database {
           sgst_amount: number;
           igst_amount: number;
           gst_amount: number;
+          payment_method: "cash" | "card" | "upi" | "online" | "other";
           total: number;
           paid_amount: number;
           credit_amount: number;
@@ -214,6 +218,7 @@ export interface Database {
           sgst_amount?: number;
           igst_amount?: number;
           gst_amount?: number;
+          payment_method?: "cash" | "card" | "upi" | "online" | "other";
           total?: number;
           paid_amount?: number;
           credit_amount?: number;
@@ -236,6 +241,7 @@ export interface Database {
           sgst_amount?: number;
           igst_amount?: number;
           gst_amount?: number;
+          payment_method?: "cash" | "card" | "upi" | "online" | "other";
           total?: number;
           paid_amount?: number;
           credit_amount?: number;

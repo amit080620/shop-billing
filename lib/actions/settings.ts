@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { requireOwner } from "../auth";
 import { createSupabaseAdminClient } from "../supabase/admin";
-import { shopSettingsSchema } from "../validation/schemas";
+import { shopSettingsSchema, LOGO_MAX_BYTES, LOGO_ALLOWED_TYPES } from "../validation/schemas";
 import { stateNameForCode } from "../constants/states";
 
 export type ActionState = { error?: string } | null;
@@ -56,4 +56,59 @@ export async function updateShopSettingsAction(
   revalidatePath("/settings");
   revalidatePath("/");
   return null;
+}
+
+export async function uploadLogoAction(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const session = await requireOwner();
+
+  const file = formData.get("logo");
+  if (!(file instanceof File) || file.size === 0) {
+    return { error: "Choose an image file" };
+  }
+  if (file.size > LOGO_MAX_BYTES) {
+    return { error: "Image must be under 2MB" };
+  }
+  if (!LOGO_ALLOWED_TYPES.includes(file.type)) {
+    return { error: "Use a PNG, JPG, WEBP, or SVG image" };
+  }
+
+  const admin = createSupabaseAdminClient();
+  const extension = file.name.split(".").pop() || "png";
+  const path = `${session.shopId}/logo.${extension}`;
+
+  const { error: uploadError } = await admin.storage
+    .from("shop-logos")
+    .upload(path, file, { upsert: true, contentType: file.type });
+  if (uploadError) {
+    console.error("Could not upload logo", uploadError);
+    return { error: "Could not upload logo" };
+  }
+
+  const { data: publicUrlData } = admin.storage.from("shop-logos").getPublicUrl(path);
+  // Cache-bust so the new logo shows immediately instead of a stale cached image.
+  const logoUrl = `${publicUrlData.publicUrl}?v=${Date.now()}`;
+
+  const { error: updateError } = await admin
+    .from("shops")
+    .update({ logo_url: logoUrl })
+    .eq("id", session.shopId);
+  if (updateError) {
+    console.error("Could not save logo url", updateError);
+    return { error: "Uploaded, but could not save. Try again." };
+  }
+
+  revalidatePath("/settings");
+  revalidatePath("/");
+  return null;
+}
+
+export async function removeLogoAction() {
+  const session = await requireOwner();
+  const admin = createSupabaseAdminClient();
+  await admin.from("shops").update({ logo_url: null }).eq("id", session.shopId);
+  revalidatePath("/settings");
+  revalidatePath("/");
 }

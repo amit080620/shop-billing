@@ -3,6 +3,7 @@ import { requireSession } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { formatMoney, formatDateTime } from "@/lib/format";
 import { PrintButton } from "./PrintButton";
+import { WhatsAppSendButton } from "./WhatsAppSendButton";
 
 export default async function PrintBillPage({
   params,
@@ -21,7 +22,7 @@ export default async function PrintBillPage({
   const { data: bill } = await admin
     .from("bills")
     .select(
-      "id, invoice_number, subtotal, discount_type, discount_value, discount_amount, taxable_amount, supply_type, cgst_amount, sgst_amount, igst_amount, gst_amount, total, paid_amount, credit_amount, created_at, customers ( name, phone, gstin, address )",
+      "id, invoice_number, subtotal, discount_type, discount_value, discount_amount, taxable_amount, supply_type, cgst_amount, sgst_amount, igst_amount, gst_amount, payment_method, total, paid_amount, credit_amount, created_at, customers ( name, phone, gstin, address )",
     )
     .eq("id", id)
     .eq("shop_id", session.shopId) // ownership check
@@ -40,6 +41,7 @@ export default async function PrintBillPage({
     : (bill.customers as { name: string; phone: string; gstin: string | null; address: string | null } | null);
 
   const isIntra = bill.supply_type === "intra";
+  const paymentLabel = paymentMethodLabel(bill.payment_method);
 
   return (
     <div
@@ -47,29 +49,52 @@ export default async function PrintBillPage({
         isThermal ? "w-[72mm] p-2 font-mono text-xs" : "max-w-2xl p-8"
       }`}
     >
-      <div className="no-print mb-4 flex justify-end gap-2">
-        <a
-          href={`/print/bill/${id}?format=full`}
-          className="rounded border border-gray-300 px-3 py-1.5 text-sm"
-        >
-          Full page
-        </a>
-        <a
-          href={`/print/bill/${id}?format=thermal`}
-          className="rounded border border-gray-300 px-3 py-1.5 text-sm"
-        >
-          Thermal (72mm)
-        </a>
-        <PrintButton />
+      <div className="no-print mb-4 flex flex-col gap-2">
+        <WhatsAppSendButton
+          customerName={customer?.name ?? null}
+          customerPhone={customer?.phone ?? null}
+          shopName={session.shopName}
+          invoiceNumber={bill.invoice_number}
+          total={Number(bill.total)}
+          paidAmount={Number(bill.paid_amount)}
+          creditAmount={Number(bill.credit_amount)}
+        />
+        <div className="flex justify-end gap-2">
+          <a
+            href={`/print/bill/${id}?format=full`}
+            className="rounded border border-gray-300 px-3 py-1.5 text-sm"
+          >
+            Full page
+          </a>
+          <a
+            href={`/print/bill/${id}?format=thermal`}
+            className="rounded border border-gray-300 px-3 py-1.5 text-sm"
+          >
+            Thermal (72mm)
+          </a>
+          <PrintButton />
+        </div>
       </div>
 
-      <div className="mb-1 flex items-center justify-between">
-        <h1 className={isThermal ? "text-sm font-bold" : "text-xl font-bold"}>
-          {session.shopName}
-        </h1>
-        <p className={isThermal ? "text-[9px] font-semibold" : "text-sm font-semibold text-gray-700"}>
-          Tax Invoice
-        </p>
+      <div className="mb-1 flex items-center gap-3">
+        {session.shopLogoUrl && (
+          // Plain <img>, not next/image — this render also feeds the browser
+          // print dialog, where next/image's lazy-loading can leave it blank.
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={session.shopLogoUrl}
+            alt=""
+            className={isThermal ? "h-8 w-8 object-contain" : "h-12 w-12 object-contain"}
+          />
+        )}
+        <div className="flex flex-1 items-center justify-between">
+          <h1 className={isThermal ? "text-sm font-bold" : "text-xl font-bold"}>
+            {session.shopName}
+          </h1>
+          <p className={isThermal ? "text-[9px] font-semibold" : "text-sm font-semibold text-gray-700"}>
+            Tax Invoice
+          </p>
+        </div>
       </div>
       {session.shopGstin && (
         <p className={isThermal ? "text-[9px] text-gray-600" : "text-xs text-gray-500"}>
@@ -134,7 +159,7 @@ export default async function PrintBillPage({
           <SummaryRow label="IGST" value={`+ ${formatMoney(bill.igst_amount)}`} />
         )}
         <SummaryRow label="Total" value={formatMoney(bill.total)} bold />
-        <SummaryRow label="Paid" value={formatMoney(bill.paid_amount)} />
+        <SummaryRow label={`Paid (${paymentLabel})`} value={formatMoney(bill.paid_amount)} />
         {bill.credit_amount > 0 && (
           <SummaryRow label="Credit (udhaar)" value={formatMoney(bill.credit_amount)} bold />
         )}
@@ -145,6 +170,21 @@ export default async function PrintBillPage({
       </p>
     </div>
   );
+}
+
+function paymentMethodLabel(method: string) {
+  switch (method) {
+    case "cash":
+      return "Cash";
+    case "card":
+      return "Card";
+    case "upi":
+      return "UPI";
+    case "online":
+      return "Online";
+    default:
+      return "Other";
+  }
 }
 
 function SummaryRow({ label, value, bold }: { label: string; value: string; bold?: boolean }) {

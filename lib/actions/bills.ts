@@ -28,7 +28,7 @@ export async function createBillAction(
   if (!parsed.success) {
     return { error: parsed.error.issues[0].message };
   }
-  const { customerId, items, discountType, discountValue, paidAmount } = parsed.data;
+  const { customerId, items, discountType, discountValue, paidAmount, paymentMethod } = parsed.data;
 
   const admin = createSupabaseAdminClient();
 
@@ -108,6 +108,7 @@ export async function createBillAction(
       subtotal: totals.subtotal,
       discount_type: discountType,
       discount_value: discountValue,
+      payment_method: paymentMethod,
       discount_amount: totals.discountAmount,
       taxable_amount: totals.taxableAmount,
       supply_type: supplyType,

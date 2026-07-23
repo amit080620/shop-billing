@@ -1,9 +1,10 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useRef, useState, useTransition } from "react";
 import { useFormStatus } from "react-dom";
 import Link from "next/link";
-import { updateShopSettingsAction } from "@/lib/actions/settings";
+import Image from "next/image";
+import { updateShopSettingsAction, uploadLogoAction, removeLogoAction } from "@/lib/actions/settings";
 import { INDIAN_STATES } from "@/lib/constants/states";
 
 type ShopSettings = {
@@ -17,6 +18,7 @@ type ShopSettings = {
   stateCode: string;
   pincode: string;
   invoicePrefix: string;
+  logoUrl: string | null;
 };
 
 function SubmitButton() {
@@ -53,6 +55,8 @@ export function SettingsClient({ shop }: { shop: ShopSettings }) {
           since it decides whether a sale is CGST+SGST or IGST.
         </p>
       )}
+
+      <LogoUploadSection currentLogoUrl={shop.logoUrl} />
 
       <form action={formAction} className="flex flex-col gap-4">
         <Section title="Business">
@@ -171,5 +175,62 @@ function Field({
         className={`rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-brand ${className}`}
       />
     </label>
+  );
+}
+
+function LogoUploadSection({ currentLogoUrl }: { currentLogoUrl: string | null }) {
+  const [preview, setPreview] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [state, formAction] = useActionState(uploadLogoAction, null);
+
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setPreview(URL.createObjectURL(file));
+    // Auto-submit the moment a file is picked — one less tap on mobile.
+    const form = fileInputRef.current?.closest("form");
+    form?.requestSubmit();
+  }
+
+  const displayUrl = preview ?? currentLogoUrl;
+
+  return (
+    <section className="flex flex-col gap-3 rounded-xl border border-border bg-surface p-4">
+      <p className="text-sm font-semibold text-foreground">Shop logo</p>
+      <div className="flex items-center gap-4">
+        <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-background">
+          {displayUrl ? (
+            <Image src={displayUrl} alt="Shop logo" width={64} height={64} className="h-full w-full object-contain" unoptimized />
+          ) : (
+            <span className="text-xs text-muted">No logo</span>
+          )}
+        </div>
+        <div className="flex flex-col gap-2">
+          <form action={formAction}>
+            <input
+              ref={fileInputRef}
+              type="file"
+              name="logo"
+              accept="image/png,image/jpeg,image/webp,image/svg+xml"
+              onChange={handleFileChange}
+              className="text-xs text-muted file:mr-3 file:rounded-lg file:border file:border-border file:bg-background file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-foreground"
+            />
+          </form>
+          {currentLogoUrl && (
+            <button
+              type="button"
+              disabled={isPending}
+              onClick={() => startTransition(() => removeLogoAction())}
+              className="self-start text-xs font-medium text-danger disabled:opacity-50"
+            >
+              Remove logo
+            </button>
+          )}
+        </div>
+      </div>
+      <p className="text-xs text-muted">PNG, JPG, WEBP or SVG, under 2MB. Appears on invoices and the dashboard.</p>
+      {state?.error && <p className="text-sm text-credit">{state.error}</p>}
+    </section>
   );
 }
