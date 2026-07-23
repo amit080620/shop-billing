@@ -82,3 +82,29 @@ export async function recordVendorPaymentAction(
   revalidatePath(`/vendors/${parsed.data.partyId}`);
   return null;
 }
+
+/** Same idea as quickCreateCustomerAction, for the New Purchase screen. */
+export async function quickCreateVendorAction(
+  name: string,
+  phone: string,
+): Promise<{ vendor?: { id: string; name: string; gstin: string | null; phone: string | null }; error?: string }> {
+  const session = await requireSession();
+  const parsed = vendorSchema.pick({ name: true }).safeParse({ name });
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0].message };
+  }
+
+  const admin = createSupabaseAdminClient();
+  const { data, error } = await admin
+    .from("vendors")
+    .insert({ shop_id: session.shopId, name: parsed.data.name, phone: phone.trim() || null })
+    .select("id, name, gstin, phone")
+    .single();
+  if (error || !data) {
+    console.error("Could not quick-create vendor", error);
+    return { error: "Could not save vendor" };
+  }
+
+  revalidatePath("/vendors");
+  return { vendor: data };
+}

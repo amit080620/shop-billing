@@ -4,10 +4,12 @@ import { useMemo, useState } from "react";
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import { createPurchaseAction } from "@/lib/actions/purchases";
+import { quickCreateVendorAction } from "@/lib/actions/vendors";
 import { calculateTransactionTotals } from "@/lib/validation/schemas";
 import { formatMoney } from "@/lib/format";
 import { COMMON_GST_RATES } from "@/lib/constants/states";
 import { SearchableSelect } from "@/app/components/SearchableSelect";
+import { InlineQuickAdd } from "@/app/components/InlineQuickAdd";
 
 type Vendor = { id: string; name: string; gstin: string | null; phone: string | null };
 type Product = { id: string; name: string; hsnCode: string | null };
@@ -161,8 +163,22 @@ export function NewPurchaseClient({
           />
         ) : (
           <p className="rounded-lg border border-dashed border-border px-3.5 py-2.5 text-sm text-muted">
-            No vendors yet — add one from the Vendors tab first.
+            No vendors yet — add one below.
           </p>
+        )}
+        {!vendor && (
+          <InlineQuickAdd<{ id: string; name: string; gstin: string | null; phone: string | null }>
+            triggerLabel="+ Add new vendor"
+            fields={[
+              { name: "name", label: "Vendor name", required: true },
+              { name: "phone", label: "Phone (optional)", type: "tel" },
+            ]}
+            onSubmit={async (v) => {
+              const r = await quickCreateVendorAction(v.name, v.phone ?? "");
+              return { data: r.vendor, error: r.error };
+            }}
+            onCreated={setVendor}
+          />
         )}
       </section>
 

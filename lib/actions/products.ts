@@ -138,3 +138,50 @@ export async function createCategoryAction(
   revalidatePath("/products");
   return null;
 }
+
+/** Called directly from client components (New Bill / New Purchase) to add
+ * a product inline mid-flow. Captures the essentials only — name, price,
+ * GST% — full details (HSN, unit, inventory) can be filled in later from
+ * the Products page. */
+export async function quickCreateProductAction(
+  name: string,
+  price: number,
+  gstPercent: number,
+): Promise<{ product?: { id: string; name: string; price: number; gstPercent: number; hsnCode: string | null }; error?: string }> {
+  const session = await requireSession();
+  const parsed = productSchema.pick({ name: true, price: true, gstPercent: true }).safeParse({
+    name,
+    price,
+    gstPercent,
+  });
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0].message };
+  }
+
+  const admin = createSupabaseAdminClient();
+  const { data, error } = await admin
+    .from("products")
+    .insert({
+      shop_id: session.shopId,
+      name: parsed.data.name,
+      price: parsed.data.price,
+      gst_percent: parsed.data.gstPercent,
+    })
+    .select("id, name, price, gst_percent, hsn_code")
+    .single();
+  if (error || !data) {
+    console.error("Could not quick-create product", error);
+    return { error: "Could not save product" };
+  }
+
+  revalidatePath("/products");
+  return {
+    product: {
+      id: data.id,
+      name: data.name,
+      price: Number(data.price),
+      gstPercent: Number(data.gst_percent),
+      hsnCode: data.hsn_code,
+    },
+  };
+}

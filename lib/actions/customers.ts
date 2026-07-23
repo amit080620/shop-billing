@@ -83,3 +83,32 @@ export async function recordPaymentAction(
   revalidatePath(`/customers/${parsed.data.partyId}`);
   return null;
 }
+
+/** Called directly from client components (not via a <form>) to add a
+ * customer inline mid-flow — e.g. from the New Bill screen — without
+ * navigating away. Returns the created row so the caller can select it
+ * immediately. */
+export async function quickCreateCustomerAction(
+  name: string,
+  phone: string,
+): Promise<{ customer?: { id: string; name: string; phone: string; gstin: string | null; state_code: string | null }; error?: string }> {
+  const session = await requireSession();
+  const parsed = customerSchema.pick({ name: true, phone: true }).safeParse({ name, phone });
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0].message };
+  }
+
+  const admin = createSupabaseAdminClient();
+  const { data, error } = await admin
+    .from("customers")
+    .insert({ shop_id: session.shopId, name: parsed.data.name, phone: parsed.data.phone })
+    .select("id, name, phone, gstin, state_code")
+    .single();
+  if (error || !data) {
+    console.error("Could not quick-create customer", error);
+    return { error: "Could not save customer" };
+  }
+
+  revalidatePath("/customers");
+  return { customer: data };
+}

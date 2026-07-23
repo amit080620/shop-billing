@@ -4,10 +4,13 @@ import { useMemo, useState } from "react";
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import { createBillAction } from "@/lib/actions/bills";
+import { quickCreateCustomerAction } from "@/lib/actions/customers";
+import { quickCreateProductAction } from "@/lib/actions/products";
 import { calculateTransactionTotals } from "@/lib/validation/schemas";
 import { determineSupplyType } from "@/lib/gst";
 import { formatMoney } from "@/lib/format";
 import { SearchableSelect } from "@/app/components/SearchableSelect";
+import { InlineQuickAdd } from "@/app/components/InlineQuickAdd";
 
 type Product = { id: string; name: string; price: number; gstPercent: number; hsnCode: string | null };
 type Customer = { id: string; name: string; phone: string; gstin: string | null; state_code: string | null };
@@ -158,14 +161,28 @@ export function NewBillClient({
                 </button>
               </div>
             ) : (
-              <SearchableSelect
-                items={customers}
-                getKey={(c) => c.id}
-                getLabel={(c) => c.name}
-                getSubLabel={(c) => c.phone}
-                onSelect={setSelectedCustomer}
-                placeholder="Search customer by name or phone"
-              />
+              <div className="flex flex-col gap-2">
+                <SearchableSelect
+                  items={customers}
+                  getKey={(c) => c.id}
+                  getLabel={(c) => c.name}
+                  getSubLabel={(c) => c.phone}
+                  onSelect={setSelectedCustomer}
+                  placeholder="Search customer by name or phone"
+                />
+                <InlineQuickAdd<{ id: string; name: string; phone: string; gstin: string | null; state_code: string | null }>
+                  triggerLabel="+ Add new customer"
+                  fields={[
+                    { name: "name", label: "Name", required: true },
+                    { name: "phone", label: "Phone", type: "tel", required: true },
+                  ]}
+                  onSubmit={async (v) => {
+                    const r = await quickCreateCustomerAction(v.name, v.phone);
+                    return { data: r.customer, error: r.error };
+                  }}
+                  onCreated={setSelectedCustomer}
+                />
+              </div>
             ))}
         </section>
 
@@ -178,6 +195,19 @@ export function NewBillClient({
             getSubLabel={(p) => formatMoney(p.price)}
             onSelect={addProduct}
             placeholder="Search products to add"
+          />
+          <InlineQuickAdd<{ id: string; name: string; price: number; gstPercent: number; hsnCode: string | null }>
+            triggerLabel="+ Add new product"
+            fields={[
+              { name: "name", label: "Product name", required: true },
+              { name: "price", label: "Price (₹)", type: "number", required: true },
+              { name: "gstPercent", label: "GST % (e.g. 0, 5, 18, 40)", type: "number" },
+            ]}
+            onSubmit={async (v) => {
+              const r = await quickCreateProductAction(v.name, Number(v.price) || 0, Number(v.gstPercent) || 0);
+              return { data: r.product, error: r.error };
+            }}
+            onCreated={addProduct}
           />
         </section>
 
