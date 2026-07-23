@@ -7,6 +7,7 @@ import Link from "next/link";
 import { createCustomerAction } from "@/lib/actions/customers";
 import { formatMoney } from "@/lib/format";
 import { EmptyState } from "@/app/components/EmptyState";
+import { PageIcon } from "@/app/components/PageIcon";
 import { INDIAN_STATES } from "@/lib/constants/states";
 
 type Customer = { id: string; name: string; phone: string; balance: number };
@@ -17,7 +18,7 @@ function SubmitButton() {
     <button
       type="submit"
       disabled={pending}
-      className="rounded-lg bg-brand px-4 py-2.5 text-sm font-medium text-white disabled:opacity-60"
+      className="btn-primary-sm"
     >
       {pending ? "Saving…" : "Save customer"}
     </button>
@@ -50,10 +51,20 @@ export function CustomersClient({
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-lg font-semibold text-foreground">Customers</h1>
+        <div className="flex items-center gap-3">
+          <PageIcon>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="9" cy="8" r="3" />
+              <path d="M2 20c0-3.3 3-5.5 7-5.5s7 2.2 7 5.5" />
+              <circle cx="17" cy="8" r="2.5" />
+              <path d="M17 12.7c2.7.4 5 2.4 5 5.3" />
+            </svg>
+          </PageIcon>
+          <h1 className="text-lg font-semibold text-foreground">Customers</h1>
+        </div>
         <button
           onClick={() => setShowForm((v) => !v)}
-          className="rounded-lg bg-brand px-3 py-1.5 text-sm font-medium text-white"
+          className="btn-primary-sm"
         >
           + Customer
         </button>

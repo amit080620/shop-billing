@@ -14,7 +14,7 @@ function SubmitButton() {
     <button
       type="submit"
       disabled={pending}
-      className="rounded-lg bg-brand px-4 py-2.5 text-sm font-medium text-white disabled:opacity-60"
+      className="btn-primary-sm"
     >
       {pending ? "Creating…" : "Create login"}
     </button>
@@ -50,7 +50,7 @@ export function StaffClient({
         <h1 className="text-lg font-semibold text-foreground">Staff</h1>
         <button
           onClick={() => setShowForm((v) => !v)}
-          className="rounded-lg bg-brand px-3 py-1.5 text-sm font-medium text-white"
+          className="btn-primary-sm"
         >
           + Add staff
         </button>

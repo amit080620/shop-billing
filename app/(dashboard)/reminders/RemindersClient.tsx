@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { formatMoney } from "@/lib/format";
 import { EmptyState } from "@/app/components/EmptyState";
+import { PageIcon } from "@/app/components/PageIcon";
 
 type Customer = { id: string; name: string; phone: string; balance: number };
 
@@ -17,11 +18,19 @@ export function RemindersClient({
 }) {
   return (
     <div className="flex flex-col gap-4">
-      <div>
-        <h1 className="text-lg font-semibold text-foreground">Udhaar reminders</h1>
-        <p className="text-sm text-muted">
-          Tap each customer to open WhatsApp with a reminder pre-filled — you still hit Send yourself.
-        </p>
+      <div className="flex items-center gap-3">
+        <PageIcon>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="9" />
+            <path d="M12 7v5l3 3" />
+          </svg>
+        </PageIcon>
+        <div>
+          <h1 className="text-lg font-semibold text-foreground">Udhaar reminders</h1>
+          <p className="text-sm text-muted">
+            Tap each customer to open WhatsApp — you still hit Send yourself.
+          </p>
+        </div>
       </div>
 
       <div className="rounded-xl border border-border bg-credit-soft p-4">

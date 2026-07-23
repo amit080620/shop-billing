@@ -1,12 +1,21 @@
 import Link from "next/link";
 import { requireSession } from "@/lib/auth";
+import { PageIcon } from "@/app/components/PageIcon";
 
 export default async function ReportsPage() {
   const session = await requireSession();
 
   return (
     <div className="flex flex-col gap-4">
-      <h1 className="text-lg font-semibold text-foreground">GST reports</h1>
+      <div className="flex items-center gap-3">
+        <PageIcon>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="4" y="3.5" width="16" height="17" rx="1.5" />
+            <path d="M8 8h8M8 12h8M8 16h5" />
+          </svg>
+        </PageIcon>
+        <h1 className="text-lg font-semibold text-foreground">GST reports</h1>
+      </div>
 
       {session.gstScheme === "composition" && (
         <p className="rounded-lg bg-credit-soft px-3 py-2 text-sm text-credit">

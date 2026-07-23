@@ -29,7 +29,7 @@ function SubmitButton({ blocked }: { blocked: boolean }) {
     <button
       type="submit"
       disabled={pending || blocked}
-      className="w-full rounded-xl bg-brand px-4 py-3.5 text-center font-medium text-white active:bg-brand-dark disabled:opacity-60"
+      className="btn-primary w-full text-center"
     >
       {pending ? "Generating invoice…" : "Generate invoice"}
     </button>
@@ -263,7 +263,7 @@ export function NewBillClient({
             setPaidAmount(totals.total);
             setStep("ticket");
           }}
-          className="rounded-xl bg-brand px-4 py-3.5 text-center font-medium text-white disabled:opacity-40"
+          className="btn-primary text-center disabled:opacity-40"
         >
           Complete ticket →
         </button>

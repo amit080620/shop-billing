@@ -11,6 +11,7 @@ import {
 } from "@/lib/actions/item-requests";
 import { formatMoney, formatDateTime } from "@/lib/format";
 import { EmptyState } from "@/app/components/EmptyState";
+import { PageIcon } from "@/app/components/PageIcon";
 import { SearchableSelect } from "@/app/components/SearchableSelect";
 
 type Customer = { id: string; name: string; phone: string };
@@ -32,7 +33,7 @@ function SubmitButton() {
     <button
       type="submit"
       disabled={pending}
-      className="rounded-lg bg-brand px-4 py-2.5 text-sm font-medium text-white disabled:opacity-60"
+      className="btn-primary-sm"
     >
       {pending ? "Saving…" : "Save request"}
     </button>
@@ -71,10 +72,18 @@ export function RequestsClient({
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-lg font-semibold text-foreground">Item requests</h1>
+        <div className="flex items-center gap-3">
+          <PageIcon>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
+              <path d="M13.7 21a2 2 0 0 1-3.4 0" />
+            </svg>
+          </PageIcon>
+          <h1 className="text-lg font-semibold text-foreground">Item requests</h1>
+        </div>
         <button
           onClick={() => setShowForm((v) => !v)}
-          className="rounded-lg bg-brand px-3 py-1.5 text-sm font-medium text-white"
+          className="btn-primary-sm"
         >
           + New request
         </button>

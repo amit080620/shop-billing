@@ -7,6 +7,7 @@ import Link from "next/link";
 import { createVendorAction } from "@/lib/actions/vendors";
 import { formatMoney } from "@/lib/format";
 import { EmptyState } from "@/app/components/EmptyState";
+import { PageIcon } from "@/app/components/PageIcon";
 import { INDIAN_STATES } from "@/lib/constants/states";
 
 type Vendor = { id: string; name: string; phone: string | null; gstin: string | null; balance: number };
@@ -17,7 +18,7 @@ function SubmitButton() {
     <button
       type="submit"
       disabled={pending}
-      className="rounded-lg bg-brand px-4 py-2.5 text-sm font-medium text-white disabled:opacity-60"
+      className="btn-primary-sm"
     >
       {pending ? "Saving…" : "Save vendor"}
     </button>
@@ -48,10 +49,20 @@ export function VendorsClient({ initialVendors }: { initialVendors: Vendor[] }) 
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-lg font-semibold text-foreground">Vendors</h1>
+        <div className="flex items-center gap-3">
+          <PageIcon>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="1.5" y="7" width="13" height="9" rx="1" />
+              <path d="M14.5 10h4l3 3v3h-7z" />
+              <circle cx="6" cy="18" r="1.7" />
+              <circle cx="17.5" cy="18" r="1.7" />
+            </svg>
+          </PageIcon>
+          <h1 className="text-lg font-semibold text-foreground">Vendors</h1>
+        </div>
         <button
           onClick={() => setShowForm((v) => !v)}
-          className="rounded-lg bg-brand px-3 py-1.5 text-sm font-medium text-white"
+          className="btn-primary-sm"
         >
           + Vendor
         </button>

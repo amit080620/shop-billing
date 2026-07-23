@@ -10,6 +10,7 @@ import {
 } from "@/lib/actions/products";
 import { formatMoney } from "@/lib/format";
 import { EmptyState } from "@/app/components/EmptyState";
+import { PageIcon } from "@/app/components/PageIcon";
 import { COMMON_GST_RATES } from "@/lib/constants/states";
 
 const UNITS = ["NOS", "KG", "GM", "LTR", "ML", "MTR", "BOX", "PCS", "DZN", "PKT"];
@@ -35,7 +36,7 @@ function SubmitButton({ label }: { label: string }) {
     <button
       type="submit"
       disabled={pending}
-      className="rounded-lg bg-brand px-4 py-2.5 text-sm font-medium text-white disabled:opacity-60"
+      className="btn-primary-sm"
     >
       {pending ? "Saving…" : label}
     </button>
@@ -84,7 +85,16 @@ export function ProductsClient({
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-lg font-semibold text-foreground">Products</h1>
+        <div className="flex items-center gap-3">
+          <PageIcon>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M3.5 8 12 4l8.5 4-8.5 4-8.5-4Z" />
+              <path d="M3.5 8v8L12 20l8.5-4V8" />
+              <path d="M12 12v8" />
+            </svg>
+          </PageIcon>
+          <h1 className="text-lg font-semibold text-foreground">Products</h1>
+        </div>
         <div className="flex gap-2">
           <button
             onClick={() => setShowCategoryForm((v) => !v)}
@@ -94,7 +104,7 @@ export function ProductsClient({
           </button>
           <button
             onClick={() => setShowForm((v) => !v)}
-            className="rounded-lg bg-brand px-3 py-1.5 text-sm font-medium text-white"
+            className="btn-primary-sm"
           >
             + Product
           </button>
