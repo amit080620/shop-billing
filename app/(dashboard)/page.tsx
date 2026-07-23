@@ -75,6 +75,11 @@ export default async function DashboardPage() {
 
   return (
     <div className="flex flex-col gap-5">
+      <div>
+        <p className="text-lg font-semibold text-foreground">{greeting()}, {session.staffName.split(" ")[0]}</p>
+        <p className="text-sm text-muted">Here&apos;s how {session.shopName} is doing.</p>
+      </div>
+
       <section className="grid grid-cols-2 gap-3">
         <StatCard label="Today's sales" value={formatMoney(todayTotal)} />
         <StatCard label="Last 7 days" value={formatMoney(weekTotal)} />
@@ -93,7 +98,7 @@ export default async function DashboardPage() {
 
       <Link
         href="/reports/gstr3b"
-        className="rounded-xl border border-border bg-surface p-4"
+        className="rounded-xl border border-border bg-surface p-4 shadow-sm"
       >
         <p className="text-xs font-medium uppercase tracking-wide text-muted">
           This month&apos;s GST — both sides
@@ -116,9 +121,11 @@ export default async function DashboardPage() {
 
       <Link
         href="/bills/new"
-        className="flex items-center justify-center rounded-xl bg-brand px-4 py-3.5 text-center font-medium text-white active:bg-brand-dark"
+        className="flex items-center justify-center gap-2 rounded-xl px-4 py-4 text-center font-semibold text-white shadow-md"
+        style={{ background: "linear-gradient(135deg, var(--brand-light), var(--brand-dark))" }}
       >
-        + New bill
+        <PlusIcon />
+        New bill
       </Link>
 
       <section>
@@ -137,7 +144,7 @@ export default async function DashboardPage() {
                 <li key={bill.id}>
                   <Link
                     href={`/print/bill/${bill.id}`}
-                    className="flex items-center justify-between rounded-lg border border-border bg-surface px-3.5 py-3"
+                    className="flex items-center justify-between rounded-lg border border-border bg-surface px-3.5 py-3 shadow-sm"
                   >
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-medium text-foreground">
@@ -168,6 +175,21 @@ export default async function DashboardPage() {
   );
 }
 
+function greeting() {
+  const hour = new Date().getHours();
+  if (hour < 12) return "Good morning";
+  if (hour < 17) return "Good afternoon";
+  return "Good evening";
+}
+
+function PlusIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+      <path d="M12 5v14M5 12h14" />
+    </svg>
+  );
+}
+
 function StatCard({
   label,
   value,
@@ -181,7 +203,7 @@ function StatCard({
   className?: string;
   href?: string;
 }) {
-  const cardClassName = `rounded-xl border border-border p-4 ${
+  const cardClassName = `rounded-xl border border-border p-4 shadow-sm ${
     tone === "credit" ? "bg-credit-soft" : "bg-surface"
   } ${className}`;
   const content = (

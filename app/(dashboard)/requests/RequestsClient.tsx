@@ -87,7 +87,7 @@ export function RequestsClient({
       {showForm && (
         <form
           action={formAction}
-          className="flex flex-col gap-3 rounded-xl border border-border bg-surface p-4"
+          className="flex flex-col gap-3 rounded-xl border border-border bg-surface shadow-sm p-4"
         >
           <div>
             <p className="mb-1.5 text-sm font-medium text-foreground">Customer</p>

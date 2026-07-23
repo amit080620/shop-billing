@@ -65,7 +65,7 @@ export function VendorLedgerClient({
         ← Vendors
       </Link>
 
-      <div className="rounded-xl border border-border bg-surface p-4">
+      <div className="rounded-xl border border-border bg-surface shadow-sm p-4">
         <h1 className="text-lg font-semibold text-foreground">{vendor.name}</h1>
         <p className="text-sm text-muted">
           {vendor.gstin ? vendor.gstin : vendor.phone || "No GSTIN on file"}
@@ -96,7 +96,7 @@ export function VendorLedgerClient({
       {showPaymentForm && (
         <form
           action={formAction}
-          className="flex flex-col gap-3 rounded-xl border border-border bg-surface p-4"
+          className="flex flex-col gap-3 rounded-xl border border-border bg-surface shadow-sm p-4"
         >
           <input type="hidden" name="vendorId" value={vendor.id} />
           <label className="flex flex-col gap-1.5 text-sm">
@@ -133,7 +133,7 @@ export function VendorLedgerClient({
               entry.type === "purchase" ? (
                 <li
                   key={entry.data.id}
-                  className="flex items-center justify-between gap-3 rounded-lg border border-border bg-surface px-3.5 py-3"
+                  className="flex items-center justify-between gap-3 rounded-lg border border-border bg-surface shadow-sm px-3.5 py-3"
                 >
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium text-foreground">

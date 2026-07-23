@@ -135,7 +135,7 @@ export default async function PurchaseRegisterPage({
 
 function SummaryCard({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-xl border border-border bg-surface p-3 text-center">
+    <div className="rounded-xl border border-border bg-surface shadow-sm p-3 text-center">
       <p className="text-xs text-muted">{label}</p>
       <p className="mt-1 text-sm font-semibold text-foreground">{value}</p>
     </div>

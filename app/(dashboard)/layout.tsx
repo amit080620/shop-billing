@@ -10,18 +10,25 @@ export default async function DashboardLayout({
   const session = await requireSession();
 
   return (
-    <div className="min-h-screen bg-background pb-20">
-      <header className="no-print sticky top-0 z-10 border-b border-border bg-surface/95 px-4 py-3 backdrop-blur">
+    <div className="min-h-screen bg-background pb-24">
+      <header
+        className="no-print sticky top-0 z-10 border-b border-border bg-surface/90 px-4 py-3 backdrop-blur-md"
+        style={{ boxShadow: "0 1px 12px hsl(220 20% 40% / 0.05)" }}
+      >
         <div className="mx-auto flex max-w-lg items-center gap-3">
-          {session.shopLogoUrl && (
+          {session.shopLogoUrl ? (
             <Image
               src={session.shopLogoUrl}
               alt=""
-              width={32}
-              height={32}
+              width={36}
+              height={36}
               unoptimized
-              className="h-8 w-8 shrink-0 rounded-md object-contain"
+              className="h-9 w-9 shrink-0 rounded-full object-contain ring-2 ring-brand-soft"
             />
+          ) : (
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand text-sm font-semibold text-white">
+              {session.shopName.charAt(0).toUpperCase()}
+            </div>
           )}
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-semibold text-foreground">
@@ -34,7 +41,7 @@ export default async function DashboardLayout({
         </div>
       </header>
 
-      <main className="mx-auto max-w-lg px-4 py-4">{children}</main>
+      <main className="page-enter mx-auto max-w-lg px-4 py-4">{children}</main>
 
       <BottomNav />
     </div>

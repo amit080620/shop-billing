@@ -67,7 +67,7 @@ export default async function Gstr3bPage({
         auto-compute it from your filed GSTR-1 + ITC ledger.
       </p>
 
-      <section className="rounded-xl border border-border bg-surface p-4">
+      <section className="rounded-xl border border-border bg-surface shadow-sm p-4">
         <div className="mb-3 flex items-center justify-between">
           <p className="text-sm font-semibold text-foreground">
             3.1(a) Outward taxable supplies
@@ -86,7 +86,7 @@ export default async function Gstr3bPage({
         <TotalsGrid taxable={outward.taxable} cgst={outward.cgst} sgst={outward.sgst} igst={outward.igst} />
       </section>
 
-      <section className="rounded-xl border border-border bg-surface p-4">
+      <section className="rounded-xl border border-border bg-surface shadow-sm p-4">
         <p className="mb-3 text-sm font-semibold text-foreground">
           3.1(d) Inward supplies liable to reverse charge
         </p>
@@ -96,7 +96,7 @@ export default async function Gstr3bPage({
         </p>
       </section>
 
-      <section className="rounded-xl border border-border bg-surface p-4">
+      <section className="rounded-xl border border-border bg-surface shadow-sm p-4">
         <p className="mb-3 text-sm font-semibold text-foreground">4. ITC available</p>
         <TotalsGrid taxable={itc.taxable} cgst={itc.cgst} sgst={itc.sgst} igst={itc.igst} />
         <p className="mt-2 text-xs text-muted">

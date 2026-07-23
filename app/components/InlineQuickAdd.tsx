@@ -64,7 +64,7 @@ export function InlineQuickAdd<T>({
           placeholder={f.placeholder ?? f.label}
           value={values[f.name] ?? ""}
           onChange={(e) => setValues((v) => ({ ...v, [f.name]: e.target.value }))}
-          className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand"
+          className="rounded-lg border border-border bg-surface shadow-sm px-3 py-2 text-sm outline-none focus:border-brand"
         />
       ))}
       {error && <p className="text-xs text-credit">{error}</p>}

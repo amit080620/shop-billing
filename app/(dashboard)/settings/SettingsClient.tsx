@@ -142,7 +142,7 @@ export function SettingsClient({ shop }: { shop: ShopSettings }) {
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="flex flex-col gap-3 rounded-xl border border-border bg-surface p-4">
+    <section className="flex flex-col gap-3 rounded-xl border border-border bg-surface shadow-sm p-4">
       <p className="text-sm font-semibold text-foreground">{title}</p>
       {children}
     </section>
@@ -196,7 +196,7 @@ function LogoUploadSection({ currentLogoUrl }: { currentLogoUrl: string | null }
   const displayUrl = preview ?? currentLogoUrl;
 
   return (
-    <section className="flex flex-col gap-3 rounded-xl border border-border bg-surface p-4">
+    <section className="flex flex-col gap-3 rounded-xl border border-border bg-surface shadow-sm p-4">
       <p className="text-sm font-semibold text-foreground">Shop logo</p>
       <div className="flex items-center gap-4">
         <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-background">

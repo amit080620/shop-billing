@@ -15,18 +15,21 @@ export function BottomNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="no-print fixed inset-x-0 bottom-0 z-20 border-t border-border bg-surface pb-[env(safe-area-inset-bottom)]">
-      <ul className="mx-auto flex max-w-lg items-stretch justify-between">
+    <nav
+      className="no-print fixed inset-x-0 bottom-0 z-20 border-t border-border bg-surface pb-[env(safe-area-inset-bottom)]"
+      style={{ boxShadow: "0 -4px 16px hsl(220 20% 40% / 0.06)" }}
+    >
+      <ul className="mx-auto flex max-w-lg items-stretch justify-between px-1">
         {TABS.map((tab) => {
           const active =
             tab.href === "/" ? pathname === "/" : pathname.startsWith(tab.href);
           const Icon = tab.icon;
           return (
-            <li key={tab.href} className="flex-1">
+            <li key={tab.href} className="flex-1 py-1.5">
               <Link
                 href={tab.href}
-                className={`flex flex-col items-center gap-0.5 py-2.5 text-[11px] font-medium transition ${
-                  active ? "text-brand" : "text-muted"
+                className={`mx-auto flex flex-col items-center gap-0.5 rounded-xl px-2 py-1.5 text-[11px] font-medium transition-colors ${
+                  active ? "bg-brand-soft text-brand-dark" : "text-muted"
                 }`}
               >
                 <Icon active={active} />

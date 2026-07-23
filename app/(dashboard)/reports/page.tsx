@@ -15,13 +15,13 @@ export default async function ReportsPage() {
         </p>
       )}
 
-      <p className="rounded-lg border border-border bg-surface px-3.5 py-3 text-xs text-muted">
+      <p className="rounded-lg border border-border bg-surface shadow-sm px-3.5 py-3 text-xs text-muted">
         These reports are laid out the same way the GST portal organizes them, built from your
         own sales and purchase entries — they don&apos;t file anything for you. Review the
         numbers (or have your CA review them) before entering them on the portal.
       </p>
 
-      <div className="flex flex-col divide-y divide-border overflow-hidden rounded-xl border border-border bg-surface">
+      <div className="flex flex-col divide-y divide-border overflow-hidden rounded-xl border border-border bg-surface shadow-sm">
         <ReportLink
           href="/reports/gstr1"
           label="GSTR-1"

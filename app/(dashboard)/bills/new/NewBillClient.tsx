@@ -146,7 +146,7 @@ export function NewBillClient({
 
           {customerMode === "existing" &&
             (selectedCustomer ? (
-              <div className="flex items-center justify-between rounded-lg border border-border bg-surface px-3.5 py-2.5">
+              <div className="flex items-center justify-between rounded-lg border border-border bg-surface shadow-sm px-3.5 py-2.5">
                 <div className="min-w-0">
                   <p className="truncate text-sm font-medium text-foreground">
                     {selectedCustomer.name}
@@ -218,7 +218,7 @@ export function NewBillClient({
               {cart.map((line) => (
                 <li
                   key={line.productId}
-                  className="flex items-center justify-between gap-3 rounded-lg border border-border bg-surface px-3.5 py-2.5"
+                  className="flex items-center justify-between gap-3 rounded-lg border border-border bg-surface shadow-sm px-3.5 py-2.5"
                 >
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium text-foreground">
@@ -303,7 +303,7 @@ export function NewBillClient({
       </div>
       <h1 className="text-lg font-semibold text-foreground">Complete ticket</h1>
 
-      <section className="rounded-xl border border-border bg-surface p-4">
+      <section className="rounded-xl border border-border bg-surface shadow-sm p-4">
         <p className="text-sm font-medium text-foreground">
           {customerMode === "existing" ? selectedCustomer?.name : "Walk-in customer"}
         </p>
@@ -321,7 +321,7 @@ export function NewBillClient({
         </ul>
       </section>
 
-      <section className="flex flex-col gap-3 rounded-xl border border-border bg-surface p-4">
+      <section className="flex flex-col gap-3 rounded-xl border border-border bg-surface shadow-sm p-4">
         <p className="text-sm font-medium text-foreground">Discount</p>
         <div className="flex gap-2">
           <button
@@ -358,7 +358,7 @@ export function NewBillClient({
         />
       </section>
 
-      <section className="flex flex-col gap-2 rounded-xl border border-border bg-surface p-4 text-sm">
+      <section className="flex flex-col gap-2 rounded-xl border border-border bg-surface shadow-sm p-4 text-sm">
         <div className="mb-1 flex items-center justify-between">
           <span className="text-xs font-medium uppercase tracking-wide text-muted">
             {supplyType === "intra" ? "Local sale · CGST + SGST" : "Inter-state sale · IGST"}
@@ -379,7 +379,7 @@ export function NewBillClient({
         <Row label="Total" value={formatMoney(totals.total)} bold />
       </section>
 
-      <section className="flex flex-col gap-3 rounded-xl border border-border bg-surface p-4">
+      <section className="flex flex-col gap-3 rounded-xl border border-border bg-surface shadow-sm p-4">
         <p className="text-sm font-medium text-foreground">How much is being paid now?</p>
         <div className="flex gap-2">
           <button

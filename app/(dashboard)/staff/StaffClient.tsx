@@ -59,7 +59,7 @@ export function StaffClient({
       {showForm && (
         <form
           action={formAction}
-          className="flex flex-col gap-3 rounded-xl border border-border bg-surface p-4"
+          className="flex flex-col gap-3 rounded-xl border border-border bg-surface shadow-sm p-4"
         >
           <label className="flex flex-col gap-1.5 text-sm">
             <span className="font-medium text-foreground">Name</span>
@@ -109,7 +109,7 @@ export function StaffClient({
         {initialStaff.map((s) => (
           <li
             key={s.id}
-            className="flex items-center justify-between gap-3 rounded-lg border border-border bg-surface px-3.5 py-3"
+            className="flex items-center justify-between gap-3 rounded-lg border border-border bg-surface shadow-sm px-3.5 py-3"
           >
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-medium text-foreground">{s.name}</p>

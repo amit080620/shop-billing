@@ -36,7 +36,7 @@ export function RemindersClient({
           {customers.map((c) => (
             <li
               key={c.id}
-              className="flex items-center justify-between gap-3 rounded-lg border border-border bg-surface px-3.5 py-3"
+              className="flex items-center justify-between gap-3 rounded-lg border border-border bg-surface shadow-sm px-3.5 py-3"
             >
               <Link href={`/customers/${c.id}`} className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium text-foreground">{c.name}</p>

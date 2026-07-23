@@ -62,7 +62,7 @@ export function CustomersClient({
       {showForm && (
         <form
           action={formAction}
-          className="flex flex-col gap-3 rounded-xl border border-border bg-surface p-4"
+          className="flex flex-col gap-3 rounded-xl border border-border bg-surface shadow-sm p-4"
         >
           <label className="flex flex-col gap-1.5 text-sm">
             <span className="font-medium text-foreground">Name</span>
@@ -123,7 +123,7 @@ export function CustomersClient({
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search by name or phone"
-          className="rounded-lg border border-border bg-surface px-3.5 py-2.5 text-sm outline-none focus:border-brand"
+          className="rounded-lg border border-border bg-surface shadow-sm px-3.5 py-2.5 text-sm outline-none focus:border-brand"
         />
       )}
 
@@ -135,7 +135,7 @@ export function CustomersClient({
             <li key={c.id}>
               <Link
                 href={`/customers/${c.id}`}
-                className="flex items-center justify-between gap-3 rounded-lg border border-border bg-surface px-3.5 py-3"
+                className="flex items-center justify-between gap-3 rounded-lg border border-border bg-surface shadow-sm px-3.5 py-3"
               >
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium text-foreground">{c.name}</p>

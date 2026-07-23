@@ -104,7 +104,7 @@ export function ProductsClient({
       {showCategoryForm && (
         <form
           action={categoryAction}
-          className="flex flex-col gap-3 rounded-xl border border-border bg-surface p-4"
+          className="flex flex-col gap-3 rounded-xl border border-border bg-surface shadow-sm p-4"
         >
           <input
             name="name"
@@ -122,7 +122,7 @@ export function ProductsClient({
       {showForm && (
         <form
           action={productAction}
-          className="flex flex-col gap-3 rounded-xl border border-border bg-surface p-4"
+          className="flex flex-col gap-3 rounded-xl border border-border bg-surface shadow-sm p-4"
         >
           <Field name="name" label="Product name" placeholder="e.g. Amul Milk 500ml" required />
           <div className="grid grid-cols-2 gap-3">
@@ -219,7 +219,7 @@ export function ProductsClient({
           {filtered.map((p) => (
             <li
               key={p.id}
-              className="flex items-center justify-between gap-3 rounded-lg border border-border bg-surface px-3.5 py-3"
+              className="flex items-center justify-between gap-3 rounded-lg border border-border bg-surface shadow-sm px-3.5 py-3"
             >
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium text-foreground">{p.name}</p>

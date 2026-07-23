@@ -9,7 +9,8 @@ function SubmitButton({ label }: { label: string }) {
     <button
       type="submit"
       disabled={pending}
-      className="w-full rounded-lg bg-brand px-4 py-3 font-medium text-white transition active:bg-brand-dark disabled:opacity-60"
+      className="w-full rounded-xl px-4 py-3.5 font-semibold text-white shadow-md disabled:opacity-60"
+      style={{ background: "linear-gradient(135deg, var(--brand-light), var(--brand-dark))" }}
     >
       {pending ? "Please wait…" : label}
     </button>
@@ -37,7 +38,7 @@ export function AuthForm({
             type={f.type}
             placeholder={f.placeholder}
             required
-            className="rounded-lg border border-border bg-surface px-3.5 py-2.5 text-base outline-none focus:border-brand focus:ring-2 focus:ring-brand-soft"
+            className="rounded-xl border border-border bg-surface shadow-sm px-4 py-3 text-base outline-none focus:border-brand focus:ring-4 focus:ring-brand-soft"
           />
         </label>
       ))}

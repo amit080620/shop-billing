@@ -22,7 +22,7 @@ export function PeriodPicker({ year, month }: { year: number; month: number }) {
       <select
         value={month}
         onChange={(e) => update(year, Number(e.target.value))}
-        className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand"
+        className="rounded-lg border border-border bg-surface shadow-sm px-3 py-2 text-sm outline-none focus:border-brand"
       >
         {MONTHS.map((m, i) => (
           <option key={m} value={i + 1}>
@@ -33,7 +33,7 @@ export function PeriodPicker({ year, month }: { year: number; month: number }) {
       <select
         value={year}
         onChange={(e) => update(Number(e.target.value), month)}
-        className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand"
+        className="rounded-lg border border-border bg-surface shadow-sm px-3 py-2 text-sm outline-none focus:border-brand"
       >
         {years.map((y) => (
           <option key={y} value={y}>
