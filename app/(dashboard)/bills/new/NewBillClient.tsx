@@ -349,29 +349,35 @@ export function NewBillClient({
         <Row label="Total" value={formatMoney(totals.total)} bold />
       </section>
 
-      <section className="flex flex-col gap-2 rounded-xl border border-border bg-surface p-4">
-        <p className="text-sm font-medium text-foreground">Paid via</p>
-        <div className="flex flex-wrap gap-2">
-          {(["cash", "card", "upi", "online", "other"] as const).map((m) => (
-            <button
-              key={m}
-              type="button"
-              onClick={() => setPaymentMethod(m)}
-              className={`rounded-full border px-3.5 py-1.5 text-xs font-medium capitalize ${
-                paymentMethod === m
-                  ? "border-brand bg-brand-soft text-brand-dark"
-                  : "border-border text-muted"
-              }`}
-            >
-              {m}
-            </button>
-          ))}
+      <section className="flex flex-col gap-3 rounded-xl border border-border bg-surface p-4">
+        <p className="text-sm font-medium text-foreground">How much is being paid now?</p>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => setPaidAmount(totals.total)}
+            className={`flex-1 rounded-lg border px-3 py-2 text-sm font-medium ${
+              paidAmount === totals.total
+                ? "border-brand bg-brand-soft text-brand-dark"
+                : "border-border text-muted"
+            }`}
+          >
+            Fully paid
+          </button>
+          <button
+            type="button"
+            onClick={() => setPaidAmount(0)}
+            disabled={customerMode === "walkin"}
+            className={`flex-1 rounded-lg border px-3 py-2 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-40 ${
+              paidAmount === 0
+                ? "border-credit bg-credit-soft text-credit"
+                : "border-border text-muted"
+            }`}
+          >
+            Full udhaar (₹0 now)
+          </button>
         </div>
-      </section>
-
-      <section className="flex flex-col gap-2 rounded-xl border border-border bg-surface p-4">
         <label className="flex flex-col gap-1.5 text-sm">
-          <span className="font-medium text-foreground">Amount paid now (₹)</span>
+          <span className="font-medium text-foreground">Or enter a part payment (₹)</span>
           <input
             type="number"
             min="0"
@@ -383,6 +389,31 @@ export function NewBillClient({
             className="rounded-lg border border-border px-3.5 py-2.5 text-sm outline-none focus:border-brand"
           />
         </label>
+
+        {typeof paidAmount === "number" && paidAmount > 0 && (
+          <div className="border-t border-border pt-3">
+            <p className="mb-2 text-sm font-medium text-foreground">
+              How was the {formatMoney(paidAmount)} paid?
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {(["cash", "card", "upi", "online", "other"] as const).map((m) => (
+                <button
+                  key={m}
+                  type="button"
+                  onClick={() => setPaymentMethod(m)}
+                  className={`rounded-full border px-3.5 py-1.5 text-xs font-medium capitalize ${
+                    paymentMethod === m
+                      ? "border-brand bg-brand-soft text-brand-dark"
+                      : "border-border text-muted"
+                  }`}
+                >
+                  {m}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         {totals.balanceAmount > 0 && (
           <p className="text-sm text-credit">
             {formatMoney(totals.balanceAmount)} will be added to this customer&apos;s credit (udhaar).
