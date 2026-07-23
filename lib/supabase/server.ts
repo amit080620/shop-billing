@@ -24,8 +24,9 @@ export async function createSupabaseServerClient() {
               cookieStore.set(name, value, options),
             );
           } catch {
-            // Called from a Server Component that can't set cookies — the
-            // middleware refreshes the session instead, so this is safe to ignore.
+            // Called from a Server Component, which can't set cookies — safe to
+            // ignore here. Server Actions (which CAN set cookies) still refresh
+            // the session normally whenever one runs, e.g. creating a bill.
           }
         },
       },
