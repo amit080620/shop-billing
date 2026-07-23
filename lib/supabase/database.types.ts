@@ -102,6 +102,9 @@ export interface Database {
           name: string;
           hsn_code: string | null;
           unit: string;
+          track_inventory: boolean;
+          stock_quantity: number;
+          low_stock_threshold: number;
           price: number;
           gst_percent: number;
           created_at: string;
@@ -113,6 +116,9 @@ export interface Database {
           name: string;
           hsn_code?: string | null;
           unit?: string;
+          track_inventory?: boolean;
+          stock_quantity?: number;
+          low_stock_threshold?: number;
           price?: number;
           gst_percent?: number;
           created_at?: string;
@@ -124,6 +130,9 @@ export interface Database {
           name?: string;
           hsn_code?: string | null;
           unit?: string;
+          track_inventory?: boolean;
+          stock_quantity?: number;
+          low_stock_threshold?: number;
           price?: number;
           gst_percent?: number;
           created_at?: string;
@@ -475,6 +484,60 @@ export interface Database {
         Relationships: [
           { foreignKeyName: "purchase_items_purchase_id_fkey"; columns: ["purchase_id"]; isOneToOne: false; referencedRelation: "purchases"; referencedColumns: ["id"] },
           { foreignKeyName: "purchase_items_product_id_fkey"; columns: ["product_id"]; isOneToOne: false; referencedRelation: "products"; referencedColumns: ["id"] },
+        ];
+      };
+      item_requests: {
+        Row: {
+          id: string;
+          shop_id: string;
+          staff_id: string;
+          customer_id: string | null;
+          customer_name: string;
+          customer_phone: string;
+          item_description: string;
+          advance_amount: number;
+          expected_date: string | null;
+          status: "pending" | "available" | "fulfilled" | "cancelled";
+          notes: string | null;
+          notified_at: string | null;
+          fulfilled_at: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          shop_id: string;
+          staff_id: string;
+          customer_id?: string | null;
+          customer_name: string;
+          customer_phone: string;
+          item_description: string;
+          advance_amount?: number;
+          expected_date?: string | null;
+          status?: "pending" | "available" | "fulfilled" | "cancelled";
+          notes?: string | null;
+          notified_at?: string | null;
+          fulfilled_at?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          shop_id?: string;
+          staff_id?: string;
+          customer_id?: string | null;
+          customer_name?: string;
+          customer_phone?: string;
+          item_description?: string;
+          advance_amount?: number;
+          expected_date?: string | null;
+          status?: "pending" | "available" | "fulfilled" | "cancelled";
+          notes?: string | null;
+          notified_at?: string | null;
+          fulfilled_at?: string | null;
+          created_at?: string;
+        };
+        Relationships: [
+          { foreignKeyName: "item_requests_shop_id_fkey"; columns: ["shop_id"]; isOneToOne: false; referencedRelation: "shops"; referencedColumns: ["id"] },
+          { foreignKeyName: "item_requests_customer_id_fkey"; columns: ["customer_id"]; isOneToOne: false; referencedRelation: "customers"; referencedColumns: ["id"] },
         ];
       };
       purchase_payments: {

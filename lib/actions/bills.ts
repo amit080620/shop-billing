@@ -38,7 +38,7 @@ export async function createBillAction(
   const productIds = [...new Set(items.map((i) => i.productId).filter(Boolean))] as string[];
   const { data: dbProducts, error: productsError } = await admin
     .from("products")
-    .select("id, name, price, gst_percent, hsn_code")
+    .select("id, name, price, gst_percent, hsn_code, track_inventory, stock_quantity")
     .eq("shop_id", session.shopId)
     .in("id", productIds);
 
@@ -149,6 +149,20 @@ export async function createBillAction(
     // Roll back the orphaned bill header so we don't leave partial data.
     await admin.from("bills").delete().eq("id", bill.id);
     return { error: "Could not save bill items" };
+  }
+
+  // Basic stock decrement — only for products with tracking turned on.
+  // Best-effort: a bill is already committed at this point, so a stock
+  // update failure here doesn't roll back the sale, just logs for review.
+  for (const item of verifiedItems) {
+    const product = item.productId ? productMap.get(item.productId) : undefined;
+    if (!product?.track_inventory) continue;
+    const newQuantity = Math.max(0, Number(product.stock_quantity) - item.quantity);
+    const { error: stockError } = await admin
+      .from("products")
+      .update({ stock_quantity: newQuantity })
+      .eq("id", product.id);
+    if (stockError) console.error("Could not update stock for product", product.id, stockError);
   }
 
   redirect(`/print/bill/${bill.id}`);

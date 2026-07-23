@@ -35,6 +35,9 @@ export const productSchema = z.object({
   hsnCode: optionalText(20),
   unit: z.string().trim().max(20).default("NOS"),
   categoryId: z.string().uuid().nullable().optional(),
+  trackInventory: z.coerce.boolean().default(false),
+  stockQuantity: z.coerce.number().min(0).default(0),
+  lowStockThreshold: z.coerce.number().min(0).default(0),
 });
 export type ProductInput = z.infer<typeof productSchema>;
 
@@ -208,3 +211,14 @@ export function calculateBillTotals(input: {
     creditAmount: r.balanceAmount,
   };
 }
+
+export const itemRequestSchema = z.object({
+  customerId: z.string().uuid().nullable().optional(),
+  customerName: z.string().trim().min(1, "Customer name is required").max(120),
+  customerPhone: z.string().trim().min(6, "Enter a valid phone number").max(20),
+  itemDescription: z.string().trim().min(1, "Describe the item").max(300),
+  advanceAmount: z.coerce.number().min(0).default(0),
+  expectedDate: optionalText(20),
+  notes: optionalText(300),
+});
+export type ItemRequestInput = z.infer<typeof itemRequestSchema>;

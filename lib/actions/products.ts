@@ -19,6 +19,9 @@ export async function createProductAction(
     hsnCode: formData.get("hsnCode"),
     unit: formData.get("unit") || "NOS",
     categoryId: formData.get("categoryId") || null,
+    trackInventory: formData.get("trackInventory") === "on",
+    stockQuantity: formData.get("stockQuantity") || 0,
+    lowStockThreshold: formData.get("lowStockThreshold") || 0,
   });
   if (!parsed.success) {
     return { error: parsed.error.issues[0].message };
@@ -46,6 +49,9 @@ export async function createProductAction(
     hsn_code: parsed.data.hsnCode ?? null,
     unit: parsed.data.unit,
     category_id: parsed.data.categoryId ?? null,
+    track_inventory: parsed.data.trackInventory,
+    stock_quantity: parsed.data.stockQuantity,
+    low_stock_threshold: parsed.data.lowStockThreshold,
   });
   if (error) {
     console.error("Could not save product", error);
@@ -69,6 +75,9 @@ export async function updateProductAction(
     hsnCode: formData.get("hsnCode"),
     unit: formData.get("unit") || "NOS",
     categoryId: formData.get("categoryId") || null,
+    trackInventory: formData.get("trackInventory") === "on",
+    stockQuantity: formData.get("stockQuantity") || 0,
+    lowStockThreshold: formData.get("lowStockThreshold") || 0,
   });
   if (!parsed.success) {
     return { error: parsed.error.issues[0].message };
@@ -84,6 +93,9 @@ export async function updateProductAction(
       hsn_code: parsed.data.hsnCode ?? null,
       unit: parsed.data.unit,
       category_id: parsed.data.categoryId ?? null,
+      track_inventory: parsed.data.trackInventory,
+      stock_quantity: parsed.data.stockQuantity,
+      low_stock_threshold: parsed.data.lowStockThreshold,
     })
     .eq("id", productId)
     .eq("shop_id", session.shopId); // ownership check baked into the query

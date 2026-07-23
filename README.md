@@ -74,6 +74,25 @@ Visit `/signup` to create your shop and owner login.
   at the time of sale, so it stays accurate even if you edit the product
   later — and rolls up into GSTR-1's mandatory Table 12.
 
+## Basic inventory
+
+Products → tick "Track stock for this product" to opt a product into stock
+tracking (off by default — most small shops don't need it for everything).
+Once tracked: stock decreases automatically on every sale, increases on
+every purchase, and the product list shows a "Low stock" flag once quantity
+drops to your set threshold. This is intentionally simple (no reservations,
+no multi-location, no batch/expiry tracking) — a real stock ledger with
+audit history would be a natural next step if you outgrow this.
+
+## Item requests ("customer asked, we didn't have it")
+
+More → Item requests. When someone asks for something you don't currently
+stock: log their name/phone (existing customer or just typed in), what they
+asked for, and optionally an advance payment taken. When it arrives, tap
+"Mark available" — a WhatsApp button appears with a pre-filled message
+("your item has arrived, come collect it," including a note about the
+advance if one was taken). Tap "Mark collected" once they've picked it up.
+
 ## Invoicing extras
 
 - **Shop logo**: More → GST & shop profile → upload a PNG/JPG/WEBP/SVG (under

@@ -51,8 +51,8 @@ export async function createPurchaseAction(
   // price/GST for a purchase come from the vendor's own bill, not our catalog.
   const productIds = [...new Set(items.map((i) => i.productId).filter(Boolean))] as string[];
   const { data: dbProducts } = productIds.length
-    ? await admin.from("products").select("id, name, hsn_code").eq("shop_id", session.shopId).in("id", productIds)
-    : { data: [] as { id: string; name: string; hsn_code: string | null }[] };
+    ? await admin.from("products").select("id, name, hsn_code, track_inventory, stock_quantity").eq("shop_id", session.shopId).in("id", productIds)
+    : { data: [] as { id: string; name: string; hsn_code: string | null; track_inventory: boolean; stock_quantity: number }[] };
   const productMap = new Map((dbProducts ?? []).map((p) => [p.id, p]));
 
   const supplyType = determineSupplyType(session.shopStateCode, vendor.state_code);
@@ -121,6 +121,18 @@ export async function createPurchaseAction(
   if (itemsError) {
     await admin.from("purchases").delete().eq("id", purchase.id);
     return { error: "Could not save purchase items" };
+  }
+
+  // Basic stock increment — only for products with tracking turned on.
+  for (const item of items) {
+    const product = item.productId ? productMap.get(item.productId) : undefined;
+    if (!product?.track_inventory) continue;
+    const newQuantity = Number(product.stock_quantity) + item.quantity;
+    const { error: stockError } = await admin
+      .from("products")
+      .update({ stock_quantity: newQuantity })
+      .eq("id", product.id);
+    if (stockError) console.error("Could not update stock for product", product.id, stockError);
   }
 
   redirect(`/vendors/${vendorId}`);

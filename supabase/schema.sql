@@ -64,12 +64,18 @@ create table if not exists products (
   name text not null,
   hsn_code text,
   unit text not null default 'NOS', -- NOS, KG, LTR, MTR, BOX, PCS, ...
+  track_inventory boolean not null default false, -- opt-in per product; off = unlimited/not tracked
+  stock_quantity numeric(12, 2) not null default 0,
+  low_stock_threshold numeric(12, 2) not null default 0,
   price numeric(12, 2) not null default 0,
   gst_percent numeric(5, 2) not null default 0,
   created_at timestamptz not null default now()
 );
 alter table products add column if not exists hsn_code text;
 alter table products add column if not exists unit text not null default 'NOS';
+alter table products add column if not exists track_inventory boolean not null default false;
+alter table products add column if not exists stock_quantity numeric(12, 2) not null default 0;
+alter table products add column if not exists low_stock_threshold numeric(12, 2) not null default 0;
 
 -- ─── Sales side (output GST — GST you charge / "giving") ────────────────
 create table if not exists customers (
@@ -172,6 +178,29 @@ create table if not exists payments (
   note text,
   created_at timestamptz not null default now()
 );
+
+-- ─── Item requests ("customer asked, we didn't have it") ────────────────
+-- Not tied to the catalog — the item may not exist as a product yet.
+-- customer_id is optional: link an existing customer, or just capture a
+-- name/phone for someone not yet in the customer list.
+create table if not exists item_requests (
+  id uuid primary key default uuid_generate_v4(),
+  shop_id uuid not null references shops(id) on delete cascade,
+  staff_id uuid not null references staff(id),
+  customer_id uuid references customers(id) on delete set null,
+  customer_name text not null,
+  customer_phone text not null,
+  item_description text not null,
+  advance_amount numeric(12, 2) not null default 0,
+  expected_date date,
+  status text not null default 'pending' check (status in ('pending', 'available', 'fulfilled', 'cancelled')),
+  notes text,
+  notified_at timestamptz,
+  fulfilled_at timestamptz,
+  created_at timestamptz not null default now()
+);
+create index if not exists idx_item_requests_shop on item_requests(shop_id, status);
+alter table item_requests enable row level security;
 
 -- ─── Purchase side (input GST / ITC — GST you pay / "taking") ───────────
 create table if not exists vendors (

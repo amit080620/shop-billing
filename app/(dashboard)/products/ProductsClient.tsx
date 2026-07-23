@@ -23,6 +23,9 @@ type Product = {
   unit: string;
   categoryId: string | null;
   categoryName: string | null;
+  trackInventory: boolean;
+  stockQuantity: number;
+  lowStockThreshold: number;
 };
 type Category = { id: string; name: string };
 
@@ -47,6 +50,7 @@ export function ProductsClient({
   categories: Category[];
 }) {
   const [showForm, setShowForm] = useState(false);
+  const [trackInventory, setTrackInventory] = useState(false);
   const [showCategoryForm, setShowCategoryForm] = useState(false);
   const [filter, setFilter] = useState<string>("all");
   const [isPending, startTransition] = useTransition();
@@ -172,6 +176,22 @@ export function ProductsClient({
               </select>
             </label>
           )}
+          <label className="flex items-center gap-2 text-sm text-foreground">
+            <input
+              type="checkbox"
+              name="trackInventory"
+              checked={trackInventory}
+              onChange={(e) => setTrackInventory(e.target.checked)}
+              className="h-4 w-4 rounded border-border"
+            />
+            Track stock for this product
+          </label>
+          {trackInventory && (
+            <div className="grid grid-cols-2 gap-3">
+              <Field name="stockQuantity" label="Current stock" type="number" step="0.01" min="0" defaultValue="0" />
+              <Field name="lowStockThreshold" label="Low-stock alert below" type="number" step="0.01" min="0" defaultValue="0" />
+            </div>
+          )}
           {productState?.error && (
             <p className="text-sm text-credit">{productState.error}</p>
           )}
@@ -207,6 +227,16 @@ export function ProductsClient({
                   {p.categoryName ?? "No category"} · GST {p.gstPercent}% · {p.unit}
                   {p.hsnCode ? ` · HSN ${p.hsnCode}` : ""}
                 </p>
+                {p.trackInventory && (
+                  <p
+                    className={`mt-0.5 text-xs font-medium ${
+                      p.stockQuantity <= p.lowStockThreshold ? "text-credit" : "text-brand"
+                    }`}
+                  >
+                    {p.stockQuantity} {p.unit} in stock
+                    {p.stockQuantity <= p.lowStockThreshold ? " · Low stock" : ""}
+                  </p>
+                )}
               </div>
               <div className="flex shrink-0 items-center gap-3">
                 <p className="text-sm font-semibold text-foreground">
