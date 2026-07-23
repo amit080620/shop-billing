@@ -1,0 +1,52 @@
+"use client";
+
+import { useActionState } from "react";
+import { useFormStatus } from "react-dom";
+
+function SubmitButton({ label }: { label: string }) {
+  const { pending } = useFormStatus();
+  return (
+    <button
+      type="submit"
+      disabled={pending}
+      className="w-full rounded-lg bg-brand px-4 py-3 font-medium text-white transition active:bg-brand-dark disabled:opacity-60"
+    >
+      {pending ? "Please wait…" : label}
+    </button>
+  );
+}
+
+export function AuthForm({
+  action,
+  fields,
+  submitLabel,
+}: {
+  action: (prev: { error?: string } | null, formData: FormData) => Promise<{ error?: string } | null>;
+  fields: { name: string; label: string; type: string; placeholder?: string }[];
+  submitLabel: string;
+}) {
+  const [state, formAction] = useActionState(action, null);
+
+  return (
+    <form action={formAction} className="flex flex-col gap-4">
+      {fields.map((f) => (
+        <label key={f.name} className="flex flex-col gap-1.5 text-sm">
+          <span className="font-medium text-foreground">{f.label}</span>
+          <input
+            name={f.name}
+            type={f.type}
+            placeholder={f.placeholder}
+            required
+            className="rounded-lg border border-border bg-surface px-3.5 py-2.5 text-base outline-none focus:border-brand focus:ring-2 focus:ring-brand-soft"
+          />
+        </label>
+      ))}
+      {state?.error && (
+        <p className="rounded-lg bg-credit-soft px-3 py-2 text-sm text-credit">
+          {state.error}
+        </p>
+      )}
+      <SubmitButton label={submitLabel} />
+    </form>
+  );
+}
