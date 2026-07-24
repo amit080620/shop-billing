@@ -152,21 +152,17 @@ export function RemindersClient({
 }
 
 function AgingBadge({ days }: { days: number }) {
-  if (days <= 0) return null;
-  const urgent = days >= 30;
-  const warm = days >= 14 && days < 30;
+  const label = days === 0 ? "Today" : `${days}d pending`;
+  const tone = days >= 30 ? "red" : days >= 10 ? "orange" : "green";
+  const styles: Record<string, { className: string; style?: React.CSSProperties }> = {
+    green: { className: "text-white", style: { backgroundColor: "#16a34a" } },
+    orange: { className: "text-white", style: { backgroundColor: "#c2760f" } },
+    red: { className: "bg-danger/15 text-danger" },
+  };
+  const { className, style } = styles[tone];
   return (
-    <span
-      className={`rounded-full px-1.5 py-0.5 text-[10px] font-medium ${
-        urgent
-          ? "bg-danger/15 text-danger"
-          : warm
-            ? "text-white"
-            : "bg-background text-muted"
-      }`}
-      style={warm ? { backgroundColor: "#c2760f" } : undefined}
-    >
-      {days}d pending
+    <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-medium ${className}`} style={style}>
+      {label}
     </span>
   );
 }
