@@ -9,30 +9,37 @@ export default async function MorePage() {
   const { lang, t } = await getTranslator();
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-5">
       <div className="flex items-center justify-between">
         <h1 className="text-lg font-semibold text-foreground">{t("more.title")}</h1>
         <LanguageToggle lang={lang} />
       </div>
 
-      <div className="flex flex-col divide-y divide-border overflow-hidden rounded-xl border border-border bg-surface shadow-sm">
+      <MenuGroup title="People">
         <MenuLink href="/customers" label={t("more.customers")} sub={t("more.customers.sub")} icon={PeopleIcon} />
-        <MenuLink href="/requests" label={t("more.requests")} sub={t("more.requests.sub")} icon={BellIcon} />
-        <MenuLink href="/reminders" label={t("more.reminders")} sub={t("more.reminders.sub")} icon={ClockIcon} />
-        <MenuLink href="/offers" label={t("more.offers")} sub={t("more.offers.sub")} icon={MegaphoneIcon} />
         <MenuLink href="/vendors" label={t("more.vendors")} sub={t("more.vendors.sub")} icon={TruckIcon} />
-        <MenuLink href="/products" label={t("more.products")} sub={t("more.products.sub")} icon={BoxIcon} />
-        <MenuLink href="/daily-summary" label="Daily summary" sub="End-of-day cash reconciliation" icon={CashIcon} />
-        <MenuLink href="/help" label="Help & guide" sub="How every screen and button works" icon={HelpIcon} />
-        <MenuLink href="/insights" label="Insights" sub="Fast movers & dead stock, from your own sales" icon={ChartIcon} />
-        <MenuLink href="/festivals" label="Festival planner" sub="Upcoming festivals & stock-up reminders" icon={FestivalIcon} />
         {session.role === "owner" && (
           <MenuLink href="/staff" label={t("more.staff")} sub={t("more.staff.sub")} icon={UsersIcon} />
         )}
+      </MenuGroup>
+
+      <MenuGroup title="Catalog">
+        <MenuLink href="/products" label={t("more.products")} sub={t("more.products.sub")} icon={BoxIcon} />
+      </MenuGroup>
+
+      <MenuGroup title="Grow your business">
+        <MenuLink href="/requests" label={t("more.requests")} sub={t("more.requests.sub")} icon={BellIcon} />
+        <MenuLink href="/reminders" label={t("more.reminders")} sub={t("more.reminders.sub")} icon={ClockIcon} />
+        <MenuLink href="/offers" label={t("more.offers")} sub={t("more.offers.sub")} icon={MegaphoneIcon} />
+        <MenuLink href="/festivals" label="Festival planner" sub="Upcoming festivals & stock-up reminders" icon={FestivalIcon} />
+      </MenuGroup>
+
+      <MenuGroup title="Shop setup">
         {session.role === "owner" && (
           <MenuLink href="/settings" label={t("more.settings")} sub={t("more.settings.sub")} icon={GearIcon} />
         )}
-      </div>
+        <MenuLink href="/help" label="Help & guide" sub="How every screen and button works" icon={HelpIcon} />
+      </MenuGroup>
 
       <div className="rounded-xl border border-border bg-surface px-4 py-3.5 text-sm text-muted shadow-sm">
         {t("more.loggedInAs")} {session.staffName} ({session.email})
@@ -47,6 +54,17 @@ export default async function MorePage() {
         </button>
       </form>
     </div>
+  );
+}
+
+function MenuGroup({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <section className="flex flex-col gap-2">
+      <h2 className="px-1 text-xs font-semibold uppercase tracking-wide text-muted">{title}</h2>
+      <div className="flex flex-col divide-y divide-border overflow-hidden rounded-xl border border-border bg-surface shadow-sm">
+        {children}
+      </div>
+    </section>
   );
 }
 
@@ -158,21 +176,6 @@ function MegaphoneIcon({ className }: { className?: string }) {
     <svg {...iconProps(className)}>
       <path d="M3 11v2a2 2 0 0 0 2 2h1l2 5h2l-1.5-5H11l8 4V6l-8 4H8l-2-4H5a2 2 0 0 0-2 2Z" />
       <path d="M17 8.5v7" />
-    </svg>
-  );
-}
-function ChartIcon({ className }: { className?: string }) {
-  return (
-    <svg {...iconProps(className)}>
-      <path d="M4 19V5M4 19h16M8 15l3-4 3 3 4-6" />
-    </svg>
-  );
-}
-function CashIcon({ className }: { className?: string }) {
-  return (
-    <svg {...iconProps(className)}>
-      <rect x="3" y="6" width="18" height="13" rx="2" />
-      <path d="M3 10h18M8 14h.01M12 14h4" />
     </svg>
   );
 }
