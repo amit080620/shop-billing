@@ -19,6 +19,7 @@ export default async function MorePage() {
         <MenuLink href="/customers" label={t("more.customers")} sub={t("more.customers.sub")} icon={PeopleIcon} />
         <MenuLink href="/requests" label={t("more.requests")} sub={t("more.requests.sub")} icon={BellIcon} />
         <MenuLink href="/reminders" label={t("more.reminders")} sub={t("more.reminders.sub")} icon={ClockIcon} />
+        <MenuLink href="/offers" label={t("more.offers")} sub={t("more.offers.sub")} icon={MegaphoneIcon} />
         <MenuLink href="/vendors" label={t("more.vendors")} sub={t("more.vendors.sub")} icon={TruckIcon} />
         <MenuLink href="/products" label={t("more.products")} sub={t("more.products.sub")} icon={BoxIcon} />
         {session.role === "owner" && (
@@ -145,6 +146,14 @@ function GearIcon({ className }: { className?: string }) {
     <svg {...iconProps(className)}>
       <circle cx="12" cy="12" r="3" />
       <path d="M19.4 13a7.6 7.6 0 0 0 0-2l2-1.5-2-3.4-2.3.9a7.5 7.5 0 0 0-1.7-1L15 3.5h-6l-.4 2.5a7.5 7.5 0 0 0-1.7 1l-2.3-.9-2 3.4L4.6 11a7.6 7.6 0 0 0 0 2l-2 1.5 2 3.4 2.3-.9c.5.4 1 .8 1.7 1l.4 2.5h6l.4-2.5c.6-.2 1.2-.6 1.7-1l2.3.9 2-3.4-2-1.5Z" />
+    </svg>
+  );
+}
+function MegaphoneIcon({ className }: { className?: string }) {
+  return (
+    <svg {...iconProps(className)}>
+      <path d="M3 11v2a2 2 0 0 0 2 2h1l2 5h2l-1.5-5H11l8 4V6l-8 4H8l-2-4H5a2 2 0 0 0-2 2Z" />
+      <path d="M17 8.5v7" />
     </svg>
   );
 }
