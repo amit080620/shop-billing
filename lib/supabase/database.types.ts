@@ -507,6 +507,32 @@ export interface Database {
           { foreignKeyName: "purchase_items_product_id_fkey"; columns: ["product_id"]; isOneToOne: false; referencedRelation: "products"; referencedColumns: ["id"] },
         ];
       };
+      festival_notes: {
+        Row: {
+          shop_id: string;
+          festival_slug: string;
+          note: string;
+          updated_by: string | null;
+          updated_at: string;
+        };
+        Insert: {
+          shop_id: string;
+          festival_slug: string;
+          note?: string;
+          updated_by?: string | null;
+          updated_at?: string;
+        };
+        Update: {
+          shop_id?: string;
+          festival_slug?: string;
+          note?: string;
+          updated_by?: string | null;
+          updated_at?: string;
+        };
+        Relationships: [
+          { foreignKeyName: "festival_notes_shop_id_fkey"; columns: ["shop_id"]; isOneToOne: false; referencedRelation: "shops"; referencedColumns: ["id"] },
+        ];
+      };
       item_requests: {
         Row: {
           id: string;

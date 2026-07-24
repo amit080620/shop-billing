@@ -200,6 +200,22 @@ create table if not exists payments (
 );
 alter table payments add column if not exists payment_method text not null default 'cash' check (payment_method in ('cash', 'card', 'upi', 'online', 'other'));
 
+-- ─── Festival notes ("what worked last time, what to remember") ─────────
+-- The shop's own memory/plan per festival — immediately personal from day
+-- one, unlike sales-trend analysis which needs a year of history to say
+-- anything. Keyed by a stable slug (see lib/festivals.ts), not the exact
+-- date, so a note carries over correctly even though festival dates shift
+-- year to year on the lunar calendar.
+create table if not exists festival_notes (
+  shop_id uuid not null references shops(id) on delete cascade,
+  festival_slug text not null,
+  note text not null default '',
+  updated_by uuid references staff(id),
+  updated_at timestamptz not null default now(),
+  primary key (shop_id, festival_slug)
+);
+alter table festival_notes enable row level security;
+
 -- ─── Item requests ("customer asked, we didn't have it") ────────────────
 -- Not tied to the catalog — the item may not exist as a product yet.
 -- customer_id is optional: link an existing customer, or just capture a

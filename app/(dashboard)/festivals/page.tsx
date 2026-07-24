@@ -4,6 +4,7 @@ import { formatMoney } from "@/lib/format";
 import { PageIcon } from "@/app/components/PageIcon";
 import { FESTIVALS } from "@/lib/festivals";
 import { AddToCalendarButton } from "./AddToCalendarButton";
+import { FestivalNoteBox } from "./FestivalNoteBox";
 
 const TRENDABLE_WINDOW_DAYS = 45; // only bother checking last-year sales for festivals coming up reasonably soon
 
@@ -15,6 +16,12 @@ export default async function FestivalsPage() {
     .from("products")
     .select("id, name, price, unit, stock_quantity, low_stock_threshold, track_inventory, categories ( name )")
     .eq("shop_id", session.shopId);
+
+  const { data: notes } = await admin
+    .from("festival_notes")
+    .select("festival_slug, note")
+    .eq("shop_id", session.shopId);
+  const notesBySlug = new Map((notes ?? []).map((n) => [n.festival_slug, n.note]));
 
   const catalog = (products ?? []).map((p) => ({
     id: p.id,
@@ -185,6 +192,7 @@ export default async function FestivalsPage() {
               </div>
 
               <AddToCalendarButton festivalName={f.name} festivalDateIso={f.date} prepHints={f.prepHints} />
+              <FestivalNoteBox slug={f.slug} initialNote={notesBySlug.get(f.slug) ?? ""} />
             </li>
           );
         })}
