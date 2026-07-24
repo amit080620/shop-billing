@@ -307,51 +307,73 @@ export function ProductsClient({
         <EmptyState text="No products yet. Add your first product to start billing." />
       ) : (
         <ul className="flex flex-col gap-2">
-          {filtered.map((p) => (
-            <li
-              key={p.id}
-              className="flex items-center justify-between gap-3 rounded-lg border border-border bg-surface shadow-sm px-3.5 py-3"
-            >
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium text-foreground">{p.name}</p>
-                <p className="text-xs text-muted">
-                  {p.categoryName ?? "No category"} · GST {p.gstPercent}% · {p.unit}
-                  {p.hsnCode ? ` · HSN ${p.hsnCode}` : ""}
-                  {p.barcode ? ` · 🏷 ${p.barcode}` : ""}
-                </p>
-                {p.trackInventory && (
-                  <p
-                    className={`mt-0.5 text-xs font-medium ${
-                      p.stockQuantity <= p.lowStockThreshold ? "text-credit" : "text-brand"
-                    }`}
-                  >
-                    {p.stockQuantity} {p.unit} in stock
-                    {p.stockQuantity <= p.lowStockThreshold ? " · Low stock" : ""}
+          {filtered.map((p) => {
+            const tone = p.trackInventory ? stockTone(p.stockQuantity, p.lowStockThreshold) : null;
+            return (
+              <li
+                key={p.id}
+                className="flex items-center justify-between gap-3 rounded-lg border border-border bg-surface shadow-sm px-3.5 py-3"
+                style={tone ? { borderLeft: `3px solid ${TONE_COLORS[tone]}` } : undefined}
+              >
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium text-foreground">{p.name}</p>
+                  <p className="text-xs text-muted">
+                    {p.categoryName ?? "No category"} · GST {p.gstPercent}% · {p.unit}
+                    {p.hsnCode ? ` · HSN ${p.hsnCode}` : ""}
+                    {p.barcode ? ` · 🏷 ${p.barcode}` : ""}
                   </p>
-                )}
-              </div>
-              <div className="flex shrink-0 items-center gap-3">
-                <p className="text-sm font-semibold text-foreground">
-                  {formatMoney(p.price)}
-                </p>
-                <button
-                  disabled={isPending}
-                  onClick={() =>
-                    startTransition(() => {
-                      deleteProductAction(p.id);
-                    })
-                  }
-                  className="text-xs font-medium text-danger disabled:opacity-50"
-                >
+                  {p.trackInventory && tone && (
+                    <span
+                      className="mt-1 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium"
+                      style={{ backgroundColor: `${TONE_COLORS[tone]}1A`, color: TONE_COLORS[tone] }}
+                    >
+                      <span
+                        className="h-1.5 w-1.5 rounded-full"
+                        style={{ backgroundColor: TONE_COLORS[tone] }}
+                      />
+                      {p.stockQuantity} {p.unit} in stock
+                      {tone === "red" ? " · Low" : tone === "orange" ? " · Getting low" : ""}
+                    </span>
+                  )}
+                </div>
+                <div className="flex shrink-0 items-center gap-3">
+                  <p className="text-sm font-semibold text-foreground">
+                    {formatMoney(p.price)}
+                  </p>
+                  <button
+                    disabled={isPending}
+                    onClick={() =>
+                      startTransition(() => {
+                        deleteProductAction(p.id);
+                      })
+                    }
+                    className="text-xs font-medium text-danger disabled:opacity-50"
+                  >
                   Delete
                 </button>
               </div>
             </li>
-          ))}
+            );
+          })}
         </ul>
       )}
     </div>
   );
+}
+
+/** Same 3-tier read as the cart's stock indicator, so the signal is
+ * consistent everywhere in the app: red = at/under threshold, orange =
+ * within 3 units of it, green = comfortably stocked. */
+const TONE_COLORS = {
+  red: "#c0362c",
+  orange: "#c2760f",
+  green: "#0f6b5c",
+} as const;
+
+function stockTone(quantity: number, threshold: number): keyof typeof TONE_COLORS {
+  if (quantity <= threshold) return "red";
+  if (quantity <= threshold + 3) return "orange";
+  return "green";
 }
 
 function Field(props: {
