@@ -1,19 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-
-interface DetectedBarcode {
-  rawValue: string;
-}
-interface BarcodeDetectorInstance {
-  detect: (source: HTMLVideoElement) => Promise<DetectedBarcode[]>;
-}
-interface BarcodeDetectorConstructor {
-  new (options?: { formats: string[] }): BarcodeDetectorInstance;
-  getSupportedFormats?: () => Promise<string[]>;
-}
-
-const WANTED_FORMATS = ["ean_13", "ean_8", "upc_a", "upc_e", "code_128", "code_39", "qr_code"];
+import { useEffect, useId, useRef, useState } from "react";
 
 // A browser page can never programmatically open Chrome's permission
 // dialog or site-settings screen — that's a deliberate security boundary,
@@ -32,84 +19,48 @@ export function CameraBarcodeScanner({
   onScan: (code: string) => void;
   label?: string;
 }) {
-  const [supported, setSupported] = useState(false);
   const [active, setActive] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const streamRef = useRef<MediaStream | null>(null);
-  const rafRef = useRef<number>(0);
-
-  useEffect(() => {
-    setSupported(typeof window !== "undefined" && "BarcodeDetector" in window);
-  }, []);
+  const containerId = `barcode-scanner-${useId().replace(/:/g, "")}`;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const scannerRef = useRef<any>(null);
 
   useEffect(() => {
     if (!active) return;
-
     let cancelled = false;
-    let detector: BarcodeDetectorInstance;
-
-    async function scanLoop() {
-      if (cancelled || !videoRef.current || videoRef.current.readyState < 2) {
-        rafRef.current = requestAnimationFrame(scanLoop);
-        return;
-      }
-      try {
-        const results = await detector.detect(videoRef.current);
-        if (results.length > 0) {
-          onScan(results[0].rawValue);
-          setActive(false);
-          return;
-        }
-      } catch {
-        // Occasional per-frame detection errors are normal — keep scanning.
-      }
-      rafRef.current = requestAnimationFrame(scanLoop);
-    }
 
     async function start() {
       try {
-        const Detector = (window as unknown as { BarcodeDetector: BarcodeDetectorConstructor })
-          .BarcodeDetector;
-        // Only request formats this browser actually supports — asking for
-        // an unsupported one can throw synchronously on some Chrome builds.
-        const supportedFormats = Detector.getSupportedFormats
-          ? await Detector.getSupportedFormats()
-          : WANTED_FORMATS;
-        const formats = WANTED_FORMATS.filter((f) => supportedFormats.includes(f));
-        detector = new Detector({ formats: formats.length > 0 ? formats : WANTED_FORMATS });
-      } catch (err) {
-        console.error("Barcode detector setup failed:", err);
-        setError("This browser can't scan barcodes — use the text box above instead.");
-        setActive(false);
-        return;
-      }
+        const { Html5Qrcode } = await import("html5-qrcode");
+        if (cancelled) return;
 
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: "environment" },
-        });
-        if (cancelled) {
-          stream.getTracks().forEach((t) => t.stop());
-          return;
-        }
-        streamRef.current = stream;
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-          await videoRef.current.play();
-        }
-        rafRef.current = requestAnimationFrame(scanLoop);
+        const scanner = new Html5Qrcode(containerId, { verbose: false });
+        scannerRef.current = scanner;
+
+        await scanner.start(
+          { facingMode: "environment" },
+          { fps: 10, qrbox: { width: 250, height: 150 } },
+          (decodedText: string) => {
+            onScan(decodedText);
+            setActive(false);
+          },
+          () => {
+            // Per-frame "nothing detected yet" callback — expected constantly
+            // while scanning, not an error.
+          },
+        );
       } catch (err) {
-        console.error("Camera access failed:", err);
-        const name = (err as { name?: string })?.name;
-        if (name === "NotAllowedError" || name === "SecurityError") {
+        console.error("Camera scan failed to start:", err);
+        if (cancelled) return;
+        const message = err instanceof Error ? err.message : String(err);
+        if (/permission|denied|notallowed/i.test(message)) {
           setError(PERMISSION_HELP);
-        } else if (name === "NotFoundError") {
+        } else if (/notfound/i.test(message)) {
           setError("No camera found on this device.");
-        } else if (name === "NotReadableError") {
+        } else if (/notreadable|inuse/i.test(message)) {
           setError("Camera is already in use by another app — close it and try again.");
         } else {
-          setError("Could not access camera. Use the text box above instead.");
+          setError("Could not start the camera. Use the text box above instead.");
         }
         setActive(false);
       }
@@ -119,14 +70,19 @@ export function CameraBarcodeScanner({
 
     return () => {
       cancelled = true;
-      cancelAnimationFrame(rafRef.current);
-      streamRef.current?.getTracks().forEach((t) => t.stop());
-      streamRef.current = null;
+      const scanner = scannerRef.current;
+      if (scanner) {
+        scanner
+          .stop()
+          .then(() => scanner.clear())
+          .catch(() => {
+            /* already stopped — nothing to clean up */
+          });
+      }
+      scannerRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [active]);
-
-  if (!supported) return null;
 
   if (!active) {
     return (
@@ -148,7 +104,7 @@ export function CameraBarcodeScanner({
 
   return (
     <div className="flex flex-col gap-2 rounded-lg border border-border bg-black p-2">
-      <video ref={videoRef} playsInline muted className="w-full rounded-md" />
+      <div id={containerId} className="w-full overflow-hidden rounded-md" />
       <p className="text-center text-xs text-white/80">Point the camera at the barcode</p>
       <button
         type="button"
