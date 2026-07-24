@@ -21,6 +21,7 @@ type Product = {
   price: number;
   gstPercent: number;
   hsnCode: string | null;
+  barcode: string | null;
   unit: string;
   categoryId: string | null;
   categoryName: string | null;
@@ -152,6 +153,7 @@ export function ProductsClient({
               </select>
             </label>
           </div>
+          <Field name="barcode" label="Barcode (optional)" placeholder="Scan with a USB scanner, or type" />
           <div className="grid grid-cols-2 gap-3">
             <Field name="hsnCode" label="HSN/SAC code" placeholder="e.g. 0402" />
             <label className="flex flex-col gap-1.5 text-sm">
@@ -236,6 +238,7 @@ export function ProductsClient({
                 <p className="text-xs text-muted">
                   {p.categoryName ?? "No category"} · GST {p.gstPercent}% · {p.unit}
                   {p.hsnCode ? ` · HSN ${p.hsnCode}` : ""}
+                  {p.barcode ? ` · 🏷 ${p.barcode}` : ""}
                 </p>
                 {p.trackInventory && (
                   <p

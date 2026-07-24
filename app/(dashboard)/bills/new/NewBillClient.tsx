@@ -11,8 +11,9 @@ import { determineSupplyType } from "@/lib/gst";
 import { formatMoney } from "@/lib/format";
 import { SearchableSelect } from "@/app/components/SearchableSelect";
 import { InlineQuickAdd } from "@/app/components/InlineQuickAdd";
+import { BarcodeScanInput } from "@/app/components/BarcodeScanInput";
 
-type Product = { id: string; name: string; price: number; gstPercent: number; hsnCode: string | null };
+type Product = { id: string; name: string; price: number; gstPercent: number; hsnCode: string | null; barcode: string | null };
 type Customer = { id: string; name: string; phone: string; gstin: string | null; state_code: string | null };
 type CartLine = {
   productId: string;
@@ -47,6 +48,7 @@ export function NewBillClient({
 }) {
   const [step, setStep] = useState<"cart" | "ticket">("cart");
   const [cart, setCart] = useState<CartLine[]>([]);
+  const [scanError, setScanError] = useState<string | null>(null);
   const [customerMode, setCustomerMode] = useState<"walkin" | "existing">("walkin");
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [discountType, setDiscountType] = useState<"percent" | "flat">("flat");
@@ -188,6 +190,18 @@ export function NewBillClient({
 
         <section className="flex flex-col gap-2">
           <p className="text-sm font-medium text-foreground">Add products</p>
+          <BarcodeScanInput
+            onScan={(code) => {
+              const match = products.find((p) => p.barcode === code);
+              if (match) {
+                addProduct(match);
+                setScanError(null);
+              } else {
+                setScanError(`No product found with barcode "${code}"`);
+              }
+            }}
+          />
+          {scanError && <p className="text-xs text-credit">{scanError}</p>}
           <SearchableSelect
             items={products}
             getKey={(p) => p.id}
@@ -196,7 +210,7 @@ export function NewBillClient({
             onSelect={addProduct}
             placeholder="Search products to add"
           />
-          <InlineQuickAdd<{ id: string; name: string; price: number; gstPercent: number; hsnCode: string | null }>
+          <InlineQuickAdd<{ id: string; name: string; price: number; gstPercent: number; hsnCode: string | null; barcode: string | null }>
             triggerLabel="+ Add new product"
             fields={[
               { name: "name", label: "Product name", required: true },

@@ -24,24 +24,28 @@ export default async function DashboardPage() {
         .from("bills")
         .select("total")
         .eq("shop_id", session.shopId)
+        .eq("status", "active")
         .gte("created_at", startOfToday.toISOString()),
       admin
         .from("bills")
         .select("total")
         .eq("shop_id", session.shopId)
+        .eq("status", "active")
         .gte("created_at", startOfWeek.toISOString()),
-      admin.from("bills").select("credit_amount").eq("shop_id", session.shopId),
+      admin.from("bills").select("credit_amount").eq("shop_id", session.shopId).eq("status", "active"),
       admin.from("payments").select("amount").eq("shop_id", session.shopId),
       admin
         .from("bills")
         .select("id, total, credit_amount, created_at, customers ( name )")
         .eq("shop_id", session.shopId)
+        .eq("status", "active")
         .order("created_at", { ascending: false })
         .limit(5),
       admin
         .from("bills")
         .select("cgst_amount, sgst_amount, igst_amount")
         .eq("shop_id", session.shopId)
+        .eq("status", "active")
         .gte("created_at", startOfMonth.toISOString()),
       admin
         .from("purchases")

@@ -25,7 +25,7 @@ export default async function NewBillPage() {
   const [{ data: products }, { data: customers }] = await Promise.all([
     admin
       .from("products")
-      .select("id, name, price, gst_percent, hsn_code")
+      .select("id, name, price, gst_percent, hsn_code, barcode")
       .eq("shop_id", session.shopId)
       .order("name"),
     admin
@@ -44,6 +44,7 @@ export default async function NewBillPage() {
         price: Number(p.price),
         gstPercent: Number(p.gst_percent),
         hsnCode: p.hsn_code,
+        barcode: p.barcode,
       }))}
       customers={customers ?? []}
     />

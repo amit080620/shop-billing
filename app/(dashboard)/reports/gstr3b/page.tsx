@@ -26,6 +26,7 @@ export default async function Gstr3bPage({
       .from("bills")
       .select("taxable_amount, cgst_amount, sgst_amount, igst_amount")
       .eq("shop_id", session.shopId)
+      .eq("status", "active")
       .gte("created_at", start.toISOString())
       .lt("created_at", end.toISOString()),
     admin

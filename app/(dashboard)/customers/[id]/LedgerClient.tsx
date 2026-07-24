@@ -13,6 +13,7 @@ type Bill = {
   total: number;
   paidAmount: number;
   creditAmount: number;
+  status: "active" | "voided";
   createdAt: string;
 };
 type Payment = { id: string; amount: number; note: string | null; createdAt: string };
@@ -141,20 +142,36 @@ export function LedgerClient({
                 <li key={entry.data.id}>
                   <Link
                     href={`/print/bill/${entry.data.id}`}
-                    className="flex items-center justify-between gap-3 rounded-lg border border-border bg-surface shadow-sm px-3.5 py-3"
+                    className={`flex items-center justify-between gap-3 rounded-lg border px-3.5 py-3 shadow-sm ${
+                      entry.data.status === "voided"
+                        ? "border-border bg-background opacity-60"
+                        : "border-border bg-surface"
+                    }`}
                   >
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium text-foreground">Bill</p>
+                      <p
+                        className={`truncate text-sm font-medium text-foreground ${
+                          entry.data.status === "voided" ? "line-through" : ""
+                        }`}
+                      >
+                        Bill
+                      </p>
                       <p className="text-xs text-muted">{formatDateTime(entry.data.createdAt)}</p>
                     </div>
                     <div className="shrink-0 text-right">
-                      <p className="text-sm font-semibold text-foreground">
-                        {formatMoney(entry.data.total)}
-                      </p>
-                      {entry.data.creditAmount > 0 && (
-                        <p className="text-xs text-credit">
-                          {formatMoney(entry.data.creditAmount)} on credit
-                        </p>
+                      {entry.data.status === "voided" ? (
+                        <p className="text-xs font-medium text-danger">Voided</p>
+                      ) : (
+                        <>
+                          <p className="text-sm font-semibold text-foreground">
+                            {formatMoney(entry.data.total)}
+                          </p>
+                          {entry.data.creditAmount > 0 && (
+                            <p className="text-xs text-credit">
+                              {formatMoney(entry.data.creditAmount)} on credit
+                            </p>
+                          )}
+                        </>
                       )}
                     </div>
                   </Link>

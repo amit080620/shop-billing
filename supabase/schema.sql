@@ -26,6 +26,7 @@ create table if not exists shops (
   gst_scheme text not null default 'regular' check (gst_scheme in ('regular', 'composition')),
   invoice_prefix text not null default 'INV',
   logo_url text,
+  upi_id text,
   created_at timestamptz not null default now()
 );
 alter table shops add column if not exists legal_name text;
@@ -39,6 +40,7 @@ alter table shops add column if not exists pincode text;
 alter table shops add column if not exists gst_scheme text not null default 'regular';
 alter table shops add column if not exists invoice_prefix text not null default 'INV';
 alter table shops add column if not exists logo_url text;
+alter table shops add column if not exists upi_id text;
 
 create table if not exists staff (
   id uuid primary key references auth.users(id) on delete cascade,
@@ -67,6 +69,7 @@ create table if not exists products (
   track_inventory boolean not null default false, -- opt-in per product; off = unlimited/not tracked
   stock_quantity numeric(12, 2) not null default 0,
   low_stock_threshold numeric(12, 2) not null default 0,
+  barcode text,
   price numeric(12, 2) not null default 0,
   gst_percent numeric(5, 2) not null default 0,
   created_at timestamptz not null default now()
@@ -76,6 +79,8 @@ alter table products add column if not exists unit text not null default 'NOS';
 alter table products add column if not exists track_inventory boolean not null default false;
 alter table products add column if not exists stock_quantity numeric(12, 2) not null default 0;
 alter table products add column if not exists low_stock_threshold numeric(12, 2) not null default 0;
+alter table products add column if not exists barcode text;
+create unique index if not exists idx_products_barcode on products(shop_id, barcode) where barcode is not null;
 
 -- ─── Sales side (output GST — GST you charge / "giving") ────────────────
 create table if not exists customers (
@@ -132,6 +137,10 @@ create table if not exists bills (
   igst_amount numeric(12, 2) not null default 0,
   gst_amount numeric(12, 2) not null default 0, -- cgst+sgst+igst, kept for quick totals
   payment_method text not null default 'cash' check (payment_method in ('cash', 'card', 'upi', 'online', 'other')),
+  status text not null default 'active' check (status in ('active', 'voided')),
+  voided_at timestamptz,
+  voided_by uuid references staff(id),
+  void_reason text,
   total numeric(12, 2) not null default 0,
   paid_amount numeric(12, 2) not null default 0,
   credit_amount numeric(12, 2) not null default 0,
@@ -146,6 +155,10 @@ alter table bills add column if not exists cgst_amount numeric(12,2) not null de
 alter table bills add column if not exists sgst_amount numeric(12,2) not null default 0;
 alter table bills add column if not exists igst_amount numeric(12,2) not null default 0;
 alter table bills add column if not exists payment_method text not null default 'cash' check (payment_method in ('cash', 'card', 'upi', 'online', 'other'));
+alter table bills add column if not exists status text not null default 'active' check (status in ('active', 'voided'));
+alter table bills add column if not exists voided_at timestamptz;
+alter table bills add column if not exists voided_by uuid references staff(id);
+alter table bills add column if not exists void_reason text;
 
 create table if not exists bill_items (
   id uuid primary key default uuid_generate_v4(),
@@ -271,6 +284,7 @@ create index if not exists idx_vendors_shop on vendors(shop_id);
 create index if not exists idx_bills_shop on bills(shop_id);
 create index if not exists idx_bills_customer on bills(customer_id);
 create index if not exists idx_bills_fy on bills(shop_id, financial_year);
+create index if not exists idx_bills_status on bills(shop_id, status);
 create index if not exists idx_bill_items_bill on bill_items(bill_id);
 create index if not exists idx_bill_items_hsn on bill_items(hsn_code);
 create index if not exists idx_payments_customer on payments(customer_id);

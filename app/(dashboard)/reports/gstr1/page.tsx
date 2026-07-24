@@ -27,6 +27,7 @@ export default async function Gstr1Page({
       "id, invoice_number, created_at, taxable_amount, supply_type, cgst_amount, sgst_amount, igst_amount, total, customers ( name, gstin, state, state_code )",
     )
     .eq("shop_id", session.shopId)
+    .eq("status", "active")
     .gte("created_at", start.toISOString())
     .lt("created_at", end.toISOString())
     .order("invoice_number");

@@ -19,6 +19,7 @@ type ShopSettings = {
   pincode: string;
   invoicePrefix: string;
   logoUrl: string | null;
+  upiId: string;
 };
 
 function SubmitButton() {
@@ -128,6 +129,19 @@ export function SettingsClient({ shop }: { shop: ShopSettings }) {
           <p className="text-xs text-muted">
             Invoices are numbered {shop.invoicePrefix || "INV"}-2026-27/00001 style — sequential
             per financial year, as required for GST filing.
+          </p>
+        </Section>
+
+        <Section title="Payments">
+          <Field
+            name="upiId"
+            label="UPI ID (optional)"
+            defaultValue={shop.upiId}
+            placeholder="yourshop@okhdfcbank"
+          />
+          <p className="text-xs text-muted">
+            When set, a scannable UPI QR code appears on invoices with an outstanding balance —
+            customers can pay the amount due straight from the printed bill.
           </p>
         </Section>
 

@@ -25,6 +25,7 @@ export async function updateShopSettingsAction(
     stateCode: formData.get("stateCode"),
     pincode: formData.get("pincode"),
     invoicePrefix: formData.get("invoicePrefix") || "INV",
+    upiId: formData.get("upiId"),
   });
   if (!parsed.success) {
     return { error: parsed.error.issues[0].message };
@@ -45,6 +46,7 @@ export async function updateShopSettingsAction(
       state: stateNameForCode(parsed.data.stateCode),
       pincode: parsed.data.pincode ?? null,
       invoice_prefix: parsed.data.invoicePrefix,
+      upi_id: parsed.data.upiId ?? null,
     })
     .eq("id", session.shopId);
 

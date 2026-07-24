@@ -14,6 +14,7 @@ export type SessionContext = {
   shopStateCode: string | null;
   shopGstin: string | null;
   shopLogoUrl: string | null;
+  shopUpiId: string | null;
   gstScheme: "regular" | "composition";
 };
 
@@ -41,7 +42,7 @@ export async function requireSession(): Promise<SessionContext> {
     admin
       .from("staff")
       .select(
-        "id, name, role, shop_id, shops ( name, state_code, gstin, gst_scheme, logo_url )",
+        "id, name, role, shop_id, shops ( name, state_code, gstin, gst_scheme, logo_url, upi_id )",
       )
       .eq("id", user.id)
       .single(),
@@ -63,6 +64,7 @@ export async function requireSession(): Promise<SessionContext> {
     shopStateCode: shop?.state_code ?? null,
     shopGstin: shop?.gstin ?? null,
     shopLogoUrl: shop?.logo_url ?? null,
+    shopUpiId: shop?.upi_id ?? null,
     gstScheme: shop?.gst_scheme ?? "regular",
   };
 }

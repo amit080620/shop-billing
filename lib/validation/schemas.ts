@@ -33,6 +33,7 @@ export const productSchema = z.object({
   price: z.coerce.number().min(0, "Price can't be negative"),
   gstPercent: z.coerce.number().min(0).max(100).default(0),
   hsnCode: optionalText(20),
+  barcode: optionalText(64),
   unit: z.string().trim().max(20).default("NOS"),
   categoryId: z.string().uuid().nullable().optional(),
   trackInventory: z.coerce.boolean().default(false),
@@ -77,6 +78,7 @@ export const shopSettingsSchema = z.object({
   stateCode: z.string().trim().length(2, "Select a state"),
   pincode: optionalText(10),
   invoicePrefix: z.string().trim().max(10).default("INV"),
+  upiId: optionalText(60),
 });
 export type ShopSettingsInput = z.infer<typeof shopSettingsSchema>;
 

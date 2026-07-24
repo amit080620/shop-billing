@@ -10,7 +10,7 @@ export default async function ProductsPage() {
     admin
       .from("products")
       .select(
-        "id, name, price, gst_percent, hsn_code, unit, category_id, track_inventory, stock_quantity, low_stock_threshold, categories ( name )",
+        "id, name, price, gst_percent, hsn_code, barcode, unit, category_id, track_inventory, stock_quantity, low_stock_threshold, categories ( name )",
       )
       .eq("shop_id", session.shopId)
       .order("name"),
@@ -29,6 +29,7 @@ export default async function ProductsPage() {
         price: Number(p.price),
         gstPercent: Number(p.gst_percent),
         hsnCode: p.hsn_code,
+        barcode: p.barcode,
         unit: p.unit,
         trackInventory: p.track_inventory,
         stockQuantity: Number(p.stock_quantity),

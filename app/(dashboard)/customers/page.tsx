@@ -17,6 +17,7 @@ export default async function CustomersPage() {
         .from("bills")
         .select("customer_id, credit_amount")
         .eq("shop_id", session.shopId)
+        .eq("status", "active")
         .not("customer_id", "is", null),
       admin
         .from("payments")

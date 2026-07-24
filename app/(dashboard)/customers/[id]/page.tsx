@@ -24,7 +24,7 @@ export default async function CustomerLedgerPage({
   const [{ data: bills }, { data: payments }] = await Promise.all([
     admin
       .from("bills")
-      .select("id, total, paid_amount, credit_amount, created_at")
+      .select("id, total, paid_amount, credit_amount, status, created_at")
       .eq("customer_id", id)
       .eq("shop_id", session.shopId)
       .order("created_at", { ascending: false }),
@@ -36,7 +36,8 @@ export default async function CustomerLedgerPage({
       .order("created_at", { ascending: false }),
   ]);
 
-  const totalCredit = (bills ?? []).reduce((s, b) => s + Number(b.credit_amount), 0);
+  const activeBills = (bills ?? []).filter((b) => b.status === "active");
+  const totalCredit = activeBills.reduce((s, b) => s + Number(b.credit_amount), 0);
   const totalPaidBack = (payments ?? []).reduce((s, p) => s + Number(p.amount), 0);
   const balance = Math.max(0, totalCredit - totalPaidBack);
 
@@ -49,6 +50,7 @@ export default async function CustomerLedgerPage({
         total: Number(b.total),
         paidAmount: Number(b.paid_amount),
         creditAmount: Number(b.credit_amount),
+        status: b.status,
         createdAt: b.created_at,
       }))}
       payments={(payments ?? []).map((p) => ({

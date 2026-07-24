@@ -17,6 +17,7 @@ export async function createProductAction(
     price: formData.get("price"),
     gstPercent: formData.get("gstPercent"),
     hsnCode: formData.get("hsnCode"),
+    barcode: formData.get("barcode"),
     unit: formData.get("unit") || "NOS",
     categoryId: formData.get("categoryId") || null,
     trackInventory: formData.get("trackInventory") === "on",
@@ -47,6 +48,7 @@ export async function createProductAction(
     price: parsed.data.price,
     gst_percent: parsed.data.gstPercent,
     hsn_code: parsed.data.hsnCode ?? null,
+    barcode: parsed.data.barcode ?? null,
     unit: parsed.data.unit,
     category_id: parsed.data.categoryId ?? null,
     track_inventory: parsed.data.trackInventory,
@@ -73,6 +75,7 @@ export async function updateProductAction(
     price: formData.get("price"),
     gstPercent: formData.get("gstPercent"),
     hsnCode: formData.get("hsnCode"),
+    barcode: formData.get("barcode"),
     unit: formData.get("unit") || "NOS",
     categoryId: formData.get("categoryId") || null,
     trackInventory: formData.get("trackInventory") === "on",
@@ -91,6 +94,7 @@ export async function updateProductAction(
       price: parsed.data.price,
       gst_percent: parsed.data.gstPercent,
       hsn_code: parsed.data.hsnCode ?? null,
+      barcode: parsed.data.barcode ?? null,
       unit: parsed.data.unit,
       category_id: parsed.data.categoryId ?? null,
       track_inventory: parsed.data.trackInventory,
@@ -147,7 +151,7 @@ export async function quickCreateProductAction(
   name: string,
   price: number,
   gstPercent: number,
-): Promise<{ product?: { id: string; name: string; price: number; gstPercent: number; hsnCode: string | null }; error?: string }> {
+): Promise<{ product?: { id: string; name: string; price: number; gstPercent: number; hsnCode: string | null; barcode: string | null }; error?: string }> {
   const session = await requireSession();
   const parsed = productSchema.pick({ name: true, price: true, gstPercent: true }).safeParse({
     name,
@@ -167,7 +171,7 @@ export async function quickCreateProductAction(
       price: parsed.data.price,
       gst_percent: parsed.data.gstPercent,
     })
-    .select("id, name, price, gst_percent, hsn_code")
+    .select("id, name, price, gst_percent, hsn_code, barcode")
     .single();
   if (error || !data) {
     console.error("Could not quick-create product", error);
@@ -182,6 +186,7 @@ export async function quickCreateProductAction(
       price: Number(data.price),
       gstPercent: Number(data.gst_percent),
       hsnCode: data.hsn_code,
+      barcode: data.barcode,
     },
   };
 }

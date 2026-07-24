@@ -24,6 +24,7 @@ export interface Database {
           gst_scheme: "regular" | "composition";
           invoice_prefix: string;
           logo_url: string | null;
+          upi_id: string | null;
           created_at: string;
         };
         Insert: {
@@ -40,6 +41,7 @@ export interface Database {
           gst_scheme?: "regular" | "composition";
           invoice_prefix?: string;
           logo_url?: string | null;
+          upi_id?: string | null;
           created_at?: string;
         };
         Update: {
@@ -56,6 +58,7 @@ export interface Database {
           gst_scheme?: "regular" | "composition";
           invoice_prefix?: string;
           logo_url?: string | null;
+          upi_id?: string | null;
           created_at?: string;
         };
         Relationships: [];
@@ -105,6 +108,7 @@ export interface Database {
           track_inventory: boolean;
           stock_quantity: number;
           low_stock_threshold: number;
+          barcode: string | null;
           price: number;
           gst_percent: number;
           created_at: string;
@@ -119,6 +123,7 @@ export interface Database {
           track_inventory?: boolean;
           stock_quantity?: number;
           low_stock_threshold?: number;
+          barcode?: string | null;
           price?: number;
           gst_percent?: number;
           created_at?: string;
@@ -133,6 +138,7 @@ export interface Database {
           track_inventory?: boolean;
           stock_quantity?: number;
           low_stock_threshold?: number;
+          barcode?: string | null;
           price?: number;
           gst_percent?: number;
           created_at?: string;
@@ -205,6 +211,10 @@ export interface Database {
           igst_amount: number;
           gst_amount: number;
           payment_method: "cash" | "card" | "upi" | "online" | "other";
+          status: "active" | "voided";
+          voided_at: string | null;
+          voided_by: string | null;
+          void_reason: string | null;
           total: number;
           paid_amount: number;
           credit_amount: number;
@@ -228,6 +238,10 @@ export interface Database {
           igst_amount?: number;
           gst_amount?: number;
           payment_method?: "cash" | "card" | "upi" | "online" | "other";
+          status?: "active" | "voided";
+          voided_at?: string | null;
+          voided_by?: string | null;
+          void_reason?: string | null;
           total?: number;
           paid_amount?: number;
           credit_amount?: number;
@@ -251,6 +265,10 @@ export interface Database {
           igst_amount?: number;
           gst_amount?: number;
           payment_method?: "cash" | "card" | "upi" | "online" | "other";
+          status?: "active" | "voided";
+          voided_at?: string | null;
+          voided_by?: string | null;
+          void_reason?: string | null;
           total?: number;
           paid_amount?: number;
           credit_amount?: number;

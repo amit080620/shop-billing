@@ -1,7 +1,8 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { requireSession } from "../auth";
+import { revalidatePath } from "next/cache";
+import { requireSession, requireOwner } from "../auth";
 import { createSupabaseAdminClient } from "../supabase/admin";
 import { billSchema, calculateTransactionTotals } from "../validation/schemas";
 import { determineSupplyType, financialYearFor, round2 } from "../gst";
@@ -166,4 +167,81 @@ export async function createBillAction(
   }
 
   redirect(`/print/bill/${bill.id}`);
+}
+
+/**
+ * Voids a bill rather than editing it — a filed GST invoice number should
+ * never be silently rewritten after the fact, since it may already be
+ * reflected in a filed GSTR-1. Voiding preserves the original invoice
+ * (for audit purposes) while excluding it from every balance/report
+ * calculation, and restores any stock that was decremented at sale time.
+ * Owner-only: this affects financial and compliance records.
+ */
+export async function voidBillAction(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const session = await requireOwner();
+  const billId = formData.get("billId");
+  const reason = formData.get("reason");
+  if (typeof billId !== "string" || typeof reason !== "string" || !reason.trim()) {
+    return { error: "Enter a reason for voiding this bill" };
+  }
+
+  const admin = createSupabaseAdminClient();
+
+  const { data: bill } = await admin
+    .from("bills")
+    .select("id, status")
+    .eq("id", billId)
+    .eq("shop_id", session.shopId)
+    .single();
+  if (!bill) return { error: "Bill not found" };
+  if (bill.status === "voided") return { error: "This bill is already voided" };
+
+  // Restore stock for any tracked products on this bill before marking it voided.
+  const { data: items } = await admin
+    .from("bill_items")
+    .select("product_id, quantity")
+    .eq("bill_id", billId);
+
+  const productIds = [...new Set((items ?? []).map((i) => i.product_id).filter(Boolean))] as string[];
+  if (productIds.length > 0) {
+    const { data: products } = await admin
+      .from("products")
+      .select("id, track_inventory, stock_quantity")
+      .in("id", productIds);
+    const productMap = new Map((products ?? []).map((p) => [p.id, p]));
+
+    for (const item of items ?? []) {
+      if (!item.product_id) continue;
+      const product = productMap.get(item.product_id);
+      if (!product?.track_inventory) continue;
+      await admin
+        .from("products")
+        .update({ stock_quantity: Number(product.stock_quantity) + Number(item.quantity) })
+        .eq("id", item.product_id);
+    }
+  }
+
+  const { error } = await admin
+    .from("bills")
+    .update({
+      status: "voided",
+      voided_at: new Date().toISOString(),
+      voided_by: session.userId,
+      void_reason: reason.trim(),
+    })
+    .eq("id", billId);
+
+  if (error) {
+    console.error("Could not void bill", error);
+    return { error: "Could not void bill" };
+  }
+
+  revalidatePath("/");
+  revalidatePath(`/print/bill/${billId}`);
+  revalidatePath("/customers");
+  revalidatePath("/reminders");
+  return null;
 }

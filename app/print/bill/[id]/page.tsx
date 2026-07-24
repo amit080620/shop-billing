@@ -2,8 +2,10 @@ import { notFound } from "next/navigation";
 import { requireSession } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { formatMoney, formatDateTime } from "@/lib/format";
+import { buildUpiLink, generateQrDataUrl } from "@/lib/qr";
 import { PrintButton } from "./PrintButton";
 import { WhatsAppSendButton } from "./WhatsAppSendButton";
+import { VoidBillButton } from "./VoidBillButton";
 
 export default async function PrintBillPage({
   params,
@@ -22,7 +24,7 @@ export default async function PrintBillPage({
   const { data: bill } = await admin
     .from("bills")
     .select(
-      "id, invoice_number, subtotal, discount_type, discount_value, discount_amount, taxable_amount, supply_type, cgst_amount, sgst_amount, igst_amount, gst_amount, payment_method, total, paid_amount, credit_amount, created_at, customers ( name, phone, gstin, address )",
+      "id, invoice_number, subtotal, discount_type, discount_value, discount_amount, taxable_amount, supply_type, cgst_amount, sgst_amount, igst_amount, gst_amount, payment_method, status, void_reason, voided_at, total, paid_amount, credit_amount, created_at, customers ( name, phone, gstin, address )",
     )
     .eq("id", id)
     .eq("shop_id", session.shopId) // ownership check
@@ -43,12 +45,39 @@ export default async function PrintBillPage({
   const isIntra = bill.supply_type === "intra";
   const paymentLabel = paymentMethodLabel(bill.payment_method);
 
+  let upiQrDataUrl: string | null = null;
+  if (session.shopUpiId && Number(bill.credit_amount) > 0 && bill.status === "active") {
+    const upiLink = buildUpiLink(
+      session.shopUpiId,
+      session.shopName,
+      Number(bill.credit_amount),
+      `Invoice ${bill.invoice_number}`,
+    );
+    upiQrDataUrl = await generateQrDataUrl(upiLink);
+  }
+
   return (
     <div
-      className={`mx-auto bg-white text-black ${
+      className={`relative mx-auto bg-white text-black ${
         isThermal ? "w-[72mm] p-2 font-mono text-xs" : "max-w-2xl p-8"
       }`}
     >
+      {bill.status === "voided" && (
+        <div
+          className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center overflow-hidden"
+          aria-hidden="true"
+        >
+          <span
+            className="select-none whitespace-nowrap font-black text-red-600/25"
+            style={{
+              fontSize: isThermal ? "28px" : "72px",
+              transform: "rotate(-25deg)",
+            }}
+          >
+            VOIDED
+          </span>
+        </div>
+      )}
       <div className="no-print mb-4 flex flex-col gap-2">
         <WhatsAppSendButton
           customerName={customer?.name ?? null}
@@ -74,7 +103,23 @@ export default async function PrintBillPage({
           </a>
           <PrintButton />
         </div>
+        {session.role === "owner" && bill.status === "active" && (
+          <VoidBillButton billId={bill.id} invoiceNumber={bill.invoice_number} />
+        )}
       </div>
+
+      {bill.status === "voided" && (
+        <div className="no-print mb-4 rounded-lg border border-danger bg-red-50 px-4 py-3 text-sm text-danger">
+          <p className="font-semibold">This invoice has been voided.</p>
+          <p className="mt-0.5">
+            Reason: {bill.void_reason} · {bill.voided_at ? formatDateTime(bill.voided_at) : ""}
+          </p>
+          <p className="mt-1 text-xs">
+            It&apos;s excluded from all totals, balances, and GST reports. Kept here only for
+            record-keeping — nothing prints on it below except as a reference copy.
+          </p>
+        </div>
+      )}
 
       <div className="mb-1 flex items-center gap-3">
         {session.shopLogoUrl && (
@@ -164,6 +209,23 @@ export default async function PrintBillPage({
           <SummaryRow label="Credit (udhaar)" value={formatMoney(bill.credit_amount)} bold />
         )}
       </div>
+
+      {upiQrDataUrl && (
+        <div className={`mt-3 flex flex-col items-center gap-1 border-t border-dashed border-gray-400 pt-3 ${isThermal ? "" : ""}`}>
+          <p className={isThermal ? "text-[9px] font-semibold" : "text-xs font-semibold text-gray-700"}>
+            Scan to pay {formatMoney(bill.credit_amount)}
+          </p>
+          {/* eslint-disable-next-line @next/next/no-img-element -- static data URL, not a Next-optimizable remote image */}
+          <img
+            src={upiQrDataUrl}
+            alt="UPI payment QR code"
+            className={isThermal ? "h-28 w-28" : "h-36 w-36"}
+          />
+          <p className={isThermal ? "text-[8px] text-gray-500" : "text-[10px] text-gray-500"}>
+            {session.shopUpiId}
+          </p>
+        </div>
+      )}
 
       <p className={`mt-6 text-center ${isThermal ? "text-[10px]" : "text-xs text-gray-500"}`}>
         Thank you for your business!
