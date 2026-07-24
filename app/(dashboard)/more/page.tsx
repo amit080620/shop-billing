@@ -23,6 +23,7 @@ export default async function MorePage() {
         <MenuLink href="/vendors" label={t("more.vendors")} sub={t("more.vendors.sub")} icon={TruckIcon} />
         <MenuLink href="/products" label={t("more.products")} sub={t("more.products.sub")} icon={BoxIcon} />
         <MenuLink href="/daily-summary" label="Daily summary" sub="End-of-day cash reconciliation" icon={CashIcon} />
+        <MenuLink href="/help" label="Help & guide" sub="How every screen and button works" icon={HelpIcon} />
         <MenuLink href="/insights" label="Insights" sub="Fast movers & dead stock, from your own sales" icon={ChartIcon} />
         {session.role === "owner" && (
           <MenuLink href="/staff" label={t("more.staff")} sub={t("more.staff.sub")} icon={UsersIcon} />
@@ -171,6 +172,15 @@ function CashIcon({ className }: { className?: string }) {
     <svg {...iconProps(className)}>
       <rect x="3" y="6" width="18" height="13" rx="2" />
       <path d="M3 10h18M8 14h.01M12 14h4" />
+    </svg>
+  );
+}
+function HelpIcon({ className }: { className?: string }) {
+  return (
+    <svg {...iconProps(className)}>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M9.5 9a2.5 2.5 0 0 1 5 0c0 1.5-2.5 2-2.5 3.5" />
+      <path d="M12 17h.01" />
     </svg>
   );
 }

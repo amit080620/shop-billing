@@ -20,7 +20,7 @@ export default async function DashboardPage() {
   startOfMonth.setDate(1);
   startOfMonth.setHours(0, 0, 0, 0);
 
-  const [todayBills, weekBills, allBillsCredit, allPayments, recentBills, monthOutputGst, monthInputGst, allPayables, allVendorPayments] =
+  const [todayBills, weekBills, allBillsCredit, allPayments, recentBills, monthOutputGst, monthInputGst, allPayables, allVendorPayments, productCount, customerCount] =
     await Promise.all([
       admin
         .from("bills")
@@ -57,6 +57,8 @@ export default async function DashboardPage() {
         .gte("purchase_date", startOfMonth.toISOString().slice(0, 10)),
       admin.from("purchases").select("payable_amount").eq("shop_id", session.shopId),
       admin.from("purchase_payments").select("amount").eq("shop_id", session.shopId),
+      admin.from("products").select("id", { count: "exact", head: true }).eq("shop_id", session.shopId),
+      admin.from("customers").select("id", { count: "exact", head: true }).eq("shop_id", session.shopId),
     ]);
 
   const todayTotal = sum(todayBills.data?.map((b) => b.total));
@@ -79,12 +81,45 @@ export default async function DashboardPage() {
   const totalVendorPaid = sum(allVendorPayments.data?.map((p) => p.amount));
   const outstandingPayable = Math.max(0, totalPayable - totalVendorPaid);
 
+  const setupSteps = [
+    { done: !!session.shopStateCode, label: "Set your shop's GST state", href: "/settings" },
+    { done: (productCount.count ?? 0) > 0, label: "Add your first product", href: "/products" },
+    { done: (customerCount.count ?? 0) > 0, label: "Add a customer", href: "/customers" },
+    { done: (recentBills.data?.length ?? 0) > 0, label: "Create your first bill", href: "/bills/new" },
+  ];
+  const setupComplete = setupSteps.every((s) => s.done);
+
   return (
     <div className="flex flex-col gap-5">
       <div>
         <p className="text-lg font-semibold text-foreground">{t(greetingKey())}, {session.staffName.split(" ")[0]}</p>
         <p className="text-sm text-muted">{t("home.subtitle", { shop: session.shopName })}</p>
       </div>
+
+      {!setupComplete && (
+        <section className="rounded-xl border border-dashed border-brand bg-brand-soft p-4">
+          <p className="text-sm font-semibold text-brand-dark">🚀 Getting started</p>
+          <p className="mt-0.5 text-xs text-brand-dark/80">A few quick steps to set up {session.shopName}.</p>
+          <ul className="mt-3 flex flex-col gap-2">
+            {setupSteps.map((step) => (
+              <li key={step.label}>
+                <Link href={step.href} className="flex items-center gap-2 text-sm">
+                  <span
+                    className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs ${
+                      step.done ? "bg-brand text-white" : "border border-brand text-transparent"
+                    }`}
+                  >
+                    ✓
+                  </span>
+                  <span className={step.done ? "text-muted line-through" : "font-medium text-foreground"}>
+                    {step.label}
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       <section className="grid grid-cols-2 gap-3">
         <StatCard label={t("home.todaySales")} value={formatMoney(todayTotal)} />

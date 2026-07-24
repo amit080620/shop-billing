@@ -3,6 +3,7 @@ import { requireSession } from "@/lib/auth";
 import { getLang } from "@/lib/i18n/server";
 import { translate } from "@/lib/i18n/dictionary";
 import { BottomNav } from "./BottomNav";
+import { WelcomeTour } from "./WelcomeTour";
 
 export default async function DashboardLayout({
   children,
@@ -47,6 +48,7 @@ export default async function DashboardLayout({
       <main className="page-enter mx-auto max-w-lg px-4 py-4">{children}</main>
 
       <BottomNav lang={lang} />
+      <WelcomeTour storageKey={`tour-seen-${session.shopId}`} />
     </div>
   );
 }
