@@ -13,7 +13,7 @@ export function DownloadImageButton({ invoiceNumber }: { invoiceNumber: string }
       const element = document.getElementById("invoice-capture-area");
       if (!element) throw new Error("Could not find invoice content");
 
-      const html2canvas = (await import("html2canvas")).default;
+      const html2canvas = (await import("html2canvas-pro")).default;
       const canvas = await html2canvas(element, {
         backgroundColor: "#ffffff",
         scale: 2, // sharper image — important for a WhatsApp-shared invoice
@@ -27,7 +27,8 @@ export function DownloadImageButton({ invoiceNumber }: { invoiceNumber: string }
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-    } catch {
+    } catch (err) {
+      console.error("Invoice image generation failed:", err);
       setError("Could not generate image. Try Print instead.");
     } finally {
       setIsGenerating(false);

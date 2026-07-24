@@ -60,7 +60,7 @@ export default async function PrintBillPage({
   return (
     <div
       className={`relative mx-auto bg-white text-black ${
-        isThermal ? "w-[72mm] p-2 font-mono text-xs" : "max-w-2xl p-8"
+        isThermal ? "w-[280px] p-2 font-mono text-xs" : "max-w-2xl p-8"
       }`}
     >
       {bill.status === "voided" && (
