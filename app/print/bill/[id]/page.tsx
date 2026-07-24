@@ -6,6 +6,7 @@ import { buildUpiLink, generateQrDataUrl } from "@/lib/qr";
 import { PrintButton } from "./PrintButton";
 import { WhatsAppSendButton } from "./WhatsAppSendButton";
 import { VoidBillButton } from "./VoidBillButton";
+import { DownloadImageButton } from "./DownloadImageButton";
 
 export default async function PrintBillPage({
   params,
@@ -101,8 +102,14 @@ export default async function PrintBillPage({
           >
             Thermal (72mm)
           </a>
+          <DownloadImageButton invoiceNumber={bill.invoice_number} />
           <PrintButton />
         </div>
+        <p className="text-right text-xs text-gray-500">
+          WhatsApp text messages can&apos;t carry an image — download the invoice above, then
+          attach that file yourself in the WhatsApp chat for a clean copy (with the QR code
+          included).
+        </p>
         {session.role === "owner" && bill.status === "active" && (
           <VoidBillButton billId={bill.id} invoiceNumber={bill.invoice_number} />
         )}
@@ -121,6 +128,7 @@ export default async function PrintBillPage({
         </div>
       )}
 
+      <div id="invoice-capture-area" className="bg-white">
       <div className="mb-1 flex items-center gap-3">
         {session.shopLogoUrl && (
           // Plain <img>, not next/image — this render also feeds the browser
@@ -230,6 +238,7 @@ export default async function PrintBillPage({
       <p className={`mt-6 text-center ${isThermal ? "text-[10px]" : "text-xs text-gray-500"}`}>
         Thank you for your business!
       </p>
+      </div>
     </div>
   );
 }
