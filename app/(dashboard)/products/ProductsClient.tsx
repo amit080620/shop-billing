@@ -304,7 +304,7 @@ export function ProductsClient({
       )}
 
       {filtered.length === 0 ? (
-        <EmptyState text="No products yet. Add your first product to start billing." />
+        <EmptyState text="Your shelf is empty — add your first product here to start billing." />
       ) : (
         <ul className="flex flex-col gap-2">
           {filtered.map((p) => {

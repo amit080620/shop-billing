@@ -128,7 +128,7 @@ export function VendorLedgerClient({
       <section>
         <h2 className="mb-2 text-sm font-semibold text-foreground">History</h2>
         {timeline.length === 0 ? (
-          <EmptyState text="No purchases or payments recorded yet." />
+          <EmptyState text="Nothing recorded here yet — it'll build up as you log purchases." />
         ) : (
           <ul className="flex flex-col gap-2">
             {timeline.map((entry) =>

@@ -75,7 +75,7 @@ export default async function PurchaseRegisterPage({
       </div>
 
       {rows.length === 0 ? (
-        <EmptyState text="No purchases recorded in this period." />
+        <EmptyState text="Nothing logged for this period yet." />
       ) : (
         <>
           <div className="flex justify-end">

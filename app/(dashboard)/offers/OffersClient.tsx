@@ -101,7 +101,7 @@ export function OffersClient({
       )}
 
       {customers.length === 0 ? (
-        <EmptyState text="No customers yet. Add some from the Customers page first." />
+        <EmptyState text="No customers yet — add a few from the Customers page, then come back here." />
       ) : filtered.length === 0 ? (
         <EmptyState text="No customers match that search." />
       ) : (

@@ -3,13 +3,16 @@ import { signupAction } from "@/lib/actions/auth";
 import { AuthForm } from "../AuthForm";
 import { AuthShell } from "../AuthShell";
 import { getTranslator } from "@/lib/i18n/server";
+import { getTheme } from "@/lib/theme";
 
 export default async function SignupPage() {
   const { lang, t } = await getTranslator();
+  const theme = await getTheme();
 
   return (
     <AuthShell
       lang={lang}
+      theme={theme}
       title={t("signup.title")}
       subtitle={t("signup.subtitle")}
       footer={

@@ -100,7 +100,7 @@ export default async function InsightsPage() {
       <section className="flex flex-col gap-2">
         <h2 className="text-sm font-semibold text-foreground">🔥 Fast movers (last 30 days)</h2>
         {fastMovers.length === 0 ? (
-          <EmptyState text="Not enough recent sales yet to show trends." />
+          <EmptyState text="Keep billing — once there's enough sales history, trends will show up here." />
         ) : (
           <ul className="flex flex-col gap-2">
             {fastMovers.map((p, i) => (
@@ -132,7 +132,7 @@ export default async function InsightsPage() {
           )}
         </div>
         {deadStock.length === 0 ? (
-          <EmptyState text="No tracked items sitting idle — good sign." />
+          <EmptyState text="Nothing gathering dust — your stock is moving well. 👍" />
         ) : (
           <ul className="flex flex-col gap-2">
             {deadStock.map((p) => (

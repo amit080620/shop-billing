@@ -1,14 +1,17 @@
 import { LanguageToggle } from "@/lib/i18n/LanguageToggle";
+import { ThemeToggle } from "@/app/components/ThemeToggle";
 import type { Lang } from "@/lib/i18n/dictionary";
 
 export function AuthShell({
   lang,
+  theme,
   title,
   subtitle,
   children,
   footer,
 }: {
   lang: Lang;
+  theme: "light" | "dark";
   title: string;
   subtitle: string;
   children: React.ReactNode;
@@ -23,8 +26,9 @@ export function AuthShell({
       }}
     >
       <div className="page-enter mx-auto w-full max-w-sm">
-        <div className="mb-4 flex justify-center">
+        <div className="mb-4 flex justify-center gap-2">
           <LanguageToggle lang={lang} />
+          <ThemeToggle theme={theme} />
         </div>
         <div className="mb-6 flex flex-col items-center gap-3 text-center">
           <div

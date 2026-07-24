@@ -51,7 +51,7 @@ export const translations: Record<Lang, Record<string, string>> = {
     "home.netPayableEst": "Net payable (est.)",
     "home.newBill": "New bill",
     "home.recentBills": "Recent bills",
-    "home.noBillsYet": "No bills yet. Create your first bill to see it here.",
+    "home.noBillsYet": "Quiet so far today — your first bill will show up right here.",
     "home.credit": "credit",
 
     // Login
@@ -171,7 +171,7 @@ export const translations: Record<Lang, Record<string, string>> = {
     "home.netPayableEst": "अनुमानित देय",
     "home.newBill": "नया बिल",
     "home.recentBills": "हाल की बिलें",
-    "home.noBillsYet": "अभी कोई बिल नहीं। पहला बिल बनाएं, यहाँ दिखेगा।",
+    "home.noBillsYet": "अभी तक शांति है — पहला बिल बनते ही यहाँ दिख जाएगा।",
     "home.credit": "उधार",
 
     // Login
@@ -291,7 +291,7 @@ export const translations: Record<Lang, Record<string, string>> = {
     "home.netPayableEst": "अंदाजे देय",
     "home.newBill": "नवीन बिल",
     "home.recentBills": "अलीकडील बिले",
-    "home.noBillsYet": "अजून बिल नाही. पहिले बिल तयार करा, इथे दिसेल.",
+    "home.noBillsYet": "अजून शांतता आहे — पहिले बिल तयार होताच इथे दिसेल.",
     "home.credit": "उधारी",
 
     // Login

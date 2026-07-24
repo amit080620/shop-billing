@@ -20,6 +20,27 @@
   --danger: #c0362c;
 }
 
+.dark {
+  /* Base surfaces — soft charcoal, not pure black (easier on the eyes,
+     avoids OLED smearing, and keeps shadows/borders visible) */
+  --background: #15171a;
+  --surface: #1e2124;
+  --foreground: #eef0f0;
+  --muted: #9aa0a6;
+  --border: #2d3236;
+
+  /* Brand — brightened slightly for contrast against a dark surface */
+  --brand: #22a68d;
+  --brand-dark: #0f6b5c;
+  --brand-light: #34c2a6;
+  --brand-soft: #163a33;
+
+  /* Credit / attention — brightened the same way */
+  --credit: #e0955c;
+  --credit-soft: #3a2a1c;
+  --danger: #e0665a;
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-surface: var(--surface);

@@ -2,17 +2,23 @@ import Link from "next/link";
 import { requireSession } from "@/lib/auth";
 import { logoutAction } from "@/lib/actions/auth";
 import { getTranslator } from "@/lib/i18n/server";
+import { getTheme } from "@/lib/theme";
+import { ThemeToggle } from "@/app/components/ThemeToggle";
 import { LanguageToggle } from "@/lib/i18n/LanguageToggle";
 
 export default async function MorePage() {
   const session = await requireSession();
   const { lang, t } = await getTranslator();
+  const theme = await getTheme();
 
   return (
     <div className="flex flex-col gap-5">
       <div className="flex items-center justify-between">
         <h1 className="text-lg font-semibold text-foreground">{t("more.title")}</h1>
-        <LanguageToggle lang={lang} />
+        <div className="flex flex-col items-end gap-2">
+          <LanguageToggle lang={lang} />
+          <ThemeToggle theme={theme} />
+        </div>
       </div>
 
       <MenuGroup title="People">

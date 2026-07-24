@@ -58,7 +58,7 @@ export function RemindersClient({
       </div>
 
       {customers.length === 0 ? (
-        <EmptyState text="No outstanding udhaar right now — everyone's settled up." />
+        <EmptyState text="Nothing pending — every customer is settled up right now. 🎉" />
       ) : (
         <>
           <label className="flex items-center gap-2 text-sm font-medium text-foreground">

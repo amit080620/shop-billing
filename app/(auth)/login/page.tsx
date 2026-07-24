@@ -3,13 +3,16 @@ import { loginAction } from "@/lib/actions/auth";
 import { AuthForm } from "../AuthForm";
 import { AuthShell } from "../AuthShell";
 import { getTranslator } from "@/lib/i18n/server";
+import { getTheme } from "@/lib/theme";
 
 export default async function LoginPage() {
   const { lang, t } = await getTranslator();
+  const theme = await getTheme();
 
   return (
     <AuthShell
       lang={lang}
+      theme={theme}
       title={t("login.title")}
       subtitle={t("login.subtitle")}
       footer={

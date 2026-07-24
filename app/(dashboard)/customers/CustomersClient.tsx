@@ -147,7 +147,7 @@ export function CustomersClient({
       )}
 
       {filtered.length === 0 ? (
-        <EmptyState text="No customers yet. Add one to start tracking credit." />
+        <EmptyState text="No customers yet — add your first one to start tracking sales and credit." />
       ) : (
         <ul className="flex flex-col gap-2">
           {filtered.map((c) => (

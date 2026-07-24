@@ -228,7 +228,7 @@ export function RequestsClient({
 
       <Section title={`Pending (${pending.length})`}>
         {pending.length === 0 ? (
-          <EmptyState text="No pending requests." />
+          <EmptyState text="Nothing pending — you're all caught up! 👍" />
         ) : (
           pending.map((r) => (
             <RequestCard key={r.id} r={r} shopName={shopName}>

@@ -24,7 +24,10 @@ export default async function NewBillPage() {
 
   const admin = createSupabaseAdminClient();
 
-  const [{ data: products }, { data: customers }] = await Promise.all([
+  const last30 = new Date();
+  last30.setDate(last30.getDate() - 30);
+
+  const [{ data: products }, { data: customers }, { data: recentBills }] = await Promise.all([
     admin
       .from("products")
       .select("id, name, price, gst_percent, hsn_code, barcode, unit, track_inventory, stock_quantity, low_stock_threshold")
@@ -35,7 +38,33 @@ export default async function NewBillPage() {
       .select("id, name, phone, gstin, state_code")
       .eq("shop_id", session.shopId)
       .order("name"),
+    admin
+      .from("bills")
+      .select("id")
+      .eq("shop_id", session.shopId)
+      .eq("status", "active")
+      .gte("created_at", last30.toISOString()),
   ]);
+
+  // "Frequently sold" quick-add chips — a real speed win for repeat items
+  // (milk, bread, etc.) without typing anything.
+  let frequentProductIds: string[] = [];
+  const recentBillIds = (recentBills ?? []).map((b) => b.id);
+  if (recentBillIds.length > 0) {
+    const { data: items } = await admin
+      .from("bill_items")
+      .select("product_id, quantity")
+      .in("bill_id", recentBillIds);
+    const countByProduct = new Map<string, number>();
+    for (const item of items ?? []) {
+      if (!item.product_id) continue;
+      countByProduct.set(item.product_id, (countByProduct.get(item.product_id) ?? 0) + Number(item.quantity));
+    }
+    frequentProductIds = [...countByProduct.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 8)
+      .map(([id]) => id);
+  }
 
   return (
     <NewBillClient
@@ -54,6 +83,7 @@ export default async function NewBillPage() {
         lowStockThreshold: Number(p.low_stock_threshold),
       }))}
       customers={customers ?? []}
+      frequentProductIds={frequentProductIds}
     />
   );
 }

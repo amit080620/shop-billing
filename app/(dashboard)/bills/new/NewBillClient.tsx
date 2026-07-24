@@ -61,16 +61,21 @@ export function NewBillClient({
   products,
   customers,
   lang,
+  frequentProductIds,
 }: {
   shopStateCode: string;
   products: Product[];
   customers: Customer[];
   lang: Lang;
+  frequentProductIds: string[];
 }) {
   const { t } = useTranslation(lang);
   const [step, setStep] = useState<"cart" | "ticket">("cart");
   const [cart, setCart] = useState<CartLine[]>([]);
   const [scanError, setScanError] = useState<string | null>(null);
+  const frequentProducts = frequentProductIds
+    .map((id) => products.find((p) => p.id === id))
+    .filter((p): p is Product => Boolean(p));
   const cartEndRef = useRef<HTMLDivElement>(null);
 
   // Scroll the newest cart item into view whenever something is added —
@@ -238,6 +243,19 @@ export function NewBillClient({
 
         <section className="flex flex-col gap-2">
           <p className="text-sm font-medium text-foreground">{t("bill.addProducts")}</p>
+          {frequentProducts.length > 0 && (
+            <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1">
+              {frequentProducts.map((p) => (
+                <button
+                  key={p.id}
+                  onClick={() => addProduct(p)}
+                  className="shrink-0 rounded-full border border-brand bg-brand-soft px-3 py-1.5 text-xs font-medium text-brand-dark"
+                >
+                  ⚡ {p.name}
+                </button>
+              ))}
+            </div>
+          )}
           <BarcodeScanInput
             placeholder={t("bill.scanPlaceholder")}
             onScan={handleBarcodeScan}

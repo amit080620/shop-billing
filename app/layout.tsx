@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { getTheme } from "@/lib/theme";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -13,13 +14,15 @@ export const viewport: Viewport = {
   themeColor: "#0f6b5c",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const theme = await getTheme();
+
   return (
-    <html lang="en">
+    <html lang="en" className={theme === "dark" ? "dark" : undefined}>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />

@@ -142,7 +142,7 @@ export function LedgerClient({
       <section>
         <h2 className="mb-2 text-sm font-semibold text-foreground">History</h2>
         {timeline.length === 0 ? (
-          <EmptyState text="No bills or payments recorded yet." />
+          <EmptyState text="Nothing here yet — their first bill or payment will show up in this space." />
         ) : (
           <ul className="flex flex-col gap-2">
             {timeline.map((entry) =>
