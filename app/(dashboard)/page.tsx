@@ -17,11 +17,7 @@ export default async function DashboardPage() {
   startOfWeek.setDate(startOfWeek.getDate() - 6);
   startOfWeek.setHours(0, 0, 0, 0);
 
-  const startOfMonth = new Date();
-  startOfMonth.setDate(1);
-  startOfMonth.setHours(0, 0, 0, 0);
-
-  const [todayBills, weekBills, allBillsCredit, allPayments, recentBills, monthOutputGst, monthInputGst, allPayables, allVendorPayments, productCount, customerCount] =
+  const [todayBills, weekBills, allBillsCredit, allPayments, recentBills, allPayables, allVendorPayments, productCount, customerCount] =
     await Promise.all([
       admin
         .from("bills")
@@ -44,18 +40,6 @@ export default async function DashboardPage() {
         .eq("status", "active")
         .order("created_at", { ascending: false })
         .limit(5),
-      admin
-        .from("bills")
-        .select("cgst_amount, sgst_amount, igst_amount")
-        .eq("shop_id", session.shopId)
-        .eq("status", "active")
-        .gte("created_at", startOfMonth.toISOString()),
-      admin
-        .from("purchases")
-        .select("cgst_amount, sgst_amount, igst_amount")
-        .eq("shop_id", session.shopId)
-        .eq("itc_eligible", true)
-        .gte("purchase_date", startOfMonth.toISOString().slice(0, 10)),
       admin.from("purchases").select("payable_amount").eq("shop_id", session.shopId),
       admin.from("purchase_payments").select("amount").eq("shop_id", session.shopId),
       admin.from("products").select("id", { count: "exact", head: true }).eq("shop_id", session.shopId),
@@ -67,16 +51,6 @@ export default async function DashboardPage() {
   const totalCredit = sum(allBillsCredit.data?.map((b) => b.credit_amount));
   const totalPaidBack = sum(allPayments.data?.map((p) => p.amount));
   const outstanding = Math.max(0, totalCredit - totalPaidBack);
-
-  const outputGst = (monthOutputGst.data ?? []).reduce(
-    (s, b) => s + Number(b.cgst_amount) + Number(b.sgst_amount) + Number(b.igst_amount),
-    0,
-  );
-  const inputGst = (monthInputGst.data ?? []).reduce(
-    (s, p) => s + Number(p.cgst_amount) + Number(p.sgst_amount) + Number(p.igst_amount),
-    0,
-  );
-  const netGst = Math.max(0, outputGst - inputGst);
 
   const totalPayable = sum(allPayables.data?.map((p) => p.payable_amount));
   const totalVendorPaid = sum(allVendorPayments.data?.map((p) => p.amount));
@@ -132,45 +106,6 @@ export default async function DashboardPage() {
         </section>
       )}
 
-      <section className="grid grid-cols-2 gap-3">
-        <StatCard label={t("home.todaySales")} value={formatMoney(todayTotal)} />
-        <StatCard label={t("home.last7Days")} value={formatMoney(weekTotal)} />
-        <StatCard
-          label={t("home.outstandingCredit")}
-          value={formatMoney(outstanding)}
-          tone="credit"
-          href="/reminders"
-        />
-        <StatCard
-          label={t("home.payableToVendors")}
-          value={formatMoney(outstandingPayable)}
-          tone="credit"
-        />
-      </section>
-
-      <Link
-        href="/reports/gstr3b"
-        className="rounded-xl border border-border bg-surface p-4 shadow-sm"
-      >
-        <p className="text-xs font-medium uppercase tracking-wide text-muted">
-          {t("home.gstBothSides")}
-        </p>
-        <div className="mt-2 grid grid-cols-3 gap-2 text-center">
-          <div>
-            <p className="text-xs text-muted">{t("home.outputSales")}</p>
-            <p className="text-sm font-semibold text-foreground">{formatMoney(outputGst)}</p>
-          </div>
-          <div>
-            <p className="text-xs text-muted">{t("home.inputPurchases")}</p>
-            <p className="text-sm font-semibold text-foreground">{formatMoney(inputGst)}</p>
-          </div>
-          <div>
-            <p className="text-xs text-muted">{t("home.netPayableEst")}</p>
-            <p className="text-sm font-semibold text-brand">{formatMoney(netGst)}</p>
-          </div>
-        </div>
-      </Link>
-
       <Link
         href="/bills/new"
         className="flex items-center justify-center gap-2 rounded-xl px-4 py-4 text-center font-semibold text-white shadow-md"
@@ -198,6 +133,22 @@ export default async function DashboardPage() {
           </div>
         </Link>
       )}
+
+      <section className="grid grid-cols-2 gap-3">
+        <StatCard label={t("home.todaySales")} value={formatMoney(todayTotal)} />
+        <StatCard label={t("home.last7Days")} value={formatMoney(weekTotal)} />
+        <StatCard
+          label={t("home.outstandingCredit")}
+          value={formatMoney(outstanding)}
+          tone="credit"
+          href="/reminders"
+        />
+        <StatCard
+          label={t("home.payableToVendors")}
+          value={formatMoney(outstandingPayable)}
+          tone="credit"
+        />
+      </section>
 
       <section>
         <h2 className="mb-2 text-sm font-semibold text-foreground">
