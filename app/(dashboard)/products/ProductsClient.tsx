@@ -3,6 +3,7 @@
 import { useMemo, useRef, useState, useTransition } from "react";
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
+import { useRouter } from "next/navigation";
 import {
   createProductAction,
   createCategoryAction,
@@ -13,6 +14,7 @@ import { EmptyState } from "@/app/components/EmptyState";
 import { PageIcon } from "@/app/components/PageIcon";
 import { CameraBarcodeScanner } from "@/app/components/CameraBarcodeScanner";
 import { BarcodeScanInput } from "@/app/components/BarcodeScanInput";
+import { BulkImportExport } from "./BulkImportExport";
 import { COMMON_GST_RATES, UNITS } from "@/lib/constants/states";
 
 type Product = {
@@ -76,6 +78,7 @@ export function ProductsClient({
     null,
   );
 
+  const router = useRouter();
   const [search, setSearch] = useState("");
   const [scanNotice, setScanNotice] = useState<string | null>(null);
 
@@ -140,6 +143,21 @@ export function ProductsClient({
         />
         <CameraBarcodeScanner onScan={handleInventoryScan} />
         {scanNotice && <p className="text-xs text-credit">{scanNotice}</p>}
+        <BulkImportExport
+          products={initialProducts.map((p) => ({
+            name: p.name,
+            price: p.price,
+            gstPercent: p.gstPercent,
+            hsnCode: p.hsnCode,
+            barcode: p.barcode,
+            unit: p.unit,
+            categoryName: p.categoryName,
+            trackInventory: p.trackInventory,
+            stockQuantity: p.stockQuantity,
+            lowStockThreshold: p.lowStockThreshold,
+          }))}
+          onImported={() => router.refresh()}
+        />
       </div>
 
       {initialProducts.some((p) => p.trackInventory) && (

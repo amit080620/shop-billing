@@ -1,11 +1,12 @@
 "use client";
 
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { formatMoney } from "@/lib/format";
 import { EmptyState } from "@/app/components/EmptyState";
 import { PageIcon } from "@/app/components/PageIcon";
 
-type Customer = { id: string; name: string; phone: string; balance: number };
+type Customer = { id: string; name: string; phone: string; balance: number; daysPending: number };
 
 export function RemindersClient({
   shopName,
@@ -16,6 +17,28 @@ export function RemindersClient({
   customers: Customer[];
   totalOutstanding: number;
 }) {
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [sentIds, setSentIds] = useState<Set<string>>(new Set());
+
+  const allSelected = customers.length > 0 && selected.size === customers.length;
+
+  function toggleAll() {
+    setSelected(allSelected ? new Set() : new Set(customers.map((c) => c.id)));
+  }
+  function toggleOne(id: string) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  const selectedCustomers = useMemo(
+    () => customers.filter((c) => selected.has(c.id) && !sentIds.has(c.id)),
+    [customers, selected, sentIds],
+  );
+
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center gap-3">
@@ -28,7 +51,8 @@ export function RemindersClient({
         <div>
           <h1 className="text-lg font-semibold text-foreground">Udhaar reminders</h1>
           <p className="text-sm text-muted">
-            Tap each customer to open WhatsApp — you still hit Send yourself.
+            Select customers (or Select all), then work through the list — you still hit Send
+            in WhatsApp yourself for each one.
           </p>
         </div>
       </div>
@@ -41,35 +65,109 @@ export function RemindersClient({
       {customers.length === 0 ? (
         <EmptyState text="No outstanding udhaar right now — everyone's settled up." />
       ) : (
-        <ul className="flex flex-col gap-2">
-          {customers.map((c) => (
-            <li
-              key={c.id}
-              className="flex items-center justify-between gap-3 rounded-lg border border-border bg-surface shadow-sm px-3.5 py-3"
-            >
-              <Link href={`/customers/${c.id}`} className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium text-foreground">{c.name}</p>
-                <p className="text-xs text-credit">{formatMoney(c.balance)} due</p>
-              </Link>
-              <a
-                href={buildWhatsAppLink(c, shopName)}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex shrink-0 items-center gap-1.5 rounded-lg bg-[#25D366] px-3 py-2 text-xs font-medium text-white"
-              >
-                <WhatsAppIcon />
-                Remind
-              </a>
-            </li>
-          ))}
-        </ul>
+        <>
+          <label className="flex items-center gap-2 text-sm font-medium text-foreground">
+            <input
+              type="checkbox"
+              checked={allSelected}
+              onChange={toggleAll}
+              className="h-4 w-4 rounded border-border"
+            />
+            Select all ({customers.length})
+          </label>
+
+          {selectedCustomers.length > 0 && (
+            <section className="flex flex-col gap-2 rounded-xl border border-dashed border-brand bg-brand-soft p-3">
+              <p className="text-xs font-semibold text-brand-dark">
+                Ready to send ({selectedCustomers.length})
+              </p>
+              <ul className="flex flex-col gap-1.5">
+                {selectedCustomers.map((c) => (
+                  <li key={c.id} className="flex items-center justify-between gap-2 rounded-lg bg-surface px-3 py-2">
+                    <span className="min-w-0 flex-1 truncate text-sm text-foreground">{c.name}</span>
+                    <a
+                      href={buildWhatsAppLink(c, shopName)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={() => setSentIds((prev) => new Set(prev).add(c.id))}
+                      className="flex shrink-0 items-center gap-1.5 rounded-lg bg-[#25D366] px-2.5 py-1.5 text-xs font-medium text-white"
+                    >
+                      <WhatsAppIcon />
+                      Send
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+
+          <ul className="flex flex-col gap-2">
+            {customers.map((c) => {
+              const sent = sentIds.has(c.id);
+              return (
+                <li
+                  key={c.id}
+                  className={`flex items-center justify-between gap-3 rounded-lg border border-border shadow-sm px-3.5 py-3 ${
+                    sent ? "bg-background opacity-60" : "bg-surface"
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={selected.has(c.id)}
+                    onChange={() => toggleOne(c.id)}
+                    className="h-4 w-4 shrink-0 rounded border-border"
+                  />
+                  <Link href={`/customers/${c.id}`} className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium text-foreground">{c.name}</p>
+                    <div className="flex items-center gap-1.5">
+                      <p className="text-xs text-credit">{formatMoney(c.balance)} due</p>
+                      <AgingBadge days={c.daysPending} />
+                    </div>
+                  </Link>
+                  <a
+                    href={buildWhatsAppLink(c, shopName)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => setSentIds((prev) => new Set(prev).add(c.id))}
+                    className={`flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium text-white ${
+                      sent ? "bg-gray-400" : "bg-[#25D366]"
+                    }`}
+                  >
+                    <WhatsAppIcon />
+                    {sent ? "Sent" : "Remind"}
+                  </a>
+                </li>
+              );
+            })}
+          </ul>
+        </>
       )}
 
       <p className="text-center text-xs text-muted">
         True automatic sending (no tap needed) requires WhatsApp&apos;s paid Business API —
-        this list is the practical middle ground: go through it monthly, one tap each.
+        select who you need and work through them monthly, one tap each.
       </p>
     </div>
+  );
+}
+
+function AgingBadge({ days }: { days: number }) {
+  if (days <= 0) return null;
+  const urgent = days >= 30;
+  const warm = days >= 14 && days < 30;
+  return (
+    <span
+      className={`rounded-full px-1.5 py-0.5 text-[10px] font-medium ${
+        urgent
+          ? "bg-danger/15 text-danger"
+          : warm
+            ? "text-white"
+            : "bg-background text-muted"
+      }`}
+      style={warm ? { backgroundColor: "#c2760f" } : undefined}
+    >
+      {days}d pending
+    </span>
   );
 }
 

@@ -22,6 +22,7 @@ export default async function MorePage() {
         <MenuLink href="/offers" label={t("more.offers")} sub={t("more.offers.sub")} icon={MegaphoneIcon} />
         <MenuLink href="/vendors" label={t("more.vendors")} sub={t("more.vendors.sub")} icon={TruckIcon} />
         <MenuLink href="/products" label={t("more.products")} sub={t("more.products.sub")} icon={BoxIcon} />
+        <MenuLink href="/insights" label="Insights" sub="Fast movers & dead stock, from your own sales" icon={ChartIcon} />
         {session.role === "owner" && (
           <MenuLink href="/staff" label={t("more.staff")} sub={t("more.staff.sub")} icon={UsersIcon} />
         )}
@@ -154,6 +155,13 @@ function MegaphoneIcon({ className }: { className?: string }) {
     <svg {...iconProps(className)}>
       <path d="M3 11v2a2 2 0 0 0 2 2h1l2 5h2l-1.5-5H11l8 4V6l-8 4H8l-2-4H5a2 2 0 0 0-2 2Z" />
       <path d="M17 8.5v7" />
+    </svg>
+  );
+}
+function ChartIcon({ className }: { className?: string }) {
+  return (
+    <svg {...iconProps(className)}>
+      <path d="M4 19V5M4 19h16M8 15l3-4 3 3 4-6" />
     </svg>
   );
 }
