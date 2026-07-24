@@ -106,15 +106,6 @@ export default async function DashboardPage() {
         </section>
       )}
 
-      <Link
-        href="/bills/new"
-        className="flex items-center justify-center gap-2 rounded-xl px-4 py-4 text-center font-semibold text-white shadow-md"
-        style={{ background: "linear-gradient(135deg, var(--brand-light), var(--brand-dark))" }}
-      >
-        <PlusIcon />
-        {t("home.newBill")}
-      </Link>
-
       {nextFestival && (
         <Link
           href="/festivals"
@@ -149,6 +140,21 @@ export default async function DashboardPage() {
           tone="credit"
         />
       </section>
+
+      {/* Positioned here, not at the very top — this is tapped dozens of
+          times a day, and the top of a tall phone screen is an awkward
+          one-handed reach. Sitting after the stats keeps it in the
+          comfortable thumb zone for most screen sizes. The bottom-nav
+          "Sell" tab is always available too, for whenever you're deeper
+          in the scroll. */}
+      <Link
+        href="/bills/new"
+        className="flex items-center justify-center gap-2 rounded-xl px-4 py-4 text-center font-semibold text-white shadow-md"
+        style={{ background: "linear-gradient(135deg, var(--brand-light), var(--brand-dark))" }}
+      >
+        <PlusIcon />
+        {t("home.newBill")}
+      </Link>
 
       <section>
         <h2 className="mb-2 text-sm font-semibold text-foreground">
