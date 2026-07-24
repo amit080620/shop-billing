@@ -41,22 +41,22 @@ export function DownloadImageButton({
       const contentWidthMm = elRect.width * PX_TO_MM;
       const contentHeightMm = elRect.height * PX_TO_MM;
 
-      // Thermal: a narrow custom page that hugs the receipt's own height.
-      // Full page: standard A4, image placed with a small margin.
+      // Full page uses A4's standard width (210mm) so it looks like a normal
+      // document; thermal uses a narrow 80mm receipt width. Either way the
+      // page HEIGHT is sized to fit the actual content — a fixed 297mm (A4)
+      // height was cutting off anything past one page's worth of items,
+      // which silently cut off the QR/link section below it too.
       const margin = isThermal ? 0 : 10;
-      const pageFormat: [number, number] = isThermal
-        ? [80, contentHeightMm + margin * 2]
-        : [210, 297]; // A4 in mm
+      const pageWidthMm = isThermal ? 80 : 210;
+      const renderWidth = pageWidthMm - margin * 2;
+      const renderHeight = (contentHeightMm / contentWidthMm) * renderWidth;
+      const pageHeightMm = renderHeight + margin * 2;
 
       const pdf = new jsPDF({
         unit: "mm",
-        format: pageFormat,
+        format: [pageWidthMm, pageHeightMm],
         orientation: "portrait",
       });
-
-      const pageWidth = pdf.internal.pageSize.getWidth();
-      const renderWidth = pageWidth - margin * 2;
-      const renderHeight = (contentHeightMm / contentWidthMm) * renderWidth;
 
       pdf.addImage(imgData, "PNG", margin, margin, renderWidth, renderHeight);
 
