@@ -2,27 +2,32 @@ import Link from "next/link";
 import { loginAction } from "@/lib/actions/auth";
 import { AuthForm } from "../AuthForm";
 import { AuthShell } from "../AuthShell";
+import { getTranslator } from "@/lib/i18n/server";
 
-export default function LoginPage() {
+export default async function LoginPage() {
+  const { lang, t } = await getTranslator();
+
   return (
     <AuthShell
-      title="Welcome back"
-      subtitle="Log in to your shop"
+      lang={lang}
+      title={t("login.title")}
+      subtitle={t("login.subtitle")}
       footer={
         <>
-          New shop?{" "}
+          {t("login.newShop")}{" "}
           <Link href="/signup" className="font-semibold text-brand">
-            Set one up
+            {t("login.setOneUp")}
           </Link>
         </>
       }
     >
       <AuthForm
         action={loginAction}
-        submitLabel="Log in"
+        submitLabel={t("login.submit")}
+        pleaseWaitLabel={t("auth.pleaseWait")}
         fields={[
-          { name: "email", label: "Email", type: "email", placeholder: "you@example.com" },
-          { name: "password", label: "Password", type: "password" },
+          { name: "email", label: t("auth.email"), type: "email", placeholder: "you@example.com" },
+          { name: "password", label: t("auth.password"), type: "password" },
         ]}
       />
     </AuthShell>

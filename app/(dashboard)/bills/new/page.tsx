@@ -1,10 +1,12 @@
 import Link from "next/link";
 import { requireSession } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { getLang } from "@/lib/i18n/server";
 import { NewBillClient } from "./NewBillClient";
 
 export default async function NewBillPage() {
   const session = await requireSession();
+  const lang = await getLang();
 
   if (!session.shopStateCode) {
     return (
@@ -38,6 +40,7 @@ export default async function NewBillPage() {
   return (
     <NewBillClient
       shopStateCode={session.shopStateCode}
+      lang={lang}
       products={(products ?? []).map((p) => ({
         id: p.id,
         name: p.name,

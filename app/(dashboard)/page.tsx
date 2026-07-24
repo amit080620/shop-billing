@@ -3,9 +3,11 @@ import { requireSession } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { formatMoney, formatDateTime } from "@/lib/format";
 import { EmptyState } from "@/app/components/EmptyState";
+import { getTranslator } from "@/lib/i18n/server";
 
 export default async function DashboardPage() {
   const session = await requireSession();
+  const { t } = await getTranslator();
   const admin = createSupabaseAdminClient();
 
   const startOfToday = new Date();
@@ -80,21 +82,21 @@ export default async function DashboardPage() {
   return (
     <div className="flex flex-col gap-5">
       <div>
-        <p className="text-lg font-semibold text-foreground">{greeting()}, {session.staffName.split(" ")[0]}</p>
-        <p className="text-sm text-muted">Here&apos;s how {session.shopName} is doing.</p>
+        <p className="text-lg font-semibold text-foreground">{t(greetingKey())}, {session.staffName.split(" ")[0]}</p>
+        <p className="text-sm text-muted">{t("home.subtitle", { shop: session.shopName })}</p>
       </div>
 
       <section className="grid grid-cols-2 gap-3">
-        <StatCard label="Today's sales" value={formatMoney(todayTotal)} />
-        <StatCard label="Last 7 days" value={formatMoney(weekTotal)} />
+        <StatCard label={t("home.todaySales")} value={formatMoney(todayTotal)} />
+        <StatCard label={t("home.last7Days")} value={formatMoney(weekTotal)} />
         <StatCard
-          label="Outstanding credit"
+          label={t("home.outstandingCredit")}
           value={formatMoney(outstanding)}
           tone="credit"
           href="/reminders"
         />
         <StatCard
-          label="Payable to vendors"
+          label={t("home.payableToVendors")}
           value={formatMoney(outstandingPayable)}
           tone="credit"
         />
@@ -105,19 +107,19 @@ export default async function DashboardPage() {
         className="rounded-xl border border-border bg-surface p-4 shadow-sm"
       >
         <p className="text-xs font-medium uppercase tracking-wide text-muted">
-          This month&apos;s GST — both sides
+          {t("home.gstBothSides")}
         </p>
         <div className="mt-2 grid grid-cols-3 gap-2 text-center">
           <div>
-            <p className="text-xs text-muted">Output (sales)</p>
+            <p className="text-xs text-muted">{t("home.outputSales")}</p>
             <p className="text-sm font-semibold text-foreground">{formatMoney(outputGst)}</p>
           </div>
           <div>
-            <p className="text-xs text-muted">Input (purchases)</p>
+            <p className="text-xs text-muted">{t("home.inputPurchases")}</p>
             <p className="text-sm font-semibold text-foreground">{formatMoney(inputGst)}</p>
           </div>
           <div>
-            <p className="text-xs text-muted">Net payable (est.)</p>
+            <p className="text-xs text-muted">{t("home.netPayableEst")}</p>
             <p className="text-sm font-semibold text-brand">{formatMoney(netGst)}</p>
           </div>
         </div>
@@ -129,15 +131,15 @@ export default async function DashboardPage() {
         style={{ background: "linear-gradient(135deg, var(--brand-light), var(--brand-dark))" }}
       >
         <PlusIcon />
-        New bill
+        {t("home.newBill")}
       </Link>
 
       <section>
         <h2 className="mb-2 text-sm font-semibold text-foreground">
-          Recent bills
+          {t("home.recentBills")}
         </h2>
         {!recentBills.data || recentBills.data.length === 0 ? (
-          <EmptyState text="No bills yet. Create your first bill to see it here." />
+          <EmptyState text={t("home.noBillsYet")} />
         ) : (
           <ul className="flex flex-col gap-2">
             {recentBills.data.map((bill) => {
@@ -152,7 +154,7 @@ export default async function DashboardPage() {
                   >
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-medium text-foreground">
-                        {customerName ?? "Walk-in customer"}
+                        {customerName ?? t("common.walkinCustomer")}
                       </p>
                       <p className="text-xs text-muted">
                         {formatDateTime(bill.created_at)}
@@ -164,7 +166,7 @@ export default async function DashboardPage() {
                       </p>
                       {bill.credit_amount > 0 && (
                         <p className="text-xs text-credit">
-                          {formatMoney(bill.credit_amount)} credit
+                          {formatMoney(bill.credit_amount)} {t("home.credit")}
                         </p>
                       )}
                     </div>
@@ -179,11 +181,11 @@ export default async function DashboardPage() {
   );
 }
 
-function greeting() {
+function greetingKey() {
   const hour = new Date().getHours();
-  if (hour < 12) return "Good morning";
-  if (hour < 17) return "Good afternoon";
-  return "Good evening";
+  if (hour < 12) return "home.greeting.morning";
+  if (hour < 17) return "home.greeting.afternoon";
+  return "home.greeting.evening";
 }
 
 function PlusIcon() {

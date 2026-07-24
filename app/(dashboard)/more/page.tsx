@@ -1,30 +1,36 @@
 import Link from "next/link";
 import { requireSession } from "@/lib/auth";
 import { logoutAction } from "@/lib/actions/auth";
+import { getTranslator } from "@/lib/i18n/server";
+import { LanguageToggle } from "@/lib/i18n/LanguageToggle";
 
 export default async function MorePage() {
   const session = await requireSession();
+  const { lang, t } = await getTranslator();
 
   return (
     <div className="flex flex-col gap-4">
-      <h1 className="text-lg font-semibold text-foreground">More</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-lg font-semibold text-foreground">{t("more.title")}</h1>
+        <LanguageToggle lang={lang} />
+      </div>
 
       <div className="flex flex-col divide-y divide-border overflow-hidden rounded-xl border border-border bg-surface shadow-sm">
-        <MenuLink href="/customers" label="Customers" sub="Sales ledger & credit" icon={PeopleIcon} />
-        <MenuLink href="/requests" label="Item requests" sub="Customer asked, notify when it arrives" icon={BellIcon} />
-        <MenuLink href="/reminders" label="Udhaar reminders" sub="One-tap WhatsApp follow-ups" icon={ClockIcon} />
-        <MenuLink href="/vendors" label="Vendors" sub="Purchases & payables" icon={TruckIcon} />
-        <MenuLink href="/products" label="Products" sub="Catalog, HSN codes, GST%, stock" icon={BoxIcon} />
+        <MenuLink href="/customers" label={t("more.customers")} sub={t("more.customers.sub")} icon={PeopleIcon} />
+        <MenuLink href="/requests" label={t("more.requests")} sub={t("more.requests.sub")} icon={BellIcon} />
+        <MenuLink href="/reminders" label={t("more.reminders")} sub={t("more.reminders.sub")} icon={ClockIcon} />
+        <MenuLink href="/vendors" label={t("more.vendors")} sub={t("more.vendors.sub")} icon={TruckIcon} />
+        <MenuLink href="/products" label={t("more.products")} sub={t("more.products.sub")} icon={BoxIcon} />
         {session.role === "owner" && (
-          <MenuLink href="/staff" label="Staff" sub="Add or remove staff logins" icon={UsersIcon} />
+          <MenuLink href="/staff" label={t("more.staff")} sub={t("more.staff.sub")} icon={UsersIcon} />
         )}
         {session.role === "owner" && (
-          <MenuLink href="/settings" label="GST & shop profile" sub="GSTIN, state, logo, invoice numbering" icon={GearIcon} />
+          <MenuLink href="/settings" label={t("more.settings")} sub={t("more.settings.sub")} icon={GearIcon} />
         )}
       </div>
 
       <div className="rounded-xl border border-border bg-surface px-4 py-3.5 text-sm text-muted shadow-sm">
-        Logged in as {session.staffName} ({session.email})
+        {t("more.loggedInAs")} {session.staffName} ({session.email})
       </div>
 
       <form action={logoutAction}>
@@ -32,7 +38,7 @@ export default async function MorePage() {
           type="submit"
           className="w-full rounded-lg border border-border px-4 py-3 text-sm font-medium text-danger transition active:scale-[0.98]"
         >
-          Log out
+          {t("more.logout")}
         </button>
       </form>
     </div>

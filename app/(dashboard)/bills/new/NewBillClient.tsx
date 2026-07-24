@@ -12,6 +12,8 @@ import { formatMoney } from "@/lib/format";
 import { SearchableSelect } from "@/app/components/SearchableSelect";
 import { InlineQuickAdd } from "@/app/components/InlineQuickAdd";
 import { BarcodeScanInput } from "@/app/components/BarcodeScanInput";
+import { useTranslation } from "@/lib/i18n/useTranslation";
+import type { Lang } from "@/lib/i18n/dictionary";
 
 type Product = { id: string; name: string; price: number; gstPercent: number; hsnCode: string | null; barcode: string | null };
 type Customer = { id: string; name: string; phone: string; gstin: string | null; state_code: string | null };
@@ -24,7 +26,7 @@ type CartLine = {
   quantity: number;
 };
 
-function SubmitButton({ blocked }: { blocked: boolean }) {
+function SubmitButton({ blocked, generatingLabel, submitLabel }: { blocked: boolean; generatingLabel: string; submitLabel: string }) {
   const { pending } = useFormStatus();
   return (
     <button
@@ -32,7 +34,7 @@ function SubmitButton({ blocked }: { blocked: boolean }) {
       disabled={pending || blocked}
       className="btn-primary w-full text-center"
     >
-      {pending ? "Generating invoice…" : "Generate invoice"}
+      {pending ? generatingLabel : submitLabel}
     </button>
   );
 }
@@ -41,11 +43,14 @@ export function NewBillClient({
   shopStateCode,
   products,
   customers,
+  lang,
 }: {
   shopStateCode: string;
   products: Product[];
   customers: Customer[];
+  lang: Lang;
 }) {
+  const { t } = useTranslation(lang);
   const [step, setStep] = useState<"cart" | "ticket">("cart");
   const [cart, setCart] = useState<CartLine[]>([]);
   const [scanError, setScanError] = useState<string | null>(null);
@@ -116,10 +121,10 @@ export function NewBillClient({
   if (step === "cart") {
     return (
       <div className="flex flex-col gap-4">
-        <h1 className="text-lg font-semibold text-foreground">New bill</h1>
+        <h1 className="text-lg font-semibold text-foreground">{t("bill.title")}</h1>
 
         <section className="flex flex-col gap-2">
-          <p className="text-sm font-medium text-foreground">Customer</p>
+          <p className="text-sm font-medium text-foreground">{t("bill.customer")}</p>
           <div className="flex gap-2">
             <button
               onClick={() => {
@@ -132,7 +137,7 @@ export function NewBillClient({
                   : "border-border text-muted"
               }`}
             >
-              Walk-in (no record)
+              {t("bill.walkin")}
             </button>
             <button
               onClick={() => setCustomerMode("existing")}
@@ -142,7 +147,7 @@ export function NewBillClient({
                   : "border-border text-muted"
               }`}
             >
-              Existing customer
+              {t("bill.existingCustomer")}
             </button>
           </div>
 
@@ -159,7 +164,7 @@ export function NewBillClient({
                   onClick={() => setSelectedCustomer(null)}
                   className="shrink-0 text-xs font-medium text-brand"
                 >
-                  Change
+                  {t("bill.change")}
                 </button>
               </div>
             ) : (
@@ -170,13 +175,13 @@ export function NewBillClient({
                   getLabel={(c) => c.name}
                   getSubLabel={(c) => c.phone}
                   onSelect={setSelectedCustomer}
-                  placeholder="Search customer by name or phone"
+                  placeholder={t("bill.searchCustomer")}
                 />
                 <InlineQuickAdd<{ id: string; name: string; phone: string; gstin: string | null; state_code: string | null }>
-                  triggerLabel="+ Add new customer"
+                  triggerLabel={t("bill.addNewCustomer")}
                   fields={[
-                    { name: "name", label: "Name", required: true },
-                    { name: "phone", label: "Phone", type: "tel", required: true },
+                    { name: "name", label: t("bill.name"), required: true },
+                    { name: "phone", label: t("bill.phone"), type: "tel", required: true },
                   ]}
                   onSubmit={async (v) => {
                     const r = await quickCreateCustomerAction(v.name, v.phone);
@@ -189,15 +194,16 @@ export function NewBillClient({
         </section>
 
         <section className="flex flex-col gap-2">
-          <p className="text-sm font-medium text-foreground">Add products</p>
+          <p className="text-sm font-medium text-foreground">{t("bill.addProducts")}</p>
           <BarcodeScanInput
+            placeholder={t("bill.scanPlaceholder")}
             onScan={(code) => {
               const match = products.find((p) => p.barcode === code);
               if (match) {
                 addProduct(match);
                 setScanError(null);
               } else {
-                setScanError(`No product found with barcode "${code}"`);
+                setScanError(`${t("bill.noProductFound")}: "${code}"`);
               }
             }}
           />
@@ -208,14 +214,14 @@ export function NewBillClient({
             getLabel={(p) => p.name}
             getSubLabel={(p) => formatMoney(p.price)}
             onSelect={addProduct}
-            placeholder="Search products to add"
+            placeholder={t("bill.searchProducts")}
           />
           <InlineQuickAdd<{ id: string; name: string; price: number; gstPercent: number; hsnCode: string | null; barcode: string | null }>
-            triggerLabel="+ Add new product"
+            triggerLabel={t("bill.addNewProduct")}
             fields={[
-              { name: "name", label: "Product name", required: true },
+              { name: "name", label: t("bill.addNewProduct").replace("+ ", ""), required: true },
               { name: "price", label: "Price (₹)", type: "number", required: true },
-              { name: "gstPercent", label: "GST % (e.g. 0, 5, 18, 40)", type: "number" },
+              { name: "gstPercent", label: "GST %", type: "number" },
             ]}
             onSubmit={async (v) => {
               const r = await quickCreateProductAction(v.name, Number(v.price) || 0, Number(v.gstPercent) || 0);
@@ -227,7 +233,7 @@ export function NewBillClient({
 
         {cart.length > 0 && (
           <section className="flex flex-col gap-2">
-            <p className="text-sm font-medium text-foreground">Cart</p>
+            <p className="text-sm font-medium text-foreground">{t("bill.cart")}</p>
             <ul className="flex flex-col gap-2">
               {cart.map((line) => (
                 <li
@@ -263,7 +269,7 @@ export function NewBillClient({
               ))}
             </ul>
             <div className="flex items-center justify-between rounded-lg bg-brand-soft px-3.5 py-2.5 text-sm">
-              <span className="text-brand-dark">Subtotal</span>
+              <span className="text-brand-dark">{t("bill.subtotal")}</span>
               <span className="font-semibold text-brand-dark">
                 {formatMoney(totals.subtotal)}
               </span>
@@ -279,7 +285,7 @@ export function NewBillClient({
           }}
           className="btn-primary text-center disabled:opacity-40"
         >
-          Complete ticket →
+          {t("bill.completeTicket")} →
         </button>
       </div>
     );
@@ -312,14 +318,14 @@ export function NewBillClient({
           onClick={() => setStep("cart")}
           className="text-sm text-muted"
         >
-          ← Back to cart
+          {t("bill.backToCart")}
         </button>
       </div>
-      <h1 className="text-lg font-semibold text-foreground">Complete ticket</h1>
+      <h1 className="text-lg font-semibold text-foreground">{t("bill.completeTicket")}</h1>
 
       <section className="rounded-xl border border-border bg-surface shadow-sm p-4">
         <p className="text-sm font-medium text-foreground">
-          {customerMode === "existing" ? selectedCustomer?.name : "Walk-in customer"}
+          {customerMode === "existing" ? selectedCustomer?.name : t("common.walkinCustomer")}
         </p>
         <ul className="mt-2 flex flex-col gap-1.5">
           {cart.map((line) => (
@@ -336,7 +342,7 @@ export function NewBillClient({
       </section>
 
       <section className="flex flex-col gap-3 rounded-xl border border-border bg-surface shadow-sm p-4">
-        <p className="text-sm font-medium text-foreground">Discount</p>
+        <p className="text-sm font-medium text-foreground">{t("bill.discount")}</p>
         <div className="flex gap-2">
           <button
             type="button"
@@ -347,7 +353,7 @@ export function NewBillClient({
                 : "border-border text-muted"
             }`}
           >
-            ₹ Flat amount
+            {t("bill.flatAmount")}
           </button>
           <button
             type="button"
@@ -358,7 +364,7 @@ export function NewBillClient({
                 : "border-border text-muted"
             }`}
           >
-            % Percentage
+            {t("bill.percentage")}
           </button>
         </div>
         <input
@@ -375,12 +381,12 @@ export function NewBillClient({
       <section className="flex flex-col gap-2 rounded-xl border border-border bg-surface shadow-sm p-4 text-sm">
         <div className="mb-1 flex items-center justify-between">
           <span className="text-xs font-medium uppercase tracking-wide text-muted">
-            {supplyType === "intra" ? "Local sale · CGST + SGST" : "Inter-state sale · IGST"}
+            {supplyType === "intra" ? t("bill.localSale") : t("bill.interStateSale")}
           </span>
         </div>
-        <Row label="Subtotal" value={formatMoney(totals.subtotal)} />
-        <Row label="Discount" value={`− ${formatMoney(totals.discountAmount)}`} />
-        <Row label="Taxable value" value={formatMoney(totals.taxableAmount)} />
+        <Row label={t("bill.subtotal")} value={formatMoney(totals.subtotal)} />
+        <Row label={t("bill.discount")} value={`− ${formatMoney(totals.discountAmount)}`} />
+        <Row label={t("bill.taxableValue")} value={formatMoney(totals.taxableAmount)} />
         {supplyType === "intra" ? (
           <>
             <Row label="CGST" value={`+ ${formatMoney(totals.cgstAmount)}`} />
@@ -390,11 +396,11 @@ export function NewBillClient({
           <Row label="IGST" value={`+ ${formatMoney(totals.igstAmount)}`} />
         )}
         <div className="my-1 h-px bg-border" />
-        <Row label="Total" value={formatMoney(totals.total)} bold />
+        <Row label={t("bill.total")} value={formatMoney(totals.total)} bold />
       </section>
 
       <section className="flex flex-col gap-3 rounded-xl border border-border bg-surface shadow-sm p-4">
-        <p className="text-sm font-medium text-foreground">How much is being paid now?</p>
+        <p className="text-sm font-medium text-foreground">{t("bill.howMuchPaid")}</p>
         <div className="flex gap-2">
           <button
             type="button"
@@ -405,7 +411,7 @@ export function NewBillClient({
                 : "border-border text-muted"
             }`}
           >
-            Fully paid
+            {t("bill.fullyPaid")}
           </button>
           <button
             type="button"
@@ -417,11 +423,11 @@ export function NewBillClient({
                 : "border-border text-muted"
             }`}
           >
-            Full udhaar (₹0 now)
+            {t("bill.fullUdhaar")}
           </button>
         </div>
         <label className="flex flex-col gap-1.5 text-sm">
-          <span className="font-medium text-foreground">Or enter a part payment (₹)</span>
+          <span className="font-medium text-foreground">{t("bill.orPartPayment")}</span>
           <input
             type="number"
             min="0"
@@ -437,7 +443,7 @@ export function NewBillClient({
         {typeof paidAmount === "number" && paidAmount > 0 && (
           <div className="border-t border-border pt-3">
             <p className="mb-2 text-sm font-medium text-foreground">
-              How was the {formatMoney(paidAmount)} paid?
+              {t("bill.howWasPaid", { amount: formatMoney(paidAmount) })}
             </p>
             <div className="flex flex-wrap gap-2">
               {(["cash", "card", "upi", "online", "other"] as const).map((m) => (
@@ -445,13 +451,13 @@ export function NewBillClient({
                   key={m}
                   type="button"
                   onClick={() => setPaymentMethod(m)}
-                  className={`rounded-full border px-3.5 py-1.5 text-xs font-medium capitalize ${
+                  className={`rounded-full border px-3.5 py-1.5 text-xs font-medium ${
                     paymentMethod === m
                       ? "border-brand bg-brand-soft text-brand-dark"
                       : "border-border text-muted"
                   }`}
                 >
-                  {m}
+                  {t(`bill.${m}`)}
                 </button>
               ))}
             </div>
@@ -460,12 +466,12 @@ export function NewBillClient({
 
         {totals.balanceAmount > 0 && (
           <p className="text-sm text-credit">
-            {formatMoney(totals.balanceAmount)} will be added to this customer&apos;s credit (udhaar).
+            {t("bill.willAddCredit", { amount: formatMoney(totals.balanceAmount) })}
           </p>
         )}
         {totals.balanceAmount > 0 && customerMode === "walkin" && (
           <p className="text-sm text-credit">
-            Walk-in sales can&apos;t carry credit — attach an existing customer to track this balance.
+            {t("bill.walkinNoCredit")}
           </p>
         )}
       </section>
@@ -476,7 +482,7 @@ export function NewBillClient({
         </p>
       )}
 
-      <SubmitButton blocked={customerMode === "walkin" && totals.balanceAmount > 0} />
+      <SubmitButton blocked={customerMode === "walkin" && totals.balanceAmount > 0} generatingLabel={t("bill.generating")} submitLabel={t("bill.generateInvoice")} />
     </form>
   );
 }

@@ -1,5 +1,7 @@
 import Image from "next/image";
 import { requireSession } from "@/lib/auth";
+import { getLang } from "@/lib/i18n/server";
+import { translate } from "@/lib/i18n/dictionary";
 import { BottomNav } from "./BottomNav";
 
 export default async function DashboardLayout({
@@ -8,6 +10,7 @@ export default async function DashboardLayout({
   children: React.ReactNode;
 }) {
   const session = await requireSession();
+  const lang = await getLang();
 
   return (
     <div className="min-h-screen bg-background pb-24">
@@ -35,7 +38,7 @@ export default async function DashboardLayout({
               {session.shopName}
             </p>
             <p className="text-xs text-muted">
-              {session.staffName} · {session.role === "owner" ? "Owner" : "Staff"}
+              {session.staffName} · {session.role === "owner" ? translate(lang, "role.owner") : translate(lang, "role.staff")}
             </p>
           </div>
         </div>
@@ -43,7 +46,7 @@ export default async function DashboardLayout({
 
       <main className="page-enter mx-auto max-w-lg px-4 py-4">{children}</main>
 
-      <BottomNav />
+      <BottomNav lang={lang} />
     </div>
   );
 }

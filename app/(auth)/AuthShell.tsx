@@ -1,9 +1,14 @@
+import { LanguageToggle } from "@/lib/i18n/LanguageToggle";
+import type { Lang } from "@/lib/i18n/dictionary";
+
 export function AuthShell({
+  lang,
   title,
   subtitle,
   children,
   footer,
 }: {
+  lang: Lang;
   title: string;
   subtitle: string;
   children: React.ReactNode;
@@ -18,6 +23,9 @@ export function AuthShell({
       }}
     >
       <div className="page-enter mx-auto w-full max-w-sm">
+        <div className="mb-4 flex justify-center">
+          <LanguageToggle lang={lang} />
+        </div>
         <div className="mb-6 flex flex-col items-center gap-3 text-center">
           <div
             className="flex h-14 w-14 items-center justify-center rounded-2xl text-2xl font-bold text-white shadow-lg"

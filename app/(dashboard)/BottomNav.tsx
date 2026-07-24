@@ -2,17 +2,20 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useTranslation } from "@/lib/i18n/useTranslation";
+import type { Lang } from "@/lib/i18n/dictionary";
 
 const TABS = [
-  { href: "/", label: "Home", icon: HomeIcon },
-  { href: "/bills/new", label: "Sell", icon: SellIcon },
-  { href: "/purchases/new", label: "Buy", icon: BuyIcon },
-  { href: "/reports", label: "Reports", icon: ReportIcon },
-  { href: "/more", label: "More", icon: MoreIcon },
+  { href: "/", labelKey: "nav.home", icon: HomeIcon },
+  { href: "/bills/new", labelKey: "nav.sell", icon: SellIcon },
+  { href: "/purchases/new", labelKey: "nav.buy", icon: BuyIcon },
+  { href: "/reports", labelKey: "nav.reports", icon: ReportIcon },
+  { href: "/more", labelKey: "nav.more", icon: MoreIcon },
 ];
 
-export function BottomNav() {
+export function BottomNav({ lang }: { lang: Lang }) {
   const pathname = usePathname();
+  const { t } = useTranslation(lang);
 
   return (
     <nav
@@ -33,7 +36,7 @@ export function BottomNav() {
                 }`}
               >
                 <Icon active={active} />
-                {tab.label}
+                {t(tab.labelKey)}
               </Link>
             </li>
           );
