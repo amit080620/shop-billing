@@ -8,6 +8,7 @@ import { quickCreateCustomerAction } from "@/lib/actions/customers";
 import { quickCreateProductAction } from "@/lib/actions/products";
 import { calculateTransactionTotals } from "@/lib/validation/schemas";
 import { determineSupplyType, round2 } from "@/lib/gst";
+import { UNITS } from "@/lib/constants/states";
 import { formatMoney } from "@/lib/format";
 import { SearchableSelect } from "@/app/components/SearchableSelect";
 import { InlineQuickAdd } from "@/app/components/InlineQuickAdd";
@@ -235,10 +236,16 @@ export function NewBillClient({
             fields={[
               { name: "name", label: t("bill.addNewProduct").replace("+ ", ""), required: true },
               { name: "price", label: "Price (₹)", type: "number", required: true },
+              { name: "unit", label: "Unit", options: [...UNITS], defaultValue: "NOS" },
               { name: "gstPercent", label: "GST %", type: "number" },
             ]}
             onSubmit={async (v) => {
-              const r = await quickCreateProductAction(v.name, Number(v.price) || 0, Number(v.gstPercent) || 0);
+              const r = await quickCreateProductAction(
+                v.name,
+                Number(v.price) || 0,
+                Number(v.gstPercent) || 0,
+                v.unit || "NOS",
+              );
               return { data: r.product, error: r.error };
             }}
             onCreated={addProduct}
@@ -252,44 +259,94 @@ export function NewBillClient({
               {cart.map((line) => (
                 <li
                   key={line.productId}
-                  className="flex items-center justify-between gap-3 rounded-lg border border-border bg-surface shadow-sm px-3.5 py-2.5"
+                  className="flex flex-col gap-2 rounded-lg border border-border bg-surface shadow-sm px-3.5 py-2.5"
                 >
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium text-foreground">
-                      {line.name}
-                    </p>
-                    <p className="text-xs text-muted">
-                      {formatMoney(line.price)}/{line.unit} · GST {line.gstPercent}%
-                    </p>
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium text-foreground">
+                        {line.name}
+                      </p>
+                      <p className="text-xs text-muted">
+                        {formatMoney(line.price)}/{line.unit} · GST {line.gstPercent}%
+                      </p>
+                    </div>
+                    <div className="flex shrink-0 items-center gap-1.5">
+                      <button
+                        onClick={() =>
+                          updateQuantity(line.productId, round2(line.quantity - quantityStep(line.unit)))
+                        }
+                        className="h-7 w-7 shrink-0 rounded-full border border-border text-sm font-medium text-foreground"
+                      >
+                        −
+                      </button>
+                      <input
+                        type="number"
+                        inputMode="decimal"
+                        step="0.01"
+                        min="0"
+                        value={line.quantity}
+                        onChange={(e) => {
+                          const v = e.target.value;
+                          if (v === "") return;
+                          const num = Number(v);
+                          if (!Number.isNaN(num)) updateQuantity(line.productId, num);
+                        }}
+                        className="w-14 rounded-lg border border-border px-1 py-1 text-center text-sm font-medium text-foreground outline-none focus:border-brand"
+                      />
+                      <button
+                        onClick={() =>
+                          updateQuantity(line.productId, round2(line.quantity + quantityStep(line.unit)))
+                        }
+                        className="h-7 w-7 shrink-0 rounded-full border border-border text-sm font-medium text-foreground"
+                      >
+                        +
+                      </button>
+                    </div>
                   </div>
-                  <div className="flex shrink-0 items-center gap-1.5">
-                    <button
-                      onClick={() => updateQuantity(line.productId, round2(line.quantity - 1))}
-                      className="h-7 w-7 shrink-0 rounded-full border border-border text-sm font-medium text-foreground"
-                    >
-                      −
-                    </button>
-                    <input
-                      type="number"
-                      inputMode="decimal"
-                      step="0.01"
-                      min="0"
-                      value={line.quantity}
-                      onChange={(e) => {
-                        const v = e.target.value;
-                        if (v === "") return;
-                        const num = Number(v);
-                        if (!Number.isNaN(num)) updateQuantity(line.productId, num);
-                      }}
-                      className="w-14 rounded-lg border border-border px-1 py-1 text-center text-sm font-medium text-foreground outline-none focus:border-brand"
-                    />
-                    <button
-                      onClick={() => updateQuantity(line.productId, round2(line.quantity + 1))}
-                      className="h-7 w-7 shrink-0 rounded-full border border-border text-sm font-medium text-foreground"
-                    >
-                      +
-                    </button>
-                  </div>
+                  {quantityPresets(line.unit).length > 0 && (
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      {quantityPresets(line.unit).map((preset) => (
+                        <button
+                          key={preset}
+                          onClick={() => updateQuantity(line.productId, preset)}
+                          className={`rounded-full border px-2.5 py-1 text-xs font-medium ${
+                            line.quantity === preset
+                              ? "border-brand bg-brand-soft text-brand-dark"
+                              : "border-border text-muted"
+                          }`}
+                        >
+                          {presetLabel(preset, line.unit)}
+                        </button>
+                      ))}
+                      {(line.unit === "KG" || line.unit === "LTR") && (
+                        <div className="flex items-center gap-1 rounded-full border border-dashed border-border px-2 py-1">
+                          <input
+                            type="number"
+                            inputMode="decimal"
+                            placeholder={line.unit === "KG" ? "e.g. 1" : "e.g. 5"}
+                            className="w-12 bg-transparent text-xs outline-none"
+                            onKeyDown={(e) => {
+                              if (e.key !== "Enter") return;
+                              e.preventDefault();
+                              const target = e.target as HTMLInputElement;
+                              const small = Number(target.value);
+                              if (!Number.isNaN(small) && small > 0) {
+                                // 3-decimal precision — needed for things like
+                                // 1 gram of saffron (0.001kg), which the usual
+                                // 2dp rounding would otherwise zero out.
+                                const qty = Math.round((small / 1000) * 1000) / 1000;
+                                updateQuantity(line.productId, qty);
+                                target.value = "";
+                              }
+                            }}
+                          />
+                          <span className="text-xs text-muted">
+                            {line.unit === "KG" ? "g" : "ml"}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </li>
               ))}
             </ul>
@@ -511,6 +568,30 @@ export function NewBillClient({
       <SubmitButton blocked={customerMode === "walkin" && totals.balanceAmount > 0} generatingLabel={t("bill.generating")} submitLabel={t("bill.generateInvoice")} />
     </form>
   );
+}
+
+/** How much +/- should move by for a given unit — whole items step by 1,
+ * kg/litre step by half, gram/ml step by 50 (since those are already the
+ * "small" unit, half a gram isn't a realistic increment). */
+function quantityStep(unit: string): number {
+  if (unit === "KG" || unit === "LTR") return 0.5;
+  if (unit === "GM" || unit === "ML") return 50;
+  return 1;
+}
+
+/** Quick-tap presets for common partial amounts — e.g. a customer asking
+ * for "500 grams" or "half a litre" shouldn't require typing decimals. */
+function quantityPresets(unit: string): number[] {
+  if (unit === "KG" || unit === "LTR") return [0.25, 0.5, 1, 2, 5];
+  if (unit === "GM" || unit === "ML") return [100, 250, 500, 1000];
+  return [];
+}
+
+function presetLabel(value: number, unit: string): string {
+  if ((unit === "KG" || unit === "LTR") && value < 1) {
+    return `${value * 1000}${unit === "KG" ? "g" : "ml"}`;
+  }
+  return `${value}${unit === "KG" ? "kg" : unit === "LTR" ? "L" : unit.toLowerCase()}`;
 }
 
 function Row({ label, value, bold }: { label: string; value: string; bold?: boolean }) {

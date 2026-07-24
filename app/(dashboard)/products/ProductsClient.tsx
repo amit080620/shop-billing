@@ -11,9 +11,7 @@ import {
 import { formatMoney } from "@/lib/format";
 import { EmptyState } from "@/app/components/EmptyState";
 import { PageIcon } from "@/app/components/PageIcon";
-import { COMMON_GST_RATES } from "@/lib/constants/states";
-
-const UNITS = ["NOS", "KG", "GM", "LTR", "ML", "MTR", "BOX", "PCS", "DZN", "PKT"];
+import { COMMON_GST_RATES, UNITS } from "@/lib/constants/states";
 
 type Product = {
   id: string;

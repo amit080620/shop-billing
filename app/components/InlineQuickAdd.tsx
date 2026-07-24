@@ -9,6 +9,9 @@ type Field = {
   type?: string;
   required?: boolean;
   placeholder?: string;
+  /** If set, renders a <select> with these options instead of a text input. */
+  options?: string[];
+  defaultValue?: string;
 };
 
 export function InlineQuickAdd<T>({
@@ -68,17 +71,32 @@ export function InlineQuickAdd<T>({
           }
         />
       )}
-      {fields.map((f) => (
-        <input
-          key={f.name}
-          type={f.type ?? "text"}
-          required={f.required}
-          placeholder={f.placeholder ?? f.label}
-          value={values[f.name] ?? ""}
-          onChange={(e) => setValues((v) => ({ ...v, [f.name]: e.target.value }))}
-          className="rounded-lg border border-border bg-surface shadow-sm px-3 py-2 text-sm outline-none focus:border-brand"
-        />
-      ))}
+      {fields.map((f) =>
+        f.options ? (
+          <select
+            key={f.name}
+            value={values[f.name] ?? f.defaultValue ?? f.options[0]}
+            onChange={(e) => setValues((v) => ({ ...v, [f.name]: e.target.value }))}
+            className="rounded-lg border border-border bg-surface shadow-sm px-3 py-2 text-sm outline-none focus:border-brand"
+          >
+            {f.options.map((opt) => (
+              <option key={opt} value={opt}>
+                {opt}
+              </option>
+            ))}
+          </select>
+        ) : (
+          <input
+            key={f.name}
+            type={f.type ?? "text"}
+            required={f.required}
+            placeholder={f.placeholder ?? f.label}
+            value={values[f.name] ?? ""}
+            onChange={(e) => setValues((v) => ({ ...v, [f.name]: e.target.value }))}
+            className="rounded-lg border border-border bg-surface shadow-sm px-3 py-2 text-sm outline-none focus:border-brand"
+          />
+        ),
+      )}
       {error && <p className="text-xs text-credit">{error}</p>}
       <div className="flex gap-2">
         <button

@@ -56,3 +56,5 @@ export function stateCodeFromGstin(gstin: string) {
 // slabs were retired; most goods moved to 5% or 18%, with 40% for luxury/sin
 // goods. Kept as quick-pick options — any custom rate can still be typed.
 export const COMMON_GST_RATES = [0, 5, 18, 40];
+
+export const UNITS = ["NOS", "KG", "GM", "LTR", "ML", "MTR", "BOX", "PCS", "DZN", "PKT"];

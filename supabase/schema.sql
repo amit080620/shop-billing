@@ -67,7 +67,7 @@ create table if not exists products (
   hsn_code text,
   unit text not null default 'NOS', -- NOS, KG, LTR, MTR, BOX, PCS, ...
   track_inventory boolean not null default false, -- opt-in per product; off = unlimited/not tracked
-  stock_quantity numeric(12, 2) not null default 0,
+  stock_quantity numeric(12, 3) not null default 0,
   low_stock_threshold numeric(12, 2) not null default 0,
   barcode text,
   price numeric(12, 2) not null default 0,
@@ -77,7 +77,12 @@ create table if not exists products (
 alter table products add column if not exists hsn_code text;
 alter table products add column if not exists unit text not null default 'NOS';
 alter table products add column if not exists track_inventory boolean not null default false;
-alter table products add column if not exists stock_quantity numeric(12, 2) not null default 0;
+alter table products add column if not exists stock_quantity numeric(12, 3) not null default 0;
+-- Widen existing quantity columns from 2 to 3 decimal places — needed for
+-- items sold in small fractional amounts (e.g. 1 gram of saffron = 0.001kg).
+-- Safe to run even if already 3dp, and safe on tables with existing data
+-- (widening precision never loses data).
+alter table products alter column stock_quantity type numeric(12, 3);
 alter table products add column if not exists low_stock_threshold numeric(12, 2) not null default 0;
 alter table products add column if not exists barcode text;
 create unique index if not exists idx_products_barcode on products(shop_id, barcode) where barcode is not null;
@@ -166,7 +171,7 @@ create table if not exists bill_items (
   product_id uuid references products(id) on delete set null,
   product_name text not null,
   hsn_code text,
-  quantity numeric(12, 2) not null,
+  quantity numeric(12, 3) not null,
   unit_price numeric(12, 2) not null,
   gst_percent numeric(5, 2) not null default 0,
   line_subtotal numeric(12, 2) not null,
@@ -180,6 +185,7 @@ alter table bill_items add column if not exists hsn_code text;
 alter table bill_items add column if not exists cgst_amount numeric(12,2) not null default 0;
 alter table bill_items add column if not exists sgst_amount numeric(12,2) not null default 0;
 alter table bill_items add column if not exists igst_amount numeric(12,2) not null default 0;
+alter table bill_items alter column quantity type numeric(12, 3);
 
 -- Payments RECEIVED from customers against outstanding credit (receivables).
 create table if not exists payments (
@@ -256,7 +262,7 @@ create table if not exists purchase_items (
   product_id uuid references products(id) on delete set null,
   description text not null, -- product name snapshot, or free-text item
   hsn_code text,
-  quantity numeric(12, 2) not null,
+  quantity numeric(12, 3) not null,
   unit_price numeric(12, 2) not null,
   gst_percent numeric(5, 2) not null default 0,
   line_subtotal numeric(12, 2) not null,
@@ -266,6 +272,7 @@ create table if not exists purchase_items (
   line_gst numeric(12, 2) not null default 0,
   line_total numeric(12, 2) not null
 );
+alter table purchase_items alter column quantity type numeric(12, 3);
 
 -- Payments WE make to vendors against payables.
 create table if not exists purchase_payments (

@@ -151,12 +151,14 @@ export async function quickCreateProductAction(
   name: string,
   price: number,
   gstPercent: number,
+  unit: string,
 ): Promise<{ product?: { id: string; name: string; price: number; gstPercent: number; hsnCode: string | null; barcode: string | null; unit: string }; error?: string }> {
   const session = await requireSession();
-  const parsed = productSchema.pick({ name: true, price: true, gstPercent: true }).safeParse({
+  const parsed = productSchema.pick({ name: true, price: true, gstPercent: true, unit: true }).safeParse({
     name,
     price,
     gstPercent,
+    unit,
   });
   if (!parsed.success) {
     return { error: parsed.error.issues[0].message };
@@ -170,6 +172,7 @@ export async function quickCreateProductAction(
       name: parsed.data.name,
       price: parsed.data.price,
       gst_percent: parsed.data.gstPercent,
+      unit: parsed.data.unit,
     })
     .select("id, name, price, gst_percent, hsn_code, barcode, unit")
     .single();
