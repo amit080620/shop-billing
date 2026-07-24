@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useMemo, useRef, useState, useTransition } from "react";
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import {
@@ -11,6 +11,7 @@ import {
 import { formatMoney } from "@/lib/format";
 import { EmptyState } from "@/app/components/EmptyState";
 import { PageIcon } from "@/app/components/PageIcon";
+import { CameraBarcodeScanner } from "@/app/components/CameraBarcodeScanner";
 import { COMMON_GST_RATES, UNITS } from "@/lib/constants/states";
 
 type Product = {
@@ -51,6 +52,7 @@ export function ProductsClient({
 }) {
   const [showForm, setShowForm] = useState(false);
   const [trackInventory, setTrackInventory] = useState(false);
+  const barcodeRef = useRef<HTMLInputElement>(null);
   const [showCategoryForm, setShowCategoryForm] = useState(false);
   const [filter, setFilter] = useState<string>("all");
   const [isPending, startTransition] = useTransition();
@@ -151,7 +153,21 @@ export function ProductsClient({
               </select>
             </label>
           </div>
-          <Field name="barcode" label="Barcode (optional)" placeholder="Scan with a USB scanner, or type" />
+          <div className="flex flex-col gap-1.5 text-sm">
+            <span className="font-medium text-foreground">Barcode (optional)</span>
+            <input
+              ref={barcodeRef}
+              name="barcode"
+              placeholder="Scan with a USB scanner, or type"
+              className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-brand"
+            />
+            <CameraBarcodeScanner
+              label="📷 Scan barcode with camera"
+              onScan={(code) => {
+                if (barcodeRef.current) barcodeRef.current.value = code;
+              }}
+            />
+          </div>
           <div className="grid grid-cols-2 gap-3">
             <Field name="hsnCode" label="HSN/SAC code" placeholder="e.g. 0402" />
             <label className="flex flex-col gap-1.5 text-sm">

@@ -13,6 +13,7 @@ import { formatMoney } from "@/lib/format";
 import { SearchableSelect } from "@/app/components/SearchableSelect";
 import { InlineQuickAdd } from "@/app/components/InlineQuickAdd";
 import { BarcodeScanInput } from "@/app/components/BarcodeScanInput";
+import { CameraBarcodeScanner } from "@/app/components/CameraBarcodeScanner";
 import { useTranslation } from "@/lib/i18n/useTranslation";
 import type { Lang } from "@/lib/i18n/dictionary";
 
@@ -100,6 +101,16 @@ export function NewBillClient({
   );
 
   const [state, formAction] = useActionState(createBillAction, null);
+
+  function handleBarcodeScan(code: string) {
+    const match = products.find((p) => p.barcode === code);
+    if (match) {
+      addProduct(match);
+      setScanError(null);
+    } else {
+      setScanError(`${t("bill.noProductFound")}: "${code}"`);
+    }
+  }
 
   function addProduct(p: Product) {
     setCart((prev) => {
@@ -212,16 +223,9 @@ export function NewBillClient({
           <p className="text-sm font-medium text-foreground">{t("bill.addProducts")}</p>
           <BarcodeScanInput
             placeholder={t("bill.scanPlaceholder")}
-            onScan={(code) => {
-              const match = products.find((p) => p.barcode === code);
-              if (match) {
-                addProduct(match);
-                setScanError(null);
-              } else {
-                setScanError(`${t("bill.noProductFound")}: "${code}"`);
-              }
-            }}
+            onScan={handleBarcodeScan}
           />
+          <CameraBarcodeScanner onScan={handleBarcodeScan} />
           {scanError && <p className="text-xs text-credit">{scanError}</p>}
           <SearchableSelect
             items={products}

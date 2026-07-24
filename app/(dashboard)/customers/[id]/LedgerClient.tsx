@@ -7,25 +7,25 @@ import Link from "next/link";
 import { recordPaymentAction } from "@/lib/actions/customers";
 import { formatMoney, formatDateTime } from "@/lib/format";
 import { EmptyState } from "@/app/components/EmptyState";
+import { DownloadStatementButton } from "./DownloadStatementButton";
 
+type BillItem = { name: string; quantity: number; unitPrice: number; lineTotal: number };
 type Bill = {
   id: string;
+  invoiceNumber: string;
   total: number;
   paidAmount: number;
   creditAmount: number;
   status: "active" | "voided";
   createdAt: string;
+  items: BillItem[];
 };
 type Payment = { id: string; amount: number; note: string | null; createdAt: string };
 
 function SubmitButton() {
   const { pending } = useFormStatus();
   return (
-    <button
-      type="submit"
-      disabled={pending}
-      className="btn-primary-sm"
-    >
+    <button type="submit" disabled={pending} className="btn-primary-sm">
       {pending ? "Saving…" : "Record payment"}
     </button>
   );
@@ -33,16 +33,19 @@ function SubmitButton() {
 
 export function LedgerClient({
   customer,
+  shopName,
   balance,
   bills,
   payments,
 }: {
   customer: { id: string; name: string; phone: string };
+  shopName: string;
   balance: number;
   bills: Bill[];
   payments: Payment[];
 }) {
   const [showPaymentForm, setShowPaymentForm] = useState(false);
+  const [expandedBillId, setExpandedBillId] = useState<string | null>(null);
 
   const [state, formAction] = useActionState(
     async (prev: { error?: string } | null, formData: FormData) => {
@@ -72,11 +75,7 @@ export function LedgerClient({
         <div className="mt-3 flex items-end justify-between">
           <div>
             <p className="text-xs text-muted">Outstanding balance</p>
-            <p
-              className={`text-2xl font-semibold ${
-                balance > 0 ? "text-credit" : "text-foreground"
-              }`}
-            >
+            <p className={`text-2xl font-semibold ${balance > 0 ? "text-credit" : "text-foreground"}`}>
               {formatMoney(balance)}
             </p>
           </div>
@@ -94,12 +93,19 @@ export function LedgerClient({
         </div>
       </div>
 
-      <button
-        onClick={() => setShowPaymentForm((v) => !v)}
-        className="rounded-lg border border-border px-4 py-2.5 text-sm font-medium text-foreground"
-      >
-        {showPaymentForm ? "Cancel" : "+ Record a payment"}
-      </button>
+      <div className="flex gap-2">
+        <button
+          onClick={() => setShowPaymentForm((v) => !v)}
+          className="flex-1 rounded-lg border border-border px-4 py-2.5 text-sm font-medium text-foreground"
+        >
+          {showPaymentForm ? "Cancel" : "+ Record a payment"}
+        </button>
+        <DownloadStatementButton customer={customer} shopName={shopName} balance={balance} bills={bills} payments={payments} />
+      </div>
+      <p className="text-xs text-muted">
+        Tap any bill below to see exactly what was bought that day — a full itemized statement
+        (downloadable above) keeps monthly settlement transparent for regular udhaar customers.
+      </p>
 
       {showPaymentForm && (
         <form
@@ -139,14 +145,19 @@ export function LedgerClient({
           <ul className="flex flex-col gap-2">
             {timeline.map((entry) =>
               entry.type === "bill" ? (
-                <li key={entry.data.id}>
-                  <Link
-                    href={`/print/bill/${entry.data.id}`}
-                    className={`flex items-center justify-between gap-3 rounded-lg border px-3.5 py-3 shadow-sm ${
-                      entry.data.status === "voided"
-                        ? "border-border bg-background opacity-60"
-                        : "border-border bg-surface"
-                    }`}
+                <li
+                  key={entry.data.id}
+                  className={`rounded-lg border shadow-sm ${
+                    entry.data.status === "voided"
+                      ? "border-border bg-background opacity-60"
+                      : "border-border bg-surface"
+                  }`}
+                >
+                  <button
+                    onClick={() =>
+                      setExpandedBillId((cur) => (cur === entry.data.id ? null : entry.data.id))
+                    }
+                    className="flex w-full items-center justify-between gap-3 px-3.5 py-3 text-left"
                   >
                     <div className="min-w-0 flex-1">
                       <p
@@ -154,7 +165,7 @@ export function LedgerClient({
                           entry.data.status === "voided" ? "line-through" : ""
                         }`}
                       >
-                        Bill
+                        Bill #{entry.data.invoiceNumber}
                       </p>
                       <p className="text-xs text-muted">{formatDateTime(entry.data.createdAt)}</p>
                     </div>
@@ -174,7 +185,29 @@ export function LedgerClient({
                         </>
                       )}
                     </div>
-                  </Link>
+                  </button>
+                  {expandedBillId === entry.data.id && (
+                    <div className="border-t border-border px-3.5 py-2.5">
+                      <ul className="flex flex-col gap-1">
+                        {entry.data.items.map((item, i) => (
+                          <li key={i} className="flex justify-between text-xs text-muted">
+                            <span className="min-w-0 flex-1 truncate">
+                              {item.name} × {item.quantity}
+                            </span>
+                            <span className="shrink-0 text-foreground">
+                              {formatMoney(item.lineTotal)}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                      <Link
+                        href={`/print/bill/${entry.data.id}`}
+                        className="mt-2 inline-block text-xs font-medium text-brand"
+                      >
+                        View full invoice →
+                      </Link>
+                    </div>
+                  )}
                 </li>
               ) : (
                 <li
@@ -203,10 +236,7 @@ export function LedgerClient({
   );
 }
 
-function buildWhatsAppReminderLink(
-  customer: { name: string; phone: string },
-  balance: number,
-) {
+function buildWhatsAppReminderLink(customer: { name: string; phone: string }, balance: number) {
   // wa.me only supports pre-filled TEXT, never file/image attachments —
   // this is a platform limitation, not a shortcut. See lib note in bills.ts.
   const digits = customer.phone.replace(/\D/g, "");
