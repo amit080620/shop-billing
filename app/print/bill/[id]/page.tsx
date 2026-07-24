@@ -104,13 +104,14 @@ export default async function PrintBillPage({
           >
             Thermal (72mm)
           </a>
-          <DownloadImageButton invoiceNumber={bill.invoice_number} />
+          <DownloadImageButton invoiceNumber={bill.invoice_number} upiLink={upiLink} isThermal={isThermal} />
           <PrintButton />
         </div>
         <p className="text-right text-xs text-gray-500">
-          WhatsApp text messages can&apos;t carry an image — download the invoice above, then
-          attach that file yourself in the WhatsApp chat for a clean copy (with the QR code
-          included).
+          WhatsApp text messages can&apos;t carry a file — download the PDF above, then attach it
+          yourself in the WhatsApp chat for a clean copy. If there&apos;s a balance due, the QR
+          area in that PDF is also tappable in most PDF viewers, opening the customer&apos;s UPI
+          app directly.
         </p>
         {session.role === "owner" && bill.status === "active" && (
           <VoidBillButton billId={bill.id} invoiceNumber={bill.invoice_number} />
@@ -221,7 +222,7 @@ export default async function PrintBillPage({
       </div>
 
       {upiQrDataUrl && (
-        <div className={`mt-3 flex flex-col items-center gap-1 border-t border-dashed border-gray-400 pt-3 ${isThermal ? "" : ""}`}>
+        <div id="upi-qr-block" className="mt-3 flex flex-col items-center gap-1 border-t border-dashed border-gray-400 pt-3">
           <p className={isThermal ? "text-[9px] font-semibold" : "text-xs font-semibold text-gray-700"}>
             Scan to pay {formatMoney(bill.credit_amount)}
           </p>
