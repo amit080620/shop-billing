@@ -1,13 +1,13 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import { createBillAction } from "@/lib/actions/bills";
 import { quickCreateCustomerAction } from "@/lib/actions/customers";
 import { quickCreateProductAction } from "@/lib/actions/products";
 import { calculateTransactionTotals } from "@/lib/validation/schemas";
-import { determineSupplyType } from "@/lib/gst";
+import { determineSupplyType, round2 } from "@/lib/gst";
 import { formatMoney } from "@/lib/format";
 import { SearchableSelect } from "@/app/components/SearchableSelect";
 import { InlineQuickAdd } from "@/app/components/InlineQuickAdd";
@@ -15,7 +15,7 @@ import { BarcodeScanInput } from "@/app/components/BarcodeScanInput";
 import { useTranslation } from "@/lib/i18n/useTranslation";
 import type { Lang } from "@/lib/i18n/dictionary";
 
-type Product = { id: string; name: string; price: number; gstPercent: number; hsnCode: string | null; barcode: string | null };
+type Product = { id: string; name: string; price: number; gstPercent: number; hsnCode: string | null; barcode: string | null; unit: string };
 type Customer = { id: string; name: string; phone: string; gstin: string | null; state_code: string | null };
 type CartLine = {
   productId: string;
@@ -23,6 +23,7 @@ type CartLine = {
   price: number;
   gstPercent: number;
   hsnCode: string | null;
+  unit: string;
   quantity: number;
 };
 
@@ -54,6 +55,17 @@ export function NewBillClient({
   const [step, setStep] = useState<"cart" | "ticket">("cart");
   const [cart, setCart] = useState<CartLine[]>([]);
   const [scanError, setScanError] = useState<string | null>(null);
+  const cartEndRef = useRef<HTMLDivElement>(null);
+
+  // Scroll the newest cart item into view whenever something is added —
+  // on mobile the keyboard often covers half the screen while searching,
+  // so without this the item you just added isn't visible until you
+  // manually scroll or dismiss the keyboard.
+  useEffect(() => {
+    if (cart.length > 0) {
+      cartEndRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+  }, [cart.length]);
   const [customerMode, setCustomerMode] = useState<"walkin" | "existing">("walkin");
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [discountType, setDiscountType] = useState<"percent" | "flat">("flat");
@@ -104,6 +116,7 @@ export function NewBillClient({
           price: p.price,
           gstPercent: p.gstPercent,
           hsnCode: p.hsnCode,
+          unit: p.unit,
           quantity: 1,
         },
       ];
@@ -216,7 +229,7 @@ export function NewBillClient({
             onSelect={addProduct}
             placeholder={t("bill.searchProducts")}
           />
-          <InlineQuickAdd<{ id: string; name: string; price: number; gstPercent: number; hsnCode: string | null; barcode: string | null }>
+          <InlineQuickAdd<{ id: string; name: string; price: number; gstPercent: number; hsnCode: string | null; barcode: string | null; unit: string }>
             triggerLabel={t("bill.addNewProduct")}
             fields={[
               { name: "name", label: t("bill.addNewProduct").replace("+ ", ""), required: true },
@@ -245,22 +258,33 @@ export function NewBillClient({
                       {line.name}
                     </p>
                     <p className="text-xs text-muted">
-                      {formatMoney(line.price)} · GST {line.gstPercent}%
+                      {formatMoney(line.price)}/{line.unit} · GST {line.gstPercent}%
                     </p>
                   </div>
-                  <div className="flex shrink-0 items-center gap-2">
+                  <div className="flex shrink-0 items-center gap-1.5">
                     <button
-                      onClick={() => updateQuantity(line.productId, line.quantity - 1)}
-                      className="h-7 w-7 rounded-full border border-border text-sm font-medium text-foreground"
+                      onClick={() => updateQuantity(line.productId, round2(line.quantity - 1))}
+                      className="h-7 w-7 shrink-0 rounded-full border border-border text-sm font-medium text-foreground"
                     >
                       −
                     </button>
-                    <span className="w-6 text-center text-sm font-medium text-foreground">
-                      {line.quantity}
-                    </span>
+                    <input
+                      type="number"
+                      inputMode="decimal"
+                      step="0.01"
+                      min="0"
+                      value={line.quantity}
+                      onChange={(e) => {
+                        const v = e.target.value;
+                        if (v === "") return;
+                        const num = Number(v);
+                        if (!Number.isNaN(num)) updateQuantity(line.productId, num);
+                      }}
+                      className="w-14 rounded-lg border border-border px-1 py-1 text-center text-sm font-medium text-foreground outline-none focus:border-brand"
+                    />
                     <button
-                      onClick={() => updateQuantity(line.productId, line.quantity + 1)}
-                      className="h-7 w-7 rounded-full border border-border text-sm font-medium text-foreground"
+                      onClick={() => updateQuantity(line.productId, round2(line.quantity + 1))}
+                      className="h-7 w-7 shrink-0 rounded-full border border-border text-sm font-medium text-foreground"
                     >
                       +
                     </button>
@@ -274,6 +298,7 @@ export function NewBillClient({
                 {formatMoney(totals.subtotal)}
               </span>
             </div>
+            <div ref={cartEndRef} />
           </section>
         )}
 

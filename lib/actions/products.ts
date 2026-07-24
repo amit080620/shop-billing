@@ -151,7 +151,7 @@ export async function quickCreateProductAction(
   name: string,
   price: number,
   gstPercent: number,
-): Promise<{ product?: { id: string; name: string; price: number; gstPercent: number; hsnCode: string | null; barcode: string | null }; error?: string }> {
+): Promise<{ product?: { id: string; name: string; price: number; gstPercent: number; hsnCode: string | null; barcode: string | null; unit: string }; error?: string }> {
   const session = await requireSession();
   const parsed = productSchema.pick({ name: true, price: true, gstPercent: true }).safeParse({
     name,
@@ -171,7 +171,7 @@ export async function quickCreateProductAction(
       price: parsed.data.price,
       gst_percent: parsed.data.gstPercent,
     })
-    .select("id, name, price, gst_percent, hsn_code, barcode")
+    .select("id, name, price, gst_percent, hsn_code, barcode, unit")
     .single();
   if (error || !data) {
     console.error("Could not quick-create product", error);
@@ -187,6 +187,7 @@ export async function quickCreateProductAction(
       gstPercent: Number(data.gst_percent),
       hsnCode: data.hsn_code,
       barcode: data.barcode,
+      unit: data.unit,
     },
   };
 }
