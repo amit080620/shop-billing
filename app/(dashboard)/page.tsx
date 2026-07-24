@@ -4,6 +4,7 @@ import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { formatMoney, formatDateTime } from "@/lib/format";
 import { EmptyState } from "@/app/components/EmptyState";
 import { getTranslator } from "@/lib/i18n/server";
+import { FESTIVALS } from "@/lib/festivals";
 
 export default async function DashboardPage() {
   const session = await requireSession();
@@ -89,6 +90,16 @@ export default async function DashboardPage() {
   ];
   const setupComplete = setupSteps.every((s) => s.done);
 
+  const todayMidnight = new Date();
+  todayMidnight.setHours(0, 0, 0, 0);
+  const nextFestival = FESTIVALS.map((f) => {
+    const date = new Date(`${f.date}T00:00:00`);
+    const daysUntil = Math.round((date.getTime() - todayMidnight.getTime()) / (1000 * 60 * 60 * 24));
+    return { ...f, daysUntil };
+  })
+    .filter((f) => f.daysUntil >= 0 && f.daysUntil <= 25)
+    .sort((a, b) => a.daysUntil - b.daysUntil)[0];
+
   return (
     <div className="flex flex-col gap-5">
       <div>
@@ -168,6 +179,25 @@ export default async function DashboardPage() {
         <PlusIcon />
         {t("home.newBill")}
       </Link>
+
+      {nextFestival && (
+        <Link
+          href="/festivals"
+          className="rounded-xl border border-dashed border-brand bg-brand-soft p-4"
+        >
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-sm font-semibold text-brand-dark">
+                🪔 {nextFestival.name} in {nextFestival.daysUntil} day{nextFestival.daysUntil === 1 ? "" : "s"}
+              </p>
+              <p className="mt-0.5 text-xs text-brand-dark/80">
+                Good time to check stock — tap for restock ideas & a calendar reminder.
+              </p>
+            </div>
+            <span className="shrink-0 text-brand-dark">›</span>
+          </div>
+        </Link>
+      )}
 
       <section>
         <h2 className="mb-2 text-sm font-semibold text-foreground">

@@ -25,6 +25,7 @@ export default async function MorePage() {
         <MenuLink href="/daily-summary" label="Daily summary" sub="End-of-day cash reconciliation" icon={CashIcon} />
         <MenuLink href="/help" label="Help & guide" sub="How every screen and button works" icon={HelpIcon} />
         <MenuLink href="/insights" label="Insights" sub="Fast movers & dead stock, from your own sales" icon={ChartIcon} />
+        <MenuLink href="/festivals" label="Festival planner" sub="Upcoming festivals & stock-up reminders" icon={FestivalIcon} />
         {session.role === "owner" && (
           <MenuLink href="/staff" label={t("more.staff")} sub={t("more.staff.sub")} icon={UsersIcon} />
         )}
@@ -181,6 +182,14 @@ function HelpIcon({ className }: { className?: string }) {
       <circle cx="12" cy="12" r="9" />
       <path d="M9.5 9a2.5 2.5 0 0 1 5 0c0 1.5-2.5 2-2.5 3.5" />
       <path d="M12 17h.01" />
+    </svg>
+  );
+}
+function FestivalIcon({ className }: { className?: string }) {
+  return (
+    <svg {...iconProps(className)}>
+      <rect x="3" y="5" width="18" height="16" rx="2" />
+      <path d="M3 10h18M8 3v4M16 3v4" />
     </svg>
   );
 }
