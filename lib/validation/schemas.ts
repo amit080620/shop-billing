@@ -109,6 +109,7 @@ export const purchaseSchema = z.object({
   purchaseDate: z.string().min(1),
   items: z.array(lineItemSchema).min(1, "Add at least one item"),
   paidAmount: z.coerce.number().min(0),
+  paymentMethod: z.enum(paymentMethods).default("cash"),
   itcEligible: z.boolean().default(true),
   reverseCharge: z.boolean().default(false),
 });
@@ -117,6 +118,7 @@ export type PurchaseInput = z.infer<typeof purchaseSchema>;
 export const paymentSchema = z.object({
   partyId: z.string().uuid(),
   amount: z.coerce.number().positive("Enter an amount greater than 0"),
+  paymentMethod: z.enum(paymentMethods).default("cash"),
   note: z.string().trim().max(200).optional(),
 });
 

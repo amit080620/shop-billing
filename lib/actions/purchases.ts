@@ -28,7 +28,7 @@ export async function createPurchaseAction(
   if (!parsed.success) {
     return { error: parsed.error.issues[0].message };
   }
-  const { vendorId, vendorInvoiceNumber, purchaseDate, items, paidAmount, itcEligible, reverseCharge } =
+  const { vendorId, vendorInvoiceNumber, purchaseDate, items, paidAmount, paymentMethod, itcEligible, reverseCharge } =
     parsed.data;
 
   const admin = createSupabaseAdminClient();
@@ -88,6 +88,7 @@ export async function createPurchaseAction(
       gst_amount: totals.gstAmount,
       total: totals.total,
       paid_amount: totals.paidAmount,
+      payment_method: paymentMethod,
       payable_amount: totals.balanceAmount,
       itc_eligible: itcEligible,
       reverse_charge: reverseCharge,

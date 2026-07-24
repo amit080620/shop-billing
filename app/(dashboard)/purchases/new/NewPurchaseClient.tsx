@@ -52,6 +52,7 @@ export function NewPurchaseClient({
   const [purchaseDate, setPurchaseDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [lines, setLines] = useState<Line[]>([]);
   const [paidAmount, setPaidAmount] = useState<number | "">("");
+  const [paymentMethod, setPaymentMethod] = useState<"cash" | "card" | "upi" | "online" | "other">("cash");
   const [itcEligible, setItcEligible] = useState(true);
   const [reverseCharge, setReverseCharge] = useState(false);
 
@@ -124,6 +125,7 @@ export function NewPurchaseClient({
       gstPercent: l.gstPercent,
     })),
     paidAmount: typeof paidAmount === "number" ? paidAmount : totals.total,
+    paymentMethod,
     itcEligible,
     reverseCharge,
   });
@@ -305,6 +307,25 @@ export function NewPurchaseClient({
             className="rounded-lg border border-border px-3.5 py-2.5 text-sm outline-none focus:border-brand"
           />
         </label>
+        <div className="flex flex-col gap-1.5 text-sm">
+          <span className="font-medium text-foreground">Paid via</span>
+          <div className="flex flex-wrap gap-2">
+            {(["cash", "card", "upi", "online", "other"] as const).map((m) => (
+              <button
+                key={m}
+                type="button"
+                onClick={() => setPaymentMethod(m)}
+                className={`rounded-full border px-3 py-1.5 text-xs font-medium capitalize ${
+                  paymentMethod === m
+                    ? "border-brand bg-brand-soft text-brand-dark"
+                    : "border-border text-muted"
+                }`}
+              >
+                {m}
+              </button>
+            ))}
+          </div>
+        </div>
         <label className="flex items-center gap-2 text-sm text-foreground">
           <input
             type="checkbox"

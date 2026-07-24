@@ -51,6 +51,7 @@ export async function recordPaymentAction(
   const parsed = paymentSchema.safeParse({
     partyId: formData.get("customerId"),
     amount: formData.get("amount"),
+    paymentMethod: formData.get("paymentMethod") || "cash",
     note: formData.get("note") || undefined,
   });
   if (!parsed.success) {
@@ -73,6 +74,7 @@ export async function recordPaymentAction(
     customer_id: parsed.data.partyId,
     staff_id: session.userId,
     amount: parsed.data.amount,
+    payment_method: parsed.data.paymentMethod,
     note: parsed.data.note ?? null,
   });
   if (error) {

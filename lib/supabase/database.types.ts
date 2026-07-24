@@ -335,9 +335,9 @@ export interface Database {
         ];
       };
       payments: {
-        Row: { id: string; shop_id: string; customer_id: string; staff_id: string; amount: number; note: string | null; created_at: string };
-        Insert: { id?: string; shop_id: string; customer_id: string; staff_id: string; amount: number; note?: string | null; created_at?: string };
-        Update: { id?: string; shop_id?: string; customer_id?: string; staff_id?: string; amount?: number; note?: string | null; created_at?: string };
+        Row: { id: string; shop_id: string; customer_id: string; staff_id: string; amount: number; payment_method: "cash" | "card" | "upi" | "online" | "other"; note: string | null; created_at: string };
+        Insert: { id?: string; shop_id: string; customer_id: string; staff_id: string; amount: number; payment_method?: "cash" | "card" | "upi" | "online" | "other"; note?: string | null; created_at?: string };
+        Update: { id?: string; shop_id?: string; customer_id?: string; staff_id?: string; amount?: number; payment_method?: "cash" | "card" | "upi" | "online" | "other"; note?: string | null; created_at?: string };
         Relationships: [
           { foreignKeyName: "payments_shop_id_fkey"; columns: ["shop_id"]; isOneToOne: false; referencedRelation: "shops"; referencedColumns: ["id"] },
           { foreignKeyName: "payments_customer_id_fkey"; columns: ["customer_id"]; isOneToOne: false; referencedRelation: "customers"; referencedColumns: ["id"] },
@@ -398,6 +398,7 @@ export interface Database {
           gst_amount: number;
           total: number;
           paid_amount: number;
+          payment_method: "cash" | "card" | "upi" | "online" | "other";
           payable_amount: number;
           itc_eligible: boolean;
           reverse_charge: boolean;
@@ -419,6 +420,7 @@ export interface Database {
           gst_amount?: number;
           total?: number;
           paid_amount?: number;
+          payment_method?: "cash" | "card" | "upi" | "online" | "other";
           payable_amount?: number;
           itc_eligible?: boolean;
           reverse_charge?: boolean;
@@ -440,6 +442,7 @@ export interface Database {
           gst_amount?: number;
           total?: number;
           paid_amount?: number;
+          payment_method?: "cash" | "card" | "upi" | "online" | "other";
           payable_amount?: number;
           itc_eligible?: boolean;
           reverse_charge?: boolean;
@@ -559,9 +562,9 @@ export interface Database {
         ];
       };
       purchase_payments: {
-        Row: { id: string; shop_id: string; vendor_id: string; staff_id: string; amount: number; note: string | null; created_at: string };
-        Insert: { id?: string; shop_id: string; vendor_id: string; staff_id: string; amount: number; note?: string | null; created_at?: string };
-        Update: { id?: string; shop_id?: string; vendor_id?: string; staff_id?: string; amount?: number; note?: string | null; created_at?: string };
+        Row: { id: string; shop_id: string; vendor_id: string; staff_id: string; amount: number; payment_method: "cash" | "card" | "upi" | "online" | "other"; note: string | null; created_at: string };
+        Insert: { id?: string; shop_id: string; vendor_id: string; staff_id: string; amount: number; payment_method?: "cash" | "card" | "upi" | "online" | "other"; note?: string | null; created_at?: string };
+        Update: { id?: string; shop_id?: string; vendor_id?: string; staff_id?: string; amount?: number; payment_method?: "cash" | "card" | "upi" | "online" | "other"; note?: string | null; created_at?: string };
         Relationships: [
           { foreignKeyName: "purchase_payments_shop_id_fkey"; columns: ["shop_id"]; isOneToOne: false; referencedRelation: "shops"; referencedColumns: ["id"] },
           { foreignKeyName: "purchase_payments_vendor_id_fkey"; columns: ["vendor_id"]; isOneToOne: false; referencedRelation: "vendors"; referencedColumns: ["id"] },

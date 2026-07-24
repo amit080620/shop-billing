@@ -8,6 +8,7 @@ import { recordPaymentAction } from "@/lib/actions/customers";
 import { formatMoney, formatDateTime } from "@/lib/format";
 import { EmptyState } from "@/app/components/EmptyState";
 import { DownloadStatementButton } from "./DownloadStatementButton";
+import { PaymentMethodPicker } from "@/app/components/PaymentMethodPicker";
 
 type BillItem = { name: string; quantity: number; unitPrice: number; lineTotal: number };
 type Bill = {
@@ -124,6 +125,7 @@ export function LedgerClient({
               className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-brand"
             />
           </label>
+          <PaymentMethodPicker />
           <label className="flex flex-col gap-1.5 text-sm">
             <span className="font-medium text-foreground">Note (optional)</span>
             <input

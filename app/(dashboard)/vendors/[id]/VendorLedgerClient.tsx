@@ -7,6 +7,7 @@ import Link from "next/link";
 import { recordVendorPaymentAction } from "@/lib/actions/vendors";
 import { formatMoney, formatDateTime } from "@/lib/format";
 import { EmptyState } from "@/app/components/EmptyState";
+import { PaymentMethodPicker } from "@/app/components/PaymentMethodPicker";
 
 type Purchase = {
   id: string;
@@ -110,6 +111,7 @@ export function VendorLedgerClient({
               className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-brand"
             />
           </label>
+          <PaymentMethodPicker />
           <label className="flex flex-col gap-1.5 text-sm">
             <span className="font-medium text-foreground">Note (optional)</span>
             <input

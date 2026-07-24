@@ -194,9 +194,11 @@ create table if not exists payments (
   customer_id uuid not null references customers(id) on delete cascade,
   staff_id uuid not null references staff(id),
   amount numeric(12, 2) not null,
+  payment_method text not null default 'cash' check (payment_method in ('cash', 'card', 'upi', 'online', 'other')),
   note text,
   created_at timestamptz not null default now()
 );
+alter table payments add column if not exists payment_method text not null default 'cash' check (payment_method in ('cash', 'card', 'upi', 'online', 'other'));
 
 -- ─── Item requests ("customer asked, we didn't have it") ────────────────
 -- Not tied to the catalog — the item may not exist as a product yet.
@@ -250,11 +252,13 @@ create table if not exists purchases (
   gst_amount numeric(12, 2) not null default 0,
   total numeric(12, 2) not null default 0,
   paid_amount numeric(12, 2) not null default 0,
+  payment_method text not null default 'cash' check (payment_method in ('cash', 'card', 'upi', 'online', 'other')),
   payable_amount numeric(12, 2) not null default 0,
   itc_eligible boolean not null default true,
   reverse_charge boolean not null default false,
   created_at timestamptz not null default now()
 );
+alter table purchases add column if not exists payment_method text not null default 'cash' check (payment_method in ('cash', 'card', 'upi', 'online', 'other'));
 
 create table if not exists purchase_items (
   id uuid primary key default uuid_generate_v4(),
@@ -281,9 +285,11 @@ create table if not exists purchase_payments (
   vendor_id uuid not null references vendors(id) on delete cascade,
   staff_id uuid not null references staff(id),
   amount numeric(12, 2) not null,
+  payment_method text not null default 'cash' check (payment_method in ('cash', 'card', 'upi', 'online', 'other')),
   note text,
   created_at timestamptz not null default now()
 );
+alter table purchase_payments add column if not exists payment_method text not null default 'cash' check (payment_method in ('cash', 'card', 'upi', 'online', 'other'));
 
 create index if not exists idx_products_shop on products(shop_id);
 create index if not exists idx_customers_shop on customers(shop_id);
