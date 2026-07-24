@@ -17,7 +17,18 @@ import { CameraBarcodeScanner } from "@/app/components/CameraBarcodeScanner";
 import { useTranslation } from "@/lib/i18n/useTranslation";
 import type { Lang } from "@/lib/i18n/dictionary";
 
-type Product = { id: string; name: string; price: number; gstPercent: number; hsnCode: string | null; barcode: string | null; unit: string };
+type Product = {
+  id: string;
+  name: string;
+  price: number;
+  gstPercent: number;
+  hsnCode: string | null;
+  barcode: string | null;
+  unit: string;
+  trackInventory: boolean;
+  stockQuantity: number;
+  lowStockThreshold: number;
+};
 type Customer = { id: string; name: string; phone: string; gstin: string | null; state_code: string | null };
 type CartLine = {
   productId: string;
@@ -27,6 +38,9 @@ type CartLine = {
   hsnCode: string | null;
   unit: string;
   quantity: number;
+  trackInventory: boolean;
+  stockQuantity: number;
+  lowStockThreshold: number;
 };
 
 function SubmitButton({ blocked, generatingLabel, submitLabel }: { blocked: boolean; generatingLabel: string; submitLabel: string }) {
@@ -130,6 +144,9 @@ export function NewBillClient({
           hsnCode: p.hsnCode,
           unit: p.unit,
           quantity: 1,
+          trackInventory: p.trackInventory,
+          stockQuantity: p.stockQuantity,
+          lowStockThreshold: p.lowStockThreshold,
         },
       ];
     });
@@ -231,11 +248,13 @@ export function NewBillClient({
             items={products}
             getKey={(p) => p.id}
             getLabel={(p) => p.name}
-            getSubLabel={(p) => formatMoney(p.price)}
+            getSubLabel={(p) =>
+              p.trackInventory ? `${formatMoney(p.price)} · ${p.stockQuantity} ${p.unit} left` : formatMoney(p.price)
+            }
             onSelect={addProduct}
             placeholder={t("bill.searchProducts")}
           />
-          <InlineQuickAdd<{ id: string; name: string; price: number; gstPercent: number; hsnCode: string | null; barcode: string | null; unit: string }>
+          <InlineQuickAdd<Product>
             triggerLabel={t("bill.addNewProduct")}
             fields={[
               { name: "name", label: t("bill.addNewProduct").replace("+ ", ""), required: true },
@@ -250,7 +269,12 @@ export function NewBillClient({
                 Number(v.gstPercent) || 0,
                 v.unit || "NOS",
               );
-              return { data: r.product, error: r.error };
+              return {
+                data: r.product
+                  ? { ...r.product, trackInventory: false, stockQuantity: 0, lowStockThreshold: 0 }
+                  : undefined,
+                error: r.error,
+              };
             }}
             onCreated={addProduct}
           />
@@ -273,6 +297,13 @@ export function NewBillClient({
                       <p className="text-xs text-muted">
                         {formatMoney(line.price)}/{line.unit} · GST {line.gstPercent}%
                       </p>
+                      {line.trackInventory && (
+                        <StockIndicator
+                          remaining={round2(line.stockQuantity - line.quantity)}
+                          threshold={line.lowStockThreshold}
+                          unit={line.unit}
+                        />
+                      )}
                     </div>
                     <div className="flex shrink-0 items-center gap-1.5">
                       <button
@@ -558,6 +589,45 @@ function quantityPresets(unit: string): number[] {
   if (unit === "KG" || unit === "LTR") return [0.25, 0.5, 1, 2, 5];
   if (unit === "GM" || unit === "ML") return [100, 250, 500, 1000];
   return [];
+}
+
+/** Shows remaining stock right in the cart, color-coded so a low/about-to-
+ * run-out item is obvious without switching to the Products screen:
+ * red = at or under the low-stock threshold, orange = within 3 units of it. */
+function StockIndicator({
+  remaining,
+  threshold,
+  unit,
+}: {
+  remaining: number;
+  threshold: number;
+  unit: string;
+}) {
+  const isLow = remaining <= threshold;
+  const isNearLow = !isLow && remaining <= threshold + 3;
+
+  if (remaining <= 0) {
+    return <p className="text-xs font-semibold text-danger">⚠ Out of stock after this sale</p>;
+  }
+  if (isLow) {
+    return (
+      <p className="text-xs font-semibold text-danger">
+        ● Low stock: {remaining} {unit} left
+      </p>
+    );
+  }
+  if (isNearLow) {
+    return (
+      <p className="text-xs font-medium" style={{ color: "#c2760f" }}>
+        ● {remaining} {unit} left — getting low
+      </p>
+    );
+  }
+  return (
+    <p className="text-xs text-muted">
+      {remaining} {unit} in stock
+    </p>
+  );
 }
 
 function presetLabel(value: number, unit: string): string {

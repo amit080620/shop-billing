@@ -12,6 +12,7 @@ import { formatMoney } from "@/lib/format";
 import { EmptyState } from "@/app/components/EmptyState";
 import { PageIcon } from "@/app/components/PageIcon";
 import { CameraBarcodeScanner } from "@/app/components/CameraBarcodeScanner";
+import { BarcodeScanInput } from "@/app/components/BarcodeScanInput";
 import { COMMON_GST_RATES, UNITS } from "@/lib/constants/states";
 
 type Product = {
@@ -75,13 +76,27 @@ export function ProductsClient({
     null,
   );
 
-  const filtered = useMemo(
-    () =>
-      filter === "all"
-        ? initialProducts
-        : initialProducts.filter((p) => p.categoryId === filter),
-    [initialProducts, filter],
-  );
+  const [search, setSearch] = useState("");
+  const [scanNotice, setScanNotice] = useState<string | null>(null);
+
+  const filtered = useMemo(() => {
+    const byCategory = filter === "all" ? initialProducts : initialProducts.filter((p) => p.categoryId === filter);
+    if (!search.trim()) return byCategory;
+    const q = search.toLowerCase();
+    return byCategory.filter(
+      (p) => p.name.toLowerCase().includes(q) || (p.barcode ?? "").toLowerCase().includes(q),
+    );
+  }, [initialProducts, filter, search]);
+
+  function handleInventoryScan(code: string) {
+    const match = initialProducts.find((p) => p.barcode === code);
+    if (match) {
+      setSearch(match.name);
+      setScanNotice(null);
+    } else {
+      setScanNotice(`No item found with barcode "${code}" — add it below.`);
+    }
+  }
 
   return (
     <div className="flex flex-col gap-4">
@@ -94,7 +109,7 @@ export function ProductsClient({
               <path d="M12 12v8" />
             </svg>
           </PageIcon>
-          <h1 className="text-lg font-semibold text-foreground">Products</h1>
+          <h1 className="text-lg font-semibold text-foreground">Inventory</h1>
         </div>
         <div className="flex gap-2">
           <button
@@ -111,6 +126,38 @@ export function ProductsClient({
           </button>
         </div>
       </div>
+
+      <div className="flex flex-col gap-2">
+        <input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search by name or barcode"
+          className="rounded-lg border border-border bg-surface shadow-sm px-3.5 py-2.5 text-sm outline-none focus:border-brand"
+        />
+        <BarcodeScanInput
+          placeholder="Scan barcode to find an item"
+          onScan={handleInventoryScan}
+        />
+        <CameraBarcodeScanner onScan={handleInventoryScan} />
+        {scanNotice && <p className="text-xs text-credit">{scanNotice}</p>}
+      </div>
+
+      {initialProducts.some((p) => p.trackInventory) && (
+        <div className="grid grid-cols-2 gap-3">
+          <div className="rounded-xl border border-border bg-surface shadow-sm p-3 text-center">
+            <p className="text-xs text-muted">Tracked items</p>
+            <p className="mt-1 text-lg font-semibold text-foreground">
+              {initialProducts.filter((p) => p.trackInventory).length}
+            </p>
+          </div>
+          <div className="rounded-xl border border-border bg-credit-soft shadow-sm p-3 text-center">
+            <p className="text-xs text-credit">Low stock</p>
+            <p className="mt-1 text-lg font-semibold text-credit">
+              {initialProducts.filter((p) => p.trackInventory && p.stockQuantity <= p.lowStockThreshold).length}
+            </p>
+          </div>
+        </div>
+      )}
 
       {showCategoryForm && (
         <form

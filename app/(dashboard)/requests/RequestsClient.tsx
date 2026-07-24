@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import {
@@ -13,6 +13,7 @@ import { formatMoney, formatDateTime } from "@/lib/format";
 import { EmptyState } from "@/app/components/EmptyState";
 import { PageIcon } from "@/app/components/PageIcon";
 import { SearchableSelect } from "@/app/components/SearchableSelect";
+import { ContactPickerButton } from "@/app/components/ContactPickerButton";
 
 type Customer = { id: string; name: string; phone: string };
 type Request = {
@@ -50,6 +51,8 @@ export function RequestsClient({
   requests: Request[];
 }) {
   const [showForm, setShowForm] = useState(false);
+  const nameRef = useRef<HTMLInputElement>(null);
+  const phoneRef = useRef<HTMLInputElement>(null);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [isPending, startTransition] = useTransition();
 
@@ -130,9 +133,16 @@ export function RequestsClient({
 
           {!selectedCustomer && (
             <>
+              <ContactPickerButton
+                onPick={(name, phone) => {
+                  if (nameRef.current) nameRef.current.value = name;
+                  if (phoneRef.current) phoneRef.current.value = phone;
+                }}
+              />
               <label className="flex flex-col gap-1.5 text-sm">
                 <span className="font-medium text-foreground">Name</span>
                 <input
+                  ref={nameRef}
                   name="customerName"
                   required
                   className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-brand"
@@ -141,6 +151,7 @@ export function RequestsClient({
               <label className="flex flex-col gap-1.5 text-sm">
                 <span className="font-medium text-foreground">Phone</span>
                 <input
+                  ref={phoneRef}
                   name="customerPhone"
                   type="tel"
                   required
