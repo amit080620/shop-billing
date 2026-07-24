@@ -135,7 +135,7 @@ export default async function DashboardPage() {
       )}
 
       <section className="grid grid-cols-2 gap-3">
-        <StatCard label={t("home.todaySales")} value={formatMoney(todayTotal)} />
+        <StatCard label={t("home.todaySales")} value={formatMoney(todayTotal)} href="/daily-summary" />
         <StatCard label={t("home.last7Days")} value={formatMoney(weekTotal)} />
         <StatCard
           label={t("home.outstandingCredit")}
