@@ -10,9 +10,20 @@ interface BarcodeDetectorInstance {
 }
 interface BarcodeDetectorConstructor {
   new (options?: { formats: string[] }): BarcodeDetectorInstance;
+  getSupportedFormats?: () => Promise<string[]>;
 }
 
-const BARCODE_FORMATS = ["ean_13", "ean_8", "upc_a", "upc_e", "code_128", "code_39", "qr_code"];
+const WANTED_FORMATS = ["ean_13", "ean_8", "upc_a", "upc_e", "code_128", "code_39", "qr_code"];
+
+// A browser page can never programmatically open Chrome's permission
+// dialog or site-settings screen — that's a deliberate security boundary,
+// not something any website's code can bypass. Once a person has denied
+// (or Chrome auto-blocked) camera access for a site, only the person can
+// re-enable it, via the steps in this message.
+const PERMISSION_HELP =
+  "Camera access is blocked for this site. Tap the 🔒 or ⓘ icon next to the " +
+  "address bar → Permissions/Site settings → Camera → Allow, then reload " +
+  "this page and try again.";
 
 export function CameraBarcodeScanner({
   onScan,
@@ -36,9 +47,7 @@ export function CameraBarcodeScanner({
     if (!active) return;
 
     let cancelled = false;
-    const Detector = (window as unknown as { BarcodeDetector: BarcodeDetectorConstructor })
-      .BarcodeDetector;
-    const detector = new Detector({ formats: BARCODE_FORMATS });
+    let detector: BarcodeDetectorInstance;
 
     async function scanLoop() {
       if (cancelled || !videoRef.current || videoRef.current.readyState < 2) {
@@ -60,6 +69,23 @@ export function CameraBarcodeScanner({
 
     async function start() {
       try {
+        const Detector = (window as unknown as { BarcodeDetector: BarcodeDetectorConstructor })
+          .BarcodeDetector;
+        // Only request formats this browser actually supports — asking for
+        // an unsupported one can throw synchronously on some Chrome builds.
+        const supportedFormats = Detector.getSupportedFormats
+          ? await Detector.getSupportedFormats()
+          : WANTED_FORMATS;
+        const formats = WANTED_FORMATS.filter((f) => supportedFormats.includes(f));
+        detector = new Detector({ formats: formats.length > 0 ? formats : WANTED_FORMATS });
+      } catch (err) {
+        console.error("Barcode detector setup failed:", err);
+        setError("This browser can't scan barcodes — use the text box above instead.");
+        setActive(false);
+        return;
+      }
+
+      try {
         const stream = await navigator.mediaDevices.getUserMedia({
           video: { facingMode: "environment" },
         });
@@ -73,8 +99,18 @@ export function CameraBarcodeScanner({
           await videoRef.current.play();
         }
         rafRef.current = requestAnimationFrame(scanLoop);
-      } catch {
-        setError("Could not access camera — check permissions.");
+      } catch (err) {
+        console.error("Camera access failed:", err);
+        const name = (err as { name?: string })?.name;
+        if (name === "NotAllowedError" || name === "SecurityError") {
+          setError(PERMISSION_HELP);
+        } else if (name === "NotFoundError") {
+          setError("No camera found on this device.");
+        } else if (name === "NotReadableError") {
+          setError("Camera is already in use by another app — close it and try again.");
+        } else {
+          setError("Could not access camera. Use the text box above instead.");
+        }
         setActive(false);
       }
     }

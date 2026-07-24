@@ -283,19 +283,9 @@ export function NewBillClient({
                       >
                         −
                       </button>
-                      <input
-                        type="number"
-                        inputMode="decimal"
-                        step="0.01"
-                        min="0"
+                      <QuantityInput
                         value={line.quantity}
-                        onChange={(e) => {
-                          const v = e.target.value;
-                          if (v === "") return;
-                          const num = Number(v);
-                          if (!Number.isNaN(num)) updateQuantity(line.productId, num);
-                        }}
-                        className="w-14 rounded-lg border border-border px-1 py-1 text-center text-sm font-medium text-foreground outline-none focus:border-brand"
+                        onCommit={(num) => updateQuantity(line.productId, num)}
                       />
                       <button
                         onClick={() =>
@@ -323,31 +313,10 @@ export function NewBillClient({
                         </button>
                       ))}
                       {(line.unit === "KG" || line.unit === "LTR") && (
-                        <div className="flex items-center gap-1 rounded-full border border-dashed border-border px-2 py-1">
-                          <input
-                            type="number"
-                            inputMode="decimal"
-                            placeholder={line.unit === "KG" ? "e.g. 1" : "e.g. 5"}
-                            className="w-12 bg-transparent text-xs outline-none"
-                            onKeyDown={(e) => {
-                              if (e.key !== "Enter") return;
-                              e.preventDefault();
-                              const target = e.target as HTMLInputElement;
-                              const small = Number(target.value);
-                              if (!Number.isNaN(small) && small > 0) {
-                                // 3-decimal precision — needed for things like
-                                // 1 gram of saffron (0.001kg), which the usual
-                                // 2dp rounding would otherwise zero out.
-                                const qty = Math.round((small / 1000) * 1000) / 1000;
-                                updateQuantity(line.productId, qty);
-                                target.value = "";
-                              }
-                            }}
-                          />
-                          <span className="text-xs text-muted">
-                            {line.unit === "KG" ? "g" : "ml"}
-                          </span>
-                        </div>
+                        <SmallUnitInput
+                          unit={line.unit}
+                          onCommit={(qty) => updateQuantity(line.productId, qty)}
+                        />
                       )}
                     </div>
                   )}
@@ -596,6 +565,84 @@ function presetLabel(value: number, unit: string): string {
     return `${value * 1000}${unit === "KG" ? "g" : "ml"}`;
   }
   return `${value}${unit === "KG" ? "kg" : unit === "LTR" ? "L" : unit.toLowerCase()}`;
+}
+
+/** A plain controlled `<input value={n}>` fights the user the moment they
+ * backspace to clear it — React immediately snaps it back to the last
+ * number, since "" isn't a valid quantity yet. This keeps its own text
+ * buffer so clearing/retyping feels normal, and only commits the parsed
+ * number to the cart on blur (or Enter). */
+function QuantityInput({ value, onCommit }: { value: number; onCommit: (n: number) => void }) {
+  const [text, setText] = useState(String(value));
+
+  useEffect(() => {
+    setText(String(value));
+  }, [value]);
+
+  function commit() {
+    const num = Number(text);
+    if (text.trim() !== "" && !Number.isNaN(num) && num > 0) {
+      onCommit(round2(num));
+    } else {
+      setText(String(value)); // invalid/empty — revert rather than silently zeroing the line
+    }
+  }
+
+  return (
+    <input
+      type="number"
+      inputMode="decimal"
+      step="0.01"
+      min="0"
+      value={text}
+      onChange={(e) => setText(e.target.value)}
+      onBlur={commit}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          (e.target as HTMLInputElement).blur();
+        }
+      }}
+      className="w-14 rounded-lg border border-border px-1 py-1 text-center text-sm font-medium text-foreground outline-none focus:border-brand"
+    />
+  );
+}
+
+/** Free-text grams/ml entry for KG/LTR products — applies on blur (tapping
+ * away) as well as Enter, so it doesn't force an extra keypress on mobile. */
+function SmallUnitInput({ unit, onCommit }: { unit: "KG" | "LTR"; onCommit: (qty: number) => void }) {
+  const [text, setText] = useState("");
+
+  function commit() {
+    const small = Number(text);
+    if (text.trim() !== "" && !Number.isNaN(small) && small > 0) {
+      // 3-decimal precision — needed for things like 1 gram of saffron
+      // (0.001kg), which the usual 2dp rounding would otherwise zero out.
+      onCommit(Math.round((small / 1000) * 1000) / 1000);
+    }
+    setText("");
+  }
+
+  return (
+    <div className="flex items-center gap-1 rounded-full border border-dashed border-border px-2 py-1">
+      <input
+        type="number"
+        inputMode="decimal"
+        placeholder={unit === "KG" ? "e.g. 1" : "e.g. 5"}
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        onBlur={commit}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            (e.target as HTMLInputElement).blur();
+          }
+        }}
+        className="w-12 bg-transparent text-xs outline-none"
+      />
+      <span className="text-xs text-muted">{unit === "KG" ? "g" : "ml"}</span>
+    </div>
+  );
 }
 
 function Row({ label, value, bold }: { label: string; value: string; bold?: boolean }) {
