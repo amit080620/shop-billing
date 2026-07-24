@@ -11,7 +11,7 @@ import {
 } from "@/lib/actions/products";
 import { formatMoney } from "@/lib/format";
 import { EmptyState } from "@/app/components/EmptyState";
-import { PageIcon } from "@/app/components/PageIcon";
+import { PageHeader } from "@/app/components/PageHeader";
 import { CameraBarcodeScanner } from "@/app/components/CameraBarcodeScanner";
 import { BarcodeScanInput } from "@/app/components/BarcodeScanInput";
 import { BulkImportExport } from "./BulkImportExport";
@@ -103,32 +103,32 @@ export function ProductsClient({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <PageIcon>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M3.5 8 12 4l8.5 4-8.5 4-8.5-4Z" />
-              <path d="M3.5 8v8L12 20l8.5-4V8" />
-              <path d="M12 12v8" />
-            </svg>
-          </PageIcon>
-          <h1 className="text-lg font-semibold text-foreground">Inventory</h1>
-        </div>
-        <div className="flex gap-2">
-          <button
-            onClick={() => setShowCategoryForm((v) => !v)}
-            className="rounded-lg border border-border px-3 py-1.5 text-sm font-medium text-foreground"
-          >
-            + Category
-          </button>
-          <button
-            onClick={() => setShowForm((v) => !v)}
-            className="btn-primary-sm"
-          >
-            + Product
-          </button>
-        </div>
-      </div>
+      <PageHeader
+        title="Inventory"
+        icon={
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M3.5 8 12 4l8.5 4-8.5 4-8.5-4Z" />
+            <path d="M3.5 8v8L12 20l8.5-4V8" />
+            <path d="M12 12v8" />
+          </svg>
+        }
+        action={
+          <div className="flex gap-2">
+            <button
+              onClick={() => setShowCategoryForm((v) => !v)}
+              className="rounded-lg border border-border px-3 py-1.5 text-sm font-medium text-foreground"
+            >
+              + Category
+            </button>
+            <button
+              onClick={() => setShowForm((v) => !v)}
+              className="btn-primary-sm"
+            >
+              + Product
+            </button>
+          </div>
+        }
+      />
 
       <div className="flex flex-col gap-2">
         <input

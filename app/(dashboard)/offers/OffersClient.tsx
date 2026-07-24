@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { PageIcon } from "@/app/components/PageIcon";
+import { PageHeader } from "@/app/components/PageHeader";
 import { EmptyState } from "@/app/components/EmptyState";
 
 type Customer = { id: string; name: string; phone: string };
@@ -60,21 +60,16 @@ export function OffersClient({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center gap-3">
-        <PageIcon>
+      <PageHeader
+        title="Send an offer"
+        subtitle="Write it once, select who to send it to (or Select all), then work through them — WhatsApp only lets a real person hit Send, so this can't be fully automatic."
+        icon={
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
             <path d="M4 4h16v12H7l-3 3V4Z" />
             <path d="M8 9h8M8 12h5" />
           </svg>
-        </PageIcon>
-        <div>
-          <h1 className="text-lg font-semibold text-foreground">Send an offer</h1>
-          <p className="text-sm text-muted">
-            Write it once, select who to send it to (or Select all), then work through them —
-            WhatsApp only lets a real person hit Send, so this can&apos;t be fully automatic.
-          </p>
-        </div>
-      </div>
+        }
+      />
 
       <section className="flex flex-col gap-2 rounded-xl border border-border bg-surface p-4 shadow-sm">
         <label className="flex flex-col gap-1.5 text-sm">

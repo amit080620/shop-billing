@@ -1,7 +1,7 @@
 import { requireSession } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { formatMoney } from "@/lib/format";
-import { PageIcon } from "@/app/components/PageIcon";
+import { PageHeader } from "@/app/components/PageHeader";
 import { DatePicker } from "./DatePicker";
 
 const METHODS = ["cash", "card", "upi", "online", "other"] as const;
@@ -99,18 +99,16 @@ export default async function DailySummaryPage({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <PageIcon>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="3" y="6" width="18" height="13" rx="2" />
-              <path d="M3 10h18M8 14h.01M12 14h4" />
-            </svg>
-          </PageIcon>
-          <h1 className="text-lg font-semibold text-foreground">Daily summary</h1>
-        </div>
-        <DatePicker date={date} />
-      </div>
+      <PageHeader
+        title="Daily summary"
+        icon={
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="3" y="6" width="18" height="13" rx="2" />
+            <path d="M3 10h18M8 14h.01M12 14h4" />
+          </svg>
+        }
+        action={<DatePicker date={date} />}
+      />
       <p className="text-xs text-muted">
         Use this at closing time to match your cash drawer — everything below is broken down by
         how it was paid.

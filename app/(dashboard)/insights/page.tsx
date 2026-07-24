@@ -1,7 +1,7 @@
 import { requireSession } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { formatMoney } from "@/lib/format";
-import { PageIcon } from "@/app/components/PageIcon";
+import { PageHeader } from "@/app/components/PageHeader";
 import { EmptyState } from "@/app/components/EmptyState";
 
 export default async function InsightsPage() {
@@ -81,17 +81,15 @@ export default async function InsightsPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center gap-3">
-        <PageIcon>
+      <PageHeader
+        title="Inventory insights"
+        subtitle="Based on your own sales data — no external AI involved."
+        icon={
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
             <path d="M4 19V5M4 19h16M8 15l3-4 3 3 4-6" />
           </svg>
-        </PageIcon>
-        <div>
-          <h1 className="text-lg font-semibold text-foreground">Inventory insights</h1>
-          <p className="text-sm text-muted">Based on your own sales data — no external AI involved.</p>
-        </div>
-      </div>
+        }
+      />
 
       <p className="rounded-lg border border-border bg-surface shadow-sm px-3.5 py-3 text-xs text-muted">
         These are statistics from your actual bills — fast/slow movers and stock sitting idle.

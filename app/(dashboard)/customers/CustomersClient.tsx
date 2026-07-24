@@ -7,7 +7,7 @@ import Link from "next/link";
 import { createCustomerAction } from "@/lib/actions/customers";
 import { formatMoney } from "@/lib/format";
 import { EmptyState } from "@/app/components/EmptyState";
-import { PageIcon } from "@/app/components/PageIcon";
+import { PageHeader } from "@/app/components/PageHeader";
 import { ContactPickerButton } from "@/app/components/ContactPickerButton";
 import { INDIAN_STATES } from "@/lib/constants/states";
 
@@ -53,25 +53,22 @@ export function CustomersClient({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <PageIcon>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="9" cy="8" r="3" />
-              <path d="M2 20c0-3.3 3-5.5 7-5.5s7 2.2 7 5.5" />
-              <circle cx="17" cy="8" r="2.5" />
-              <path d="M17 12.7c2.7.4 5 2.4 5 5.3" />
-            </svg>
-          </PageIcon>
-          <h1 className="text-lg font-semibold text-foreground">Customers</h1>
-        </div>
-        <button
-          onClick={() => setShowForm((v) => !v)}
-          className="btn-primary-sm"
-        >
-          + Customer
-        </button>
-      </div>
+      <PageHeader
+        title="Customers"
+        icon={
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="9" cy="8" r="3" />
+            <path d="M2 20c0-3.3 3-5.5 7-5.5s7 2.2 7 5.5" />
+            <circle cx="17" cy="8" r="2.5" />
+            <path d="M17 12.7c2.7.4 5 2.4 5 5.3" />
+          </svg>
+        }
+        action={
+          <button onClick={() => setShowForm((v) => !v)} className="btn-primary-sm">
+            + Customer
+          </button>
+        }
+      />
 
       {showForm && (
         <form

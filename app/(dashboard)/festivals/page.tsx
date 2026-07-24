@@ -1,7 +1,7 @@
 import { requireSession } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { formatMoney } from "@/lib/format";
-import { PageIcon } from "@/app/components/PageIcon";
+import { PageHeader } from "@/app/components/PageHeader";
 import { FESTIVALS } from "@/lib/festivals";
 import { AddToCalendarButton } from "./AddToCalendarButton";
 import { FestivalNoteBox } from "./FestivalNoteBox";
@@ -89,18 +89,16 @@ export default async function FestivalsPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center gap-3">
-        <PageIcon>
+      <PageHeader
+        title="Festival planner"
+        subtitle="Plan stock 15–20 days ahead of India's major festivals."
+        icon={
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
             <rect x="3" y="5" width="18" height="16" rx="2" />
             <path d="M3 10h18M8 3v4M16 3v4" />
           </svg>
-        </PageIcon>
-        <div>
-          <h1 className="text-lg font-semibold text-foreground">Festival planner</h1>
-          <p className="text-sm text-muted">Plan stock 15–20 days ahead of India&apos;s major festivals.</p>
-        </div>
-      </div>
+        }
+      />
 
       <p className="rounded-lg border border-border bg-surface shadow-sm px-3.5 py-3 text-xs text-muted">
         &quot;Sold well last year&quot; only appears once you have a year of sales history for that

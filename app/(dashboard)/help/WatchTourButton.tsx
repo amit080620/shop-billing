@@ -1,6 +1,6 @@
 "use client";
 
-export function WatchTourButton({ shopId }: { shopId: string }) {
+export function WatchTourButton({ shopId, label = "🎬 Watch tour again" }: { shopId: string; label?: string }) {
   function replay() {
     try {
       localStorage.removeItem(`tour-seen-${shopId}`);
@@ -17,7 +17,7 @@ export function WatchTourButton({ shopId }: { shopId: string }) {
       onClick={replay}
       className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-foreground"
     >
-      🎬 Watch tour again
+      {label}
     </button>
   );
 }

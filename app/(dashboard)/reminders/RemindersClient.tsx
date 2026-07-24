@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { formatMoney } from "@/lib/format";
 import { EmptyState } from "@/app/components/EmptyState";
-import { PageIcon } from "@/app/components/PageIcon";
+import { PageHeader } from "@/app/components/PageHeader";
 
 type Customer = { id: string; name: string; phone: string; balance: number; daysPending: number };
 
@@ -41,21 +41,16 @@ export function RemindersClient({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center gap-3">
-        <PageIcon>
+      <PageHeader
+        title="Udhaar reminders"
+        subtitle="Select customers (or Select all), then work through the list — you still hit Send in WhatsApp yourself for each one."
+        icon={
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
             <circle cx="12" cy="12" r="9" />
             <path d="M12 7v5l3 3" />
           </svg>
-        </PageIcon>
-        <div>
-          <h1 className="text-lg font-semibold text-foreground">Udhaar reminders</h1>
-          <p className="text-sm text-muted">
-            Select customers (or Select all), then work through the list — you still hit Send
-            in WhatsApp yourself for each one.
-          </p>
-        </div>
-      </div>
+        }
+      />
 
       <div className="rounded-xl border border-border bg-credit-soft p-4">
         <p className="text-xs text-credit">Total outstanding</p>

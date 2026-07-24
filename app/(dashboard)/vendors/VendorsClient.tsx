@@ -7,7 +7,7 @@ import Link from "next/link";
 import { createVendorAction } from "@/lib/actions/vendors";
 import { formatMoney } from "@/lib/format";
 import { EmptyState } from "@/app/components/EmptyState";
-import { PageIcon } from "@/app/components/PageIcon";
+import { PageHeader } from "@/app/components/PageHeader";
 import { ContactPickerButton } from "@/app/components/ContactPickerButton";
 import { INDIAN_STATES } from "@/lib/constants/states";
 
@@ -51,25 +51,22 @@ export function VendorsClient({ initialVendors }: { initialVendors: Vendor[] }) 
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <PageIcon>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="1.5" y="7" width="13" height="9" rx="1" />
-              <path d="M14.5 10h4l3 3v3h-7z" />
-              <circle cx="6" cy="18" r="1.7" />
-              <circle cx="17.5" cy="18" r="1.7" />
-            </svg>
-          </PageIcon>
-          <h1 className="text-lg font-semibold text-foreground">Vendors</h1>
-        </div>
-        <button
-          onClick={() => setShowForm((v) => !v)}
-          className="btn-primary-sm"
-        >
-          + Vendor
-        </button>
-      </div>
+      <PageHeader
+        title="Vendors"
+        icon={
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="1.5" y="7" width="13" height="9" rx="1" />
+            <path d="M14.5 10h4l3 3v3h-7z" />
+            <circle cx="6" cy="18" r="1.7" />
+            <circle cx="17.5" cy="18" r="1.7" />
+          </svg>
+        }
+        action={
+          <button onClick={() => setShowForm((v) => !v)} className="btn-primary-sm">
+            + Vendor
+          </button>
+        }
+      />
 
       {totalPayable > 0 && (
         <div className="rounded-xl border border-border bg-credit-soft p-4">
