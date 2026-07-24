@@ -29,7 +29,7 @@ const SLIDES: Slide[] = [
   {
     icon: "📊",
     title: "Reports & Daily Summary",
-    body: "GSTR-1, GSTR-3B and your purchase register live under Reports. For matching your cash drawer every evening, use More → Daily summary.",
+    body: "GSTR-1, GSTR-3B, your purchase register, Daily summary (for matching your cash drawer every evening), and Insights all live under Reports.",
   },
   {
     icon: "💬",

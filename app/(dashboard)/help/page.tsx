@@ -1,5 +1,7 @@
+import { requireSession } from "@/lib/auth";
 import { PageIcon } from "@/app/components/PageIcon";
 import { HelpAccordion } from "./HelpAccordion";
+import { WatchTourButton } from "./WatchTourButton";
 
 const SECTIONS = [
   {
@@ -10,8 +12,8 @@ const SECTIONS = [
         a: "Today's sales, last 7 days, outstanding credit (customers who owe you), and payable to vendors (what you owe them). Tap \"Outstanding credit\" to jump straight to the reminders list.",
       },
       {
-        q: "What's the GST card in the middle?",
-        a: "This month's Output GST (from sales) vs Input GST (from purchases) vs estimated net payable. Tapping it opens the full GSTR-3B report.",
+        q: "What's the 🪔 banner that sometimes appears?",
+        a: "A heads-up when a major festival is within 25 days — tap it for restock ideas and a calendar reminder (More → Festival planner). It only shows up when one's actually coming soon.",
       },
       {
         q: "What's the Getting Started checklist?",
@@ -149,7 +151,9 @@ const SECTIONS = [
   },
 ];
 
-export default function HelpPage() {
+export default async function HelpPage() {
+  const session = await requireSession();
+
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center gap-3">
@@ -165,6 +169,8 @@ export default function HelpPage() {
           <p className="text-sm text-muted">Tap a question to expand it.</p>
         </div>
       </div>
+
+      <WatchTourButton shopId={session.shopId} />
 
       {SECTIONS.map((section) => (
         <section key={section.title} className="flex flex-col gap-2">
