@@ -10,6 +10,7 @@ export function WhatsAppSendButton({
   total,
   paidAmount,
   creditAmount,
+  upiLink,
 }: {
   customerName: string | null;
   customerPhone: string | null;
@@ -18,6 +19,7 @@ export function WhatsAppSendButton({
   total: number;
   paidAmount: number;
   creditAmount: number;
+  upiLink?: string | null;
 }) {
   if (!customerPhone) {
     return (
@@ -38,6 +40,12 @@ export function WhatsAppSendButton({
   ];
   if (creditAmount > 0) {
     lines.push(`Balance due: ${formatMoney(creditAmount)}`);
+    if (upiLink) {
+      // Plain-text URI — WhatsApp auto-links recognized schemes, so this
+      // renders tappable on most phones and opens whichever UPI app the
+      // customer has installed, pre-filled with the amount due.
+      lines.push(`Pay now: ${upiLink}`);
+    }
   }
   lines.push("Thank you for your business!");
 

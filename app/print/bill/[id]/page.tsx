@@ -46,9 +46,10 @@ export default async function PrintBillPage({
   const isIntra = bill.supply_type === "intra";
   const paymentLabel = paymentMethodLabel(bill.payment_method);
 
+  let upiLink: string | null = null;
   let upiQrDataUrl: string | null = null;
   if (session.shopUpiId && Number(bill.credit_amount) > 0 && bill.status === "active") {
-    const upiLink = buildUpiLink(
+    upiLink = buildUpiLink(
       session.shopUpiId,
       session.shopName,
       Number(bill.credit_amount),
@@ -88,6 +89,7 @@ export default async function PrintBillPage({
           total={Number(bill.total)}
           paidAmount={Number(bill.paid_amount)}
           creditAmount={Number(bill.credit_amount)}
+          upiLink={upiLink}
         />
         <div className="flex justify-end gap-2">
           <a
