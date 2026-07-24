@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import Link from "next/link";
@@ -8,6 +8,7 @@ import { createVendorAction } from "@/lib/actions/vendors";
 import { formatMoney } from "@/lib/format";
 import { EmptyState } from "@/app/components/EmptyState";
 import { PageIcon } from "@/app/components/PageIcon";
+import { ContactPickerButton } from "@/app/components/ContactPickerButton";
 import { INDIAN_STATES } from "@/lib/constants/states";
 
 type Vendor = { id: string; name: string; phone: string | null; gstin: string | null; balance: number };
@@ -27,6 +28,8 @@ function SubmitButton() {
 
 export function VendorsClient({ initialVendors }: { initialVendors: Vendor[] }) {
   const [showForm, setShowForm] = useState(false);
+  const nameRef = useRef<HTMLInputElement>(null);
+  const phoneRef = useRef<HTMLInputElement>(null);
   const [search, setSearch] = useState("");
 
   const [state, formAction] = useActionState(
@@ -80,9 +83,16 @@ export function VendorsClient({ initialVendors }: { initialVendors: Vendor[] }) 
           action={formAction}
           className="flex flex-col gap-3 rounded-xl border border-border bg-surface shadow-sm p-4"
         >
+          <ContactPickerButton
+            onPick={(name, phone) => {
+              if (nameRef.current) nameRef.current.value = name;
+              if (phoneRef.current) phoneRef.current.value = phone;
+            }}
+          />
           <label className="flex flex-col gap-1.5 text-sm">
             <span className="font-medium text-foreground">Name</span>
             <input
+              ref={nameRef}
               name="name"
               required
               className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-brand"
@@ -91,6 +101,7 @@ export function VendorsClient({ initialVendors }: { initialVendors: Vendor[] }) 
           <label className="flex flex-col gap-1.5 text-sm">
             <span className="font-medium text-foreground">Phone</span>
             <input
+              ref={phoneRef}
               name="phone"
               type="tel"
               className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-brand"

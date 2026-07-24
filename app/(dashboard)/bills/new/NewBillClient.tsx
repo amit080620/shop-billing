@@ -201,6 +201,7 @@ export function NewBillClient({
                     return { data: r.customer, error: r.error };
                   }}
                   onCreated={setSelectedCustomer}
+                  contactFields={{ name: "name", phone: "phone" }}
                 />
               </div>
             ))}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { ContactPickerButton } from "./ContactPickerButton";
 
 type Field = {
   name: string;
@@ -15,11 +16,15 @@ export function InlineQuickAdd<T>({
   fields,
   onSubmit,
   onCreated,
+  contactFields,
 }: {
   triggerLabel: string;
   fields: Field[];
   onSubmit: (values: Record<string, string>) => Promise<{ data?: T; error?: string }>;
   onCreated: (data: T) => void;
+  /** When set, shows a "Pick from contacts" button (Android Chrome only —
+   * hides itself elsewhere) that fills these two field names. */
+  contactFields?: { name: string; phone: string };
 }) {
   const [open, setOpen] = useState(false);
   const [values, setValues] = useState<Record<string, string>>({});
@@ -56,6 +61,13 @@ export function InlineQuickAdd<T>({
 
   return (
     <div className="flex flex-col gap-2 rounded-lg border border-dashed border-brand bg-brand-soft p-3">
+      {contactFields && (
+        <ContactPickerButton
+          onPick={(name, phone) =>
+            setValues((v) => ({ ...v, [contactFields.name]: name, [contactFields.phone]: phone }))
+          }
+        />
+      )}
       {fields.map((f) => (
         <input
           key={f.name}

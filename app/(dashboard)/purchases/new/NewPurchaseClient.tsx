@@ -178,6 +178,7 @@ export function NewPurchaseClient({
               return { data: r.vendor, error: r.error };
             }}
             onCreated={setVendor}
+            contactFields={{ name: "name", phone: "phone" }}
           />
         )}
       </section>
