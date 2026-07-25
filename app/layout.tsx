@@ -1,10 +1,24 @@
 import type { Metadata, Viewport } from "next";
 import { getTheme } from "@/lib/theme";
+import { ServiceWorkerRegistration } from "./components/ServiceWorkerRegistration";
 import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Shop Billing",
   description: "Simple billing for small shops",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Shop Billing",
+  },
+  icons: {
+    icon: [
+      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
+  },
 };
 
 export const viewport: Viewport = {
@@ -33,6 +47,7 @@ export default async function RootLayout({
         />
       </head>
       <body className="font-sans antialiased">
+        <ServiceWorkerRegistration />
         {children}
       </body>
     </html>

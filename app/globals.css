@@ -29,15 +29,18 @@
   --muted: #9aa0a6;
   --border: #2d3236;
 
-  /* Brand — brightened slightly for contrast against a dark surface */
-  --brand: #22a68d;
-  --brand-dark: #0f6b5c;
-  --brand-light: #34c2a6;
-  --brand-soft: #163a33;
+  /* Brand — teal reads muddy on a dark surface, so dark mode switches the
+     accent to saffron/gold instead (also the more culturally resonant
+     choice) — every primary button, chip, and highlight follows from here. */
+  --brand: #f2a930;
+  --brand-dark: #b6791a;
+  --brand-light: #ffc966;
+  --brand-soft: #3d2f14;
 
-  /* Credit / attention — brightened the same way */
-  --credit: #e0955c;
-  --credit-soft: #3a2a1c;
+  /* Credit / attention — kept a distinct warm coral-red so it doesn't
+     blend into the new saffron brand color */
+  --credit: #e8674f;
+  --credit-soft: #3a221c;
   --danger: #e0665a;
 }
 
