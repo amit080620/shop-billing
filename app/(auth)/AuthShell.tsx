@@ -26,9 +26,10 @@ export function AuthShell({
       }}
     >
       <div className="page-enter mx-auto w-full max-w-sm">
-        <div className="mb-4 flex justify-center gap-2">
-          <LanguageToggle lang={lang} />
-          <ThemeToggle theme={theme} />
+        <div className="mb-4 flex justify-center gap-1.5 rounded-lg border border-border p-1">
+          <LanguageToggle lang={lang} compact />
+          <div className="w-px bg-border" />
+          <ThemeToggle theme={theme} compact />
         </div>
         <div className="mb-6 flex flex-col items-center gap-3 text-center">
           <div

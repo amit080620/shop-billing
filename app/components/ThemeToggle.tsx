@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 
-export function ThemeToggle({ theme }: { theme: "light" | "dark" }) {
+export function ThemeToggle({ theme, compact = false }: { theme: "light" | "dark"; compact?: boolean }) {
   const router = useRouter();
 
   function switchTo(next: "light" | "dark") {
@@ -12,7 +12,7 @@ export function ThemeToggle({ theme }: { theme: "light" | "dark" }) {
   }
 
   return (
-    <div className="flex gap-1.5 rounded-lg border border-border p-1">
+    <div className={`flex gap-1.5 ${compact ? "" : "rounded-lg border border-border p-1"}`}>
       <button
         onClick={() => switchTo("light")}
         className={`rounded-md px-2.5 py-1 text-xs font-medium ${

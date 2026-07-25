@@ -13,13 +13,24 @@ export default async function MorePage() {
 
   return (
     <div className="flex flex-col gap-5">
-      <div className="flex items-center justify-between">
-        <h1 className="text-lg font-semibold text-foreground">{t("more.title")}</h1>
-        <div className="flex flex-col items-end gap-2">
-          <LanguageToggle lang={lang} />
-          <ThemeToggle theme={theme} />
+      <h1 className="text-lg font-semibold text-foreground">{t("more.title")}</h1>
+
+      <MenuGroup title="Preferences">
+        <div className="flex items-center justify-between px-4 py-3.5">
+          <div>
+            <p className="text-sm font-medium text-foreground">{t("more.language")}</p>
+            <p className="text-xs text-muted">Applies to this device only</p>
+          </div>
+          <LanguageToggle lang={lang} compact />
         </div>
-      </div>
+        <div className="flex items-center justify-between px-4 py-3.5">
+          <div>
+            <p className="text-sm font-medium text-foreground">Theme</p>
+            <p className="text-xs text-muted">Applies to this device only</p>
+          </div>
+          <ThemeToggle theme={theme} compact />
+        </div>
+      </MenuGroup>
 
       <MenuGroup title="People">
         <MenuLink href="/customers" label={t("more.customers")} sub={t("more.customers.sub")} icon={PeopleIcon} />
