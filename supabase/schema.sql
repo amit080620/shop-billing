@@ -349,3 +349,33 @@ NOTIFY pgrst, 'reload schema';
 insert into storage.buckets (id, name, public)
 values ('shop-logos', 'shop-logos', true)
 on conflict (id) do nothing;
+
+-- ─── Platform / Super Admin layer ─────────────────────────────────────────
+-- Entirely separate from shop staff — a super admin is just any auth.users
+-- row whose id is whitelisted here. There's no self-signup for this; add
+-- rows manually via SQL after creating the auth user (see DEPLOYMENT.md).
+create table if not exists super_admins (
+  user_id uuid primary key references auth.users(id) on delete cascade,
+  name text not null,
+  created_at timestamptz not null default now()
+);
+alter table super_admins enable row level security;
+
+-- NULL = unlimited (default for all existing shops, so this rolls out
+-- without locking anyone out) — a super admin sets an actual date once a
+-- shop is on a paid plan.
+alter table shops add column if not exists subscription_valid_until date;
+alter table shops add column if not exists wallet_balance numeric(12, 2) not null default 0;
+
+-- Audit trail of every recharge/validity change — who did it, when, and why.
+create table if not exists subscription_transactions (
+  id uuid primary key default uuid_generate_v4(),
+  shop_id uuid not null references shops(id) on delete cascade,
+  amount numeric(12, 2) not null default 0,
+  new_valid_until date,
+  note text,
+  created_by uuid references super_admins(user_id),
+  created_at timestamptz not null default now()
+);
+alter table subscription_transactions enable row level security;
+create index if not exists idx_subscription_transactions_shop on subscription_transactions(shop_id);

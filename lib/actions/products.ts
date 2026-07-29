@@ -194,3 +194,46 @@ export async function quickCreateProductAction(
     },
   };
 }
+
+/** Generates a unique, internal-use barcode for a product that doesn't
+ * have one — for printing a shelf sticker. This is a shop-internal code
+ * (not a registered GS1/EAN-13 number), which is exactly what's needed for
+ * a shop's own scanner-based lookup; it doesn't need external registration. */
+export async function generateBarcodeAction(
+  productId: string,
+): Promise<{ barcode?: string; error?: string }> {
+  const session = await requireSession();
+  const admin = createSupabaseAdminClient();
+
+  const { data: product } = await admin
+    .from("products")
+    .select("id, barcode")
+    .eq("id", productId)
+    .eq("shop_id", session.shopId)
+    .single();
+  if (!product) return { error: "Product not found" };
+  if (product.barcode) return { barcode: product.barcode };
+
+  // 12 numeric digits — scans cleanly as Code128 or EAN-13-style on any
+  // standard barcode scanner. Retried on the rare chance of a collision.
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const candidate = Array.from({ length: 12 }, () => Math.floor(Math.random() * 10)).join("");
+    const { data: existing } = await admin
+      .from("products")
+      .select("id")
+      .eq("shop_id", session.shopId)
+      .eq("barcode", candidate)
+      .maybeSingle();
+    if (existing) continue;
+
+    const { error } = await admin.from("products").update({ barcode: candidate }).eq("id", productId);
+    if (error) {
+      console.error("Could not save generated barcode", error);
+      return { error: "Could not save barcode" };
+    }
+    revalidatePath("/products");
+    return { barcode: candidate };
+  }
+
+  return { error: "Could not generate a unique barcode — try again" };
+}

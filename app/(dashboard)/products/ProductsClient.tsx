@@ -4,10 +4,12 @@ import { useMemo, useRef, useState, useTransition } from "react";
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import {
   createProductAction,
   createCategoryAction,
   deleteProductAction,
+  generateBarcodeAction,
 } from "@/lib/actions/products";
 import { formatMoney } from "@/lib/format";
 import { EmptyState } from "@/app/components/EmptyState";
@@ -79,6 +81,14 @@ export function ProductsClient({
   );
 
   const router = useRouter();
+  const [generatingBarcodeFor, setGeneratingBarcodeFor] = useState<string | null>(null);
+
+  async function handleGenerateBarcode(productId: string) {
+    setGeneratingBarcodeFor(productId);
+    await generateBarcodeAction(productId);
+    setGeneratingBarcodeFor(null);
+    router.refresh();
+  }
   const [search, setSearch] = useState("");
   const [scanNotice, setScanNotice] = useState<string | null>(null);
 
@@ -176,6 +186,16 @@ export function ProductsClient({
           </div>
         </div>
       )}
+
+      <Link
+        href="/products/labels"
+        className="flex items-center justify-between rounded-xl border border-border bg-surface shadow-sm px-4 py-3.5"
+      >
+        <span className="flex items-center gap-2 text-sm font-medium text-foreground">
+          🏷 Print barcode labels
+        </span>
+        <span className="text-muted">›</span>
+      </Link>
 
       {showCategoryForm && (
         <form
@@ -322,6 +342,15 @@ export function ProductsClient({
                     {p.hsnCode ? ` · HSN ${p.hsnCode}` : ""}
                     {p.barcode ? ` · 🏷 ${p.barcode}` : ""}
                   </p>
+                  {!p.barcode && (
+                    <button
+                      onClick={() => handleGenerateBarcode(p.id)}
+                      disabled={generatingBarcodeFor === p.id}
+                      className="mt-1 text-xs font-medium text-brand disabled:opacity-60"
+                    >
+                      {generatingBarcodeFor === p.id ? "Generating…" : "🏷 Generate barcode"}
+                    </button>
+                  )}
                   {p.trackInventory && tone && (
                     <span
                       className="mt-1 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium"

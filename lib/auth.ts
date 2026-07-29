@@ -42,7 +42,7 @@ export async function requireSession(): Promise<SessionContext> {
     admin
       .from("staff")
       .select(
-        "id, name, role, shop_id, shops ( name, state_code, gstin, gst_scheme, logo_url, upi_id )",
+        "id, name, role, shop_id, shops ( name, state_code, gstin, gst_scheme, logo_url, upi_id, subscription_valid_until )",
       )
       .eq("id", user.id)
       .single(),
@@ -53,6 +53,11 @@ export async function requireSession(): Promise<SessionContext> {
   }
 
   const shop = Array.isArray(staff.shops) ? staff.shops[0] : staff.shops;
+
+  // NULL means unlimited — only block once an actual date has passed.
+  if (shop?.subscription_valid_until && new Date(shop.subscription_valid_until) < new Date()) {
+    redirect("/subscription-expired");
+  }
 
   return {
     userId: user.id,

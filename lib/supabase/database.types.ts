@@ -25,6 +25,8 @@ export interface Database {
           invoice_prefix: string;
           logo_url: string | null;
           upi_id: string | null;
+          subscription_valid_until: string | null;
+          wallet_balance: number;
           created_at: string;
         };
         Insert: {
@@ -42,6 +44,8 @@ export interface Database {
           invoice_prefix?: string;
           logo_url?: string | null;
           upi_id?: string | null;
+          subscription_valid_until?: string | null;
+          wallet_balance?: number;
           created_at?: string;
         };
         Update: {
@@ -59,6 +63,8 @@ export interface Database {
           invoice_prefix?: string;
           logo_url?: string | null;
           upi_id?: string | null;
+          subscription_valid_until?: string | null;
+          wallet_balance?: number;
           created_at?: string;
         };
         Relationships: [];
@@ -505,6 +511,44 @@ export interface Database {
         Relationships: [
           { foreignKeyName: "purchase_items_purchase_id_fkey"; columns: ["purchase_id"]; isOneToOne: false; referencedRelation: "purchases"; referencedColumns: ["id"] },
           { foreignKeyName: "purchase_items_product_id_fkey"; columns: ["product_id"]; isOneToOne: false; referencedRelation: "products"; referencedColumns: ["id"] },
+        ];
+      };
+      super_admins: {
+        Row: { user_id: string; name: string; created_at: string };
+        Insert: { user_id: string; name: string; created_at?: string };
+        Update: { user_id?: string; name?: string; created_at?: string };
+        Relationships: [];
+      };
+      subscription_transactions: {
+        Row: {
+          id: string;
+          shop_id: string;
+          amount: number;
+          new_valid_until: string | null;
+          note: string | null;
+          created_by: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          shop_id: string;
+          amount?: number;
+          new_valid_until?: string | null;
+          note?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          shop_id?: string;
+          amount?: number;
+          new_valid_until?: string | null;
+          note?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+        };
+        Relationships: [
+          { foreignKeyName: "subscription_transactions_shop_id_fkey"; columns: ["shop_id"]; isOneToOne: false; referencedRelation: "shops"; referencedColumns: ["id"] },
         ];
       };
       festival_notes: {

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import { createBillAction } from "@/lib/actions/bills";
@@ -15,6 +16,7 @@ import { InlineQuickAdd } from "@/app/components/InlineQuickAdd";
 import { BarcodeScanInput } from "@/app/components/BarcodeScanInput";
 import { CameraBarcodeScanner } from "@/app/components/CameraBarcodeScanner";
 import { useTranslation } from "@/lib/i18n/useTranslation";
+import { useOnlineStatus } from "@/lib/useOnlineStatus";
 import type { Lang } from "@/lib/i18n/dictionary";
 
 type Product = {
@@ -62,16 +64,57 @@ export function NewBillClient({
   customers,
   lang,
   frequentProductIds,
+  shopContext,
 }: {
   shopStateCode: string;
   products: Product[];
   customers: Customer[];
   lang: Lang;
   frequentProductIds: string[];
+  shopContext: {
+    shopId: string;
+    shopName: string;
+    shopStateCode: string;
+    staffId: string;
+    staffName: string;
+    invoicePrefix: string;
+  };
 }) {
   const { t } = useTranslation(lang);
+  const isOnline = useOnlineStatus();
   const [step, setStep] = useState<"cart" | "ticket">("cart");
   const [cart, setCart] = useState<CartLine[]>([]);
+
+  // Refresh the offline cache every time this page loads successfully
+  // (i.e. while online) — so if the connection drops mid-day, there's
+  // always a reasonably fresh local copy of products/customers to work
+  // from in the offline billing flow.
+  useEffect(() => {
+    import("@/lib/offline-db").then(({ cacheForOffline }) => {
+      cacheForOffline(
+        { ...shopContext, cachedAt: new Date().toISOString() },
+        products.map((p) => ({
+          id: p.id,
+          name: p.name,
+          price: p.price,
+          gstPercent: p.gstPercent,
+          hsnCode: p.hsnCode,
+          barcode: p.barcode,
+          unit: p.unit,
+        })),
+        customers.map((c) => ({
+          id: c.id,
+          name: c.name,
+          phone: c.phone,
+          gstin: c.gstin,
+          stateCode: c.state_code,
+        })),
+      )
+        .then(() => console.log("[offline-db] Cached for offline use:", products.length, "products,", customers.length, "customers"))
+        .catch((err) => console.error("[offline-db] Failed to cache for offline use:", err));
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const [scanError, setScanError] = useState<string | null>(null);
   const frequentProducts = frequentProductIds
     .map((id) => products.find((p) => p.id === id))
@@ -169,6 +212,16 @@ export function NewBillClient({
     return (
       <div className="flex flex-col gap-4">
         <h1 className="text-lg font-semibold text-foreground">{t("bill.title")}</h1>
+
+        {!isOnline && (
+          <Link
+            href="/offline-bill"
+            className="rounded-lg border border-credit bg-credit-soft px-3.5 py-3 text-sm text-credit"
+          >
+            You&apos;re offline — this screen needs a connection. Tap here for offline billing
+            instead (bills sync automatically once you&apos;re back online). →
+          </Link>
+        )}
 
         <section className="flex flex-col gap-2">
           <p className="text-sm font-medium text-foreground">{t("bill.customer")}</p>

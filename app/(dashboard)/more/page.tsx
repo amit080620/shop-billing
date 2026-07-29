@@ -44,6 +44,10 @@ export default async function MorePage() {
         <MenuLink href="/products" label={t("more.products")} sub={t("more.products.sub")} icon={BoxIcon} />
       </MenuGroup>
 
+      <MenuGroup title="No internet?">
+        <MenuLink href="/offline-bill" label="Offline billing" sub="Keep billing with no connection — syncs automatically once you're back online" icon={OfflineIcon} />
+      </MenuGroup>
+
       <MenuGroup title="Grow your business">
         <MenuLink href="/requests" label={t("more.requests")} sub={t("more.requests.sub")} icon={BellIcon} />
         <MenuLink href="/reminders" label={t("more.reminders")} sub={t("more.reminders.sub")} icon={ClockIcon} />
@@ -210,6 +214,17 @@ function FestivalIcon({ className }: { className?: string }) {
     <svg {...iconProps(className)}>
       <rect x="3" y="5" width="18" height="16" rx="2" />
       <path d="M3 10h18M8 3v4M16 3v4" />
+    </svg>
+  );
+}
+function OfflineIcon({ className }: { className?: string }) {
+  return (
+    <svg {...iconProps(className)}>
+      <path d="M2 8.5a17 17 0 0 1 20 0" />
+      <path d="M5.5 12a11.5 11.5 0 0 1 13 0" />
+      <path d="M9 15.5a6 6 0 0 1 6 0" />
+      <path d="M12 19h.01" />
+      <path d="M3 3l18 18" />
     </svg>
   );
 }

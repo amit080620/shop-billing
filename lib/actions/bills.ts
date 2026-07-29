@@ -2,34 +2,22 @@
 
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { requireSession, requireOwner } from "../auth";
+import { requireSession, requireOwner, type SessionContext } from "../auth";
 import { createSupabaseAdminClient } from "../supabase/admin";
-import { billSchema, calculateTransactionTotals } from "../validation/schemas";
+import { billSchema, calculateTransactionTotals, type BillInput } from "../validation/schemas";
 import { determineSupplyType, financialYearFor, round2 } from "../gst";
 
 export type ActionState = { error?: string } | null;
 
-export async function createBillAction(
-  _prev: ActionState,
-  formData: FormData,
-): Promise<ActionState> {
-  const session = await requireSession();
-
-  const raw = formData.get("payload");
-  if (typeof raw !== "string") return { error: "Invalid submission" };
-
-  let payload: unknown;
-  try {
-    payload = JSON.parse(raw);
-  } catch {
-    return { error: "Invalid submission" };
-  }
-
-  const parsed = billSchema.safeParse(payload);
-  if (!parsed.success) {
-    return { error: parsed.error.issues[0].message };
-  }
-  const { customerId, items, discountType, discountValue, paidAmount, paymentMethod } = parsed.data;
+/** The actual bill-creation logic, shared by the normal online form
+ * submission and the offline-sync path — one source of truth for invoice
+ * numbering, GST calculation, and stock decrement, so the two can never
+ * silently drift apart. */
+async function createBillCore(
+  session: SessionContext,
+  parsedData: BillInput,
+): Promise<{ billId: string; invoiceNumber: string } | { error: string }> {
+  const { customerId, items, discountType, discountValue, paidAmount, paymentMethod } = parsedData;
 
   const admin = createSupabaseAdminClient();
 
@@ -37,11 +25,13 @@ export async function createBillAction(
   // authoritative price/GST/HSN from the DB rather than trusting client
   // values (client values only drive the live on-screen preview).
   const productIds = [...new Set(items.map((i) => i.productId).filter(Boolean))] as string[];
-  const { data: dbProducts, error: productsError } = await admin
-    .from("products")
-    .select("id, name, price, gst_percent, hsn_code, track_inventory, stock_quantity")
-    .eq("shop_id", session.shopId)
-    .in("id", productIds);
+  const { data: dbProducts, error: productsError } = productIds.length
+    ? await admin
+        .from("products")
+        .select("id, name, price, gst_percent, hsn_code, track_inventory, stock_quantity")
+        .eq("shop_id", session.shopId)
+        .in("id", productIds)
+    : { data: [], error: null };
 
   if (productsError || !dbProducts || dbProducts.length !== productIds.length) {
     return { error: "One or more products could not be verified" };
@@ -166,7 +156,51 @@ export async function createBillAction(
     if (stockError) console.error("Could not update stock for product", product.id, stockError);
   }
 
-  redirect(`/print/bill/${bill.id}`);
+  return { billId: bill.id, invoiceNumber };
+}
+
+export async function createBillAction(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const session = await requireSession();
+
+  const raw = formData.get("payload");
+  if (typeof raw !== "string") return { error: "Invalid submission" };
+
+  let payload: unknown;
+  try {
+    payload = JSON.parse(raw);
+  } catch {
+    return { error: "Invalid submission" };
+  }
+
+  const parsed = billSchema.safeParse(payload);
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0].message };
+  }
+
+  const result = await createBillCore(session, parsed.data);
+  if ("error" in result) return { error: result.error };
+
+  redirect(`/print/bill/${result.billId}`);
+}
+
+/** Called by the offline-sync engine — same core logic as createBillAction,
+ * but returns a plain result instead of redirecting, since the sync loop
+ * processes a whole queue of bills in one pass and can't navigate away
+ * partway through. */
+export async function syncOfflineBillAction(
+  payload: unknown,
+): Promise<{ billId: string; invoiceNumber: string } | { error: string }> {
+  const session = await requireSession();
+
+  const parsed = billSchema.safeParse(payload);
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0].message };
+  }
+
+  return createBillCore(session, parsed.data);
 }
 
 /**
