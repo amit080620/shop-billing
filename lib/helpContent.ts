@@ -142,6 +142,43 @@ export const HELP_CONTENT: Record<Lang, HelpSection[]> = {
       ],
     },
     {
+      title: "📴 Offline billing",
+      items: [
+        {
+          q: "What is this, in plain terms?",
+          a: "A separate, lightweight billing screen (More → Offline billing) that keeps working even with zero internet — for when your connection drops mid-day and you still need to sell. Normal billing (the Sell tab) can't work offline at all, since it talks to the server for every action.",
+        },
+        {
+          q: "What do I need to do BEFORE the internet goes out?",
+          a: "Nothing extra — just use the app normally. Every time you open the Sell screen while online, it quietly saves a fresh copy of your products, customers, and shop details onto your phone. Also open More → Offline billing at least once while online, so that screen itself is saved and can open later with no connection.",
+        },
+        {
+          q: "How do I know it's ready?",
+          a: "Open More → Offline billing while online — if it shows your shop name and lets you search products, it's ready. If it says \"open the app online first\", it hasn't cached anything yet — just browse the Sell screen once and try again.",
+        },
+        {
+          q: "What happens when I make a bill while offline?",
+          a: "You build the cart exactly like normal billing — search cached products, pick a customer or leave it as walk-in, choose payment method. When you save it, you get a provisional receipt (item list and total) — but NOT a real GST invoice number yet, since that has to come from the server in the correct sequence.",
+        },
+        {
+          q: "Is the provisional receipt good enough to give the customer?",
+          a: "Yes, for the moment — it shows what was bought and the total. It's clearly marked provisional. Once it syncs, you can print/share the real, final invoice with its proper GST number.",
+        },
+        {
+          q: "How does it become a real invoice?",
+          a: "As soon as your phone has internet again, open More → Offline billing and tap \"Sync now\" (or it may sync automatically). Each waiting bill is sent to the server in the order it was created, gets the next real sequential invoice number, and updates your stock — exactly as if you'd billed it online.",
+        },
+        {
+          q: "What if something goes wrong during sync?",
+          a: "That one bill stays marked \"failed, will retry\" in the pending list — nothing is lost. Fix whatever caused it (e.g. a product was deleted since) if needed, then tap Sync now again.",
+        },
+        {
+          q: "What are the real limitations I should know?",
+          a: "Stock levels and prices reflect the last time you were online — if two staff members are both selling the same low-stock item while offline, you could oversell it. There's no barcode camera scanner in the offline screen yet, only text search. And you must have opened the Sell and Offline billing screens online at least once on THIS device before it can work with no connection.",
+        },
+      ],
+    },
+    {
       title: "🔴 🟡 🟢 Voiding a bill",
       items: [
         {
@@ -289,6 +326,43 @@ export const HELP_CONTENT: Record<Lang, HelpSection[]> = {
       ],
     },
     {
+      title: "📴 Offline बिलिंग",
+      items: [
+        {
+          q: "यह असल में है क्या?",
+          a: "एक अलग, हल्का billing screen (More → Offline billing) जो बिना internet के भी काम करता है — जब दिन में कभी internet कट जाए और फिर भी बेचना हो। सामान्य billing (Sell tab) offline बिल्कुल काम नहीं करती, क्योंकि वो हर कदम पर server से बात करती है।",
+        },
+        {
+          q: "Internet जाने से पहले क्या करना ज़रूरी है?",
+          a: "कुछ अलग से नहीं — बस app को सामान्य तरीके से इस्तेमाल करते रहें। जब भी online रहते हुए Sell पेज खुलता है, आपके products, customers, और दुकान की जानकारी अपने-आप फ़ोन में save होती रहती है। साथ ही More → Offline billing भी online रहते हुए एक बार ज़रूर खोल लें, ताकि वो पेज खुद भी बाद में बिना internet खुल सके।",
+        },
+        {
+          q: "कैसे पता चले यह तैयार है?",
+          a: "Online रहते हुए More → Offline billing खोलें — अगर वहाँ आपकी दुकान का नाम दिखे और products खोज सकें, तो तैयार है। अगर \"पहले online app खोलें\" जैसा message दिखे, तो अभी data cache नहीं हुआ — एक बार Sell screen खोलकर फिर कोशिश करें।",
+        },
+        {
+          q: "Offline बिल बनाने पर क्या होता है?",
+          a: "बिल्कुल सामान्य billing जैसे ही cart बनाएं — cached products खोजें, customer चुनें या walk-in छोड़ दें, payment method चुनें। Save करने पर एक अस्थायी (provisional) receipt मिलती है — items और total के साथ — पर **असली GST invoice number नहीं** अभी, क्योंकि वो सही क्रम में सिर्फ़ server से ही मिल सकता है।",
+        },
+        {
+          q: "क्या यह अस्थायी receipt customer को देने लायक है?",
+          a: "हाँ, फ़िलहाल के लिए — इसमें क्या खरीदा गया और total साफ़ दिखता है, और साफ़ लिखा होता है कि यह अस्थायी है। Sync होने के बाद असली, पूरी invoice (सही GST number के साथ) print/share कर सकते हैं।",
+        },
+        {
+          q: "यह असली invoice कैसे बनती है?",
+          a: "जैसे ही फ़ोन में internet वापस आए, More → Offline billing खोलें और \"Sync now\" दबाएँ (या अपने-आप sync हो सकता है)। हर pending बिल उसी क्रम में जिस क्रम में बनी थी, server को भेजी जाती है, असली अगला sequential invoice number मिलता है, और stock update होती है — बिल्कुल वैसे ही जैसे online बिल बनाने पर होता है।",
+        },
+        {
+          q: "अगर sync के दौरान कुछ गड़बड़ हो जाए?",
+          a: "वो एक बिल pending list में \"failed, will retry\" के साथ रुकी रहेगी — कुछ भी खोता नहीं। अगर ज़रूरत हो तो वजह ठीक करें (जैसे कोई product तब तक delete हो गया हो), फिर दोबारा Sync now दबाएँ।",
+        },
+        {
+          q: "असली सीमाएँ क्या हैं, जो जान लेनी चाहिए?",
+          a: "Stock और price उतने ही ताज़ा हैं जितनी बार आप last online थे — अगर 2 staff members एक ही कम-stock वाला item offline बेच रहे हों, तो ज़्यादा बिक सकता है। Offline screen में अभी camera barcode scan नहीं है, सिर्फ़ text से खोज सकते हैं। और इस डिवाइस पर Sell और Offline billing दोनों को online रहते हुए कम से कम एक बार खोलना ज़रूरी है, तभी बिना internet काम करेगा।",
+        },
+      ],
+    },
+    {
       title: "🔴 🟡 🟢 बिल void करना",
       items: [
         {
@@ -432,6 +506,43 @@ export const HELP_CONTENT: Record<Lang, HelpSection[]> = {
         {
           q: "आणखी एक कर्मचारी कसा जोडायचा?",
           a: "More → Staff (फक्त मालक) → Add staff. त्यांचा ईमेल आणि तात्पुरता पासवर्ड सेट करा, ज्याने ते लॉग इन करतील — त्याच दुकानासाठी, Staff किंवा Owner भूमिकेसह.",
+        },
+      ],
+    },
+    {
+      title: "📴 ऑफलाइन बिलिंग",
+      items: [
+        {
+          q: "हे नक्की काय आहे?",
+          a: "एक वेगळी, हलकी बिलिंग स्क्रीन (More → Offline billing) जी इंटरनेटशिवायही काम करते — दिवसा कधी इंटरनेट गेले तरी विक्री सुरू ठेवता यावी म्हणून. सामान्य बिलिंग (Sell tab) इंटरनेटशिवाय अजिबात काम करत नाही, कारण ती प्रत्येक पायरीला सर्व्हरशी संपर्क साधते.",
+        },
+        {
+          q: "इंटरनेट जाण्याआधी काय करणे गरजेचे आहे?",
+          a: "वेगळे काही नाही — फक्त app नेहमीप्रमाणे वापरत राहा. जेव्हा जेव्हा ऑनलाइन असताना Sell पेज उघडते, तेव्हा तुमची उत्पादने, ग्राहक, आणि दुकानाची माहिती आपोआप फोनमध्ये साठवली जाते. तसेच More → Offline billing सुद्धा ऑनलाइन असताना एकदा उघडा, म्हणजे ते पेजही नंतर इंटरनेटशिवाय उघडू शकेल.",
+        },
+        {
+          q: "हे तयार आहे हे कसे कळेल?",
+          a: "ऑनलाइन असताना More → Offline billing उघडा — जर तिथे तुमच्या दुकानाचे नाव दिसले आणि उत्पादने शोधता आली, तर तयार आहे. \"आधी app ऑनलाइन उघडा\" असा संदेश दिसल्यास, अजून डेटा साठवला गेलेला नाही — एकदा Sell स्क्रीन उघडून पुन्हा प्रयत्न करा.",
+        },
+        {
+          q: "ऑफलाइन बिल बनवल्यावर काय होते?",
+          a: "अगदी नेहमीसारखेच कार्ट तयार करा — साठवलेली उत्पादने शोधा, ग्राहक निवडा किंवा वॉक-इन ठेवा, पेमेंट पद्धत निवडा. सेव्ह केल्यावर एक तात्पुरती (provisional) पावती मिळते — वस्तू आणि एकूण रकमेसह — पण **खरा GST बिल क्रमांक अजून नाही**, कारण तो योग्य क्रमाने फक्त सर्व्हरकडूनच मिळू शकतो.",
+        },
+        {
+          q: "ही तात्पुरती पावती ग्राहकाला द्यायला पुरेशी आहे का?",
+          a: "होय, सध्यापुरती — यात काय विकत घेतले आणि एकूण रक्कम स्पष्ट दिसते, आणि ती तात्पुरती असल्याचे स्पष्ट लिहिलेले असते. Sync झाल्यावर खरे, पूर्ण बिल (योग्य GST क्रमांकासह) प्रिंट/शेअर करता येते.",
+        },
+        {
+          q: "हे खरे बिल कसे बनते?",
+          a: "फोनला पुन्हा इंटरनेट मिळताच, More → Offline billing उघडा आणि \"Sync now\" दाबा (किंवा आपोआप sync होऊ शकते). प्रत्येक थांबलेले बिल ज्या क्रमाने तयार झाले त्याच क्रमाने सर्व्हरला पाठवले जाते, त्याला खरा पुढचा क्रमांक मिळतो, आणि साठा अद्ययावत होतो — अगदी ऑनलाइन बिल बनवल्यासारखेच.",
+        },
+        {
+          q: "Sync दरम्यान काही चूक झाली तर?",
+          a: "ते एक बिल pending यादीत \"failed, will retry\" सह थांबलेले राहते — काहीही गमावले जात नाही. गरज असल्यास कारण दुरुस्त करा (उदा. एखादे उत्पादन तोपर्यंत डिलीट झाले असेल), मग पुन्हा Sync now दाबा.",
+        },
+        {
+          q: "कोणत्या खऱ्या मर्यादा लक्षात ठेवाव्यात?",
+          a: "साठा आणि किंमती तुम्ही शेवटचे ऑनलाइन होता तितक्याच ताज्या असतात — दोन कर्मचारी एकाच कमी-साठा असलेल्या वस्तूची ऑफलाइन विक्री करत असतील, तर जास्त विकली जाऊ शकते. ऑफलाइन स्क्रीनमध्ये अजून कॅमेरा बारकोड स्कॅन नाही, फक्त टेक्स्टने शोधता येते. आणि या डिव्हाइसवर Sell आणि Offline billing दोन्ही ऑनलाइन असताना किमान एकदा उघडलेले असणे गरजेचे आहे, तरच इंटरनेटशिवाय काम करेल.",
         },
       ],
     },

@@ -34,6 +34,9 @@ export function LabelsClient({ shopName, products: initialProducts }: { shopName
     const result = await generateBarcodeAction(productId);
     if (result.barcode) {
       setProducts((prev) => prev.map((p) => (p.id === productId ? { ...p, barcode: result.barcode! } : p)));
+      // Selecting 1 automatically once a barcode exists — one less step
+      // before the print button actually appears.
+      setQuantities((prev) => ({ ...prev, [productId]: prev[productId] || 1 }));
     }
     setGenerating(null);
   }
@@ -47,7 +50,7 @@ export function LabelsClient({ shopName, products: initialProducts }: { shopName
       <div className="no-print flex items-center justify-between">
         <div>
           <h1 className="text-lg font-semibold text-foreground">Print barcode labels</h1>
-          <p className="text-sm text-muted">Select items and how many stickers you need.</p>
+          <p className="text-sm text-muted">Tap + on each item you need stickers for, then Print.</p>
         </div>
         <Link href="/products" className="text-sm text-brand">
           ← Inventory
@@ -62,8 +65,8 @@ export function LabelsClient({ shopName, products: initialProducts }: { shopName
           className="rounded-lg border border-border bg-surface shadow-sm px-3.5 py-2.5 text-sm outline-none focus:border-brand"
         />
 
-        <div className="flex gap-2">
-          <span className="self-center text-xs font-medium text-muted">Label size:</span>
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-medium text-muted">Label size:</span>
           {(["thermal", "a4"] as const).map((size) => (
             <button
               key={size}
@@ -79,66 +82,95 @@ export function LabelsClient({ shopName, products: initialProducts }: { shopName
       </div>
 
       <ul className="no-print flex flex-col gap-2">
-        {filtered.map((p) => (
-          <li key={p.id} className="flex items-center justify-between gap-3 rounded-lg border border-border bg-surface shadow-sm px-3.5 py-2.5">
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-medium text-foreground">{p.name}</p>
-              <p className="text-xs text-muted">
-                {formatMoney(p.price)} · {p.barcode ? `🏷 ${p.barcode}` : "No barcode yet"}
-              </p>
-            </div>
-            {p.barcode ? (
-              <input
-                type="number"
-                min={0}
-                value={quantities[p.id] ?? 0}
-                onChange={(e) => setQty(p.id, Number(e.target.value))}
-                className="w-16 shrink-0 rounded-lg border border-border px-2 py-1.5 text-center text-sm outline-none focus:border-brand"
-              />
-            ) : (
-              <button
-                onClick={() => handleGenerate(p.id)}
-                disabled={generating === p.id}
-                className="shrink-0 rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-brand disabled:opacity-60"
-              >
-                {generating === p.id ? "…" : "Generate"}
-              </button>
-            )}
-          </li>
-        ))}
+        {filtered.map((p) => {
+          const qty = quantities[p.id] ?? 0;
+          return (
+            <li key={p.id} className="flex items-center justify-between gap-3 rounded-lg border border-border bg-surface shadow-sm px-3.5 py-2.5">
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-medium text-foreground">{p.name}</p>
+                <p className="text-xs text-muted">
+                  {formatMoney(p.price)} · {p.barcode ? `🏷 ${p.barcode}` : "No barcode yet"}
+                </p>
+              </div>
+              {p.barcode ? (
+                <div className="flex shrink-0 items-center gap-1.5">
+                  <button
+                    onClick={() => setQty(p.id, qty - 1)}
+                    className="h-7 w-7 rounded-full border border-border text-sm font-medium text-foreground"
+                  >
+                    −
+                  </button>
+                  <span className={`w-6 text-center text-sm font-semibold ${qty > 0 ? "text-brand-dark" : "text-muted"}`}>
+                    {qty}
+                  </span>
+                  <button
+                    onClick={() => setQty(p.id, qty + 1)}
+                    className="h-7 w-7 rounded-full border border-brand bg-brand-soft text-sm font-medium text-brand-dark"
+                  >
+                    +
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => handleGenerate(p.id)}
+                  disabled={generating === p.id}
+                  className="shrink-0 rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-brand disabled:opacity-60"
+                >
+                  {generating === p.id ? "…" : "Generate barcode"}
+                </button>
+              )}
+            </li>
+          );
+        })}
       </ul>
 
-      {selectedLabels.length > 0 && (
-        <div className="no-print rounded-lg border border-dashed border-brand bg-brand-soft px-3.5 py-3">
-          <p className="text-sm font-medium text-brand-dark">{selectedLabels.length} label(s) ready</p>
-          <button onClick={() => window.print()} className="btn-primary-sm mt-2">
-            🖨 Print labels
-          </button>
-        </div>
-      )}
-
-      {/* The actual printable sheet — hidden on screen, shown fully on print */}
       <div
-        id="label-sheet"
-        className={labelSize === "thermal" ? "flex flex-col gap-2" : "grid grid-cols-3 gap-2"}
+        className={`no-print sticky bottom-16 rounded-xl border px-3.5 py-3 shadow-md ${
+          selectedLabels.length > 0
+            ? "border-brand bg-brand-soft"
+            : "border-dashed border-border bg-surface"
+        }`}
       >
+        {selectedLabels.length > 0 ? (
+          <>
+            <p className="text-sm font-medium text-brand-dark">{selectedLabels.length} label(s) ready to print</p>
+            <button onClick={() => window.print()} className="btn-primary-sm mt-2">
+              🖨 Print labels
+            </button>
+          </>
+        ) : (
+          <p className="text-xs text-muted">
+            Tap the <span className="font-semibold text-brand-dark">+</span> button next to an
+            item above to add it here — the print button appears once you&apos;ve picked at least one.
+          </p>
+        )}
+      </div>
+
+      {/* The actual printable sheet — invisible on screen, shown only when printing */}
+      <div id="label-sheet" className={labelSize === "a4" ? "label-sheet-a4" : "label-sheet-thermal"}>
         {selectedLabels.map(({ key, product }) => (
           <BarcodeLabel key={key} name={product.name} price={product.price} unit={product.unit} code={product.barcode!} shopName={shopName} size={labelSize} />
         ))}
       </div>
 
       <style jsx global>{`
-        @media screen {
-          #label-sheet {
-            display: none;
-          }
+        #label-sheet {
+          display: none;
         }
         @media print {
           .no-print {
             display: none !important;
           }
           #label-sheet {
-            display: ${labelSize === "thermal" ? "flex" : "grid"} !important;
+            display: ${selectedLabels.length > 0 ? (labelSize === "a4" ? "grid" : "flex") : "none"};
+          }
+          .label-sheet-thermal {
+            flex-direction: column;
+            gap: 2mm;
+          }
+          .label-sheet-a4 {
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2mm;
           }
           @page {
             size: ${labelSize === "thermal" ? "40mm auto" : "A4"};

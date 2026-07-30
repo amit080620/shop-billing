@@ -32,12 +32,8 @@ export function AuthShell({
           <ThemeToggle theme={theme} compact />
         </div>
         <div className="mb-6 flex flex-col items-center gap-3 text-center">
-          <div
-            className="flex h-14 w-14 items-center justify-center rounded-2xl text-2xl font-bold text-white shadow-lg"
-            style={{ background: "linear-gradient(135deg, var(--brand-light), var(--brand-dark))" }}
-          >
-            ₹
-          </div>
+          {/* eslint-disable-next-line @next/next/no-img-element -- small static brand asset, next/image adds no value here */}
+          <img src="/brand-logo.png" alt="The Ray" className="h-24 w-auto" />
           <div>
             <h1 className="text-2xl font-bold text-foreground">{title}</h1>
             <p className="mt-1 text-sm text-muted">{subtitle}</p>

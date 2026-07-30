@@ -1,6 +1,6 @@
 {
-  "name": "Shop Billing",
-  "short_name": "Billing",
+  "name": "The Ray - Shop Billing",
+  "short_name": "The Ray",
   "description": "GST billing, inventory, and udhaar tracking for small shops",
   "start_url": "/",
   "display": "standalone",

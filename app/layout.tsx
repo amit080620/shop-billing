@@ -4,16 +4,17 @@ import { ServiceWorkerRegistration } from "./components/ServiceWorkerRegistratio
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Shop Billing",
+  title: "The Ray - Shop Billing",
   description: "Simple billing for small shops",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Shop Billing",
+    title: "The Ray - Shop Billing",
   },
   icons: {
     icon: [
+      { url: "/favicon.png", sizes: "64x64", type: "image/png" },
       { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
       { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
     ],

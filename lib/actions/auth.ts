@@ -34,9 +34,15 @@ export async function signupAction(
     return { error: authError?.message ?? "Could not create account" };
   }
 
+  // New shops get a 14-day trial by default — a super admin extends this
+  // via /admin once the shop is on a paid plan. Existing shops created
+  // before this rolled out keep their unlimited access (NULL), untouched.
+  const trialEnds = new Date();
+  trialEnds.setDate(trialEnds.getDate() + 14);
+
   const { data: shop, error: shopError } = await admin
     .from("shops")
-    .insert({ name: shopName })
+    .insert({ name: shopName, subscription_valid_until: trialEnds.toISOString().slice(0, 10) })
     .select("id")
     .single();
   if (shopError || !shop) {
