@@ -179,6 +179,64 @@ export const HELP_CONTENT: Record<Lang, HelpSection[]> = {
       ],
     },
     {
+      title: "🍽 Restaurant — Tables & orders",
+      items: [
+        {
+          q: "How do I start an order?",
+          a: "Tap a free (green) table on the Tables screen — it opens a new order for that table and marks it occupied. Search the menu and tap an item to add it; tap again to add another one. Tap an occupied (red) table any time to reopen its order and keep adding.",
+        },
+        {
+          q: "What does Print KOT actually send?",
+          a: "Only the items added since the last KOT for that table — so if you print, then add two more dishes later, the second KOT shows just those two, not the whole order again. This is what stops the kitchen from re-cooking something already on the stove.",
+        },
+        {
+          q: "What's the Kitchen tab / Kitchen Display?",
+          a: "A full-screen, no-app-chrome view meant for a TV or tablet sitting in the kitchen — every open table's ticket, color-coded by how long it's been waiting (green under 10 minutes, orange 10–20, red 20+). It refreshes itself every few seconds, so nobody needs to keep printing paper KOTs.",
+        },
+        {
+          q: "How do I remove a wrongly-added item?",
+          a: "Tap the ✕ next to it in the order screen — no PIN needed, since correcting a mistake is a normal part of taking orders. A PIN is only required to cancel the entire table's order.",
+        },
+        {
+          q: "What's the Manager PIN for?",
+          a: "It's needed to cancel a started order (the whole table, not a single item) — deliberately a separate PIN from the owner's login password, set under Settings → Restaurant, so staff never need real account credentials just to void something with a supervisor's approval.",
+        },
+        {
+          q: "How does Settle work?",
+          a: "Tap Settle on an order, apply a discount if needed, then enter the payment — split it across cash, card, UPI, etc. if the customer's paying more than one way. Whatever's short of the total becomes credit against that customer, same as a regular bill.",
+        },
+        {
+          q: "Dine-in, Takeaway, Delivery — what's that toggle for?",
+          a: "Marks how the order is being served, for your own records and future reporting. It doesn't change how billing or KOT works.",
+        },
+      ],
+    },
+    {
+      title: "🔁 Rental — Bookings & returns",
+      items: [
+        {
+          q: "How do I make an item rentable?",
+          a: "In Inventory, edit the item and tick \"Also available for rent\" — then set a rate for whichever durations you actually rent by (hourly/daily/weekly/monthly) and, if you take one, a security deposit.",
+        },
+        {
+          q: "How does the app stop double-booking?",
+          a: "Every time you book, it checks every other booking for that same item whose dates overlap the ones you're entering, and only lets you book what's actually free for that window. If you ask for more than what's available, it tells you the exact number free instead.",
+        },
+        {
+          q: "What happens to the security deposit?",
+          a: "It's collected at booking time and held separately from the rental charge (no GST applies to it, since it's refundable, not a sale). When the item is returned, any damage charge is deducted from it automatically, and the remainder is refunded. If damage costs more than the deposit, the difference becomes credit owed by the customer.",
+        },
+        {
+          q: "How do I process a return?",
+          a: "Open the rental and tap Process return — mark each item's condition (good/damaged/missing), add a damage charge or late fee if applicable, and confirm. The item becomes available to book again immediately.",
+        },
+        {
+          q: "Where do past rentals go?",
+          a: "More → Rentals → Rental history shows everything that's been returned or cancelled, most recent first.",
+        },
+      ],
+    },
+    {
       title: "🔴 🟡 🟢 Voiding a bill",
       items: [
         {
@@ -363,6 +421,64 @@ export const HELP_CONTENT: Record<Lang, HelpSection[]> = {
       ],
     },
     {
+      title: "🍽 Restaurant — Tables और Orders",
+      items: [
+        {
+          q: "Order कैसे शुरू करें?",
+          a: "Tables screen पर किसी खाली (हरी) table पर टैप करें — उसके लिए नया order खुल जाता है और table occupied हो जाती है। Menu खोजें और item पर टैप करके जोड़ें; दोबारा टैप करने से और जुड़ता है। किसी occupied (लाल) table पर कभी भी टैप करके उसका order फिर से खोल सकते हैं।",
+        },
+        {
+          q: "Print KOT असल में क्या भेजता है?",
+          a: "सिर्फ़ वही items जो उस table के पिछले KOT के बाद जुड़े हों — तो अगर आपने print किया, फिर बाद में 2 और dish जोड़ीं, दूसरा KOT सिर्फ़ वही 2 दिखाएगा, पूरा order दोबारा नहीं। यही kitchen को already बन रही चीज़ दोबारा बनाने से रोकता है।",
+        },
+        {
+          q: "Kitchen tab / Kitchen Display क्या है?",
+          a: "एक पूरी स्क्रीन वाला view, बिना किसी app menu के — किसी TV या tablet के लिए जो kitchen में रखा हो। हर खुली table का ticket, रंग के हिसाब से (हरा 10 मिनट से कम, नारंगी 10-20, लाल 20+ मिनट) — कितनी देर से रुका है दिखाता है। यह अपने-आप हर कुछ सेकंड में update होता रहता है, तो कागज़ पर KOT print करने की ज़रूरत नहीं।",
+        },
+        {
+          q: "गलती से जुड़े item को कैसे हटाएँ?",
+          a: "Order screen में उसके बगल में ✕ दबाएँ — कोई PIN नहीं चाहिए, क्योंकि गलती ठीक करना सामान्य काम है। PIN सिर्फ़ पूरी table का order cancel करने के लिए चाहिए।",
+        },
+        {
+          q: "Manager PIN किसलिए है?",
+          a: "किसी शुरू हो चुकी order को cancel करने के लिए (पूरी table, सिर्फ़ एक item नहीं) — जानबूझकर owner के login password से अलग, Settings → Restaurant में सेट करें, ताकि staff को कभी असली account credentials न जानने पड़ें, सिर्फ़ supervisor की मंज़ूरी से काम हो जाए।",
+        },
+        {
+          q: "Settle कैसे काम करता है?",
+          a: "किसी order पर Settle दबाएँ, ज़रूरत हो तो discount लगाएँ, फिर payment डालें — अगर customer एक से ज़्यादा तरीके से पैसे दे रहा है तो cash/card/UPI में बाँट सकते हैं। जो total से कम रह जाए, वो customer के उधार में जुड़ जाता है, सामान्य बिल जैसे ही।",
+        },
+        {
+          q: "Dine-in, Takeaway, Delivery वाला toggle किसलिए है?",
+          a: "यह record रखता है कि order कैसे serve हुआ, आपकी अपनी जानकारी और आगे reports के लिए। billing या KOT के काम करने के तरीके में कोई फ़र्क़ नहीं पड़ता।",
+        },
+      ],
+    },
+    {
+      title: "🔁 Rental — Booking और Return",
+      items: [
+        {
+          q: "किसी item को rentable कैसे बनाएँ?",
+          a: "Inventory में item edit करें और \"Also available for rent\" टिक करें — फिर जिन duration पर असल में rent करते हैं (hourly/daily/weekly/monthly) उनकी rate भरें, और अगर लेते हैं तो security deposit।",
+        },
+        {
+          q: "App double-booking कैसे रोकता है?",
+          a: "जब भी book करें, वो उसी item की हर दूसरी booking से जाँच करता है जिनकी dates overlap होती हैं, और सिर्फ़ उतना ही book होने देता है जितना उस समय के लिए असल में खाली है। अगर उपलब्ध से ज़्यादा माँगें, तो सही उपलब्ध संख्या बता देता है।",
+        },
+        {
+          q: "Security deposit का क्या होता है?",
+          a: "यह booking के वक़्त लिया जाता है और rental charge से अलग रखा जाता है (इस पर GST नहीं लगता, क्योंकि यह refundable है, बिक्री नहीं)। सामान वापस आने पर, कोई damage charge अपने-आप deposit से कट जाता है, बाकी वापस मिल जाता है। अगर damage deposit से ज़्यादा हो, तो फ़र्क़ customer के उधार में जुड़ जाता है।",
+        },
+        {
+          q: "Return कैसे process करें?",
+          a: "Rental खोलें और Process return दबाएँ — हर item की हालत बताएं (अच्छी/खराब/गुम), ज़रूरत हो तो damage charge या late fee जोड़ें, और confirm करें। Item तुरंत दोबारा book होने लायक हो जाता है।",
+        },
+        {
+          q: "पुरानी rentals कहाँ मिलेंगी?",
+          a: "More → Rentals → Rental history में सारी वापस आई या cancel हुई rentals दिखती हैं, सबसे नई सबसे पहले।",
+        },
+      ],
+    },
+    {
       title: "🔴 🟡 🟢 बिल void करना",
       items: [
         {
@@ -543,6 +659,64 @@ export const HELP_CONTENT: Record<Lang, HelpSection[]> = {
         {
           q: "कोणत्या खऱ्या मर्यादा लक्षात ठेवाव्यात?",
           a: "साठा आणि किंमती तुम्ही शेवटचे ऑनलाइन होता तितक्याच ताज्या असतात — दोन कर्मचारी एकाच कमी-साठा असलेल्या वस्तूची ऑफलाइन विक्री करत असतील, तर जास्त विकली जाऊ शकते. ऑफलाइन स्क्रीनमध्ये अजून कॅमेरा बारकोड स्कॅन नाही, फक्त टेक्स्टने शोधता येते. आणि या डिव्हाइसवर Sell आणि Offline billing दोन्ही ऑनलाइन असताना किमान एकदा उघडलेले असणे गरजेचे आहे, तरच इंटरनेटशिवाय काम करेल.",
+        },
+      ],
+    },
+    {
+      title: "🍽 रेस्टॉरंट — टेबल्स व ऑर्डर्स",
+      items: [
+        {
+          q: "ऑर्डर कशी सुरू करायची?",
+          a: "Tables स्क्रीनवर एखाद्या रिकाम्या (हिरव्या) टेबलवर टॅप करा — त्यासाठी नवीन ऑर्डर उघडते आणि टेबल occupied होते. मेनू शोधा आणि आयटमवर टॅप करून जोडा; पुन्हा टॅप केल्यास आणखी एक जोडली जाते. व्यापलेल्या (लाल) टेबलवर कधीही टॅप करून त्याची ऑर्डर पुन्हा उघडता येते.",
+        },
+        {
+          q: "Print KOT नक्की काय पाठवते?",
+          a: "फक्त त्या टेबलच्या शेवटच्या KOT नंतर जोडलेले आयटम — म्हणजे तुम्ही प्रिंट केले, नंतर आणखी 2 डिश जोडल्या, तर दुसरे KOT फक्त त्या 2 दाखवते, संपूर्ण ऑर्डर पुन्हा नाही. यामुळेच स्वयंपाकघर आधीच बनत असलेली गोष्ट पुन्हा बनवत नाही.",
+        },
+        {
+          q: "Kitchen टॅब / Kitchen Display म्हणजे काय?",
+          a: "स्वयंपाकघरात ठेवलेल्या TV किंवा टॅबलेटसाठी बनवलेले, कोणत्याही app मेनूशिवाय पूर्ण स्क्रीन दृश्य — प्रत्येक उघड्या टेबलचे तिकीट, किती वेळ थांबले आहे त्यानुसार रंगीत (हिरवा 10 मिनिटांखाली, केशरी 10-20, लाल 20+ मिनिटे). हे दर काही सेकंदांनी आपोआप अपडेट होते, त्यामुळे कागदी KOT प्रिंट करायची गरज नाही.",
+        },
+        {
+          q: "चुकून जोडलेला आयटम कसा काढायचा?",
+          a: "ऑर्डर स्क्रीनमध्ये त्याच्या बाजूला ✕ दाबा — PIN लागत नाही, कारण चूक दुरुस्त करणे हे सामान्य काम आहे. संपूर्ण टेबलची ऑर्डर रद्द करण्यासाठीच PIN लागतो.",
+        },
+        {
+          q: "Manager PIN कशासाठी आहे?",
+          a: "सुरू झालेली ऑर्डर रद्द करण्यासाठी (संपूर्ण टेबल, एकच आयटम नाही) — मालकाच्या लॉगिन पासवर्डपेक्षा जाणूनबुजून वेगळे, Settings → Restaurant मध्ये सेट करा, जेणेकरून कर्मचाऱ्यांना कधीही खरे खाते credentials माहित असण्याची गरज नाही, फक्त पर्यवेक्षकाच्या मान्यतेने काम होते.",
+        },
+        {
+          q: "Settle कसे काम करते?",
+          a: "ऑर्डरवर Settle दाबा, गरज असल्यास सूट लावा, मग पेमेंट टाका — ग्राहक एकापेक्षा जास्त प्रकारे पैसे देत असेल तर cash/card/UPI मध्ये विभागू शकता. जे एकूण रकमेपेक्षा कमी राहील, ते ग्राहकाच्या उधारीत जोडले जाते, नेहमीच्या बिलासारखेच.",
+        },
+        {
+          q: "Dine-in, Takeaway, Delivery टॉगल कशासाठी आहे?",
+          a: "ऑर्डर कशी दिली गेली याची नोंद ठेवते, तुमच्या स्वतःच्या माहितीसाठी आणि पुढील अहवालांसाठी. बिलिंग किंवा KOT काम करण्याच्या पद्धतीत काहीही फरक पडत नाही.",
+        },
+      ],
+    },
+    {
+      title: "🔁 भाड्याने देणे — बुकिंग व परतावा",
+      items: [
+        {
+          q: "एखादी वस्तू rentable कशी बनवायची?",
+          a: "Inventory मध्ये वस्तू edit करा आणि \"Also available for rent\" टिक करा — मग तुम्ही ज्या कालावधीनुसार खरोखर भाड्याने देता (hourly/daily/weekly/monthly) त्यांचा दर भरा, आणि घेत असाल तर सुरक्षा ठेव.",
+        },
+        {
+          q: "App दुहेरी-बुकिंग कसे थांबवते?",
+          a: "जेव्हाही तुम्ही बुक करता, ते त्याच वस्तूच्या दुसऱ्या प्रत्येक बुकिंगशी तपासते ज्यांच्या तारखा जुळतात, आणि त्या कालावधीसाठी प्रत्यक्षात मोकळे असेल तेवढेच बुक करू देते. उपलब्धतेपेक्षा जास्त मागितल्यास, नेमकी उपलब्ध संख्या सांगते.",
+        },
+        {
+          q: "सुरक्षा ठेवीचे काय होते?",
+          a: "ती बुकिंगच्या वेळी घेतली जाते आणि भाड्याच्या रकमेपासून वेगळी ठेवली जाते (यावर GST लागत नाही, कारण ती परत करण्यायोग्य आहे, विक्री नाही). वस्तू परत आल्यावर, कोणताही नुकसान शुल्क आपोआप ठेवीतून वजा होतो, उरलेली रक्कम परत केली जाते. नुकसान ठेवीपेक्षा जास्त असल्यास, फरक ग्राहकाच्या उधारीत जोडला जातो.",
+        },
+        {
+          q: "परतावा कसा process करायचा?",
+          a: "भाडे उघडा आणि Process return दाबा — प्रत्येक वस्तूची स्थिती सांगा (चांगली/खराब/गहाळ), गरज असल्यास नुकसान शुल्क किंवा विलंब शुल्क जोडा, आणि पुष्टी करा. वस्तू लगेच पुन्हा बुक करण्यायोग्य होते.",
+        },
+        {
+          q: "जुनी भाडी कुठे मिळतील?",
+          a: "More → Rentals → Rental history मध्ये परत आलेली किंवा रद्द झालेली सर्व भाडी दिसतात, सर्वात नवीन आधी.",
         },
       ],
     },

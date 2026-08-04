@@ -10,7 +10,7 @@ type Slide = {
   cta?: { label: string; href: string };
 };
 
-const SLIDES: Slide[] = [
+const RETAIL_SLIDES: Slide[] = [
   {
     icon: "👋",
     title: "Welcome to your shop's billing app",
@@ -44,10 +44,80 @@ const SLIDES: Slide[] = [
   },
 ];
 
-export function WelcomeTour({ storageKey }: { storageKey: string }) {
+const RESTAURANT_SLIDES: Slide[] = [
+  {
+    icon: "👋",
+    title: "Welcome — this app is set up for a restaurant",
+    body: "A quick 30-second look at where everything lives — you can always come back to this from More → Help.",
+  },
+  {
+    icon: "🍽",
+    title: "Tables",
+    body: "Tap a free (green) table to start an order — search the menu, tap items to add them. Tap an occupied (red) table to open its order and keep adding.",
+  },
+  {
+    icon: "🍳",
+    title: "Kitchen (KOT)",
+    body: "Print KOT sends only the newly-added items to the kitchen — nothing gets shown twice. For a paperless setup, open the Kitchen tab on a TV or tablet in the kitchen — it updates itself every few seconds.",
+  },
+  {
+    icon: "💰",
+    title: "Settling a table",
+    body: "When the table's ready to pay, tap Settle — you can split the payment across cash, card, and UPI. Cancelling an order needs the Manager PIN (set that up under Settings → Restaurant) so only a supervisor can void a started order.",
+  },
+  {
+    icon: "📊",
+    title: "Reports",
+    body: "Restaurant sales (day-wise and month-wise, tap any bill for its items) lives under More → Restaurant. GSTR-1, GSTR-3B, and your purchase register are under Reports.",
+  },
+  {
+    icon: "⚙️",
+    title: "One last thing",
+    body: "If you haven't already, set your shop's state under More → GST & shop profile — billing is blocked until that's filled in, since it decides CGST+SGST vs IGST on every invoice.",
+    cta: { label: "Go to GST profile", href: "/settings" },
+  },
+];
+
+const RENTAL_SLIDES: Slide[] = [
+  {
+    icon: "👋",
+    title: "Welcome — this app is set up for a rental business",
+    body: "A quick 30-second look at where everything lives — you can always come back to this from More → Help.",
+  },
+  {
+    icon: "🔁",
+    title: "New rental",
+    body: "Pick a customer, choose items marked \"Also available for rent\" (set that up per item in Inventory), a start/end date, and a security deposit. The app blocks double-booking the same item for overlapping dates automatically.",
+  },
+  {
+    icon: "↩️",
+    title: "Returns",
+    body: "When items come back, open the rental and tap Process return — mark each item's condition. Any damage charge is deducted from the deposit automatically, and the rest is refunded.",
+  },
+  {
+    icon: "📊",
+    title: "Reports",
+    body: "GSTR-1, GSTR-3B, and your purchase register live under Reports. Rental history (past returns) is under More → Rentals.",
+  },
+  {
+    icon: "⚙️",
+    title: "One last thing",
+    body: "If you haven't already, set your shop's state under More → GST & shop profile — billing is blocked until that's filled in, since it decides CGST+SGST vs IGST on every invoice.",
+    cta: { label: "Go to GST profile", href: "/settings" },
+  },
+];
+
+function slidesFor(businessType: string) {
+  if (businessType === "restaurant") return RESTAURANT_SLIDES;
+  if (businessType === "rental") return RENTAL_SLIDES;
+  return RETAIL_SLIDES;
+}
+
+export function WelcomeTour({ storageKey, businessType }: { storageKey: string; businessType: string }) {
   const [visible, setVisible] = useState(false);
   const [step, setStep] = useState(0);
   const router = useRouter();
+  const SLIDES = slidesFor(businessType);
 
   useEffect(() => {
     try {
