@@ -11,56 +11,17 @@ export default async function DashboardPage() {
   const { t } = await getTranslator();
   const admin = createSupabaseAdminClient();
 
-  const startOfToday = new Date();
-  startOfToday.setHours(0, 0, 0, 0);
-  const startOfWeek = new Date();
-  startOfWeek.setDate(startOfWeek.getDate() - 6);
-  startOfWeek.setHours(0, 0, 0, 0);
-
-  const [todayBills, weekBills, allBillsCredit, allPayments, recentBills, allPayables, allVendorPayments, productCount, customerCount] =
-    await Promise.all([
-      admin
-        .from("bills")
-        .select("total")
-        .eq("shop_id", session.shopId)
-        .eq("status", "active")
-        .gte("created_at", startOfToday.toISOString()),
-      admin
-        .from("bills")
-        .select("total")
-        .eq("shop_id", session.shopId)
-        .eq("status", "active")
-        .gte("created_at", startOfWeek.toISOString()),
-      admin.from("bills").select("credit_amount").eq("shop_id", session.shopId).eq("status", "active"),
-      admin.from("payments").select("amount").eq("shop_id", session.shopId),
-      admin
-        .from("bills")
-        .select("id, total, credit_amount, created_at, customers ( name )")
-        .eq("shop_id", session.shopId)
-        .eq("status", "active")
-        .order("created_at", { ascending: false })
-        .limit(5),
-      admin.from("purchases").select("payable_amount").eq("shop_id", session.shopId),
-      admin.from("purchase_payments").select("amount").eq("shop_id", session.shopId),
-      admin.from("products").select("id", { count: "exact", head: true }).eq("shop_id", session.shopId),
-      admin.from("customers").select("id", { count: "exact", head: true }).eq("shop_id", session.shopId),
-    ]);
-
-  const todayTotal = sum(todayBills.data?.map((b) => b.total));
-  const weekTotal = sum(weekBills.data?.map((b) => b.total));
-  const totalCredit = sum(allBillsCredit.data?.map((b) => b.credit_amount));
-  const totalPaidBack = sum(allPayments.data?.map((p) => p.amount));
-  const outstanding = Math.max(0, totalCredit - totalPaidBack);
-
-  const totalPayable = sum(allPayables.data?.map((p) => p.payable_amount));
-  const totalVendorPaid = sum(allVendorPayments.data?.map((p) => p.amount));
-  const outstandingPayable = Math.max(0, totalPayable - totalVendorPaid);
+  const [{ count: productCount }, { count: customerCount }, { data: anyBill }] = await Promise.all([
+    admin.from("products").select("id", { count: "exact", head: true }).eq("shop_id", session.shopId),
+    admin.from("customers").select("id", { count: "exact", head: true }).eq("shop_id", session.shopId),
+    admin.from("bills").select("id").eq("shop_id", session.shopId).limit(1),
+  ]);
 
   const setupSteps = [
     { done: !!session.shopStateCode, label: "Set your shop's GST state", href: "/settings" },
-    { done: (productCount.count ?? 0) > 0, label: "Add your first product", href: "/products" },
-    { done: (customerCount.count ?? 0) > 0, label: "Add a customer", href: "/customers" },
-    { done: (recentBills.data?.length ?? 0) > 0, label: "Create your first bill", href: "/bills/new" },
+    { done: (productCount ?? 0) > 0, label: "Add your first product", href: "/products" },
+    { done: (customerCount ?? 0) > 0, label: "Add a customer", href: "/customers" },
+    { done: (anyBill?.length ?? 0) > 0, label: "Create your first bill", href: "/bills/new" },
   ];
   const setupComplete = setupSteps.every((s) => s.done);
 
@@ -107,10 +68,7 @@ export default async function DashboardPage() {
       )}
 
       {nextFestival && (
-        <Link
-          href="/festivals"
-          className="rounded-xl border border-dashed border-brand bg-brand-soft p-4"
-        >
+        <Link href="/festivals" className="rounded-xl border border-dashed border-brand bg-brand-soft p-4">
           <div className="flex items-center justify-between gap-3">
             <div>
               <p className="text-sm font-semibold text-brand-dark">
@@ -125,28 +83,67 @@ export default async function DashboardPage() {
         </Link>
       )}
 
+      {session.businessType === "restaurant" ? (
+        <RestaurantHome shopId={session.shopId} />
+      ) : session.businessType === "rental" ? (
+        <RentalHome shopId={session.shopId} />
+      ) : (
+        <RetailHome session={session} t={t} />
+      )}
+    </div>
+  );
+}
+
+// ─── Retail / Mart / Hardware / Pharmacy / General ─────────────────────────
+async function RetailHome({
+  session,
+  t,
+}: {
+  session: Awaited<ReturnType<typeof requireSession>>;
+  t: (key: string, vars?: Record<string, string | number>) => string;
+}) {
+  const admin = createSupabaseAdminClient();
+  const startOfToday = new Date();
+  startOfToday.setHours(0, 0, 0, 0);
+  const startOfWeek = new Date();
+  startOfWeek.setDate(startOfWeek.getDate() - 6);
+  startOfWeek.setHours(0, 0, 0, 0);
+
+  const [todayBills, weekBills, allBillsCredit, allPayments, recentBills, allPayables, allVendorPayments] =
+    await Promise.all([
+      admin.from("bills").select("total").eq("shop_id", session.shopId).eq("status", "active").gte("created_at", startOfToday.toISOString()),
+      admin.from("bills").select("total").eq("shop_id", session.shopId).eq("status", "active").gte("created_at", startOfWeek.toISOString()),
+      admin.from("bills").select("credit_amount").eq("shop_id", session.shopId).eq("status", "active"),
+      admin.from("payments").select("amount").eq("shop_id", session.shopId),
+      admin
+        .from("bills")
+        .select("id, total, credit_amount, created_at, customers ( name )")
+        .eq("shop_id", session.shopId)
+        .eq("status", "active")
+        .order("created_at", { ascending: false })
+        .limit(5),
+      admin.from("purchases").select("payable_amount").eq("shop_id", session.shopId),
+      admin.from("purchase_payments").select("amount").eq("shop_id", session.shopId),
+    ]);
+
+  const todayTotal = sum(todayBills.data?.map((b) => b.total));
+  const weekTotal = sum(weekBills.data?.map((b) => b.total));
+  const totalCredit = sum(allBillsCredit.data?.map((b) => b.credit_amount));
+  const totalPaidBack = sum(allPayments.data?.map((p) => p.amount));
+  const outstanding = Math.max(0, totalCredit - totalPaidBack);
+  const totalPayable = sum(allPayables.data?.map((p) => p.payable_amount));
+  const totalVendorPaid = sum(allVendorPayments.data?.map((p) => p.amount));
+  const outstandingPayable = Math.max(0, totalPayable - totalVendorPaid);
+
+  return (
+    <>
       <section className="grid grid-cols-2 gap-3">
         <StatCard label={t("home.todaySales")} value={formatMoney(todayTotal)} href="/daily-summary" />
         <StatCard label={t("home.last7Days")} value={formatMoney(weekTotal)} />
-        <StatCard
-          label={t("home.outstandingCredit")}
-          value={formatMoney(outstanding)}
-          tone="credit"
-          href="/reminders"
-        />
-        <StatCard
-          label={t("home.payableToVendors")}
-          value={formatMoney(outstandingPayable)}
-          tone="credit"
-        />
+        <StatCard label={t("home.outstandingCredit")} value={formatMoney(outstanding)} tone="credit" href="/reminders" />
+        <StatCard label={t("home.payableToVendors")} value={formatMoney(outstandingPayable)} tone="credit" />
       </section>
 
-      {/* Positioned here, not at the very top — this is tapped dozens of
-          times a day, and the top of a tall phone screen is an awkward
-          one-handed reach. Sitting after the stats keeps it in the
-          comfortable thumb zone for most screen sizes. The bottom-nav
-          "Sell" tab is always available too, for whenever you're deeper
-          in the scroll. */}
       <Link
         href="/bills/new"
         className="flex items-center justify-center gap-2 rounded-xl px-4 py-4 text-center font-semibold text-white shadow-md"
@@ -157,40 +154,23 @@ export default async function DashboardPage() {
       </Link>
 
       <section>
-        <h2 className="mb-2 text-sm font-semibold text-foreground">
-          {t("home.recentBills")}
-        </h2>
+        <h2 className="mb-2 text-sm font-semibold text-foreground">{t("home.recentBills")}</h2>
         {!recentBills.data || recentBills.data.length === 0 ? (
           <EmptyState text={t("home.noBillsYet")} />
         ) : (
           <ul className="flex flex-col gap-2">
             {recentBills.data.map((bill) => {
-              const customerName = Array.isArray(bill.customers)
-                ? bill.customers[0]?.name
-                : (bill.customers as { name: string } | null)?.name;
+              const customerName = Array.isArray(bill.customers) ? bill.customers[0]?.name : (bill.customers as { name: string } | null)?.name;
               return (
                 <li key={bill.id}>
-                  <Link
-                    href={`/print/bill/${bill.id}`}
-                    className="flex items-center justify-between rounded-lg border border-border bg-surface px-3.5 py-3 shadow-sm"
-                  >
+                  <Link href={`/print/bill/${bill.id}`} className="flex items-center justify-between rounded-lg border border-border bg-surface px-3.5 py-3 shadow-sm">
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium text-foreground">
-                        {customerName ?? t("common.walkinCustomer")}
-                      </p>
-                      <p className="text-xs text-muted">
-                        {formatDateTime(bill.created_at)}
-                      </p>
+                      <p className="truncate text-sm font-medium text-foreground">{customerName ?? t("common.walkinCustomer")}</p>
+                      <p className="text-xs text-muted">{formatDateTime(bill.created_at)}</p>
                     </div>
                     <div className="shrink-0 text-right">
-                      <p className="text-sm font-semibold text-foreground">
-                        {formatMoney(bill.total)}
-                      </p>
-                      {bill.credit_amount > 0 && (
-                        <p className="text-xs text-credit">
-                          {formatMoney(bill.credit_amount)} {t("home.credit")}
-                        </p>
-                      )}
+                      <p className="text-sm font-semibold text-foreground">{formatMoney(bill.total)}</p>
+                      {bill.credit_amount > 0 && <p className="text-xs text-credit">{formatMoney(bill.credit_amount)} {t("home.credit")}</p>}
                     </div>
                   </Link>
                 </li>
@@ -199,7 +179,134 @@ export default async function DashboardPage() {
           </ul>
         )}
       </section>
-    </div>
+    </>
+  );
+}
+
+// ─── Restaurant ──────────────────────────────────────────────────────────
+async function RestaurantHome({ shopId }: { shopId: string }) {
+  const admin = createSupabaseAdminClient();
+  const startOfToday = new Date();
+  startOfToday.setHours(0, 0, 0, 0);
+
+  const [{ data: tables }, { data: openOrders }, { data: todaySettled }, { data: recentSettled }] = await Promise.all([
+    admin.from("restaurant_tables").select("id, status").eq("shop_id", shopId),
+    admin.from("restaurant_orders").select("id").eq("shop_id", shopId).eq("status", "open"),
+    admin.from("restaurant_orders").select("total").eq("shop_id", shopId).eq("status", "settled").gte("settled_at", startOfToday.toISOString()),
+    admin
+      .from("restaurant_orders")
+      .select("id, order_number, total, settled_at, restaurant_tables ( name )")
+      .eq("shop_id", shopId)
+      .eq("status", "settled")
+      .order("settled_at", { ascending: false })
+      .limit(5),
+  ]);
+
+  const occupied = (tables ?? []).filter((t) => t.status === "occupied").length;
+  const todayRevenue = sum(todaySettled?.map((o) => o.total));
+
+  return (
+    <>
+      <section className="grid grid-cols-2 gap-3">
+        <StatCard label="Tables occupied" value={`${occupied} / ${tables?.length ?? 0}`} href="/restaurant" />
+        <StatCard label="Orders in kitchen" value={String(openOrders?.length ?? 0)} tone={openOrders && openOrders.length > 0 ? "credit" : "default"} href="/restaurant-kds" />
+        <StatCard label="Today's revenue" value={formatMoney(todayRevenue)} href="/restaurant/reports" className="col-span-2" />
+      </section>
+
+      <Link
+        href="/restaurant"
+        className="flex items-center justify-center gap-2 rounded-xl px-4 py-4 text-center font-semibold text-white shadow-md"
+        style={{ background: "linear-gradient(135deg, var(--brand-light), var(--brand-dark))" }}
+      >
+        <PlusIcon />
+        Go to Tables
+      </Link>
+
+      <section>
+        <h2 className="mb-2 text-sm font-semibold text-foreground">Recently settled</h2>
+        {!recentSettled || recentSettled.length === 0 ? (
+          <EmptyState text="No settled bills yet today — they'll show up here." />
+        ) : (
+          <ul className="flex flex-col gap-2">
+            {recentSettled.map((o) => {
+              const table = Array.isArray(o.restaurant_tables) ? o.restaurant_tables[0] : o.restaurant_tables;
+              return (
+                <li key={o.id}>
+                  <Link href={`/restaurant/reports/${o.id}`} className="flex items-center justify-between rounded-lg border border-border bg-surface px-3.5 py-3 shadow-sm">
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium text-foreground">{table?.name ?? "Table"} · #{o.order_number}</p>
+                      <p className="text-xs text-muted">{o.settled_at && formatDateTime(o.settled_at)}</p>
+                    </div>
+                    <p className="shrink-0 text-sm font-semibold text-foreground">{formatMoney(o.total)}</p>
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </section>
+    </>
+  );
+}
+
+// ─── Rental ────────────────────────────────────────────────────────────────
+async function RentalHome({ shopId }: { shopId: string }) {
+  const admin = createSupabaseAdminClient();
+  const now = new Date();
+
+  const [{ data: active }, { data: recentRentals }] = await Promise.all([
+    admin.from("rentals").select("id, end_date").eq("shop_id", shopId).in("status", ["booked", "active"]),
+    admin
+      .from("rentals")
+      .select("id, rental_number, total, created_at, customers ( name )")
+      .eq("shop_id", shopId)
+      .order("created_at", { ascending: false })
+      .limit(5),
+  ]);
+
+  const activeCount = active?.length ?? 0;
+  const overdueCount = (active ?? []).filter((r) => new Date(r.end_date) < now).length;
+
+  return (
+    <>
+      <section className="grid grid-cols-2 gap-3">
+        <StatCard label="Active & booked" value={String(activeCount)} href="/rentals" />
+        <StatCard label="Overdue" value={String(overdueCount)} tone={overdueCount > 0 ? "credit" : "default"} href="/rentals" />
+      </section>
+
+      <Link
+        href="/rentals/new"
+        className="flex items-center justify-center gap-2 rounded-xl px-4 py-4 text-center font-semibold text-white shadow-md"
+        style={{ background: "linear-gradient(135deg, var(--brand-light), var(--brand-dark))" }}
+      >
+        <PlusIcon />
+        New rental
+      </Link>
+
+      <section>
+        <h2 className="mb-2 text-sm font-semibold text-foreground">Recent rentals</h2>
+        {!recentRentals || recentRentals.length === 0 ? (
+          <EmptyState text="No rentals booked yet — they'll show up here." />
+        ) : (
+          <ul className="flex flex-col gap-2">
+            {recentRentals.map((r) => {
+              const customerName = Array.isArray(r.customers) ? r.customers[0]?.name : (r.customers as { name: string } | null)?.name;
+              return (
+                <li key={r.id}>
+                  <Link href={`/rentals/${r.id}`} className="flex items-center justify-between rounded-lg border border-border bg-surface px-3.5 py-3 shadow-sm">
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium text-foreground">{customerName ?? "Walk-in"} · #{r.rental_number}</p>
+                      <p className="text-xs text-muted">{formatDateTime(r.created_at)}</p>
+                    </div>
+                    <p className="shrink-0 text-sm font-semibold text-foreground">{formatMoney(r.total)}</p>
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </section>
+    </>
   );
 }
 
@@ -236,16 +343,8 @@ function StatCard({
   } ${className}`;
   const content = (
     <>
-      <p className={`text-xs ${tone === "credit" ? "text-credit" : "text-muted"}`}>
-        {label}
-      </p>
-      <p
-        className={`mt-1 text-xl font-semibold ${
-          tone === "credit" ? "text-credit" : "text-foreground"
-        }`}
-      >
-        {value}
-      </p>
+      <p className={`text-xs ${tone === "credit" ? "text-credit" : "text-muted"}`}>{label}</p>
+      <p className={`mt-1 text-xl font-semibold ${tone === "credit" ? "text-credit" : "text-foreground"}`}>{value}</p>
     </>
   );
 
