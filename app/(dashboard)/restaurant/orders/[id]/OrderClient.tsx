@@ -9,6 +9,7 @@ import {
   getNewKotItemsAction,
   settleOrderAction,
   cancelOrderAction,
+  setOrderTypeAction,
   type SettlePayment,
 } from "@/lib/actions/restaurant";
 import { formatMoney } from "@/lib/format";
@@ -20,6 +21,7 @@ type Order = {
   id: string;
   orderNumber: string;
   status: "open" | "settled" | "cancelled";
+  orderType: "dine_in" | "takeaway" | "delivery";
   subtotal: number;
   discountAmount: number;
   cgstAmount: number;
@@ -93,6 +95,27 @@ export function OrderClient({
           ← Tables
         </Link>
       </div>
+
+      {!isReadOnly && (
+        <div className="no-print flex gap-2">
+          {(["dine_in", "takeaway", "delivery"] as const).map((type) => (
+            <button
+              key={type}
+              onClick={() =>
+                startTransition(async () => {
+                  await setOrderTypeAction(order.id, type);
+                  router.refresh();
+                })
+              }
+              className={`rounded-full border px-3 py-1.5 text-xs font-medium ${
+                order.orderType === type ? "border-brand bg-brand-soft text-brand-dark" : "border-border text-muted"
+              }`}
+            >
+              {type === "dine_in" ? "🍽 Dine-in" : type === "takeaway" ? "🥡 Takeaway" : "🛵 Delivery"}
+            </button>
+          ))}
+        </div>
+      )}
 
       {!isReadOnly && (
         <section className="no-print flex flex-col gap-2">

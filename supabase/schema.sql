@@ -633,3 +633,7 @@ alter table products add column if not exists drug_schedule text
 -- lets billing sell individual tablets instead of forcing a whole strip.
 alter table products add column if not exists units_per_pack numeric(12, 3);
 alter table products add column if not exists loose_unit_name text;
+
+-- ─── Restaurant order type (PetPooja-style classification) ───────────────
+alter table restaurant_orders add column if not exists order_type text not null default 'dine_in'
+  check (order_type in ('dine_in', 'takeaway', 'delivery'));

@@ -6,7 +6,7 @@ import { createSupabaseAdminClient } from "../supabase/admin";
 import { shopSettingsSchema, LOGO_MAX_BYTES, LOGO_ALLOWED_TYPES } from "../validation/schemas";
 import { stateNameForCode } from "../constants/states";
 
-export type ActionState = { error?: string } | null;
+export type ActionState = { error?: string; success?: boolean } | null;
 
 export async function updateShopSettingsAction(
   _prev: ActionState,
@@ -61,7 +61,7 @@ export async function updateShopSettingsAction(
 
   revalidatePath("/settings");
   revalidatePath("/");
-  return null;
+  return { success: true };
 }
 
 export async function uploadLogoAction(

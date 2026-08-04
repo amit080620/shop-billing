@@ -328,3 +328,20 @@ export async function cancelOrderAction(
   revalidatePath("/restaurant");
   return {};
 }
+
+export async function setOrderTypeAction(
+  orderId: string,
+  orderType: "dine_in" | "takeaway" | "delivery",
+): Promise<{ error?: string }> {
+  const session = await requireSession();
+  const admin = createSupabaseAdminClient();
+  const { error } = await admin
+    .from("restaurant_orders")
+    .update({ order_type: orderType })
+    .eq("id", orderId)
+    .eq("shop_id", session.shopId)
+    .eq("status", "open");
+  if (error) return { error: "Could not update order type" };
+  revalidatePath(`/restaurant/orders/${orderId}`);
+  return {};
+}

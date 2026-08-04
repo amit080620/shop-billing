@@ -43,15 +43,13 @@ export default async function MorePage() {
 
       {session.businessType === "restaurant" && (
         <MenuGroup title="Restaurant">
-          <MenuLink href="/restaurant" label="Tables" sub="Start orders, KOT, settle bills" icon={TableIcon} />
+          <MenuLink href="/restaurant-kds" label="Kitchen display (TV)" sub="Big-screen view for the kitchen" icon={KitchenIcon} />
           <MenuLink href="/restaurant/reports" label="Restaurant sales" sub="Day-wise & month-wise reports" icon={ClockIcon} />
         </MenuGroup>
       )}
 
       {session.businessType === "rental" && (
         <MenuGroup title="Rentals">
-          <MenuLink href="/rentals" label="Active & upcoming rentals" sub="Bookings, pickups, returns, overdue" icon={RentalIcon} />
-          <MenuLink href="/rentals/new" label="New rental" sub="Book items out for a customer" icon={PlusCircleIcon} />
           <MenuLink href="/rentals/history" label="Rental history" sub="Past returns & cancellations" icon={ClockIcon} />
         </MenuGroup>
       )}
@@ -252,34 +250,18 @@ function OfflineIcon({ className }: { className?: string }) {
     </svg>
   );
 }
-function RentalIcon({ className }: { className?: string }) {
-  return (
-    <svg {...iconProps(className)}>
-      <path d="M3 7h18M6 7V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v2M4 7v13a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V7" />
-      <path d="M9 12h6M9 16h4" />
-    </svg>
-  );
-}
-function PlusCircleIcon({ className }: { className?: string }) {
-  return (
-    <svg {...iconProps(className)}>
-      <circle cx="12" cy="12" r="9" />
-      <path d="M12 8v8M8 12h8" />
-    </svg>
-  );
-}
-function TableIcon({ className }: { className?: string }) {
-  return (
-    <svg {...iconProps(className)}>
-      <rect x="3" y="10" width="18" height="4" rx="1" />
-      <path d="M6 14v5M18 14v5" />
-    </svg>
-  );
-}
 function ExpiryIcon({ className }: { className?: string }) {
   return (
     <svg {...iconProps(className)}>
       <path d="M9 2h6M10 2v5.5L5 15a3 3 0 0 0 2.5 4.7h9a3 3 0 0 0 2.5-4.7L14 7.5V2" />
+    </svg>
+  );
+}
+function KitchenIcon({ className }: { className?: string }) {
+  return (
+    <svg {...iconProps(className)}>
+      <rect x="2.5" y="4.5" width="19" height="13" rx="1.5" />
+      <path d="M8 21h8M12 17.5V21" />
     </svg>
   );
 }

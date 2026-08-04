@@ -5,17 +5,44 @@ import { usePathname } from "next/navigation";
 import { useTranslation } from "@/lib/i18n/useTranslation";
 import type { Lang } from "@/lib/i18n/dictionary";
 
-const TABS = [
-  { href: "/", labelKey: "nav.home", icon: HomeIcon },
-  { href: "/bills/new", labelKey: "nav.sell", icon: SellIcon },
-  { href: "/purchases/new", labelKey: "nav.buy", icon: BuyIcon },
-  { href: "/reports", labelKey: "nav.reports", icon: ReportIcon },
-  { href: "/more", labelKey: "nav.more", icon: MoreIcon },
-];
+function tabsFor(businessType: string, t: (key: string) => string) {
+  const RETAIL_TABS = [
+    { href: "/", label: t("nav.home"), icon: HomeIcon },
+    { href: "/bills/new", label: t("nav.sell"), icon: SellIcon },
+    { href: "/purchases/new", label: t("nav.buy"), icon: BuyIcon },
+    { href: "/reports", label: t("nav.reports"), icon: ReportIcon },
+    { href: "/more", label: t("nav.more"), icon: MoreIcon },
+  ];
 
-export function BottomNav({ lang }: { lang: Lang }) {
+  // A restaurant's whole day revolves around tables and the kitchen —
+  // Sell/Buy (built for retail stock transactions) aren't what a restaurant
+  // reaches for dozens of times a shift, so the primary tab becomes Tables,
+  // with the kitchen display one tap away instead of buried in More.
+  const RESTAURANT_TABS = [
+    { href: "/", label: t("nav.home"), icon: HomeIcon },
+    { href: "/restaurant", label: "Tables", icon: TableIcon },
+    { href: "/restaurant-kds", label: "Kitchen", icon: KitchenIcon },
+    { href: "/reports", label: t("nav.reports"), icon: ReportIcon },
+    { href: "/more", label: t("nav.more"), icon: MoreIcon },
+  ];
+
+  const RENTAL_TABS = [
+    { href: "/", label: t("nav.home"), icon: HomeIcon },
+    { href: "/rentals/new", label: "New rental", icon: BuyIcon },
+    { href: "/rentals", label: "Rentals", icon: TableIcon },
+    { href: "/reports", label: t("nav.reports"), icon: ReportIcon },
+    { href: "/more", label: t("nav.more"), icon: MoreIcon },
+  ];
+
+  if (businessType === "restaurant") return RESTAURANT_TABS;
+  if (businessType === "rental") return RENTAL_TABS;
+  return RETAIL_TABS;
+}
+
+export function BottomNav({ lang, businessType }: { lang: Lang; businessType: string }) {
   const pathname = usePathname();
   const { t } = useTranslation(lang);
+  const tabs = tabsFor(businessType, t);
 
   return (
     <nav
@@ -23,7 +50,7 @@ export function BottomNav({ lang }: { lang: Lang }) {
       style={{ boxShadow: "0 -4px 16px hsl(220 20% 40% / 0.06)" }}
     >
       <ul className="mx-auto flex max-w-lg items-stretch justify-between px-1">
-        {TABS.map((tab) => {
+        {tabs.map((tab) => {
           const active =
             tab.href === "/" ? pathname === "/" : pathname.startsWith(tab.href);
           const Icon = tab.icon;
@@ -36,7 +63,7 @@ export function BottomNav({ lang }: { lang: Lang }) {
                 }`}
               >
                 <Icon active={active} />
-                {t(tab.labelKey)}
+                {tab.label}
               </Link>
             </li>
           );
@@ -99,6 +126,22 @@ function MoreIcon({ active }: { active: boolean }) {
       <circle cx="5" cy="12" r="1.6" />
       <circle cx="12" cy="12" r="1.6" />
       <circle cx="19" cy="12" r="1.6" />
+    </svg>
+  );
+}
+function TableIcon({ active }: { active: boolean }) {
+  return (
+    <svg {...iconProps(active)}>
+      <rect x="3" y="10" width="18" height="4" rx="1" />
+      <path d="M6 14v5M18 14v5" />
+    </svg>
+  );
+}
+function KitchenIcon({ active }: { active: boolean }) {
+  return (
+    <svg {...iconProps(active)}>
+      <rect x="2.5" y="4.5" width="19" height="13" rx="1.5" />
+      <path d="M8 21h8M12 17.5V21" />
     </svg>
   );
 }

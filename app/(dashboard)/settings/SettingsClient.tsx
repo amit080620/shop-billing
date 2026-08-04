@@ -181,6 +181,11 @@ export function SettingsClient({ shop }: { shop: ShopSettings }) {
           </p>
         </Section>
 
+        {state?.success && (
+          <p className="rounded-lg bg-brand-soft px-3 py-2 text-sm font-medium text-brand-dark">
+            ✓ Saved.
+          </p>
+        )}
         {state?.error && (
           <p className="rounded-lg bg-credit-soft px-3 py-2 text-sm text-credit">{state.error}</p>
         )}
