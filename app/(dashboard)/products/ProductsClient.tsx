@@ -32,6 +32,14 @@ type Product = {
   trackInventory: boolean;
   stockQuantity: number;
   lowStockThreshold: number;
+  isRentable: boolean;
+  rentalRateHourly: number | null;
+  rentalRateDaily: number | null;
+  rentalRateWeekly: number | null;
+  rentalRateMonthly: number | null;
+  securityDeposit: number;
+  isPharma: boolean;
+  requiresPrescription: boolean;
 };
 type Category = { id: string; name: string };
 
@@ -51,12 +59,17 @@ function SubmitButton({ label }: { label: string }) {
 export function ProductsClient({
   initialProducts,
   categories,
+  terminology,
 }: {
   initialProducts: Product[];
   categories: Category[];
+  terminology: { productPlural: string; productSingular: string; productSub: string; addProductLabel: string };
 }) {
   const [showForm, setShowForm] = useState(false);
   const [trackInventory, setTrackInventory] = useState(false);
+  const [isRentable, setIsRentable] = useState(false);
+  const [isPharma, setIsPharma] = useState(false);
+  const [requiresPrescription, setRequiresPrescription] = useState(false);
   const barcodeRef = useRef<HTMLInputElement>(null);
   const [showCategoryForm, setShowCategoryForm] = useState(false);
   const [filter, setFilter] = useState<string>("all");
@@ -114,7 +127,7 @@ export function ProductsClient({
   return (
     <div className="flex flex-col gap-4">
       <PageHeader
-        title="Inventory"
+        title={terminology.productPlural}
         icon={
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
             <path d="M3.5 8 12 4l8.5 4-8.5 4-8.5-4Z" />
@@ -134,7 +147,7 @@ export function ProductsClient({
               onClick={() => setShowForm((v) => !v)}
               className="btn-primary-sm"
             >
-              + Product
+              {terminology.addProductLabel}
             </button>
           </div>
         }
@@ -303,6 +316,83 @@ export function ProductsClient({
               <Field name="lowStockThreshold" label="Low-stock alert below" type="number" step="0.01" min="0" defaultValue="0" />
             </div>
           )}
+          <label className="flex items-center gap-2 text-sm text-foreground">
+            <input
+              type="checkbox"
+              name="isRentable"
+              checked={isRentable}
+              onChange={(e) => setIsRentable(e.target.checked)}
+              className="h-4 w-4 rounded border-border"
+            />
+            Also available for rent
+          </label>
+          {isRentable && (
+            <div className="flex flex-col gap-3 rounded-lg border border-dashed border-brand bg-brand-soft p-3">
+              <p className="text-xs text-brand-dark">
+                Set a rate for whichever durations you actually rent this by — leave the rest blank.
+              </p>
+              <div className="grid grid-cols-2 gap-3">
+                <Field name="rentalRateHourly" label="₹ per hour" type="number" step="0.01" min="0" />
+                <Field name="rentalRateDaily" label="₹ per day" type="number" step="0.01" min="0" />
+                <Field name="rentalRateWeekly" label="₹ per week" type="number" step="0.01" min="0" />
+                <Field name="rentalRateMonthly" label="₹ per month" type="number" step="0.01" min="0" />
+              </div>
+              <Field name="securityDeposit" label="Security deposit (₹, refundable)" type="number" step="0.01" min="0" defaultValue="0" />
+            </div>
+          )}
+          <label className="flex items-center gap-2 text-sm text-foreground">
+            <input
+              type="checkbox"
+              name="isPharma"
+              checked={isPharma}
+              onChange={(e) => setIsPharma(e.target.checked)}
+              className="h-4 w-4 rounded border-border"
+            />
+            Track with batch & expiry (medicine)
+          </label>
+          {isPharma && (
+            <div className="flex flex-col gap-3 rounded-lg border border-dashed border-brand bg-brand-soft p-3">
+              <Field name="saltComposition" label="Salt / composition (optional)" placeholder="e.g. Paracetamol 500mg" />
+              <label className="flex items-center gap-2 text-sm text-brand-dark">
+                <input
+                  type="checkbox"
+                  name="requiresPrescription"
+                  checked={requiresPrescription}
+                  onChange={(e) => setRequiresPrescription(e.target.checked)}
+                  className="h-4 w-4 rounded border-border"
+                />
+                Requires a prescription (Rx)
+              </label>
+              <div className="grid grid-cols-2 gap-3">
+                <label className="flex flex-col gap-1.5 text-xs text-brand-dark">
+                  Drug schedule (optional)
+                  <select
+                    name="drugSchedule"
+                    defaultValue=""
+                    className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand"
+                  >
+                    <option value="">Not classified</option>
+                    <option value="otc">OTC (over the counter)</option>
+                    <option value="h">Schedule H</option>
+                    <option value="h1">Schedule H1</option>
+                    <option value="x">Schedule X (narcotic)</option>
+                    <option value="g">Schedule G</option>
+                  </select>
+                </label>
+                <Field name="rackLocation" label="Rack / shelf (optional)" placeholder="e.g. Rack 3B" />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <Field name="unitsPerPack" label="Units per pack (e.g. 10)" type="number" min="1" step="1" placeholder="Leave blank if not applicable" />
+                <Field name="looseUnitName" label="Loose unit name" placeholder="e.g. tablet, capsule" />
+              </div>
+              <p className="text-xs text-brand-dark">
+                Fill in units-per-pack + loose unit name to let billing sell individual tablets
+                from a strip, not just the whole pack. After saving, add stock via Pharmacy →
+                Batches — each batch gets its own expiry date, and billing automatically sells
+                the earliest-expiring batch first.
+              </p>
+            </div>
+          )}
           {productState?.error && (
             <p className="text-sm text-credit">{productState.error}</p>
           )}
@@ -342,6 +432,19 @@ export function ProductsClient({
                     {p.hsnCode ? ` · HSN ${p.hsnCode}` : ""}
                     {p.barcode ? ` · 🏷 ${p.barcode}` : ""}
                   </p>
+                  {p.isRentable && (
+                    <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-brand-soft px-2 py-0.5 text-[11px] font-medium text-brand-dark">
+                      🔁 For rent
+                    </span>
+                  )}
+                  {p.isPharma && (
+                    <a
+                      href={`/pharmacy/batches/${p.id}`}
+                      className="mt-1 inline-flex items-center gap-1 rounded-full bg-brand-soft px-2 py-0.5 text-[11px] font-medium text-brand-dark"
+                    >
+                      🧪 Manage batches{p.requiresPrescription ? " · Rx" : ""}
+                    </a>
+                  )}
                   {!p.barcode && (
                     <button
                       onClick={() => handleGenerateBarcode(p.id)}

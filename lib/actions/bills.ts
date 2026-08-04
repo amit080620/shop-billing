@@ -17,7 +17,7 @@ async function createBillCore(
   session: SessionContext,
   parsedData: BillInput,
 ): Promise<{ billId: string; invoiceNumber: string } | { error: string }> {
-  const { customerId, items, discountType, discountValue, paidAmount, paymentMethod } = parsedData;
+  const { customerId, items, discountType, discountValue, paidAmount, paymentMethod, doctorName, patientName } = parsedData;
 
   const admin = createSupabaseAdminClient();
 
@@ -28,7 +28,7 @@ async function createBillCore(
   const { data: dbProducts, error: productsError } = productIds.length
     ? await admin
         .from("products")
-        .select("id, name, price, gst_percent, hsn_code, track_inventory, stock_quantity")
+        .select("id, name, price, gst_percent, hsn_code, track_inventory, stock_quantity, is_pharma, requires_prescription")
         .eq("shop_id", session.shopId)
         .in("id", productIds)
     : { data: [], error: null };
@@ -37,6 +37,11 @@ async function createBillCore(
     return { error: "One or more products could not be verified" };
   }
   const productMap = new Map(dbProducts.map((p) => [p.id, p]));
+
+  const needsPrescription = items.some((item) => item.productId && productMap.get(item.productId)?.requires_prescription);
+  if (needsPrescription && (!doctorName || !patientName)) {
+    return { error: "One or more items need a prescription — enter the doctor's and patient's name." };
+  }
 
   let customerStateCode: string | null = null;
   if (customerId) {
@@ -65,6 +70,7 @@ async function createBillCore(
       productName: product?.name ?? item.description,
       hsnCode: product?.hsn_code ?? null,
       quantity: item.quantity,
+      stockQuantity: item.stockQuantity ?? item.quantity,
       unitPrice: product ? Number(product.price) : item.unitPrice,
       gstPercent: product ? Number(product.gst_percent) : item.gstPercent,
     };
@@ -110,6 +116,8 @@ async function createBillCore(
       total: totals.total,
       paid_amount: totals.paidAmount,
       credit_amount: totals.balanceAmount,
+      doctor_name: needsPrescription ? doctorName : null,
+      patient_name: needsPrescription ? patientName : null,
     })
     .select("id")
     .single();
@@ -142,13 +150,46 @@ async function createBillCore(
     return { error: "Could not save bill items" };
   }
 
-  // Basic stock decrement — only for products with tracking turned on.
-  // Best-effort: a bill is already committed at this point, so a stock
-  // update failure here doesn't roll back the sale, just logs for review.
-  for (const item of verifiedItems) {
+  // Stock decrement — best-effort (the bill is already committed at this
+  // point, so a failure here doesn't roll back the sale, just logs for
+  // review). Pharma items draw from the earliest-expiring batch(es) first
+  // (FEFO); everything else just decrements the product's aggregate stock
+  // as before.
+  for (let i = 0; i < verifiedItems.length; i++) {
+    const item = verifiedItems[i];
     const product = item.productId ? productMap.get(item.productId) : undefined;
     if (!product?.track_inventory) continue;
-    const newQuantity = Math.max(0, Number(product.stock_quantity) - item.quantity);
+
+    if (product.is_pharma) {
+      const { data: batches } = await admin
+        .from("medicine_batches")
+        .select("id, quantity")
+        .eq("product_id", product.id)
+        .gt("quantity", 0)
+        .order("expiry_date", { ascending: true });
+
+      let remaining = item.stockQuantity;
+      let firstBatchId: string | null = null;
+      for (const batch of batches ?? []) {
+        if (remaining <= 0) break;
+        const take = Math.min(remaining, Number(batch.quantity));
+        const { error: batchError } = await admin
+          .from("medicine_batches")
+          .update({ quantity: round2(Number(batch.quantity) - take) })
+          .eq("id", batch.id);
+        if (batchError) {
+          console.error("Could not update batch stock", batch.id, batchError);
+          continue;
+        }
+        if (!firstBatchId) firstBatchId = batch.id;
+        remaining = round2(remaining - take);
+      }
+      if (firstBatchId) {
+        await admin.from("bill_items").update({ batch_id: firstBatchId }).eq("bill_id", bill.id).eq("product_id", product.id);
+      }
+    }
+
+    const newQuantity = Math.max(0, Number(product.stock_quantity) - item.stockQuantity);
     const { error: stockError } = await admin
       .from("products")
       .update({ stock_quantity: newQuantity })

@@ -17,6 +17,14 @@ function SubmitButton({ label, pleaseWaitLabel }: { label: string; pleaseWaitLab
   );
 }
 
+type Field = {
+  name: string;
+  label: string;
+  type: string;
+  placeholder?: string;
+  options?: { value: string; label: string }[];
+};
+
 export function AuthForm({
   action,
   fields,
@@ -24,7 +32,7 @@ export function AuthForm({
   pleaseWaitLabel = "Please wait…",
 }: {
   action: (prev: { error?: string } | null, formData: FormData) => Promise<{ error?: string } | null>;
-  fields: { name: string; label: string; type: string; placeholder?: string }[];
+  fields: Field[];
   submitLabel: string;
   pleaseWaitLabel?: string;
 }) {
@@ -35,13 +43,31 @@ export function AuthForm({
       {fields.map((f) => (
         <label key={f.name} className="flex flex-col gap-1.5 text-sm">
           <span className="font-medium text-foreground">{f.label}</span>
-          <input
-            name={f.name}
-            type={f.type}
-            placeholder={f.placeholder}
-            required
-            className="rounded-xl border border-border bg-surface shadow-sm px-4 py-3 text-base outline-none focus:border-brand focus:ring-4 focus:ring-brand-soft"
-          />
+          {f.options ? (
+            <select
+              name={f.name}
+              required
+              defaultValue=""
+              className="rounded-xl border border-border bg-surface shadow-sm px-4 py-3 text-base outline-none focus:border-brand focus:ring-4 focus:ring-brand-soft"
+            >
+              <option value="" disabled>
+                {f.placeholder ?? "Choose one"}
+              </option>
+              {f.options.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <input
+              name={f.name}
+              type={f.type}
+              placeholder={f.placeholder}
+              required
+              className="rounded-xl border border-border bg-surface shadow-sm px-4 py-3 text-base outline-none focus:border-brand focus:ring-4 focus:ring-brand-soft"
+            />
+          )}
         </label>
       ))}
       {state?.error && (

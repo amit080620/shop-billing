@@ -16,6 +16,7 @@ export async function updateShopSettingsAction(
 
   const parsed = shopSettingsSchema.safeParse({
     name: formData.get("name"),
+    businessType: formData.get("businessType") || "general",
     legalName: formData.get("legalName"),
     gstin: formData.get("gstin"),
     gstScheme: formData.get("gstScheme"),
@@ -26,6 +27,7 @@ export async function updateShopSettingsAction(
     pincode: formData.get("pincode"),
     invoicePrefix: formData.get("invoicePrefix") || "INV",
     upiId: formData.get("upiId"),
+    managerPin: formData.get("managerPin"),
   });
   if (!parsed.success) {
     return { error: parsed.error.issues[0].message };
@@ -36,6 +38,7 @@ export async function updateShopSettingsAction(
     .from("shops")
     .update({
       name: parsed.data.name,
+      business_type: parsed.data.businessType,
       legal_name: parsed.data.legalName ?? null,
       gstin: parsed.data.gstin ?? null,
       gst_scheme: parsed.data.gstScheme,
@@ -47,6 +50,7 @@ export async function updateShopSettingsAction(
       pincode: parsed.data.pincode ?? null,
       invoice_prefix: parsed.data.invoicePrefix,
       upi_id: parsed.data.upiId ?? null,
+      manager_pin: parsed.data.managerPin ?? null,
     })
     .eq("id", session.shopId);
 

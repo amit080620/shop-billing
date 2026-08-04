@@ -23,6 +23,19 @@ export async function createProductAction(
     trackInventory: formData.get("trackInventory") === "on",
     stockQuantity: formData.get("stockQuantity") || 0,
     lowStockThreshold: formData.get("lowStockThreshold") || 0,
+    isRentable: formData.get("isRentable") === "on",
+    rentalRateHourly: formData.get("rentalRateHourly") || null,
+    rentalRateDaily: formData.get("rentalRateDaily") || null,
+    rentalRateWeekly: formData.get("rentalRateWeekly") || null,
+    rentalRateMonthly: formData.get("rentalRateMonthly") || null,
+    securityDeposit: formData.get("securityDeposit") || 0,
+    isPharma: formData.get("isPharma") === "on",
+    requiresPrescription: formData.get("requiresPrescription") === "on",
+    saltComposition: formData.get("saltComposition"),
+    rackLocation: formData.get("rackLocation"),
+    drugSchedule: formData.get("drugSchedule") || null,
+    unitsPerPack: formData.get("unitsPerPack") || null,
+    looseUnitName: formData.get("looseUnitName"),
   });
   if (!parsed.success) {
     return { error: parsed.error.issues[0].message };
@@ -54,6 +67,19 @@ export async function createProductAction(
     track_inventory: parsed.data.trackInventory,
     stock_quantity: parsed.data.stockQuantity,
     low_stock_threshold: parsed.data.lowStockThreshold,
+    is_rentable: parsed.data.isRentable,
+    rental_rate_hourly: parsed.data.rentalRateHourly ?? null,
+    rental_rate_daily: parsed.data.rentalRateDaily ?? null,
+    rental_rate_weekly: parsed.data.rentalRateWeekly ?? null,
+    rental_rate_monthly: parsed.data.rentalRateMonthly ?? null,
+    security_deposit: parsed.data.securityDeposit,
+    is_pharma: parsed.data.isPharma,
+    requires_prescription: parsed.data.requiresPrescription,
+    salt_composition: parsed.data.saltComposition ?? null,
+    rack_location: parsed.data.rackLocation ?? null,
+    drug_schedule: parsed.data.drugSchedule ?? null,
+    units_per_pack: parsed.data.unitsPerPack ?? null,
+    loose_unit_name: parsed.data.looseUnitName ?? null,
   });
   if (error) {
     console.error("Could not save product", error);
@@ -81,6 +107,19 @@ export async function updateProductAction(
     trackInventory: formData.get("trackInventory") === "on",
     stockQuantity: formData.get("stockQuantity") || 0,
     lowStockThreshold: formData.get("lowStockThreshold") || 0,
+    isRentable: formData.get("isRentable") === "on",
+    rentalRateHourly: formData.get("rentalRateHourly") || null,
+    rentalRateDaily: formData.get("rentalRateDaily") || null,
+    rentalRateWeekly: formData.get("rentalRateWeekly") || null,
+    rentalRateMonthly: formData.get("rentalRateMonthly") || null,
+    securityDeposit: formData.get("securityDeposit") || 0,
+    isPharma: formData.get("isPharma") === "on",
+    requiresPrescription: formData.get("requiresPrescription") === "on",
+    saltComposition: formData.get("saltComposition"),
+    rackLocation: formData.get("rackLocation"),
+    drugSchedule: formData.get("drugSchedule") || null,
+    unitsPerPack: formData.get("unitsPerPack") || null,
+    looseUnitName: formData.get("looseUnitName"),
   });
   if (!parsed.success) {
     return { error: parsed.error.issues[0].message };
@@ -100,6 +139,19 @@ export async function updateProductAction(
       track_inventory: parsed.data.trackInventory,
       stock_quantity: parsed.data.stockQuantity,
       low_stock_threshold: parsed.data.lowStockThreshold,
+      is_rentable: parsed.data.isRentable,
+      rental_rate_hourly: parsed.data.rentalRateHourly ?? null,
+      rental_rate_daily: parsed.data.rentalRateDaily ?? null,
+      rental_rate_weekly: parsed.data.rentalRateWeekly ?? null,
+      rental_rate_monthly: parsed.data.rentalRateMonthly ?? null,
+      security_deposit: parsed.data.securityDeposit,
+      is_pharma: parsed.data.isPharma,
+      requires_prescription: parsed.data.requiresPrescription,
+      salt_composition: parsed.data.saltComposition ?? null,
+      rack_location: parsed.data.rackLocation ?? null,
+      drug_schedule: parsed.data.drugSchedule ?? null,
+      units_per_pack: parsed.data.unitsPerPack ?? null,
+      loose_unit_name: parsed.data.looseUnitName ?? null,
     })
     .eq("id", productId)
     .eq("shop_id", session.shopId); // ownership check baked into the query

@@ -30,12 +30,16 @@ type Product = {
   trackInventory: boolean;
   stockQuantity: number;
   lowStockThreshold: number;
+  requiresPrescription: boolean;
+  unitsPerPack: number | null;
+  looseUnitName: string | null;
 };
 type Customer = { id: string; name: string; phone: string; gstin: string | null; state_code: string | null };
 type CartLine = {
   productId: string;
   name: string;
   price: number;
+  packPrice: number;
   gstPercent: number;
   hsnCode: string | null;
   unit: string;
@@ -43,6 +47,10 @@ type CartLine = {
   trackInventory: boolean;
   stockQuantity: number;
   lowStockThreshold: number;
+  requiresPrescription: boolean;
+  unitsPerPack: number | null;
+  looseUnitName: string | null;
+  saleMode: "pack" | "loose";
 };
 
 function SubmitButton({ blocked, generatingLabel, submitLabel }: { blocked: boolean; generatingLabel: string; submitLabel: string }) {
@@ -136,6 +144,8 @@ export function NewBillClient({
   const [discountValue, setDiscountValue] = useState(0);
   const [paidAmount, setPaidAmount] = useState<number | "">("");
   const [paymentMethod, setPaymentMethod] = useState<"cash" | "card" | "upi" | "online" | "other">("cash");
+  const [doctorName, setDoctorName] = useState("");
+  const [patientName, setPatientName] = useState("");
 
   const supplyType = useMemo(
     () =>
@@ -188,6 +198,7 @@ export function NewBillClient({
           productId: p.id,
           name: p.name,
           price: p.price,
+          packPrice: p.price,
           gstPercent: p.gstPercent,
           hsnCode: p.hsnCode,
           unit: p.unit,
@@ -195,6 +206,10 @@ export function NewBillClient({
           trackInventory: p.trackInventory,
           stockQuantity: p.stockQuantity,
           lowStockThreshold: p.lowStockThreshold,
+          requiresPrescription: p.requiresPrescription,
+          unitsPerPack: p.unitsPerPack,
+          looseUnitName: p.looseUnitName,
+          saleMode: "pack",
         },
       ];
     });
@@ -205,6 +220,18 @@ export function NewBillClient({
       quantity <= 0
         ? prev.filter((c) => c.productId !== productId)
         : prev.map((c) => (c.productId === productId ? { ...c, quantity } : c)),
+    );
+  }
+
+  function toggleSaleMode(productId: string, mode: "pack" | "loose") {
+    setCart((prev) =>
+      prev.map((c) => {
+        if (c.productId !== productId || c.saleMode === mode) return c;
+        if (mode === "loose" && c.unitsPerPack) {
+          return { ...c, saleMode: "loose", quantity: 1, price: round2(c.packPrice / c.unitsPerPack) };
+        }
+        return { ...c, saleMode: "pack", quantity: 1, price: c.packPrice };
+      }),
     );
   }
 
@@ -342,7 +369,7 @@ export function NewBillClient({
               );
               return {
                 data: r.product
-                  ? { ...r.product, trackInventory: false, stockQuantity: 0, lowStockThreshold: 0 }
+                  ? { ...r.product, packPrice: r.product.price, trackInventory: false, stockQuantity: 0, lowStockThreshold: 0, requiresPrescription: false, unitsPerPack: null, looseUnitName: null }
                   : undefined,
                 error: r.error,
               };
@@ -366,11 +393,34 @@ export function NewBillClient({
                         {line.name}
                       </p>
                       <p className="text-xs text-muted">
-                        {formatMoney(line.price)}/{line.unit} · GST {line.gstPercent}%
+                        {formatMoney(line.price)}/{line.saleMode === "loose" ? line.looseUnitName : line.unit} · GST {line.gstPercent}%
                       </p>
+                      {line.unitsPerPack && line.looseUnitName && (
+                        <div className="mt-1 flex gap-1.5">
+                          <button
+                            onClick={() => toggleSaleMode(line.productId, "pack")}
+                            className={`rounded-full border px-2 py-0.5 text-[11px] font-medium ${
+                              line.saleMode === "pack" ? "border-brand bg-brand-soft text-brand-dark" : "border-border text-muted"
+                            }`}
+                          >
+                            Full {line.unit}
+                          </button>
+                          <button
+                            onClick={() => toggleSaleMode(line.productId, "loose")}
+                            className={`rounded-full border px-2 py-0.5 text-[11px] font-medium capitalize ${
+                              line.saleMode === "loose" ? "border-brand bg-brand-soft text-brand-dark" : "border-border text-muted"
+                            }`}
+                          >
+                            Loose {line.looseUnitName}
+                          </button>
+                        </div>
+                      )}
                       {line.trackInventory && (
                         <StockIndicator
-                          remaining={round2(line.stockQuantity - line.quantity)}
+                          remaining={round2(
+                            line.stockQuantity -
+                              (line.saleMode === "loose" && line.unitsPerPack ? line.quantity / line.unitsPerPack : line.quantity),
+                          )}
                           threshold={line.lowStockThreshold}
                           unit={line.unit}
                         />
@@ -459,11 +509,14 @@ export function NewBillClient({
       quantity: c.quantity,
       unitPrice: c.price,
       gstPercent: c.gstPercent,
+      stockQuantity: c.saleMode === "loose" && c.unitsPerPack ? round2(c.quantity / c.unitsPerPack) : c.quantity,
     })),
     discountType,
     discountValue,
     paidAmount: typeof paidAmount === "number" ? paidAmount : 0,
     paymentMethod,
+    doctorName,
+    patientName,
   });
 
   return (
@@ -626,6 +679,26 @@ export function NewBillClient({
           <p className="text-sm text-credit">
             {t("bill.willAddCredit", { amount: formatMoney(totals.balanceAmount) })}
           </p>
+        )}
+
+        {cart.some((c) => c.requiresPrescription) && (
+          <div className="flex flex-col gap-2 rounded-lg border border-dashed border-brand bg-brand-soft p-3">
+            <p className="text-xs font-medium text-brand-dark">
+              💊 One or more items need a prescription (Rx) — enter both before generating the invoice.
+            </p>
+            <input
+              value={doctorName}
+              onChange={(e) => setDoctorName(e.target.value)}
+              placeholder="Doctor's name"
+              className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand"
+            />
+            <input
+              value={patientName}
+              onChange={(e) => setPatientName(e.target.value)}
+              placeholder="Patient's name"
+              className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand"
+            />
+          </div>
         )}
         {totals.balanceAmount > 0 && customerMode === "walkin" && (
           <p className="text-sm text-credit">

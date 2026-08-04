@@ -4,12 +4,14 @@ import { logoutAction } from "@/lib/actions/auth";
 import { getTranslator } from "@/lib/i18n/server";
 import { getTheme } from "@/lib/theme";
 import { ThemeToggle } from "@/app/components/ThemeToggle";
+import { getTerminology } from "@/lib/businessType";
 import { LanguageToggle } from "@/lib/i18n/LanguageToggle";
 
 export default async function MorePage() {
   const session = await requireSession();
   const { lang, t } = await getTranslator();
   const theme = await getTheme();
+  const terminology = getTerminology(session.businessType);
 
   return (
     <div className="flex flex-col gap-5">
@@ -32,6 +34,28 @@ export default async function MorePage() {
         </div>
       </MenuGroup>
 
+      {session.businessType === "pharmacy" && (
+        <MenuGroup title="Pharmacy">
+          <MenuLink href="/pharmacy/expiry" label="Expiry alerts" sub="Medicines nearing or past expiry" icon={ExpiryIcon} />
+          <MenuLink href="/pharmacy/doctors" label="Doctor-wise sales" sub="Prescriptions by doctor" icon={ClockIcon} />
+        </MenuGroup>
+      )}
+
+      {session.businessType === "restaurant" && (
+        <MenuGroup title="Restaurant">
+          <MenuLink href="/restaurant" label="Tables" sub="Start orders, KOT, settle bills" icon={TableIcon} />
+          <MenuLink href="/restaurant/reports" label="Restaurant sales" sub="Day-wise & month-wise reports" icon={ClockIcon} />
+        </MenuGroup>
+      )}
+
+      {session.businessType === "rental" && (
+        <MenuGroup title="Rentals">
+          <MenuLink href="/rentals" label="Active & upcoming rentals" sub="Bookings, pickups, returns, overdue" icon={RentalIcon} />
+          <MenuLink href="/rentals/new" label="New rental" sub="Book items out for a customer" icon={PlusCircleIcon} />
+          <MenuLink href="/rentals/history" label="Rental history" sub="Past returns & cancellations" icon={ClockIcon} />
+        </MenuGroup>
+      )}
+
       <MenuGroup title="People">
         <MenuLink href="/customers" label={t("more.customers")} sub={t("more.customers.sub")} icon={PeopleIcon} />
         <MenuLink href="/vendors" label={t("more.vendors")} sub={t("more.vendors.sub")} icon={TruckIcon} />
@@ -41,7 +65,7 @@ export default async function MorePage() {
       </MenuGroup>
 
       <MenuGroup title="Catalog">
-        <MenuLink href="/products" label={t("more.products")} sub={t("more.products.sub")} icon={BoxIcon} />
+        <MenuLink href="/products" label={terminology.productPlural} sub={terminology.productSub} icon={BoxIcon} />
       </MenuGroup>
 
       <MenuGroup title="No internet?">
@@ -225,6 +249,37 @@ function OfflineIcon({ className }: { className?: string }) {
       <path d="M9 15.5a6 6 0 0 1 6 0" />
       <path d="M12 19h.01" />
       <path d="M3 3l18 18" />
+    </svg>
+  );
+}
+function RentalIcon({ className }: { className?: string }) {
+  return (
+    <svg {...iconProps(className)}>
+      <path d="M3 7h18M6 7V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v2M4 7v13a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V7" />
+      <path d="M9 12h6M9 16h4" />
+    </svg>
+  );
+}
+function PlusCircleIcon({ className }: { className?: string }) {
+  return (
+    <svg {...iconProps(className)}>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 8v8M8 12h8" />
+    </svg>
+  );
+}
+function TableIcon({ className }: { className?: string }) {
+  return (
+    <svg {...iconProps(className)}>
+      <rect x="3" y="10" width="18" height="4" rx="1" />
+      <path d="M6 14v5M18 14v5" />
+    </svg>
+  );
+}
+function ExpiryIcon({ className }: { className?: string }) {
+  return (
+    <svg {...iconProps(className)}>
+      <path d="M9 2h6M10 2v5.5L5 15a3 3 0 0 0 2.5 4.7h9a3 3 0 0 0 2.5-4.7L14 7.5V2" />
     </svg>
   );
 }

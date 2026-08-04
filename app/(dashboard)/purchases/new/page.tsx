@@ -13,13 +13,13 @@ export default async function NewPurchasePage({
 
   const [{ data: vendors }, { data: products }] = await Promise.all([
     admin.from("vendors").select("id, name, gstin, phone").eq("shop_id", session.shopId).order("name"),
-    admin.from("products").select("id, name, hsn_code").eq("shop_id", session.shopId).order("name"),
+    admin.from("products").select("id, name, hsn_code, is_pharma").eq("shop_id", session.shopId).order("name"),
   ]);
 
   return (
     <NewPurchaseClient
       vendors={vendors ?? []}
-      products={(products ?? []).map((p) => ({ id: p.id, name: p.name, hsnCode: p.hsn_code }))}
+      products={(products ?? []).map((p) => ({ id: p.id, name: p.name, hsnCode: p.hsn_code, isPharma: p.is_pharma }))}
       preselectedVendorId={vendorId ?? null}
     />
   );

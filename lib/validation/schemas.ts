@@ -39,6 +39,19 @@ export const productSchema = z.object({
   trackInventory: z.coerce.boolean().default(false),
   stockQuantity: z.coerce.number().min(0).default(0),
   lowStockThreshold: z.coerce.number().min(0).default(0),
+  isRentable: z.coerce.boolean().default(false),
+  rentalRateHourly: z.coerce.number().min(0).nullable().optional(),
+  rentalRateDaily: z.coerce.number().min(0).nullable().optional(),
+  rentalRateWeekly: z.coerce.number().min(0).nullable().optional(),
+  rentalRateMonthly: z.coerce.number().min(0).nullable().optional(),
+  securityDeposit: z.coerce.number().min(0).default(0),
+  isPharma: z.coerce.boolean().default(false),
+  requiresPrescription: z.coerce.boolean().default(false),
+  saltComposition: optionalText(200),
+  rackLocation: optionalText(60),
+  drugSchedule: z.enum(["otc", "h", "h1", "x", "g"]).nullable().optional(),
+  unitsPerPack: z.coerce.number().min(1).nullable().optional(),
+  looseUnitName: optionalText(30),
 });
 export type ProductInput = z.infer<typeof productSchema>;
 
@@ -69,6 +82,9 @@ export const LOGO_ALLOWED_TYPES = ["image/png", "image/jpeg", "image/webp", "ima
 
 export const shopSettingsSchema = z.object({
   name: z.string().trim().min(1, "Shop name is required").max(120),
+  businessType: z
+    .enum(["grocery", "restaurant", "mart", "hardware", "pharmacy", "rental", "general"])
+    .default("general"),
   legalName: optionalText(160),
   gstin: optionalGstin,
   gstScheme: z.enum(["regular", "composition"]).default("regular"),
@@ -79,6 +95,7 @@ export const shopSettingsSchema = z.object({
   pincode: optionalText(10),
   invoicePrefix: z.string().trim().max(10).default("INV"),
   upiId: optionalText(60),
+  managerPin: optionalText(12),
 });
 export type ShopSettingsInput = z.infer<typeof shopSettingsSchema>;
 
@@ -89,6 +106,16 @@ const lineItemSchema = z.object({
   quantity: z.coerce.number().positive("Quantity must be greater than 0"),
   unitPrice: z.coerce.number().min(0),
   gstPercent: z.coerce.number().min(0).max(100),
+  // How much to actually decrement from stock/batches, in pack units — only
+  // differs from `quantity` when selling loose units off a pack (e.g. 3
+  // tablets sold off a 10-tablet strip decrements 0.3 packs, not 3).
+  // Falls back to `quantity` when omitted, so non-pharma items are unaffected.
+  stockQuantity: z.coerce.number().min(0).nullable().optional(),
+  // Batch details — only meaningful on a purchase line for a pharma
+  // product; ignored everywhere else.
+  batchNumber: optionalText(60),
+  expiryDate: optionalText(10),
+  mfgDate: optionalText(10),
 });
 
 export const paymentMethods = ["cash", "card", "upi", "online", "other"] as const;
@@ -100,6 +127,8 @@ export const billSchema = z.object({
   discountValue: z.coerce.number().min(0).default(0),
   paidAmount: z.coerce.number().min(0),
   paymentMethod: z.enum(paymentMethods).default("cash"),
+  doctorName: optionalText(120),
+  patientName: optionalText(120),
 });
 export type BillInput = z.infer<typeof billSchema>;
 
@@ -131,6 +160,9 @@ export const staffInviteSchema = z.object({
 
 export const signupSchema = z.object({
   shopName: z.string().trim().min(1, "Shop name is required").max(120),
+  businessType: z
+    .enum(["grocery", "restaurant", "mart", "hardware", "pharmacy", "rental", "general"])
+    .default("general"),
   ownerName: z.string().trim().min(1, "Your name is required").max(80),
   email: z.string().trim().email(),
   password: z.string().min(6, "Password must be at least 6 characters"),
@@ -226,3 +258,83 @@ export const itemRequestSchema = z.object({
   notes: optionalText(300),
 });
 export type ItemRequestInput = z.infer<typeof itemRequestSchema>;
+
+// ─── Rentals ────────────────────────────────────────────────────────────
+export const rentalRateTypes = ["hourly", "daily", "weekly", "monthly"] as const;
+
+export const rentalItemSchema = z.object({
+  productId: z.string().uuid().nullable(),
+  description: z.string().trim().min(1),
+  quantity: z.coerce.number().positive("Quantity must be greater than 0"),
+  rateType: z.enum(rentalRateTypes),
+  rate: z.coerce.number().min(0),
+  duration: z.coerce.number().positive("Duration must be greater than 0"),
+  gstPercent: z.coerce.number().min(0).max(100).default(0),
+  depositPerUnit: z.coerce.number().min(0).default(0),
+});
+export type RentalItemInput = z.infer<typeof rentalItemSchema>;
+
+export const rentalSchema = z.object({
+  customerId: z.string().uuid().nullable(),
+  startDate: z.string().min(1, "Pick a start date"),
+  endDate: z.string().min(1, "Pick an end date"),
+  items: z.array(rentalItemSchema).min(1, "Add at least one item"),
+  deliveryRequired: z.boolean().default(false),
+  deliveryAddress: optionalText(300),
+  deliveryCharge: z.coerce.number().min(0).default(0),
+  paidAmount: z.coerce.number().min(0),
+  paymentMethod: z.enum(paymentMethods).default("cash"),
+  notes: optionalText(300),
+});
+export type RentalInput = z.infer<typeof rentalSchema>;
+
+/** Rental charges follow the same CGST/SGST vs IGST logic as a sale, but
+ * the security deposit is excluded from the taxable value — it's a
+ * refundable deposit, not consideration for a supply, so GST doesn't
+ * apply to it. Delivery charge is added after tax as a pragmatic
+ * simplification; a composite-supply treatment would tax it at the same
+ * rate as the goods — worth a CA's review for high-value rental
+ * businesses. */
+export function calculateRentalTotals(input: {
+  items: { quantity: number; rate: number; duration: number; gstPercent: number; depositPerUnit: number }[];
+  deliveryCharge: number;
+  paidAmount: number;
+  supplyType: SupplyType;
+}) {
+  let subtotal = 0;
+  let cgstAmount = 0;
+  let sgstAmount = 0;
+  let igstAmount = 0;
+  let depositTotal = 0;
+
+  const lines = input.items.map((item) => {
+    const lineSubtotal = round2(item.quantity * item.rate * item.duration);
+    subtotal = round2(subtotal + lineSubtotal);
+    depositTotal = round2(depositTotal + item.quantity * item.depositPerUnit);
+    const { cgst, sgst, igst } = splitTax(lineSubtotal, item.gstPercent, input.supplyType);
+    cgstAmount = round2(cgstAmount + cgst);
+    sgstAmount = round2(sgstAmount + sgst);
+    igstAmount = round2(igstAmount + igst);
+    return { lineSubtotal, cgst, sgst, igst, lineGst: round2(cgst + sgst + igst) };
+  });
+
+  const gstAmount = round2(cgstAmount + sgstAmount + igstAmount);
+  const rentalTotal = round2(subtotal + gstAmount + input.deliveryCharge);
+  const total = round2(rentalTotal + depositTotal);
+  const paidAmount = round2(Math.min(input.paidAmount, total));
+  const balanceAmount = round2(Math.max(0, total - paidAmount));
+
+  return {
+    subtotal,
+    cgstAmount,
+    sgstAmount,
+    igstAmount,
+    gstAmount,
+    depositTotal,
+    rentalTotal,
+    total,
+    paidAmount,
+    balanceAmount,
+    lines,
+  };
+}

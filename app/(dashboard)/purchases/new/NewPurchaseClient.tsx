@@ -12,7 +12,7 @@ import { SearchableSelect } from "@/app/components/SearchableSelect";
 import { InlineQuickAdd } from "@/app/components/InlineQuickAdd";
 
 type Vendor = { id: string; name: string; gstin: string | null; phone: string | null };
-type Product = { id: string; name: string; hsnCode: string | null };
+type Product = { id: string; name: string; hsnCode: string | null; isPharma: boolean };
 type Line = {
   key: string;
   productId: string | null;
@@ -21,6 +21,10 @@ type Line = {
   quantity: number;
   unitPrice: number;
   gstPercent: number;
+  isPharma: boolean;
+  batchNumber: string;
+  expiryDate: string;
+  mfgDate: string;
 };
 
 function SubmitButton() {
@@ -85,6 +89,10 @@ export function NewPurchaseClient({
         quantity: 1,
         unitPrice: 0,
         gstPercent: 0,
+        isPharma: p.isPharma,
+        batchNumber: "",
+        expiryDate: "",
+        mfgDate: "",
       },
     ]);
   }
@@ -100,6 +108,10 @@ export function NewPurchaseClient({
         quantity: 1,
         unitPrice: 0,
         gstPercent: 0,
+        isPharma: false,
+        batchNumber: "",
+        expiryDate: "",
+        mfgDate: "",
       },
     ]);
   }
@@ -123,6 +135,9 @@ export function NewPurchaseClient({
       quantity: l.quantity,
       unitPrice: l.unitPrice,
       gstPercent: l.gstPercent,
+      batchNumber: l.isPharma && l.batchNumber ? l.batchNumber : undefined,
+      expiryDate: l.isPharma && l.expiryDate ? l.expiryDate : undefined,
+      mfgDate: l.isPharma && l.mfgDate ? l.mfgDate : undefined,
     })),
     paidAmount: typeof paidAmount === "number" ? paidAmount : totals.total,
     paymentMethod,
@@ -278,6 +293,28 @@ export function NewPurchaseClient({
                 onChange={(v) => updateLine(line.key, { hsnCode: String(v) })}
               />
             </div>
+            {line.isPharma && (
+              <div className="grid grid-cols-3 gap-2 rounded-lg border border-dashed border-brand bg-brand-soft p-2">
+                <LabeledInput
+                  label="Batch no."
+                  type="text"
+                  value={line.batchNumber}
+                  onChange={(v) => updateLine(line.key, { batchNumber: String(v) })}
+                />
+                <LabeledInput
+                  label="Mfg date"
+                  type="date"
+                  value={line.mfgDate}
+                  onChange={(v) => updateLine(line.key, { mfgDate: String(v) })}
+                />
+                <LabeledInput
+                  label="Expiry date"
+                  type="date"
+                  value={line.expiryDate}
+                  onChange={(v) => updateLine(line.key, { expiryDate: String(v) })}
+                />
+              </div>
+            )}
           </div>
         ))}
       </section>

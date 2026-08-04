@@ -51,8 +51,8 @@ export async function createPurchaseAction(
   // price/GST for a purchase come from the vendor's own bill, not our catalog.
   const productIds = [...new Set(items.map((i) => i.productId).filter(Boolean))] as string[];
   const { data: dbProducts } = productIds.length
-    ? await admin.from("products").select("id, name, hsn_code, track_inventory, stock_quantity").eq("shop_id", session.shopId).in("id", productIds)
-    : { data: [] as { id: string; name: string; hsn_code: string | null; track_inventory: boolean; stock_quantity: number }[] };
+    ? await admin.from("products").select("id, name, hsn_code, track_inventory, stock_quantity, is_pharma").eq("shop_id", session.shopId).in("id", productIds)
+    : { data: [] as { id: string; name: string; hsn_code: string | null; track_inventory: boolean; stock_quantity: number; is_pharma: boolean }[] };
   const productMap = new Map((dbProducts ?? []).map((p) => [p.id, p]));
 
   const supplyType = determineSupplyType(session.shopStateCode, vendor.state_code);
@@ -134,6 +134,25 @@ export async function createPurchaseAction(
       .update({ stock_quantity: newQuantity })
       .eq("id", product.id);
     if (stockError) console.error("Could not update stock for product", product.id, stockError);
+  }
+
+  // For pharma products where batch details were filled in on this
+  // purchase line, record the batch too — the stock increment above
+  // already covers the aggregate number, so this only adds the batch
+  // record, it doesn't touch stock_quantity again.
+  for (const item of items) {
+    const product = item.productId ? productMap.get(item.productId) : undefined;
+    if (!product?.is_pharma || !item.batchNumber || !item.expiryDate) continue;
+    const { error: batchError } = await admin.from("medicine_batches").insert({
+      shop_id: session.shopId,
+      product_id: product.id,
+      batch_number: item.batchNumber,
+      expiry_date: item.expiryDate,
+      mfg_date: item.mfgDate || null,
+      quantity: item.quantity,
+      purchase_price: item.unitPrice,
+    });
+    if (batchError) console.error("Could not record batch for product", product.id, batchError);
   }
 
   redirect(`/vendors/${vendorId}`);

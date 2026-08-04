@@ -379,3 +379,257 @@ create table if not exists subscription_transactions (
 );
 alter table subscription_transactions enable row level security;
 create index if not exists idx_subscription_transactions_shop on subscription_transactions(shop_id);
+
+-- ─── Rentals ───────────────────────────────────────────────────────────
+-- Rental support is per-product opt-in — the same catalog serves both
+-- sale (existing price/stock_quantity) and rental (these new fields),
+-- since this shop sells some things and rents others.
+alter table products add column if not exists is_rentable boolean not null default false;
+alter table products add column if not exists rental_rate_hourly numeric(12, 2);
+alter table products add column if not exists rental_rate_daily numeric(12, 2);
+alter table products add column if not exists rental_rate_weekly numeric(12, 2);
+alter table products add column if not exists rental_rate_monthly numeric(12, 2);
+alter table products add column if not exists security_deposit numeric(12, 2) not null default 0;
+
+-- Separate sequential numbering from sales invoices — a rental agreement
+-- number, not a GST sales invoice number.
+create table if not exists rental_counters (
+  shop_id uuid not null references shops(id) on delete cascade,
+  financial_year text not null,
+  last_number integer not null default 0,
+  primary key (shop_id, financial_year)
+);
+alter table rental_counters enable row level security;
+
+create or replace function next_rental_number(p_shop_id uuid, p_financial_year text)
+returns integer
+language plpgsql
+as $$
+declare
+  v_number integer;
+begin
+  insert into rental_counters (shop_id, financial_year, last_number)
+  values (p_shop_id, p_financial_year, 1)
+  on conflict (shop_id, financial_year)
+  do update set last_number = rental_counters.last_number + 1
+  returning last_number into v_number;
+  return v_number;
+end;
+$$;
+
+create table if not exists rentals (
+  id uuid primary key default uuid_generate_v4(),
+  shop_id uuid not null references shops(id) on delete cascade,
+  customer_id uuid references customers(id),
+  staff_id uuid not null references staff(id),
+  rental_number text not null,
+  financial_year text not null,
+  status text not null default 'booked' check (status in ('booked', 'active', 'returned', 'cancelled')),
+  start_date timestamptz not null,
+  end_date timestamptz not null,
+  actual_return_date timestamptz,
+  supply_type text not null default 'intra' check (supply_type in ('intra', 'inter')),
+  subtotal numeric(12, 2) not null default 0,
+  cgst_amount numeric(12, 2) not null default 0,
+  sgst_amount numeric(12, 2) not null default 0,
+  igst_amount numeric(12, 2) not null default 0,
+  delivery_required boolean not null default false,
+  delivery_address text,
+  delivery_charge numeric(12, 2) not null default 0,
+  security_deposit_collected numeric(12, 2) not null default 0,
+  security_deposit_returned numeric(12, 2) not null default 0,
+  damage_charge numeric(12, 2) not null default 0,
+  late_fee numeric(12, 2) not null default 0,
+  total numeric(12, 2) not null default 0,
+  payment_method text not null default 'cash' check (payment_method in ('cash', 'card', 'upi', 'online', 'other')),
+  paid_amount numeric(12, 2) not null default 0,
+  credit_amount numeric(12, 2) not null default 0,
+  notes text,
+  created_at timestamptz not null default now()
+);
+alter table rentals enable row level security;
+create index if not exists idx_rentals_shop on rentals(shop_id);
+create index if not exists idx_rentals_dates on rentals(shop_id, start_date, end_date);
+create index if not exists idx_rentals_status on rentals(shop_id, status);
+
+create table if not exists rental_items (
+  id uuid primary key default uuid_generate_v4(),
+  rental_id uuid not null references rentals(id) on delete cascade,
+  product_id uuid references products(id),
+  product_name text not null,
+  quantity numeric(12, 3) not null,
+  rate_type text not null check (rate_type in ('hourly', 'daily', 'weekly', 'monthly')),
+  rate numeric(12, 2) not null,
+  duration numeric(12, 2) not null,
+  gst_percent numeric(5, 2) not null default 0,
+  line_subtotal numeric(12, 2) not null,
+  cgst_amount numeric(12, 2) not null default 0,
+  sgst_amount numeric(12, 2) not null default 0,
+  igst_amount numeric(12, 2) not null default 0,
+  line_total numeric(12, 2) not null,
+  deposit_per_unit numeric(12, 2) not null default 0,
+  condition_on_return text check (condition_on_return in ('good', 'damaged', 'missing')),
+  damage_notes text
+);
+alter table rental_items enable row level security;
+create index if not exists idx_rental_items_rental on rental_items(rental_id);
+create index if not exists idx_rental_items_product on rental_items(product_id);
+
+-- ─── Business type (per-shop terminology/personalization) ────────────────
+-- Same core engine for every shop — this just drives what words the UI
+-- uses ("Products" vs "Menu items" vs "Medicines") and, over time, which
+-- optional modules (like Rentals) get suggested. It does NOT gate access
+-- to any feature — a grocery shop that also rents things still has full
+-- access to Rentals regardless of this value.
+alter table shops add column if not exists business_type text not null default 'general'
+  check (business_type in ('grocery', 'restaurant', 'mart', 'hardware', 'pharmacy', 'rental', 'general'));
+
+-- ─── Restaurant module ────────────────────────────────────────────────────
+-- Manager PIN — separate from the owner's login password, used only for
+-- supervisor-override actions (cancelling a started order). Never sent to
+-- the client for comparison — checked server-side only.
+alter table shops add column if not exists manager_pin text;
+
+create table if not exists restaurant_tables (
+  id uuid primary key default uuid_generate_v4(),
+  shop_id uuid not null references shops(id) on delete cascade,
+  name text not null,
+  status text not null default 'free' check (status in ('free', 'occupied')),
+  created_at timestamptz not null default now()
+);
+alter table restaurant_tables enable row level security;
+create index if not exists idx_restaurant_tables_shop on restaurant_tables(shop_id);
+
+create table if not exists restaurant_order_counters (
+  shop_id uuid not null references shops(id) on delete cascade,
+  financial_year text not null,
+  last_number integer not null default 0,
+  primary key (shop_id, financial_year)
+);
+alter table restaurant_order_counters enable row level security;
+
+create or replace function next_restaurant_order_number(p_shop_id uuid, p_financial_year text)
+returns integer
+language plpgsql
+as $$
+declare
+  v_number integer;
+begin
+  insert into restaurant_order_counters (shop_id, financial_year, last_number)
+  values (p_shop_id, p_financial_year, 1)
+  on conflict (shop_id, financial_year)
+  do update set last_number = restaurant_order_counters.last_number + 1
+  returning last_number into v_number;
+  return v_number;
+end;
+$$;
+
+-- An "order" is the open tab for a table — it reserves its number as soon
+-- as the first item is added (so the KOT and the eventual final bill share
+-- the same number), and only becomes a real GST-relevant record once
+-- settled. Cancelled orders keep their number reserved, never reused —
+-- same philosophy as voided bills.
+create table if not exists restaurant_orders (
+  id uuid primary key default uuid_generate_v4(),
+  shop_id uuid not null references shops(id) on delete cascade,
+  table_id uuid not null references restaurant_tables(id),
+  staff_id uuid not null references staff(id),
+  customer_id uuid references customers(id),
+  order_number text not null,
+  financial_year text not null,
+  status text not null default 'open' check (status in ('open', 'settled', 'cancelled')),
+  supply_type text not null default 'intra' check (supply_type in ('intra', 'inter')),
+  subtotal numeric(12, 2) not null default 0,
+  discount_type text not null default 'flat' check (discount_type in ('flat', 'percent')),
+  discount_value numeric(12, 2) not null default 0,
+  discount_amount numeric(12, 2) not null default 0,
+  taxable_amount numeric(12, 2) not null default 0,
+  cgst_amount numeric(12, 2) not null default 0,
+  sgst_amount numeric(12, 2) not null default 0,
+  igst_amount numeric(12, 2) not null default 0,
+  total numeric(12, 2) not null default 0,
+  paid_amount numeric(12, 2) not null default 0,
+  credit_amount numeric(12, 2) not null default 0,
+  settled_at timestamptz,
+  cancelled_at timestamptz,
+  cancel_reason text,
+  created_at timestamptz not null default now()
+);
+alter table restaurant_orders enable row level security;
+create index if not exists idx_restaurant_orders_shop on restaurant_orders(shop_id);
+create index if not exists idx_restaurant_orders_status on restaurant_orders(shop_id, status);
+create index if not exists idx_restaurant_orders_table on restaurant_orders(table_id);
+create index if not exists idx_restaurant_orders_created on restaurant_orders(shop_id, created_at);
+
+create table if not exists restaurant_order_items (
+  id uuid primary key default uuid_generate_v4(),
+  order_id uuid not null references restaurant_orders(id) on delete cascade,
+  product_id uuid references products(id),
+  product_name text not null,
+  quantity numeric(12, 3) not null,
+  unit_price numeric(12, 2) not null,
+  gst_percent numeric(5, 2) not null default 0,
+  line_subtotal numeric(12, 2) not null,
+  cgst_amount numeric(12, 2) not null default 0,
+  sgst_amount numeric(12, 2) not null default 0,
+  igst_amount numeric(12, 2) not null default 0,
+  line_total numeric(12, 2) not null,
+  kot_printed boolean not null default false,
+  created_at timestamptz not null default now()
+);
+alter table restaurant_order_items enable row level security;
+create index if not exists idx_restaurant_order_items_order on restaurant_order_items(order_id);
+
+-- Split settlement — a table can be paid part-cash, part-card/UPI, etc.
+create table if not exists restaurant_order_payments (
+  id uuid primary key default uuid_generate_v4(),
+  order_id uuid not null references restaurant_orders(id) on delete cascade,
+  payment_method text not null check (payment_method in ('cash', 'card', 'upi', 'online', 'other')),
+  amount numeric(12, 2) not null,
+  created_at timestamptz not null default now()
+);
+alter table restaurant_order_payments enable row level security;
+create index if not exists idx_restaurant_order_payments_order on restaurant_order_payments(order_id);
+
+-- ─── Pharmacy module ───────────────────────────────────────────────────────
+alter table products add column if not exists is_pharma boolean not null default false;
+alter table products add column if not exists requires_prescription boolean not null default false;
+alter table products add column if not exists salt_composition text;
+
+-- A medicine can have several batches in stock at once, each with its own
+-- expiry — billing always draws from the earliest-expiring batch first
+-- (FEFO), and this table is what makes expiry alerts possible at all.
+create table if not exists medicine_batches (
+  id uuid primary key default uuid_generate_v4(),
+  shop_id uuid not null references shops(id) on delete cascade,
+  product_id uuid not null references products(id) on delete cascade,
+  batch_number text not null,
+  manufacturer text,
+  mfg_date date,
+  expiry_date date not null,
+  quantity numeric(12, 3) not null default 0,
+  purchase_price numeric(12, 2),
+  created_at timestamptz not null default now()
+);
+alter table medicine_batches enable row level security;
+create index if not exists idx_medicine_batches_shop on medicine_batches(shop_id);
+create index if not exists idx_medicine_batches_product on medicine_batches(product_id);
+create index if not exists idx_medicine_batches_expiry on medicine_batches(shop_id, expiry_date);
+
+-- Prescription context applies to the whole bill (one visit, one
+-- prescription, several medicines) rather than per line item.
+alter table bills add column if not exists doctor_name text;
+alter table bills add column if not exists patient_name text;
+
+-- Which batch a sale actually drew stock from — needed for FEFO to mean
+-- anything beyond "trust me."
+alter table bill_items add column if not exists batch_id uuid references medicine_batches(id);
+
+-- ─── Pharmacy enhancements ─────────────────────────────────────────────────
+alter table products add column if not exists rack_location text;
+alter table products add column if not exists drug_schedule text
+  check (drug_schedule is null or drug_schedule in ('otc', 'h', 'h1', 'x', 'g'));
+-- e.g. a strip of 10 tablets: units_per_pack=10, loose_unit_name='tablet' —
+-- lets billing sell individual tablets instead of forcing a whole strip.
+alter table products add column if not exists units_per_pack numeric(12, 3);
+alter table products add column if not exists loose_unit_name text;

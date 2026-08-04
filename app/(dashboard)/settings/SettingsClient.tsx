@@ -6,6 +6,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { updateShopSettingsAction, uploadLogoAction, removeLogoAction } from "@/lib/actions/settings";
 import { INDIAN_STATES } from "@/lib/constants/states";
+import { BUSINESS_TYPES } from "@/lib/businessType";
 
 type ShopSettings = {
   name: string;
@@ -20,6 +21,8 @@ type ShopSettings = {
   invoicePrefix: string;
   logoUrl: string | null;
   upiId: string;
+  businessType: string;
+  managerPin: string;
 };
 
 function SubmitButton() {
@@ -62,6 +65,24 @@ export function SettingsClient({ shop }: { shop: ShopSettings }) {
       <form action={formAction} className="flex flex-col gap-4">
         <Section title="Business">
           <Field name="name" label="Display name" defaultValue={shop.name} required />
+          <label className="flex flex-col gap-1.5 text-sm">
+            <span className="font-medium text-foreground">Business type</span>
+            <select
+              name="businessType"
+              defaultValue={shop.businessType}
+              className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-brand"
+            >
+              {BUSINESS_TYPES.map((b) => (
+                <option key={b.value} value={b.value}>
+                  {b.icon} {b.label}
+                </option>
+              ))}
+            </select>
+            <span className="text-xs text-muted">
+              Changes wording around the app (e.g. &quot;Products&quot; vs &quot;Menu items&quot;) —
+              every feature stays available regardless of what you pick.
+            </span>
+          </label>
           <Field
             name="legalName"
             label="Legal / registered name (optional)"
@@ -145,6 +166,21 @@ export function SettingsClient({ shop }: { shop: ShopSettings }) {
           </p>
         </Section>
 
+        <Section title="Restaurant">
+          <Field
+            name="managerPin"
+            label="Manager PIN"
+            type="password"
+            defaultValue={shop.managerPin}
+            placeholder="e.g. 1947"
+          />
+          <p className="text-xs text-muted">
+            Needed to cancel a started restaurant order — deliberately separate from your login
+            password, so staff never need your real account credentials. Leave blank to disable
+            order cancellation entirely.
+          </p>
+        </Section>
+
         {state?.error && (
           <p className="rounded-lg bg-credit-soft px-3 py-2 text-sm text-credit">{state.error}</p>
         )}
@@ -166,6 +202,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 function Field({
   name,
   label,
+  type = "text",
   defaultValue,
   placeholder,
   required,
@@ -173,6 +210,7 @@ function Field({
 }: {
   name: string;
   label: string;
+  type?: string;
   defaultValue?: string;
   placeholder?: string;
   required?: boolean;
@@ -183,6 +221,7 @@ function Field({
       <span className="font-medium text-foreground">{label}</span>
       <input
         name={name}
+        type={type}
         defaultValue={defaultValue}
         placeholder={placeholder}
         required={required}
