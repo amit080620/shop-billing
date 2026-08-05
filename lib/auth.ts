@@ -10,7 +10,7 @@ export type SessionContext = {
   shopId: string;
   shopName: string;
   staffName: string;
-  role: "owner" | "staff";
+  role: "owner" | "manager" | "staff";
   shopStateCode: string | null;
   shopGstin: string | null;
   shopLogoUrl: string | null;

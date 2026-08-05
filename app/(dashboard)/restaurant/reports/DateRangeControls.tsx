@@ -25,6 +25,12 @@ export function DateRangeControls({
     const t = iso(new Date());
     go(t, t);
   }
+  function setThisWeek() {
+    const now = new Date();
+    const start = new Date(now);
+    start.setDate(now.getDate() - 6);
+    go(iso(start), iso(now));
+  }
   function setThisMonth() {
     const now = new Date();
     const start = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -36,6 +42,9 @@ export function DateRangeControls({
       <div className="flex gap-2">
         <button onClick={setToday} className="rounded-full border border-border px-3 py-1.5 text-xs font-medium text-muted">
           Today
+        </button>
+        <button onClick={setThisWeek} className="rounded-full border border-border px-3 py-1.5 text-xs font-medium text-muted">
+          This week
         </button>
         <button onClick={setThisMonth} className="rounded-full border border-border px-3 py-1.5 text-xs font-medium text-muted">
           This month

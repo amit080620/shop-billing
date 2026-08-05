@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createTableAction, startOrderAction } from "@/lib/actions/restaurant";
@@ -10,11 +10,16 @@ import { EmptyState } from "@/app/components/EmptyState";
 import { useTranslation } from "@/lib/i18n/useTranslation";
 import type { Lang } from "@/lib/i18n/dictionary";
 
-type Table = { id: string; name: string; status: "free" | "occupied"; openOrderId: string | null; openOrderTotal: number };
+type Table = { id: string; name: string; status: "free" | "occupied"; openOrderId: string | null; openOrderTotal: number; readyCount: number };
 
 export function TablesClient({ tables, lang }: { tables: Table[]; lang: Lang }) {
   const { t } = useTranslation(lang);
   const router = useRouter();
+
+  useEffect(() => {
+    const timer = setInterval(() => router.refresh(), 15000);
+    return () => clearInterval(timer);
+  }, [router]);
   const [isPending, startTransition] = useTransition();
   const [showAddTable, setShowAddTable] = useState(false);
   const [newTableName, setNewTableName] = useState("");
@@ -97,12 +102,17 @@ export function TablesClient({ tables, lang }: { tables: Table[]; lang: Lang }) 
               key={table.id}
               onClick={() => handleTableTap(table)}
               disabled={isPending}
-              className={`flex flex-col items-center justify-center gap-1 rounded-xl border p-4 shadow-sm disabled:opacity-60 ${
+              className={`relative flex flex-col items-center justify-center gap-1 rounded-xl border p-4 shadow-sm disabled:opacity-60 ${
                 table.status === "occupied"
                   ? "border-danger bg-red-50"
                   : "border-brand bg-brand-soft"
               }`}
             >
+              {table.readyCount > 0 && (
+                <span className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-brand text-[10px] font-bold text-white">
+                  🔔
+                </span>
+              )}
               <span className={`text-sm font-semibold ${table.status === "occupied" ? "text-danger" : "text-brand-dark"}`}>
                 {table.name}
               </span>

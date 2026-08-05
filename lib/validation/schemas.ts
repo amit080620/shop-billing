@@ -155,7 +155,7 @@ export const staffInviteSchema = z.object({
   email: z.string().trim().email(),
   password: z.string().min(6, "Password must be at least 6 characters"),
   name: z.string().trim().min(1, "Name is required").max(80),
-  role: z.enum(["owner", "staff"]),
+  role: z.enum(["owner", "manager", "staff"]),
 });
 
 export const signupSchema = z.object({

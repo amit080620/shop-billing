@@ -15,16 +15,29 @@ export default async function RestaurantPage() {
 
   const orderByTable = new Map((openOrders ?? []).map((o) => [o.table_id, o]));
 
+  const openOrderIds = (openOrders ?? []).map((o) => o.id);
+  const { data: readyItems } = openOrderIds.length
+    ? await admin.from("restaurant_order_items").select("order_id").in("order_id", openOrderIds).eq("status", "ready")
+    : { data: [] };
+  const readyCountByOrder = new Map<string, number>();
+  for (const item of readyItems ?? []) {
+    readyCountByOrder.set(item.order_id, (readyCountByOrder.get(item.order_id) ?? 0) + 1);
+  }
+
   return (
     <TablesClient
       lang={lang}
-      tables={(tables ?? []).map((t) => ({
-        id: t.id,
-        name: t.name,
-        status: t.status,
-        openOrderId: orderByTable.get(t.id)?.id ?? null,
-        openOrderTotal: orderByTable.get(t.id)?.total ? Number(orderByTable.get(t.id)!.total) : 0,
-      }))}
+      tables={(tables ?? []).map((t) => {
+        const order = orderByTable.get(t.id);
+        return {
+          id: t.id,
+          name: t.name,
+          status: t.status,
+          openOrderId: order?.id ?? null,
+          openOrderTotal: order?.total ? Number(order.total) : 0,
+          readyCount: order ? readyCountByOrder.get(order.id) ?? 0 : 0,
+        };
+      })}
     />
   );
 }

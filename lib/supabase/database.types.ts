@@ -83,21 +83,21 @@ export interface Database {
           id: string;
           shop_id: string;
           name: string;
-          role: "owner" | "staff";
+          role: "owner" | "manager" | "staff";
           created_at: string;
         };
         Insert: {
           id: string;
           shop_id: string;
           name: string;
-          role: "owner" | "staff";
+          role: "owner" | "manager" | "staff";
           created_at?: string;
         };
         Update: {
           id?: string;
           shop_id?: string;
           name?: string;
-          role?: "owner" | "staff";
+          role?: "owner" | "manager" | "staff";
           created_at?: string;
         };
         Relationships: [
@@ -730,6 +730,7 @@ export interface Database {
           igst_amount: number;
           line_total: number;
           kot_printed: boolean;
+          status: "pending" | "ready" | "served";
           created_at: string;
         };
         Insert: {
@@ -746,6 +747,7 @@ export interface Database {
           igst_amount?: number;
           line_total: number;
           kot_printed?: boolean;
+          status?: "pending" | "ready" | "served";
           created_at?: string;
         };
         Update: {
@@ -762,6 +764,7 @@ export interface Database {
           igst_amount?: number;
           line_total?: number;
           kot_printed?: boolean;
+          status?: "pending" | "ready" | "served";
           created_at?: string;
         };
         Relationships: [

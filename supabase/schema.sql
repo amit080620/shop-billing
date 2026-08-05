@@ -746,3 +746,11 @@ create table if not exists stock_audit_items (
 );
 alter table stock_audit_items enable row level security;
 create index if not exists idx_stock_audit_items_audit on stock_audit_items(audit_id);
+
+-- ─── Kitchen workflow: pending → ready → served ───────────────────────────
+alter table restaurant_order_items add column if not exists status text not null default 'pending'
+  check (status in ('pending', 'ready', 'served'));
+
+-- ─── Manager role ───────────────────────────────────────────────────────
+alter table staff drop constraint if exists staff_role_check;
+alter table staff add constraint staff_role_check check (role in ('owner', 'manager', 'staff'));

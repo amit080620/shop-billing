@@ -11,6 +11,7 @@ import {
   cancelOrderAction,
   setOrderTypeAction,
   setWaiterAction,
+  markItemServedAction,
   type SettlePayment,
 } from "@/lib/actions/restaurant";
 import { formatMoney } from "@/lib/format";
@@ -19,7 +20,7 @@ import { useTranslation } from "@/lib/i18n/useTranslation";
 import type { Lang } from "@/lib/i18n/dictionary";
 
 type Product = { id: string; name: string; price: number; category: string };
-type Item = { id: string; productName: string; quantity: number; unitPrice: number; lineTotal: number };
+type Item = { id: string; productName: string; quantity: number; unitPrice: number; lineTotal: number; status: "pending" | "ready" | "served" };
 type Order = {
   id: string;
   orderNumber: string;
@@ -214,9 +215,30 @@ export function OrderClient({
           <ul className="flex flex-col gap-2">
             {initialItems.map((item) => (
               <li key={item.id} className="flex items-center justify-between gap-3 rounded-lg border border-border bg-surface px-3.5 py-2.5">
-                <span className="min-w-0 flex-1 truncate text-sm text-foreground">{item.productName} × {item.quantity}</span>
+                <div className="min-w-0 flex-1">
+                  <span className="truncate text-sm text-foreground">{item.productName} × {item.quantity}</span>
+                  {item.status === "ready" && (
+                    <span className="ml-2 rounded-full bg-brand-soft px-2 py-0.5 text-[11px] font-medium text-brand-dark">🔔 Ready</span>
+                  )}
+                  {item.status === "served" && (
+                    <span className="ml-2 rounded-full bg-background px-2 py-0.5 text-[11px] font-medium text-muted">✓ Served</span>
+                  )}
+                </div>
                 <span className="shrink-0 text-sm font-medium text-foreground">{formatMoney(item.lineTotal)}</span>
-                {!isReadOnly && (
+                {!isReadOnly && item.status === "ready" && (
+                  <button
+                    onClick={() =>
+                      startTransition(async () => {
+                        await markItemServedAction(item.id, order.id);
+                        router.refresh();
+                      })
+                    }
+                    className="shrink-0 rounded-lg border border-brand bg-brand-soft px-2 py-1 text-xs font-medium text-brand-dark"
+                  >
+                    Served
+                  </button>
+                )}
+                {!isReadOnly && item.status !== "served" && (
                   <button onClick={() => removeItem(item.id)} className="shrink-0 text-xs text-danger">
                     ✕
                   </button>
@@ -401,9 +423,13 @@ function SettleModal({
   t: Translator;
 }) {
   const [discountValue, setDiscountValue] = useState(0);
+  const [splitCount, setSplitCount] = useState(1);
   const [payments, setPayments] = useState<SettlePayment[]>([{ method: "cash", amount: total }]);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+
+  const netTotal = Math.max(0, total - discountValue);
+  const perPerson = splitCount > 1 ? Math.round((netTotal / splitCount) * 100) / 100 : null;
 
   const paidTotal = payments.reduce((s, p) => s + (p.amount || 0), 0);
 
@@ -442,6 +468,22 @@ function SettleModal({
             className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-brand"
           />
         </label>
+
+        <label className="mt-1 flex flex-col gap-1 text-xs text-muted">
+          Split equally among (optional — just a calculator, doesn&apos;t change how you record payment)
+          <div className="flex items-center gap-2">
+            <button type="button" onClick={() => setSplitCount((n) => Math.max(1, n - 1))} className="h-8 w-8 rounded-full border border-border text-sm">−</button>
+            <span className="w-8 text-center text-sm font-medium text-foreground">{splitCount}</span>
+            <button type="button" onClick={() => setSplitCount((n) => n + 1)} className="h-8 w-8 rounded-full border border-brand bg-brand-soft text-sm text-brand-dark">+</button>
+            <span className="text-xs text-muted">{splitCount === 1 ? "person" : "people"}</span>
+          </div>
+        </label>
+        {perPerson !== null && (
+          <div className="rounded-lg bg-brand-soft px-3.5 py-2.5 text-sm">
+            <span className="text-brand-dark">Each person pays </span>
+            <span className="font-semibold text-brand-dark">{formatMoney(perPerson)}</span>
+          </div>
+        )}
 
         <p className="mt-3 text-xs font-medium text-muted">{t("order.paymentSplit")}</p>
         <div className="flex flex-col gap-2">

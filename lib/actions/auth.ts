@@ -87,9 +87,23 @@ export async function loginAction(
   }
 
   const supabase = await createSupabaseServerClient();
-  const { error } = await supabase.auth.signInWithPassword(parsed.data);
-  if (error) {
+  const { data: authData, error } = await supabase.auth.signInWithPassword(parsed.data);
+  if (error || !authData.user) {
     return { error: "Incorrect email or password" };
+  }
+
+  // Restaurant staff/managers live on the Tables screen all day — send
+  // them straight there instead of the generic Home dashboard. Owners
+  // still land on Home, since they care about the overview first.
+  const admin = createSupabaseAdminClient();
+  const { data: staffRow } = await admin
+    .from("staff")
+    .select("role, shop_id, shops ( business_type )")
+    .eq("id", authData.user.id)
+    .single();
+  const shop = staffRow ? (Array.isArray(staffRow.shops) ? staffRow.shops[0] : staffRow.shops) : null;
+  if (staffRow && staffRow.role !== "owner" && shop?.business_type === "restaurant") {
+    redirect("/restaurant");
   }
 
   redirect("/");

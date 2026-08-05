@@ -36,6 +36,16 @@ export default async function RestaurantReportsPage({
 
   const totalSales = (orders ?? []).reduce((s, o) => s + Number(o.total), 0);
 
+  const orderIds = (orders ?? []).map((o) => o.id);
+  const { data: payments } = orderIds.length
+    ? await admin.from("restaurant_order_payments").select("payment_method, amount").in("order_id", orderIds)
+    : { data: [] };
+  const byMethod = new Map<string, number>();
+  for (const p of payments ?? []) {
+    byMethod.set(p.payment_method, (byMethod.get(p.payment_method) ?? 0) + Number(p.amount));
+  }
+  const methodRows = [...byMethod.entries()].sort((a, b) => b[1] - a[1]);
+
   return (
     <div className="flex flex-col gap-4">
       <PageHeader
@@ -61,6 +71,20 @@ export default async function RestaurantReportsPage({
         <p className="text-xs text-muted">{(orders ?? []).length} bill(s)</p>
       </div>
 
+      {methodRows.length > 0 && (
+        <div className="rounded-xl border border-border bg-surface shadow-sm p-4">
+          <p className="mb-2 text-xs font-medium text-muted">Payment mix</p>
+          <div className="flex flex-col gap-1.5">
+            {methodRows.map(([method, amount]) => (
+              <div key={method} className="flex items-center justify-between text-sm">
+                <span className="capitalize text-foreground">{method}</span>
+                <span className="font-medium text-foreground">{formatMoney(amount)}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {(!orders || orders.length === 0) ? (
         <EmptyState text="No settled bills in this range." />
       ) : (
@@ -69,7 +93,7 @@ export default async function RestaurantReportsPage({
             const table = Array.isArray(o.restaurant_tables) ? o.restaurant_tables[0] : o.restaurant_tables;
             return (
               <li key={o.id}>
-                <a
+                <Link
                   href={`/restaurant/reports/${o.id}`}
                   className="flex items-center justify-between gap-3 rounded-lg border border-border bg-surface shadow-sm px-3.5 py-3"
                 >
@@ -82,7 +106,7 @@ export default async function RestaurantReportsPage({
                     </p>
                   </div>
                   <p className="shrink-0 text-sm font-semibold text-foreground">{formatMoney(o.total)}</p>
-                </a>
+                </Link>
               </li>
             );
           })}

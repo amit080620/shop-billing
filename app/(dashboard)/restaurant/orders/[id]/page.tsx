@@ -55,6 +55,7 @@ export default async function OrderPage({
         quantity: Number(i.quantity),
         unitPrice: Number(i.unit_price),
         lineTotal: Number(i.line_total),
+        status: i.status,
       }))}
       products={(products ?? []).map((p) => ({
         id: p.id,

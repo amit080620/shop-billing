@@ -359,3 +359,39 @@ export async function setWaiterAction(orderId: string, waiterName: string): Prom
   revalidatePath(`/restaurant/orders/${orderId}`);
   return {};
 }
+
+export async function markItemReadyAction(itemId: string): Promise<{ error?: string }> {
+  const session = await requireSession();
+  const admin = createSupabaseAdminClient();
+  const { data: item } = await admin
+    .from("restaurant_order_items")
+    .select("id, order_id, restaurant_orders!inner ( shop_id )")
+    .eq("id", itemId)
+    .single();
+  const order = item ? (Array.isArray(item.restaurant_orders) ? item.restaurant_orders[0] : item.restaurant_orders) : null;
+  if (!item || !order || order.shop_id !== session.shopId) return { error: "Item not found" };
+
+  await admin.from("restaurant_order_items").update({ status: "ready" }).eq("id", itemId);
+  revalidatePath("/restaurant-kds");
+  revalidatePath("/restaurant");
+  revalidatePath(`/restaurant/orders/${item.order_id}`);
+  return {};
+}
+
+export async function markItemServedAction(itemId: string, orderId: string): Promise<{ error?: string }> {
+  const session = await requireSession();
+  const admin = createSupabaseAdminClient();
+  const { data: order } = await admin
+    .from("restaurant_orders")
+    .select("id")
+    .eq("id", orderId)
+    .eq("shop_id", session.shopId)
+    .single();
+  if (!order) return { error: "Order not found" };
+
+  await admin.from("restaurant_order_items").update({ status: "served" }).eq("id", itemId).eq("order_id", orderId);
+  revalidatePath("/restaurant-kds");
+  revalidatePath("/restaurant");
+  revalidatePath(`/restaurant/orders/${orderId}`);
+  return {};
+}
