@@ -3,6 +3,7 @@ import { requireSession } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { PageHeader } from "@/app/components/PageHeader";
 import { EmptyState } from "@/app/components/EmptyState";
+import { ShareExpiryWhatsApp } from "./ShareExpiryWhatsApp";
 
 function daysUntil(dateStr: string) {
   return Math.round((new Date(dateStr).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
@@ -44,6 +45,11 @@ export default async function ExpiryAlertsPage() {
         <EmptyState text="Nothing expiring in the next 90 days — good shape." />
       ) : (
         <>
+          <ShareExpiryWhatsApp
+            shopName={session.shopName}
+            expired={expired.map(toRow)}
+            critical={critical.map(toRow)}
+          />
           {expired.length > 0 && <Group title={`🔴 Already expired (${expired.length})`} batches={expired} />}
           {critical.length > 0 && <Group title={`🟠 Within 30 days (${critical.length})`} batches={critical} />}
           {upcoming.length > 0 && <Group title={`🟡 31–90 days (${upcoming.length})`} batches={upcoming} />}
@@ -51,6 +57,18 @@ export default async function ExpiryAlertsPage() {
       )}
     </div>
   );
+}
+
+function toRow(b: BatchRow) {
+  const product = Array.isArray(b.products) ? b.products[0] : b.products;
+  return {
+    name: product?.name ?? "Medicine",
+    batchNumber: b.batch_number,
+    quantity: Number(b.quantity),
+    unit: product?.unit ?? "",
+    expiryDate: b.expiry_date,
+    daysLeft: daysUntil(b.expiry_date),
+  };
 }
 
 type BatchRow = {

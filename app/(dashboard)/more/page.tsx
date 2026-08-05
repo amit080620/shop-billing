@@ -38,6 +38,7 @@ export default async function MorePage() {
         <MenuGroup title="Pharmacy">
           <MenuLink href="/pharmacy/expiry" label="Expiry alerts" sub="Medicines nearing or past expiry" icon={ExpiryIcon} />
           <MenuLink href="/pharmacy/doctors" label="Doctor-wise sales" sub="Prescriptions by doctor" icon={ClockIcon} />
+          <MenuLink href="/pharmacy/schedule-x-register" label="Schedule X register" sub="Narcotic sales compliance record" icon={RegisterIcon} />
         </MenuGroup>
       )}
 
@@ -262,6 +263,14 @@ function KitchenIcon({ className }: { className?: string }) {
     <svg {...iconProps(className)}>
       <rect x="2.5" y="4.5" width="19" height="13" rx="1.5" />
       <path d="M8 21h8M12 17.5V21" />
+    </svg>
+  );
+}
+function RegisterIcon({ className }: { className?: string }) {
+  return (
+    <svg {...iconProps(className)}>
+      <rect x="4" y="3" width="16" height="18" rx="2" />
+      <path d="M8 7h8M8 11h8M8 15h5" />
     </svg>
   );
 }
