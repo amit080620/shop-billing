@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { adminSetBusinessTypeAction } from "@/lib/actions/admin-subscriptions";
 import { BUSINESS_TYPES } from "@/lib/businessType";
@@ -28,17 +28,25 @@ export function BusinessTypeForm({
   locked: boolean;
 }) {
   const [state, formAction] = useActionState(adminSetBusinessTypeAction, null);
+  // Controlled, not defaultValue/defaultChecked — after a save, the server
+  // re-sends these as fresh props, but an *uncontrolled* select/checkbox
+  // ignores prop changes post-mount, which is what was showing the wrong
+  // value after saving. Keeping our own state (seeded once from props,
+  // then driven by the user and by a successful save) fixes that.
+  const [selectedType, setSelectedType] = useState(businessType);
+  const [isLocked, setIsLocked] = useState(locked);
 
   return (
     <form action={formAction} className="flex flex-col gap-3 rounded-xl border border-gray-800 bg-gray-900 p-4">
       <input type="hidden" name="shopId" value={shopId} />
+      <input type="hidden" name="businessType" value={selectedType} />
       <p className="text-sm font-medium">Business type override</p>
       <p className="text-xs text-gray-500">
         Normal shops lock this at signup — this is the only way to change it once locked.
       </p>
       <select
-        name="businessType"
-        defaultValue={businessType}
+        value={selectedType}
+        onChange={(e) => setSelectedType(e.target.value)}
         className="rounded-lg border border-gray-700 bg-gray-800 px-3 py-2 text-sm text-white outline-none focus:border-gray-500"
       >
         {BUSINESS_TYPES.map((b) => (
@@ -48,11 +56,19 @@ export function BusinessTypeForm({
         ))}
       </select>
       <label className="flex items-center gap-2 text-xs text-gray-400">
-        <input type="checkbox" name="locked" defaultChecked={locked} className="h-4 w-4" />
+        <input
+          type="checkbox"
+          checked={isLocked}
+          onChange={(e) => setIsLocked(e.target.checked)}
+          className="h-4 w-4"
+        />
         Locked (shop owner can&apos;t change this from Settings)
       </label>
+      {/* Only submitted when checked — matches a normal HTML checkbox's
+          semantics, which the server action already expects. */}
+      {isLocked && <input type="hidden" name="locked" value="on" />}
       {state?.error && <p className="text-xs text-red-400">{state.error}</p>}
-      {state?.success && <p className="text-xs text-emerald-400">Saved.</p>}
+      {state?.success && <p className="text-xs text-emerald-400">Saved — currently set to {BUSINESS_TYPES.find((b) => b.value === selectedType)?.label}.</p>}
       <SubmitButton />
     </form>
   );

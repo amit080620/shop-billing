@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { requireSession } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { formatMoney } from "@/lib/format";
@@ -113,6 +114,12 @@ export default async function DailySummaryPage({
         Use this at closing time to match your cash drawer — everything below is broken down by
         how it was paid.
       </p>
+
+      {session.role === "owner" && (
+        <Link href={`/daily-summary/by-staff?date=${date}`} className="rounded-lg border border-dashed border-brand bg-brand-soft px-3.5 py-3 text-sm font-medium text-brand-dark">
+          👥 Staff-wise breakdown →
+        </Link>
+      )}
 
       <section className="rounded-xl p-4 shadow-md" style={{ background: "linear-gradient(135deg, var(--brand-light), var(--brand-dark))" }}>
         <p className="text-xs font-medium uppercase tracking-wide text-white/80">
