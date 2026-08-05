@@ -570,6 +570,50 @@ export interface Database {
           { foreignKeyName: "purchase_items_product_id_fkey"; columns: ["product_id"]; isOneToOne: false; referencedRelation: "products"; referencedColumns: ["id"] },
         ];
       };
+      batch_writeoffs: {
+        Row: {
+          id: string;
+          shop_id: string;
+          batch_id: string;
+          product_id: string;
+          product_name: string;
+          batch_number: string;
+          staff_id: string;
+          quantity: number;
+          reason: "expired" | "damaged" | "other";
+          notes: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          shop_id: string;
+          batch_id: string;
+          product_id: string;
+          product_name: string;
+          batch_number: string;
+          staff_id: string;
+          quantity: number;
+          reason: "expired" | "damaged" | "other";
+          notes?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          shop_id?: string;
+          batch_id?: string;
+          product_id?: string;
+          product_name?: string;
+          batch_number?: string;
+          staff_id?: string;
+          quantity?: number;
+          reason?: "expired" | "damaged" | "other";
+          notes?: string | null;
+          created_at?: string;
+        };
+        Relationships: [
+          { foreignKeyName: "batch_writeoffs_batch_id_fkey"; columns: ["batch_id"]; isOneToOne: false; referencedRelation: "medicine_batches"; referencedColumns: ["id"] },
+        ];
+      };
       medicine_batches: {
         Row: {
           id: string;

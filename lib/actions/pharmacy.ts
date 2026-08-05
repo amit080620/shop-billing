@@ -94,3 +94,79 @@ export async function deleteBatchAction(batchId: string, productId: string): Pro
   revalidatePath("/products");
   return {};
 }
+
+export async function writeOffBatchAction(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const session = await requireSession();
+  const admin = createSupabaseAdminClient();
+
+  const batchId = formData.get("batchId");
+  const productId = formData.get("productId");
+  const quantity = Number(formData.get("quantity"));
+  const reason = formData.get("reason");
+  const notes = formData.get("notes");
+
+  if (typeof batchId !== "string" || !batchId) return { error: "Missing batch" };
+  if (typeof productId !== "string" || !productId) return { error: "Missing product" };
+  if (!quantity || quantity <= 0) return { error: "Enter a quantity greater than 0" };
+  if (typeof reason !== "string" || !["expired", "damaged", "other"].includes(reason)) {
+    return { error: "Choose a reason" };
+  }
+
+  const { data: batch } = await admin
+    .from("medicine_batches")
+    .select("id, batch_number, quantity")
+    .eq("id", batchId)
+    .eq("shop_id", session.shopId)
+    .single();
+  if (!batch) return { error: "Batch not found" };
+  if (quantity > Number(batch.quantity)) {
+    return { error: `Only ${batch.quantity} left in this batch — can't write off more than that.` };
+  }
+
+  const { data: product } = await admin
+    .from("products")
+    .select("id, name, stock_quantity")
+    .eq("id", productId)
+    .eq("shop_id", session.shopId)
+    .single();
+  if (!product) return { error: "Product not found" };
+
+  const { error: writeoffError } = await admin.from("batch_writeoffs").insert({
+    shop_id: session.shopId,
+    batch_id: batchId,
+    product_id: productId,
+    product_name: product.name,
+    batch_number: batch.batch_number,
+    staff_id: session.userId,
+    quantity,
+    reason: reason as "expired" | "damaged" | "other",
+    notes: typeof notes === "string" && notes.trim() ? notes.trim() : null,
+  });
+  if (writeoffError) {
+    console.error("Could not log write-off", writeoffError);
+    return { error: "Could not save write-off" };
+  }
+
+  // Reduce both the batch and the product's aggregate stock — this is a
+  // loss, not a sale, so no revenue or invoice is generated for it.
+  await admin
+    .from("medicine_batches")
+    .update({ quantity: round2(Number(batch.quantity) - quantity) })
+    .eq("id", batchId);
+  await admin
+    .from("products")
+    .update({ stock_quantity: Math.max(0, round2(Number(product.stock_quantity) - quantity)) })
+    .eq("id", productId);
+
+  revalidatePath(`/pharmacy/batches/${productId}`);
+  revalidatePath("/products");
+  revalidatePath("/pharmacy/expiry");
+  return null;
+}
+
+function round2(n: number) {
+  return Math.round((n + Number.EPSILON) * 100) / 100;
+}

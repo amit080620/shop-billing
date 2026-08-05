@@ -754,3 +754,21 @@ alter table restaurant_order_items add column if not exists status text not null
 -- ─── Manager role ───────────────────────────────────────────────────────
 alter table staff drop constraint if exists staff_role_check;
 alter table staff add constraint staff_role_check check (role in ('owner', 'manager', 'staff'));
+
+-- ─── Batch write-off (expired/damaged stock loss tracking) ───────────────
+create table if not exists batch_writeoffs (
+  id uuid primary key default uuid_generate_v4(),
+  shop_id uuid not null references shops(id) on delete cascade,
+  batch_id uuid not null references medicine_batches(id) on delete cascade,
+  product_id uuid not null references products(id),
+  product_name text not null,
+  batch_number text not null,
+  staff_id uuid not null references staff(id),
+  quantity numeric(12, 3) not null,
+  reason text not null check (reason in ('expired', 'damaged', 'other')),
+  notes text,
+  created_at timestamptz not null default now()
+);
+alter table batch_writeoffs enable row level security;
+create index if not exists idx_batch_writeoffs_shop on batch_writeoffs(shop_id);
+create index if not exists idx_batch_writeoffs_product on batch_writeoffs(product_id);

@@ -6,6 +6,7 @@ import { PageHeader } from "@/app/components/PageHeader";
 import { EmptyState } from "@/app/components/EmptyState";
 import { AddBatchForm } from "./AddBatchForm";
 import { DeleteBatchButton } from "./DeleteBatchButton";
+import { WriteOffButton } from "./WriteOffButton";
 
 function daysUntil(dateStr: string) {
   return Math.round((new Date(dateStr).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
@@ -87,7 +88,16 @@ export default async function BatchesPage({
                       <p className="text-xs text-muted">Cost {formatMoney(Number(b.purchase_price))}/unit</p>
                     )}
                   </div>
-                  <DeleteBatchButton batchId={b.id} productId={product.id} />
+                  <div className="flex shrink-0 flex-col items-end gap-1.5">
+                    <WriteOffButton
+                      batchId={b.id}
+                      productId={product.id}
+                      batchNumber={b.batch_number}
+                      maxQuantity={Number(b.quantity)}
+                      unit={product.unit}
+                    />
+                    <DeleteBatchButton batchId={b.id} productId={product.id} />
+                  </div>
                 </li>
               );
             })}
