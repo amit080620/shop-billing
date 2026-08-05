@@ -22,6 +22,7 @@ type Bill = {
   items: BillItem[];
 };
 type Payment = { id: string; amount: number; note: string | null; createdAt: string };
+type Return = { id: string; returnNumber: string; total: number; createdAt: string; invoiceNumber: string };
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -38,12 +39,14 @@ export function LedgerClient({
   balance,
   bills,
   payments,
+  returns,
 }: {
   customer: { id: string; name: string; phone: string };
   shopName: string;
   balance: number;
   bills: Bill[];
   payments: Payment[];
+  returns: Return[];
 }) {
   const [showPaymentForm, setShowPaymentForm] = useState(false);
   const [expandedBillId, setExpandedBillId] = useState<string | null>(null);
@@ -234,6 +237,30 @@ export function LedgerClient({
           </ul>
         )}
       </section>
+
+      {returns.length > 0 && (
+        <section className="flex flex-col gap-2">
+          <p className="text-sm font-medium text-foreground">Returns</p>
+          <ul className="flex flex-col gap-2">
+            {returns.map((r) => (
+              <li key={r.id}>
+                <Link
+                  href={`/returns/${r.id}`}
+                  className="flex items-center justify-between rounded-lg border border-border bg-surface shadow-sm px-3.5 py-2.5"
+                >
+                  <div>
+                    <p className="text-sm font-medium text-foreground">↩️ #{r.returnNumber}</p>
+                    <p className="text-xs text-muted">
+                      Against #{r.invoiceNumber} · {formatDateTime(r.createdAt)}
+                    </p>
+                  </div>
+                  <p className="text-sm font-semibold text-danger">− {formatMoney(r.total)}</p>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
     </div>
   );
 }

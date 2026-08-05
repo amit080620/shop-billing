@@ -21,7 +21,7 @@ export default async function CustomerLedgerPage({
 
   if (!customer) notFound();
 
-  const [{ data: bills }, { data: payments }] = await Promise.all([
+  const [{ data: bills }, { data: payments }, { data: returns }] = await Promise.all([
     admin
       .from("bills")
       .select("id, invoice_number, total, paid_amount, credit_amount, status, created_at")
@@ -31,6 +31,12 @@ export default async function CustomerLedgerPage({
     admin
       .from("payments")
       .select("id, amount, note, created_at")
+      .eq("customer_id", id)
+      .eq("shop_id", session.shopId)
+      .order("created_at", { ascending: false }),
+    admin
+      .from("returns")
+      .select("id, return_number, total, created_at, bills ( invoice_number )")
       .eq("customer_id", id)
       .eq("shop_id", session.shopId)
       .order("created_at", { ascending: false }),
@@ -81,6 +87,13 @@ export default async function CustomerLedgerPage({
         amount: Number(p.amount),
         note: p.note,
         createdAt: p.created_at,
+      }))}
+      returns={(returns ?? []).map((r) => ({
+        id: r.id,
+        returnNumber: r.return_number,
+        total: Number(r.total),
+        createdAt: r.created_at,
+        invoiceNumber: (Array.isArray(r.bills) ? r.bills[0]?.invoice_number : (r.bills as { invoice_number: string } | null)?.invoice_number) ?? "",
       }))}
     />
   );

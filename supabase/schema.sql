@@ -651,3 +651,72 @@ alter table shops add column if not exists business_type_locked boolean not null
 -- Free-text rather than a strict staff reference — a floor waiter serving
 -- tables doesn't need their own login just to be tagged on an order.
 alter table restaurant_orders add column if not exists waiter_name text;
+
+-- ─── Returns / Exchange (partial bill returns) ────────────────────────────
+-- A return is its own clean record referencing the original bill — never
+-- edits the original bill's numbers (which stays the accurate historical
+-- record of what was actually invoiced). Kept as a separate credit-note-
+-- style transaction with its own sequential number.
+create table if not exists return_counters (
+  shop_id uuid not null references shops(id) on delete cascade,
+  financial_year text not null,
+  last_number integer not null default 0,
+  primary key (shop_id, financial_year)
+);
+alter table return_counters enable row level security;
+
+create or replace function next_return_number(p_shop_id uuid, p_financial_year text)
+returns integer
+language plpgsql
+as $$
+declare
+  v_number integer;
+begin
+  insert into return_counters (shop_id, financial_year, last_number)
+  values (p_shop_id, p_financial_year, 1)
+  on conflict (shop_id, financial_year)
+  do update set last_number = return_counters.last_number + 1
+  returning last_number into v_number;
+  return v_number;
+end;
+$$;
+
+create table if not exists returns (
+  id uuid primary key default uuid_generate_v4(),
+  shop_id uuid not null references shops(id) on delete cascade,
+  bill_id uuid not null references bills(id),
+  customer_id uuid references customers(id),
+  staff_id uuid not null references staff(id),
+  return_number text not null,
+  financial_year text not null,
+  reason text,
+  subtotal numeric(12, 2) not null default 0,
+  cgst_amount numeric(12, 2) not null default 0,
+  sgst_amount numeric(12, 2) not null default 0,
+  igst_amount numeric(12, 2) not null default 0,
+  total numeric(12, 2) not null default 0,
+  refund_method text not null default 'cash' check (refund_method in ('cash', 'card', 'upi', 'online', 'other', 'credit_adjustment')),
+  created_at timestamptz not null default now()
+);
+alter table returns enable row level security;
+create index if not exists idx_returns_shop on returns(shop_id);
+create index if not exists idx_returns_bill on returns(bill_id);
+
+create table if not exists return_items (
+  id uuid primary key default uuid_generate_v4(),
+  return_id uuid not null references returns(id) on delete cascade,
+  bill_item_id uuid not null references bill_items(id),
+  product_id uuid references products(id),
+  product_name text not null,
+  quantity numeric(12, 3) not null,
+  unit_price numeric(12, 2) not null,
+  gst_percent numeric(5, 2) not null default 0,
+  line_subtotal numeric(12, 2) not null,
+  cgst_amount numeric(12, 2) not null default 0,
+  sgst_amount numeric(12, 2) not null default 0,
+  igst_amount numeric(12, 2) not null default 0,
+  line_total numeric(12, 2) not null
+);
+alter table return_items enable row level security;
+create index if not exists idx_return_items_return on return_items(return_id);
+create index if not exists idx_return_items_bill_item on return_items(bill_item_id);
