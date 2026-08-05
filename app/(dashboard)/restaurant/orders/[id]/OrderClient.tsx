@@ -17,7 +17,7 @@ import { SearchableSelect } from "@/app/components/SearchableSelect";
 import { useTranslation } from "@/lib/i18n/useTranslation";
 import type { Lang } from "@/lib/i18n/dictionary";
 
-type Product = { id: string; name: string; price: number };
+type Product = { id: string; name: string; price: number; category: string };
 type Item = { id: string; productName: string; quantity: number; unitPrice: number; lineTotal: number };
 type Order = {
   id: string;
@@ -54,6 +54,7 @@ export function OrderClient({
   const [showBillPrint, setShowBillPrint] = useState(false);
   const [showSettle, setShowSettle] = useState(false);
   const [showCancel, setShowCancel] = useState(false);
+  const [activeCategory, setActiveCategory] = useState<string | null>(null);
 
   function addItem(p: Product) {
     startTransition(async () => {
@@ -88,6 +89,7 @@ export function OrderClient({
   }
 
   const isReadOnly = order.status !== "open";
+  const categories = [...new Set(products.map((p) => p.category))].sort();
 
   return (
     <div className="flex flex-col gap-4 pb-24">
@@ -125,14 +127,57 @@ export function OrderClient({
       {!isReadOnly && (
         <section className="no-print flex flex-col gap-2">
           <p className="text-sm font-medium text-foreground">{t("order.addItems")}</p>
-          <SearchableSelect
-            items={products}
-            getKey={(p) => p.id}
-            getLabel={(p) => p.name}
-            getSubLabel={(p) => formatMoney(p.price)}
-            onSelect={addItem}
-            placeholder={t("order.searchMenu")}
-          />
+
+          {categories.length > 1 && (
+            <div className="flex gap-1.5 overflow-x-auto pb-1">
+              <button
+                type="button"
+                onClick={() => setActiveCategory(null)}
+                className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium ${
+                  activeCategory === null ? "border-brand bg-brand-soft text-brand-dark" : "border-border text-muted"
+                }`}
+              >
+                All
+              </button>
+              {categories.map((cat) => (
+                <button
+                  key={cat}
+                  type="button"
+                  onClick={() => setActiveCategory(cat)}
+                  className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium ${
+                    activeCategory === cat ? "border-brand bg-brand-soft text-brand-dark" : "border-border text-muted"
+                  }`}
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {activeCategory ? (
+            <div className="grid grid-cols-2 gap-2">
+              {products.filter((p) => p.category === activeCategory).map((p) => (
+                <button
+                  key={p.id}
+                  type="button"
+                  onClick={() => addItem(p)}
+                  className="flex flex-col items-start gap-0.5 rounded-lg border border-border bg-surface px-3 py-2.5 text-left"
+                >
+                  <span className="truncate text-sm font-medium text-foreground">{p.name}</span>
+                  <span className="text-xs text-muted">{formatMoney(p.price)}</span>
+                </button>
+              ))}
+            </div>
+          ) : (
+            <SearchableSelect
+              items={products}
+              getKey={(p) => p.id}
+              getLabel={(p) => p.name}
+              getSubLabel={(p) => formatMoney(p.price)}
+              onSelect={addItem}
+              placeholder={t("order.searchMenu")}
+            />
+          )}
         </section>
       )}
 

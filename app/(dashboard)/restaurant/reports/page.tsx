@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { requireSession } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { formatMoney } from "@/lib/format";
@@ -47,6 +48,10 @@ export default async function RestaurantReportsPage({
       />
 
       <DateRangeControls from={fromDate} to={toDate} />
+
+      <Link href="/restaurant/reports/items" className="rounded-lg border border-dashed border-brand bg-brand-soft px-3.5 py-3 text-sm font-medium text-brand-dark">
+        📊 Item-wise & category-wise sales →
+      </Link>
 
       <div className="rounded-xl border border-border bg-surface shadow-sm p-4 text-center">
         <p className="text-xs text-muted">

@@ -26,7 +26,7 @@ export default async function OrderPage({
 
   const [{ data: items }, { data: products }] = await Promise.all([
     admin.from("restaurant_order_items").select("*").eq("order_id", id).order("created_at"),
-    admin.from("products").select("id, name, price, gst_percent").eq("shop_id", session.shopId).order("name"),
+    admin.from("products").select("id, name, price, gst_percent, category_id, categories ( name )").eq("shop_id", session.shopId).order("name"),
   ]);
 
   const table = Array.isArray(order.restaurant_tables) ? order.restaurant_tables[0] : order.restaurant_tables;
@@ -55,7 +55,12 @@ export default async function OrderPage({
         unitPrice: Number(i.unit_price),
         lineTotal: Number(i.line_total),
       }))}
-      products={(products ?? []).map((p) => ({ id: p.id, name: p.name, price: Number(p.price) }))}
+      products={(products ?? []).map((p) => ({
+        id: p.id,
+        name: p.name,
+        price: Number(p.price),
+        category: Array.isArray(p.categories) ? p.categories[0]?.name ?? "Other" : (p.categories as { name: string } | null)?.name ?? "Other",
+      }))}
     />
   );
 }

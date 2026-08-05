@@ -6,11 +6,19 @@ function iso(d: Date) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
-export function DateRangeControls({ from, to }: { from: string; to: string }) {
+export function DateRangeControls({
+  from,
+  to,
+  basePath = "/restaurant/reports",
+}: {
+  from: string;
+  to: string;
+  basePath?: string;
+}) {
   const router = useRouter();
 
   function go(f: string, t: string) {
-    router.push(`/restaurant/reports?from=${f}&to=${t}`);
+    router.push(`${basePath}?from=${f}&to=${t}`);
   }
 
   function setToday() {
