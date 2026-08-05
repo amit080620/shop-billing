@@ -14,6 +14,8 @@ import {
 } from "@/lib/actions/restaurant";
 import { formatMoney } from "@/lib/format";
 import { SearchableSelect } from "@/app/components/SearchableSelect";
+import { useTranslation } from "@/lib/i18n/useTranslation";
+import type { Lang } from "@/lib/i18n/dictionary";
 
 type Product = { id: string; name: string; price: number };
 type Item = { id: string; productName: string; quantity: number; unitPrice: number; lineTotal: number };
@@ -33,15 +35,18 @@ type Order = {
 
 export function OrderClient({
   shopName,
+  lang,
   order,
   items: initialItems,
   products,
 }: {
   shopName: string;
+  lang: Lang;
   order: Order;
   items: Item[];
   products: Product[];
 }) {
+  const { t } = useTranslation(lang);
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -74,7 +79,7 @@ export function OrderClient({
         return;
       }
       if (!result.items || result.items.length === 0) {
-        setError("Nothing new to send to the kitchen.");
+        setError(t("order.nothingNewKitchen"));
         return;
       }
       setKotItems(result.items);
@@ -92,7 +97,7 @@ export function OrderClient({
           <p className="text-xs text-muted">#{order.orderNumber} · {order.status}</p>
         </div>
         <Link href="/restaurant" className="text-sm text-brand">
-          ← Tables
+          {t("order.backToTables")}
         </Link>
       </div>
 
@@ -111,7 +116,7 @@ export function OrderClient({
                 order.orderType === type ? "border-brand bg-brand-soft text-brand-dark" : "border-border text-muted"
               }`}
             >
-              {type === "dine_in" ? "🍽 Dine-in" : type === "takeaway" ? "🥡 Takeaway" : "🛵 Delivery"}
+              {type === "dine_in" ? t("order.dineIn") : type === "takeaway" ? t("order.takeaway") : t("order.delivery")}
             </button>
           ))}
         </div>
@@ -119,23 +124,23 @@ export function OrderClient({
 
       {!isReadOnly && (
         <section className="no-print flex flex-col gap-2">
-          <p className="text-sm font-medium text-foreground">Add items</p>
+          <p className="text-sm font-medium text-foreground">{t("order.addItems")}</p>
           <SearchableSelect
             items={products}
             getKey={(p) => p.id}
             getLabel={(p) => p.name}
             getSubLabel={(p) => formatMoney(p.price)}
             onSelect={addItem}
-            placeholder="Search menu"
+            placeholder={t("order.searchMenu")}
           />
         </section>
       )}
 
       <section className="no-print flex flex-col gap-2">
-        <p className="text-sm font-medium text-foreground">Order</p>
+        <p className="text-sm font-medium text-foreground">{t("order.orderLabel")}</p>
         {initialItems.length === 0 ? (
           <p className="rounded-lg border border-dashed border-border px-3.5 py-6 text-center text-sm text-muted">
-            No items yet — search above to add the first one.
+            {t("order.noItemsYet")}
           </p>
         ) : (
           <ul className="flex flex-col gap-2">
@@ -154,7 +159,7 @@ export function OrderClient({
         )}
         {initialItems.length > 0 && (
           <div className="flex justify-between rounded-lg bg-brand-soft px-3.5 py-2.5 text-sm">
-            <span className="text-brand-dark">Total</span>
+            <span className="text-brand-dark">{t("order.total")}</span>
             <span className="font-semibold text-brand-dark">{formatMoney(order.total)}</span>
           </div>
         )}
@@ -165,13 +170,13 @@ export function OrderClient({
       {!isReadOnly && initialItems.length > 0 && (
         <div className="no-print fixed inset-x-0 bottom-16 flex gap-2 border-t border-border bg-surface p-3">
           <button onClick={printKot} disabled={isPending} className="flex-1 rounded-lg border border-border px-2 py-2.5 text-xs font-medium text-foreground disabled:opacity-60">
-            🍳 Print KOT
+            {t("order.printKot")}
           </button>
           <button onClick={() => setShowBillPrint(true)} className="flex-1 rounded-lg border border-border px-2 py-2.5 text-xs font-medium text-foreground">
-            🖨 Print bill
+            {t("order.printBill")}
           </button>
           <button onClick={() => setShowSettle(true)} className="flex-1 rounded-lg bg-brand px-2 py-2.5 text-xs font-medium text-white">
-            💰 Settle
+            {t("order.settle")}
           </button>
           <button onClick={() => setShowCancel(true)} className="rounded-lg border border-danger px-2 py-2.5 text-xs font-medium text-danger">
             ✕
@@ -191,7 +196,7 @@ export function OrderClient({
       )}
 
       {showBillPrint && (
-        <BillPrintView shopName={shopName} order={order} items={initialItems} onClose={() => setShowBillPrint(false)} />
+        <BillPrintView shopName={shopName} order={order} items={initialItems} onClose={() => setShowBillPrint(false)} t={t} />
       )}
       {showSettle && (
         <SettleModal
@@ -199,10 +204,11 @@ export function OrderClient({
           total={order.total}
           onClose={() => setShowSettle(false)}
           onDone={() => router.push("/restaurant")}
+          t={t}
         />
       )}
       {showCancel && (
-        <CancelModal orderId={order.id} onClose={() => setShowCancel(false)} onDone={() => router.push("/restaurant")} />
+        <CancelModal orderId={order.id} onClose={() => setShowCancel(false)} onDone={() => router.push("/restaurant")} t={t} />
       )}
 
       <style jsx global>{`
@@ -237,25 +243,29 @@ export function OrderClient({
   );
 }
 
+type Translator = (key: string, vars?: Record<string, string | number>) => string;
+
 function BillPrintView({
   shopName,
   order,
   items,
   onClose,
+  t,
 }: {
   shopName: string;
   order: Order;
   items: Item[];
   onClose: () => void;
+  t: Translator;
 }) {
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-black/50">
       <div className="no-print flex justify-end gap-2 bg-surface p-3">
         <button onClick={() => window.print()} className="btn-primary-sm">
-          🖨 Print
+          {t("order.printBill")}
         </button>
         <button onClick={onClose} className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-muted">
-          Close
+          {t("order.close")}
         </button>
       </div>
       <div id="bill-print" className="mx-auto w-full max-w-sm overflow-y-auto bg-white p-6 text-black">
@@ -266,9 +276,9 @@ function BillPrintView({
         <table className="w-full text-xs">
           <thead>
             <tr className="border-b border-black text-left">
-              <th className="py-1">Item</th>
-              <th className="py-1 text-right">Qty</th>
-              <th className="py-1 text-right">Amount</th>
+              <th className="py-1">{t("order.item")}</th>
+              <th className="py-1 text-right">{t("order.qty")}</th>
+              <th className="py-1 text-right">{t("order.amount")}</th>
             </tr>
           </thead>
           <tbody>
@@ -282,13 +292,13 @@ function BillPrintView({
           </tbody>
         </table>
         <hr className="my-2 border-dashed" />
-        <div className="flex justify-between text-xs"><span>Subtotal</span><span>{formatMoney(order.subtotal)}</span></div>
-        {order.discountAmount > 0 && <div className="flex justify-between text-xs"><span>Discount</span><span>− {formatMoney(order.discountAmount)}</span></div>}
+        <div className="flex justify-between text-xs"><span>{t("order.subtotal")}</span><span>{formatMoney(order.subtotal)}</span></div>
+        {order.discountAmount > 0 && <div className="flex justify-between text-xs"><span>{t("order.discount")}</span><span>− {formatMoney(order.discountAmount)}</span></div>}
         {order.cgstAmount > 0 && <div className="flex justify-between text-xs"><span>CGST</span><span>{formatMoney(order.cgstAmount)}</span></div>}
         {order.sgstAmount > 0 && <div className="flex justify-between text-xs"><span>SGST</span><span>{formatMoney(order.sgstAmount)}</span></div>}
         {order.igstAmount > 0 && <div className="flex justify-between text-xs"><span>IGST</span><span>{formatMoney(order.igstAmount)}</span></div>}
-        <div className="mt-1 flex justify-between border-t border-black pt-1 text-sm font-bold"><span>Total</span><span>{formatMoney(order.total)}</span></div>
-        <p className="mt-3 text-center text-[10px]">Thank you, visit again!</p>
+        <div className="mt-1 flex justify-between border-t border-black pt-1 text-sm font-bold"><span>{t("order.total")}</span><span>{formatMoney(order.total)}</span></div>
+        <p className="mt-3 text-center text-[10px]">{t("order.thankYou")}</p>
       </div>
       <style jsx global>{`
         @media print {
@@ -314,11 +324,13 @@ function SettleModal({
   total,
   onClose,
   onDone,
+  t,
 }: {
   orderId: string;
   total: number;
   onClose: () => void;
   onDone: () => void;
+  t: Translator;
 }) {
   const [discountValue, setDiscountValue] = useState(0);
   const [payments, setPayments] = useState<SettlePayment[]>([{ method: "cash", amount: total }]);
@@ -351,9 +363,9 @@ function SettleModal({
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 sm:items-center">
       <div className="w-full max-w-sm rounded-t-2xl bg-surface p-5 sm:rounded-2xl">
-        <p className="text-sm font-semibold text-foreground">Settle bill</p>
+        <p className="text-sm font-semibold text-foreground">{t("order.settleBill")}</p>
         <label className="mt-3 flex flex-col gap-1 text-xs text-muted">
-          Discount (₹, optional)
+          {t("order.discountOptional")}
           <input
             type="number"
             min={0}
@@ -363,7 +375,7 @@ function SettleModal({
           />
         </label>
 
-        <p className="mt-3 text-xs font-medium text-muted">Payment (split across methods if needed)</p>
+        <p className="mt-3 text-xs font-medium text-muted">{t("order.paymentSplit")}</p>
         <div className="flex flex-col gap-2">
           {payments.map((p, i) => (
             <div key={i} className="flex items-center gap-2">
@@ -388,27 +400,27 @@ function SettleModal({
               )}
             </div>
           ))}
-          <button onClick={addPaymentRow} className="self-start text-xs text-brand">+ Split payment</button>
+          <button onClick={addPaymentRow} className="self-start text-xs text-brand">{t("order.splitPayment")}</button>
         </div>
 
         <div className="mt-3 flex justify-between text-sm">
-          <span className="text-muted">Bill total</span>
+          <span className="text-muted">{t("order.billTotal")}</span>
           <span className="font-semibold text-foreground">{formatMoney(total)}</span>
         </div>
         <div className="flex justify-between text-sm">
-          <span className="text-muted">Collecting now</span>
+          <span className="text-muted">{t("order.collectingNow")}</span>
           <span className={`font-semibold ${paidTotal < total ? "text-credit" : "text-brand"}`}>{formatMoney(paidTotal)}</span>
         </div>
-        {paidTotal < total && <p className="text-xs text-credit">{formatMoney(total - paidTotal)} will go on the customer&apos;s credit.</p>}
+        {paidTotal < total && <p className="text-xs text-credit">{formatMoney(total - paidTotal)} {t("order.willGoOnCredit")}</p>}
 
         {error && <p className="mt-2 text-xs text-danger">{error}</p>}
 
         <div className="mt-4 flex gap-2">
           <button onClick={confirm} disabled={isPending} className="btn-primary flex-1 text-center disabled:opacity-60">
-            {isPending ? "Settling…" : "Confirm settlement"}
+            {isPending ? t("order.settling") : t("order.confirmSettlement")}
           </button>
           <button onClick={onClose} className="rounded-lg border border-border px-4 py-2 text-sm font-medium text-muted">
-            Cancel
+            {t("common.cancel")}
           </button>
         </div>
       </div>
@@ -416,7 +428,17 @@ function SettleModal({
   );
 }
 
-function CancelModal({ orderId, onClose, onDone }: { orderId: string; onClose: () => void; onDone: () => void }) {
+function CancelModal({
+  orderId,
+  onClose,
+  onDone,
+  t,
+}: {
+  orderId: string;
+  onClose: () => void;
+  onDone: () => void;
+  t: Translator;
+}) {
   const [pin, setPin] = useState("");
   const [reason, setReason] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -436,29 +458,29 @@ function CancelModal({ orderId, onClose, onDone }: { orderId: string; onClose: (
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
       <div className="w-full max-w-xs rounded-2xl bg-surface p-5">
-        <p className="text-sm font-semibold text-danger">Cancel this order?</p>
-        <p className="mt-1 text-xs text-muted">Needs the manager PIN — set in Settings by the owner.</p>
+        <p className="text-sm font-semibold text-danger">{t("order.cancelOrderQuestion")}</p>
+        <p className="mt-1 text-xs text-muted">{t("order.needsManagerPin")}</p>
         <input
           type="password"
           inputMode="numeric"
           value={pin}
           onChange={(e) => setPin(e.target.value)}
-          placeholder="Manager PIN"
+          placeholder={t("order.managerPinPlaceholder")}
           className="mt-3 w-full rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-danger"
         />
         <input
           value={reason}
           onChange={(e) => setReason(e.target.value)}
-          placeholder="Reason (e.g. customer left, wrong table)"
+          placeholder={t("order.reasonPlaceholder")}
           className="mt-2 w-full rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-danger"
         />
         {error && <p className="mt-2 text-xs text-danger">{error}</p>}
         <div className="mt-4 flex gap-2">
           <button onClick={confirm} disabled={isPending || !pin} className="flex-1 rounded-lg border border-danger px-4 py-2 text-sm font-medium text-danger disabled:opacity-60">
-            {isPending ? "Cancelling…" : "Confirm cancel"}
+            {isPending ? t("order.cancelling") : t("order.confirmCancel")}
           </button>
           <button onClick={onClose} className="rounded-lg border border-border px-4 py-2 text-sm font-medium text-muted">
-            Back
+            {t("order.back")}
           </button>
         </div>
       </div>

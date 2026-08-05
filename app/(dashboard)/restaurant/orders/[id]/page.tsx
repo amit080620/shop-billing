@@ -1,5 +1,6 @@
 import { requireSession } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { getTranslator } from "@/lib/i18n/server";
 import { OrderClient } from "./OrderClient";
 
 export default async function OrderPage({
@@ -8,6 +9,7 @@ export default async function OrderPage({
   params: Promise<{ id: string }>;
 }) {
   const session = await requireSession();
+  const { lang } = await getTranslator();
   const { id } = await params;
   const admin = createSupabaseAdminClient();
 
@@ -32,6 +34,7 @@ export default async function OrderPage({
   return (
     <OrderClient
       shopName={session.shopName}
+      lang={lang}
       order={{
         id: order.id,
         orderNumber: order.order_number,

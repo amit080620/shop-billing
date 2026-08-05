@@ -10,6 +10,8 @@ import { formatMoney } from "@/lib/format";
 import { SearchableSelect } from "@/app/components/SearchableSelect";
 import { InlineQuickAdd } from "@/app/components/InlineQuickAdd";
 import { quickCreateCustomerAction } from "@/lib/actions/customers";
+import { useTranslation } from "@/lib/i18n/useTranslation";
+import type { Lang } from "@/lib/i18n/dictionary";
 
 type Product = {
   id: string;
@@ -38,24 +40,29 @@ type CartLine = {
   depositPerUnit: number;
 };
 
-function SubmitButton() {
+type Translator = (key: string, vars?: Record<string, string | number>) => string;
+
+function SubmitButton({ t }: { t: Translator }) {
   const { pending } = useFormStatus();
   return (
     <button type="submit" disabled={pending} className="btn-primary w-full text-center disabled:opacity-60">
-      {pending ? "Booking…" : "Confirm booking"}
+      {pending ? t("rental.booking") : t("rental.confirmBooking")}
     </button>
   );
 }
 
 export function NewRentalClient({
   shopStateCode,
+  lang,
   products,
   customers: initialCustomers,
 }: {
   shopStateCode: string;
+  lang: Lang;
   products: Product[];
   customers: Customer[];
 }) {
+  const { t } = useTranslation(lang);
   const [customers, setCustomers] = useState(initialCustomers);
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [cart, setCart] = useState<CartLine[]>([]);
@@ -115,6 +122,16 @@ export function NewRentalClient({
     return { hourly: p.rentalRateHourly, daily: p.rentalRateDaily, weekly: p.rentalRateWeekly, monthly: p.rentalRateMonthly }[type];
   }
 
+  function durationLabel(rateType: RateType) {
+    return rateType === "hourly"
+      ? t("rental.durationHrs")
+      : rateType === "daily"
+        ? t("rental.durationDays")
+        : rateType === "weekly"
+          ? t("rental.durationWks")
+          : t("rental.durationMo");
+  }
+
   const payload = useMemo(
     () =>
       JSON.stringify({
@@ -147,19 +164,19 @@ export function NewRentalClient({
     <form action={formAction} className="flex flex-col gap-4">
       <input type="hidden" name="payload" value={payload} />
       <div className="flex items-center justify-between">
-        <h1 className="text-lg font-semibold text-foreground">New rental</h1>
+        <h1 className="text-lg font-semibold text-foreground">{t("rental.title")}</h1>
         <Link href="/rentals" className="text-sm text-brand">
-          ← Rentals
+          {t("rental.backToRentals")}
         </Link>
       </div>
 
       <section className="flex flex-col gap-2">
-        <p className="text-sm font-medium text-foreground">Customer (required for rentals)</p>
+        <p className="text-sm font-medium text-foreground">{t("rental.customerRequired")}</p>
         {selectedCustomer ? (
           <div className="flex items-center justify-between rounded-lg border border-border bg-surface px-3 py-2 text-sm">
             <span>{selectedCustomer.name} · {selectedCustomer.phone}</span>
             <button type="button" onClick={() => setCustomerId(null)} className="text-xs text-brand">
-              Change
+              {t("rental.change")}
             </button>
           </div>
         ) : (
@@ -170,13 +187,13 @@ export function NewRentalClient({
               getLabel={(c) => c.name}
               getSubLabel={(c) => c.phone}
               onSelect={(c) => setCustomerId(c.id)}
-              placeholder="Search customer by name or phone"
+              placeholder={t("rental.searchCustomer")}
             />
             <InlineQuickAdd<{ id: string; name: string; phone: string; state_code: string | null }>
-              triggerLabel="+ Add new customer"
+              triggerLabel={t("rental.addNewCustomer")}
               fields={[
-                { name: "name", label: "Name", required: true },
-                { name: "phone", label: "Phone", type: "tel", required: true },
+                { name: "name", label: t("rental.name"), required: true },
+                { name: "phone", label: t("rental.phone"), type: "tel", required: true },
               ]}
               contactFields={{ name: "name", phone: "phone" }}
               onSubmit={async (v) => {
@@ -194,7 +211,7 @@ export function NewRentalClient({
 
       <section className="grid grid-cols-2 gap-3">
         <label className="flex flex-col gap-1.5 text-sm">
-          <span className="font-medium text-foreground">Start</span>
+          <span className="font-medium text-foreground">{t("rental.start")}</span>
           <input
             type="datetime-local"
             value={startDate}
@@ -203,7 +220,7 @@ export function NewRentalClient({
           />
         </label>
         <label className="flex flex-col gap-1.5 text-sm">
-          <span className="font-medium text-foreground">End</span>
+          <span className="font-medium text-foreground">{t("rental.end")}</span>
           <input
             type="datetime-local"
             value={endDate}
@@ -214,19 +231,17 @@ export function NewRentalClient({
       </section>
 
       <section className="flex flex-col gap-2">
-        <p className="text-sm font-medium text-foreground">Add items to rent</p>
+        <p className="text-sm font-medium text-foreground">{t("rental.addItemsToRent")}</p>
         <SearchableSelect
           items={products}
           getKey={(p) => p.id}
           getLabel={(p) => p.name}
           getSubLabel={(p) => `${p.stockQuantity} owned`}
           onSelect={addProduct}
-          placeholder="Search rentable products"
+          placeholder={t("rental.searchRentable")}
         />
         {products.length === 0 && (
-          <p className="text-xs text-muted">
-            No rentable products yet — mark items as &quot;Also available for rent&quot; in Inventory first.
-          </p>
+          <p className="text-xs text-muted">{t("rental.noRentableProducts")}</p>
         )}
       </section>
 
@@ -235,33 +250,33 @@ export function NewRentalClient({
           {cart.map((line) => {
             const product = products.find((p) => p.id === line.productId);
             const availableRateTypes = (["hourly", "daily", "weekly", "monthly"] as RateType[]).filter(
-              (t) => product && rateFor(product, t) != null,
+              (rt) => product && rateFor(product, rt) != null,
             );
             return (
               <div key={line.productId} className="flex flex-col gap-2 rounded-lg border border-border bg-surface p-3">
                 <div className="flex items-center justify-between">
                   <p className="text-sm font-medium text-foreground">{line.name}</p>
                   <button type="button" onClick={() => removeLine(line.productId)} className="text-xs text-danger">
-                    Remove
+                    {t("rental.remove")}
                   </button>
                 </div>
                 <div className="flex flex-wrap gap-1.5">
-                  {availableRateTypes.map((t) => (
+                  {availableRateTypes.map((rt) => (
                     <button
-                      key={t}
+                      key={rt}
                       type="button"
-                      onClick={() => updateLine(line.productId, { rateType: t, rate: (product && rateFor(product, t)) ?? 0 })}
+                      onClick={() => updateLine(line.productId, { rateType: rt, rate: (product && rateFor(product, rt)) ?? 0 })}
                       className={`rounded-full border px-2.5 py-1 text-xs font-medium capitalize ${
-                        line.rateType === t ? "border-brand bg-brand-soft text-brand-dark" : "border-border text-muted"
+                        line.rateType === rt ? "border-brand bg-brand-soft text-brand-dark" : "border-border text-muted"
                       }`}
                     >
-                      {t} · {formatMoney((product && rateFor(product, t)) ?? 0)}
+                      {rt} · {formatMoney((product && rateFor(product, rt)) ?? 0)}
                     </button>
                   ))}
                 </div>
                 <div className="grid grid-cols-3 gap-2">
                   <label className="flex flex-col gap-1 text-xs text-muted">
-                    Qty
+                    {t("rental.qty")}
                     <input
                       type="number"
                       min={0.01}
@@ -272,7 +287,7 @@ export function NewRentalClient({
                     />
                   </label>
                   <label className="flex flex-col gap-1 text-xs text-muted">
-                    Duration ({line.rateType === "hourly" ? "hrs" : line.rateType === "daily" ? "days" : line.rateType === "weekly" ? "wks" : "mo"})
+                    {durationLabel(line.rateType)}
                     <input
                       type="number"
                       min={0.01}
@@ -283,7 +298,7 @@ export function NewRentalClient({
                     />
                   </label>
                   <label className="flex flex-col gap-1 text-xs text-muted">
-                    Deposit/unit
+                    {t("rental.depositPerUnit")}
                     <input
                       type="number"
                       min={0}
@@ -308,21 +323,21 @@ export function NewRentalClient({
             onChange={(e) => setDeliveryRequired(e.target.checked)}
             className="h-4 w-4 rounded border-border"
           />
-          We&apos;ll deliver / pick up
+          {t("rental.willDeliver")}
         </label>
         {deliveryRequired && (
           <div className="flex flex-col gap-2">
             <input
               value={deliveryAddress}
               onChange={(e) => setDeliveryAddress(e.target.value)}
-              placeholder="Delivery address"
+              placeholder={t("rental.deliveryAddress")}
               className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand"
             />
             <input
               type="number"
               value={deliveryCharge}
               onChange={(e) => setDeliveryCharge(e.target.value === "" ? "" : Number(e.target.value))}
-              placeholder="Delivery charge (₹)"
+              placeholder={t("rental.deliveryCharge")}
               className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand"
             />
           </div>
@@ -331,17 +346,17 @@ export function NewRentalClient({
 
       {cart.length > 0 && (
         <section className="flex flex-col gap-1.5 rounded-lg border border-border bg-surface p-3.5 text-sm">
-          <Row label="Rental subtotal" value={formatMoney(totals.subtotal)} />
-          <Row label="GST" value={formatMoney(totals.gstAmount)} />
-          {deliveryRequired && <Row label="Delivery" value={formatMoney(typeof deliveryCharge === "number" ? deliveryCharge : 0)} />}
-          <Row label="Security deposit (refundable)" value={formatMoney(totals.depositTotal)} />
-          <Row label="Total to collect now" value={formatMoney(totals.total)} bold />
+          <Row label={t("rental.subtotal")} value={formatMoney(totals.subtotal)} />
+          <Row label={t("rental.gst")} value={formatMoney(totals.gstAmount)} />
+          {deliveryRequired && <Row label={t("rental.delivery")} value={formatMoney(typeof deliveryCharge === "number" ? deliveryCharge : 0)} />}
+          <Row label={t("rental.depositRefundable")} value={formatMoney(totals.depositTotal)} />
+          <Row label={t("rental.totalToCollect")} value={formatMoney(totals.total)} bold />
         </section>
       )}
 
       <section className="flex flex-col gap-2">
         <label className="flex flex-col gap-1.5 text-sm">
-          <span className="font-medium text-foreground">Amount paid now (₹)</span>
+          <span className="font-medium text-foreground">{t("rental.amountPaidNow")}</span>
           <input
             type="number"
             value={paidAmount}
@@ -367,13 +382,13 @@ export function NewRentalClient({
         <input
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
-          placeholder="Notes (optional)"
+          placeholder={t("rental.notesOptional")}
           className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand"
         />
       </section>
 
       {state?.error && <p className="text-sm text-danger">{state.error}</p>}
-      <SubmitButton />
+      <SubmitButton t={t} />
     </form>
   );
 }

@@ -1,10 +1,12 @@
 import Link from "next/link";
 import { requireSession } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { getTranslator } from "@/lib/i18n/server";
 import { NewRentalClient } from "./NewRentalClient";
 
 export default async function NewRentalPage() {
   const session = await requireSession();
+  const { lang } = await getTranslator();
 
   if (!session.shopStateCode) {
     return (
@@ -34,6 +36,7 @@ export default async function NewRentalPage() {
   return (
     <NewRentalClient
       shopStateCode={session.shopStateCode}
+      lang={lang}
       products={(products ?? []).map((p) => ({
         id: p.id,
         name: p.name,
