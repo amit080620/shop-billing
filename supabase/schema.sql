@@ -720,3 +720,29 @@ create table if not exists return_items (
 alter table return_items enable row level security;
 create index if not exists idx_return_items_return on return_items(return_id);
 create index if not exists idx_return_items_bill_item on return_items(bill_item_id);
+
+-- ─── Stock audit / physical count reconciliation ──────────────────────────
+create table if not exists stock_audits (
+  id uuid primary key default uuid_generate_v4(),
+  shop_id uuid not null references shops(id) on delete cascade,
+  staff_id uuid not null references staff(id),
+  status text not null default 'draft' check (status in ('draft', 'completed')),
+  notes text,
+  created_at timestamptz not null default now(),
+  completed_at timestamptz
+);
+alter table stock_audits enable row level security;
+create index if not exists idx_stock_audits_shop on stock_audits(shop_id);
+
+create table if not exists stock_audit_items (
+  id uuid primary key default uuid_generate_v4(),
+  audit_id uuid not null references stock_audits(id) on delete cascade,
+  product_id uuid not null references products(id),
+  product_name text not null,
+  unit text not null default 'NOS',
+  system_quantity numeric(12, 3) not null,
+  counted_quantity numeric(12, 3),
+  created_at timestamptz not null default now()
+);
+alter table stock_audit_items enable row level security;
+create index if not exists idx_stock_audit_items_audit on stock_audit_items(audit_id);

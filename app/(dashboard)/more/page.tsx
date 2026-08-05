@@ -65,6 +65,7 @@ export default async function MorePage() {
 
       <MenuGroup title="Catalog">
         <MenuLink href="/products" label={terminology.productPlural} sub={terminology.productSub} icon={BoxIcon} />
+        <MenuLink href="/stock-audit" label="Stock audit" sub="Count physical stock, reconcile mismatches" icon={AuditIcon} />
       </MenuGroup>
 
       <MenuGroup title="No internet?">
@@ -271,6 +272,14 @@ function RegisterIcon({ className }: { className?: string }) {
     <svg {...iconProps(className)}>
       <rect x="4" y="3" width="16" height="18" rx="2" />
       <path d="M8 7h8M8 11h8M8 15h5" />
+    </svg>
+  );
+}
+function AuditIcon({ className }: { className?: string }) {
+  return (
+    <svg {...iconProps(className)}>
+      <path d="M9 12.5 11 14.5 15.5 10" />
+      <rect x="3" y="3" width="18" height="18" rx="2" />
     </svg>
   );
 }

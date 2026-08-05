@@ -46,7 +46,7 @@ export async function createReturnAction(
   const billItemIds = lines.map((l) => l.billItemId);
   const { data: billItems } = await admin
     .from("bill_items")
-    .select("id, product_id, product_name, quantity, unit_price, gst_percent")
+    .select("id, product_id, product_name, quantity, unit_price, gst_percent, batch_id")
     .in("id", billItemIds)
     .eq("bill_id", billId);
   if (!billItems || billItems.length !== billItemIds.length) {
@@ -148,7 +148,10 @@ export async function createReturnAction(
   }
 
   // Restore stock for tracked products — best-effort, matches the same
-  // philosophy as the sale-side stock decrement.
+  // philosophy as the sale-side stock decrement. Pharma items go back to
+  // the exact batch they were sold from (via the original bill_item's
+  // batch_id), so expiry tracking stays accurate — not just the
+  // product's aggregate count.
   for (const row of itemRows) {
     if (!row.product_id) continue;
     const { data: product } = await admin
@@ -157,6 +160,22 @@ export async function createReturnAction(
       .eq("id", row.product_id)
       .single();
     if (!product?.track_inventory) continue;
+
+    const originalBatchId = billItemMap.get(row.bill_item_id)?.batch_id;
+    if (originalBatchId) {
+      const { data: batch } = await admin
+        .from("medicine_batches")
+        .select("id, quantity")
+        .eq("id", originalBatchId)
+        .single();
+      if (batch) {
+        await admin
+          .from("medicine_batches")
+          .update({ quantity: round2(Number(batch.quantity) + row.quantity) })
+          .eq("id", batch.id);
+      }
+    }
+
     await admin
       .from("products")
       .update({ stock_quantity: round2(Number(product.stock_quantity) + row.quantity) })

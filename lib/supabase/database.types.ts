@@ -877,6 +877,74 @@ export interface Database {
           { foreignKeyName: "return_items_bill_item_id_fkey"; columns: ["bill_item_id"]; isOneToOne: false; referencedRelation: "bill_items"; referencedColumns: ["id"] },
         ];
       };
+      stock_audits: {
+        Row: {
+          id: string;
+          shop_id: string;
+          staff_id: string;
+          status: "draft" | "completed";
+          notes: string | null;
+          created_at: string;
+          completed_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          shop_id: string;
+          staff_id: string;
+          status?: "draft" | "completed";
+          notes?: string | null;
+          created_at?: string;
+          completed_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          shop_id?: string;
+          staff_id?: string;
+          status?: "draft" | "completed";
+          notes?: string | null;
+          created_at?: string;
+          completed_at?: string | null;
+        };
+        Relationships: [
+          { foreignKeyName: "stock_audits_shop_id_fkey"; columns: ["shop_id"]; isOneToOne: false; referencedRelation: "shops"; referencedColumns: ["id"] },
+        ];
+      };
+      stock_audit_items: {
+        Row: {
+          id: string;
+          audit_id: string;
+          product_id: string;
+          product_name: string;
+          unit: string;
+          system_quantity: number;
+          counted_quantity: number | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          audit_id: string;
+          product_id: string;
+          product_name: string;
+          unit?: string;
+          system_quantity: number;
+          counted_quantity?: number | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          audit_id?: string;
+          product_id?: string;
+          product_name?: string;
+          unit?: string;
+          system_quantity?: number;
+          counted_quantity?: number | null;
+          created_at?: string;
+        };
+        Relationships: [
+          { foreignKeyName: "stock_audit_items_audit_id_fkey"; columns: ["audit_id"]; isOneToOne: false; referencedRelation: "stock_audits"; referencedColumns: ["id"] },
+          { foreignKeyName: "stock_audit_items_product_id_fkey"; columns: ["product_id"]; isOneToOne: false; referencedRelation: "products"; referencedColumns: ["id"] },
+        ];
+      };
       return_counters: {
         Row: { shop_id: string; financial_year: string; last_number: number };
         Insert: { shop_id: string; financial_year: string; last_number?: number };
