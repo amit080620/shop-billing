@@ -46,6 +46,7 @@ export default async function MorePage() {
       {session.businessType === "restaurant" && (
         <MenuGroup title="Restaurant">
           <MenuLink href="/restaurant-kds" label="Kitchen display (TV)" sub="Big-screen view for the kitchen" icon={KitchenIcon} />
+          <MenuLink href="/restaurant/combos" label="Combo deals" sub="Bundle menu items at a set price" icon={BoxIcon} />
           <MenuLink href="/restaurant/reports" label="Restaurant sales" sub="Day-wise & month-wise reports" icon={ClockIcon} />
         </MenuGroup>
       )}

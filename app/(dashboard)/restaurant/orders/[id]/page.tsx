@@ -24,10 +24,18 @@ export default async function OrderPage({
     return <p className="text-sm text-muted">Order not found.</p>;
   }
 
-  const [{ data: items }, { data: products }] = await Promise.all([
+  const [{ data: items }, { data: products }, { data: combos }] = await Promise.all([
     admin.from("restaurant_order_items").select("*").eq("order_id", id).order("created_at"),
     admin.from("products").select("id, name, price, gst_percent, category_id, categories ( name )").eq("shop_id", session.shopId).order("name"),
+    admin.from("combos").select("id, name, price").eq("shop_id", session.shopId).eq("is_active", true).order("name"),
   ]);
+
+  const { data: otherOpenOrders } = await admin
+    .from("restaurant_orders")
+    .select("id, table_id, restaurant_tables ( name )")
+    .eq("shop_id", session.shopId)
+    .eq("status", "open")
+    .neq("id", id);
 
   const table = Array.isArray(order.restaurant_tables) ? order.restaurant_tables[0] : order.restaurant_tables;
 
@@ -62,6 +70,11 @@ export default async function OrderPage({
         name: p.name,
         price: Number(p.price),
         category: Array.isArray(p.categories) ? p.categories[0]?.name ?? "Other" : (p.categories as { name: string } | null)?.name ?? "Other",
+      }))}
+      combos={(combos ?? []).map((c) => ({ id: c.id, name: c.name, price: Number(c.price) }))}
+      otherTables={(otherOpenOrders ?? []).map((o) => ({
+        orderId: o.id,
+        tableName: (Array.isArray(o.restaurant_tables) ? o.restaurant_tables[0]?.name : (o.restaurant_tables as { name: string } | null)?.name) ?? "Table",
       }))}
     />
   );

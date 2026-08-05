@@ -9,7 +9,7 @@ export default async function RestaurantPage() {
   const admin = createSupabaseAdminClient();
 
   const [{ data: tables }, { data: openOrders }] = await Promise.all([
-    admin.from("restaurant_tables").select("id, name, status").eq("shop_id", session.shopId).order("name"),
+    admin.from("restaurant_tables").select("id, name, status, qr_token").eq("shop_id", session.shopId).order("name"),
     admin.from("restaurant_orders").select("id, table_id, total, created_at").eq("shop_id", session.shopId).eq("status", "open"),
   ]);
 
@@ -35,6 +35,7 @@ export default async function RestaurantPage() {
           status: t.status,
           openOrderId: order?.id ?? null,
           openOrderTotal: order?.total ? Number(order.total) : 0,
+          qrToken: t.qr_token,
           readyCount: order ? readyCountByOrder.get(order.id) ?? 0 : 0,
         };
       })}

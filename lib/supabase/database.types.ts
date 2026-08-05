@@ -570,6 +570,22 @@ export interface Database {
           { foreignKeyName: "purchase_items_product_id_fkey"; columns: ["product_id"]; isOneToOne: false; referencedRelation: "products"; referencedColumns: ["id"] },
         ];
       };
+      combos: {
+        Row: { id: string; shop_id: string; name: string; price: number; gst_percent: number; is_active: boolean; created_at: string };
+        Insert: { id?: string; shop_id: string; name: string; price: number; gst_percent?: number; is_active?: boolean; created_at?: string };
+        Update: { id?: string; shop_id?: string; name?: string; price?: number; gst_percent?: number; is_active?: boolean; created_at?: string };
+        Relationships: [
+          { foreignKeyName: "combos_shop_id_fkey"; columns: ["shop_id"]; isOneToOne: false; referencedRelation: "shops"; referencedColumns: ["id"] },
+        ];
+      };
+      combo_items: {
+        Row: { id: string; combo_id: string; product_id: string | null; product_name: string; quantity: number };
+        Insert: { id?: string; combo_id: string; product_id?: string | null; product_name: string; quantity?: number };
+        Update: { id?: string; combo_id?: string; product_id?: string | null; product_name?: string; quantity?: number };
+        Relationships: [
+          { foreignKeyName: "combo_items_combo_id_fkey"; columns: ["combo_id"]; isOneToOne: false; referencedRelation: "combos"; referencedColumns: ["id"] },
+        ];
+      };
       batch_writeoffs: {
         Row: {
           id: string;
@@ -656,11 +672,51 @@ export interface Database {
         ];
       };
       restaurant_tables: {
-        Row: { id: string; shop_id: string; name: string; status: "free" | "occupied"; created_at: string };
-        Insert: { id?: string; shop_id: string; name: string; status?: "free" | "occupied"; created_at?: string };
-        Update: { id?: string; shop_id?: string; name?: string; status?: "free" | "occupied"; created_at?: string };
+        Row: { id: string; shop_id: string; name: string; status: "free" | "occupied"; qr_token: string; created_at: string };
+        Insert: { id?: string; shop_id: string; name: string; status?: "free" | "occupied"; qr_token?: string; created_at?: string };
+        Update: { id?: string; shop_id?: string; name?: string; status?: "free" | "occupied"; qr_token?: string; created_at?: string };
         Relationships: [
           { foreignKeyName: "restaurant_tables_shop_id_fkey"; columns: ["shop_id"]; isOneToOne: false; referencedRelation: "shops"; referencedColumns: ["id"] },
+        ];
+      };
+      table_order_requests: {
+        Row: {
+          id: string;
+          shop_id: string;
+          table_id: string;
+          status: "pending" | "accepted" | "rejected";
+          customer_name: string | null;
+          created_at: string;
+          handled_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          shop_id: string;
+          table_id: string;
+          status?: "pending" | "accepted" | "rejected";
+          customer_name?: string | null;
+          created_at?: string;
+          handled_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          shop_id?: string;
+          table_id?: string;
+          status?: "pending" | "accepted" | "rejected";
+          customer_name?: string | null;
+          created_at?: string;
+          handled_at?: string | null;
+        };
+        Relationships: [
+          { foreignKeyName: "table_order_requests_table_id_fkey"; columns: ["table_id"]; isOneToOne: false; referencedRelation: "restaurant_tables"; referencedColumns: ["id"] },
+        ];
+      };
+      table_order_request_items: {
+        Row: { id: string; request_id: string; product_id: string; product_name: string; quantity: number; unit_price: number };
+        Insert: { id?: string; request_id: string; product_id: string; product_name: string; quantity: number; unit_price: number };
+        Update: { id?: string; request_id?: string; product_id?: string; product_name?: string; quantity?: number; unit_price?: number };
+        Relationships: [
+          { foreignKeyName: "table_order_request_items_request_id_fkey"; columns: ["request_id"]; isOneToOne: false; referencedRelation: "table_order_requests"; referencedColumns: ["id"] },
         ];
       };
       restaurant_order_counters: {

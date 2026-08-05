@@ -12,14 +12,17 @@ import {
   setOrderTypeAction,
   setWaiterAction,
   markItemServedAction,
+  mergeTableAction,
   type SettlePayment,
 } from "@/lib/actions/restaurant";
+import { addComboToOrderAction } from "@/lib/actions/combos";
 import { formatMoney } from "@/lib/format";
 import { SearchableSelect } from "@/app/components/SearchableSelect";
 import { useTranslation } from "@/lib/i18n/useTranslation";
 import type { Lang } from "@/lib/i18n/dictionary";
 
 type Product = { id: string; name: string; price: number; category: string };
+type Combo = { id: string; name: string; price: number };
 type Item = { id: string; productName: string; quantity: number; unitPrice: number; lineTotal: number; status: "pending" | "ready" | "served" };
 type Order = {
   id: string;
@@ -42,12 +45,16 @@ export function OrderClient({
   order,
   items: initialItems,
   products,
+  combos,
+  otherTables,
 }: {
   shopName: string;
   lang: Lang;
   order: Order;
   items: Item[];
   products: Product[];
+  combos: Combo[];
+  otherTables: { orderId: string; tableName: string }[];
 }) {
   const { t } = useTranslation(lang);
   const router = useRouter();
@@ -57,12 +64,21 @@ export function OrderClient({
   const [showBillPrint, setShowBillPrint] = useState(false);
   const [showSettle, setShowSettle] = useState(false);
   const [showCancel, setShowCancel] = useState(false);
+  const [showMerge, setShowMerge] = useState(false);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [waiterName, setWaiterName] = useState(order.waiterName ?? "");
 
   function addItem(p: Product) {
     startTransition(async () => {
       const result = await addOrderItemAction(order.id, p.id, 1);
+      if (result.error) setError(result.error);
+      router.refresh();
+    });
+  }
+
+  function addCombo(comboId: string) {
+    startTransition(async () => {
+      const result = await addComboToOrderAction(order.id, comboId);
       if (result.error) setError(result.error);
       router.refresh();
     });
@@ -146,6 +162,31 @@ export function OrderClient({
       )}
       {isReadOnly && order.waiterName && (
         <p className="no-print text-xs text-muted">{t("order.waiter")}: {order.waiterName}</p>
+      )}
+
+      {!isReadOnly && otherTables.length > 0 && (
+        <button onClick={() => setShowMerge(true)} className="no-print self-start text-xs text-brand">
+          🔀 Merge with another table
+        </button>
+      )}
+
+      {!isReadOnly && combos.length > 0 && (
+        <section className="no-print flex flex-col gap-2">
+          <p className="text-sm font-medium text-foreground">🍱 Combos</p>
+          <div className="flex gap-2 overflow-x-auto pb-1">
+            {combos.map((c) => (
+              <button
+                key={c.id}
+                onClick={() => addCombo(c.id)}
+                disabled={isPending}
+                className="shrink-0 rounded-lg border border-brand bg-brand-soft px-3 py-2 text-left disabled:opacity-60"
+              >
+                <p className="text-xs font-medium text-brand-dark">{c.name}</p>
+                <p className="text-[11px] text-brand-dark/70">{formatMoney(c.price)}</p>
+              </button>
+            ))}
+          </div>
+        </section>
       )}
 
       {!isReadOnly && (
@@ -299,6 +340,14 @@ export function OrderClient({
       )}
       {showCancel && (
         <CancelModal orderId={order.id} onClose={() => setShowCancel(false)} onDone={() => router.push("/restaurant")} t={t} />
+      )}
+      {showMerge && (
+        <MergeModal
+          currentOrderId={order.id}
+          otherTables={otherTables}
+          onClose={() => setShowMerge(false)}
+          onDone={() => router.refresh()}
+        />
       )}
 
       <style jsx global>{`
@@ -593,6 +642,59 @@ function CancelModal({
             {t("order.back")}
           </button>
         </div>
+      </div>
+    </div>
+  );
+}
+
+function MergeModal({
+  currentOrderId,
+  otherTables,
+  onClose,
+  onDone,
+}: {
+  currentOrderId: string;
+  otherTables: { orderId: string; tableName: string }[];
+  onClose: () => void;
+  onDone: () => void;
+}) {
+  const [error, setError] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
+
+  function merge(secondaryOrderId: string) {
+    startTransition(async () => {
+      const result = await mergeTableAction(currentOrderId, secondaryOrderId);
+      if (result.error) {
+        setError(result.error);
+        return;
+      }
+      onDone();
+      onClose();
+    });
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+      <div className="w-full max-w-xs rounded-2xl bg-surface p-5">
+        <p className="text-sm font-semibold text-foreground">Merge which table into this one?</p>
+        <p className="mt-1 text-xs text-muted">All items from the other table move here, and it becomes free.</p>
+        <ul className="mt-3 flex flex-col gap-1.5">
+          {otherTables.map((t) => (
+            <li key={t.orderId}>
+              <button
+                onClick={() => merge(t.orderId)}
+                disabled={isPending}
+                className="w-full rounded-lg border border-border px-3 py-2 text-left text-sm text-foreground disabled:opacity-60"
+              >
+                {t.tableName}
+              </button>
+            </li>
+          ))}
+        </ul>
+        {error && <p className="mt-2 text-xs text-danger">{error}</p>}
+        <button onClick={onClose} className="mt-4 w-full rounded-lg border border-border px-4 py-2 text-sm font-medium text-muted">
+          Cancel
+        </button>
       </div>
     </div>
   );

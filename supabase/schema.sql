@@ -772,3 +772,61 @@ create table if not exists batch_writeoffs (
 alter table batch_writeoffs enable row level security;
 create index if not exists idx_batch_writeoffs_shop on batch_writeoffs(shop_id);
 create index if not exists idx_batch_writeoffs_product on batch_writeoffs(product_id);
+
+-- ─── Combo / meal deals ─────────────────────────────────────────────────
+create table if not exists combos (
+  id uuid primary key default uuid_generate_v4(),
+  shop_id uuid not null references shops(id) on delete cascade,
+  name text not null,
+  price numeric(12, 2) not null,
+  gst_percent numeric(5, 2) not null default 0,
+  is_active boolean not null default true,
+  created_at timestamptz not null default now()
+);
+alter table combos enable row level security;
+create index if not exists idx_combos_shop on combos(shop_id);
+
+create table if not exists combo_items (
+  id uuid primary key default uuid_generate_v4(),
+  combo_id uuid not null references combos(id) on delete cascade,
+  product_id uuid references products(id),
+  product_name text not null,
+  quantity numeric(12, 3) not null default 1
+);
+alter table combo_items enable row level security;
+create index if not exists idx_combo_items_combo on combo_items(combo_id);
+
+-- ─── QR table ordering (customer self-order, staff-approved) ─────────────
+-- A separate random token (not the table's real id) is what goes into the
+-- public QR URL — this keeps table ids unguessable and lets the token be
+-- rotated independently if a QR sticker is ever compromised.
+alter table restaurant_tables add column if not exists qr_token uuid not null default uuid_generate_v4();
+create unique index if not exists idx_restaurant_tables_qr_token on restaurant_tables(qr_token);
+
+-- A customer's scan never writes directly into the real order — it only
+-- creates a request that staff must review and accept. This is the one
+-- part of the whole app reachable without any login, so everything here
+-- stays strictly read-the-menu / propose-items, nothing else.
+create table if not exists table_order_requests (
+  id uuid primary key default uuid_generate_v4(),
+  shop_id uuid not null references shops(id) on delete cascade,
+  table_id uuid not null references restaurant_tables(id) on delete cascade,
+  status text not null default 'pending' check (status in ('pending', 'accepted', 'rejected')),
+  customer_name text,
+  created_at timestamptz not null default now(),
+  handled_at timestamptz
+);
+alter table table_order_requests enable row level security;
+create index if not exists idx_table_order_requests_table on table_order_requests(table_id);
+create index if not exists idx_table_order_requests_shop_status on table_order_requests(shop_id, status);
+
+create table if not exists table_order_request_items (
+  id uuid primary key default uuid_generate_v4(),
+  request_id uuid not null references table_order_requests(id) on delete cascade,
+  product_id uuid not null references products(id),
+  product_name text not null,
+  quantity numeric(12, 3) not null,
+  unit_price numeric(12, 2) not null
+);
+alter table table_order_request_items enable row level security;
+create index if not exists idx_table_order_request_items_request on table_order_request_items(request_id);

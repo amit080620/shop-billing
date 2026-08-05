@@ -395,3 +395,49 @@ export async function markItemServedAction(itemId: string, orderId: string): Pro
   revalidatePath(`/restaurant/orders/${orderId}`);
   return {};
 }
+
+/** Merges another table's open order into this one — every item moves
+ * over, totals recalculate, and the other table frees up. Used when two
+ * tables combine into one party. */
+export async function mergeTableAction(primaryOrderId: string, secondaryOrderId: string): Promise<{ error?: string }> {
+  const session = await requireSession();
+  const admin = createSupabaseAdminClient();
+
+  if (primaryOrderId === secondaryOrderId) return { error: "Can't merge a table with itself" };
+
+  const { data: primary } = await admin
+    .from("restaurant_orders")
+    .select("id, status, table_id")
+    .eq("id", primaryOrderId)
+    .eq("shop_id", session.shopId)
+    .single();
+  const { data: secondary } = await admin
+    .from("restaurant_orders")
+    .select("id, status, table_id")
+    .eq("id", secondaryOrderId)
+    .eq("shop_id", session.shopId)
+    .single();
+  if (!primary || !secondary) return { error: "Table not found" };
+  if (primary.status !== "open" || secondary.status !== "open") return { error: "Both tables must have an open order" };
+
+  const { error: moveError } = await admin
+    .from("restaurant_order_items")
+    .update({ order_id: primaryOrderId })
+    .eq("order_id", secondaryOrderId);
+  if (moveError) {
+    console.error("Could not move items during merge", moveError);
+    return { error: "Could not merge tables" };
+  }
+
+  await admin
+    .from("restaurant_orders")
+    .update({ status: "cancelled", cancel_reason: `Merged into order ${primaryOrderId}` })
+    .eq("id", secondaryOrderId);
+  await admin.from("restaurant_tables").update({ status: "free" }).eq("id", secondary.table_id);
+
+  await recalcOrderTotals(primaryOrderId);
+
+  revalidatePath("/restaurant");
+  revalidatePath(`/restaurant/orders/${primaryOrderId}`);
+  return {};
+}
