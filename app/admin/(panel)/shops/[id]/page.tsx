@@ -2,6 +2,7 @@ import Link from "next/link";
 import { requireSuperAdmin } from "@/lib/admin-auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { RechargeForm } from "./RechargeForm";
+import { BusinessTypeForm } from "./BusinessTypeForm";
 
 export default async function AdminShopDetailPage({
   params,
@@ -57,6 +58,8 @@ export default async function AdminShopDetailPage({
       </div>
 
       <RechargeForm shopId={shop.id} />
+
+      <BusinessTypeForm shopId={shop.id} businessType={shop.business_type} locked={shop.business_type_locked} />
 
       <section className="rounded-xl border border-gray-800 bg-gray-900 p-3">
         <p className="text-xs font-medium text-gray-400">Staff ({staff?.length ?? 0})</p>

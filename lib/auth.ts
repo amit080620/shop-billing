@@ -17,6 +17,7 @@ export type SessionContext = {
   shopUpiId: string | null;
   gstScheme: "regular" | "composition";
   businessType: string;
+  businessTypeLocked: boolean;
 };
 
 /**
@@ -43,7 +44,7 @@ export async function requireSession(): Promise<SessionContext> {
     admin
       .from("staff")
       .select(
-        "id, name, role, shop_id, shops ( name, state_code, gstin, gst_scheme, logo_url, upi_id, subscription_valid_until, business_type )",
+        "id, name, role, shop_id, shops ( name, state_code, gstin, gst_scheme, logo_url, upi_id, subscription_valid_until, business_type, business_type_locked )",
       )
       .eq("id", user.id)
       .single(),
@@ -73,6 +74,7 @@ export async function requireSession(): Promise<SessionContext> {
     shopUpiId: shop?.upi_id ?? null,
     gstScheme: shop?.gst_scheme ?? "regular",
     businessType: shop?.business_type ?? "general",
+    businessTypeLocked: shop?.business_type_locked ?? false,
   };
 }
 

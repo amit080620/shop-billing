@@ -34,11 +34,24 @@ export async function updateShopSettingsAction(
   }
 
   const admin = createSupabaseAdminClient();
+
+  // Defense in depth — the UI already hides the dropdown once locked, but
+  // a locked shop's business type must never change even if a request
+  // somehow includes a different value.
+  const { data: currentShop } = await admin
+    .from("shops")
+    .select("business_type, business_type_locked")
+    .eq("id", session.shopId)
+    .single();
+  const businessType = currentShop?.business_type_locked
+    ? currentShop.business_type
+    : parsed.data.businessType;
+
   const { error } = await admin
     .from("shops")
     .update({
       name: parsed.data.name,
-      business_type: parsed.data.businessType,
+      business_type: businessType,
       legal_name: parsed.data.legalName ?? null,
       gstin: parsed.data.gstin ?? null,
       gst_scheme: parsed.data.gstScheme,

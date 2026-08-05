@@ -22,6 +22,7 @@ type ShopSettings = {
   logoUrl: string | null;
   upiId: string;
   businessType: string;
+  businessTypeLocked: boolean;
   managerPin: string;
 };
 
@@ -67,21 +68,37 @@ export function SettingsClient({ shop }: { shop: ShopSettings }) {
           <Field name="name" label="Display name" defaultValue={shop.name} required />
           <label className="flex flex-col gap-1.5 text-sm">
             <span className="font-medium text-foreground">Business type</span>
-            <select
-              name="businessType"
-              defaultValue={shop.businessType}
-              className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-brand"
-            >
-              {BUSINESS_TYPES.map((b) => (
-                <option key={b.value} value={b.value}>
-                  {b.icon} {b.label}
-                </option>
-              ))}
-            </select>
-            <span className="text-xs text-muted">
-              Changes wording around the app (e.g. &quot;Products&quot; vs &quot;Menu items&quot;) —
-              every feature stays available regardless of what you pick.
-            </span>
+            {shop.businessTypeLocked ? (
+              <>
+                <div className="rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground">
+                  {BUSINESS_TYPES.find((b) => b.value === shop.businessType)?.icon}{" "}
+                  {BUSINESS_TYPES.find((b) => b.value === shop.businessType)?.label ?? shop.businessType}
+                </div>
+                <span className="text-xs text-muted">
+                  Locked after signup — switching verticals on a live shop tends to mix up data
+                  between them. If this genuinely needs to change, contact whoever manages your
+                  subscription.
+                </span>
+              </>
+            ) : (
+              <>
+                <select
+                  name="businessType"
+                  defaultValue={shop.businessType}
+                  className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-brand"
+                >
+                  {BUSINESS_TYPES.map((b) => (
+                    <option key={b.value} value={b.value}>
+                      {b.icon} {b.label}
+                    </option>
+                  ))}
+                </select>
+                <span className="text-xs text-muted">
+                  Changes wording around the app (e.g. &quot;Products&quot; vs &quot;Menu items&quot;)
+                  and which vertical tools show up. This locks after you save it once.
+                </span>
+              </>
+            )}
           </label>
           <Field
             name="legalName"

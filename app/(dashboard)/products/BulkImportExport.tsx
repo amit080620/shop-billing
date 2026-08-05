@@ -15,6 +15,8 @@ type Product = {
   trackInventory: boolean;
   stockQuantity: number;
   lowStockThreshold: number;
+  isPharma?: boolean;
+  requiresPrescription?: boolean;
 };
 
 const HEADERS = [
@@ -28,6 +30,16 @@ const HEADERS = [
   "trackInventory",
   "stockQuantity",
   "lowStockThreshold",
+  "isPharma",
+  "requiresPrescription",
+  "saltComposition",
+  "unitsPerPack",
+  "looseUnitName",
+  "rackLocation",
+  "drugSchedule",
+  "batchNumber",
+  "expiryDate",
+  "mfgDate",
 ];
 
 function normalizeKey(k: string) {
@@ -50,9 +62,19 @@ export function BulkImportExport({ products, onImported }: { products: Product[]
       "inventory-import-template.csv",
       HEADERS,
       [
+        // A regular (non-medicine) product — pharmacy columns left blank.
         [
           "Amul Milk 500ml", "28", "5", "PKT", "0402", "8901234567890",
           "Dairy", "TRUE", "50", "10",
+          "", "", "", "", "", "", "", "", "", "",
+        ],
+        // A medicine — batch/expiry columns fill in its first stock too,
+        // so it shows up correctly on the Expiry alerts page right away.
+        [
+          "Paracetamol 500", "50", "12", "strip", "3004", "",
+          "Medicines", "TRUE", "20", "5",
+          "TRUE", "FALSE", "Paracetamol 500mg", "10", "tablet", "Rack 3B", "otc",
+          "B001", "2027-06-30", "2026-01-15",
         ],
       ],
     );
@@ -73,6 +95,9 @@ export function BulkImportExport({ products, onImported }: { products: Product[]
         p.trackInventory ? "TRUE" : "FALSE",
         p.stockQuantity,
         p.lowStockThreshold,
+        p.isPharma ? "TRUE" : "FALSE",
+        p.requiresPrescription ? "TRUE" : "FALSE",
+        "", "", "", "", "", "", "",
       ]),
     );
   }
@@ -103,6 +128,16 @@ export function BulkImportExport({ products, onImported }: { products: Product[]
           trackInventory: toBool(normalized.trackinventory),
           stockQuantity: Number(normalized.stockquantity ?? 0),
           lowStockThreshold: Number(normalized.lowstockthreshold ?? 0),
+          isPharma: toBool(normalized.ispharma),
+          requiresPrescription: toBool(normalized.requiresprescription ?? normalized.rx),
+          saltComposition: String(normalized.saltcomposition ?? normalized.composition ?? "").trim(),
+          unitsPerPack: Number(normalized.unitsperpack ?? 0),
+          looseUnitName: String(normalized.looseunitname ?? "").trim(),
+          rackLocation: String(normalized.racklocation ?? normalized.rack ?? "").trim(),
+          drugSchedule: String(normalized.drugschedule ?? normalized.schedule ?? "").trim(),
+          batchNumber: String(normalized.batchnumber ?? normalized.batch ?? "").trim(),
+          expiryDate: String(normalized.expirydate ?? normalized.expiry ?? "").trim(),
+          mfgDate: String(normalized.mfgdate ?? normalized.manufacturedate ?? "").trim(),
         };
       });
 
@@ -140,7 +175,8 @@ export function BulkImportExport({ products, onImported }: { products: Product[]
       </div>
       <p className="text-xs text-muted">
         For setting up your whole catalog at once — download the template, fill it in Excel or
-        Google Sheets (or export your current inventory to edit and re-upload), then import.
+        Google Sheets, then import. Medicine rows can also include batch number + expiry date to
+        create their first batch straight away — leave those columns blank for non-medicine items.
       </p>
       <div className="flex flex-wrap gap-2">
         <button

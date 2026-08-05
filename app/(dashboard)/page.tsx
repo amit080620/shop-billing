@@ -3,6 +3,7 @@ import { requireSession } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { formatMoney, formatDateTime } from "@/lib/format";
 import { EmptyState } from "@/app/components/EmptyState";
+import { SalesTrendChart } from "@/app/components/SalesTrendChart";
 import { getTranslator } from "@/lib/i18n/server";
 import { FESTIVALS } from "@/lib/festivals";
 
@@ -112,7 +113,7 @@ async function RetailHome({
   const [todayBills, weekBills, allBillsCredit, allPayments, recentBills, allPayables, allVendorPayments] =
     await Promise.all([
       admin.from("bills").select("total").eq("shop_id", session.shopId).eq("status", "active").gte("created_at", startOfToday.toISOString()),
-      admin.from("bills").select("total").eq("shop_id", session.shopId).eq("status", "active").gte("created_at", startOfWeek.toISOString()),
+      admin.from("bills").select("total, created_at").eq("shop_id", session.shopId).eq("status", "active").gte("created_at", startOfWeek.toISOString()),
       admin.from("bills").select("credit_amount").eq("shop_id", session.shopId).eq("status", "active"),
       admin.from("payments").select("amount").eq("shop_id", session.shopId),
       admin
@@ -135,13 +136,40 @@ async function RetailHome({
   const totalVendorPaid = sum(allVendorPayments.data?.map((p) => p.amount));
   const outstandingPayable = Math.max(0, totalPayable - totalVendorPaid);
 
+  // 7-day trend for the chart — one bucket per day, oldest first.
+  const trend: { day: string; total: number }[] = [];
+  for (let i = 6; i >= 0; i--) {
+    const dayStart = new Date();
+    dayStart.setDate(dayStart.getDate() - i);
+    dayStart.setHours(0, 0, 0, 0);
+    const dayEnd = new Date(dayStart);
+    dayEnd.setDate(dayEnd.getDate() + 1);
+    const dayTotal = sum(
+      (weekBills.data ?? [])
+        .filter((b) => {
+          const t = new Date(b.created_at).getTime();
+          return t >= dayStart.getTime() && t < dayEnd.getTime();
+        })
+        .map((b) => b.total),
+    );
+    trend.push({ day: dayStart.toLocaleDateString("en-IN", { weekday: "short" }), total: dayTotal });
+  }
+
   return (
     <>
+      <section className="rounded-xl border border-border bg-surface p-4 shadow-sm">
+        <div className="mb-1 flex items-center justify-between">
+          <p className="text-xs font-medium text-muted">Last 7 days</p>
+          <p className="text-sm font-semibold text-foreground">{formatMoney(weekTotal)}</p>
+        </div>
+        <SalesTrendChart data={trend} />
+      </section>
+
       <section className="grid grid-cols-2 gap-3">
-        <StatCard label={t("home.todaySales")} value={formatMoney(todayTotal)} href="/daily-summary" />
-        <StatCard label={t("home.last7Days")} value={formatMoney(weekTotal)} />
-        <StatCard label={t("home.outstandingCredit")} value={formatMoney(outstanding)} tone="credit" href="/reminders" />
-        <StatCard label={t("home.payableToVendors")} value={formatMoney(outstandingPayable)} tone="credit" />
+        <StatCard label={t("home.todaySales")} value={formatMoney(todayTotal)} href="/daily-summary" icon="💰" />
+        <StatCard label={t("home.last7Days")} value={formatMoney(weekTotal)} icon="📈" />
+        <StatCard label={t("home.outstandingCredit")} value={formatMoney(outstanding)} tone="credit" href="/reminders" icon="🧾" />
+        <StatCard label={t("home.payableToVendors")} value={formatMoney(outstandingPayable)} tone="credit" icon="🤝" />
       </section>
 
       <Link
@@ -208,9 +236,9 @@ async function RestaurantHome({ shopId }: { shopId: string }) {
   return (
     <>
       <section className="grid grid-cols-2 gap-3">
-        <StatCard label="Tables occupied" value={`${occupied} / ${tables?.length ?? 0}`} href="/restaurant" />
-        <StatCard label="Orders in kitchen" value={String(openOrders?.length ?? 0)} tone={openOrders && openOrders.length > 0 ? "credit" : "default"} href="/restaurant-kds" />
-        <StatCard label="Today's revenue" value={formatMoney(todayRevenue)} href="/restaurant/reports" className="col-span-2" />
+        <StatCard label="Tables occupied" value={`${occupied} / ${tables?.length ?? 0}`} href="/restaurant" icon="🍽" />
+        <StatCard label="Orders in kitchen" value={String(openOrders?.length ?? 0)} tone={openOrders && openOrders.length > 0 ? "credit" : "default"} href="/restaurant-kds" icon="🍳" />
+        <StatCard label="Today's revenue" value={formatMoney(todayRevenue)} href="/restaurant/reports" className="col-span-2" icon="💰" />
       </section>
 
       <Link
@@ -270,8 +298,8 @@ async function RentalHome({ shopId }: { shopId: string }) {
   return (
     <>
       <section className="grid grid-cols-2 gap-3">
-        <StatCard label="Active & booked" value={String(activeCount)} href="/rentals" />
-        <StatCard label="Overdue" value={String(overdueCount)} tone={overdueCount > 0 ? "credit" : "default"} href="/rentals" />
+        <StatCard label="Active & booked" value={String(activeCount)} href="/rentals" icon="🔁" />
+        <StatCard label="Overdue" value={String(overdueCount)} tone={overdueCount > 0 ? "credit" : "default"} href="/rentals" icon="⏰" />
       </section>
 
       <Link
@@ -331,20 +359,35 @@ function StatCard({
   tone = "default",
   className = "",
   href,
+  icon,
 }: {
   label: string;
   value: string;
   tone?: "default" | "credit";
   className?: string;
   href?: string;
+  icon?: string;
 }) {
-  const cardClassName = `rounded-xl border border-border p-4 shadow-sm ${
+  const cardClassName = `group relative overflow-hidden rounded-xl border border-border p-4 shadow-sm transition-transform active:scale-[0.98] ${
     tone === "credit" ? "bg-credit-soft" : "bg-surface"
   } ${className}`;
   const content = (
     <>
-      <p className={`text-xs ${tone === "credit" ? "text-credit" : "text-muted"}`}>{label}</p>
-      <p className={`mt-1 text-xl font-semibold ${tone === "credit" ? "text-credit" : "text-foreground"}`}>{value}</p>
+      <div className="flex items-center justify-between">
+        <p className={`text-xs font-medium ${tone === "credit" ? "text-credit" : "text-muted"}`}>{label}</p>
+        {icon && (
+          <span
+            className={`flex h-7 w-7 items-center justify-center rounded-lg text-sm ${
+              tone === "credit" ? "bg-white/60" : "bg-brand-soft"
+            }`}
+          >
+            {icon}
+          </span>
+        )}
+      </div>
+      <p className={`mt-2 text-2xl font-bold tracking-tight ${tone === "credit" ? "text-credit" : "text-foreground"}`}>
+        {value}
+      </p>
     </>
   );
 

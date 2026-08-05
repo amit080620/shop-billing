@@ -43,7 +43,7 @@ export async function signupAction(
 
   const { data: shop, error: shopError } = await admin
     .from("shops")
-    .insert({ name: shopName, business_type: businessType, subscription_valid_until: trialEnds.toISOString().slice(0, 10) })
+    .insert({ name: shopName, business_type: businessType, business_type_locked: true, subscription_valid_until: trialEnds.toISOString().slice(0, 10) })
     .select("id")
     .single();
   if (shopError || !shop) {

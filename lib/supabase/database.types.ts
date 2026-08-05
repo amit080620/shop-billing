@@ -28,6 +28,7 @@ export interface Database {
           subscription_valid_until: string | null;
           wallet_balance: number;
           business_type: string;
+          business_type_locked: boolean;
           manager_pin: string | null;
           created_at: string;
         };
@@ -49,6 +50,7 @@ export interface Database {
           subscription_valid_until?: string | null;
           wallet_balance?: number;
           business_type?: string;
+          business_type_locked?: boolean;
           manager_pin?: string | null;
           created_at?: string;
         };
@@ -70,6 +72,7 @@ export interface Database {
           subscription_valid_until?: string | null;
           wallet_balance?: number;
           business_type?: string;
+          business_type_locked?: boolean;
           manager_pin?: string | null;
           created_at?: string;
         };

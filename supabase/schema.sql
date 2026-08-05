@@ -637,3 +637,12 @@ alter table products add column if not exists loose_unit_name text;
 -- ─── Restaurant order type (PetPooja-style classification) ───────────────
 alter table restaurant_orders add column if not exists order_type text not null default 'dine_in'
   check (order_type in ('dine_in', 'takeaway', 'delivery'));
+
+-- ─── Business type lock ────────────────────────────────────────────────────
+-- New shops lock their business type at signup (a real shop shouldn't be
+-- able to casually flip between Restaurant/Pharmacy/etc. from Settings —
+-- that's how test data from different verticals ends up mixed together in
+-- the same shop). Existing shops stay unlocked so this doesn't retroactively
+-- block anyone already using the app; only a super admin can change a
+-- locked shop's type, from the platform admin panel.
+alter table shops add column if not exists business_type_locked boolean not null default false;

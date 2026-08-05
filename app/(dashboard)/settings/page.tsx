@@ -9,7 +9,7 @@ export default async function SettingsPage() {
   const { data: shop } = await admin
     .from("shops")
     .select(
-      "name, legal_name, gstin, gst_scheme, address_line1, address_line2, city, state_code, pincode, invoice_prefix, logo_url, upi_id, business_type, manager_pin",
+      "name, legal_name, gstin, gst_scheme, address_line1, address_line2, city, state_code, pincode, invoice_prefix, logo_url, upi_id, business_type, business_type_locked, manager_pin",
     )
     .eq("id", session.shopId)
     .single();
@@ -30,6 +30,7 @@ export default async function SettingsPage() {
         logoUrl: shop?.logo_url ?? null,
         upiId: shop?.upi_id ?? "",
         businessType: shop?.business_type ?? "general",
+        businessTypeLocked: shop?.business_type_locked ?? false,
         managerPin: shop?.manager_pin ?? "",
       }}
     />
