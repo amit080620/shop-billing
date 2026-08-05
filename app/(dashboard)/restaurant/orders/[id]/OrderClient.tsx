@@ -10,6 +10,7 @@ import {
   settleOrderAction,
   cancelOrderAction,
   setOrderTypeAction,
+  setWaiterAction,
   type SettlePayment,
 } from "@/lib/actions/restaurant";
 import { formatMoney } from "@/lib/format";
@@ -24,6 +25,7 @@ type Order = {
   orderNumber: string;
   status: "open" | "settled" | "cancelled";
   orderType: "dine_in" | "takeaway" | "delivery";
+  waiterName: string | null;
   subtotal: number;
   discountAmount: number;
   cgstAmount: number;
@@ -55,6 +57,7 @@ export function OrderClient({
   const [showSettle, setShowSettle] = useState(false);
   const [showCancel, setShowCancel] = useState(false);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
+  const [waiterName, setWaiterName] = useState(order.waiterName ?? "");
 
   function addItem(p: Product) {
     startTransition(async () => {
@@ -122,6 +125,26 @@ export function OrderClient({
             </button>
           ))}
         </div>
+      )}
+
+      {!isReadOnly && (
+        <input
+          value={waiterName}
+          onChange={(e) => setWaiterName(e.target.value)}
+          onBlur={() => {
+            if (waiterName !== (order.waiterName ?? "")) {
+              startTransition(async () => {
+                await setWaiterAction(order.id, waiterName);
+                router.refresh();
+              });
+            }
+          }}
+          placeholder={`${t("order.waiter")}: ${t("order.waiterPlaceholder")}`}
+          className="no-print rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand"
+        />
+      )}
+      {isReadOnly && order.waiterName && (
+        <p className="no-print text-xs text-muted">{t("order.waiter")}: {order.waiterName}</p>
       )}
 
       {!isReadOnly && (

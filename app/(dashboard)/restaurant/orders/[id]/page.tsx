@@ -47,6 +47,7 @@ export default async function OrderPage({
         total: Number(order.total),
         tableName: table?.name ?? "Table",
         orderType: order.order_type,
+        waiterName: order.waiter_name,
       }}
       items={(items ?? []).map((i) => ({
         id: i.id,

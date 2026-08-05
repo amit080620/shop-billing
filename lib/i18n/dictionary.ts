@@ -171,6 +171,8 @@ export const translations: Record<Lang, Record<string, string>> = {
     "order.confirmCancel": "Confirm cancel",
     "order.cancelling": "Cancelling…",
     "order.back": "Back",
+    "order.waiter": "Waiter",
+    "order.waiterPlaceholder": "e.g. Ramesh",
 
     // Rental — New rental booking
     "rental.booking": "Booking…",
@@ -376,6 +378,8 @@ export const translations: Record<Lang, Record<string, string>> = {
     "order.confirmCancel": "Cancel पक्का करें",
     "order.cancelling": "Cancel हो रहा है…",
     "order.back": "वापस",
+    "order.waiter": "Waiter",
+    "order.waiterPlaceholder": "जैसे रमेश",
 
     // Rental — New rental booking
     "rental.booking": "Book हो रहा है…",
@@ -581,6 +585,8 @@ export const translations: Record<Lang, Record<string, string>> = {
     "order.confirmCancel": "रद्द करणे निश्चित करा",
     "order.cancelling": "रद्द होत आहे…",
     "order.back": "मागे",
+    "order.waiter": "Waiter",
+    "order.waiterPlaceholder": "उदा. रमेश",
 
     // Rental — New rental booking
     "rental.booking": "Book होत आहे…",

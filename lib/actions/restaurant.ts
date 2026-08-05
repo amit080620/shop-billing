@@ -345,3 +345,17 @@ export async function setOrderTypeAction(
   revalidatePath(`/restaurant/orders/${orderId}`);
   return {};
 }
+
+export async function setWaiterAction(orderId: string, waiterName: string): Promise<{ error?: string }> {
+  const session = await requireSession();
+  const admin = createSupabaseAdminClient();
+  const { error } = await admin
+    .from("restaurant_orders")
+    .update({ waiter_name: waiterName.trim() || null })
+    .eq("id", orderId)
+    .eq("shop_id", session.shopId)
+    .eq("status", "open");
+  if (error) return { error: "Could not save waiter" };
+  revalidatePath(`/restaurant/orders/${orderId}`);
+  return {};
+}

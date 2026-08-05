@@ -646,3 +646,8 @@ alter table restaurant_orders add column if not exists order_type text not null 
 -- block anyone already using the app; only a super admin can change a
 -- locked shop's type, from the platform admin panel.
 alter table shops add column if not exists business_type_locked boolean not null default false;
+
+-- ─── Waiter assignment ─────────────────────────────────────────────────────
+-- Free-text rather than a strict staff reference — a floor waiter serving
+-- tables doesn't need their own login just to be tagged on an order.
+alter table restaurant_orders add column if not exists waiter_name text;

@@ -636,6 +636,7 @@ export interface Database {
           financial_year: string;
           status: "open" | "settled" | "cancelled";
           order_type: "dine_in" | "takeaway" | "delivery";
+          waiter_name: string | null;
           supply_type: "intra" | "inter";
           subtotal: number;
           discount_type: "flat" | "percent";
@@ -663,6 +664,7 @@ export interface Database {
           financial_year: string;
           status?: "open" | "settled" | "cancelled";
           order_type?: "dine_in" | "takeaway" | "delivery";
+          waiter_name?: string | null;
           supply_type?: "intra" | "inter";
           subtotal?: number;
           discount_type?: "flat" | "percent";
@@ -690,6 +692,7 @@ export interface Database {
           financial_year?: string;
           status?: "open" | "settled" | "cancelled";
           order_type?: "dine_in" | "takeaway" | "delivery";
+          waiter_name?: string | null;
           supply_type?: "intra" | "inter";
           subtotal?: number;
           discount_type?: "flat" | "percent";

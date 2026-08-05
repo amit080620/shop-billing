@@ -35,13 +35,23 @@ export default async function ItemWiseReportPage({
   // one Supabase call without a view.
   const { data: orders } = await admin
     .from("restaurant_orders")
-    .select("id")
+    .select("id, waiter_name, total")
     .eq("shop_id", session.shopId)
     .eq("status", "settled")
     .gte("settled_at", startOfRange.toISOString())
     .lte("settled_at", endOfRange.toISOString());
 
   const orderIds = (orders ?? []).map((o) => o.id);
+
+  const byWaiter = new Map<string, { name: string; orders: number; revenue: number }>();
+  for (const o of orders ?? []) {
+    const name = o.waiter_name?.trim() || "Unassigned";
+    const existing = byWaiter.get(name) ?? { name, orders: 0, revenue: 0 };
+    existing.orders += 1;
+    existing.revenue += Number(o.total);
+    byWaiter.set(name, existing);
+  }
+  const waiterRows = [...byWaiter.values()].sort((a, b) => b.revenue - a.revenue);
 
   const { data: items } = orderIds.length
     ? await admin
@@ -106,6 +116,23 @@ export default async function ItemWiseReportPage({
         <EmptyState text="No settled bills in this range yet." />
       ) : (
         <>
+          {waiterRows.length > 1 && (
+            <section className="flex flex-col gap-2">
+              <p className="text-sm font-medium text-foreground">By waiter</p>
+              <ul className="flex flex-col gap-1.5">
+                {waiterRows.map((w) => (
+                  <li key={w.name} className="flex items-center justify-between rounded-lg border border-border bg-surface shadow-sm px-3.5 py-2.5">
+                    <div>
+                      <p className="text-sm font-medium text-foreground">{w.name}</p>
+                      <p className="text-xs text-muted">{w.orders} bill(s)</p>
+                    </div>
+                    <p className="text-sm font-semibold text-foreground">{formatMoney(w.revenue)}</p>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+
           <section className="flex flex-col gap-2">
             <p className="text-sm font-medium text-foreground">By category</p>
             <ul className="flex flex-col gap-1.5">
