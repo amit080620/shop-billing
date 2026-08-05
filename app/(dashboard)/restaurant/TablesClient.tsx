@@ -7,10 +7,13 @@ import { createTableAction, startOrderAction } from "@/lib/actions/restaurant";
 import { formatMoney } from "@/lib/format";
 import { PageHeader } from "@/app/components/PageHeader";
 import { EmptyState } from "@/app/components/EmptyState";
+import { useTranslation } from "@/lib/i18n/useTranslation";
+import type { Lang } from "@/lib/i18n/dictionary";
 
 type Table = { id: string; name: string; status: "free" | "occupied"; openOrderId: string | null; openOrderTotal: number };
 
-export function TablesClient({ tables }: { tables: Table[] }) {
+export function TablesClient({ tables, lang }: { tables: Table[]; lang: Lang }) {
+  const { t } = useTranslation(lang);
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [showAddTable, setShowAddTable] = useState(false);
@@ -50,10 +53,10 @@ export function TablesClient({ tables }: { tables: Table[] }) {
   return (
     <div className="flex flex-col gap-4">
       <PageHeader
-        title="Tables"
+        title={t("tables.title")}
         action={
           <button onClick={() => setShowAddTable((v) => !v)} className="btn-primary-sm">
-            + Table
+            {t("tables.addTable")}
           </button>
         }
         icon={
@@ -66,7 +69,7 @@ export function TablesClient({ tables }: { tables: Table[] }) {
 
       <div className="flex gap-2 overflow-x-auto">
         <Link href="/restaurant/reports" className="shrink-0 rounded-full border border-border px-3 py-1.5 text-xs font-medium text-muted">
-          📊 Sales reports →
+          {t("tables.salesReports")}
         </Link>
       </div>
 
@@ -75,18 +78,18 @@ export function TablesClient({ tables }: { tables: Table[] }) {
           <input
             value={newTableName}
             onChange={(e) => setNewTableName(e.target.value)}
-            placeholder="e.g. Table 5, T5, Patio 2"
+            placeholder={t("tables.namePlaceholder")}
             className="flex-1 rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand"
           />
           <button onClick={handleAddTable} disabled={isPending} className="btn-primary-sm">
-            Add
+            {t("tables.add")}
           </button>
         </div>
       )}
       {error && <p className="text-sm text-danger">{error}</p>}
 
       {tables.length === 0 ? (
-        <EmptyState text="No tables yet — add your first one above." />
+        <EmptyState text={t("tables.empty")} />
       ) : (
         <div className="grid grid-cols-3 gap-3">
           {tables.map((table) => (
@@ -104,7 +107,7 @@ export function TablesClient({ tables }: { tables: Table[] }) {
                 {table.name}
               </span>
               <span className={`text-[11px] ${table.status === "occupied" ? "text-danger" : "text-brand-dark"}`}>
-                {table.status === "occupied" ? formatMoney(table.openOrderTotal) : "Free"}
+                {table.status === "occupied" ? formatMoney(table.openOrderTotal) : t("tables.free")}
               </span>
             </button>
           ))}

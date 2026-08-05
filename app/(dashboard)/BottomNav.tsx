@@ -20,16 +20,16 @@ function tabsFor(businessType: string, t: (key: string) => string) {
   // with the kitchen display one tap away instead of buried in More.
   const RESTAURANT_TABS = [
     { href: "/", label: t("nav.home"), icon: HomeIcon },
-    { href: "/restaurant", label: "Tables", icon: TableIcon },
-    { href: "/restaurant-kds", label: "Kitchen", icon: KitchenIcon },
+    { href: "/restaurant", label: t("nav.tables"), icon: TableIcon },
+    { href: "/restaurant-kds", label: t("nav.kitchen"), icon: KitchenIcon },
     { href: "/reports", label: t("nav.reports"), icon: ReportIcon },
     { href: "/more", label: t("nav.more"), icon: MoreIcon },
   ];
 
   const RENTAL_TABS = [
     { href: "/", label: t("nav.home"), icon: HomeIcon },
-    { href: "/rentals/new", label: "New rental", icon: BuyIcon },
-    { href: "/rentals", label: "Rentals", icon: TableIcon },
+    { href: "/rentals/new", label: t("nav.newRental"), icon: BuyIcon },
+    { href: "/rentals", label: t("nav.rentals"), icon: TableIcon },
     { href: "/reports", label: t("nav.reports"), icon: ReportIcon },
     { href: "/more", label: t("nav.more"), icon: MoreIcon },
   ];

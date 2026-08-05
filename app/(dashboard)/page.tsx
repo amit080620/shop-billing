@@ -136,24 +136,7 @@ async function RetailHome({
   const totalVendorPaid = sum(allVendorPayments.data?.map((p) => p.amount));
   const outstandingPayable = Math.max(0, totalPayable - totalVendorPaid);
 
-  // 7-day trend for the chart — one bucket per day, oldest first.
-  const trend: { day: string; total: number }[] = [];
-  for (let i = 6; i >= 0; i--) {
-    const dayStart = new Date();
-    dayStart.setDate(dayStart.getDate() - i);
-    dayStart.setHours(0, 0, 0, 0);
-    const dayEnd = new Date(dayStart);
-    dayEnd.setDate(dayEnd.getDate() + 1);
-    const dayTotal = sum(
-      (weekBills.data ?? [])
-        .filter((b) => {
-          const t = new Date(b.created_at).getTime();
-          return t >= dayStart.getTime() && t < dayEnd.getTime();
-        })
-        .map((b) => b.total),
-    );
-    trend.push({ day: dayStart.toLocaleDateString("en-IN", { weekday: "short" }), total: dayTotal });
-  }
+  const trend = buildSevenDayTrend(weekBills.data ?? [], "created_at");
 
   return (
     <>
@@ -216,11 +199,14 @@ async function RestaurantHome({ shopId }: { shopId: string }) {
   const admin = createSupabaseAdminClient();
   const startOfToday = new Date();
   startOfToday.setHours(0, 0, 0, 0);
+  const startOfWeek = new Date();
+  startOfWeek.setDate(startOfWeek.getDate() - 6);
+  startOfWeek.setHours(0, 0, 0, 0);
 
-  const [{ data: tables }, { data: openOrders }, { data: todaySettled }, { data: recentSettled }] = await Promise.all([
+  const [{ data: tables }, { data: openOrders }, { data: weekSettled }, { data: recentSettled }] = await Promise.all([
     admin.from("restaurant_tables").select("id, status").eq("shop_id", shopId),
     admin.from("restaurant_orders").select("id").eq("shop_id", shopId).eq("status", "open"),
-    admin.from("restaurant_orders").select("total").eq("shop_id", shopId).eq("status", "settled").gte("settled_at", startOfToday.toISOString()),
+    admin.from("restaurant_orders").select("total, settled_at").eq("shop_id", shopId).eq("status", "settled").gte("settled_at", startOfWeek.toISOString()),
     admin
       .from("restaurant_orders")
       .select("id, order_number, total, settled_at, restaurant_tables ( name )")
@@ -231,10 +217,21 @@ async function RestaurantHome({ shopId }: { shopId: string }) {
   ]);
 
   const occupied = (tables ?? []).filter((t) => t.status === "occupied").length;
-  const todayRevenue = sum(todaySettled?.map((o) => o.total));
+  const todayRevenue = sum(
+    (weekSettled ?? []).filter((o) => o.settled_at && new Date(o.settled_at) >= startOfToday).map((o) => o.total),
+  );
+  const trend = buildSevenDayTrend(weekSettled ?? [], "settled_at");
 
   return (
     <>
+      <section className="rounded-xl border border-border bg-surface p-4 shadow-sm">
+        <div className="mb-1 flex items-center justify-between">
+          <p className="text-xs font-medium text-muted">Last 7 days</p>
+          <p className="text-sm font-semibold text-foreground">{formatMoney(sum(trend.map((d) => d.total)))}</p>
+        </div>
+        <SalesTrendChart data={trend} />
+      </section>
+
       <section className="grid grid-cols-2 gap-3">
         <StatCard label="Tables occupied" value={`${occupied} / ${tables?.length ?? 0}`} href="/restaurant" icon="🍽" />
         <StatCard label="Orders in kitchen" value={String(openOrders?.length ?? 0)} tone={openOrders && openOrders.length > 0 ? "credit" : "default"} href="/restaurant-kds" icon="🍳" />
@@ -281,8 +278,11 @@ async function RestaurantHome({ shopId }: { shopId: string }) {
 async function RentalHome({ shopId }: { shopId: string }) {
   const admin = createSupabaseAdminClient();
   const now = new Date();
+  const startOfWeek = new Date();
+  startOfWeek.setDate(startOfWeek.getDate() - 6);
+  startOfWeek.setHours(0, 0, 0, 0);
 
-  const [{ data: active }, { data: recentRentals }] = await Promise.all([
+  const [{ data: active }, { data: recentRentals }, { data: weekRentals }] = await Promise.all([
     admin.from("rentals").select("id, end_date").eq("shop_id", shopId).in("status", ["booked", "active"]),
     admin
       .from("rentals")
@@ -290,13 +290,23 @@ async function RentalHome({ shopId }: { shopId: string }) {
       .eq("shop_id", shopId)
       .order("created_at", { ascending: false })
       .limit(5),
+    admin.from("rentals").select("total, created_at").eq("shop_id", shopId).gte("created_at", startOfWeek.toISOString()),
   ]);
 
   const activeCount = active?.length ?? 0;
   const overdueCount = (active ?? []).filter((r) => new Date(r.end_date) < now).length;
+  const trend = buildSevenDayTrend(weekRentals ?? [], "created_at");
 
   return (
     <>
+      <section className="rounded-xl border border-border bg-surface p-4 shadow-sm">
+        <div className="mb-1 flex items-center justify-between">
+          <p className="text-xs font-medium text-muted">Last 7 days</p>
+          <p className="text-sm font-semibold text-foreground">{formatMoney(sum(trend.map((d) => d.total)))}</p>
+        </div>
+        <SalesTrendChart data={trend} />
+      </section>
+
       <section className="grid grid-cols-2 gap-3">
         <StatCard label="Active & booked" value={String(activeCount)} href="/rentals" icon="🔁" />
         <StatCard label="Overdue" value={String(overdueCount)} tone={overdueCount > 0 ? "credit" : "default"} href="/rentals" icon="⏰" />
@@ -404,4 +414,33 @@ function StatCard({
 
 function sum(values: number[] | undefined) {
   return (values ?? []).reduce((a, b) => a + Number(b), 0);
+}
+
+/** Buckets a list of records into the last 7 days by whichever date field
+ * they carry — shared by every business type's Home so the chart always
+ * behaves the same way regardless of what's being counted. */
+function buildSevenDayTrend<T extends Record<string, unknown>>(
+  records: T[],
+  dateField: keyof T,
+): { day: string; total: number }[] {
+  const trend: { day: string; total: number }[] = [];
+  for (let i = 6; i >= 0; i--) {
+    const dayStart = new Date();
+    dayStart.setDate(dayStart.getDate() - i);
+    dayStart.setHours(0, 0, 0, 0);
+    const dayEnd = new Date(dayStart);
+    dayEnd.setDate(dayEnd.getDate() + 1);
+    const dayTotal = sum(
+      records
+        .filter((r) => {
+          const raw = r[dateField];
+          if (!raw) return false;
+          const t = new Date(String(raw)).getTime();
+          return t >= dayStart.getTime() && t < dayEnd.getTime();
+        })
+        .map((r) => Number((r as Record<string, unknown>).total ?? 0)),
+    );
+    trend.push({ day: dayStart.toLocaleDateString("en-IN", { weekday: "short" }), total: dayTotal });
+  }
+  return trend;
 }

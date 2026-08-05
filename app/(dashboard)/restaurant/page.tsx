@@ -1,9 +1,11 @@
 import { requireSession } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { getTranslator } from "@/lib/i18n/server";
 import { TablesClient } from "./TablesClient";
 
 export default async function RestaurantPage() {
   const session = await requireSession();
+  const { lang } = await getTranslator();
   const admin = createSupabaseAdminClient();
 
   const [{ data: tables }, { data: openOrders }] = await Promise.all([
@@ -15,6 +17,7 @@ export default async function RestaurantPage() {
 
   return (
     <TablesClient
+      lang={lang}
       tables={(tables ?? []).map((t) => ({
         id: t.id,
         name: t.name,

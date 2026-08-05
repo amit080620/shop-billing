@@ -8,6 +8,10 @@ export const translations: Record<Lang, Record<string, string>> = {
     "nav.buy": "Buy",
     "nav.reports": "Reports",
     "nav.more": "More",
+    "nav.tables": "Tables",
+    "nav.kitchen": "Kitchen",
+    "nav.newRental": "New rental",
+    "nav.rentals": "Rentals",
 
     // More menu
     "more.title": "More",
@@ -120,6 +124,15 @@ export const translations: Record<Lang, Record<string, string>> = {
     "common.addUse": "Add & use",
     "common.adding": "Adding…",
     "common.walkinCustomer": "Walk-in customer",
+
+    // Restaurant — Tables
+    "tables.title": "Tables",
+    "tables.addTable": "+ Table",
+    "tables.salesReports": "📊 Sales reports →",
+    "tables.namePlaceholder": "e.g. Table 5, T5, Patio 2",
+    "tables.add": "Add",
+    "tables.empty": "No tables yet — add your first one above.",
+    "tables.free": "Free",
   },
   hi: {
     // Bottom nav
@@ -128,6 +141,10 @@ export const translations: Record<Lang, Record<string, string>> = {
     "nav.buy": "खरीदें",
     "nav.reports": "रिपोर्ट",
     "nav.more": "और",
+    "nav.tables": "Tables",
+    "nav.kitchen": "Kitchen",
+    "nav.newRental": "नया Rental",
+    "nav.rentals": "Rentals",
 
     // More menu
     "more.title": "और",
@@ -240,6 +257,15 @@ export const translations: Record<Lang, Record<string, string>> = {
     "common.addUse": "जोड़ें व इस्तेमाल करें",
     "common.adding": "जोड़ा जा रहा है…",
     "common.walkinCustomer": "वॉक-इन ग्राहक",
+
+    // Restaurant — Tables
+    "tables.title": "Tables",
+    "tables.addTable": "+ Table",
+    "tables.salesReports": "📊 Sales reports →",
+    "tables.namePlaceholder": "जैसे Table 5, T5, Patio 2",
+    "tables.add": "जोड़ें",
+    "tables.empty": "अभी कोई table नहीं — ऊपर से पहली जोड़ें।",
+    "tables.free": "खाली",
   },
   mr: {
     // Bottom nav
@@ -248,6 +274,10 @@ export const translations: Record<Lang, Record<string, string>> = {
     "nav.buy": "खरेदी करा",
     "nav.reports": "अहवाल",
     "nav.more": "अधिक",
+    "nav.tables": "Tables",
+    "nav.kitchen": "Kitchen",
+    "nav.newRental": "नवीन Rental",
+    "nav.rentals": "Rentals",
 
     // More menu
     "more.title": "अधिक",
@@ -360,6 +390,15 @@ export const translations: Record<Lang, Record<string, string>> = {
     "common.addUse": "जोडा व वापरा",
     "common.adding": "जोडत आहे…",
     "common.walkinCustomer": "वॉक-इन ग्राहक",
+
+    // Restaurant — Tables
+    "tables.title": "Tables",
+    "tables.addTable": "+ Table",
+    "tables.salesReports": "📊 Sales reports →",
+    "tables.namePlaceholder": "उदा. Table 5, T5, Patio 2",
+    "tables.add": "जोडा",
+    "tables.empty": "अजून टेबल नाही — वरून पहिले जोडा.",
+    "tables.free": "रिकामे",
   },
 };
 
