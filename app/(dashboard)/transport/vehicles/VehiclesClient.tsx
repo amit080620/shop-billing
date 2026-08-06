@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useTransition } from "react";
+import { useActionState, useState, useTransition } from "react";
 import { useFormStatus } from "react-dom";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -27,6 +27,7 @@ export function VehiclesClient({ vehicles, lang }: { vehicles: Vehicle[]; lang: 
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [state, formAction] = useActionState(createVehicleAction, null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   return (
     <div className="flex flex-col gap-4">
@@ -73,6 +74,8 @@ export function VehiclesClient({ vehicles, lang }: { vehicles: Vehicle[]; lang: 
         <SubmitButton label={t("vehicles.add")} pendingLabel={t("vehicles.adding")} />
       </form>
 
+      {deleteError && <p className="rounded-lg bg-credit-soft px-3.5 py-2.5 text-sm text-credit">{deleteError}</p>}
+
       {vehicles.length === 0 ? (
         <EmptyState text={t("vehicles.empty")} />
       ) : (
@@ -103,7 +106,12 @@ export function VehiclesClient({ vehicles, lang }: { vehicles: Vehicle[]; lang: 
                   onClick={() => {
                     if (!confirm(t("vehicles.deleteConfirm"))) return;
                     startTransition(async () => {
-                      await deleteVehicleAction(v.id);
+                      const result = await deleteVehicleAction(v.id);
+                      if (result.error) {
+                        setDeleteError(result.error);
+                        return;
+                      }
+                      setDeleteError(null);
                       router.refresh();
                     });
                   }}

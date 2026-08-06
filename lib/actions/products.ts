@@ -82,6 +82,9 @@ export async function createProductAction(
     loose_unit_name: parsed.data.looseUnitName ?? null,
   });
   if (error) {
+    if (error.code === "23505") {
+      return { error: "That barcode is already used by another item — scan or check which product it belongs to." };
+    }
     console.error("Could not save product", error);
     return { error: "Could not save product" };
   }
@@ -157,6 +160,9 @@ export async function updateProductAction(
     .eq("shop_id", session.shopId); // ownership check baked into the query
 
   if (error) {
+    if (error.code === "23505") {
+      return { error: "That barcode is already used by another item — scan or check which product it belongs to." };
+    }
     console.error("Could not update product", error);
     return { error: "Could not update product" };
   }
@@ -164,15 +170,29 @@ export async function updateProductAction(
   return null;
 }
 
-export async function deleteProductAction(productId: string) {
+export async function deleteProductAction(productId: string): Promise<{ error?: string }> {
   const session = await requireSession();
   const admin = createSupabaseAdminClient();
-  await admin
+  const { error } = await admin
     .from("products")
     .delete()
     .eq("id", productId)
     .eq("shop_id", session.shopId);
+  if (error) {
+    // Foreign key violation — this item has real sales history (a bill,
+    // restaurant order, rental, return, or combo points to it) and
+    // deleting it would orphan that history, so Postgres blocks it. The
+    // item can just be left in the catalog and not sold going forward —
+    // there's no "hide" toggle for regular products yet, but not selling
+    // it achieves the same practical result.
+    if (error.code === "23503") {
+      return { error: "This item has past sales, rentals, or orders on record and can't be deleted — you can just stop selling it instead." };
+    }
+    console.error("Could not delete product", error);
+    return { error: "Could not delete item" };
+  }
   revalidatePath("/products");
+  return {};
 }
 
 export async function createCategoryAction(

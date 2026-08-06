@@ -31,6 +31,7 @@ export function StaffClient({
 }) {
   const [showForm, setShowForm] = useState(false);
   const [isPending, startTransition] = useTransition();
+  const [removeError, setRemoveError] = useState<string | null>(null);
 
   const [state, formAction] = useActionState(
     async (prev: { error?: string } | null, formData: FormData) => {
@@ -107,6 +108,8 @@ export function StaffClient({
         </form>
       )}
 
+      {removeError && <p className="rounded-lg bg-credit-soft px-3.5 py-2.5 text-sm text-credit">{removeError}</p>}
+
       <ul className="flex flex-col gap-2">
         {initialStaff.map((s) => (
           <li
@@ -122,8 +125,9 @@ export function StaffClient({
               <button
                 disabled={isPending}
                 onClick={() =>
-                  startTransition(() => {
-                    removeStaffAction(s.id);
+                  startTransition(async () => {
+                    const result = await removeStaffAction(s.id);
+                    setRemoveError(result?.error ?? null);
                   })
                 }
                 className="shrink-0 text-xs font-medium text-danger disabled:opacity-50"

@@ -81,7 +81,19 @@ export async function deleteBatchAction(batchId: string, productId: string): Pro
     .eq("shop_id", session.shopId)
     .single();
 
-  await admin.from("medicine_batches").delete().eq("id", batchId);
+  const { error: deleteError } = await admin.from("medicine_batches").delete().eq("id", batchId);
+  if (deleteError) {
+    // Foreign key violation — this batch has been sold from (a bill_item
+    // points to it for FEFO history) and deleting it would orphan that
+    // sale's record, so Postgres blocks it. Write off the remaining
+    // quantity instead — same end result (stock goes to zero) without
+    // breaking past invoices.
+    if (deleteError.code === "23503") {
+      return { error: "This batch has past sales on record and can't be deleted — use Write off instead to zero it out." };
+    }
+    console.error("Could not delete batch", deleteError);
+    return { error: "Could not remove batch" };
+  }
 
   if (product) {
     await admin

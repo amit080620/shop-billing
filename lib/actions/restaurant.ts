@@ -284,8 +284,32 @@ export async function settleOrderAction(
 
   await admin.from("restaurant_tables").update({ status: "free" }).eq("id", order.table_id);
 
+  // Menu items marked "track stock" (e.g. a limited daily special) need
+  // their stock actually reduced once the order is confirmed — settling
+  // is the equivalent of a bill being created, and is the point where
+  // this genuinely becomes a completed sale rather than an order that
+  // could still be cancelled.
+  const { data: items } = await admin
+    .from("restaurant_order_items")
+    .select("product_id, quantity")
+    .eq("order_id", orderId)
+    .not("product_id", "is", null);
+  for (const item of items ?? []) {
+    const { data: product } = await admin
+      .from("products")
+      .select("id, track_inventory, stock_quantity")
+      .eq("id", item.product_id)
+      .single();
+    if (!product?.track_inventory) continue;
+    await admin
+      .from("products")
+      .update({ stock_quantity: Math.max(0, round2(Number(product.stock_quantity) - Number(item.quantity))) })
+      .eq("id", product.id);
+  }
+
   revalidatePath("/restaurant");
   revalidatePath(`/restaurant/orders/${orderId}`);
+  revalidatePath("/products");
   return {};
 }
 

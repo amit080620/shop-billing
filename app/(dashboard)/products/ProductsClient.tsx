@@ -119,6 +119,7 @@ export function ProductsClient({
 
   const router = useRouter();
   const [generatingBarcodeFor, setGeneratingBarcodeFor] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   function openNewProductForm() {
     setEditingProduct(null);
@@ -479,6 +480,8 @@ export function ProductsClient({
         </div>
       )}
 
+      {deleteError && <p className="rounded-lg bg-credit-soft px-3.5 py-2.5 text-sm text-credit">{deleteError}</p>}
+
       {filtered.length === 0 ? (
         <EmptyState text={t("products.emptyShelf")} />
       ) : (
@@ -548,8 +551,9 @@ export function ProductsClient({
                     <button
                       disabled={isPending}
                       onClick={() =>
-                        startTransition(() => {
-                          deleteProductAction(p.id);
+                        startTransition(async () => {
+                          const result = await deleteProductAction(p.id);
+                          setDeleteError(result?.error ?? null);
                         })
                       }
                       className="text-xs font-medium text-danger disabled:opacity-50"

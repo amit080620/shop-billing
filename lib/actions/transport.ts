@@ -47,7 +47,19 @@ export async function toggleVehicleActiveAction(vehicleId: string, isActive: boo
 export async function deleteVehicleAction(vehicleId: string): Promise<{ error?: string }> {
   const session = await requireSession();
   const admin = createSupabaseAdminClient();
-  await admin.from("vehicles").delete().eq("id", vehicleId).eq("shop_id", session.shopId);
+  const { error } = await admin.from("vehicles").delete().eq("id", vehicleId).eq("shop_id", session.shopId);
+  if (error) {
+    // Foreign key violation — this vehicle has trip history that other
+    // records point to, so it can't be deleted outright without losing
+    // that history. Deactivating (already a button right next to this
+    // one) is the correct move instead: it hides the vehicle from new
+    // billing while keeping past reports intact.
+    if (error.code === "23503") {
+      return { error: "This vehicle has past trips on record and can't be deleted — use Deactivate instead to hide it from new bills." };
+    }
+    console.error("Could not delete vehicle", error);
+    return { error: "Could not delete vehicle" };
+  }
   revalidatePath("/transport/vehicles");
   return {};
 }
