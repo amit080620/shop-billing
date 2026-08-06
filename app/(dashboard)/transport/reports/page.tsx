@@ -30,13 +30,13 @@ export default async function TransportReportsPage({
 
   const { data: trips } = await admin
     .from("transport_trips")
-    .select("id, vehicle_id, km, transport_charge, trip_date, created_at, vehicles ( name, vehicle_number )")
+    .select("id, vehicle_id, km, transport_charge, driver_name, load_weight, load_unit, trip_date, created_at, vehicles ( name, vehicle_number )")
     .eq("shop_id", session.shopId)
     .gte("created_at", startOfRange.toISOString())
     .lte("created_at", endOfRange.toISOString())
     .order("created_at", { ascending: false });
 
-  type VehicleTotals = { name: string; vehicleNumber: string | null; rounds: number; totalKm: number; totalEarnings: number };
+  type VehicleTotals = { name: string; vehicleNumber: string | null; rounds: number; totalKm: number; totalEarnings: number; loadByUnit: Record<string, number> };
   const byVehicle = new Map<string, VehicleTotals>();
   for (const trip of trips ?? []) {
     const vehicle = Array.isArray(trip.vehicles) ? trip.vehicles[0] : trip.vehicles;
@@ -46,13 +46,30 @@ export default async function TransportReportsPage({
       rounds: 0,
       totalKm: 0,
       totalEarnings: 0,
+      loadByUnit: {} as Record<string, number>,
     };
     existing.rounds += 1;
     existing.totalKm += Number(trip.km);
     existing.totalEarnings += Number(trip.transport_charge);
+    if (trip.load_weight && trip.load_unit) {
+      existing.loadByUnit[trip.load_unit] = (existing.loadByUnit[trip.load_unit] ?? 0) + Number(trip.load_weight);
+    }
     byVehicle.set(trip.vehicle_id, existing);
   }
   const vehicleRows = [...byVehicle.values()].sort((a, b) => b.totalEarnings - a.totalEarnings);
+
+  type DriverTotals = { name: string; rounds: number; totalKm: number; totalEarnings: number };
+  const byDriver = new Map<string, DriverTotals>();
+  for (const trip of trips ?? []) {
+    if (!trip.driver_name?.trim()) continue;
+    const key = trip.driver_name.trim();
+    const existing = byDriver.get(key) ?? { name: key, rounds: 0, totalKm: 0, totalEarnings: 0 };
+    existing.rounds += 1;
+    existing.totalKm += Number(trip.km);
+    existing.totalEarnings += Number(trip.transport_charge);
+    byDriver.set(key, existing);
+  }
+  const driverRows = [...byDriver.values()].sort((a, b) => b.rounds - a.rounds);
 
   const grandTotalEarnings = vehicleRows.reduce((s, v) => s + v.totalEarnings, 0);
   const grandTotalRounds = vehicleRows.reduce((s, v) => s + v.rounds, 0);
@@ -93,20 +110,47 @@ export default async function TransportReportsPage({
       {vehicleRows.length === 0 ? (
         <EmptyState text="No trips recorded in this range." />
       ) : (
-        <ul className="flex flex-col gap-2">
-          {vehicleRows.map((v) => (
-            <li key={v.name} className="rounded-xl border border-border bg-surface shadow-sm p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-semibold text-foreground">{v.name}</p>
-                  {v.vehicleNumber && <p className="text-xs text-muted">{v.vehicleNumber}</p>}
-                </div>
-                <p className="text-sm font-semibold text-foreground">{formatMoney(v.totalEarnings)}</p>
-              </div>
-              <p className="mt-1 text-xs text-muted">{v.rounds} round(s) · {v.totalKm.toLocaleString("en-IN")} km total</p>
-            </li>
-          ))}
-        </ul>
+        <>
+          <ul className="flex flex-col gap-2">
+            {vehicleRows.map((v) => {
+              const loadEntries = Object.entries(v.loadByUnit);
+              return (
+                <li key={v.name} className="rounded-xl border border-border bg-surface shadow-sm p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-semibold text-foreground">{v.name}</p>
+                      {v.vehicleNumber && <p className="text-xs text-muted">{v.vehicleNumber}</p>}
+                    </div>
+                    <p className="text-sm font-semibold text-foreground">{formatMoney(v.totalEarnings)}</p>
+                  </div>
+                  <p className="mt-1 text-xs text-muted">{v.rounds} round(s) · {v.totalKm.toLocaleString("en-IN")} km total</p>
+                  {loadEntries.length > 0 && (
+                    <p className="text-xs text-muted">
+                      Carried: {loadEntries.map(([unit, qty]) => `${qty.toLocaleString("en-IN")} ${unit}`).join(", ")}
+                    </p>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+
+          {driverRows.length > 0 && (
+            <section className="flex flex-col gap-2">
+              <p className="text-sm font-medium text-foreground">By driver</p>
+              <ul className="flex flex-col gap-2">
+                {driverRows.map((d) => (
+                  <li key={d.name} className="flex items-center justify-between rounded-lg border border-border bg-surface shadow-sm px-3.5 py-2.5">
+                    <div>
+                      <p className="text-sm font-medium text-foreground">{d.name}</p>
+                      <p className="text-xs text-muted">{d.rounds} round(s) · {d.totalKm.toLocaleString("en-IN")} km</p>
+                    </div>
+                    <p className="text-sm font-semibold text-foreground">{formatMoney(d.totalEarnings)}</p>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+        </>
       )}
     </div>
   );

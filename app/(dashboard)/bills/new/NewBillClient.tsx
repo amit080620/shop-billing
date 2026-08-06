@@ -148,7 +148,7 @@ export function NewBillClient({
   const [paymentMethod, setPaymentMethod] = useState<"cash" | "card" | "upi" | "online" | "other">("cash");
   const [doctorName, setDoctorName] = useState("");
   const [patientName, setPatientName] = useState("");
-  const [tripInfo, setTripInfo] = useState<{ vehicleId: string; km: number } | null>(null);
+  const [tripInfo, setTripInfo] = useState<{ vehicleId: string; km: number; driverName: string; loadWeight: number | null; loadUnit: string } | null>(null);
 
   const supplyType = useMemo(
     () =>
@@ -218,13 +218,22 @@ export function NewBillClient({
     });
   }
 
-  function addTransportCharge(vehicleId: string, vehicleName: string, km: number, ratePerKm: number) {
+  function addTransportCharge(
+    vehicleId: string,
+    vehicleName: string,
+    km: number,
+    ratePerKm: number,
+    driverName: string,
+    loadWeight: number | null,
+    loadUnit: string,
+  ) {
     const amount = Math.round(km * ratePerKm * 100) / 100;
+    const loadLabel = loadWeight ? ` · ${loadWeight} ${loadUnit}` : "";
     setCart((prev) => [
       ...prev.filter((c) => c.productId !== "__transport_charge__"),
       {
         productId: "__transport_charge__",
-        name: `🚚 Transport: ${vehicleName} (${km} km)`,
+        name: `🚚 Transport: ${vehicleName} (${km} km${loadLabel})`,
         price: amount,
         packPrice: amount,
         gstPercent: 0,
@@ -240,7 +249,7 @@ export function NewBillClient({
         saleMode: "pack",
       },
     ]);
-    setTripInfo({ vehicleId, km });
+    setTripInfo({ vehicleId, km, driverName, loadWeight, loadUnit });
   }
 
   function updateQuantity(productId: string, quantity: number) {
@@ -549,6 +558,9 @@ export function NewBillClient({
     patientName,
     tripVehicleId: tripInfo?.vehicleId ?? null,
     tripKm: tripInfo?.km ?? null,
+    tripDriverName: tripInfo?.driverName ?? "",
+    tripLoadWeight: tripInfo?.loadWeight ?? null,
+    tripLoadUnit: tripInfo?.loadUnit ?? "",
   });
 
   return (
@@ -710,6 +722,14 @@ export function NewBillClient({
         {totals.balanceAmount > 0 && (
           <p className="text-sm text-credit">
             {t("bill.willAddCredit", { amount: formatMoney(totals.balanceAmount) })}
+          </p>
+        )}
+
+        {tripInfo && totals.total > 50000 && (
+          <p className="rounded-lg border border-dashed border-credit bg-credit-soft px-3.5 py-2.5 text-xs text-credit">
+            ⚠️ This delivery is over ₹50,000 — an E-way Bill is legally required for goods
+            movement above this value. Generate one on the GST e-way bill portal before the
+            vehicle leaves.
           </p>
         )}
 
@@ -907,11 +927,22 @@ function TransportChargePicker({
   onAdd,
 }: {
   vehicles: { id: string; name: string; ratePerKm: number }[];
-  onAdd: (vehicleId: string, vehicleName: string, km: number, ratePerKm: number) => void;
+  onAdd: (
+    vehicleId: string,
+    vehicleName: string,
+    km: number,
+    ratePerKm: number,
+    driverName: string,
+    loadWeight: number | null,
+    loadUnit: string,
+  ) => void;
 }) {
   const [open, setOpen] = useState(false);
   const [vehicleId, setVehicleId] = useState(vehicles[0]?.id ?? "");
   const [km, setKm] = useState<number | "">("");
+  const [driverName, setDriverName] = useState("");
+  const [loadWeight, setLoadWeight] = useState<number | "">("");
+  const [loadUnit, setLoadUnit] = useState("TON");
 
   const vehicle = vehicles.find((v) => v.id === vehicleId);
   const charge = vehicle && typeof km === "number" ? Math.round(km * vehicle.ratePerKm * 100) / 100 : null;
@@ -946,6 +977,33 @@ function TransportChargePicker({
         placeholder="Distance covered (km)"
         className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand"
       />
+      <input
+        value={driverName}
+        onChange={(e) => setDriverName(e.target.value)}
+        placeholder="Driver name (optional)"
+        className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand"
+      />
+      <div className="grid grid-cols-2 gap-2">
+        <input
+          type="number"
+          min={0}
+          step="0.01"
+          value={loadWeight}
+          onChange={(e) => setLoadWeight(e.target.value === "" ? "" : Number(e.target.value))}
+          placeholder="Load carried (optional)"
+          className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand"
+        />
+        <select
+          value={loadUnit}
+          onChange={(e) => setLoadUnit(e.target.value)}
+          className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand"
+        >
+          <option value="TON">Ton</option>
+          <option value="QTL">Quintal</option>
+          <option value="KG">Kg</option>
+          <option value="CFT">Cu. ft</option>
+        </select>
+      </div>
       {charge !== null && <p className="text-xs text-brand-dark">Transport charge: {formatMoney(charge)}</p>}
       <div className="flex gap-2">
         <button
@@ -953,9 +1011,11 @@ function TransportChargePicker({
           disabled={!vehicle || typeof km !== "number" || km <= 0}
           onClick={() => {
             if (!vehicle || typeof km !== "number") return;
-            onAdd(vehicle.id, vehicle.name, km, vehicle.ratePerKm);
+            onAdd(vehicle.id, vehicle.name, km, vehicle.ratePerKm, driverName, typeof loadWeight === "number" ? loadWeight : null, loadUnit);
             setOpen(false);
             setKm("");
+            setDriverName("");
+            setLoadWeight("");
           }}
           className="btn-primary-sm disabled:opacity-60"
         >

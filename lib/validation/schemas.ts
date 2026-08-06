@@ -134,6 +134,9 @@ export const billSchema = z.object({
   // the bill is created, for vehicle-wise reporting.
   tripVehicleId: z.string().uuid().nullable().optional(),
   tripKm: z.coerce.number().min(0).nullable().optional(),
+  tripDriverName: optionalText(80),
+  tripLoadWeight: z.coerce.number().min(0).nullable().optional(),
+  tripLoadUnit: optionalText(10),
 });
 export type BillInput = z.infer<typeof billSchema>;
 

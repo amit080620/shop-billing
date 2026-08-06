@@ -872,3 +872,10 @@ alter table transport_trips enable row level security;
 create index if not exists idx_transport_trips_shop on transport_trips(shop_id);
 create index if not exists idx_transport_trips_vehicle on transport_trips(vehicle_id);
 create index if not exists idx_transport_trips_bill on transport_trips(bill_id);
+
+-- ─── Transport enhancements: driver + load weight ─────────────────────────
+-- Free-text driver name — same reasoning as restaurant waiter_name, a
+-- driver doesn't need their own login just to be tagged on a trip.
+alter table transport_trips add column if not exists driver_name text;
+alter table transport_trips add column if not exists load_weight numeric(12, 3);
+alter table transport_trips add column if not exists load_unit text;

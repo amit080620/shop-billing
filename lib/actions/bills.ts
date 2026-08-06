@@ -17,7 +17,7 @@ async function createBillCore(
   session: SessionContext,
   parsedData: BillInput,
 ): Promise<{ billId: string; invoiceNumber: string } | { error: string }> {
-  const { customerId, items, discountType, discountValue, paidAmount, paymentMethod, doctorName, patientName, tripVehicleId, tripKm } = parsedData;
+  const { customerId, items, discountType, discountValue, paidAmount, paymentMethod, doctorName, patientName, tripVehicleId, tripKm, tripDriverName, tripLoadWeight, tripLoadUnit } = parsedData;
 
   const admin = createSupabaseAdminClient();
 
@@ -171,6 +171,9 @@ async function createBillCore(
         km: tripKm,
         rate_per_km: Number(vehicle.rate_per_km),
         transport_charge: round2(tripKm * Number(vehicle.rate_per_km)),
+        driver_name: tripDriverName ?? null,
+        load_weight: tripLoadWeight ?? null,
+        load_unit: tripLoadUnit ?? null,
       });
     }
   }

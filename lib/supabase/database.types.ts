@@ -592,6 +592,9 @@ export interface Database {
           transport_charge: number;
           gst_percent: number;
           notes: string | null;
+          driver_name: string | null;
+          load_weight: number | null;
+          load_unit: string | null;
           created_at: string;
         };
         Insert: {
@@ -607,6 +610,9 @@ export interface Database {
           transport_charge: number;
           gst_percent?: number;
           notes?: string | null;
+          driver_name?: string | null;
+          load_weight?: number | null;
+          load_unit?: string | null;
           created_at?: string;
         };
         Update: {
@@ -622,6 +628,9 @@ export interface Database {
           transport_charge?: number;
           gst_percent?: number;
           notes?: string | null;
+          driver_name?: string | null;
+          load_weight?: number | null;
+          load_unit?: string | null;
           created_at?: string;
         };
         Relationships: [
