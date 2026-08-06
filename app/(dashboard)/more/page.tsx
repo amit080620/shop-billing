@@ -67,6 +67,12 @@ export default async function MorePage() {
         </MenuGroup>
       )}
 
+      {["hardware", "mart", "general"].includes(session.businessType) && (
+        <MenuGroup title="Hardware">
+          <MenuLink href="/warranty" label="Warranty lookup" sub="Check warranty status by phone or invoice" icon={WarrantyIcon} />
+        </MenuGroup>
+      )}
+
       <MenuGroup title="People">
         <MenuLink href="/customers" label={t("more.customers")} sub={t("more.customers.sub")} icon={PeopleIcon} />
         <MenuLink href="/vendors" label={t("more.vendors")} sub={t("more.vendors.sub")} icon={TruckIcon} />
@@ -292,6 +298,14 @@ function AuditIcon({ className }: { className?: string }) {
     <svg {...iconProps(className)}>
       <path d="M9 12.5 11 14.5 15.5 10" />
       <rect x="3" y="3" width="18" height="18" rx="2" />
+    </svg>
+  );
+}
+function WarrantyIcon({ className }: { className?: string }) {
+  return (
+    <svg {...iconProps(className)}>
+      <path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6l-8-3Z" />
+      <path d="m9 12 2 2 4-4" />
     </svg>
   );
 }

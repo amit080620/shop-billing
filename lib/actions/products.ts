@@ -36,6 +36,8 @@ export async function createProductAction(
     drugSchedule: formData.get("drugSchedule") || null,
     unitsPerPack: formData.get("unitsPerPack") || null,
     looseUnitName: formData.get("looseUnitName"),
+    hasWarranty: formData.get("hasWarranty") === "on",
+    warrantyMonths: formData.get("warrantyMonths") || null,
   });
   if (!parsed.success) {
     return { error: parsed.error.issues[0].message };
@@ -80,6 +82,8 @@ export async function createProductAction(
     drug_schedule: parsed.data.drugSchedule ?? null,
     units_per_pack: parsed.data.unitsPerPack ?? null,
     loose_unit_name: parsed.data.looseUnitName ?? null,
+    has_warranty: parsed.data.hasWarranty,
+    warranty_months: parsed.data.warrantyMonths ?? null,
   });
   if (error) {
     if (error.code === "23505") {
@@ -123,6 +127,8 @@ export async function updateProductAction(
     drugSchedule: formData.get("drugSchedule") || null,
     unitsPerPack: formData.get("unitsPerPack") || null,
     looseUnitName: formData.get("looseUnitName"),
+    hasWarranty: formData.get("hasWarranty") === "on",
+    warrantyMonths: formData.get("warrantyMonths") || null,
   });
   if (!parsed.success) {
     return { error: parsed.error.issues[0].message };
@@ -155,6 +161,8 @@ export async function updateProductAction(
       drug_schedule: parsed.data.drugSchedule ?? null,
       units_per_pack: parsed.data.unitsPerPack ?? null,
       loose_unit_name: parsed.data.looseUnitName ?? null,
+      has_warranty: parsed.data.hasWarranty,
+      warranty_months: parsed.data.warrantyMonths ?? null,
     })
     .eq("id", productId)
     .eq("shop_id", session.shopId); // ownership check baked into the query

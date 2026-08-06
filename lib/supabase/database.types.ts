@@ -139,6 +139,8 @@ export interface Database {
           drug_schedule: string | null;
           units_per_pack: number | null;
           loose_unit_name: string | null;
+          has_warranty: boolean;
+          warranty_months: number | null;
           created_at: string;
         };
         Insert: {
@@ -167,6 +169,8 @@ export interface Database {
           drug_schedule?: string | null;
           units_per_pack?: number | null;
           loose_unit_name?: string | null;
+          has_warranty?: boolean;
+          warranty_months?: number | null;
           created_at?: string;
         };
         Update: {
@@ -195,6 +199,8 @@ export interface Database {
           drug_schedule?: string | null;
           units_per_pack?: number | null;
           loose_unit_name?: string | null;
+          has_warranty?: boolean;
+          warranty_months?: number | null;
           created_at?: string;
         };
         Relationships: [
@@ -357,6 +363,8 @@ export interface Database {
           line_gst: number;
           line_total: number;
           batch_id: string | null;
+          warranty_months: number | null;
+          warranty_expires_on: string | null;
         };
         Insert: {
           id?: string;
@@ -368,6 +376,8 @@ export interface Database {
           unit_price: number;
           gst_percent?: number;
           batch_id?: string | null;
+          warranty_months?: number | null;
+          warranty_expires_on?: string | null;
           line_subtotal: number;
           cgst_amount?: number;
           sgst_amount?: number;

@@ -36,7 +36,7 @@ export default async function PrintBillPage({
 
   const { data: items } = await admin
     .from("bill_items")
-    .select("product_name, hsn_code, quantity, unit_price, gst_percent, cgst_amount, sgst_amount, igst_amount, line_total")
+    .select("product_name, hsn_code, quantity, unit_price, gst_percent, cgst_amount, sgst_amount, igst_amount, line_total, warranty_months, warranty_expires_on")
     .eq("bill_id", id)
     .order("product_name");
 
@@ -194,7 +194,14 @@ export default async function PrintBillPage({
         <tbody>
           {(items ?? []).map((item, i) => (
             <tr key={i} className={isThermal ? "" : "text-sm"}>
-              <td className="py-1">{item.product_name}</td>
+              <td className="py-1">
+                {item.product_name}
+                {item.warranty_expires_on && (
+                  <div className="text-xs text-gray-500">
+                    🛡️ Warranty till {new Date(item.warranty_expires_on).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+                  </div>
+                )}
+              </td>
               {!isThermal && <td className="py-1 text-gray-500">{item.hsn_code ?? "—"}</td>}
               <td className="py-1 text-right">{item.quantity}</td>
               <td className="py-1 text-right">{formatMoney(item.unit_price)}</td>

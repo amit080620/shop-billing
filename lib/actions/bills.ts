@@ -28,7 +28,7 @@ async function createBillCore(
   const { data: dbProducts, error: productsError } = productIds.length
     ? await admin
         .from("products")
-        .select("id, name, price, gst_percent, hsn_code, track_inventory, stock_quantity, is_pharma, requires_prescription")
+        .select("id, name, price, gst_percent, hsn_code, track_inventory, stock_quantity, is_pharma, requires_prescription, has_warranty, warranty_months")
         .eq("shop_id", session.shopId)
         .in("id", productIds)
     : { data: [], error: null };
@@ -73,6 +73,7 @@ async function createBillCore(
       stockQuantity: item.stockQuantity ?? item.quantity,
       unitPrice: product ? Number(product.price) : item.unitPrice,
       gstPercent: product ? Number(product.gst_percent) : item.gstPercent,
+      warrantyMonths: product?.has_warranty ? product.warranty_months : null,
     };
   });
 
@@ -126,6 +127,12 @@ async function createBillCore(
 
   const billItemsRows = verifiedItems.map((item, i) => {
     const line = totals.lines[i];
+    let warrantyExpiresOn: string | null = null;
+    if (item.warrantyMonths) {
+      const expiry = new Date();
+      expiry.setMonth(expiry.getMonth() + item.warrantyMonths);
+      warrantyExpiresOn = expiry.toISOString().slice(0, 10);
+    }
     return {
       bill_id: bill.id,
       product_id: item.productId,
@@ -134,6 +141,8 @@ async function createBillCore(
       quantity: item.quantity,
       unit_price: item.unitPrice,
       gst_percent: item.gstPercent,
+      warranty_months: item.warrantyMonths,
+      warranty_expires_on: warrantyExpiresOn,
       line_subtotal: line.lineSubtotal,
       cgst_amount: line.cgst,
       sgst_amount: line.sgst,

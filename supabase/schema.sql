@@ -898,3 +898,17 @@ create unique index if not exists idx_table_order_requests_one_pending
 create unique index if not exists idx_restaurant_orders_one_open_per_table
   on restaurant_orders(table_id)
   where status = 'open';
+
+-- ─── Hardware/Electrical: warranty tracking ───────────────────────────────
+-- Mirrors the pharma extension pattern (is_pharma/requires_prescription)
+-- — an opt-in per product, since a hardware shop sells both warrantied
+-- items (fans, geysers, MCBs) and plain hardware (nails, pipes) side by
+-- side in the same catalog.
+alter table products add column if not exists has_warranty boolean not null default false;
+alter table products add column if not exists warranty_months integer;
+
+-- Snapshotted onto the sale itself — if the product's warranty terms
+-- change later, past sales keep the terms that were actually promised at
+-- the time, same reasoning as bill_items.hsn_code being a snapshot.
+alter table bill_items add column if not exists warranty_months integer;
+alter table bill_items add column if not exists warranty_expires_on date;

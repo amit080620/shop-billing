@@ -52,6 +52,8 @@ export const productSchema = z.object({
   drugSchedule: z.enum(["otc", "h", "h1", "x", "g"]).nullable().optional(),
   unitsPerPack: z.coerce.number().min(1).nullable().optional(),
   looseUnitName: optionalText(30),
+  hasWarranty: z.coerce.boolean().default(false),
+  warrantyMonths: z.coerce.number().int().min(0).max(240).nullable().optional(),
 });
 export type ProductInput = z.infer<typeof productSchema>;
 

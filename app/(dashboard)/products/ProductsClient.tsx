@@ -51,6 +51,8 @@ type Product = {
   drugSchedule: string | null;
   unitsPerPack: number | null;
   looseUnitName: string | null;
+  hasWarranty: boolean;
+  warrantyMonths: number | null;
 };
 type Category = { id: string; name: string };
 
@@ -85,12 +87,14 @@ export function ProductsClient({
   // tracking" or a transport business seeing "available for rent".
   const showRentalSection = !["restaurant", "pharmacy", "transport"].includes(businessType);
   const showPharmaSection = !["restaurant", "transport", "rental"].includes(businessType);
+  const showWarrantySection = ["hardware", "general", "mart"].includes(businessType);
   const [showForm, setShowForm] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [trackInventory, setTrackInventory] = useState(false);
   const [isRentable, setIsRentable] = useState(false);
   const [isPharma, setIsPharma] = useState(false);
   const [requiresPrescription, setRequiresPrescription] = useState(false);
+  const [hasWarranty, setHasWarranty] = useState(false);
   const barcodeRef = useRef<HTMLInputElement>(null);
   const [showCategoryForm, setShowCategoryForm] = useState(false);
   const [filter, setFilter] = useState<string>("all");
@@ -129,6 +133,7 @@ export function ProductsClient({
     setIsRentable(false);
     setIsPharma(false);
     setRequiresPrescription(false);
+    setHasWarranty(false);
     setShowForm(true);
   }
 
@@ -138,6 +143,7 @@ export function ProductsClient({
     setIsRentable(p.isRentable);
     setIsPharma(p.isPharma);
     setRequiresPrescription(p.requiresPrescription);
+    setHasWarranty(p.hasWarranty);
     setShowForm(true);
   }
 
@@ -401,6 +407,31 @@ export function ProductsClient({
               )}
             </>
           )}
+          {showWarrantySection && (
+            <>
+              <label className="flex items-center gap-2 text-sm text-foreground">
+                <input
+                  type="checkbox"
+                  name="hasWarranty"
+                  checked={hasWarranty}
+                  onChange={(e) => setHasWarranty(e.target.checked)}
+                  className="h-4 w-4 rounded border-border"
+                />
+                Comes with warranty
+              </label>
+              {hasWarranty && (
+                <Field
+                  name="warrantyMonths"
+                  label="Warranty period (months)"
+                  type="number"
+                  min="1"
+                  max="240"
+                  placeholder="e.g. 12"
+                  defaultValue={editingProduct?.warrantyMonths != null ? String(editingProduct.warrantyMonths) : undefined}
+                />
+              )}
+            </>
+          )}
           {showPharmaSection && (
           <>
           <label className="flex items-center gap-2 text-sm text-foreground">
@@ -514,6 +545,11 @@ export function ProductsClient({
                   {p.isRentable && (
                     <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-brand-soft px-2 py-0.5 text-[11px] font-medium text-brand-dark">
                       {t("products.forRent")}
+                    </span>
+                  )}
+                  {p.hasWarranty && p.warrantyMonths && (
+                    <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-brand-soft px-2 py-0.5 text-[11px] font-medium text-brand-dark">
+                      🛡️ {p.warrantyMonths}mo warranty
                     </span>
                   )}
                   {p.isPharma && (
