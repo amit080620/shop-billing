@@ -3,7 +3,7 @@
 import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { createTableAction, startOrderAction } from "@/lib/actions/restaurant";
+import { createTableAction, startOrderAction, renameTableAction, deleteTableAction } from "@/lib/actions/restaurant";
 import {
   listPendingTableRequestsAction,
   acceptTableOrderRequestAction,
@@ -27,6 +27,8 @@ export function TablesClient({ tables, lang }: { tables: Table[]; lang: Lang }) 
   const [newTableName, setNewTableName] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [qrTable, setQrTable] = useState<Table | null>(null);
+  const [renameValue, setRenameValue] = useState("");
+  const [tableActionError, setTableActionError] = useState<string | null>(null);
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const [requests, setRequests] = useState<PendingRequest[]>([]);
 
@@ -74,6 +76,8 @@ export function TablesClient({ tables, lang }: { tables: Table[]; lang: Lang }) 
   function showQr(table: Table) {
     setQrTable(table);
     setQrDataUrl(null);
+    setRenameValue(table.name);
+    setTableActionError(null);
     const fullUrl = `${window.location.origin}/order/${table.qrToken}`;
     getTableQrImageAction(table.id, fullUrl).then((r) => {
       if (r.dataUrl) setQrDataUrl(r.dataUrl);
@@ -211,9 +215,58 @@ export function TablesClient({ tables, lang }: { tables: Table[]; lang: Lang }) 
                 <div className="flex h-48 w-48 items-center justify-center text-xs text-muted">Generating…</div>
               )}
             </div>
-            <button onClick={() => setQrTable(null)} className="mt-3 rounded-lg border border-border px-4 py-2 text-sm font-medium text-muted">
-              Close
-            </button>
+
+            <div className="mt-4 flex items-center gap-2 border-t border-border pt-4">
+              <input
+                value={renameValue}
+                onChange={(e) => setRenameValue(e.target.value)}
+                className="flex-1 rounded-lg border border-border px-2.5 py-1.5 text-sm outline-none focus:border-brand"
+              />
+              <button
+                onClick={() =>
+                  startTransition(async () => {
+                    const result = await renameTableAction(qrTable.id, renameValue);
+                    if (result?.error) {
+                      setTableActionError(result.error);
+                      return;
+                    }
+                    setTableActionError(null);
+                    setQrTable(null);
+                    router.refresh();
+                  })
+                }
+                disabled={isPending}
+                className="btn-primary-sm disabled:opacity-60"
+              >
+                Rename
+              </button>
+            </div>
+            {tableActionError && <p className="mt-2 text-xs text-danger">{tableActionError}</p>}
+
+            <div className="mt-3 flex gap-2">
+              <button
+                onClick={() => {
+                  if (!confirm(`Remove ${qrTable.name}?`)) return;
+                  startTransition(async () => {
+                    const result = await deleteTableAction(qrTable.id);
+                    if (result?.error) {
+                      setTableActionError(result.error);
+                      return;
+                    }
+                    setTableActionError(null);
+                    setQrTable(null);
+                    router.refresh();
+                  });
+                }}
+                disabled={isPending}
+                className="flex-1 rounded-lg border border-danger px-4 py-2 text-sm font-medium text-danger disabled:opacity-60"
+              >
+                Remove table
+              </button>
+              <button onClick={() => setQrTable(null)} className="flex-1 rounded-lg border border-border px-4 py-2 text-sm font-medium text-muted">
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}

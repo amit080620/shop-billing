@@ -215,6 +215,40 @@ export async function createCategoryAction(
   return null;
 }
 
+export async function renameCategoryAction(categoryId: string, newName: string): Promise<{ error?: string }> {
+  const session = await requireSession();
+  const parsed = categorySchema.safeParse({ name: newName });
+  if (!parsed.success) return { error: parsed.error.issues[0].message };
+
+  const admin = createSupabaseAdminClient();
+  const { error } = await admin
+    .from("categories")
+    .update({ name: parsed.data.name })
+    .eq("id", categoryId)
+    .eq("shop_id", session.shopId);
+  if (error) {
+    if (error.code === "23505") return { error: "A category with that name already exists" };
+    return { error: "Could not rename category" };
+  }
+  revalidatePath("/products");
+  return {};
+}
+
+/** Safe to delete outright — products.category_id is ON DELETE SET NULL,
+ * so removing a category just makes its products "uncategorized" rather
+ * than blocking or losing anything. */
+export async function deleteCategoryAction(categoryId: string): Promise<{ error?: string }> {
+  const session = await requireSession();
+  const admin = createSupabaseAdminClient();
+  const { error } = await admin.from("categories").delete().eq("id", categoryId).eq("shop_id", session.shopId);
+  if (error) {
+    console.error("Could not delete category", error);
+    return { error: "Could not delete category" };
+  }
+  revalidatePath("/products");
+  return {};
+}
+
 /** Called directly from client components (New Bill / New Purchase) to add
  * a product inline mid-flow. Captures the essentials only — name, price,
  * GST% — full details (HSN, unit, inventory) can be filled in later from

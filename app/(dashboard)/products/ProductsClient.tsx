@@ -9,6 +9,8 @@ import {
   createProductAction,
   updateProductAction,
   createCategoryAction,
+  renameCategoryAction,
+  deleteCategoryAction,
   deleteProductAction,
   generateBarcodeAction,
 } from "@/lib/actions/products";
@@ -270,6 +272,14 @@ export function ProductsClient({
           )}
           <SubmitButton label={t("products.saveCategory")} pendingLabel={t("products.saving")} />
         </form>
+      )}
+
+      {showCategoryForm && categories.length > 0 && (
+        <ul className="flex flex-col gap-1.5">
+          {categories.map((c) => (
+            <CategoryRow key={c.id} category={c} onChanged={() => router.refresh()} />
+          ))}
+        </ul>
       )}
 
       {showForm && (
@@ -631,5 +641,76 @@ function Chip({
     >
       {children}
     </button>
+  );
+}
+
+function CategoryRow({ category, onChanged }: { category: Category; onChanged: () => void }) {
+  const [editing, setEditing] = useState(false);
+  const [name, setName] = useState(category.name);
+  const [error, setError] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
+
+  if (!editing) {
+    return (
+      <li className="flex items-center justify-between rounded-lg border border-border bg-surface px-3.5 py-2">
+        <span className="text-sm text-foreground">{category.name}</span>
+        <div className="flex gap-3">
+          <button onClick={() => setEditing(true)} className="text-xs font-medium text-brand">
+            Rename
+          </button>
+          <button
+            onClick={() => {
+              if (!confirm(`Delete category "${category.name}"? Its products won't be deleted, just uncategorized.`)) return;
+              startTransition(async () => {
+                const result = await deleteCategoryAction(category.id);
+                if (result?.error) {
+                  setError(result.error);
+                  return;
+                }
+                onChanged();
+              });
+            }}
+            disabled={isPending}
+            className="text-xs font-medium text-danger disabled:opacity-60"
+          >
+            Delete
+          </button>
+        </div>
+      </li>
+    );
+  }
+
+  return (
+    <li className="flex flex-col gap-1.5 rounded-lg border border-dashed border-brand bg-brand-soft px-3.5 py-2">
+      <div className="flex items-center gap-2">
+        <input
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          className="flex-1 rounded-lg border border-border bg-surface px-2.5 py-1.5 text-sm outline-none focus:border-brand"
+        />
+        <button
+          onClick={() =>
+            startTransition(async () => {
+              const result = await renameCategoryAction(category.id, name);
+              if (result?.error) {
+                setError(result.error);
+                return;
+              }
+              setError(null);
+              setEditing(false);
+              onChanged();
+            })
+          }
+          disabled={isPending}
+          className="btn-primary-sm disabled:opacity-60"
+        >
+          Save
+        </button>
+        <button onClick={() => { setEditing(false); setName(category.name); }} className="text-xs font-medium text-muted">
+          Cancel
+        </button>
+      </div>
+      {error && <p className="text-xs text-danger">{error}</p>}
+    </li>
   );
 }

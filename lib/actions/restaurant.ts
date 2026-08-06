@@ -21,6 +21,48 @@ export async function createTableAction(name: string): Promise<{ error?: string;
   return { tableId: data.id };
 }
 
+export async function renameTableAction(tableId: string, newName: string): Promise<{ error?: string }> {
+  const session = await requireSession();
+  if (!newName.trim()) return { error: "Enter a table name/number" };
+  const admin = createSupabaseAdminClient();
+  const { error } = await admin
+    .from("restaurant_tables")
+    .update({ name: newName.trim() })
+    .eq("id", tableId)
+    .eq("shop_id", session.shopId);
+  if (error) return { error: "Could not rename table" };
+  revalidatePath("/restaurant");
+  return {};
+}
+
+export async function deleteTableAction(tableId: string): Promise<{ error?: string }> {
+  const session = await requireSession();
+  const admin = createSupabaseAdminClient();
+
+  const { data: table } = await admin
+    .from("restaurant_tables")
+    .select("status")
+    .eq("id", tableId)
+    .eq("shop_id", session.shopId)
+    .single();
+  if (!table) return { error: "Table not found" };
+  if (table.status === "occupied") return { error: "This table has an open order — settle or cancel it first." };
+
+  const { error } = await admin.from("restaurant_tables").delete().eq("id", tableId).eq("shop_id", session.shopId);
+  if (error) {
+    // Past orders point at this table (FK), so it can't be removed once
+    // it's ever been used — nothing to fix here, the table just stays in
+    // the list, which is the honest outcome given it has real history.
+    if (error.code === "23503") {
+      return { error: "This table has past orders on record and can't be removed." };
+    }
+    console.error("Could not delete table", error);
+    return { error: "Could not delete table" };
+  }
+  revalidatePath("/restaurant");
+  return {};
+}
+
 /** Recomputes an order's totals from scratch off its current line items —
  * always called after any item add/remove, so the stored total can never
  * silently drift from what's actually in the order. */
