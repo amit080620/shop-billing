@@ -1,10 +1,12 @@
 import { requireSession } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { getTerminology } from "@/lib/businessType";
+import { getTranslator } from "@/lib/i18n/server";
 import { ProductsClient } from "./ProductsClient";
 
 export default async function ProductsPage() {
   const session = await requireSession();
+  const { lang } = await getTranslator();
   const admin = createSupabaseAdminClient();
   const terminology = getTerminology(session.businessType);
 
@@ -25,6 +27,7 @@ export default async function ProductsPage() {
 
   return (
     <ProductsClient
+      lang={lang}
       initialProducts={(products ?? []).map((p) => ({
         id: p.id,
         name: p.name,

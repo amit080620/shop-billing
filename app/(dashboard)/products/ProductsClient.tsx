@@ -19,6 +19,8 @@ import { CameraBarcodeScanner } from "@/app/components/CameraBarcodeScanner";
 import { BarcodeScanInput } from "@/app/components/BarcodeScanInput";
 import { BulkImportExport } from "./BulkImportExport";
 import { COMMON_GST_RATES, UNITS } from "@/lib/constants/states";
+import { useTranslation } from "@/lib/i18n/useTranslation";
+import type { Lang } from "@/lib/i18n/dictionary";
 
 type Product = {
   id: string;
@@ -49,15 +51,11 @@ type Product = {
 };
 type Category = { id: string; name: string };
 
-function SubmitButton({ label }: { label: string }) {
+function SubmitButton({ label, pendingLabel }: { label: string; pendingLabel: string }) {
   const { pending } = useFormStatus();
   return (
-    <button
-      type="submit"
-      disabled={pending}
-      className="btn-primary-sm"
-    >
-      {pending ? "Saving…" : label}
+    <button type="submit" disabled={pending} className="btn-primary-sm">
+      {pending ? pendingLabel : label}
     </button>
   );
 }
@@ -66,11 +64,14 @@ export function ProductsClient({
   initialProducts,
   categories,
   terminology,
+  lang,
 }: {
   initialProducts: Product[];
   categories: Category[];
   terminology: { productPlural: string; productSingular: string; productSub: string; addProductLabel: string };
+  lang: Lang;
 }) {
+  const { t } = useTranslation(lang);
   const [showForm, setShowForm] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [trackInventory, setTrackInventory] = useState(false);
@@ -150,7 +151,7 @@ export function ProductsClient({
       setSearch(match.name);
       setScanNotice(null);
     } else {
-      setScanNotice(`No item found with barcode "${code}" — add it below.`);
+      setScanNotice(t("products.noItemFound", { code }));
     }
   }
 
@@ -171,7 +172,7 @@ export function ProductsClient({
               onClick={() => setShowCategoryForm((v) => !v)}
               className="rounded-lg border border-border px-3 py-1.5 text-sm font-medium text-foreground"
             >
-              + Category
+              {t("products.addCategory")}
             </button>
             <button
               onClick={() => (showForm && !editingProduct ? setShowForm(false) : openNewProductForm())}
@@ -187,11 +188,11 @@ export function ProductsClient({
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search by name or barcode"
+          placeholder={t("products.searchPlaceholder")}
           className="rounded-lg border border-border bg-surface shadow-sm px-3.5 py-2.5 text-sm outline-none focus:border-brand"
         />
         <BarcodeScanInput
-          placeholder="Scan barcode to find an item"
+          placeholder={t("products.scanPlaceholder")}
           onScan={handleInventoryScan}
         />
         <CameraBarcodeScanner onScan={handleInventoryScan} />
@@ -216,13 +217,13 @@ export function ProductsClient({
       {initialProducts.some((p) => p.trackInventory) && (
         <div className="grid grid-cols-2 gap-3">
           <div className="rounded-xl border border-border bg-surface shadow-sm p-3 text-center">
-            <p className="text-xs text-muted">Tracked items</p>
+            <p className="text-xs text-muted">{t("products.trackedItems")}</p>
             <p className="mt-1 text-lg font-semibold text-foreground">
               {initialProducts.filter((p) => p.trackInventory).length}
             </p>
           </div>
           <div className="rounded-xl border border-border bg-credit-soft shadow-sm p-3 text-center">
-            <p className="text-xs text-credit">Low stock</p>
+            <p className="text-xs text-credit">{t("products.lowStock")}</p>
             <p className="mt-1 text-lg font-semibold text-credit">
               {initialProducts.filter((p) => p.trackInventory && p.stockQuantity <= p.lowStockThreshold).length}
             </p>
@@ -235,7 +236,7 @@ export function ProductsClient({
         className="flex items-center justify-between rounded-xl border border-border bg-surface shadow-sm px-4 py-3.5"
       >
         <span className="flex items-center gap-2 text-sm font-medium text-foreground">
-          🏷 Print barcode labels
+          {t("products.printLabels")}
         </span>
         <span className="text-muted">›</span>
       </Link>
@@ -248,13 +249,13 @@ export function ProductsClient({
           <input
             name="name"
             required
-            placeholder="Category name (e.g. Dairy, Snacks)"
+            placeholder={t("products.categoryNamePlaceholder")}
             className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-brand"
           />
           {categoryState?.error && (
             <p className="text-sm text-credit">{categoryState.error}</p>
           )}
-          <SubmitButton label="Save category" />
+          <SubmitButton label={t("products.saveCategory")} pendingLabel={t("products.saving")} />
         </form>
       )}
 
@@ -265,13 +266,13 @@ export function ProductsClient({
           className="flex flex-col gap-3 rounded-xl border border-border bg-surface shadow-sm p-4"
         >
           {editingProduct && (
-            <p className="text-xs font-medium text-brand">Editing: {editingProduct.name}</p>
+            <p className="text-xs font-medium text-brand">{t("products.editing", { name: editingProduct.name })}</p>
           )}
-          <Field name="name" label="Product name" placeholder="e.g. Amul Milk 500ml" required defaultValue={editingProduct?.name} />
+          <Field name="name" label={t("products.name")} placeholder={t("products.namePlaceholder")} required defaultValue={editingProduct?.name} />
           <div className="grid grid-cols-2 gap-3">
-            <Field name="price" label="Price (₹)" type="number" step="0.01" min="0" required defaultValue={editingProduct ? String(editingProduct.price) : undefined} />
+            <Field name="price" label={t("products.price")} type="number" step="0.01" min="0" required defaultValue={editingProduct ? String(editingProduct.price) : undefined} />
             <label className="flex flex-col gap-1.5 text-sm">
-              <span className="font-medium text-foreground">GST %</span>
+              <span className="font-medium text-foreground">{t("products.gstPercent")}</span>
               <select
                 name="gstPercent"
                 defaultValue={editingProduct ? String(editingProduct.gstPercent) : "0"}
@@ -286,25 +287,25 @@ export function ProductsClient({
             </label>
           </div>
           <div className="flex flex-col gap-1.5 text-sm">
-            <span className="font-medium text-foreground">Barcode (optional)</span>
+            <span className="font-medium text-foreground">{t("products.barcode")}</span>
             <input
               ref={barcodeRef}
               name="barcode"
               defaultValue={editingProduct?.barcode ?? ""}
-              placeholder="Scan with a USB scanner, or type"
+              placeholder={t("products.barcodePlaceholder")}
               className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-brand"
             />
             <CameraBarcodeScanner
-              label="📷 Scan barcode with camera"
+              label={t("products.scanWithCamera")}
               onScan={(code) => {
                 if (barcodeRef.current) barcodeRef.current.value = code;
               }}
             />
           </div>
           <div className="grid grid-cols-2 gap-3">
-            <Field name="hsnCode" label="HSN/SAC code" placeholder="e.g. 0402" defaultValue={editingProduct?.hsnCode ?? undefined} />
+            <Field name="hsnCode" label={t("products.hsnCode")} placeholder={t("products.hsnPlaceholder")} defaultValue={editingProduct?.hsnCode ?? undefined} />
             <label className="flex flex-col gap-1.5 text-sm">
-              <span className="font-medium text-foreground">Unit</span>
+              <span className="font-medium text-foreground">{t("products.unit")}</span>
               <select
                 name="unit"
                 defaultValue={editingProduct?.unit ?? "NOS"}
@@ -320,13 +321,13 @@ export function ProductsClient({
           </div>
           {categories.length > 0 && (
             <label className="flex flex-col gap-1.5 text-sm">
-              <span className="font-medium text-foreground">Category (optional)</span>
+              <span className="font-medium text-foreground">{t("products.category")}</span>
               <select
                 name="categoryId"
                 className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-brand"
                 defaultValue={editingProduct?.categoryId ?? ""}
               >
-                <option value="">No category</option>
+                <option value="">{t("products.noCategory")}</option>
                 {categories.map((c) => (
                   <option key={c.id} value={c.id}>
                     {c.name}
@@ -343,12 +344,12 @@ export function ProductsClient({
               onChange={(e) => setTrackInventory(e.target.checked)}
               className="h-4 w-4 rounded border-border"
             />
-            Track stock for this product
+            {t("products.trackStock")}
           </label>
           {trackInventory && (
             <div className="grid grid-cols-2 gap-3">
-              <Field name="stockQuantity" label="Current stock" type="number" step="0.01" min="0" defaultValue={editingProduct ? String(editingProduct.stockQuantity) : "0"} />
-              <Field name="lowStockThreshold" label="Low-stock alert below" type="number" step="0.01" min="0" defaultValue={editingProduct ? String(editingProduct.lowStockThreshold) : "0"} />
+              <Field name="stockQuantity" label={t("products.currentStock")} type="number" step="0.01" min="0" defaultValue={editingProduct ? String(editingProduct.stockQuantity) : "0"} />
+              <Field name="lowStockThreshold" label={t("products.lowStockAlertBelow")} type="number" step="0.01" min="0" defaultValue={editingProduct ? String(editingProduct.lowStockThreshold) : "0"} />
             </div>
           )}
           <label className="flex items-center gap-2 text-sm text-foreground">
@@ -359,20 +360,18 @@ export function ProductsClient({
               onChange={(e) => setIsRentable(e.target.checked)}
               className="h-4 w-4 rounded border-border"
             />
-            Also available for rent
+            {t("products.alsoRentable")}
           </label>
           {isRentable && (
             <div className="flex flex-col gap-3 rounded-lg border border-dashed border-brand bg-brand-soft p-3">
-              <p className="text-xs text-brand-dark">
-                Set a rate for whichever durations you actually rent this by — leave the rest blank.
-              </p>
+              <p className="text-xs text-brand-dark">{t("products.rentalRateExplain")}</p>
               <div className="grid grid-cols-2 gap-3">
-                <Field name="rentalRateHourly" label="₹ per hour" type="number" step="0.01" min="0" defaultValue={editingProduct?.rentalRateHourly != null ? String(editingProduct.rentalRateHourly) : undefined} />
-                <Field name="rentalRateDaily" label="₹ per day" type="number" step="0.01" min="0" defaultValue={editingProduct?.rentalRateDaily != null ? String(editingProduct.rentalRateDaily) : undefined} />
-                <Field name="rentalRateWeekly" label="₹ per week" type="number" step="0.01" min="0" defaultValue={editingProduct?.rentalRateWeekly != null ? String(editingProduct.rentalRateWeekly) : undefined} />
-                <Field name="rentalRateMonthly" label="₹ per month" type="number" step="0.01" min="0" defaultValue={editingProduct?.rentalRateMonthly != null ? String(editingProduct.rentalRateMonthly) : undefined} />
+                <Field name="rentalRateHourly" label={t("products.perHour")} type="number" step="0.01" min="0" defaultValue={editingProduct?.rentalRateHourly != null ? String(editingProduct.rentalRateHourly) : undefined} />
+                <Field name="rentalRateDaily" label={t("products.perDay")} type="number" step="0.01" min="0" defaultValue={editingProduct?.rentalRateDaily != null ? String(editingProduct.rentalRateDaily) : undefined} />
+                <Field name="rentalRateWeekly" label={t("products.perWeek")} type="number" step="0.01" min="0" defaultValue={editingProduct?.rentalRateWeekly != null ? String(editingProduct.rentalRateWeekly) : undefined} />
+                <Field name="rentalRateMonthly" label={t("products.perMonth")} type="number" step="0.01" min="0" defaultValue={editingProduct?.rentalRateMonthly != null ? String(editingProduct.rentalRateMonthly) : undefined} />
               </div>
-              <Field name="securityDeposit" label="Security deposit (₹, refundable)" type="number" step="0.01" min="0" defaultValue={editingProduct ? String(editingProduct.securityDeposit) : "0"} />
+              <Field name="securityDeposit" label={t("products.securityDeposit")} type="number" step="0.01" min="0" defaultValue={editingProduct ? String(editingProduct.securityDeposit) : "0"} />
             </div>
           )}
           <label className="flex items-center gap-2 text-sm text-foreground">
@@ -383,11 +382,11 @@ export function ProductsClient({
               onChange={(e) => setIsPharma(e.target.checked)}
               className="h-4 w-4 rounded border-border"
             />
-            Track with batch & expiry (medicine)
+            {t("products.trackBatch")}
           </label>
           {isPharma && (
             <div className="flex flex-col gap-3 rounded-lg border border-dashed border-brand bg-brand-soft p-3">
-              <Field name="saltComposition" label="Salt / composition (optional)" placeholder="e.g. Paracetamol 500mg" defaultValue={editingProduct?.saltComposition ?? undefined} />
+              <Field name="saltComposition" label={t("products.saltComposition")} placeholder={t("products.saltPlaceholder")} defaultValue={editingProduct?.saltComposition ?? undefined} />
               <label className="flex items-center gap-2 text-sm text-brand-dark">
                 <input
                   type="checkbox"
@@ -396,43 +395,41 @@ export function ProductsClient({
                   onChange={(e) => setRequiresPrescription(e.target.checked)}
                   className="h-4 w-4 rounded border-border"
                 />
-                Requires a prescription (Rx)
+                {t("products.requiresRx")}
               </label>
               <div className="grid grid-cols-2 gap-3">
                 <label className="flex flex-col gap-1.5 text-xs text-brand-dark">
-                  Drug schedule (optional)
+                  {t("products.drugSchedule")}
                   <select
                     name="drugSchedule"
                     defaultValue={editingProduct?.drugSchedule ?? ""}
                     className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand"
                   >
-                    <option value="">Not classified</option>
-                    <option value="otc">OTC (over the counter)</option>
-                    <option value="h">Schedule H</option>
-                    <option value="h1">Schedule H1</option>
-                    <option value="x">Schedule X (narcotic)</option>
-                    <option value="g">Schedule G</option>
+                    <option value="">{t("products.notClassified")}</option>
+                    <option value="otc">{t("products.scheduleOtc")}</option>
+                    <option value="h">{t("products.scheduleH")}</option>
+                    <option value="h1">{t("products.scheduleH1")}</option>
+                    <option value="x">{t("products.scheduleX")}</option>
+                    <option value="g">{t("products.scheduleG")}</option>
                   </select>
                 </label>
-                <Field name="rackLocation" label="Rack / shelf (optional)" placeholder="e.g. Rack 3B" defaultValue={editingProduct?.rackLocation ?? undefined} />
+                <Field name="rackLocation" label={t("products.rackLocation")} placeholder={t("products.rackPlaceholder")} defaultValue={editingProduct?.rackLocation ?? undefined} />
               </div>
               <div className="grid grid-cols-2 gap-3">
-                <Field name="unitsPerPack" label="Units per pack (e.g. 10)" type="number" min="1" step="1" placeholder="Leave blank if not applicable" defaultValue={editingProduct?.unitsPerPack != null ? String(editingProduct.unitsPerPack) : undefined} />
-                <Field name="looseUnitName" label="Loose unit name" placeholder="e.g. tablet, capsule" defaultValue={editingProduct?.looseUnitName ?? undefined} />
+                <Field name="unitsPerPack" label={t("products.unitsPerPack")} type="number" min="1" step="1" placeholder={t("products.unitsPerPackPlaceholder")} defaultValue={editingProduct?.unitsPerPack != null ? String(editingProduct.unitsPerPack) : undefined} />
+                <Field name="looseUnitName" label={t("products.looseUnitName")} placeholder={t("products.looseUnitPlaceholder")} defaultValue={editingProduct?.looseUnitName ?? undefined} />
               </div>
-              <p className="text-xs text-brand-dark">
-                Fill in units-per-pack + loose unit name to let billing sell individual tablets
-                from a strip, not just the whole pack. After saving, add stock via Pharmacy →
-                Batches — each batch gets its own expiry date, and billing automatically sells
-                the earliest-expiring batch first.
-              </p>
+              <p className="text-xs text-brand-dark">{t("products.pharmaExplain")}</p>
             </div>
           )}
           {productState?.error && (
             <p className="text-sm text-credit">{productState.error}</p>
           )}
           <div className="flex gap-2">
-            <SubmitButton label={editingProduct ? "Update product" : "Save product"} />
+            <SubmitButton
+              label={editingProduct ? t("products.updateProduct") : t("products.saveProduct")}
+              pendingLabel={t("products.saving")}
+            />
             {editingProduct && (
               <button
                 type="button"
@@ -442,7 +439,7 @@ export function ProductsClient({
                 }}
                 className="rounded-lg border border-border px-4 py-2 text-sm font-medium text-muted"
               >
-                Cancel
+                {t("common.cancel")}
               </button>
             )}
           </div>
@@ -452,7 +449,7 @@ export function ProductsClient({
       {categories.length > 0 && (
         <div className="flex gap-2 overflow-x-auto pb-1">
           <Chip active={filter === "all"} onClick={() => setFilter("all")}>
-            All
+            {t("products.all")}
           </Chip>
           {categories.map((c) => (
             <Chip key={c.id} active={filter === c.id} onClick={() => setFilter(c.id)}>
@@ -463,7 +460,7 @@ export function ProductsClient({
       )}
 
       {filtered.length === 0 ? (
-        <EmptyState text="Your shelf is empty — add your first product here to start billing." />
+        <EmptyState text={t("products.emptyShelf")} />
       ) : (
         <ul className="flex flex-col gap-2">
           {filtered.map((p) => {
@@ -477,13 +474,13 @@ export function ProductsClient({
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium text-foreground">{p.name}</p>
                   <p className="text-xs text-muted">
-                    {p.categoryName ?? "No category"} · GST {p.gstPercent}% · {p.unit}
+                    {p.categoryName ?? t("products.noCategory")} · GST {p.gstPercent}% · {p.unit}
                     {p.hsnCode ? ` · HSN ${p.hsnCode}` : ""}
                     {p.barcode ? ` · 🏷 ${p.barcode}` : ""}
                   </p>
                   {p.isRentable && (
                     <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-brand-soft px-2 py-0.5 text-[11px] font-medium text-brand-dark">
-                      🔁 For rent
+                      {t("products.forRent")}
                     </span>
                   )}
                   {p.isPharma && (
@@ -491,7 +488,7 @@ export function ProductsClient({
                       href={`/pharmacy/batches/${p.id}`}
                       className="mt-1 inline-flex items-center gap-1 rounded-full bg-brand-soft px-2 py-0.5 text-[11px] font-medium text-brand-dark"
                     >
-                      🧪 Manage batches{p.requiresPrescription ? " · Rx" : ""}
+                      {t("products.manageBatches")}{p.requiresPrescription ? " · Rx" : ""}
                     </a>
                   )}
                   {!p.barcode && (
@@ -500,7 +497,7 @@ export function ProductsClient({
                       disabled={generatingBarcodeFor === p.id}
                       className="mt-1 text-xs font-medium text-brand disabled:opacity-60"
                     >
-                      {generatingBarcodeFor === p.id ? "Generating…" : "🏷 Generate barcode"}
+                      {generatingBarcodeFor === p.id ? t("products.generating") : t("products.generateBarcode")}
                     </button>
                   )}
                   {p.trackInventory && tone && (
@@ -512,8 +509,8 @@ export function ProductsClient({
                         className="h-1.5 w-1.5 rounded-full"
                         style={{ backgroundColor: TONE_COLORS[tone] }}
                       />
-                      {p.stockQuantity} {p.unit} in stock
-                      {tone === "red" ? " · Low" : tone === "orange" ? " · Getting low" : ""}
+                      {t("products.inStock", { qty: p.stockQuantity, unit: p.unit })}
+                      {tone === "red" ? ` · ${t("products.low")}` : tone === "orange" ? ` · ${t("products.gettingLow")}` : ""}
                     </span>
                   )}
                 </div>
@@ -526,7 +523,7 @@ export function ProductsClient({
                       onClick={() => openEditProductForm(p)}
                       className="text-xs font-medium text-brand"
                     >
-                      Edit
+                      {t("products.edit")}
                     </button>
                     <button
                       disabled={isPending}
@@ -537,7 +534,7 @@ export function ProductsClient({
                       }
                       className="text-xs font-medium text-danger disabled:opacity-50"
                     >
-                      Delete
+                      {t("products.delete")}
                     </button>
                   </div>
                 </div>
