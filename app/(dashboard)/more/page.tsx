@@ -57,6 +57,13 @@ export default async function MorePage() {
         </MenuGroup>
       )}
 
+      {session.businessType === "transport" && (
+        <MenuGroup title="Transport">
+          <MenuLink href="/transport/vehicles" label="Vehicles" sub="Manage trucks & per-km rates" icon={TruckIcon} />
+          <MenuLink href="/transport/reports" label="Vehicle-wise trips" sub="Rounds, km & earnings per vehicle" icon={ClockIcon} />
+        </MenuGroup>
+      )}
+
       <MenuGroup title="People">
         <MenuLink href="/customers" label={t("more.customers")} sub={t("more.customers.sub")} icon={PeopleIcon} />
         <MenuLink href="/vendors" label={t("more.vendors")} sub={t("more.vendors.sub")} icon={TruckIcon} />

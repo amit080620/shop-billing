@@ -8,6 +8,7 @@ import { recordVendorPaymentAction } from "@/lib/actions/vendors";
 import { formatMoney, formatDateTime } from "@/lib/format";
 import { EmptyState } from "@/app/components/EmptyState";
 import { PaymentMethodPicker } from "@/app/components/PaymentMethodPicker";
+import { EditVendorButton } from "./EditVendorButton";
 
 type Purchase = {
   id: string;
@@ -39,7 +40,7 @@ export function VendorLedgerClient({
   purchases,
   payments,
 }: {
-  vendor: { id: string; name: string; phone: string | null; gstin: string | null };
+  vendor: { id: string; name: string; phone: string | null; gstin: string | null; address: string | null; stateCode: string | null };
   balance: number;
   purchases: Purchase[];
   payments: Payment[];
@@ -67,10 +68,15 @@ export function VendorLedgerClient({
       </Link>
 
       <div className="rounded-xl border border-border bg-surface shadow-sm p-4">
-        <h1 className="text-lg font-semibold text-foreground">{vendor.name}</h1>
-        <p className="text-sm text-muted">
-          {vendor.gstin ? vendor.gstin : vendor.phone || "No GSTIN on file"}
-        </p>
+        <div className="flex items-start justify-between gap-2">
+          <div>
+            <h1 className="text-lg font-semibold text-foreground">{vendor.name}</h1>
+            <p className="text-sm text-muted">
+              {vendor.gstin ? vendor.gstin : vendor.phone || "No GSTIN on file"}
+            </p>
+          </div>
+          <EditVendorButton vendor={vendor} />
+        </div>
         <div className="mt-3">
           <p className="text-xs text-muted">You owe</p>
           <p className={`text-2xl font-semibold ${balance > 0 ? "text-credit" : "text-foreground"}`}>

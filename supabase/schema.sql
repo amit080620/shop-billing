@@ -830,3 +830,45 @@ create table if not exists table_order_request_items (
 );
 alter table table_order_request_items enable row level security;
 create index if not exists idx_table_order_request_items_request on table_order_request_items(request_id);
+
+-- ─── Transport & Materials business type ──────────────────────────────────
+alter table shops drop constraint if exists shops_business_type_check;
+alter table shops add constraint shops_business_type_check
+  check (business_type in ('grocery', 'restaurant', 'mart', 'hardware', 'pharmacy', 'rental', 'transport', 'general'));
+
+create table if not exists vehicles (
+  id uuid primary key default uuid_generate_v4(),
+  shop_id uuid not null references shops(id) on delete cascade,
+  name text not null,
+  vehicle_number text,
+  rate_per_km numeric(12, 2) not null default 0,
+  is_active boolean not null default true,
+  created_at timestamptz not null default now()
+);
+alter table vehicles enable row level security;
+create index if not exists idx_vehicles_shop on vehicles(shop_id);
+
+-- One "trip" — a vehicle covering some distance for a customer. Its
+-- transport charge becomes one line on the same bill as the materials it
+-- carried, so the customer gets a single combined invoice. bill_id is
+-- filled in once billed; a trip can exist un-billed briefly while being
+-- built up in the New Bill screen.
+create table if not exists transport_trips (
+  id uuid primary key default uuid_generate_v4(),
+  shop_id uuid not null references shops(id) on delete cascade,
+  vehicle_id uuid not null references vehicles(id),
+  customer_id uuid references customers(id),
+  bill_id uuid references bills(id) on delete set null,
+  staff_id uuid not null references staff(id),
+  trip_date date not null default current_date,
+  km numeric(12, 2) not null,
+  rate_per_km numeric(12, 2) not null,
+  transport_charge numeric(12, 2) not null,
+  gst_percent numeric(5, 2) not null default 0,
+  notes text,
+  created_at timestamptz not null default now()
+);
+alter table transport_trips enable row level security;
+create index if not exists idx_transport_trips_shop on transport_trips(shop_id);
+create index if not exists idx_transport_trips_vehicle on transport_trips(vehicle_id);
+create index if not exists idx_transport_trips_bill on transport_trips(bill_id);

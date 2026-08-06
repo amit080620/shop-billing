@@ -570,6 +570,65 @@ export interface Database {
           { foreignKeyName: "purchase_items_product_id_fkey"; columns: ["product_id"]; isOneToOne: false; referencedRelation: "products"; referencedColumns: ["id"] },
         ];
       };
+      vehicles: {
+        Row: { id: string; shop_id: string; name: string; vehicle_number: string | null; rate_per_km: number; is_active: boolean; created_at: string };
+        Insert: { id?: string; shop_id: string; name: string; vehicle_number?: string | null; rate_per_km?: number; is_active?: boolean; created_at?: string };
+        Update: { id?: string; shop_id?: string; name?: string; vehicle_number?: string | null; rate_per_km?: number; is_active?: boolean; created_at?: string };
+        Relationships: [
+          { foreignKeyName: "vehicles_shop_id_fkey"; columns: ["shop_id"]; isOneToOne: false; referencedRelation: "shops"; referencedColumns: ["id"] },
+        ];
+      };
+      transport_trips: {
+        Row: {
+          id: string;
+          shop_id: string;
+          vehicle_id: string;
+          customer_id: string | null;
+          bill_id: string | null;
+          staff_id: string;
+          trip_date: string;
+          km: number;
+          rate_per_km: number;
+          transport_charge: number;
+          gst_percent: number;
+          notes: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          shop_id: string;
+          vehicle_id: string;
+          customer_id?: string | null;
+          bill_id?: string | null;
+          staff_id: string;
+          trip_date?: string;
+          km: number;
+          rate_per_km: number;
+          transport_charge: number;
+          gst_percent?: number;
+          notes?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          shop_id?: string;
+          vehicle_id?: string;
+          customer_id?: string | null;
+          bill_id?: string | null;
+          staff_id?: string;
+          trip_date?: string;
+          km?: number;
+          rate_per_km?: number;
+          transport_charge?: number;
+          gst_percent?: number;
+          notes?: string | null;
+          created_at?: string;
+        };
+        Relationships: [
+          { foreignKeyName: "transport_trips_vehicle_id_fkey"; columns: ["vehicle_id"]; isOneToOne: false; referencedRelation: "vehicles"; referencedColumns: ["id"] },
+          { foreignKeyName: "transport_trips_bill_id_fkey"; columns: ["bill_id"]; isOneToOne: false; referencedRelation: "bills"; referencedColumns: ["id"] },
+        ];
+      };
       combos: {
         Row: { id: string; shop_id: string; name: string; price: number; gst_percent: number; is_active: boolean; created_at: string };
         Insert: { id?: string; shop_id: string; name: string; price: number; gst_percent?: number; is_active?: boolean; created_at?: string };

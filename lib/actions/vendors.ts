@@ -43,6 +43,46 @@ export async function createVendorAction(
   return null;
 }
 
+export async function updateVendorAction(
+  vendorId: string,
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const session = await requireSession();
+  const parsed = vendorSchema.safeParse({
+    name: formData.get("name"),
+    phone: formData.get("phone"),
+    gstin: formData.get("gstin"),
+    address: formData.get("address"),
+    stateCode: formData.get("stateCode") || null,
+  });
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0].message };
+  }
+
+  const admin = createSupabaseAdminClient();
+  const { error } = await admin
+    .from("vendors")
+    .update({
+      name: parsed.data.name,
+      phone: parsed.data.phone ?? null,
+      gstin: parsed.data.gstin ?? null,
+      address: parsed.data.address ?? null,
+      state_code: parsed.data.stateCode ?? null,
+      state: parsed.data.stateCode ? stateNameForCode(parsed.data.stateCode) : null,
+    })
+    .eq("id", vendorId)
+    .eq("shop_id", session.shopId);
+  if (error) {
+    console.error("Could not update vendor", error);
+    return { error: "Could not update vendor" };
+  }
+
+  revalidatePath("/vendors");
+  revalidatePath(`/vendors/${vendorId}`);
+  return null;
+}
+
 export async function recordVendorPaymentAction(
   _prev: ActionState,
   formData: FormData,

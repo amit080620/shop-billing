@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   createProductAction,
+  updateProductAction,
   createCategoryAction,
   deleteProductAction,
   generateBarcodeAction,
@@ -40,6 +41,11 @@ type Product = {
   securityDeposit: number;
   isPharma: boolean;
   requiresPrescription: boolean;
+  saltComposition: string | null;
+  rackLocation: string | null;
+  drugSchedule: string | null;
+  unitsPerPack: number | null;
+  looseUnitName: string | null;
 };
 type Category = { id: string; name: string };
 
@@ -66,6 +72,7 @@ export function ProductsClient({
   terminology: { productPlural: string; productSingular: string; productSub: string; addProductLabel: string };
 }) {
   const [showForm, setShowForm] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [trackInventory, setTrackInventory] = useState(false);
   const [isRentable, setIsRentable] = useState(false);
   const [isPharma, setIsPharma] = useState(false);
@@ -77,8 +84,13 @@ export function ProductsClient({
 
   const [productState, productAction] = useActionState(
     async (prev: { error?: string } | null, formData: FormData) => {
-      const result = await createProductAction(prev, formData);
-      if (!result?.error) setShowForm(false);
+      const result = editingProduct
+        ? await updateProductAction(editingProduct.id, prev, formData)
+        : await createProductAction(prev, formData);
+      if (!result?.error) {
+        setShowForm(false);
+        setEditingProduct(null);
+      }
       return result;
     },
     null,
@@ -95,6 +107,24 @@ export function ProductsClient({
 
   const router = useRouter();
   const [generatingBarcodeFor, setGeneratingBarcodeFor] = useState<string | null>(null);
+
+  function openNewProductForm() {
+    setEditingProduct(null);
+    setTrackInventory(false);
+    setIsRentable(false);
+    setIsPharma(false);
+    setRequiresPrescription(false);
+    setShowForm(true);
+  }
+
+  function openEditProductForm(p: Product) {
+    setEditingProduct(p);
+    setTrackInventory(p.trackInventory);
+    setIsRentable(p.isRentable);
+    setIsPharma(p.isPharma);
+    setRequiresPrescription(p.requiresPrescription);
+    setShowForm(true);
+  }
 
   async function handleGenerateBarcode(productId: string) {
     setGeneratingBarcodeFor(productId);
@@ -144,7 +174,7 @@ export function ProductsClient({
               + Category
             </button>
             <button
-              onClick={() => setShowForm((v) => !v)}
+              onClick={() => (showForm && !editingProduct ? setShowForm(false) : openNewProductForm())}
               className="btn-primary-sm"
             >
               {terminology.addProductLabel}
@@ -230,17 +260,21 @@ export function ProductsClient({
 
       {showForm && (
         <form
+          key={editingProduct?.id ?? "new"}
           action={productAction}
           className="flex flex-col gap-3 rounded-xl border border-border bg-surface shadow-sm p-4"
         >
-          <Field name="name" label="Product name" placeholder="e.g. Amul Milk 500ml" required />
+          {editingProduct && (
+            <p className="text-xs font-medium text-brand">Editing: {editingProduct.name}</p>
+          )}
+          <Field name="name" label="Product name" placeholder="e.g. Amul Milk 500ml" required defaultValue={editingProduct?.name} />
           <div className="grid grid-cols-2 gap-3">
-            <Field name="price" label="Price (₹)" type="number" step="0.01" min="0" required />
+            <Field name="price" label="Price (₹)" type="number" step="0.01" min="0" required defaultValue={editingProduct ? String(editingProduct.price) : undefined} />
             <label className="flex flex-col gap-1.5 text-sm">
               <span className="font-medium text-foreground">GST %</span>
               <select
                 name="gstPercent"
-                defaultValue="0"
+                defaultValue={editingProduct ? String(editingProduct.gstPercent) : "0"}
                 className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-brand"
               >
                 {COMMON_GST_RATES.map((r) => (
@@ -256,6 +290,7 @@ export function ProductsClient({
             <input
               ref={barcodeRef}
               name="barcode"
+              defaultValue={editingProduct?.barcode ?? ""}
               placeholder="Scan with a USB scanner, or type"
               className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-brand"
             />
@@ -267,12 +302,12 @@ export function ProductsClient({
             />
           </div>
           <div className="grid grid-cols-2 gap-3">
-            <Field name="hsnCode" label="HSN/SAC code" placeholder="e.g. 0402" />
+            <Field name="hsnCode" label="HSN/SAC code" placeholder="e.g. 0402" defaultValue={editingProduct?.hsnCode ?? undefined} />
             <label className="flex flex-col gap-1.5 text-sm">
               <span className="font-medium text-foreground">Unit</span>
               <select
                 name="unit"
-                defaultValue="NOS"
+                defaultValue={editingProduct?.unit ?? "NOS"}
                 className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-brand"
               >
                 {UNITS.map((u) => (
@@ -289,7 +324,7 @@ export function ProductsClient({
               <select
                 name="categoryId"
                 className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-brand"
-                defaultValue=""
+                defaultValue={editingProduct?.categoryId ?? ""}
               >
                 <option value="">No category</option>
                 {categories.map((c) => (
@@ -312,8 +347,8 @@ export function ProductsClient({
           </label>
           {trackInventory && (
             <div className="grid grid-cols-2 gap-3">
-              <Field name="stockQuantity" label="Current stock" type="number" step="0.01" min="0" defaultValue="0" />
-              <Field name="lowStockThreshold" label="Low-stock alert below" type="number" step="0.01" min="0" defaultValue="0" />
+              <Field name="stockQuantity" label="Current stock" type="number" step="0.01" min="0" defaultValue={editingProduct ? String(editingProduct.stockQuantity) : "0"} />
+              <Field name="lowStockThreshold" label="Low-stock alert below" type="number" step="0.01" min="0" defaultValue={editingProduct ? String(editingProduct.lowStockThreshold) : "0"} />
             </div>
           )}
           <label className="flex items-center gap-2 text-sm text-foreground">
@@ -332,12 +367,12 @@ export function ProductsClient({
                 Set a rate for whichever durations you actually rent this by — leave the rest blank.
               </p>
               <div className="grid grid-cols-2 gap-3">
-                <Field name="rentalRateHourly" label="₹ per hour" type="number" step="0.01" min="0" />
-                <Field name="rentalRateDaily" label="₹ per day" type="number" step="0.01" min="0" />
-                <Field name="rentalRateWeekly" label="₹ per week" type="number" step="0.01" min="0" />
-                <Field name="rentalRateMonthly" label="₹ per month" type="number" step="0.01" min="0" />
+                <Field name="rentalRateHourly" label="₹ per hour" type="number" step="0.01" min="0" defaultValue={editingProduct?.rentalRateHourly != null ? String(editingProduct.rentalRateHourly) : undefined} />
+                <Field name="rentalRateDaily" label="₹ per day" type="number" step="0.01" min="0" defaultValue={editingProduct?.rentalRateDaily != null ? String(editingProduct.rentalRateDaily) : undefined} />
+                <Field name="rentalRateWeekly" label="₹ per week" type="number" step="0.01" min="0" defaultValue={editingProduct?.rentalRateWeekly != null ? String(editingProduct.rentalRateWeekly) : undefined} />
+                <Field name="rentalRateMonthly" label="₹ per month" type="number" step="0.01" min="0" defaultValue={editingProduct?.rentalRateMonthly != null ? String(editingProduct.rentalRateMonthly) : undefined} />
               </div>
-              <Field name="securityDeposit" label="Security deposit (₹, refundable)" type="number" step="0.01" min="0" defaultValue="0" />
+              <Field name="securityDeposit" label="Security deposit (₹, refundable)" type="number" step="0.01" min="0" defaultValue={editingProduct ? String(editingProduct.securityDeposit) : "0"} />
             </div>
           )}
           <label className="flex items-center gap-2 text-sm text-foreground">
@@ -352,7 +387,7 @@ export function ProductsClient({
           </label>
           {isPharma && (
             <div className="flex flex-col gap-3 rounded-lg border border-dashed border-brand bg-brand-soft p-3">
-              <Field name="saltComposition" label="Salt / composition (optional)" placeholder="e.g. Paracetamol 500mg" />
+              <Field name="saltComposition" label="Salt / composition (optional)" placeholder="e.g. Paracetamol 500mg" defaultValue={editingProduct?.saltComposition ?? undefined} />
               <label className="flex items-center gap-2 text-sm text-brand-dark">
                 <input
                   type="checkbox"
@@ -368,7 +403,7 @@ export function ProductsClient({
                   Drug schedule (optional)
                   <select
                     name="drugSchedule"
-                    defaultValue=""
+                    defaultValue={editingProduct?.drugSchedule ?? ""}
                     className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand"
                   >
                     <option value="">Not classified</option>
@@ -379,11 +414,11 @@ export function ProductsClient({
                     <option value="g">Schedule G</option>
                   </select>
                 </label>
-                <Field name="rackLocation" label="Rack / shelf (optional)" placeholder="e.g. Rack 3B" />
+                <Field name="rackLocation" label="Rack / shelf (optional)" placeholder="e.g. Rack 3B" defaultValue={editingProduct?.rackLocation ?? undefined} />
               </div>
               <div className="grid grid-cols-2 gap-3">
-                <Field name="unitsPerPack" label="Units per pack (e.g. 10)" type="number" min="1" step="1" placeholder="Leave blank if not applicable" />
-                <Field name="looseUnitName" label="Loose unit name" placeholder="e.g. tablet, capsule" />
+                <Field name="unitsPerPack" label="Units per pack (e.g. 10)" type="number" min="1" step="1" placeholder="Leave blank if not applicable" defaultValue={editingProduct?.unitsPerPack != null ? String(editingProduct.unitsPerPack) : undefined} />
+                <Field name="looseUnitName" label="Loose unit name" placeholder="e.g. tablet, capsule" defaultValue={editingProduct?.looseUnitName ?? undefined} />
               </div>
               <p className="text-xs text-brand-dark">
                 Fill in units-per-pack + loose unit name to let billing sell individual tablets
@@ -396,7 +431,21 @@ export function ProductsClient({
           {productState?.error && (
             <p className="text-sm text-credit">{productState.error}</p>
           )}
-          <SubmitButton label="Save product" />
+          <div className="flex gap-2">
+            <SubmitButton label={editingProduct ? "Update product" : "Save product"} />
+            {editingProduct && (
+              <button
+                type="button"
+                onClick={() => {
+                  setShowForm(false);
+                  setEditingProduct(null);
+                }}
+                className="rounded-lg border border-border px-4 py-2 text-sm font-medium text-muted"
+              >
+                Cancel
+              </button>
+            )}
+          </div>
         </form>
       )}
 
@@ -468,23 +517,31 @@ export function ProductsClient({
                     </span>
                   )}
                 </div>
-                <div className="flex shrink-0 items-center gap-3">
+                <div className="flex shrink-0 flex-col items-end gap-1.5">
                   <p className="text-sm font-semibold text-foreground">
                     {formatMoney(p.price)}
                   </p>
-                  <button
-                    disabled={isPending}
-                    onClick={() =>
-                      startTransition(() => {
-                        deleteProductAction(p.id);
-                      })
-                    }
-                    className="text-xs font-medium text-danger disabled:opacity-50"
-                  >
-                  Delete
-                </button>
-              </div>
-            </li>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => openEditProductForm(p)}
+                      className="text-xs font-medium text-brand"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      disabled={isPending}
+                      onClick={() =>
+                        startTransition(() => {
+                          deleteProductAction(p.id);
+                        })
+                      }
+                      className="text-xs font-medium text-danger disabled:opacity-50"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              </li>
             );
           })}
         </ul>

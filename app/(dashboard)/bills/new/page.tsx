@@ -27,7 +27,7 @@ export default async function NewBillPage() {
   const last30 = new Date();
   last30.setDate(last30.getDate() - 30);
 
-  const [{ data: products }, { data: customers }, { data: recentBills }, { data: shop }] = await Promise.all([
+  const [{ data: products }, { data: customers }, { data: recentBills }, { data: shop }, { data: vehicles }] = await Promise.all([
     admin
       .from("products")
       .select("id, name, price, gst_percent, hsn_code, barcode, unit, track_inventory, stock_quantity, low_stock_threshold, requires_prescription, units_per_pack, loose_unit_name")
@@ -45,6 +45,7 @@ export default async function NewBillPage() {
       .eq("status", "active")
       .gte("created_at", last30.toISOString()),
     admin.from("shops").select("invoice_prefix").eq("id", session.shopId).single(),
+    admin.from("vehicles").select("id, name, rate_per_km").eq("shop_id", session.shopId).eq("is_active", true).order("name"),
   ]);
 
   // "Frequently sold" quick-add chips — a real speed win for repeat items
@@ -96,6 +97,7 @@ export default async function NewBillPage() {
       }))}
       customers={customers ?? []}
       frequentProductIds={frequentProductIds}
+      vehicles={(vehicles ?? []).map((v) => ({ id: v.id, name: v.name, ratePerKm: Number(v.rate_per_km) }))}
     />
   );
 }

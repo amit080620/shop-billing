@@ -73,12 +73,14 @@ export function NewBillClient({
   lang,
   frequentProductIds,
   shopContext,
+  vehicles,
 }: {
   shopStateCode: string;
   products: Product[];
   customers: Customer[];
   lang: Lang;
   frequentProductIds: string[];
+  vehicles: { id: string; name: string; ratePerKm: number }[];
   shopContext: {
     shopId: string;
     shopName: string;
@@ -146,6 +148,7 @@ export function NewBillClient({
   const [paymentMethod, setPaymentMethod] = useState<"cash" | "card" | "upi" | "online" | "other">("cash");
   const [doctorName, setDoctorName] = useState("");
   const [patientName, setPatientName] = useState("");
+  const [tripInfo, setTripInfo] = useState<{ vehicleId: string; km: number } | null>(null);
 
   const supplyType = useMemo(
     () =>
@@ -213,6 +216,31 @@ export function NewBillClient({
         },
       ];
     });
+  }
+
+  function addTransportCharge(vehicleId: string, vehicleName: string, km: number, ratePerKm: number) {
+    const amount = Math.round(km * ratePerKm * 100) / 100;
+    setCart((prev) => [
+      ...prev.filter((c) => c.productId !== "__transport_charge__"),
+      {
+        productId: "__transport_charge__",
+        name: `🚚 Transport: ${vehicleName} (${km} km)`,
+        price: amount,
+        packPrice: amount,
+        gstPercent: 0,
+        hsnCode: null,
+        unit: "trip",
+        quantity: 1,
+        trackInventory: false,
+        stockQuantity: 0,
+        lowStockThreshold: 0,
+        requiresPrescription: false,
+        unitsPerPack: null,
+        looseUnitName: null,
+        saleMode: "pack",
+      },
+    ]);
+    setTripInfo({ vehicleId, km });
   }
 
   function updateQuantity(productId: string, quantity: number) {
@@ -378,6 +406,8 @@ export function NewBillClient({
           />
         </section>
 
+        {vehicles.length > 0 && <TransportChargePicker vehicles={vehicles} onAdd={addTransportCharge} />}
+
         {cart.length > 0 && (
           <section className="flex flex-col gap-2">
             <p className="text-sm font-medium text-foreground">{t("bill.cart")}</p>
@@ -503,7 +533,7 @@ export function NewBillClient({
   const payload = JSON.stringify({
     customerId: customerMode === "existing" ? selectedCustomer?.id ?? null : null,
     items: cart.map((c) => ({
-      productId: c.productId,
+      productId: c.productId === "__transport_charge__" ? null : c.productId,
       description: c.name,
       hsnCode: c.hsnCode,
       quantity: c.quantity,
@@ -517,6 +547,8 @@ export function NewBillClient({
     paymentMethod,
     doctorName,
     patientName,
+    tripVehicleId: tripInfo?.vehicleId ?? null,
+    tripKm: tripInfo?.km ?? null,
   });
 
   return (
@@ -866,6 +898,73 @@ function Row({ label, value, bold }: { label: string; value: string; bold?: bool
       <span className={bold ? "font-semibold text-foreground" : "text-foreground"}>
         {value}
       </span>
+    </div>
+  );
+}
+
+function TransportChargePicker({
+  vehicles,
+  onAdd,
+}: {
+  vehicles: { id: string; name: string; ratePerKm: number }[];
+  onAdd: (vehicleId: string, vehicleName: string, km: number, ratePerKm: number) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [vehicleId, setVehicleId] = useState(vehicles[0]?.id ?? "");
+  const [km, setKm] = useState<number | "">("");
+
+  const vehicle = vehicles.find((v) => v.id === vehicleId);
+  const charge = vehicle && typeof km === "number" ? Math.round(km * vehicle.ratePerKm * 100) / 100 : null;
+
+  if (!open) {
+    return (
+      <button type="button" onClick={() => setOpen(true)} className="self-start text-sm font-medium text-brand">
+        🚚 Add transport charge
+      </button>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-2 rounded-lg border border-dashed border-brand bg-brand-soft p-3">
+      <select
+        value={vehicleId}
+        onChange={(e) => setVehicleId(e.target.value)}
+        className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand"
+      >
+        {vehicles.map((v) => (
+          <option key={v.id} value={v.id}>
+            {v.name} — {formatMoney(v.ratePerKm)}/km
+          </option>
+        ))}
+      </select>
+      <input
+        type="number"
+        min={0}
+        step="0.1"
+        value={km}
+        onChange={(e) => setKm(e.target.value === "" ? "" : Number(e.target.value))}
+        placeholder="Distance covered (km)"
+        className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand"
+      />
+      {charge !== null && <p className="text-xs text-brand-dark">Transport charge: {formatMoney(charge)}</p>}
+      <div className="flex gap-2">
+        <button
+          type="button"
+          disabled={!vehicle || typeof km !== "number" || km <= 0}
+          onClick={() => {
+            if (!vehicle || typeof km !== "number") return;
+            onAdd(vehicle.id, vehicle.name, km, vehicle.ratePerKm);
+            setOpen(false);
+            setKm("");
+          }}
+          className="btn-primary-sm disabled:opacity-60"
+        >
+          Add to bill
+        </button>
+        <button type="button" onClick={() => setOpen(false)} className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-muted">
+          Cancel
+        </button>
+      </div>
     </div>
   );
 }

@@ -88,6 +88,8 @@ export default async function DashboardPage() {
         <RestaurantHome shopId={session.shopId} />
       ) : session.businessType === "rental" ? (
         <RentalHome shopId={session.shopId} />
+      ) : session.businessType === "pharmacy" ? (
+        <PharmacyHome session={session} t={t} />
       ) : (
         <RetailHome session={session} t={t} />
       )}
@@ -153,6 +155,120 @@ async function RetailHome({
         <StatCard label={t("home.last7Days")} value={formatMoney(weekTotal)} icon="📈" />
         <StatCard label={t("home.outstandingCredit")} value={formatMoney(outstanding)} tone="credit" href="/reminders" icon="🧾" />
         <StatCard label={t("home.payableToVendors")} value={formatMoney(outstandingPayable)} tone="credit" icon="🤝" />
+      </section>
+
+      <Link
+        href="/bills/new"
+        className="flex items-center justify-center gap-2 rounded-xl px-4 py-4 text-center font-semibold text-white shadow-md"
+        style={{ background: "linear-gradient(135deg, var(--brand-light), var(--brand-dark))" }}
+      >
+        <PlusIcon />
+        {t("home.newBill")}
+      </Link>
+
+      <section>
+        <h2 className="mb-2 text-sm font-semibold text-foreground">{t("home.recentBills")}</h2>
+        {!recentBills.data || recentBills.data.length === 0 ? (
+          <EmptyState text={t("home.noBillsYet")} />
+        ) : (
+          <ul className="flex flex-col gap-2">
+            {recentBills.data.map((bill) => {
+              const customerName = Array.isArray(bill.customers) ? bill.customers[0]?.name : (bill.customers as { name: string } | null)?.name;
+              return (
+                <li key={bill.id}>
+                  <Link href={`/print/bill/${bill.id}`} className="flex items-center justify-between rounded-lg border border-border bg-surface px-3.5 py-3 shadow-sm">
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium text-foreground">{customerName ?? t("common.walkinCustomer")}</p>
+                      <p className="text-xs text-muted">{formatDateTime(bill.created_at)}</p>
+                    </div>
+                    <div className="shrink-0 text-right">
+                      <p className="text-sm font-semibold text-foreground">{formatMoney(bill.total)}</p>
+                      {bill.credit_amount > 0 && <p className="text-xs text-credit">{formatMoney(bill.credit_amount)} {t("home.credit")}</p>}
+                    </div>
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </section>
+    </>
+  );
+}
+
+// ─── Pharmacy ────────────────────────────────────────────────────────────
+async function PharmacyHome({
+  session,
+  t,
+}: {
+  session: Awaited<ReturnType<typeof requireSession>>;
+  t: (key: string, vars?: Record<string, string | number>) => string;
+}) {
+  const admin = createSupabaseAdminClient();
+  const startOfToday = new Date();
+  startOfToday.setHours(0, 0, 0, 0);
+  const startOfWeek = new Date();
+  startOfWeek.setDate(startOfWeek.getDate() - 6);
+  startOfWeek.setHours(0, 0, 0, 0);
+  const expiryCutoff = new Date();
+  expiryCutoff.setDate(expiryCutoff.getDate() + 30);
+
+  const [todayBills, weekBills, recentBills, { data: expiringBatches }, { data: products }] = await Promise.all([
+    admin.from("bills").select("total").eq("shop_id", session.shopId).eq("status", "active").gte("created_at", startOfToday.toISOString()),
+    admin.from("bills").select("total, created_at").eq("shop_id", session.shopId).eq("status", "active").gte("created_at", startOfWeek.toISOString()),
+    admin
+      .from("bills")
+      .select("id, total, credit_amount, created_at, customers ( name )")
+      .eq("shop_id", session.shopId)
+      .eq("status", "active")
+      .order("created_at", { ascending: false })
+      .limit(5),
+    admin
+      .from("medicine_batches")
+      .select("id, quantity")
+      .eq("shop_id", session.shopId)
+      .lte("expiry_date", expiryCutoff.toISOString().slice(0, 10))
+      .gt("quantity", 0),
+    admin
+      .from("products")
+      .select("id, stock_quantity, low_stock_threshold")
+      .eq("shop_id", session.shopId)
+      .eq("is_pharma", true)
+      .eq("track_inventory", true),
+  ]);
+
+  const todayTotal = sum(todayBills.data?.map((b) => b.total));
+  const expiringCount = expiringBatches?.length ?? 0;
+  const lowStockCount = (products ?? []).filter((p) => Number(p.stock_quantity) <= Number(p.low_stock_threshold)).length;
+  const trend = buildSevenDayTrend(weekBills.data ?? [], "created_at");
+
+  return (
+    <>
+      <section className="rounded-xl border border-border bg-surface p-4 shadow-sm">
+        <div className="mb-1 flex items-center justify-between">
+          <p className="text-xs font-medium text-muted">Last 7 days</p>
+          <p className="text-sm font-semibold text-foreground">{formatMoney(sum(trend.map((d) => d.total)))}</p>
+        </div>
+        <SalesTrendChart data={trend} />
+      </section>
+
+      <section className="grid grid-cols-2 gap-3">
+        <StatCard label={t("home.todaySales")} value={formatMoney(todayTotal)} href="/daily-summary" icon="💰" />
+        <StatCard
+          label="Expiring soon"
+          value={String(expiringCount)}
+          tone={expiringCount > 0 ? "credit" : "default"}
+          href="/pharmacy/expiry"
+          icon="⏰"
+        />
+        <StatCard
+          label="Low stock"
+          value={String(lowStockCount)}
+          tone={lowStockCount > 0 ? "credit" : "default"}
+          href="/products"
+          icon="📉"
+          className="col-span-2"
+        />
       </section>
 
       <Link

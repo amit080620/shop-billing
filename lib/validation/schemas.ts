@@ -83,7 +83,7 @@ export const LOGO_ALLOWED_TYPES = ["image/png", "image/jpeg", "image/webp", "ima
 export const shopSettingsSchema = z.object({
   name: z.string().trim().min(1, "Shop name is required").max(120),
   businessType: z
-    .enum(["grocery", "restaurant", "mart", "hardware", "pharmacy", "rental", "general"])
+    .enum(["grocery", "restaurant", "mart", "hardware", "pharmacy", "rental", "transport", "general"])
     .default("general"),
   legalName: optionalText(160),
   gstin: optionalGstin,
@@ -129,6 +129,11 @@ export const billSchema = z.object({
   paymentMethod: z.enum(paymentMethods).default("cash"),
   doctorName: optionalText(120),
   patientName: optionalText(120),
+  // Present only when a transport-charge line was added (Transport &
+  // Materials business type) — used to log a vehicle trip record after
+  // the bill is created, for vehicle-wise reporting.
+  tripVehicleId: z.string().uuid().nullable().optional(),
+  tripKm: z.coerce.number().min(0).nullable().optional(),
 });
 export type BillInput = z.infer<typeof billSchema>;
 
@@ -161,7 +166,7 @@ export const staffInviteSchema = z.object({
 export const signupSchema = z.object({
   shopName: z.string().trim().min(1, "Shop name is required").max(120),
   businessType: z
-    .enum(["grocery", "restaurant", "mart", "hardware", "pharmacy", "rental", "general"])
+    .enum(["grocery", "restaurant", "mart", "hardware", "pharmacy", "rental", "transport", "general"])
     .default("general"),
   ownerName: z.string().trim().min(1, "Your name is required").max(80),
   email: z.string().trim().email(),

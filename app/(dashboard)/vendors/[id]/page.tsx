@@ -14,7 +14,7 @@ export default async function VendorLedgerPage({
 
   const { data: vendor } = await admin
     .from("vendors")
-    .select("id, name, phone, gstin")
+    .select("id, name, phone, gstin, address, state_code")
     .eq("id", id)
     .eq("shop_id", session.shopId)
     .single();
@@ -42,7 +42,14 @@ export default async function VendorLedgerPage({
 
   return (
     <VendorLedgerClient
-      vendor={vendor}
+      vendor={{
+        id: vendor.id,
+        name: vendor.name,
+        phone: vendor.phone,
+        gstin: vendor.gstin,
+        address: vendor.address,
+        stateCode: vendor.state_code,
+      }}
       balance={balance}
       purchases={(purchases ?? []).map((p) => ({
         id: p.id,

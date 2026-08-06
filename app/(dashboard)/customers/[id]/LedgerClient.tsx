@@ -8,6 +8,7 @@ import { recordPaymentAction } from "@/lib/actions/customers";
 import { formatMoney, formatDateTime } from "@/lib/format";
 import { EmptyState } from "@/app/components/EmptyState";
 import { DownloadStatementButton } from "./DownloadStatementButton";
+import { EditCustomerButton } from "./EditCustomerButton";
 import { PaymentMethodPicker } from "@/app/components/PaymentMethodPicker";
 
 type BillItem = { name: string; quantity: number; unitPrice: number; lineTotal: number };
@@ -41,7 +42,7 @@ export function LedgerClient({
   payments,
   returns,
 }: {
-  customer: { id: string; name: string; phone: string };
+  customer: { id: string; name: string; phone: string; gstin: string | null; address: string | null; stateCode: string | null };
   shopName: string;
   balance: number;
   bills: Bill[];
@@ -74,8 +75,13 @@ export function LedgerClient({
       </Link>
 
       <div className="rounded-xl border border-border bg-surface shadow-sm p-4">
-        <h1 className="text-lg font-semibold text-foreground">{customer.name}</h1>
-        <p className="text-sm text-muted">{customer.phone}</p>
+        <div className="flex items-start justify-between gap-2">
+          <div>
+            <h1 className="text-lg font-semibold text-foreground">{customer.name}</h1>
+            <p className="text-sm text-muted">{customer.phone}</p>
+          </div>
+          <EditCustomerButton customer={customer} />
+        </div>
         <div className="mt-3 flex items-end justify-between">
           <div>
             <p className="text-xs text-muted">Outstanding balance</p>

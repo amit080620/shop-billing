@@ -5,6 +5,7 @@ import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import Link from "next/link";
 import { addStaffAction, removeStaffAction } from "@/lib/actions/staff";
+import { EditStaffButton } from "./EditStaffButton";
 
 type StaffMember = { id: string; name: string; role: "owner" | "manager" | "staff" };
 
@@ -116,6 +117,7 @@ export function StaffClient({
               <p className="truncate text-sm font-medium text-foreground">{s.name}</p>
               <p className="text-xs text-muted capitalize">{s.role}</p>
             </div>
+            <EditStaffButton staff={s} isSelf={s.id === currentUserId} />
             {s.id !== currentUserId && (
               <button
                 disabled={isPending}

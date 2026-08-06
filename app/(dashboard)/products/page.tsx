@@ -12,7 +12,7 @@ export default async function ProductsPage() {
     admin
       .from("products")
       .select(
-        "id, name, price, gst_percent, hsn_code, barcode, unit, category_id, track_inventory, stock_quantity, low_stock_threshold, is_rentable, rental_rate_hourly, rental_rate_daily, rental_rate_weekly, rental_rate_monthly, security_deposit, is_pharma, requires_prescription, salt_composition, categories ( name )",
+        "id, name, price, gst_percent, hsn_code, barcode, unit, category_id, track_inventory, stock_quantity, low_stock_threshold, is_rentable, rental_rate_hourly, rental_rate_daily, rental_rate_weekly, rental_rate_monthly, security_deposit, is_pharma, requires_prescription, salt_composition, rack_location, drug_schedule, units_per_pack, loose_unit_name, categories ( name )",
       )
       .eq("shop_id", session.shopId)
       .order("name"),
@@ -45,6 +45,11 @@ export default async function ProductsPage() {
         securityDeposit: Number(p.security_deposit),
         isPharma: p.is_pharma,
         requiresPrescription: p.requires_prescription,
+        saltComposition: p.salt_composition,
+        rackLocation: p.rack_location,
+        drugSchedule: p.drug_schedule,
+        unitsPerPack: p.units_per_pack !== null ? Number(p.units_per_pack) : null,
+        looseUnitName: p.loose_unit_name,
         categoryName: Array.isArray(p.categories)
           ? p.categories[0]?.name
           : (p.categories as { name: string } | null)?.name ?? null,

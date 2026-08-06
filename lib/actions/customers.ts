@@ -43,6 +43,46 @@ export async function createCustomerAction(
   return null;
 }
 
+export async function updateCustomerAction(
+  customerId: string,
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const session = await requireSession();
+  const parsed = customerSchema.safeParse({
+    name: formData.get("name"),
+    phone: formData.get("phone"),
+    gstin: formData.get("gstin"),
+    address: formData.get("address"),
+    stateCode: formData.get("stateCode") || null,
+  });
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0].message };
+  }
+
+  const admin = createSupabaseAdminClient();
+  const { error } = await admin
+    .from("customers")
+    .update({
+      name: parsed.data.name,
+      phone: parsed.data.phone,
+      gstin: parsed.data.gstin ?? null,
+      address: parsed.data.address ?? null,
+      state_code: parsed.data.stateCode ?? null,
+      state: parsed.data.stateCode ? stateNameForCode(parsed.data.stateCode) : null,
+    })
+    .eq("id", customerId)
+    .eq("shop_id", session.shopId);
+  if (error) {
+    console.error("Could not update customer", error);
+    return { error: "Could not update customer" };
+  }
+
+  revalidatePath("/customers");
+  revalidatePath(`/customers/${customerId}`);
+  return null;
+}
+
 export async function recordPaymentAction(
   _prev: ActionState,
   formData: FormData,

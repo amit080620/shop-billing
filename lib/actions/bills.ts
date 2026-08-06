@@ -17,7 +17,7 @@ async function createBillCore(
   session: SessionContext,
   parsedData: BillInput,
 ): Promise<{ billId: string; invoiceNumber: string } | { error: string }> {
-  const { customerId, items, discountType, discountValue, paidAmount, paymentMethod, doctorName, patientName } = parsedData;
+  const { customerId, items, discountType, discountValue, paidAmount, paymentMethod, doctorName, patientName, tripVehicleId, tripKm } = parsedData;
 
   const admin = createSupabaseAdminClient();
 
@@ -148,6 +148,31 @@ async function createBillCore(
     // Roll back the orphaned bill header so we don't leave partial data.
     await admin.from("bills").delete().eq("id", bill.id);
     return { error: "Could not save bill items" };
+  }
+
+  // Transport & Materials business type — a bill that included a
+  // transport-charge line also logs the underlying trip, so Vehicles gets
+  // an accurate rounds/km/earnings history. Best-effort: the bill itself
+  // is already valid either way.
+  if (tripVehicleId && tripKm && tripKm > 0) {
+    const { data: vehicle } = await admin
+      .from("vehicles")
+      .select("id, rate_per_km")
+      .eq("id", tripVehicleId)
+      .eq("shop_id", session.shopId)
+      .single();
+    if (vehicle) {
+      await admin.from("transport_trips").insert({
+        shop_id: session.shopId,
+        vehicle_id: vehicle.id,
+        customer_id: customerId,
+        bill_id: bill.id,
+        staff_id: session.userId,
+        km: tripKm,
+        rate_per_km: Number(vehicle.rate_per_km),
+        transport_charge: round2(tripKm * Number(vehicle.rate_per_km)),
+      });
+    }
   }
 
   // Stock decrement — best-effort (the bill is already committed at this

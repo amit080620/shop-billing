@@ -14,7 +14,7 @@ export default async function CustomerLedgerPage({
 
   const { data: customer } = await admin
     .from("customers")
-    .select("id, name, phone")
+    .select("id, name, phone, gstin, address, state_code")
     .eq("id", id)
     .eq("shop_id", session.shopId) // ownership check
     .single();
@@ -69,7 +69,14 @@ export default async function CustomerLedgerPage({
 
   return (
     <LedgerClient
-      customer={customer}
+      customer={{
+        id: customer.id,
+        name: customer.name,
+        phone: customer.phone,
+        gstin: customer.gstin,
+        address: customer.address,
+        stateCode: customer.state_code,
+      }}
       shopName={session.shopName}
       balance={balance}
       bills={(bills ?? []).map((b) => ({

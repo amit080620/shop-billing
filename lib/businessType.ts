@@ -1,4 +1,4 @@
-export type BusinessType = "grocery" | "restaurant" | "mart" | "hardware" | "pharmacy" | "rental" | "general";
+export type BusinessType = "grocery" | "restaurant" | "mart" | "hardware" | "pharmacy" | "rental" | "transport" | "general";
 
 export const BUSINESS_TYPES: { value: BusinessType; label: string; icon: string }[] = [
   { value: "grocery", label: "Grocery / Kirana", icon: "🛒" },
@@ -7,6 +7,7 @@ export const BUSINESS_TYPES: { value: BusinessType; label: string; icon: string 
   { value: "pharmacy", label: "Pharmacy / Medical", icon: "💊" },
   { value: "restaurant", label: "Restaurant / Café", icon: "🍽️" },
   { value: "rental", label: "Rental business", icon: "🔁" },
+  { value: "transport", label: "Transport & Materials", icon: "🚚" },
   { value: "general", label: "General / Other", icon: "🏬" },
 ];
 
@@ -58,6 +59,12 @@ const TERMINOLOGY: Record<BusinessType, Terminology> = {
     productSingular: "Item",
     productSub: "Catalog, rental rates, stock",
     addProductLabel: "+ Item",
+  },
+  transport: {
+    productPlural: "Materials",
+    productSingular: "Material",
+    productSub: "Catalog, HSN codes, GST%, stock",
+    addProductLabel: "+ Material",
   },
   general: {
     productPlural: "Products",
