@@ -401,6 +401,19 @@ export const translations: Record<Lang, Record<string, string>> = {
     "rentalsPage.saving": "Saving…",
     "rentalsPage.markReturned": "Mark as returned",
 
+    // Subscription card
+    "subscription.title": "Subscription",
+    "subscription.active": "Active",
+    "subscription.expiringSoon": "Expiring soon",
+    "subscription.expired": "Expired",
+    "subscription.daysRemaining": "days remaining",
+    "subscription.daysOverdue": "days overdue",
+    "subscription.memberSince": "Member since",
+    "subscription.validUntil": "Valid until",
+    "subscription.rechargeContact": "Recharge / Contact us",
+    "subscription.whatsappGreeting": "Hi, this is",
+    "subscription.whatsappRecharge": "I'd like to recharge my subscription.",
+
     // Pharmacy — Expiry, Doctors, Schedule X, Write-offs
     "expiry.title": "Expiry alerts",
     "expiry.subtitle": "Next 90 days — push these for sale or return before they're wasted.",
@@ -868,6 +881,19 @@ export const translations: Record<Lang, Record<string, string>> = {
     "rentalsPage.saving": "सेव हो रहा है…",
     "rentalsPage.markReturned": "वापस आया mark करें",
 
+    // Subscription card
+    "subscription.title": "Subscription",
+    "subscription.active": "चालू",
+    "subscription.expiringSoon": "जल्द खत्म होगी",
+    "subscription.expired": "खत्म हो गई",
+    "subscription.daysRemaining": "दिन बाकी",
+    "subscription.daysOverdue": "दिन overdue",
+    "subscription.memberSince": "सदस्य बने",
+    "subscription.validUntil": "वैध तारीख",
+    "subscription.rechargeContact": "Recharge / संपर्क करें",
+    "subscription.whatsappGreeting": "नमस्ते, यह",
+    "subscription.whatsappRecharge": "है — मुझे अपनी subscription recharge करनी है।",
+
     // Pharmacy — Expiry, Doctors, Schedule X, Write-offs
     "expiry.title": "Expiry की चेतावनी",
     "expiry.subtitle": "अगले 90 दिन — बर्बाद होने से पहले बेच दें या वापस कर दें।",
@@ -1334,6 +1360,19 @@ export const translations: Record<Lang, Record<string, string>> = {
     "rentalsPage.lateFeeLabel": "Late fee (₹) — ठरलेल्या तारखेनंतर परत आल्यास",
     "rentalsPage.saving": "सेव्ह होत आहे…",
     "rentalsPage.markReturned": "परत आले mark करा",
+
+    // Subscription card
+    "subscription.title": "Subscription",
+    "subscription.active": "सुरू",
+    "subscription.expiringSoon": "लवकर संपणार",
+    "subscription.expired": "संपली",
+    "subscription.daysRemaining": "दिवस बाकी",
+    "subscription.daysOverdue": "दिवस overdue",
+    "subscription.memberSince": "सदस्य झाले",
+    "subscription.validUntil": "वैध तारीख",
+    "subscription.rechargeContact": "Recharge / संपर्क करा",
+    "subscription.whatsappGreeting": "नमस्कार, हे",
+    "subscription.whatsappRecharge": "आहे — मला माझे subscription recharge करायचे आहे.",
 
     // Pharmacy — Expiry, Doctors, Schedule X, Write-offs
     "expiry.title": "Expiry सूचना",
