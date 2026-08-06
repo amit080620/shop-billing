@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { requireSession } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { getTranslator } from "@/lib/i18n/server";
 import { PageHeader } from "@/app/components/PageHeader";
 import { EmptyState } from "@/app/components/EmptyState";
 import { ShareExpiryWhatsApp } from "./ShareExpiryWhatsApp";
@@ -11,6 +12,7 @@ function daysUntil(dateStr: string) {
 
 export default async function ExpiryAlertsPage() {
   const session = await requireSession();
+  const { t, lang } = await getTranslator();
   const admin = createSupabaseAdminClient();
 
   const cutoff = new Date();
@@ -31,8 +33,8 @@ export default async function ExpiryAlertsPage() {
   return (
     <div className="flex flex-col gap-4">
       <PageHeader
-        title="Expiry alerts"
-        subtitle="Next 90 days — push these for sale or return before they're wasted."
+        title={t("expiry.title")}
+        subtitle={t("expiry.subtitle")}
         icon={
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
             <circle cx="12" cy="12" r="9" />
@@ -42,17 +44,18 @@ export default async function ExpiryAlertsPage() {
       />
 
       {(!batches || batches.length === 0) ? (
-        <EmptyState text="Nothing expiring in the next 90 days — good shape." />
+        <EmptyState text={t("expiry.empty")} />
       ) : (
         <>
           <ShareExpiryWhatsApp
             shopName={session.shopName}
+            lang={lang}
             expired={expired.map(toRow)}
             critical={critical.map(toRow)}
           />
-          {expired.length > 0 && <Group title={`🔴 Already expired (${expired.length})`} batches={expired} />}
-          {critical.length > 0 && <Group title={`🟠 Within 30 days (${critical.length})`} batches={critical} />}
-          {upcoming.length > 0 && <Group title={`🟡 31–90 days (${upcoming.length})`} batches={upcoming} />}
+          {expired.length > 0 && <Group title={t("expiry.alreadyExpired", { count: expired.length })} batches={expired} t={t} />}
+          {critical.length > 0 && <Group title={t("expiry.within30", { count: critical.length })} batches={critical} t={t} />}
+          {upcoming.length > 0 && <Group title={t("expiry.days31to90", { count: upcoming.length })} batches={upcoming} t={t} />}
         </>
       )}
     </div>
@@ -80,7 +83,9 @@ type BatchRow = {
   products: { id: string; name: string; unit: string } | { id: string; name: string; unit: string }[] | null;
 };
 
-function Group({ title, batches }: { title: string; batches: BatchRow[] }) {
+type Translator = (key: string, vars?: Record<string, string | number>) => string;
+
+function Group({ title, batches, t }: { title: string; batches: BatchRow[]; t: Translator }) {
   return (
     <section className="flex flex-col gap-2">
       <p className="text-sm font-semibold text-foreground">{title}</p>
@@ -97,12 +102,16 @@ function Group({ title, batches }: { title: string; batches: BatchRow[] }) {
                 <div className="min-w-0">
                   <p className="truncate text-sm font-medium text-foreground">{product?.name ?? "Medicine"}</p>
                   <p className="text-xs text-muted">
-                    Batch {b.batch_number} · {Number(b.quantity)} {product?.unit} ·{" "}
-                    {new Date(b.expiry_date).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+                    {t("expiry.batchLine", {
+                      number: b.batch_number,
+                      qty: Number(b.quantity),
+                      unit: product?.unit ?? "",
+                      date: new Date(b.expiry_date).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }),
+                    })}
                   </p>
                 </div>
                 <span className="shrink-0 text-xs font-medium text-danger">
-                  {days < 0 ? "Expired" : `${days}d`}
+                  {days < 0 ? t("expiry.expired") : t("expiry.daysShort", { days })}
                 </span>
               </Link>
             </li>

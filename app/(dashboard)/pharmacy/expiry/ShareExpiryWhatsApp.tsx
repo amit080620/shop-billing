@@ -1,8 +1,12 @@
 "use client";
 
+import { useTranslation } from "@/lib/i18n/useTranslation";
+import type { Lang } from "@/lib/i18n/dictionary";
+
 type Row = { name: string; batchNumber: string; quantity: number; unit: string; expiryDate: string; daysLeft: number };
 
-export function ShareExpiryWhatsApp({ expired, critical, shopName }: { expired: Row[]; critical: Row[]; shopName: string }) {
+export function ShareExpiryWhatsApp({ expired, critical, shopName, lang }: { expired: Row[]; critical: Row[]; shopName: string; lang: Lang }) {
+  const { t } = useTranslation(lang);
   function share() {
     const lines: string[] = [`*${shopName} — Expiry alert*`, ""];
 
@@ -32,7 +36,7 @@ export function ShareExpiryWhatsApp({ expired, critical, shopName }: { expired: 
       onClick={share}
       className="rounded-lg border border-brand bg-brand-soft px-3.5 py-2.5 text-sm font-medium text-brand-dark"
     >
-      📤 Share urgent list via WhatsApp
+      {t("expiry.shareButton")}
     </button>
   );
 }

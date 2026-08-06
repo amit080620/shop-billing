@@ -14,7 +14,7 @@ type Row = {
   patientName: string;
 };
 
-export function ExportRegisterButton({ rows }: { rows: Row[] }) {
+export function ExportRegisterButton({ rows, label }: { rows: Row[]; label: string }) {
   function exportCsv() {
     downloadCsv(
       "schedule-x-register.csv",
@@ -35,7 +35,7 @@ export function ExportRegisterButton({ rows }: { rows: Row[] }) {
 
   return (
     <button onClick={exportCsv} className="self-start rounded-lg border border-brand bg-brand-soft px-3.5 py-2 text-sm font-medium text-brand-dark">
-      📥 Export register (CSV)
+      {label}
     </button>
   );
 }
