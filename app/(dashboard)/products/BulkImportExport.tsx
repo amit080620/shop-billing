@@ -51,33 +51,14 @@ function toBool(v: unknown) {
   return s === "true" || s === "yes" || s === "y" || s === "1";
 }
 
-export function BulkImportExport({ products, onImported }: { products: Product[]; onImported: () => void }) {
+export function BulkImportExport({ products, onImported, businessType }: { products: Product[]; onImported: () => void; businessType: string }) {
   const [open, setOpen] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   const [result, setResult] = useState<ImportResult | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   function downloadTemplate() {
-    downloadCsv(
-      "inventory-import-template.csv",
-      HEADERS,
-      [
-        // A regular (non-medicine) product — pharmacy columns left blank.
-        [
-          "Amul Milk 500ml", "28", "5", "PKT", "0402", "8901234567890",
-          "Dairy", "TRUE", "50", "10",
-          "", "", "", "", "", "", "", "", "", "",
-        ],
-        // A medicine — batch/expiry columns fill in its first stock too,
-        // so it shows up correctly on the Expiry alerts page right away.
-        [
-          "Paracetamol 500", "50", "12", "strip", "3004", "",
-          "Medicines", "TRUE", "20", "5",
-          "TRUE", "FALSE", "Paracetamol 500mg", "10", "tablet", "Rack 3B", "otc",
-          "B001", "2027-06-30", "2026-01-15",
-        ],
-      ],
-    );
+    downloadCsv("inventory-import-template.csv", HEADERS, sampleRowsFor(businessType));
   }
 
   function exportInventory() {
@@ -227,4 +208,50 @@ export function BulkImportExport({ products, onImported }: { products: Product[]
       )}
     </div>
   );
+}
+
+/** Business-appropriate example rows for the template — a restaurant
+ * seeing "Amul Milk" as the sample makes the whole template feel like it
+ * wasn't built for them; each vertical gets an example shaped like what
+ * they'd actually type in. Columns always match HEADERS' 20-column order. */
+function sampleRowsFor(businessType: string): (string | number)[][] {
+  const blank20 = (row: (string | number)[]) => [...row, ...Array(20 - row.length).fill("")];
+
+  switch (businessType) {
+    case "restaurant":
+      return [
+        blank20(["Butter Chicken", "280", "5", "PLATE", "", "", "Main Course", "FALSE", "", ""]),
+        blank20(["Masala Chai", "20", "5", "GLASS", "", "", "Beverages", "FALSE", "", ""]),
+      ];
+    case "transport":
+      return [
+        blank20(["River Sand", "1200", "5", "TON", "2505", "", "Sand", "TRUE", "50", "5"]),
+        blank20(["Cement OPC 43", "380", "28", "BAG", "2523", "", "Cement", "TRUE", "100", "20"]),
+      ];
+    case "rental":
+      return [
+        blank20(["Plastic Chair", "0", "18", "NOS", "", "", "Furniture", "TRUE", "50", "5"]),
+        blank20(["Round Table (6-seater)", "0", "18", "NOS", "", "", "Furniture", "TRUE", "10", "2"]),
+      ];
+    case "hardware":
+      return [
+        blank20(["PVC Pipe 1 inch", "45", "18", "MTR", "3917", "", "Plumbing", "TRUE", "200", "20"]),
+        blank20(["Cement Nails 2 inch", "120", "18", "KG", "7317", "", "Nails & Fasteners", "TRUE", "30", "5"]),
+      ];
+    case "pharmacy":
+      return [
+        // Batch/expiry columns fill in its first stock too, so it shows up
+        // correctly on the Expiry alerts page right away.
+        [
+          "Paracetamol 500", "50", "12", "STRIP", "3004", "",
+          "Medicines", "TRUE", "20", "5",
+          "TRUE", "FALSE", "Paracetamol 500mg", "10", "tablet", "Rack 3B", "otc",
+          "B001", "2027-06-30", "2026-01-15",
+        ],
+      ];
+    default:
+      return [
+        blank20(["Amul Milk 500ml", "28", "5", "PKT", "0402", "8901234567890", "Dairy", "TRUE", "50", "10"]),
+      ];
+  }
 }

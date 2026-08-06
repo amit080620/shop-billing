@@ -77,3 +77,31 @@ const TERMINOLOGY: Record<BusinessType, Terminology> = {
 export function getTerminology(businessType: string): Terminology {
   return TERMINOLOGY[businessType as BusinessType] ?? TERMINOLOGY.general;
 }
+
+// The full unit list (lib/constants/states.ts) has everything from KG to
+// TON to CUM — showing all of it to every business is how a restaurant
+// ends up with "Ton" as an option for a plate of food. Each vertical gets
+// its own short, relevant list instead, with the most likely pick first;
+// anything genuinely unusual is still one scroll away since this filters
+// the same master list rather than replacing it.
+const UNIT_PRIORITY: Record<BusinessType, string[]> = {
+  restaurant: ["PLATE", "NOS", "BOWL", "GLASS", "PCS", "KG", "LTR"],
+  transport: ["TON", "QTL", "BAG", "KG", "CFT", "CUM", "NOS", "LTR"],
+  pharmacy: ["STRIP", "BOX", "BOTTLE", "NOS", "ML", "KG", "GM"],
+  rental: ["NOS", "PCS", "SET", "KG"],
+  hardware: ["PCS", "NOS", "MTR", "BOX", "KG", "SET"],
+  grocery: ["KG", "GM", "LTR", "ML", "NOS", "PKT", "BOX", "DZN"],
+  mart: ["KG", "GM", "LTR", "ML", "NOS", "PKT", "BOX", "DZN"],
+  general: [],
+};
+
+/** Returns the full unit list re-ordered so the ones that actually make
+ * sense for this business sit at the top of the dropdown — nothing is
+ * removed, a restaurant can still pick KG for a bulk ingredient if they
+ * genuinely need to, it's just not the first thing they see. */
+export function getUnitsForBusinessType(businessType: string, allUnits: string[]): string[] {
+  const priority = UNIT_PRIORITY[businessType as BusinessType] ?? [];
+  if (priority.length === 0) return allUnits;
+  const rest = allUnits.filter((u) => !priority.includes(u));
+  return [...priority.filter((u) => allUnits.includes(u)), ...rest];
+}

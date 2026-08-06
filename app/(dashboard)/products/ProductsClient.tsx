@@ -19,6 +19,7 @@ import { CameraBarcodeScanner } from "@/app/components/CameraBarcodeScanner";
 import { BarcodeScanInput } from "@/app/components/BarcodeScanInput";
 import { BulkImportExport } from "./BulkImportExport";
 import { COMMON_GST_RATES, UNITS } from "@/lib/constants/states";
+import { getUnitsForBusinessType } from "@/lib/businessType";
 import { useTranslation } from "@/lib/i18n/useTranslation";
 import type { Lang } from "@/lib/i18n/dictionary";
 
@@ -65,13 +66,23 @@ export function ProductsClient({
   categories,
   terminology,
   lang,
+  businessType,
 }: {
   initialProducts: Product[];
   categories: Category[];
   terminology: { productPlural: string; productSingular: string; productSub: string; addProductLabel: string };
   lang: Lang;
+  businessType: string;
 }) {
   const { t } = useTranslation(lang);
+  const orderedUnits = getUnitsForBusinessType(businessType, UNITS);
+  // Grocery/Mart/Hardware/General stay flexible (either toggle might
+  // genuinely apply to some item in a general store) — only hidden for
+  // verticals where it's clearly never relevant, which is the actual
+  // complaint this was fixing: a restaurant seeing "medicine batch
+  // tracking" or a transport business seeing "available for rent".
+  const showRentalSection = !["restaurant", "pharmacy", "transport"].includes(businessType);
+  const showPharmaSection = !["restaurant", "transport", "rental"].includes(businessType);
   const [showForm, setShowForm] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [trackInventory, setTrackInventory] = useState(false);
@@ -198,6 +209,7 @@ export function ProductsClient({
         <CameraBarcodeScanner onScan={handleInventoryScan} />
         {scanNotice && <p className="text-xs text-credit">{scanNotice}</p>}
         <BulkImportExport
+          businessType={businessType}
           products={initialProducts.map((p) => ({
             name: p.name,
             price: p.price,
@@ -311,7 +323,7 @@ export function ProductsClient({
                 defaultValue={editingProduct?.unit ?? "NOS"}
                 className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-brand"
               >
-                {UNITS.map((u) => (
+                {orderedUnits.map((u) => (
                   <option key={u} value={u}>
                     {u}
                   </option>
@@ -352,28 +364,34 @@ export function ProductsClient({
               <Field name="lowStockThreshold" label={t("products.lowStockAlertBelow")} type="number" step="0.01" min="0" defaultValue={editingProduct ? String(editingProduct.lowStockThreshold) : "0"} />
             </div>
           )}
-          <label className="flex items-center gap-2 text-sm text-foreground">
-            <input
-              type="checkbox"
-              name="isRentable"
-              checked={isRentable}
-              onChange={(e) => setIsRentable(e.target.checked)}
-              className="h-4 w-4 rounded border-border"
-            />
-            {t("products.alsoRentable")}
-          </label>
-          {isRentable && (
-            <div className="flex flex-col gap-3 rounded-lg border border-dashed border-brand bg-brand-soft p-3">
-              <p className="text-xs text-brand-dark">{t("products.rentalRateExplain")}</p>
-              <div className="grid grid-cols-2 gap-3">
-                <Field name="rentalRateHourly" label={t("products.perHour")} type="number" step="0.01" min="0" defaultValue={editingProduct?.rentalRateHourly != null ? String(editingProduct.rentalRateHourly) : undefined} />
-                <Field name="rentalRateDaily" label={t("products.perDay")} type="number" step="0.01" min="0" defaultValue={editingProduct?.rentalRateDaily != null ? String(editingProduct.rentalRateDaily) : undefined} />
-                <Field name="rentalRateWeekly" label={t("products.perWeek")} type="number" step="0.01" min="0" defaultValue={editingProduct?.rentalRateWeekly != null ? String(editingProduct.rentalRateWeekly) : undefined} />
-                <Field name="rentalRateMonthly" label={t("products.perMonth")} type="number" step="0.01" min="0" defaultValue={editingProduct?.rentalRateMonthly != null ? String(editingProduct.rentalRateMonthly) : undefined} />
-              </div>
-              <Field name="securityDeposit" label={t("products.securityDeposit")} type="number" step="0.01" min="0" defaultValue={editingProduct ? String(editingProduct.securityDeposit) : "0"} />
-            </div>
+          {showRentalSection && (
+            <>
+              <label className="flex items-center gap-2 text-sm text-foreground">
+                <input
+                  type="checkbox"
+                  name="isRentable"
+                  checked={isRentable}
+                  onChange={(e) => setIsRentable(e.target.checked)}
+                  className="h-4 w-4 rounded border-border"
+                />
+                {t("products.alsoRentable")}
+              </label>
+              {isRentable && (
+                <div className="flex flex-col gap-3 rounded-lg border border-dashed border-brand bg-brand-soft p-3">
+                  <p className="text-xs text-brand-dark">{t("products.rentalRateExplain")}</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <Field name="rentalRateHourly" label={t("products.perHour")} type="number" step="0.01" min="0" defaultValue={editingProduct?.rentalRateHourly != null ? String(editingProduct.rentalRateHourly) : undefined} />
+                    <Field name="rentalRateDaily" label={t("products.perDay")} type="number" step="0.01" min="0" defaultValue={editingProduct?.rentalRateDaily != null ? String(editingProduct.rentalRateDaily) : undefined} />
+                    <Field name="rentalRateWeekly" label={t("products.perWeek")} type="number" step="0.01" min="0" defaultValue={editingProduct?.rentalRateWeekly != null ? String(editingProduct.rentalRateWeekly) : undefined} />
+                    <Field name="rentalRateMonthly" label={t("products.perMonth")} type="number" step="0.01" min="0" defaultValue={editingProduct?.rentalRateMonthly != null ? String(editingProduct.rentalRateMonthly) : undefined} />
+                  </div>
+                  <Field name="securityDeposit" label={t("products.securityDeposit")} type="number" step="0.01" min="0" defaultValue={editingProduct ? String(editingProduct.securityDeposit) : "0"} />
+                </div>
+              )}
+            </>
           )}
+          {showPharmaSection && (
+          <>
           <label className="flex items-center gap-2 text-sm text-foreground">
             <input
               type="checkbox"
@@ -421,6 +439,8 @@ export function ProductsClient({
               </div>
               <p className="text-xs text-brand-dark">{t("products.pharmaExplain")}</p>
             </div>
+          )}
+          </>
           )}
           {productState?.error && (
             <p className="text-sm text-credit">{productState.error}</p>

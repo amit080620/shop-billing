@@ -2,6 +2,7 @@ import Link from "next/link";
 import { requireSession } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { formatMoney } from "@/lib/format";
+import { getTranslator } from "@/lib/i18n/server";
 import { PageHeader } from "@/app/components/PageHeader";
 import { EmptyState } from "@/app/components/EmptyState";
 import { DateRangeControls } from "../DateRangeControls";
@@ -22,6 +23,7 @@ export default async function ItemWiseReportPage({
   searchParams: Promise<{ from?: string; to?: string }>;
 }) {
   const session = await requireSession();
+  const { t, lang } = await getTranslator();
   const { from, to } = await searchParams;
   const fromDate = from || startOfMonthIso();
   const toDate = to || todayIso();
@@ -43,9 +45,10 @@ export default async function ItemWiseReportPage({
 
   const orderIds = (orders ?? []).map((o) => o.id);
 
+  const unassignedLabel = t("rreports.unassigned");
   const byWaiter = new Map<string, { name: string; orders: number; revenue: number }>();
   for (const o of orders ?? []) {
-    const name = o.waiter_name?.trim() || "Unassigned";
+    const name = o.waiter_name?.trim() || unassignedLabel;
     const existing = byWaiter.get(name) ?? { name, orders: 0, revenue: 0 };
     existing.orders += 1;
     existing.revenue += Number(o.total);
@@ -72,10 +75,11 @@ export default async function ItemWiseReportPage({
   );
 
   // Aggregate by item name
+  const uncategorizedLabel = t("rreports.uncategorized");
   const byItem = new Map<string, { name: string; qty: number; revenue: number; category: string }>();
   for (const item of items ?? []) {
     const key = item.product_name;
-    const category = (item.product_id && categoryByProduct.get(item.product_id)) || "Uncategorized";
+    const category = (item.product_id && categoryByProduct.get(item.product_id)) || uncategorizedLabel;
     const existing = byItem.get(key) ?? { name: item.product_name, qty: 0, revenue: 0, category };
     existing.qty += Number(item.quantity);
     existing.revenue += Number(item.line_total);
@@ -98,8 +102,8 @@ export default async function ItemWiseReportPage({
   return (
     <div className="flex flex-col gap-4">
       <PageHeader
-        title="Item-wise sales"
-        subtitle="Which dishes actually sell — by revenue, this period."
+        title={t("rreports.itemsTitle")}
+        subtitle={t("rreports.itemsSubtitle")}
         icon={
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
             <path d="M4 19V5M4 19h16M8 15l3-4 3 3 4-6" />
@@ -107,24 +111,24 @@ export default async function ItemWiseReportPage({
         }
       />
       <Link href="/restaurant/reports" className="text-sm text-muted">
-        ← Day-wise reports
+        {t("rreports.backToDayWise")}
       </Link>
 
-      <DateRangeControls from={fromDate} to={toDate} basePath="/restaurant/reports/items" />
+      <DateRangeControls from={fromDate} to={toDate} basePath="/restaurant/reports/items" lang={lang} />
 
       {itemRows.length === 0 ? (
-        <EmptyState text="No settled bills in this range yet." />
+        <EmptyState text={t("rreports.itemsEmpty")} />
       ) : (
         <>
           {waiterRows.length > 1 && (
             <section className="flex flex-col gap-2">
-              <p className="text-sm font-medium text-foreground">By waiter</p>
+              <p className="text-sm font-medium text-foreground">{t("rreports.byWaiter")}</p>
               <ul className="flex flex-col gap-1.5">
                 {waiterRows.map((w) => (
                   <li key={w.name} className="flex items-center justify-between rounded-lg border border-border bg-surface shadow-sm px-3.5 py-2.5">
                     <div>
                       <p className="text-sm font-medium text-foreground">{w.name}</p>
-                      <p className="text-xs text-muted">{w.orders} bill(s)</p>
+                      <p className="text-xs text-muted">{t("rreports.billCount", { count: w.orders })}</p>
                     </div>
                     <p className="text-sm font-semibold text-foreground">{formatMoney(w.revenue)}</p>
                   </li>
@@ -134,7 +138,7 @@ export default async function ItemWiseReportPage({
           )}
 
           <section className="flex flex-col gap-2">
-            <p className="text-sm font-medium text-foreground">By category</p>
+            <p className="text-sm font-medium text-foreground">{t("rreports.byCategory")}</p>
             <ul className="flex flex-col gap-1.5">
               {categoryRows.map((c) => (
                 <li key={c.name} className="rounded-lg border border-border bg-surface shadow-sm px-3.5 py-2.5">
@@ -154,7 +158,7 @@ export default async function ItemWiseReportPage({
           </section>
 
           <section className="flex flex-col gap-2">
-            <p className="text-sm font-medium text-foreground">By item</p>
+            <p className="text-sm font-medium text-foreground">{t("rreports.byItem")}</p>
             <ul className="flex flex-col gap-1.5">
               {itemRows.map((r, i) => (
                 <li key={r.name} className="flex items-center justify-between gap-3 rounded-lg border border-border bg-surface shadow-sm px-3.5 py-2.5">
@@ -162,7 +166,7 @@ export default async function ItemWiseReportPage({
                     <span className="w-5 shrink-0 text-xs font-semibold text-muted">#{i + 1}</span>
                     <div className="min-w-0">
                       <p className="truncate text-sm font-medium text-foreground">{r.name}</p>
-                      <p className="text-xs text-muted">{r.category} · {r.qty} sold</p>
+                      <p className="text-xs text-muted">{r.category} · {r.qty} {t("rreports.sold")}</p>
                     </div>
                   </div>
                   <p className="shrink-0 text-sm font-semibold text-foreground">{formatMoney(r.revenue)}</p>

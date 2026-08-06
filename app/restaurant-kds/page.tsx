@@ -1,9 +1,11 @@
 import { requireSession } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { getTranslator } from "@/lib/i18n/server";
 import { KdsClient } from "./KdsClient";
 
 export default async function KdsPage() {
   const session = await requireSession();
+  const { lang } = await getTranslator();
   const admin = createSupabaseAdminClient();
 
   const { data: orders } = await admin
@@ -27,5 +29,5 @@ export default async function KdsPage() {
     };
   });
 
-  return <KdsClient shopName={session.shopName} initialTickets={tickets} />;
+  return <KdsClient shopName={session.shopName} initialTickets={tickets} lang={lang} />;
 }

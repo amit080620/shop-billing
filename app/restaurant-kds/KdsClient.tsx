@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { markItemReadyAction } from "@/lib/actions/restaurant";
+import { useTranslation } from "@/lib/i18n/useTranslation";
+import type { Lang } from "@/lib/i18n/dictionary";
 
 type Item = { id: string; name: string; quantity: number; status: "pending" | "ready" | "served"; createdAt: string };
 type Ticket = {
@@ -13,7 +15,8 @@ type Ticket = {
   items: Item[];
 };
 
-export function KdsClient({ shopName, initialTickets }: { shopName: string; initialTickets: Ticket[] }) {
+export function KdsClient({ shopName, initialTickets, lang }: { shopName: string; initialTickets: Ticket[]; lang: Lang }) {
+  const { t } = useTranslation(lang);
   const router = useRouter();
   const [now, setNow] = useState(Date.now());
   const [, startTransition] = useTransition();
@@ -102,17 +105,17 @@ export function KdsClient({ shopName, initialTickets }: { shopName: string; init
     <div className="min-h-screen bg-gray-950 p-4 text-white">
       <div className="mb-4 flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold">{shopName} · Kitchen</h1>
-          <p className="text-sm text-gray-400">{visibleTickets.length} order(s) in progress · tap an item once it&apos;s ready</p>
+          <h1 className="text-xl font-bold">{t("kds.title", { shop: shopName })}</h1>
+          <p className="text-sm text-gray-400">{t("kds.subtitle", { count: visibleTickets.length })}</p>
         </div>
         <a href="/restaurant" className="rounded-lg border border-gray-700 px-3 py-1.5 text-sm text-gray-300">
-          ← Back to app
+          {t("kds.backToApp")}
         </a>
       </div>
 
       {visibleTickets.length === 0 ? (
         <div className="flex h-[70vh] items-center justify-center text-2xl font-medium text-gray-600">
-          No open orders — kitchen&apos;s clear ✨
+          {t("kds.empty")}
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { requireSession } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { formatMoney } from "@/lib/format";
+import { getTranslator } from "@/lib/i18n/server";
 import { PageHeader } from "@/app/components/PageHeader";
 import { EmptyState } from "@/app/components/EmptyState";
 import { DateRangeControls } from "./DateRangeControls";
@@ -17,6 +18,7 @@ export default async function RestaurantReportsPage({
   searchParams: Promise<{ from?: string; to?: string }>;
 }) {
   const session = await requireSession();
+  const { t, lang } = await getTranslator();
   const { from, to } = await searchParams;
   const fromDate = from || todayIso();
   const toDate = to || todayIso();
@@ -49,7 +51,7 @@ export default async function RestaurantReportsPage({
   return (
     <div className="flex flex-col gap-4">
       <PageHeader
-        title="Restaurant sales"
+        title={t("rreports.title")}
         icon={
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
             <path d="M4 19V5M4 19h16M8 15l3-4 3 3 4-6" />
@@ -57,23 +59,23 @@ export default async function RestaurantReportsPage({
         }
       />
 
-      <DateRangeControls from={fromDate} to={toDate} />
+      <DateRangeControls from={fromDate} to={toDate} lang={lang} />
 
       <Link href="/restaurant/reports/items" className="rounded-lg border border-dashed border-brand bg-brand-soft px-3.5 py-3 text-sm font-medium text-brand-dark">
-        📊 Item-wise & category-wise sales →
+        {t("rreports.itemWiseLink")}
       </Link>
 
       <div className="rounded-xl border border-border bg-surface shadow-sm p-4 text-center">
         <p className="text-xs text-muted">
-          {fromDate === toDate ? "That day" : `${fromDate} → ${toDate}`}
+          {fromDate === toDate ? t("rreports.thatDay") : `${fromDate} → ${toDate}`}
         </p>
         <p className="mt-1 text-xl font-semibold text-foreground">{formatMoney(totalSales)}</p>
-        <p className="text-xs text-muted">{(orders ?? []).length} bill(s)</p>
+        <p className="text-xs text-muted">{t("rreports.billCount", { count: (orders ?? []).length })}</p>
       </div>
 
       {methodRows.length > 0 && (
         <div className="rounded-xl border border-border bg-surface shadow-sm p-4">
-          <p className="mb-2 text-xs font-medium text-muted">Payment mix</p>
+          <p className="mb-2 text-xs font-medium text-muted">{t("rreports.paymentMix")}</p>
           <div className="flex flex-col gap-1.5">
             {methodRows.map(([method, amount]) => (
               <div key={method} className="flex items-center justify-between text-sm">
@@ -86,7 +88,7 @@ export default async function RestaurantReportsPage({
       )}
 
       {(!orders || orders.length === 0) ? (
-        <EmptyState text="No settled bills in this range." />
+        <EmptyState text={t("rreports.empty")} />
       ) : (
         <ul className="flex flex-col gap-2">
           {orders.map((o) => {

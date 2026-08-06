@@ -28,6 +28,7 @@ export default async function ProductsPage() {
   return (
     <ProductsClient
       lang={lang}
+      businessType={session.businessType}
       initialProducts={(products ?? []).map((p) => ({
         id: p.id,
         name: p.name,
