@@ -1,9 +1,11 @@
 import { requireSession } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { getTranslator } from "@/lib/i18n/server";
 import { VehiclesClient } from "./VehiclesClient";
 
 export default async function VehiclesPage() {
   const session = await requireSession();
+  const { lang } = await getTranslator();
   const admin = createSupabaseAdminClient();
 
   const { data: vehicles } = await admin
@@ -14,6 +16,7 @@ export default async function VehiclesPage() {
 
   return (
     <VehiclesClient
+      lang={lang}
       vehicles={(vehicles ?? []).map((v) => ({
         id: v.id,
         name: v.name,

@@ -8,19 +8,22 @@ import { createVehicleAction, toggleVehicleActiveAction, deleteVehicleAction } f
 import { formatMoney } from "@/lib/format";
 import { PageHeader } from "@/app/components/PageHeader";
 import { EmptyState } from "@/app/components/EmptyState";
+import { useTranslation } from "@/lib/i18n/useTranslation";
+import type { Lang } from "@/lib/i18n/dictionary";
 
 type Vehicle = { id: string; name: string; vehicleNumber: string | null; ratePerKm: number; isActive: boolean };
 
-function SubmitButton() {
+function SubmitButton({ label, pendingLabel }: { label: string; pendingLabel: string }) {
   const { pending } = useFormStatus();
   return (
     <button type="submit" disabled={pending} className="btn-primary-sm disabled:opacity-60">
-      {pending ? "Adding…" : "Add vehicle"}
+      {pending ? pendingLabel : label}
     </button>
   );
 }
 
-export function VehiclesClient({ vehicles }: { vehicles: Vehicle[] }) {
+export function VehiclesClient({ vehicles, lang }: { vehicles: Vehicle[]; lang: Lang }) {
+  const { t } = useTranslation(lang);
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [state, formAction] = useActionState(createVehicleAction, null);
@@ -28,8 +31,8 @@ export function VehiclesClient({ vehicles }: { vehicles: Vehicle[] }) {
   return (
     <div className="flex flex-col gap-4">
       <PageHeader
-        title="Vehicles"
-        subtitle="Set a per-km rate for each vehicle — used to calculate transport charges on bills."
+        title={t("vehicles.title")}
+        subtitle={t("vehicles.subtitle")}
         icon={
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
             <path d="M3 13h13l3 4h2v3H3v-7Z" />
@@ -40,20 +43,20 @@ export function VehiclesClient({ vehicles }: { vehicles: Vehicle[] }) {
         }
       />
       <Link href="/transport/reports" className="text-sm text-muted">
-        Vehicle-wise trip report →
+        {t("vehicles.reportLink")}
       </Link>
 
       <form action={formAction} className="flex flex-col gap-3 rounded-xl border border-dashed border-brand bg-brand-soft p-4">
         <div className="grid grid-cols-2 gap-2">
           <input
             name="name"
-            placeholder="Vehicle name (e.g. Truck 1)"
+            placeholder={t("vehicles.namePlaceholder")}
             required
             className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand"
           />
           <input
             name="vehicleNumber"
-            placeholder="Vehicle no. (optional)"
+            placeholder={t("vehicles.numberPlaceholder")}
             className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand"
           />
         </div>
@@ -62,16 +65,16 @@ export function VehiclesClient({ vehicles }: { vehicles: Vehicle[] }) {
           type="number"
           min="0"
           step="0.01"
-          placeholder="Rate per km (₹)"
+          placeholder={t("vehicles.ratePlaceholder")}
           required
           className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand"
         />
         {state?.error && <p className="text-xs text-danger">{state.error}</p>}
-        <SubmitButton />
+        <SubmitButton label={t("vehicles.add")} pendingLabel={t("vehicles.adding")} />
       </form>
 
       {vehicles.length === 0 ? (
-        <EmptyState text="No vehicles yet — add one above to start billing transport charges." />
+        <EmptyState text={t("vehicles.empty")} />
       ) : (
         <ul className="flex flex-col gap-2">
           {vehicles.map((v) => (
@@ -94,11 +97,11 @@ export function VehiclesClient({ vehicles }: { vehicles: Vehicle[] }) {
                   disabled={isPending}
                   className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-foreground disabled:opacity-60"
                 >
-                  {v.isActive ? "Deactivate" : "Activate"}
+                  {v.isActive ? t("vehicles.deactivate") : t("vehicles.activate")}
                 </button>
                 <button
                   onClick={() => {
-                    if (!confirm("Delete this vehicle?")) return;
+                    if (!confirm(t("vehicles.deleteConfirm"))) return;
                     startTransition(async () => {
                       await deleteVehicleAction(v.id);
                       router.refresh();
@@ -107,7 +110,7 @@ export function VehiclesClient({ vehicles }: { vehicles: Vehicle[] }) {
                   disabled={isPending}
                   className="rounded-lg border border-danger px-3 py-1.5 text-xs font-medium text-danger disabled:opacity-60"
                 >
-                  Delete
+                  {t("vehicles.delete")}
                 </button>
               </div>
             </li>

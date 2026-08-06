@@ -2,6 +2,7 @@ import Link from "next/link";
 import { requireSession } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { formatMoney } from "@/lib/format";
+import { getTranslator } from "@/lib/i18n/server";
 import { ReturnForm } from "./ReturnForm";
 
 export default async function RentalDetailPage({
@@ -10,6 +11,7 @@ export default async function RentalDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const session = await requireSession();
+  const { t, lang } = await getTranslator();
   const { id } = await params;
   const admin = createSupabaseAdminClient();
 
@@ -21,7 +23,7 @@ export default async function RentalDetailPage({
     .single();
 
   if (!rental) {
-    return <p className="text-sm text-muted">Rental not found.</p>;
+    return <p className="text-sm text-muted">{t("rentalsPage.notFound")}</p>;
   }
 
   const { data: items } = await admin
@@ -34,13 +36,13 @@ export default async function RentalDetailPage({
   return (
     <div className="flex flex-col gap-4">
       <Link href="/rentals" className="text-sm text-muted">
-        ← Rentals
+        {t("rentalsPage.backToRentals")}
       </Link>
 
       <div>
         <h1 className="text-lg font-semibold text-foreground">#{rental.rental_number}</h1>
         <p className="text-sm text-muted">
-          {customer?.name ?? "Walk-in"} {customer?.phone ? `· ${customer.phone}` : ""}
+          {customer?.name ?? t("rentalsPage.walkIn")} {customer?.phone ? `· ${customer.phone}` : ""}
         </p>
         <span
           className={`mt-1 inline-block rounded-full px-2 py-0.5 text-xs font-medium ${
@@ -56,7 +58,7 @@ export default async function RentalDetailPage({
       </div>
 
       <div className="rounded-xl border border-border bg-surface shadow-sm p-4">
-        <p className="text-xs text-muted">Rental period</p>
+        <p className="text-xs text-muted">{t("rentalsPage.period")}</p>
         <p className="text-sm font-medium text-foreground">
           {new Date(rental.start_date).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" })}
           {" → "}
@@ -64,13 +66,13 @@ export default async function RentalDetailPage({
         </p>
         {rental.actual_return_date && (
           <p className="mt-1 text-xs text-muted">
-            Actually returned: {new Date(rental.actual_return_date).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" })}
+            {t("rentalsPage.actuallyReturned", { date: new Date(rental.actual_return_date).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" }) })}
           </p>
         )}
       </div>
 
       <section className="flex flex-col gap-2">
-        <p className="text-sm font-medium text-foreground">Items</p>
+        <p className="text-sm font-medium text-foreground">{t("rentalsPage.items")}</p>
         <ul className="flex flex-col gap-2">
           {(items ?? []).map((item) => (
             <li key={item.id} className="rounded-lg border border-border bg-surface px-3.5 py-2.5">
@@ -80,11 +82,11 @@ export default async function RentalDetailPage({
               </div>
               <p className="text-xs text-muted">
                 {formatMoney(item.rate)}/{item.rate_type} × {item.duration}
-                {item.deposit_per_unit > 0 && ` · Deposit ${formatMoney(item.deposit_per_unit)}/unit`}
+                {item.deposit_per_unit > 0 && ` · ${t("rentalsPage.depositPerUnit", { amount: formatMoney(item.deposit_per_unit) })}`}
               </p>
               {item.condition_on_return && (
                 <p className={`text-xs ${item.condition_on_return === "good" ? "text-brand" : "text-danger"}`}>
-                  Returned: {item.condition_on_return}
+                  {t("rentalsPage.returnedCondition", { condition: item.condition_on_return })}
                   {item.damage_notes ? ` — ${item.damage_notes}` : ""}
                 </p>
               )}
@@ -94,25 +96,26 @@ export default async function RentalDetailPage({
       </section>
 
       <section className="rounded-xl border border-border bg-surface shadow-sm p-4">
-        <Row label="Rental subtotal" value={formatMoney(rental.subtotal)} />
-        <Row label="GST" value={formatMoney(Number(rental.cgst_amount) + Number(rental.sgst_amount) + Number(rental.igst_amount))} />
-        {rental.delivery_charge > 0 && <Row label="Delivery" value={formatMoney(rental.delivery_charge)} />}
-        <Row label="Security deposit collected" value={formatMoney(rental.security_deposit_collected)} />
+        <Row label={t("rentalsPage.subtotal")} value={formatMoney(rental.subtotal)} />
+        <Row label={t("rentalsPage.gst")} value={formatMoney(Number(rental.cgst_amount) + Number(rental.sgst_amount) + Number(rental.igst_amount))} />
+        {rental.delivery_charge > 0 && <Row label={t("rentalsPage.delivery")} value={formatMoney(rental.delivery_charge)} />}
+        <Row label={t("rentalsPage.depositCollected")} value={formatMoney(rental.security_deposit_collected)} />
         {rental.status === "returned" && (
           <>
-            <Row label="Damage charge" value={formatMoney(rental.damage_charge)} />
-            <Row label="Late fee" value={formatMoney(rental.late_fee)} />
-            <Row label="Deposit returned" value={formatMoney(rental.security_deposit_returned)} />
+            <Row label={t("rentalsPage.damageCharge")} value={formatMoney(rental.damage_charge)} />
+            <Row label={t("rentalsPage.lateFee")} value={formatMoney(rental.late_fee)} />
+            <Row label={t("rentalsPage.depositReturned")} value={formatMoney(rental.security_deposit_returned)} />
           </>
         )}
-        <Row label="Total" value={formatMoney(rental.total)} bold />
-        <Row label="Paid" value={formatMoney(rental.paid_amount)} />
-        {rental.credit_amount > 0 && <Row label="Balance due" value={formatMoney(rental.credit_amount)} bold />}
+        <Row label={t("rentalsPage.total")} value={formatMoney(rental.total)} bold />
+        <Row label={t("rentalsPage.paid")} value={formatMoney(rental.paid_amount)} />
+        {rental.credit_amount > 0 && <Row label={t("rentalsPage.balanceDue")} value={formatMoney(rental.credit_amount)} bold />}
       </section>
 
       {(rental.status === "booked" || rental.status === "active") && (
         <ReturnForm
           rentalId={rental.id}
+          lang={lang}
           items={(items ?? []).map((i) => ({ id: i.id, name: i.product_name, quantity: Number(i.quantity) }))}
         />
       )}

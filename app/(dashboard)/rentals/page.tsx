@@ -2,12 +2,14 @@ import Link from "next/link";
 import { requireSession } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { formatMoney } from "@/lib/format";
+import { getTranslator } from "@/lib/i18n/server";
 import { PageHeader } from "@/app/components/PageHeader";
 import { EmptyState } from "@/app/components/EmptyState";
 import { MarkActiveButton } from "./MarkActiveButton";
 
 export default async function RentalsPage() {
   const session = await requireSession();
+  const { t, lang } = await getTranslator();
   const admin = createSupabaseAdminClient();
 
   const { data: rentals } = await admin
@@ -26,10 +28,10 @@ export default async function RentalsPage() {
   return (
     <div className="flex flex-col gap-4">
       <PageHeader
-        title="Rentals"
+        title={t("rentalsPage.title")}
         action={
           <Link href="/rentals/new" className="btn-primary-sm">
-            + New rental
+            {t("rentalsPage.newRental")}
           </Link>
         }
         icon={
@@ -42,12 +44,12 @@ export default async function RentalsPage() {
 
       <div className="flex gap-2 overflow-x-auto">
         <Link href="/rentals/history" className="shrink-0 rounded-full border border-border px-3 py-1.5 text-xs font-medium text-muted">
-          Past rentals →
+          {t("rentalsPage.pastLink")}
         </Link>
       </div>
 
       {withOverdue.length === 0 ? (
-        <EmptyState text="No active or upcoming rentals right now." />
+        <EmptyState text={t("rentalsPage.empty")} />
       ) : (
         <ul className="flex flex-col gap-2">
           {withOverdue.map((r) => {
@@ -62,7 +64,7 @@ export default async function RentalsPage() {
                 <Link href={`/rentals/${r.id}`} className="flex items-center justify-between gap-3">
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium text-foreground">
-                      {customerName ?? "Unknown customer"} · #{r.rental_number}
+                      {customerName ?? t("rentalsPage.unknownCustomer")} · #{r.rental_number}
                     </p>
                     <p className="text-xs text-muted">
                       {new Date(r.start_date).toLocaleDateString("en-IN", { day: "numeric", month: "short" })} →{" "}
@@ -80,11 +82,11 @@ export default async function RentalsPage() {
                             : "bg-background text-muted"
                       }`}
                     >
-                      {r.isOverdue ? "Overdue" : r.status === "active" ? "Out" : "Booked"}
+                      {r.isOverdue ? t("rentalsPage.overdue") : r.status === "active" ? t("rentalsPage.out") : t("rentalsPage.booked")}
                     </span>
                   </div>
                 </Link>
-                {r.status === "booked" && <MarkActiveButton rentalId={r.id} />}
+                {r.status === "booked" && <MarkActiveButton rentalId={r.id} lang={lang} />}
               </li>
             );
           })}

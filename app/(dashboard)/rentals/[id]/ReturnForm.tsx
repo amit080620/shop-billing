@@ -3,20 +3,23 @@
 import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { returnRentalAction } from "@/lib/actions/rentals";
+import { useTranslation } from "@/lib/i18n/useTranslation";
+import type { Lang } from "@/lib/i18n/dictionary";
 
 type Item = { id: string; name: string; quantity: number };
 type Condition = "good" | "damaged" | "missing";
 
-function SubmitButton() {
+function SubmitButton({ label, pendingLabel }: { label: string; pendingLabel: string }) {
   const { pending } = useFormStatus();
   return (
     <button type="submit" disabled={pending} className="btn-primary w-full text-center disabled:opacity-60">
-      {pending ? "Saving…" : "Mark as returned"}
+      {pending ? pendingLabel : label}
     </button>
   );
 }
 
-export function ReturnForm({ rentalId, items }: { rentalId: string; items: Item[] }) {
+export function ReturnForm({ rentalId, items, lang }: { rentalId: string; items: Item[]; lang: Lang }) {
+  const { t } = useTranslation(lang);
   const [conditions, setConditions] = useState<Record<string, Condition>>(
     Object.fromEntries(items.map((i) => [i.id, "good" as Condition])),
   );
@@ -30,9 +33,12 @@ export function ReturnForm({ rentalId, items }: { rentalId: string; items: Item[
     items.map((i) => ({ rentalItemId: i.id, condition: conditions[i.id] ?? "good", damageNotes: notes[i.id] || undefined })),
   );
 
+  const conditionLabel = (c: Condition) =>
+    c === "good" ? t("rentalsPage.conditionGood") : c === "damaged" ? t("rentalsPage.conditionDamaged") : t("rentalsPage.conditionMissing");
+
   return (
     <form action={formAction} className="flex flex-col gap-3 rounded-xl border border-dashed border-brand bg-brand-soft p-4">
-      <p className="text-sm font-semibold text-brand-dark">Process return</p>
+      <p className="text-sm font-semibold text-brand-dark">{t("rentalsPage.processReturn")}</p>
       <input type="hidden" name="rentalId" value={rentalId} />
       <input type="hidden" name="items" value={itemsPayload} />
 
@@ -49,7 +55,7 @@ export function ReturnForm({ rentalId, items }: { rentalId: string; items: Item[
                   conditions[item.id] === c ? "border-brand bg-brand-soft text-brand-dark" : "border-border text-muted"
                 }`}
               >
-                {c}
+                {conditionLabel(c)}
               </button>
             ))}
           </div>
@@ -57,7 +63,7 @@ export function ReturnForm({ rentalId, items }: { rentalId: string; items: Item[
             <input
               value={notes[item.id] ?? ""}
               onChange={(e) => setNotes((prev) => ({ ...prev, [item.id]: e.target.value }))}
-              placeholder="What happened? (optional)"
+              placeholder={t("rentalsPage.whatHappened")}
               className="rounded-lg border border-border px-2.5 py-1.5 text-xs outline-none focus:border-brand"
             />
           )}
@@ -65,7 +71,7 @@ export function ReturnForm({ rentalId, items }: { rentalId: string; items: Item[
       ))}
 
       <label className="flex flex-col gap-1 text-xs text-brand-dark">
-        Damage charge (₹) — deducted from the deposit
+        {t("rentalsPage.damageChargeLabel")}
         <input
           name="damageCharge"
           type="number"
@@ -77,7 +83,7 @@ export function ReturnForm({ rentalId, items }: { rentalId: string; items: Item[
         />
       </label>
       <label className="flex flex-col gap-1 text-xs text-brand-dark">
-        Late fee (₹) — if returned after the due date
+        {t("rentalsPage.lateFeeLabel")}
         <input
           name="lateFee"
           type="number"
@@ -90,7 +96,7 @@ export function ReturnForm({ rentalId, items }: { rentalId: string; items: Item[
       </label>
 
       {state?.error && <p className="text-xs text-danger">{state.error}</p>}
-      <SubmitButton />
+      <SubmitButton label={t("rentalsPage.markReturned")} pendingLabel={t("rentalsPage.saving")} />
     </form>
   );
 }

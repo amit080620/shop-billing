@@ -2,6 +2,7 @@ import Link from "next/link";
 import { requireSession } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { formatMoney } from "@/lib/format";
+import { getTranslator } from "@/lib/i18n/server";
 import { PageHeader } from "@/app/components/PageHeader";
 import { EmptyState } from "@/app/components/EmptyState";
 
@@ -20,6 +21,7 @@ export default async function TransportReportsPage({
   searchParams: Promise<{ from?: string; to?: string }>;
 }) {
   const session = await requireSession();
+  const { t } = await getTranslator();
   const { from, to } = await searchParams;
   const fromDate = from || startOfMonthIso();
   const toDate = to || todayIso();
@@ -77,8 +79,8 @@ export default async function TransportReportsPage({
   return (
     <div className="flex flex-col gap-4">
       <PageHeader
-        title="Vehicle-wise trips"
-        subtitle="Rounds, distance, and earnings per vehicle."
+        title={t("treports.title")}
+        subtitle={t("treports.subtitle")}
         icon={
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
             <path d="M3 13h13l3 4h2v3H3v-7Z" />
@@ -89,26 +91,26 @@ export default async function TransportReportsPage({
         }
       />
       <Link href="/transport/vehicles" className="text-sm text-muted">
-        ← Vehicles
+        {t("treports.backToVehicles")}
       </Link>
 
       <form className="flex items-center gap-2" action="/transport/reports">
         <input type="date" name="from" defaultValue={fromDate} className="flex-1 rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand" />
-        <span className="text-xs text-muted">to</span>
+        <span className="text-xs text-muted">{t("treports.to")}</span>
         <input type="date" name="to" defaultValue={toDate} className="flex-1 rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand" />
         <button type="submit" className="rounded-lg border border-border px-3 py-2 text-xs font-medium text-foreground">
-          Go
+          {t("treports.go")}
         </button>
       </form>
 
       <div className="rounded-xl border border-border bg-surface shadow-sm p-4 text-center">
         <p className="text-xs text-muted">{fromDate} → {toDate}</p>
         <p className="mt-1 text-xl font-semibold text-foreground">{formatMoney(grandTotalEarnings)}</p>
-        <p className="text-xs text-muted">{grandTotalRounds} round(s) across all vehicles</p>
+        <p className="text-xs text-muted">{t("treports.roundsAcrossAll", { count: grandTotalRounds })}</p>
       </div>
 
       {vehicleRows.length === 0 ? (
-        <EmptyState text="No trips recorded in this range." />
+        <EmptyState text={t("treports.empty")} />
       ) : (
         <>
           <ul className="flex flex-col gap-2">
@@ -123,10 +125,10 @@ export default async function TransportReportsPage({
                     </div>
                     <p className="text-sm font-semibold text-foreground">{formatMoney(v.totalEarnings)}</p>
                   </div>
-                  <p className="mt-1 text-xs text-muted">{v.rounds} round(s) · {v.totalKm.toLocaleString("en-IN")} km total</p>
+                  <p className="mt-1 text-xs text-muted">{t("treports.roundsKm", { rounds: v.rounds, km: v.totalKm.toLocaleString("en-IN") })}</p>
                   {loadEntries.length > 0 && (
                     <p className="text-xs text-muted">
-                      Carried: {loadEntries.map(([unit, qty]) => `${qty.toLocaleString("en-IN")} ${unit}`).join(", ")}
+                      {t("treports.carried", { list: loadEntries.map(([unit, qty]) => `${qty.toLocaleString("en-IN")} ${unit}`).join(", ") })}
                     </p>
                   )}
                 </li>
@@ -136,13 +138,13 @@ export default async function TransportReportsPage({
 
           {driverRows.length > 0 && (
             <section className="flex flex-col gap-2">
-              <p className="text-sm font-medium text-foreground">By driver</p>
+              <p className="text-sm font-medium text-foreground">{t("treports.byDriver")}</p>
               <ul className="flex flex-col gap-2">
                 {driverRows.map((d) => (
                   <li key={d.name} className="flex items-center justify-between rounded-lg border border-border bg-surface shadow-sm px-3.5 py-2.5">
                     <div>
                       <p className="text-sm font-medium text-foreground">{d.name}</p>
-                      <p className="text-xs text-muted">{d.rounds} round(s) · {d.totalKm.toLocaleString("en-IN")} km</p>
+                      <p className="text-xs text-muted">{t("treports.driverRoundsKm", { rounds: d.rounds, km: d.totalKm.toLocaleString("en-IN") })}</p>
                     </div>
                     <p className="text-sm font-semibold text-foreground">{formatMoney(d.totalEarnings)}</p>
                   </li>

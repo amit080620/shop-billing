@@ -2,11 +2,13 @@ import Link from "next/link";
 import { requireSession } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { formatMoney } from "@/lib/format";
+import { getTranslator } from "@/lib/i18n/server";
 import { PageHeader } from "@/app/components/PageHeader";
 import { EmptyState } from "@/app/components/EmptyState";
 
 export default async function RentalHistoryPage() {
   const session = await requireSession();
+  const { t } = await getTranslator();
   const admin = createSupabaseAdminClient();
 
   const { data: rentals } = await admin
@@ -20,7 +22,7 @@ export default async function RentalHistoryPage() {
   return (
     <div className="flex flex-col gap-4">
       <PageHeader
-        title="Rental history"
+        title={t("rentalsPage.historyTitle")}
         icon={
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
             <path d="M3 7h18M6 7V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v2M4 7v13a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V7" />
@@ -28,11 +30,11 @@ export default async function RentalHistoryPage() {
         }
       />
       <Link href="/rentals" className="text-sm text-brand">
-        ← Active & upcoming rentals
+        {t("rentalsPage.backToActive")}
       </Link>
 
       {(!rentals || rentals.length === 0) ? (
-        <EmptyState text="No completed rentals yet." />
+        <EmptyState text={t("rentalsPage.historyEmpty")} />
       ) : (
         <ul className="flex flex-col gap-2">
           {rentals.map((r) => {
@@ -47,7 +49,7 @@ export default async function RentalHistoryPage() {
                 >
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium text-foreground">
-                      {customerName ?? "Walk-in"} · #{r.rental_number}
+                      {customerName ?? t("rentalsPage.walkIn")} · #{r.rental_number}
                     </p>
                     <p className="text-xs text-muted">
                       {new Date(r.start_date).toLocaleDateString("en-IN", { day: "numeric", month: "short" })} →{" "}
