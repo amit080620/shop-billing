@@ -33,13 +33,14 @@ export function AuditClient({
   const discrepancies = items.filter((i) => i.countedQuantity !== null && i.countedQuantity !== i.systemQuantity);
 
   function updateCount(itemId: string, value: string) {
-    const counted = value === "" ? null : Number(value);
+    const counted = value === "" ? null : Math.max(0, Number(value));
     setItems((prev) => prev.map((i) => (i.id === itemId ? { ...i, countedQuantity: counted } : i)));
   }
 
   function saveCount(itemId: string, counted: number | null) {
     startTransition(async () => {
-      await updateAuditItemAction(itemId, counted);
+      const result = await updateAuditItemAction(itemId, counted);
+      if (result?.error) setError(result.error);
     });
   }
 

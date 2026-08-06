@@ -63,6 +63,9 @@ export async function updateAuditItemAction(
   const audit = item ? (Array.isArray(item.stock_audits) ? item.stock_audits[0] : item.stock_audits) : null;
   if (!item || !audit || audit.shop_id !== session.shopId) return { error: "Item not found" };
   if (audit.status !== "draft") return { error: "This audit is already completed" };
+  if (countedQuantity !== null && (!Number.isFinite(countedQuantity) || countedQuantity < 0)) {
+    return { error: "Enter a valid count (0 or more)" };
+  }
 
   const { error } = await admin
     .from("stock_audit_items")
