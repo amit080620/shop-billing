@@ -36,6 +36,7 @@ export default async function DailySummaryPage({
     { data: purchases },
     { data: vendorPayments },
     { data: restaurantOrders },
+    { data: rentals },
   ] = await Promise.all([
     admin
       .from("bills")
@@ -71,6 +72,15 @@ export default async function DailySummaryPage({
       .eq("status", "settled")
       .gte("settled_at", startOfDay.toISOString())
       .lte("settled_at", endOfDay.toISOString()),
+    // Rentals also never touch `bills` — same reasoning as restaurant
+    // orders above.
+    admin
+      .from("rentals")
+      .select("payment_method, paid_amount, credit_amount")
+      .eq("shop_id", session.shopId)
+      .neq("status", "cancelled")
+      .gte("created_at", startOfDay.toISOString())
+      .lte("created_at", endOfDay.toISOString()),
   ]);
 
   const salesByMethod = emptyTotals();
@@ -86,6 +96,10 @@ export default async function DailySummaryPage({
       salesByMethod[method as Method] += Number(p.amount);
     }
     newCreditGiven += Number(order.credit_amount);
+  }
+  for (const r of rentals ?? []) {
+    salesByMethod[r.payment_method as Method] += Number(r.paid_amount);
+    newCreditGiven += Number(r.credit_amount);
   }
 
   const oldCreditCollected = emptyTotals();

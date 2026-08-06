@@ -21,7 +21,7 @@ export default async function Gstr3bPage({
   const start = new Date(year, month - 1, 1);
   const end = new Date(year, month, 1);
 
-  const [{ data: bills }, { data: purchases }, { data: restaurantOrders }] = await Promise.all([
+  const [{ data: bills }, { data: purchases }, { data: restaurantOrders }, { data: rentals }] = await Promise.all([
     admin
       .from("bills")
       .select("taxable_amount, cgst_amount, sgst_amount, igst_amount")
@@ -44,9 +44,21 @@ export default async function Gstr3bPage({
       .eq("status", "settled")
       .gte("settled_at", start.toISOString())
       .lt("settled_at", end.toISOString()),
+    // Same reasoning for rentals — their own table, never `bills`.
+    admin
+      .from("rentals")
+      .select("subtotal, cgst_amount, sgst_amount, igst_amount")
+      .eq("shop_id", session.shopId)
+      .neq("status", "cancelled")
+      .gte("created_at", start.toISOString())
+      .lt("created_at", end.toISOString()),
   ]);
 
-  const outward = sumFields([...(bills ?? []), ...(restaurantOrders ?? [])]);
+  const outward = sumFields([
+    ...(bills ?? []),
+    ...(restaurantOrders ?? []),
+    ...(rentals ?? []).map((r) => ({ taxable_amount: r.subtotal, cgst_amount: r.cgst_amount, sgst_amount: r.sgst_amount, igst_amount: r.igst_amount })),
+  ]);
   const rcmPurchases = (purchases ?? []).filter((p) => p.reverse_charge);
   const rcm = sumFields(rcmPurchases);
   const itcPurchases = (purchases ?? []).filter((p) => p.itc_eligible);

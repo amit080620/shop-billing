@@ -60,6 +60,19 @@ export default async function Gstr1Page({
         .in("order_id", restaurantOrderIds)
     : { data: [] as never[] };
 
+  // Same reasoning for rentals — their own table, never `bills`.
+  const { data: rentals } = await admin
+    .from("rentals")
+    .select("id, rental_number, created_at, subtotal, supply_type, cgst_amount, sgst_amount, igst_amount, total, customers ( name, gstin, state, state_code )")
+    .eq("shop_id", session.shopId)
+    .neq("status", "cancelled")
+    .gte("created_at", start.toISOString())
+    .lt("created_at", end.toISOString());
+  const normalizedRentals = (rentals ?? []).map((r) => {
+    const customer = Array.isArray(r.customers) ? r.customers[0] : r.customers;
+    return { ...r, customer: customer ?? null };
+  });
+
   type BillRow = {
     id: string;
     invoice_number: string;
@@ -85,6 +98,12 @@ export default async function Gstr1Page({
   );
   const b2cSmall = normalizedBills.filter((b) => !b2b.includes(b) && !b2cLarge.includes(b));
 
+  const rentalB2b = normalizedRentals.filter((r) => r.customer?.gstin);
+  const rentalB2cLarge = normalizedRentals.filter(
+    (r) => !r.customer?.gstin && r.supply_type === "inter" && Number(r.total) > 250000,
+  );
+  const rentalB2cSmall = normalizedRentals.filter((r) => !rentalB2b.includes(r) && !rentalB2cLarge.includes(r));
+
   // Table 7 — B2C Small: consolidated by (place of supply state, rate)
   const b2cSmallGroups = new Map<
     string,
@@ -102,6 +121,20 @@ export default async function Gstr1Page({
       g.igst += Number(item.igst_amount);
       b2cSmallGroups.set(key, g);
     }
+  }
+
+  for (const rental of rentalB2cSmall) {
+    const state = rental.customer?.state ?? "Same state (walk-in)";
+    const taxable = Number(rental.subtotal);
+    const rentalTax = Number(rental.cgst_amount) + Number(rental.sgst_amount) + Number(rental.igst_amount);
+    const rate = taxable > 0 ? Math.round((rentalTax / taxable) * 100) : 0;
+    const key = `${state}__${rate}`;
+    const g = b2cSmallGroups.get(key) ?? { state, rate, taxable: 0, cgst: 0, sgst: 0, igst: 0 };
+    g.taxable += taxable;
+    g.cgst += Number(rental.cgst_amount);
+    g.sgst += Number(rental.sgst_amount);
+    g.igst += Number(rental.igst_amount);
+    b2cSmallGroups.set(key, g);
   }
 
   for (const item of restaurantItems ?? []) {
@@ -151,10 +184,12 @@ export default async function Gstr1Page({
   const invoiceNumbers = normalizedBills.map((b) => b.invoice_number).sort();
   const totalTaxable =
     normalizedBills.reduce((s, b) => s + Number(b.taxable_amount), 0) +
-    (restaurantOrders ?? []).reduce((s, o) => s + Number(o.taxable_amount), 0);
+    (restaurantOrders ?? []).reduce((s, o) => s + Number(o.taxable_amount), 0) +
+    normalizedRentals.reduce((s, r) => s + Number(r.subtotal), 0);
   const totalTax =
     normalizedBills.reduce((s, b) => s + Number(b.cgst_amount) + Number(b.sgst_amount) + Number(b.igst_amount), 0) +
-    (restaurantOrders ?? []).reduce((s, o) => s + Number(o.cgst_amount) + Number(o.sgst_amount) + Number(o.igst_amount), 0);
+    (restaurantOrders ?? []).reduce((s, o) => s + Number(o.cgst_amount) + Number(o.sgst_amount) + Number(o.igst_amount), 0) +
+    normalizedRentals.reduce((s, r) => s + Number(r.cgst_amount) + Number(r.sgst_amount) + Number(r.igst_amount), 0);
 
   return (
     <div className="flex flex-col gap-4">
@@ -174,32 +209,57 @@ export default async function Gstr1Page({
         <SummaryCard label="Total tax" value={formatMoney(totalTax)} />
       </div>
 
-      {normalizedBills.length === 0 && (restaurantOrders ?? []).length === 0 ? (
+      {normalizedBills.length === 0 && (restaurantOrders ?? []).length === 0 && normalizedRentals.length === 0 ? (
         <p className="rounded-lg border border-dashed border-border px-4 py-6 text-center text-sm text-muted">
           No sales invoices in this period.
         </p>
       ) : (
         <Gstr1Client
           period={`${MONTHS[month - 1]}-${year}`}
-          b2b={b2b.map((b) => ({
-            gstin: b.customer!.gstin!,
-            name: b.customer!.name,
-            invoiceNumber: b.invoice_number,
-            date: b.created_at,
-            taxable: Number(b.taxable_amount),
-            cgst: Number(b.cgst_amount),
-            sgst: Number(b.sgst_amount),
-            igst: Number(b.igst_amount),
-            total: Number(b.total),
-          }))}
-          b2cLarge={b2cLarge.map((b) => ({
-            invoiceNumber: b.invoice_number,
-            date: b.created_at,
-            state: b.customer?.state ?? "—",
-            taxable: Number(b.taxable_amount),
-            igst: Number(b.igst_amount),
-            total: Number(b.total),
-          }))}
+          b2b={b2b
+            .map((b) => ({
+              gstin: b.customer!.gstin!,
+              name: b.customer!.name,
+              invoiceNumber: b.invoice_number,
+              date: b.created_at,
+              taxable: Number(b.taxable_amount),
+              cgst: Number(b.cgst_amount),
+              sgst: Number(b.sgst_amount),
+              igst: Number(b.igst_amount),
+              total: Number(b.total),
+            }))
+            .concat(
+              rentalB2b.map((r) => ({
+                gstin: r.customer!.gstin!,
+                name: r.customer!.name,
+                invoiceNumber: r.rental_number,
+                date: r.created_at,
+                taxable: Number(r.subtotal),
+                cgst: Number(r.cgst_amount),
+                sgst: Number(r.sgst_amount),
+                igst: Number(r.igst_amount),
+                total: Number(r.total),
+              })),
+            )}
+          b2cLarge={b2cLarge
+            .map((b) => ({
+              invoiceNumber: b.invoice_number,
+              date: b.created_at,
+              state: b.customer?.state ?? "—",
+              taxable: Number(b.taxable_amount),
+              igst: Number(b.igst_amount),
+              total: Number(b.total),
+            }))
+            .concat(
+              rentalB2cLarge.map((r) => ({
+                invoiceNumber: r.rental_number,
+                date: r.created_at,
+                state: r.customer?.state ?? "—",
+                taxable: Number(r.subtotal),
+                igst: Number(r.igst_amount),
+                total: Number(r.total),
+              })),
+            )}
           b2cSmall={[...b2cSmallGroups.values()]}
           hsnSummary={[...hsnGroups.values()]}
           invoiceNumbers={invoiceNumbers}
