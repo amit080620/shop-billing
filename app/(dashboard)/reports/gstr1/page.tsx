@@ -73,6 +73,16 @@ export default async function Gstr1Page({
     return { ...r, customer: customer ?? null };
   });
 
+  const rentalIds = (rentals ?? []).map((r) => r.id);
+  const { data: rentalItems } = rentalIds.length
+    ? await admin.from("rental_items").select("rental_id, product_id, quantity, gst_percent, line_subtotal, cgst_amount, sgst_amount, igst_amount").in("rental_id", rentalIds)
+    : { data: [] as never[] };
+  const rentalProductIds = [...new Set((rentalItems ?? []).map((i) => i.product_id).filter(Boolean))] as string[];
+  const { data: rentalProducts } = rentalProductIds.length
+    ? await admin.from("products").select("id, hsn_code").in("id", rentalProductIds)
+    : { data: [] as never[] };
+  const hsnByProduct = new Map((rentalProducts ?? []).map((p) => [p.id, p.hsn_code]));
+
   type BillRow = {
     id: string;
     invoice_number: string;
@@ -123,17 +133,17 @@ export default async function Gstr1Page({
     }
   }
 
-  for (const rental of rentalB2cSmall) {
-    const state = rental.customer?.state ?? "Same state (walk-in)";
-    const taxable = Number(rental.subtotal);
-    const rentalTax = Number(rental.cgst_amount) + Number(rental.sgst_amount) + Number(rental.igst_amount);
-    const rate = taxable > 0 ? Math.round((rentalTax / taxable) * 100) : 0;
-    const key = `${state}__${rate}`;
-    const g = b2cSmallGroups.get(key) ?? { state, rate, taxable: 0, cgst: 0, sgst: 0, igst: 0 };
-    g.taxable += taxable;
-    g.cgst += Number(rental.cgst_amount);
-    g.sgst += Number(rental.sgst_amount);
-    g.igst += Number(rental.igst_amount);
+  const rentalB2cSmallIds = new Set(rentalB2cSmall.map((r) => r.id));
+  for (const item of rentalItems ?? []) {
+    if (!rentalB2cSmallIds.has(item.rental_id)) continue;
+    const rental = rentalB2cSmall.find((r) => r.id === item.rental_id);
+    const state = rental?.customer?.state ?? "Same state (walk-in)";
+    const key = `${state}__${item.gst_percent}`;
+    const g = b2cSmallGroups.get(key) ?? { state, rate: Number(item.gst_percent), taxable: 0, cgst: 0, sgst: 0, igst: 0 };
+    g.taxable += Number(item.line_subtotal);
+    g.cgst += Number(item.cgst_amount);
+    g.sgst += Number(item.sgst_amount);
+    g.igst += Number(item.igst_amount);
     b2cSmallGroups.set(key, g);
   }
 
@@ -173,6 +183,17 @@ export default async function Gstr1Page({
   for (const item of restaurantItems ?? []) {
     const key = `—__${item.gst_percent}`;
     const g = hsnGroups.get(key) ?? { hsn: "—", rate: Number(item.gst_percent), qty: 0, taxable: 0, cgst: 0, sgst: 0, igst: 0 };
+    g.qty += Number(item.quantity);
+    g.taxable += Number(item.line_subtotal);
+    g.cgst += Number(item.cgst_amount);
+    g.sgst += Number(item.sgst_amount);
+    g.igst += Number(item.igst_amount);
+    hsnGroups.set(key, g);
+  }
+  for (const item of rentalItems ?? []) {
+    const hsn = (item.product_id && hsnByProduct.get(item.product_id)) || "—";
+    const key = `${hsn}__${item.gst_percent}`;
+    const g = hsnGroups.get(key) ?? { hsn, rate: Number(item.gst_percent), qty: 0, taxable: 0, cgst: 0, sgst: 0, igst: 0 };
     g.qty += Number(item.quantity);
     g.taxable += Number(item.line_subtotal);
     g.cgst += Number(item.cgst_amount);

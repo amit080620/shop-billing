@@ -34,8 +34,21 @@ function tabsFor(businessType: string, t: (key: string) => string) {
     { href: "/more", label: t("nav.more"), icon: MoreIcon },
   ];
 
+  // A transport & materials shop lives in two screens all day: billing
+  // (material + the vehicle's transport charge on the same bill) and
+  // keeping the vehicle list current — so those replace Buy/Reports up
+  // front, same treatment as Restaurant got for Tables/Kitchen.
+  const TRANSPORT_TABS = [
+    { href: "/", label: t("nav.home"), icon: HomeIcon },
+    { href: "/bills/new", label: t("nav.sell"), icon: SellIcon },
+    { href: "/transport/vehicles", label: "Vehicles", icon: TruckNavIcon },
+    { href: "/transport/reports", label: t("nav.reports"), icon: ReportIcon },
+    { href: "/more", label: t("nav.more"), icon: MoreIcon },
+  ];
+
   if (businessType === "restaurant") return RESTAURANT_TABS;
   if (businessType === "rental") return RENTAL_TABS;
+  if (businessType === "transport") return TRANSPORT_TABS;
   return RETAIL_TABS;
 }
 
@@ -142,6 +155,16 @@ function KitchenIcon({ active }: { active: boolean }) {
     <svg {...iconProps(active)}>
       <rect x="2.5" y="4.5" width="19" height="13" rx="1.5" />
       <path d="M8 21h8M12 17.5V21" />
+    </svg>
+  );
+}
+function TruckNavIcon({ active }: { active: boolean }) {
+  return (
+    <svg {...iconProps(active)}>
+      <path d="M2 16h11V6H2v10Z" />
+      <path d="M13 9h4l3 3v4h-7V9Z" />
+      <circle cx="6" cy="18" r="1.6" />
+      <circle cx="16.5" cy="18" r="1.6" />
     </svg>
   );
 }

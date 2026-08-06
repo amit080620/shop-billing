@@ -57,4 +57,4 @@ export function stateCodeFromGstin(gstin: string) {
 // goods. Kept as quick-pick options — any custom rate can still be typed.
 export const COMMON_GST_RATES = [0, 5, 18, 40];
 
-export const UNITS = ["NOS", "KG", "GM", "LTR", "ML", "MTR", "BOX", "PCS", "DZN", "PKT"];
+export const UNITS = ["NOS", "KG", "GM", "TON", "QTL", "LTR", "ML", "MTR", "BOX", "PCS", "DZN", "PKT", "BAG", "CFT", "CUM"];

@@ -14,7 +14,7 @@ export default async function InsightsPage() {
   const last60 = new Date(now);
   last60.setDate(last60.getDate() - 60);
 
-  const [{ data: products }, { data: recentBills }, { data: olderBills }] = await Promise.all([
+  const [{ data: products }, { data: recentBills }, { data: olderBills }, { data: recentOrders }, { data: olderOrders }, { data: recentRentals }, { data: olderRentals }] = await Promise.all([
     admin
       .from("products")
       .select("id, name, unit, price, track_inventory, stock_quantity")
@@ -33,12 +33,44 @@ export default async function InsightsPage() {
       .eq("shop_id", session.shopId)
       .eq("status", "active")
       .gte("created_at", last60.toISOString()),
+    // Restaurant orders and rentals live in their own tables, never
+    // `bills` — without these, a restaurant/rental shop's insights would
+    // only ever show "nothing sells" and mark everything as dead stock.
+    admin
+      .from("restaurant_orders")
+      .select("id")
+      .eq("shop_id", session.shopId)
+      .eq("status", "settled")
+      .gte("settled_at", last30.toISOString()),
+    admin
+      .from("restaurant_orders")
+      .select("id")
+      .eq("shop_id", session.shopId)
+      .eq("status", "settled")
+      .gte("settled_at", last60.toISOString()),
+    admin
+      .from("rentals")
+      .select("id")
+      .eq("shop_id", session.shopId)
+      .neq("status", "cancelled")
+      .gte("created_at", last30.toISOString()),
+    admin
+      .from("rentals")
+      .select("id")
+      .eq("shop_id", session.shopId)
+      .neq("status", "cancelled")
+      .gte("created_at", last60.toISOString()),
   ]);
+
+  const recentOrderIds = (recentOrders ?? []).map((o) => o.id);
+  const olderOrderIds = (olderOrders ?? []).map((o) => o.id);
+  const recentRentalIds = (recentRentals ?? []).map((r) => r.id);
+  const olderRentalIds = (olderRentals ?? []).map((r) => r.id);
 
   const recentBillIds = (recentBills ?? []).map((b) => b.id);
   const olderBillIds = (olderBills ?? []).map((b) => b.id);
 
-  const [{ data: recentItems }, { data: soldWithin60 }] = await Promise.all([
+  const [{ data: recentItems }, { data: soldWithin60 }, { data: recentOrderItems }, { data: soldViaOrders60 }, { data: recentRentalItems }, { data: soldViaRentals60 }] = await Promise.all([
     recentBillIds.length
       ? admin
           .from("bill_items")
@@ -48,11 +80,23 @@ export default async function InsightsPage() {
     olderBillIds.length
       ? admin.from("bill_items").select("product_id").in("bill_id", olderBillIds)
       : Promise.resolve({ data: [] as { product_id: string | null }[] }),
+    recentOrderIds.length
+      ? admin.from("restaurant_order_items").select("product_id, product_name, quantity, line_total").in("order_id", recentOrderIds)
+      : Promise.resolve({ data: [] as { product_id: string | null; product_name: string; quantity: number; line_total: number }[] }),
+    olderOrderIds.length
+      ? admin.from("restaurant_order_items").select("product_id").in("order_id", olderOrderIds)
+      : Promise.resolve({ data: [] as { product_id: string | null }[] }),
+    recentRentalIds.length
+      ? admin.from("rental_items").select("product_id, product_name, quantity, line_total").in("rental_id", recentRentalIds)
+      : Promise.resolve({ data: [] as { product_id: string | null; product_name: string; quantity: number; line_total: number }[] }),
+    olderRentalIds.length
+      ? admin.from("rental_items").select("product_id").in("rental_id", olderRentalIds)
+      : Promise.resolve({ data: [] as { product_id: string | null }[] }),
   ]);
 
   // Fast movers — top sellers by revenue in the last 30 days.
   const salesByProduct = new Map<string, { name: string; qty: number; revenue: number }>();
-  for (const item of recentItems ?? []) {
+  for (const item of [...(recentItems ?? []), ...(recentOrderItems ?? []), ...(recentRentalItems ?? [])]) {
     if (!item.product_id) continue;
     const entry = salesByProduct.get(item.product_id) ?? { name: item.product_name, qty: 0, revenue: 0 };
     entry.qty += Number(item.quantity);
@@ -65,7 +109,11 @@ export default async function InsightsPage() {
     .slice(0, 10);
 
   // Dead stock — tracked items sitting with stock but no sale in 60 days.
-  const soldRecentlyIds = new Set((soldWithin60 ?? []).map((i) => i.product_id).filter(Boolean));
+  const soldRecentlyIds = new Set(
+    [...(soldWithin60 ?? []), ...(soldViaOrders60 ?? []), ...(soldViaRentals60 ?? [])]
+      .map((i) => i.product_id)
+      .filter(Boolean),
+  );
   const deadStock = (products ?? [])
     .filter((p) => p.track_inventory && Number(p.stock_quantity) > 0 && !soldRecentlyIds.has(p.id))
     .map((p) => ({

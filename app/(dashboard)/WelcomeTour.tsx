@@ -107,9 +107,44 @@ const RENTAL_SLIDES: Slide[] = [
   },
 ];
 
+const TRANSPORT_SLIDES: Slide[] = [
+  {
+    icon: "👋",
+    title: "Welcome — this app is set up for transport & materials",
+    body: "A quick 30-second look at where everything lives — you can always come back to this from More → Help.",
+  },
+  {
+    icon: "🧱",
+    title: "Materials",
+    body: "Your sand, cement, gravel etc. are managed under More → Materials — same as any product: name, price, GST, and the right unit (Ton/Quintal/Bag are all available, not just KG).",
+  },
+  {
+    icon: "🚚",
+    title: "Vehicles",
+    body: "Add each truck under More → Transport → Vehicles with its own per-km rate. This is what powers the transport charge calculator when billing.",
+  },
+  {
+    icon: "🧾",
+    title: "One bill, material + transport",
+    body: "In Sell, add materials as usual, then tap \"Add transport charge\" — pick the vehicle, enter the distance, and it's added to the same bill at the vehicle's per-km rate.",
+  },
+  {
+    icon: "📊",
+    title: "Vehicle-wise reports",
+    body: "More → Transport → Vehicle-wise trips shows rounds, total km, and earnings per vehicle — filter by any date range.",
+  },
+  {
+    icon: "⚙️",
+    title: "One last thing",
+    body: "If you haven't already, set your shop's state under More → GST & shop profile — billing is blocked until that's filled in, since it decides CGST+SGST vs IGST on every invoice.",
+    cta: { label: "Go to GST profile", href: "/settings" },
+  },
+];
+
 function slidesFor(businessType: string) {
   if (businessType === "restaurant") return RESTAURANT_SLIDES;
   if (businessType === "rental") return RENTAL_SLIDES;
+  if (businessType === "transport") return TRANSPORT_SLIDES;
   return RETAIL_SLIDES;
 }
 
