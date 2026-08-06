@@ -2,6 +2,7 @@ import Link from "next/link";
 import { requireSession } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { formatMoney } from "@/lib/format";
+import { getTranslator } from "@/lib/i18n/server";
 import { PageHeader } from "@/app/components/PageHeader";
 import { EmptyState } from "@/app/components/EmptyState";
 import { AddBatchForm } from "./AddBatchForm";
@@ -18,6 +19,7 @@ export default async function BatchesPage({
   params: Promise<{ productId: string }>;
 }) {
   const session = await requireSession();
+  const { t, lang } = await getTranslator();
   const { productId } = await params;
   const admin = createSupabaseAdminClient();
 
@@ -28,7 +30,7 @@ export default async function BatchesPage({
     .eq("shop_id", session.shopId)
     .single();
 
-  if (!product) return <p className="text-sm text-muted">Medicine not found.</p>;
+  if (!product) return <p className="text-sm text-muted">{t("batches.notFound")}</p>;
 
   const { data: batches } = await admin
     .from("medicine_batches")
@@ -39,12 +41,12 @@ export default async function BatchesPage({
   return (
     <div className="flex flex-col gap-4">
       <Link href="/products" className="text-sm text-muted">
-        ← Inventory
+        {t("batches.backToInventory")}
       </Link>
 
       <PageHeader
         title={product.name}
-        subtitle={`${Number(product.stock_quantity)} ${product.unit} total across all batches`}
+        subtitle={t("batches.totalAcross", { qty: Number(product.stock_quantity), unit: product.unit })}
         icon={
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
             <path d="M9 2h6M10 2v5.5L5 15a3 3 0 0 0 2.5 4.7h9a3 3 0 0 0 2.5-4.7L14 7.5V2" />
@@ -52,12 +54,12 @@ export default async function BatchesPage({
         }
       />
 
-      <AddBatchForm productId={product.id} />
+      <AddBatchForm productId={product.id} lang={lang} />
 
       <section className="flex flex-col gap-2">
-        <p className="text-sm font-medium text-foreground">Batches (earliest expiry first)</p>
+        <p className="text-sm font-medium text-foreground">{t("batches.heading")}</p>
         {(!batches || batches.length === 0) ? (
-          <EmptyState text="No batches yet — add the first one above when new stock arrives." />
+          <EmptyState text={t("batches.empty")} />
         ) : (
           <ul className="flex flex-col gap-2">
             {batches.map((b) => {
@@ -77,15 +79,16 @@ export default async function BatchesPage({
                 >
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium text-foreground">
-                      Batch {b.batch_number} · {Number(b.quantity)} {product.unit}
+                      {t("batches.batchLabel", { number: b.batch_number, qty: Number(b.quantity), unit: product.unit })}
                     </p>
                     <p className={`text-xs ${tone === "expired" || tone === "critical" ? "text-danger" : "text-muted"}`}>
-                      Expires {new Date(b.expiry_date).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
-                      {days < 0 ? " · EXPIRED" : ` · ${days}d left`}
+                      {t("batches.expires", { date: new Date(b.expiry_date).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) })}
+                      {" · "}
+                      {days < 0 ? t("batches.expired") : t("batches.daysLeft", { days })}
                       {b.manufacturer ? ` · ${b.manufacturer}` : ""}
                     </p>
                     {b.purchase_price != null && (
-                      <p className="text-xs text-muted">Cost {formatMoney(Number(b.purchase_price))}/unit</p>
+                      <p className="text-xs text-muted">{t("batches.cost", { price: formatMoney(Number(b.purchase_price)) })}</p>
                     )}
                   </div>
                   <div className="flex shrink-0 flex-col items-end gap-1.5">
@@ -95,8 +98,9 @@ export default async function BatchesPage({
                       batchNumber={b.batch_number}
                       maxQuantity={Number(b.quantity)}
                       unit={product.unit}
+                      lang={lang}
                     />
-                    <DeleteBatchButton batchId={b.id} productId={product.id} />
+                    <DeleteBatchButton batchId={b.id} productId={product.id} lang={lang} />
                   </div>
                 </li>
               );
