@@ -182,6 +182,7 @@ export function NewRentalClient({
         ) : (
           <>
             <SearchableSelect
+            lang={lang}
               items={customers}
               getKey={(c) => c.id}
               getLabel={(c) => c.name}
@@ -233,6 +234,7 @@ export function NewRentalClient({
       <section className="flex flex-col gap-2">
         <p className="text-sm font-medium text-foreground">{t("rental.addItemsToRent")}</p>
         <SearchableSelect
+            lang={lang}
           items={products}
           getKey={(p) => p.id}
           getLabel={(p) => p.name}

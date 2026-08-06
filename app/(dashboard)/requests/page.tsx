@@ -1,9 +1,11 @@
 import { requireSession } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { getTranslator } from "@/lib/i18n/server";
 import { RequestsClient } from "./RequestsClient";
 
 export default async function RequestsPage() {
   const session = await requireSession();
+  const { lang } = await getTranslator();
   const admin = createSupabaseAdminClient();
 
   const [{ data: requests }, { data: customers }] = await Promise.all([
@@ -19,6 +21,7 @@ export default async function RequestsPage() {
 
   return (
     <RequestsClient
+      lang={lang}
       shopName={session.shopName}
       customers={customers ?? []}
       requests={(requests ?? []).map((r) => ({

@@ -8,6 +8,7 @@ import { quickCreateVendorAction } from "@/lib/actions/vendors";
 import { calculateTransactionTotals } from "@/lib/validation/schemas";
 import { formatMoney } from "@/lib/format";
 import { COMMON_GST_RATES } from "@/lib/constants/states";
+import type { Lang } from "@/lib/i18n/dictionary";
 import { SearchableSelect } from "@/app/components/SearchableSelect";
 import { InlineQuickAdd } from "@/app/components/InlineQuickAdd";
 
@@ -44,10 +45,12 @@ export function NewPurchaseClient({
   vendors,
   products,
   preselectedVendorId,
+  lang,
 }: {
   vendors: Vendor[];
   products: Product[];
   preselectedVendorId: string | null;
+  lang: Lang;
 }) {
   const [vendor, setVendor] = useState<Vendor | null>(
     vendors.find((v) => v.id === preselectedVendorId) ?? null,
@@ -171,6 +174,7 @@ export function NewPurchaseClient({
           </div>
         ) : vendors.length > 0 ? (
           <SearchableSelect
+            lang={lang}
             items={vendors}
             getKey={(v) => v.id}
             getLabel={(v) => v.name}
@@ -226,6 +230,7 @@ export function NewPurchaseClient({
         <p className="text-sm font-medium text-foreground">Items</p>
         {products.length > 0 && (
           <SearchableSelect
+            lang={lang}
             items={products}
             getKey={(p) => p.id}
             getLabel={(p) => p.name}

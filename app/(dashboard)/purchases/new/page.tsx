@@ -1,5 +1,6 @@
 import { requireSession } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { getTranslator } from "@/lib/i18n/server";
 import { NewPurchaseClient } from "./NewPurchaseClient";
 
 export default async function NewPurchasePage({
@@ -9,6 +10,7 @@ export default async function NewPurchasePage({
 }) {
   const { vendorId } = await searchParams;
   const session = await requireSession();
+  const { lang } = await getTranslator();
   const admin = createSupabaseAdminClient();
 
   const [{ data: vendors }, { data: products }] = await Promise.all([
@@ -18,6 +20,7 @@ export default async function NewPurchasePage({
 
   return (
     <NewPurchaseClient
+      lang={lang}
       vendors={vendors ?? []}
       products={(products ?? []).map((p) => ({ id: p.id, name: p.name, hsnCode: p.hsn_code, isPharma: p.is_pharma }))}
       preselectedVendorId={vendorId ?? null}

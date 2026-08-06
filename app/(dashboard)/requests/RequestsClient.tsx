@@ -13,6 +13,7 @@ import { formatMoney, formatDateTime } from "@/lib/format";
 import { EmptyState } from "@/app/components/EmptyState";
 import { PageHeader } from "@/app/components/PageHeader";
 import { SearchableSelect } from "@/app/components/SearchableSelect";
+import type { Lang } from "@/lib/i18n/dictionary";
 import { ContactPickerButton } from "@/app/components/ContactPickerButton";
 
 type Customer = { id: string; name: string; phone: string };
@@ -45,10 +46,12 @@ export function RequestsClient({
   shopName,
   customers,
   requests,
+  lang,
 }: {
   shopName: string;
   customers: Customer[];
   requests: Request[];
+  lang: Lang;
 }) {
   const [showForm, setShowForm] = useState(false);
   const nameRef = useRef<HTMLInputElement>(null);
@@ -116,6 +119,7 @@ export function RequestsClient({
               </div>
             ) : customers.length > 0 ? (
               <SearchableSelect
+                lang={lang}
                 items={customers}
                 getKey={(c) => c.id}
                 getLabel={(c) => c.name}

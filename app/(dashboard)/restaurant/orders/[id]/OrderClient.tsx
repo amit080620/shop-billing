@@ -235,6 +235,7 @@ export function OrderClient({
             </div>
           ) : (
             <SearchableSelect
+            lang={lang}
               items={products}
               getKey={(p) => p.id}
               getLabel={(p) => p.name}

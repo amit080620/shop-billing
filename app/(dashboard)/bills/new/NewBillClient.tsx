@@ -334,6 +334,7 @@ export function NewBillClient({
             ) : (
               <div className="flex flex-col gap-2">
                 <SearchableSelect
+            lang={lang}
                   items={customers}
                   getKey={(c) => c.id}
                   getLabel={(c) => c.name}
@@ -380,6 +381,7 @@ export function NewBillClient({
           <CameraBarcodeScanner onScan={handleBarcodeScan} />
           {scanError && <p className="text-xs text-credit">{scanError}</p>}
           <SearchableSelect
+            lang={lang}
             items={products}
             getKey={(p) => p.id}
             getLabel={(p) => p.name}

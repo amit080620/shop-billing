@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import type { Lang } from "@/lib/i18n/dictionary";
 
 // Web Speech API isn't in TypeScript's default DOM lib — minimal shape for
 // what's actually used here.
@@ -10,6 +11,9 @@ interface SpeechRecognitionResultLike {
 interface SpeechRecognitionEventLike extends Event {
   results: { [index: number]: { [index: number]: SpeechRecognitionResultLike } };
 }
+interface SpeechRecognitionErrorLike extends Event {
+  error: string;
+}
 interface SpeechRecognitionLike extends EventTarget {
   lang: string;
   interimResults: boolean;
@@ -17,7 +21,7 @@ interface SpeechRecognitionLike extends EventTarget {
   start: () => void;
   stop: () => void;
   onresult: ((event: SpeechRecognitionEventLike) => void) | null;
-  onerror: (() => void) | null;
+  onerror: ((event: SpeechRecognitionErrorLike) => void) | null;
   onend: (() => void) | null;
 }
 
@@ -30,6 +34,40 @@ function getSpeechRecognition(): (new () => SpeechRecognitionLike) | null {
   return w.SpeechRecognition ?? w.webkitSpeechRecognition ?? null;
 }
 
+// Locking recognition to en-IN regardless of what the person is actually
+// speaking is why voice search "doesn't work" for Hindi/Marathi users —
+// match it to the app's selected language instead.
+function speechLocaleFor(lang?: Lang) {
+  if (lang === "hi") return "hi-IN";
+  if (lang === "mr") return "mr-IN";
+  return "en-IN";
+}
+
+function voiceErrorMessages(lang?: Lang) {
+  if (lang === "hi") {
+    return {
+      permission: "माइक की अनुमति नहीं मिली — फ़ोन की Settings में इस साइट को Microphone की अनुमति दें।",
+      noSpeech: "कुछ सुनाई नहीं दिया — दोबारा कोशिश करें।",
+      network: "Internet नहीं मिला — voice search के लिए connection चाहिए।",
+      generic: "Voice search नहीं चल पाया — दोबारा कोशिश करें।",
+    };
+  }
+  if (lang === "mr") {
+    return {
+      permission: "माइकला परवानगी मिळाली नाही — फोनच्या Settings मध्ये या साइटला Microphone परवानगी द्या.",
+      noSpeech: "काही ऐकू आले नाही — पुन्हा प्रयत्न करा.",
+      network: "Internet मिळाले नाही — voice search साठी connection आवश्यक आहे.",
+      generic: "Voice search चालले नाही — पुन्हा प्रयत्न करा.",
+    };
+  }
+  return {
+    permission: "Microphone permission was denied — allow it for this site in your phone's Settings.",
+    noSpeech: "Didn't catch that — try again.",
+    network: "No internet connection — voice search needs one.",
+    generic: "Voice search couldn't start — please try again.",
+  };
+}
+
 export function SearchableSelect<T>({
   items,
   getLabel,
@@ -37,6 +75,7 @@ export function SearchableSelect<T>({
   getKey,
   onSelect,
   placeholder,
+  lang,
 }: {
   items: T[];
   getLabel: (item: T) => string;
@@ -44,11 +83,13 @@ export function SearchableSelect<T>({
   getKey: (item: T) => string;
   onSelect: (item: T) => void;
   placeholder: string;
+  lang?: Lang;
 }) {
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
   const [listening, setListening] = useState(false);
   const [voiceSupported, setVoiceSupported] = useState(false);
+  const [voiceError, setVoiceError] = useState<string | null>(null);
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
 
   useEffect(() => {
@@ -58,8 +99,9 @@ export function SearchableSelect<T>({
   function startVoiceSearch() {
     const SpeechRecognitionCtor = getSpeechRecognition();
     if (!SpeechRecognitionCtor) return;
+    setVoiceError(null);
     const recognition = new SpeechRecognitionCtor();
-    recognition.lang = "en-IN";
+    recognition.lang = speechLocaleFor(lang);
     recognition.interimResults = false;
     recognition.maxAlternatives = 1;
     recognition.onresult = (event) => {
@@ -67,9 +109,21 @@ export function SearchableSelect<T>({
       if (transcript) {
         setQuery(transcript);
         setOpen(true);
+        setVoiceError(null);
       }
     };
-    recognition.onerror = () => setListening(false);
+    recognition.onerror = (event) => {
+      setListening(false);
+      if (event.error === "not-allowed" || event.error === "service-not-allowed") {
+        setVoiceError(voiceErrorMessages(lang).permission);
+      } else if (event.error === "no-speech") {
+        setVoiceError(voiceErrorMessages(lang).noSpeech);
+      } else if (event.error === "network") {
+        setVoiceError(voiceErrorMessages(lang).network);
+      } else {
+        setVoiceError(voiceErrorMessages(lang).generic);
+      }
+    };
     recognition.onend = () => setListening(false);
     recognitionRef.current = recognition;
     setListening(true);
@@ -100,6 +154,7 @@ export function SearchableSelect<T>({
         onChange={(e) => {
           setQuery(e.target.value);
           setOpen(true);
+          setVoiceError(null);
         }}
         onFocus={() => setOpen(true)}
         onBlur={() => setTimeout(() => setOpen(false), 150)}
@@ -118,6 +173,9 @@ export function SearchableSelect<T>({
         >
           🎤
         </button>
+      )}
+      {voiceError && (
+        <p className="mt-1 text-xs text-danger">{voiceError}</p>
       )}
       {open && filtered.length > 0 && (
         <ul className="absolute z-30 mt-1 max-h-64 w-full overflow-y-auto rounded-lg border border-border bg-surface shadow-lg">

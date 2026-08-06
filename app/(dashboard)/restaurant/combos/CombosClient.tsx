@@ -111,6 +111,7 @@ export function CombosClient({ products, combos, lang }: { products: Product[]; 
 
           <p className="text-xs text-brand-dark">{t("combos.included")}</p>
           <SearchableSelect
+            lang={lang}
             items={products}
             getKey={(p) => p.id}
             getLabel={(p) => p.name}
