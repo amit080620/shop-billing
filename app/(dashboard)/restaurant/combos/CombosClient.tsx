@@ -8,11 +8,14 @@ import { formatMoney } from "@/lib/format";
 import { PageHeader } from "@/app/components/PageHeader";
 import { EmptyState } from "@/app/components/EmptyState";
 import { SearchableSelect } from "@/app/components/SearchableSelect";
+import { useTranslation } from "@/lib/i18n/useTranslation";
+import type { Lang } from "@/lib/i18n/dictionary";
 
 type Product = { id: string; name: string; price: number };
 type Combo = { id: string; name: string; price: number; gstPercent: number; isActive: boolean; items: { name: string; quantity: number }[] };
 
-export function CombosClient({ products, combos }: { products: Product[]; combos: Combo[] }) {
+export function CombosClient({ products, combos, lang }: { products: Product[]; combos: Combo[]; lang: Lang }) {
+  const { t } = useTranslation(lang);
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [showForm, setShowForm] = useState(false);
@@ -60,8 +63,8 @@ export function CombosClient({ products, combos }: { products: Product[]; combos
   return (
     <div className="flex flex-col gap-4">
       <PageHeader
-        title="Combo deals"
-        subtitle="Bundle menu items at a set price — kitchen still sees every item inside."
+        title={t("combos.title")}
+        subtitle={t("combos.subtitle")}
         icon={
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
             <rect x="3" y="7" width="18" height="13" rx="2" />
@@ -70,12 +73,12 @@ export function CombosClient({ products, combos }: { products: Product[]; combos
         }
         action={
           <button onClick={() => setShowForm((v) => !v)} className="btn-primary-sm">
-            + Combo
+            {t("combos.add")}
           </button>
         }
       />
       <Link href="/restaurant" className="text-sm text-muted">
-        ← Tables
+        {t("combos.backToTables")}
       </Link>
 
       {showForm && (
@@ -83,7 +86,7 @@ export function CombosClient({ products, combos }: { products: Product[]; combos
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="Combo name (e.g. Burger Meal)"
+            placeholder={t("combos.namePlaceholder")}
             className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand"
           />
           <div className="grid grid-cols-2 gap-2">
@@ -92,7 +95,7 @@ export function CombosClient({ products, combos }: { products: Product[]; combos
               min={0}
               value={price}
               onChange={(e) => setPrice(e.target.value === "" ? "" : Number(e.target.value))}
-              placeholder="Combo price (₹)"
+              placeholder={t("combos.pricePlaceholder")}
               className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand"
             />
             <input
@@ -101,19 +104,19 @@ export function CombosClient({ products, combos }: { products: Product[]; combos
               max={100}
               value={gstPercent}
               onChange={(e) => setGstPercent(e.target.value === "" ? "" : Number(e.target.value))}
-              placeholder="GST % on combo"
+              placeholder={t("combos.gstPlaceholder")}
               className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand"
             />
           </div>
 
-          <p className="text-xs text-brand-dark">Add what&apos;s included:</p>
+          <p className="text-xs text-brand-dark">{t("combos.included")}</p>
           <SearchableSelect
             items={products}
             getKey={(p) => p.id}
             getLabel={(p) => p.name}
             getSubLabel={(p) => formatMoney(p.price)}
             onSelect={addItem}
-            placeholder="Search menu items to add"
+            placeholder={t("combos.searchMenu")}
           />
           {items.length > 0 && (
             <ul className="flex flex-col gap-1.5">
@@ -131,19 +134,19 @@ export function CombosClient({ products, combos }: { products: Product[]; combos
           )}
           {items.length > 0 && typeof price === "number" && price > 0 && (
             <p className="text-xs text-brand-dark">
-              Individual items add up to {formatMoney(sumOfItems)} — combo saves customers {formatMoney(Math.max(0, sumOfItems - price))}.
+              {t("combos.savings", { sum: formatMoney(sumOfItems), saved: formatMoney(Math.max(0, sumOfItems - price)) })}
             </p>
           )}
 
           {error && <p className="text-xs text-danger">{error}</p>}
           <button onClick={handleCreate} disabled={isPending} className="btn-primary-sm disabled:opacity-60">
-            {isPending ? "Saving…" : "Save combo"}
+            {isPending ? t("combos.saving") : t("combos.save")}
           </button>
         </div>
       )}
 
       {combos.length === 0 ? (
-        <EmptyState text="No combos yet — create one above to speed up ordering for popular bundles." />
+        <EmptyState text={t("combos.empty")} />
       ) : (
         <ul className="flex flex-col gap-2">
           {combos.map((c) => (
@@ -163,11 +166,11 @@ export function CombosClient({ products, combos }: { products: Product[]; combos
                   }
                   className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-foreground"
                 >
-                  {c.isActive ? "Deactivate" : "Activate"}
+                  {c.isActive ? t("combos.deactivate") : t("combos.activate")}
                 </button>
                 <button
                   onClick={() => {
-                    if (!confirm("Delete this combo?")) return;
+                    if (!confirm(t("combos.deleteConfirm"))) return;
                     startTransition(async () => {
                       await deleteComboAction(c.id);
                       router.refresh();
@@ -175,7 +178,7 @@ export function CombosClient({ products, combos }: { products: Product[]; combos
                   }}
                   className="rounded-lg border border-danger px-3 py-1.5 text-xs font-medium text-danger"
                 >
-                  Delete
+                  {t("combos.delete")}
                 </button>
               </div>
             </li>

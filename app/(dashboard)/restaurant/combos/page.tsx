@@ -1,9 +1,11 @@
 import { requireSession } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { getTranslator } from "@/lib/i18n/server";
 import { CombosClient } from "./CombosClient";
 
 export default async function CombosPage() {
   const session = await requireSession();
+  const { lang } = await getTranslator();
   const admin = createSupabaseAdminClient();
 
   const [{ data: products }, { data: combos }] = await Promise.all([
@@ -24,6 +26,7 @@ export default async function CombosPage() {
 
   return (
     <CombosClient
+      lang={lang}
       products={(products ?? []).map((p) => ({ id: p.id, name: p.name, price: Number(p.price) }))}
       combos={(combos ?? []).map((c) => ({
         id: c.id,

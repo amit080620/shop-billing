@@ -166,13 +166,13 @@ export function OrderClient({
 
       {!isReadOnly && otherTables.length > 0 && (
         <button onClick={() => setShowMerge(true)} className="no-print self-start text-xs text-brand">
-          🔀 Merge with another table
+          {t("order.mergeTable")}
         </button>
       )}
 
       {!isReadOnly && combos.length > 0 && (
         <section className="no-print flex flex-col gap-2">
-          <p className="text-sm font-medium text-foreground">🍱 Combos</p>
+          <p className="text-sm font-medium text-foreground">{t("order.combos")}</p>
           <div className="flex gap-2 overflow-x-auto pb-1">
             {combos.map((c) => (
               <button
@@ -347,6 +347,7 @@ export function OrderClient({
           otherTables={otherTables}
           onClose={() => setShowMerge(false)}
           onDone={() => router.refresh()}
+          t={t}
         />
       )}
 
@@ -519,17 +520,17 @@ function SettleModal({
         </label>
 
         <label className="mt-1 flex flex-col gap-1 text-xs text-muted">
-          Split equally among (optional — just a calculator, doesn&apos;t change how you record payment)
+          {t("order.splitAmong")}
           <div className="flex items-center gap-2">
             <button type="button" onClick={() => setSplitCount((n) => Math.max(1, n - 1))} className="h-8 w-8 rounded-full border border-border text-sm">−</button>
             <span className="w-8 text-center text-sm font-medium text-foreground">{splitCount}</span>
             <button type="button" onClick={() => setSplitCount((n) => n + 1)} className="h-8 w-8 rounded-full border border-brand bg-brand-soft text-sm text-brand-dark">+</button>
-            <span className="text-xs text-muted">{splitCount === 1 ? "person" : "people"}</span>
+            <span className="text-xs text-muted">{splitCount === 1 ? t("order.person") : t("order.people")}</span>
           </div>
         </label>
         {perPerson !== null && (
           <div className="rounded-lg bg-brand-soft px-3.5 py-2.5 text-sm">
-            <span className="text-brand-dark">Each person pays </span>
+            <span className="text-brand-dark">{t("order.eachPersonPays")} </span>
             <span className="font-semibold text-brand-dark">{formatMoney(perPerson)}</span>
           </div>
         )}
@@ -652,11 +653,13 @@ function MergeModal({
   otherTables,
   onClose,
   onDone,
+  t,
 }: {
   currentOrderId: string;
   otherTables: { orderId: string; tableName: string }[];
   onClose: () => void;
   onDone: () => void;
+  t: Translator;
 }) {
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -676,8 +679,8 @@ function MergeModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
       <div className="w-full max-w-xs rounded-2xl bg-surface p-5">
-        <p className="text-sm font-semibold text-foreground">Merge which table into this one?</p>
-        <p className="mt-1 text-xs text-muted">All items from the other table move here, and it becomes free.</p>
+        <p className="text-sm font-semibold text-foreground">{t("order.mergeQuestion")}</p>
+        <p className="mt-1 text-xs text-muted">{t("order.mergeExplain")}</p>
         <ul className="mt-3 flex flex-col gap-1.5">
           {otherTables.map((t) => (
             <li key={t.orderId}>
@@ -693,7 +696,7 @@ function MergeModal({
         </ul>
         {error && <p className="mt-2 text-xs text-danger">{error}</p>}
         <button onClick={onClose} className="mt-4 w-full rounded-lg border border-border px-4 py-2 text-sm font-medium text-muted">
-          Cancel
+          {t("common.cancel")}
         </button>
       </div>
     </div>
