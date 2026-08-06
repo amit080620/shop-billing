@@ -113,6 +113,12 @@ export async function submitTableOrderRequestAction(
     .select("id")
     .single();
   if (error || !request) {
+    // The unique index on (table_id) where status='pending' is what
+    // actually closes the race — this is the friendly message for when
+    // it fires (someone else's scan landed a beat earlier).
+    if (error?.code === "23505") {
+      return { error: "There's already a request waiting for staff to review — please wait for that one first." };
+    }
     console.error("Could not create table order request", error);
     return { error: "Could not send your request — please try again." };
   }

@@ -879,3 +879,22 @@ create index if not exists idx_transport_trips_bill on transport_trips(bill_id);
 alter table transport_trips add column if not exists driver_name text;
 alter table transport_trips add column if not exists load_weight numeric(12, 3);
 alter table transport_trips add column if not exists load_unit text;
+
+-- ─── Prevent duplicate pending QR order requests (race condition guard) ───
+-- The application already checks "does a pending request exist?" before
+-- inserting, but two near-simultaneous scans could both pass that check
+-- before either insert lands. This partial unique index makes the
+-- database itself the final word — a second pending insert for the same
+-- table is rejected outright, closing the race window the app-level
+-- check alone can't.
+create unique index if not exists idx_table_order_requests_one_pending
+  on table_order_requests(table_id)
+  where status = 'pending';
+
+-- ─── Prevent duplicate open orders on the same table (race condition) ────
+-- Same reasoning as the QR request guard above — two waiters tapping the
+-- same free table within the same instant could otherwise both pass the
+-- "no open order yet" check before either insert lands.
+create unique index if not exists idx_restaurant_orders_one_open_per_table
+  on restaurant_orders(table_id)
+  where status = 'open';

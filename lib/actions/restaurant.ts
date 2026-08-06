@@ -177,7 +177,22 @@ export async function startOrderAction(tableId: string): Promise<{ orderId?: str
     })
     .select("id")
     .single();
-  if (error || !order) return { error: "Could not start order" };
+  if (error || !order) {
+    // The unique index is what actually closes the race between two
+    // waiters tapping the same free table at the same instant — when it
+    // fires, someone else's insert won, so just hand back their order
+    // instead of showing an error for what the person actually wanted.
+    if (error?.code === "23505") {
+      const { data: winner } = await admin
+        .from("restaurant_orders")
+        .select("id")
+        .eq("table_id", tableId)
+        .eq("status", "open")
+        .maybeSingle();
+      if (winner) return { orderId: winner.id };
+    }
+    return { error: "Could not start order" };
+  }
 
   await admin.from("restaurant_tables").update({ status: "occupied" }).eq("id", tableId);
   revalidatePath("/restaurant");
