@@ -83,7 +83,7 @@ async function recalcOrderTotals(orderId: string) {
   const subtotal = round2((items ?? []).reduce((s, i) => s + Number(i.quantity) * Number(i.unit_price), 0));
   const discountAmount =
     order.discount_type === "percent"
-      ? round2((subtotal * Number(order.discount_value)) / 100)
+      ? round2(Math.min((subtotal * Number(order.discount_value)) / 100, subtotal))
       : round2(Math.min(Number(order.discount_value), subtotal));
   const taxableAmount = round2(subtotal - discountAmount);
   const discountRatio = subtotal > 0 ? taxableAmount / subtotal : 1;
@@ -302,12 +302,15 @@ export async function settleOrderAction(
     await recalcOrderTotals(orderId);
   }
 
+  if (payments.length === 0) return { error: "Add at least one payment" };
+  if (payments.some((p) => !Number.isFinite(p.amount) || p.amount <= 0)) {
+    return { error: "Each payment amount must be greater than 0" };
+  }
+
   const { data: freshOrder } = await admin.from("restaurant_orders").select("total").eq("id", orderId).single();
   const total = Number(freshOrder?.total ?? order.total);
   const paidAmount = round2(payments.reduce((s, p) => s + p.amount, 0));
   const creditAmount = round2(Math.max(0, total - paidAmount));
-
-  if (payments.length === 0) return { error: "Add at least one payment" };
 
   const { error: paymentsError } = await admin.from("restaurant_order_payments").insert(
     payments.map((p) => ({ order_id: orderId, payment_method: p.method, amount: p.amount })),

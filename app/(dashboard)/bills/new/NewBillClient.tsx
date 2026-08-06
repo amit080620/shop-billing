@@ -627,6 +627,7 @@ export function NewBillClient({
         <input
           type="number"
           min="0"
+          max={discountType === "percent" ? 100 : undefined}
           step="0.01"
           value={discountValue || ""}
           onChange={(e) => setDiscountValue(Number(e.target.value) || 0)}

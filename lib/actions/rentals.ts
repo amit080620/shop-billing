@@ -232,8 +232,8 @@ export async function returnRentalAction(
   const admin = createSupabaseAdminClient();
 
   const rentalId = formData.get("rentalId");
-  const damageCharge = round2(Number(formData.get("damageCharge")) || 0);
-  const lateFee = round2(Number(formData.get("lateFee")) || 0);
+  const damageCharge = Math.max(0, round2(Number(formData.get("damageCharge")) || 0));
+  const lateFee = Math.max(0, round2(Number(formData.get("lateFee")) || 0));
   const itemsRaw = formData.get("items");
 
   if (typeof rentalId !== "string" || typeof itemsRaw !== "string") {

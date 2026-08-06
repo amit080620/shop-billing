@@ -197,7 +197,7 @@ export function calculateTransactionTotals(input: {
 
   const discountAmount = round2(
     input.discountType === "percent"
-      ? subtotal * (input.discountValue / 100)
+      ? Math.min(subtotal * (input.discountValue / 100), subtotal)
       : Math.min(input.discountValue, subtotal),
   );
 
