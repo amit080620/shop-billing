@@ -4,7 +4,7 @@ import { useActionState, useState, useTransition } from "react";
 import { useFormStatus } from "react-dom";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { createVehicleAction, toggleVehicleActiveAction, deleteVehicleAction } from "@/lib/actions/transport";
+import { createVehicleAction, toggleVehicleActiveAction, updateVehicleAction, deleteVehicleAction } from "@/lib/actions/transport";
 import { formatMoney } from "@/lib/format";
 import { PageHeader } from "@/app/components/PageHeader";
 import { EmptyState } from "@/app/components/EmptyState";
@@ -28,6 +28,7 @@ export function VehiclesClient({ vehicles, lang }: { vehicles: Vehicle[]; lang: 
   const [isPending, startTransition] = useTransition();
   const [state, formAction] = useActionState(createVehicleAction, null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   return (
     <div className="flex flex-col gap-4">
@@ -80,7 +81,18 @@ export function VehiclesClient({ vehicles, lang }: { vehicles: Vehicle[]; lang: 
         <EmptyState text={t("vehicles.empty")} />
       ) : (
         <ul className="flex flex-col gap-2">
-          {vehicles.map((v) => (
+          {vehicles.map((v) =>
+            editingId === v.id ? (
+              <VehicleEditRow
+                key={v.id}
+                vehicle={v}
+                onDone={() => {
+                  setEditingId(null);
+                  router.refresh();
+                }}
+                onCancel={() => setEditingId(null)}
+              />
+            ) : (
             <li key={v.id} className={`rounded-xl border shadow-sm p-4 ${v.isActive ? "border-border bg-surface" : "border-border bg-background opacity-60"}`}>
               <div className="flex items-center justify-between">
                 <div>
@@ -90,6 +102,12 @@ export function VehiclesClient({ vehicles, lang }: { vehicles: Vehicle[]; lang: 
                 <p className="text-sm font-semibold text-foreground">{formatMoney(v.ratePerKm)}/km</p>
               </div>
               <div className="mt-2 flex gap-2">
+                <button
+                  onClick={() => setEditingId(v.id)}
+                  className="rounded-lg border border-brand px-3 py-1.5 text-xs font-medium text-brand-dark"
+                >
+                  Edit
+                </button>
                 <button
                   onClick={() =>
                     startTransition(async () => {
@@ -122,9 +140,72 @@ export function VehiclesClient({ vehicles, lang }: { vehicles: Vehicle[]; lang: 
                 </button>
               </div>
             </li>
-          ))}
+            ),
+          )}
         </ul>
       )}
     </div>
+  );
+}
+
+function VehicleEditRow({
+  vehicle,
+  onDone,
+  onCancel,
+}: {
+  vehicle: Vehicle;
+  onDone: () => void;
+  onCancel: () => void;
+}) {
+  const [name, setName] = useState(vehicle.name);
+  const [vehicleNumber, setVehicleNumber] = useState(vehicle.vehicleNumber ?? "");
+  const [ratePerKm, setRatePerKm] = useState<number | "">(vehicle.ratePerKm);
+  const [error, setError] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
+
+  return (
+    <li className="flex flex-col gap-2 rounded-xl border border-dashed border-brand bg-brand-soft p-4">
+      <input
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand"
+      />
+      <input
+        value={vehicleNumber}
+        onChange={(e) => setVehicleNumber(e.target.value)}
+        placeholder="Vehicle no."
+        className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand"
+      />
+      <input
+        type="number"
+        min="0"
+        step="0.01"
+        value={ratePerKm}
+        onChange={(e) => setRatePerKm(e.target.value === "" ? "" : Number(e.target.value))}
+        className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand"
+      />
+      {error && <p className="text-xs text-danger">{error}</p>}
+      <div className="flex gap-2">
+        <button
+          onClick={() =>
+            startTransition(async () => {
+              const result = await updateVehicleAction(vehicle.id, name, vehicleNumber, typeof ratePerKm === "number" ? ratePerKm : 0);
+              if (result.error) {
+                setError(result.error);
+                return;
+              }
+              onDone();
+            })
+          }
+          disabled={isPending}
+          className="btn-primary-sm disabled:opacity-60"
+        >
+          {isPending ? "Saving…" : "Save"}
+        </button>
+        <button onClick={onCancel} className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-muted">
+          Cancel
+        </button>
+      </div>
+    </li>
   );
 }

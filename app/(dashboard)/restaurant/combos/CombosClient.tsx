@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { createComboAction, toggleComboActiveAction, deleteComboAction, type ComboItemInput } from "@/lib/actions/combos";
+import { createComboAction, updateComboAction, toggleComboActiveAction, deleteComboAction, type ComboItemInput } from "@/lib/actions/combos";
 import { formatMoney } from "@/lib/format";
 import { PageHeader } from "@/app/components/PageHeader";
 import { EmptyState } from "@/app/components/EmptyState";
@@ -19,11 +19,39 @@ export function CombosClient({ products, combos, lang }: { products: Product[]; 
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [showForm, setShowForm] = useState(false);
+  const [editingCombo, setEditingCombo] = useState<Combo | null>(null);
   const [name, setName] = useState("");
   const [price, setPrice] = useState<number | "">("");
   const [gstPercent, setGstPercent] = useState<number | "">("");
   const [items, setItems] = useState<ComboItemInput[]>([]);
   const [error, setError] = useState<string | null>(null);
+
+  function openEdit(c: Combo) {
+    setEditingCombo(c);
+    setName(c.name);
+    setPrice(c.price);
+    setGstPercent(c.gstPercent);
+    // Combo.items only carries name/quantity for display — resolve back
+    // to product ids so the editable list can still add/remove by id.
+    setItems(
+      c.items
+        .map((i) => {
+          const product = products.find((p) => p.name === i.name);
+          return product ? { productId: product.id, productName: product.name, quantity: i.quantity } : null;
+        })
+        .filter((i): i is ComboItemInput => i !== null),
+    );
+    setShowForm(true);
+  }
+
+  function openNew() {
+    setEditingCombo(null);
+    setName("");
+    setPrice("");
+    setGstPercent("");
+    setItems([]);
+    setShowForm(true);
+  }
 
   const sumOfItems = items.reduce((s, i) => {
     const p = products.find((p) => p.id === i.productId);
@@ -46,7 +74,9 @@ export function CombosClient({ products, combos, lang }: { products: Product[]; 
   function handleCreate() {
     setError(null);
     startTransition(async () => {
-      const result = await createComboAction(name, typeof price === "number" ? price : 0, typeof gstPercent === "number" ? gstPercent : 0, items);
+      const result = editingCombo
+        ? await updateComboAction(editingCombo.id, name, typeof price === "number" ? price : 0, typeof gstPercent === "number" ? gstPercent : 0, items)
+        : await createComboAction(name, typeof price === "number" ? price : 0, typeof gstPercent === "number" ? gstPercent : 0, items);
       if (result.error) {
         setError(result.error);
         return;
@@ -55,6 +85,7 @@ export function CombosClient({ products, combos, lang }: { products: Product[]; 
       setPrice("");
       setGstPercent("");
       setItems([]);
+      setEditingCombo(null);
       setShowForm(false);
       router.refresh();
     });
@@ -72,7 +103,7 @@ export function CombosClient({ products, combos, lang }: { products: Product[]; 
           </svg>
         }
         action={
-          <button onClick={() => setShowForm((v) => !v)} className="btn-primary-sm">
+          <button onClick={() => (showForm && !editingCombo ? setShowForm(false) : openNew())} className="btn-primary-sm">
             {t("combos.add")}
           </button>
         }
@@ -83,6 +114,7 @@ export function CombosClient({ products, combos, lang }: { products: Product[]; 
 
       {showForm && (
         <div className="flex flex-col gap-3 rounded-xl border border-dashed border-brand bg-brand-soft p-4">
+          {editingCombo && <p className="text-xs font-medium text-brand-dark">Editing: {editingCombo.name}</p>}
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
@@ -140,9 +172,14 @@ export function CombosClient({ products, combos, lang }: { products: Product[]; 
           )}
 
           {error && <p className="text-xs text-danger">{error}</p>}
-          <button onClick={handleCreate} disabled={isPending} className="btn-primary-sm disabled:opacity-60">
-            {isPending ? t("combos.saving") : t("combos.save")}
-          </button>
+          <div className="flex gap-2">
+            <button onClick={handleCreate} disabled={isPending} className="btn-primary-sm disabled:opacity-60">
+              {isPending ? t("combos.saving") : editingCombo ? "Update combo" : t("combos.save")}
+            </button>
+            <button onClick={() => { setShowForm(false); setEditingCombo(null); }} className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-muted">
+              {t("common.cancel")}
+            </button>
+          </div>
         </div>
       )}
 
@@ -158,6 +195,12 @@ export function CombosClient({ products, combos, lang }: { products: Product[]; 
               </div>
               <p className="text-xs text-muted">{c.items.map((i) => `${i.quantity}× ${i.name}`).join(", ")}</p>
               <div className="mt-2 flex gap-2">
+                <button
+                  onClick={() => openEdit(c)}
+                  className="rounded-lg border border-brand px-3 py-1.5 text-xs font-medium text-brand-dark"
+                >
+                  {t("products.edit")}
+                </button>
                 <button
                   onClick={() =>
                     startTransition(async () => {

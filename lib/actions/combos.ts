@@ -52,6 +52,54 @@ export async function toggleComboActiveAction(comboId: string, isActive: boolean
   return {};
 }
 
+export async function updateComboAction(
+  comboId: string,
+  name: string,
+  price: number,
+  gstPercent: number,
+  items: ComboItemInput[],
+): Promise<{ error?: string }> {
+  const session = await requireSession();
+  const admin = createSupabaseAdminClient();
+
+  if (!name.trim()) return { error: "Enter a combo name" };
+  if (!price || price <= 0) return { error: "Enter a price greater than 0" };
+  if (items.length === 0) return { error: "Add at least one item to the combo" };
+
+  const { data: combo } = await admin
+    .from("combos")
+    .select("id")
+    .eq("id", comboId)
+    .eq("shop_id", session.shopId)
+    .single();
+  if (!combo) return { error: "Combo not found" };
+
+  const { error } = await admin
+    .from("combos")
+    .update({ name: name.trim(), price, gst_percent: gstPercent })
+    .eq("id", comboId);
+  if (error) {
+    console.error("Could not update combo", error);
+    return { error: "Could not update combo" };
+  }
+
+  // Simplest correct way to change what's included: replace the set
+  // wholesale rather than diffing — combo_items has no other table
+  // pointing at individual rows, so this is safe and avoids partial
+  // add/remove bugs.
+  await admin.from("combo_items").delete().eq("combo_id", comboId);
+  const { error: itemsError } = await admin.from("combo_items").insert(
+    items.map((i) => ({ combo_id: comboId, product_id: i.productId, product_name: i.productName, quantity: i.quantity })),
+  );
+  if (itemsError) {
+    console.error("Could not update combo items", itemsError);
+    return { error: "Could not save combo items" };
+  }
+
+  revalidatePath("/restaurant/combos");
+  return {};
+}
+
 export async function deleteComboAction(comboId: string): Promise<{ error?: string }> {
   const session = await requireSession();
   const admin = createSupabaseAdminClient();

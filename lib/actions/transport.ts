@@ -44,6 +44,34 @@ export async function toggleVehicleActiveAction(vehicleId: string, isActive: boo
   return {};
 }
 
+export async function updateVehicleAction(
+  vehicleId: string,
+  name: string,
+  vehicleNumber: string,
+  ratePerKm: number,
+): Promise<{ error?: string }> {
+  const session = await requireSession();
+  if (!name.trim()) return { error: "Enter a vehicle name" };
+  if (Number.isNaN(ratePerKm) || ratePerKm < 0) return { error: "Enter a valid rate per km" };
+
+  const admin = createSupabaseAdminClient();
+  const { error } = await admin
+    .from("vehicles")
+    .update({
+      name: name.trim(),
+      vehicle_number: vehicleNumber.trim() ? vehicleNumber.trim().toUpperCase() : null,
+      rate_per_km: ratePerKm,
+    })
+    .eq("id", vehicleId)
+    .eq("shop_id", session.shopId);
+  if (error) {
+    console.error("Could not update vehicle", error);
+    return { error: "Could not update vehicle" };
+  }
+  revalidatePath("/transport/vehicles");
+  return {};
+}
+
 export async function deleteVehicleAction(vehicleId: string): Promise<{ error?: string }> {
   const session = await requireSession();
   const admin = createSupabaseAdminClient();
