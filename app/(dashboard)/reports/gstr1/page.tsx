@@ -40,6 +40,26 @@ export default async function Gstr1Page({
         .in("bill_id", billIds)
     : { data: [] as never[] };
 
+  // Restaurant sales never touch `bills` — without folding them in here,
+  // a restaurant's entire outward-supply GST filing would silently miss
+  // every table's revenue. Dine-in customers essentially never carry a
+  // registered GSTIN, so these are added straight into B2C Small + the
+  // HSN/SAC summary, same as any other unregistered walk-in sale.
+  const { data: restaurantOrders } = await admin
+    .from("restaurant_orders")
+    .select("id, taxable_amount, cgst_amount, sgst_amount, igst_amount, total")
+    .eq("shop_id", session.shopId)
+    .eq("status", "settled")
+    .gte("settled_at", start.toISOString())
+    .lt("settled_at", end.toISOString());
+  const restaurantOrderIds = (restaurantOrders ?? []).map((o) => o.id);
+  const { data: restaurantItems } = restaurantOrderIds.length
+    ? await admin
+        .from("restaurant_order_items")
+        .select("order_id, quantity, gst_percent, line_subtotal, cgst_amount, sgst_amount, igst_amount")
+        .in("order_id", restaurantOrderIds)
+    : { data: [] as never[] };
+
   type BillRow = {
     id: string;
     invoice_number: string;
@@ -84,6 +104,16 @@ export default async function Gstr1Page({
     }
   }
 
+  for (const item of restaurantItems ?? []) {
+    const key = `Same state (walk-in)__${item.gst_percent}`;
+    const g = b2cSmallGroups.get(key) ?? { state: "Same state (walk-in)", rate: Number(item.gst_percent), taxable: 0, cgst: 0, sgst: 0, igst: 0 };
+    g.taxable += Number(item.line_subtotal);
+    g.cgst += Number(item.cgst_amount);
+    g.sgst += Number(item.sgst_amount);
+    g.igst += Number(item.igst_amount);
+    b2cSmallGroups.set(key, g);
+  }
+
   // Table 12 — HSN summary across ALL bills in the period
   const hsnGroups = new Map<
     string,
@@ -107,13 +137,24 @@ export default async function Gstr1Page({
     g.igst += Number(item.igst_amount);
     hsnGroups.set(key, g);
   }
+  for (const item of restaurantItems ?? []) {
+    const key = `—__${item.gst_percent}`;
+    const g = hsnGroups.get(key) ?? { hsn: "—", rate: Number(item.gst_percent), qty: 0, taxable: 0, cgst: 0, sgst: 0, igst: 0 };
+    g.qty += Number(item.quantity);
+    g.taxable += Number(item.line_subtotal);
+    g.cgst += Number(item.cgst_amount);
+    g.sgst += Number(item.sgst_amount);
+    g.igst += Number(item.igst_amount);
+    hsnGroups.set(key, g);
+  }
 
   const invoiceNumbers = normalizedBills.map((b) => b.invoice_number).sort();
-  const totalTaxable = normalizedBills.reduce((s, b) => s + Number(b.taxable_amount), 0);
-  const totalTax = normalizedBills.reduce(
-    (s, b) => s + Number(b.cgst_amount) + Number(b.sgst_amount) + Number(b.igst_amount),
-    0,
-  );
+  const totalTaxable =
+    normalizedBills.reduce((s, b) => s + Number(b.taxable_amount), 0) +
+    (restaurantOrders ?? []).reduce((s, o) => s + Number(o.taxable_amount), 0);
+  const totalTax =
+    normalizedBills.reduce((s, b) => s + Number(b.cgst_amount) + Number(b.sgst_amount) + Number(b.igst_amount), 0) +
+    (restaurantOrders ?? []).reduce((s, o) => s + Number(o.cgst_amount) + Number(o.sgst_amount) + Number(o.igst_amount), 0);
 
   return (
     <div className="flex flex-col gap-4">
@@ -133,7 +174,7 @@ export default async function Gstr1Page({
         <SummaryCard label="Total tax" value={formatMoney(totalTax)} />
       </div>
 
-      {normalizedBills.length === 0 ? (
+      {normalizedBills.length === 0 && (restaurantOrders ?? []).length === 0 ? (
         <p className="rounded-lg border border-dashed border-border px-4 py-6 text-center text-sm text-muted">
           No sales invoices in this period.
         </p>

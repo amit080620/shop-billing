@@ -35,6 +35,7 @@ export default async function DailySummaryPage({
     { data: paymentsReceived },
     { data: purchases },
     { data: vendorPayments },
+    { data: restaurantOrders },
   ] = await Promise.all([
     admin
       .from("bills")
@@ -60,6 +61,16 @@ export default async function DailySummaryPage({
       .eq("shop_id", session.shopId)
       .gte("created_at", startOfDay.toISOString())
       .lte("created_at", endOfDay.toISOString()),
+    // Restaurant sales live in a separate table (Tables/Orders/Settle),
+    // never in `bills` — without this, a restaurant's takings would be
+    // completely invisible here even though real money changed hands.
+    admin
+      .from("restaurant_orders")
+      .select("id, credit_amount, restaurant_order_payments ( payment_method, amount )")
+      .eq("shop_id", session.shopId)
+      .eq("status", "settled")
+      .gte("settled_at", startOfDay.toISOString())
+      .lte("settled_at", endOfDay.toISOString()),
   ]);
 
   const salesByMethod = emptyTotals();
@@ -67,6 +78,14 @@ export default async function DailySummaryPage({
   for (const b of bills ?? []) {
     salesByMethod[b.payment_method as Method] += Number(b.paid_amount);
     newCreditGiven += Number(b.credit_amount);
+  }
+  for (const order of restaurantOrders ?? []) {
+    const orderPayments = Array.isArray(order.restaurant_order_payments) ? order.restaurant_order_payments : [];
+    for (const p of orderPayments) {
+      const method = p.payment_method === "card" || p.payment_method === "cash" || p.payment_method === "upi" || p.payment_method === "online" ? p.payment_method : "other";
+      salesByMethod[method as Method] += Number(p.amount);
+    }
+    newCreditGiven += Number(order.credit_amount);
   }
 
   const oldCreditCollected = emptyTotals();

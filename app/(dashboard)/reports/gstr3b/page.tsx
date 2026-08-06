@@ -21,7 +21,7 @@ export default async function Gstr3bPage({
   const start = new Date(year, month - 1, 1);
   const end = new Date(year, month, 1);
 
-  const [{ data: bills }, { data: purchases }] = await Promise.all([
+  const [{ data: bills }, { data: purchases }, { data: restaurantOrders }] = await Promise.all([
     admin
       .from("bills")
       .select("taxable_amount, cgst_amount, sgst_amount, igst_amount")
@@ -35,9 +35,18 @@ export default async function Gstr3bPage({
       .eq("shop_id", session.shopId)
       .gte("purchase_date", start.toISOString().slice(0, 10))
       .lt("purchase_date", end.toISOString().slice(0, 10)),
+    // Restaurant sales never touch `bills` — merged in here so a
+    // restaurant's outward-supply liability isn't silently understated.
+    admin
+      .from("restaurant_orders")
+      .select("taxable_amount, cgst_amount, sgst_amount, igst_amount")
+      .eq("shop_id", session.shopId)
+      .eq("status", "settled")
+      .gte("settled_at", start.toISOString())
+      .lt("settled_at", end.toISOString()),
   ]);
 
-  const outward = sumFields(bills ?? []);
+  const outward = sumFields([...(bills ?? []), ...(restaurantOrders ?? [])]);
   const rcmPurchases = (purchases ?? []).filter((p) => p.reverse_charge);
   const rcm = sumFields(rcmPurchases);
   const itcPurchases = (purchases ?? []).filter((p) => p.itc_eligible);
