@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { requireSession } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { getTranslator } from "@/lib/i18n/server";
 import { LedgerClient } from "./LedgerClient";
 
 export default async function CustomerLedgerPage({
@@ -10,6 +11,7 @@ export default async function CustomerLedgerPage({
 }) {
   const { id } = await params;
   const session = await requireSession();
+  const { lang } = await getTranslator();
   const admin = createSupabaseAdminClient();
 
   const { data: customer } = await admin
@@ -69,6 +71,7 @@ export default async function CustomerLedgerPage({
 
   return (
     <LedgerClient
+      lang={lang}
       customer={{
         id: customer.id,
         name: customer.name,

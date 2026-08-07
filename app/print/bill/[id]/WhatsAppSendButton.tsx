@@ -1,6 +1,8 @@
 "use client";
 
 import { formatMoney } from "@/lib/format";
+import { useTranslation } from "@/lib/i18n/useTranslation";
+import type { Lang } from "@/lib/i18n/dictionary";
 
 export function WhatsAppSendButton({
   customerName,
@@ -11,6 +13,7 @@ export function WhatsAppSendButton({
   paidAmount,
   creditAmount,
   upiLink,
+  lang,
 }: {
   customerName: string | null;
   customerPhone: string | null;
@@ -20,7 +23,10 @@ export function WhatsAppSendButton({
   paidAmount: number;
   creditAmount: number;
   upiLink?: string | null;
+  lang: Lang;
 }) {
+  const { t } = useTranslation(lang);
+
   if (!customerPhone) {
     return (
       <p className="rounded-lg border border-dashed border-gray-300 px-3.5 py-2.5 text-center text-xs text-gray-500">
@@ -33,21 +39,21 @@ export function WhatsAppSendButton({
   const withCountryCode = digits.length === 10 ? `91${digits}` : digits;
 
   const lines = [
-    `Hi ${customerName ?? "there"}, here's your invoice from ${shopName}.`,
-    `Invoice #${invoiceNumber}`,
-    `Total: ${formatMoney(total)}`,
-    `Paid: ${formatMoney(paidAmount)}`,
+    t("wa.billGreeting", { name: customerName ?? "there", shop: shopName }),
+    t("wa.billInvoiceNo", { number: invoiceNumber }),
+    t("wa.billTotal", { amount: formatMoney(total) }),
+    t("wa.billPaid", { amount: formatMoney(paidAmount) }),
   ];
   if (creditAmount > 0) {
-    lines.push(`Balance due: ${formatMoney(creditAmount)}`);
+    lines.push(t("wa.billBalanceDue", { amount: formatMoney(creditAmount) }));
     if (upiLink) {
       // Plain-text URI — WhatsApp auto-links recognized schemes, so this
       // renders tappable on most phones and opens whichever UPI app the
       // customer has installed, pre-filled with the amount due.
-      lines.push(`Pay now: ${upiLink}`);
+      lines.push(t("wa.billPayNow", { link: upiLink }));
     }
   }
-  lines.push("Thank you for your business!");
+  lines.push(t("wa.billThanks"));
 
   const href = `https://wa.me/${withCountryCode}?text=${encodeURIComponent(lines.join("\n"))}`;
 

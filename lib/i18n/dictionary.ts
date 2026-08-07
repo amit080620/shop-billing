@@ -414,6 +414,23 @@ export const translations: Record<Lang, Record<string, string>> = {
     "subscription.whatsappGreeting": "Hi, this is",
     "subscription.whatsappRecharge": "I'd like to recharge my subscription.",
 
+    // WhatsApp message templates
+    "wa.reminderMessage": "Hi {name}, this is a reminder from {shop} that you have an outstanding balance of {amount}. Please pay at your earliest convenience. Thank you!",
+    "wa.salonConfirm": "Hi {name}, your appointment for {service} at {time} is confirmed. See you then!",
+    "wa.reservationConfirm": "Hi {name}, your table for {partySize} at {time} is confirmed. See you then!",
+    "wa.jobReady": "Hi {name}, your {item} (Job #{jobNumber}) is ready for pickup!",
+    "wa.ledgerReminder": "Hi {name}, this is a reminder that you have an outstanding balance of {amount}. Please pay at your earliest convenience. Thank you!",
+    "wa.billGreeting": "Hi {name}, here's your invoice from {shop}.",
+    "wa.billInvoiceNo": "Invoice #{number}",
+    "wa.billTotal": "Total: {amount}",
+    "wa.billPaid": "Paid: {amount}",
+    "wa.billBalanceDue": "Balance due: {amount}",
+    "wa.billPayNow": "Pay now: {link}",
+    "wa.billThanks": "Thank you for your business!",
+    "wa.requestAvailable": "Hi {name}, good news from {shop} — the item you asked for ({item}) is now available.{advance} Please visit to collect it. Thank you!",
+    "wa.offerDefault": "🎉 Special offer at {shop}! Visit us this week for great deals. See you soon!",
+    "wa.requestAdvanceNote": " Your advance of {amount} is on file.",
+
     // Pharmacy — Expiry, Doctors, Schedule X, Write-offs
     "expiry.title": "Expiry alerts",
     "expiry.subtitle": "Next 90 days — push these for sale or return before they're wasted.",
@@ -894,6 +911,23 @@ export const translations: Record<Lang, Record<string, string>> = {
     "subscription.whatsappGreeting": "नमस्ते, यह",
     "subscription.whatsappRecharge": "है — मुझे अपनी subscription recharge करनी है।",
 
+    // WhatsApp message templates
+    "wa.reminderMessage": "नमस्ते {name}, {shop} की तरफ़ से याद दिलाना है कि आपका {amount} बकाया है। कृपया जल्द भुगतान कर दें। धन्यवाद!",
+    "wa.salonConfirm": "नमस्ते {name}, {service} के लिए आपका appointment {time} बजे confirm हो गया है। मिलते हैं!",
+    "wa.reservationConfirm": "नमस्ते {name}, {partySize} लोगों के लिए आपकी table {time} बजे के लिए confirm हो गई है। मिलते हैं!",
+    "wa.jobReady": "नमस्ते {name}, आपका {item} (Job #{jobNumber}) तैयार है, ले जा सकते हैं!",
+    "wa.ledgerReminder": "नमस्ते {name}, याद दिलाना है कि आपका {amount} बकाया है। कृपया जल्द भुगतान कर दें। धन्यवाद!",
+    "wa.billGreeting": "नमस्ते {name}, यह रहा आपका {shop} से बिल।",
+    "wa.billInvoiceNo": "बिल नंबर #{number}",
+    "wa.billTotal": "कुल: {amount}",
+    "wa.billPaid": "भुगतान हुआ: {amount}",
+    "wa.billBalanceDue": "बकाया राशि: {amount}",
+    "wa.billPayNow": "अभी भुगतान करें: {link}",
+    "wa.billThanks": "आपके व्यापार के लिए धन्यवाद!",
+    "wa.requestAvailable": "नमस्ते {name}, {shop} की तरफ़ से खुशख़बरी — आपने जो item माँगा था ({item}) वह अब उपलब्ध है।{advance} कृपया लेने आ जाएँ। धन्यवाद!",
+    "wa.offerDefault": "🎉 {shop} में ख़ास ऑफ़र! इस हफ़्ते हमसे मिलें, बढ़िया deals पाएँ। मिलते हैं!",
+    "wa.requestAdvanceNote": " आपका {amount} एडवांस दर्ज है।",
+
     // Pharmacy — Expiry, Doctors, Schedule X, Write-offs
     "expiry.title": "Expiry की चेतावनी",
     "expiry.subtitle": "अगले 90 दिन — बर्बाद होने से पहले बेच दें या वापस कर दें।",
@@ -1373,6 +1407,23 @@ export const translations: Record<Lang, Record<string, string>> = {
     "subscription.rechargeContact": "Recharge / संपर्क करा",
     "subscription.whatsappGreeting": "नमस्कार, हे",
     "subscription.whatsappRecharge": "आहे — मला माझे subscription recharge करायचे आहे.",
+
+    // WhatsApp message templates
+    "wa.reminderMessage": "नमस्कार {name}, {shop} कडून आठवण — आपले {amount} बाकी आहे. कृपया लवकर भरणा करा. धन्यवाद!",
+    "wa.salonConfirm": "नमस्कार {name}, {service} साठी आपली appointment {time} वाजता confirm झाली आहे. भेटूया!",
+    "wa.reservationConfirm": "नमस्कार {name}, {partySize} जणांसाठी आपले टेबल {time} वाजता confirm झाले आहे. भेटूया!",
+    "wa.jobReady": "नमस्कार {name}, आपले {item} (Job #{jobNumber}) तयार आहे, घेऊन जाऊ शकता!",
+    "wa.ledgerReminder": "नमस्कार {name}, आठवण करून देत आहोत — आपले {amount} बाकी आहे. कृपया लवकर भरणा करा. धन्यवाद!",
+    "wa.billGreeting": "नमस्कार {name}, हे आहे आपले {shop} कडील बिल.",
+    "wa.billInvoiceNo": "बिल क्रमांक #{number}",
+    "wa.billTotal": "एकूण: {amount}",
+    "wa.billPaid": "भरणा झाला: {amount}",
+    "wa.billBalanceDue": "बाकी रक्कम: {amount}",
+    "wa.billPayNow": "आता भरणा करा: {link}",
+    "wa.billThanks": "आपल्या व्यवसायासाठी धन्यवाद!",
+    "wa.requestAvailable": "नमस्कार {name}, {shop} कडून आनंदाची बातमी — आपण मागितलेला item ({item}) आता उपलब्ध आहे.{advance} कृपया घेण्यासाठी या. धन्यवाद!",
+    "wa.offerDefault": "🎉 {shop} मध्ये खास ऑफर! या आठवड्यात भेट द्या, उत्तम सवलती मिळवा. भेटूया!",
+    "wa.requestAdvanceNote": " आपले {amount} advance नोंदवलेले आहे.",
 
     // Pharmacy — Expiry, Doctors, Schedule X, Write-offs
     "expiry.title": "Expiry सूचना",

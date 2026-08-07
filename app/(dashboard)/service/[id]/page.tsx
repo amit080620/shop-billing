@@ -1,5 +1,6 @@
 import { requireSession } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { getTranslator } from "@/lib/i18n/server";
 import { JobDetailClient } from "./JobDetailClient";
 
 export default async function JobDetailPage({
@@ -8,6 +9,7 @@ export default async function JobDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const session = await requireSession();
+  const { lang } = await getTranslator();
   const { id } = await params;
   const admin = createSupabaseAdminClient();
 
@@ -30,6 +32,7 @@ export default async function JobDetailPage({
 
   return (
     <JobDetailClient
+      lang={lang}
       job={{
         id: job.id,
         jobNumber: job.job_number,

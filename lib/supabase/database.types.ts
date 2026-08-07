@@ -245,6 +245,10 @@ export interface Database {
           address: string | null;
           state: string | null;
           state_code: string | null;
+          date_of_birth: string | null;
+          gender: "male" | "female" | "other" | null;
+          blood_group: string | null;
+          known_allergies: string | null;
           created_at: string;
         };
         Insert: {
@@ -256,6 +260,10 @@ export interface Database {
           address?: string | null;
           state?: string | null;
           state_code?: string | null;
+          date_of_birth?: string | null;
+          gender?: "male" | "female" | "other" | null;
+          blood_group?: string | null;
+          known_allergies?: string | null;
           created_at?: string;
         };
         Update: {
@@ -267,6 +275,10 @@ export interface Database {
           address?: string | null;
           state?: string | null;
           state_code?: string | null;
+          date_of_birth?: string | null;
+          gender?: "male" | "female" | "other" | null;
+          blood_group?: string | null;
+          known_allergies?: string | null;
           created_at?: string;
         };
         Relationships: [
@@ -661,6 +673,140 @@ export interface Database {
           created_at?: string;
         };
         Relationships: [];
+      };
+      prescription_settings: {
+        Row: { shop_id: string; header_text: string | null; footer_text: string | null; show_shop_logo: boolean; custom_field_labels: string[]; updated_at: string };
+        Insert: { shop_id: string; header_text?: string | null; footer_text?: string | null; show_shop_logo?: boolean; custom_field_labels?: string[]; updated_at?: string };
+        Update: { shop_id?: string; header_text?: string | null; footer_text?: string | null; show_shop_logo?: boolean; custom_field_labels?: string[]; updated_at?: string };
+        Relationships: [];
+      };
+      booking_settings: {
+        Row: { shop_id: string; slot_duration_minutes: number; working_hours: Record<string, { start: string; end: string }[]>; is_public_booking_enabled: boolean; public_token: string; updated_at: string };
+        Insert: { shop_id: string; slot_duration_minutes?: number; working_hours?: Record<string, { start: string; end: string }[]>; is_public_booking_enabled?: boolean; public_token?: string; updated_at?: string };
+        Update: { shop_id?: string; slot_duration_minutes?: number; working_hours?: Record<string, { start: string; end: string }[]>; is_public_booking_enabled?: boolean; public_token?: string; updated_at?: string };
+        Relationships: [];
+      };
+      clinic_appointments: {
+        Row: {
+          id: string;
+          shop_id: string;
+          patient_id: string | null;
+          patient_name: string;
+          patient_phone: string;
+          reason_for_visit: string | null;
+          appointment_date: string;
+          appointment_time: string;
+          status: "booked" | "confirmed" | "arrived" | "in_consultation" | "completed" | "cancelled" | "no_show";
+          doctor_name: string | null;
+          notes: string | null;
+          staff_id: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          shop_id: string;
+          patient_id?: string | null;
+          patient_name: string;
+          patient_phone: string;
+          reason_for_visit?: string | null;
+          appointment_date: string;
+          appointment_time: string;
+          status?: "booked" | "confirmed" | "arrived" | "in_consultation" | "completed" | "cancelled" | "no_show";
+          doctor_name?: string | null;
+          notes?: string | null;
+          staff_id: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          shop_id?: string;
+          patient_id?: string | null;
+          patient_name?: string;
+          patient_phone?: string;
+          reason_for_visit?: string | null;
+          appointment_date?: string;
+          appointment_time?: string;
+          status?: "booked" | "confirmed" | "arrived" | "in_consultation" | "completed" | "cancelled" | "no_show";
+          doctor_name?: string | null;
+          notes?: string | null;
+          staff_id?: string;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      prescription_counters: {
+        Row: { shop_id: string; financial_year: string; last_number: number };
+        Insert: { shop_id: string; financial_year: string; last_number?: number };
+        Update: { shop_id?: string; financial_year?: string; last_number?: number };
+        Relationships: [];
+      };
+      prescriptions: {
+        Row: {
+          id: string;
+          shop_id: string;
+          prescription_number: string;
+          financial_year: string;
+          appointment_id: string | null;
+          patient_id: string | null;
+          patient_name: string;
+          patient_age: string | null;
+          patient_gender: string | null;
+          patient_phone: string | null;
+          doctor_name: string | null;
+          custom_sections: { label: string; value: string }[];
+          follow_up_date: string | null;
+          bill_id: string | null;
+          staff_id: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          shop_id: string;
+          prescription_number: string;
+          financial_year: string;
+          appointment_id?: string | null;
+          patient_id?: string | null;
+          patient_name: string;
+          patient_age?: string | null;
+          patient_gender?: string | null;
+          patient_phone?: string | null;
+          doctor_name?: string | null;
+          custom_sections?: { label: string; value: string }[];
+          follow_up_date?: string | null;
+          bill_id?: string | null;
+          staff_id: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          shop_id?: string;
+          prescription_number?: string;
+          financial_year?: string;
+          appointment_id?: string | null;
+          patient_id?: string | null;
+          patient_name?: string;
+          patient_age?: string | null;
+          patient_gender?: string | null;
+          patient_phone?: string | null;
+          doctor_name?: string | null;
+          custom_sections?: { label: string; value: string }[];
+          follow_up_date?: string | null;
+          bill_id?: string | null;
+          staff_id?: string;
+          created_at?: string;
+        };
+        Relationships: [
+          { foreignKeyName: "prescriptions_bill_id_fkey"; columns: ["bill_id"]; isOneToOne: false; referencedRelation: "bills"; referencedColumns: ["id"] },
+          { foreignKeyName: "prescriptions_patient_id_fkey"; columns: ["patient_id"]; isOneToOne: false; referencedRelation: "customers"; referencedColumns: ["id"] },
+        ];
+      };
+      prescription_items: {
+        Row: { id: string; prescription_id: string; medicine_name: string; dosage: string | null; frequency: string | null; duration: string | null; instructions: string | null; quantity: number | null; sort_order: number };
+        Insert: { id?: string; prescription_id: string; medicine_name: string; dosage?: string | null; frequency?: string | null; duration?: string | null; instructions?: string | null; quantity?: number | null; sort_order?: number };
+        Update: { id?: string; prescription_id?: string; medicine_name?: string; dosage?: string | null; frequency?: string | null; duration?: string | null; instructions?: string | null; quantity?: number | null; sort_order?: number };
+        Relationships: [
+          { foreignKeyName: "prescription_items_prescription_id_fkey"; columns: ["prescription_id"]; isOneToOne: false; referencedRelation: "prescriptions"; referencedColumns: ["id"] },
+        ];
       };
       appointments: {
         Row: {
@@ -1734,6 +1880,10 @@ export interface Database {
         Returns: number;
       };
       next_job_number: {
+        Args: { p_shop_id: string; p_financial_year: string };
+        Returns: number;
+      };
+      next_prescription_number: {
         Args: { p_shop_id: string; p_financial_year: string };
         Returns: number;
       };

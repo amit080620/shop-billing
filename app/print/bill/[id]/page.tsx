@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { requireSession } from "@/lib/auth";
+import { getTranslator } from "@/lib/i18n/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { formatMoney, formatDateTime } from "@/lib/format";
 import { buildUpiLink, generateQrDataUrl } from "@/lib/qr";
@@ -21,6 +22,7 @@ export default async function PrintBillPage({
   const isThermal = format === "thermal";
 
   const session = await requireSession();
+  const { lang } = await getTranslator();
   const admin = createSupabaseAdminClient();
 
   const { data: bill } = await admin
@@ -83,6 +85,7 @@ export default async function PrintBillPage({
       )}
       <div className="no-print mb-4 flex flex-col gap-2">
         <WhatsAppSendButton
+          lang={lang}
           customerName={customer?.name ?? null}
           customerPhone={customer?.phone ?? null}
           shopName={session.shopName}

@@ -5,6 +5,8 @@ import Link from "next/link";
 import { formatMoney } from "@/lib/format";
 import { EmptyState } from "@/app/components/EmptyState";
 import { PageHeader } from "@/app/components/PageHeader";
+import { useTranslation } from "@/lib/i18n/useTranslation";
+import type { Lang } from "@/lib/i18n/dictionary";
 
 type Customer = { id: string; name: string; phone: string; balance: number; daysPending: number };
 
@@ -12,11 +14,14 @@ export function RemindersClient({
   shopName,
   customers,
   totalOutstanding,
+  lang,
 }: {
   shopName: string;
   customers: Customer[];
   totalOutstanding: number;
+  lang: Lang;
 }) {
+  const { t } = useTranslation(lang);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [sentIds, setSentIds] = useState<Set<string>>(new Set());
 
@@ -81,7 +86,7 @@ export function RemindersClient({
                   <li key={c.id} className="flex items-center justify-between gap-2 rounded-lg bg-surface px-3 py-2">
                     <span className="min-w-0 flex-1 truncate text-sm text-foreground">{c.name}</span>
                     <a
-                      href={buildWhatsAppLink(c, shopName)}
+                      href={buildWhatsAppLink(c, shopName, t)}
                       target="_blank"
                       rel="noopener noreferrer"
                       onClick={() => setSentIds((prev) => new Set(prev).add(c.id))}
@@ -120,7 +125,7 @@ export function RemindersClient({
                     </div>
                   </Link>
                   <a
-                    href={buildWhatsAppLink(c, shopName)}
+                    href={buildWhatsAppLink(c, shopName, t)}
                     target="_blank"
                     rel="noopener noreferrer"
                     onClick={() => setSentIds((prev) => new Set(prev).add(c.id))}
@@ -162,12 +167,10 @@ function AgingBadge({ days }: { days: number }) {
   );
 }
 
-function buildWhatsAppLink(customer: Customer, shopName: string) {
+function buildWhatsAppLink(customer: Customer, shopName: string, t: (key: string, values?: Record<string, string | number>) => string) {
   const digits = customer.phone.replace(/\D/g, "");
   const withCountryCode = digits.length === 10 ? `91${digits}` : digits;
-  const message =
-    `Hi ${customer.name}, this is a reminder from ${shopName} that you have an outstanding ` +
-    `balance of ${formatMoney(customer.balance)}. Please pay at your earliest convenience. Thank you!`;
+  const message = t("wa.reminderMessage", { name: customer.name, shop: shopName, amount: formatMoney(customer.balance) });
   return `https://wa.me/${withCountryCode}?text=${encodeURIComponent(message)}`;
 }
 

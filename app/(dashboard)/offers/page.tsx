@@ -1,9 +1,11 @@
 import { requireSession } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { getTranslator } from "@/lib/i18n/server";
 import { OffersClient } from "./OffersClient";
 
 export default async function OffersPage() {
   const session = await requireSession();
+  const { lang } = await getTranslator();
   const admin = createSupabaseAdminClient();
 
   const { data: customers } = await admin
@@ -12,5 +14,5 @@ export default async function OffersPage() {
     .eq("shop_id", session.shopId)
     .order("name");
 
-  return <OffersClient shopName={session.shopName} customers={customers ?? []} />;
+  return <OffersClient shopName={session.shopName} customers={customers ?? []} lang={lang} />;
 }

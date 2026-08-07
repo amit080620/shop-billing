@@ -1,9 +1,11 @@
 import { requireSession } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { getTranslator } from "@/lib/i18n/server";
 import { RemindersClient } from "./RemindersClient";
 
 export default async function RemindersPage() {
   const session = await requireSession();
+  const { lang } = await getTranslator();
   const admin = createSupabaseAdminClient();
 
   const [{ data: customers }, { data: bills }, { data: payments }] = await Promise.all([
@@ -72,6 +74,7 @@ export default async function RemindersPage() {
   return (
     <RemindersClient
       shopName={session.shopName}
+      lang={lang}
       customers={withBalance}
       totalOutstanding={totalOutstanding}
     />

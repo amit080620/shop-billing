@@ -21,6 +21,19 @@ export async function createReturnAction(
   const reason = formData.get("reason");
   const refundMethod = formData.get("refundMethod");
   const linesRaw = formData.get("lines");
+  const managerPin = formData.get("managerPin");
+
+  // Manager PIN protection on returns is opt-in and universal — if the
+  // shop has set one (in Settings), it applies here regardless of
+  // business type, since a fake/inflated return is a real theft vector
+  // in any retail-like business, not just restaurants. Shops that never
+  // set a PIN see no change at all.
+  const { data: shopRow } = await admin.from("shops").select("manager_pin").eq("id", session.shopId).single();
+  if (shopRow?.manager_pin) {
+    if (typeof managerPin !== "string" || managerPin !== shopRow.manager_pin) {
+      return { error: "Manager PIN required to process a return" };
+    }
+  }
 
   if (typeof billId !== "string" || !billId) return { error: "Missing bill" };
   if (typeof linesRaw !== "string") return { error: "Invalid submission" };

@@ -7,6 +7,7 @@ import { ThemeToggle } from "@/app/components/ThemeToggle";
 import { getTerminology } from "@/lib/businessType";
 import { LanguageToggle } from "@/lib/i18n/LanguageToggle";
 import { SubscriptionCard } from "@/app/components/SubscriptionCard";
+import { InstallAppButton } from "@/app/components/InstallAppButton";
 
 export default async function MorePage() {
   const session = await requireSession();
@@ -19,6 +20,7 @@ export default async function MorePage() {
       <h1 className="text-lg font-semibold text-foreground">{t("more.title")}</h1>
 
       <SubscriptionCard />
+      <InstallAppButton />
 
       <MenuGroup title="Preferences">
         <div className="flex items-center justify-between px-4 py-3.5">

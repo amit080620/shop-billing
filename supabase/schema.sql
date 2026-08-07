@@ -1121,3 +1121,131 @@ create table if not exists restaurant_reservations (
 );
 alter table restaurant_reservations enable row level security;
 create index if not exists idx_restaurant_reservations_shop_date on restaurant_reservations(shop_id, reservation_date);
+
+-- ─── Clinic / Doctor business type ─────────────────────────────────────────
+alter table shops drop constraint if exists shops_business_type_check;
+alter table shops add constraint shops_business_type_check
+  check (business_type in ('grocery', 'restaurant', 'mart', 'hardware', 'pharmacy', 'rental', 'transport', 'service', 'salon', 'jewellery', 'clinic', 'general'));
+
+-- Patient-specific optional fields, added to the existing customers table
+-- rather than a separate "patients" table — a clinic's patients ARE its
+-- customers (same ledger, same repeat-visit history), just with a few
+-- extra medical fields that stay null for every other business type.
+alter table customers add column if not exists date_of_birth date;
+alter table customers add column if not exists gender text check (gender in ('male', 'female', 'other'));
+alter table customers add column if not exists blood_group text;
+alter table customers add column if not exists known_allergies text;
+
+-- The doctor's letterhead — set once, applied to every prescription
+-- printed. Deliberately separate from the shop's logo/name (used on
+-- bills) since a prescription pad conventionally carries the doctor's
+-- own registration details, qualifications, and clinic timings, not a
+-- generic shop header.
+create table if not exists prescription_settings (
+  shop_id uuid primary key references shops(id) on delete cascade,
+  header_text text,
+  footer_text text,
+  show_shop_logo boolean not null default true,
+  custom_field_labels jsonb not null default '["Chief Complaint", "Diagnosis", "Advice"]'::jsonb,
+  updated_at timestamptz not null default now()
+);
+alter table prescription_settings enable row level security;
+
+create table if not exists clinic_appointments (
+  id uuid primary key default uuid_generate_v4(),
+  shop_id uuid not null references shops(id) on delete cascade,
+  patient_id uuid references customers(id),
+  patient_name text not null,
+  patient_phone text not null,
+  reason_for_visit text,
+  appointment_date date not null,
+  appointment_time text not null,
+  status text not null default 'booked' check (status in ('booked', 'confirmed', 'arrived', 'in_consultation', 'completed', 'cancelled', 'no_show')),
+  doctor_name text,
+  notes text,
+  staff_id uuid not null references staff(id),
+  created_at timestamptz not null default now()
+);
+alter table clinic_appointments enable row level security;
+create index if not exists idx_clinic_appointments_shop_date on clinic_appointments(shop_id, appointment_date);
+
+create table if not exists prescription_counters (
+  shop_id uuid not null references shops(id) on delete cascade,
+  financial_year text not null,
+  last_number integer not null default 0,
+  primary key (shop_id, financial_year)
+);
+alter table prescription_counters enable row level security;
+
+create or replace function next_prescription_number(p_shop_id uuid, p_financial_year text)
+returns integer
+language plpgsql
+as $$
+declare
+  v_number integer;
+begin
+  insert into prescription_counters (shop_id, financial_year, last_number)
+  values (p_shop_id, p_financial_year, 1)
+  on conflict (shop_id, financial_year)
+  do update set last_number = prescription_counters.last_number + 1
+  returning last_number into v_number;
+  return v_number;
+end;
+$$;
+
+-- Custom sections (Chief Complaint, Diagnosis, Lab Tests, Vitals, Advice
+-- — whatever the doctor's own pad uses) are stored as a flexible ordered
+-- array rather than fixed columns, so there's genuinely no limit on what
+-- a doctor can add without a schema change.
+create table if not exists prescriptions (
+  id uuid primary key default uuid_generate_v4(),
+  shop_id uuid not null references shops(id) on delete cascade,
+  prescription_number text not null,
+  financial_year text not null,
+  appointment_id uuid references clinic_appointments(id) on delete set null,
+  patient_id uuid references customers(id),
+  patient_name text not null,
+  patient_age text,
+  patient_gender text,
+  patient_phone text,
+  doctor_name text,
+  custom_sections jsonb not null default '[]'::jsonb,
+  follow_up_date date,
+  bill_id uuid references bills(id) on delete set null,
+  staff_id uuid not null references staff(id),
+  created_at timestamptz not null default now()
+);
+alter table prescriptions enable row level security;
+create index if not exists idx_prescriptions_shop on prescriptions(shop_id);
+create index if not exists idx_prescriptions_patient on prescriptions(patient_id);
+
+create table if not exists prescription_items (
+  id uuid primary key default uuid_generate_v4(),
+  prescription_id uuid not null references prescriptions(id) on delete cascade,
+  medicine_name text not null,
+  dosage text,
+  frequency text,
+  duration text,
+  instructions text,
+  quantity numeric(10, 2),
+  sort_order integer not null default 0
+);
+alter table prescription_items enable row level security;
+create index if not exists idx_prescription_items_prescription on prescription_items(prescription_id);
+
+-- ─── Public self-service booking (Clinic + Salon) ──────────────────────────
+-- One shared system for both — a patient booking a doctor's slot and a
+-- customer booking a haircut slot are the same underlying need: show
+-- what's actually free, let them pick, done. Which table the resulting
+-- booking lands in (clinic_appointments vs appointments) depends on the
+-- shop's business_type, decided in the action, not the schema.
+create table if not exists booking_settings (
+  shop_id uuid primary key references shops(id) on delete cascade,
+  slot_duration_minutes integer not null default 20,
+  working_hours jsonb not null default '{}'::jsonb,
+  is_public_booking_enabled boolean not null default false,
+  public_token uuid not null default uuid_generate_v4(),
+  updated_at timestamptz not null default now()
+);
+alter table booking_settings enable row level security;
+create unique index if not exists idx_booking_settings_public_token on booking_settings(public_token);

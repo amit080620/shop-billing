@@ -10,6 +10,8 @@ import { EmptyState } from "@/app/components/EmptyState";
 import { DownloadStatementButton } from "./DownloadStatementButton";
 import { EditCustomerButton } from "./EditCustomerButton";
 import { PaymentMethodPicker } from "@/app/components/PaymentMethodPicker";
+import { useTranslation } from "@/lib/i18n/useTranslation";
+import type { Lang } from "@/lib/i18n/dictionary";
 
 type BillItem = { name: string; quantity: number; unitPrice: number; lineTotal: number };
 type Bill = {
@@ -41,6 +43,7 @@ export function LedgerClient({
   bills,
   payments,
   returns,
+  lang,
 }: {
   customer: { id: string; name: string; phone: string; gstin: string | null; address: string | null; stateCode: string | null };
   shopName: string;
@@ -48,7 +51,9 @@ export function LedgerClient({
   bills: Bill[];
   payments: Payment[];
   returns: Return[];
+  lang: Lang;
 }) {
+  const { t } = useTranslation(lang);
   const [showPaymentForm, setShowPaymentForm] = useState(false);
   const [expandedBillId, setExpandedBillId] = useState<string | null>(null);
 
@@ -66,7 +71,7 @@ export function LedgerClient({
     ...payments.map((p) => ({ type: "payment" as const, at: p.createdAt, data: p })),
   ].sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime());
 
-  const whatsappHref = buildWhatsAppReminderLink(customer, balance);
+  const whatsappHref = buildWhatsAppReminderLink(customer, balance, t);
 
   return (
     <div className="flex flex-col gap-4">
@@ -271,14 +276,16 @@ export function LedgerClient({
   );
 }
 
-function buildWhatsAppReminderLink(customer: { name: string; phone: string }, balance: number) {
+function buildWhatsAppReminderLink(
+  customer: { name: string; phone: string },
+  balance: number,
+  t: (key: string, values?: Record<string, string | number>) => string,
+) {
   // wa.me only supports pre-filled TEXT, never file/image attachments —
   // this is a platform limitation, not a shortcut. See lib note in bills.ts.
   const digits = customer.phone.replace(/\D/g, "");
   const withCountryCode = digits.length === 10 ? `91${digits}` : digits;
-  const message =
-    `Hi ${customer.name}, this is a reminder that you have an outstanding ` +
-    `balance of ${formatMoney(balance)}. Please pay at your earliest convenience. Thank you!`;
+  const message = t("wa.ledgerReminder", { name: customer.name, amount: formatMoney(balance) });
   return `https://wa.me/${withCountryCode}?text=${encodeURIComponent(message)}`;
 }
 

@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { updateJobStatusAction, assignTechnicianAction, deliverJobAction } from "@/lib/actions/service";
 import { formatMoney } from "@/lib/format";
+import { useTranslation } from "@/lib/i18n/useTranslation";
+import type { Lang } from "@/lib/i18n/dictionary";
 
 type Job = {
   id: string;
@@ -33,16 +35,17 @@ const STATUS_LABELS: Record<string, string> = {
   cancelled: "Cancelled",
 };
 
-function whatsappReadyLink(job: Job) {
+function whatsappReadyLink(job: Job, t: (key: string, values?: Record<string, string | number>) => string) {
   const digits = job.customerPhone.replace(/\D/g, "");
   const withCountryCode = digits.length === 10 ? `91${digits}` : digits;
-  const message = `Hi ${job.customerName}, your ${job.itemDescription} (Job #${job.jobNumber}) is ready for pickup!`;
+  const message = t("wa.jobReady", { name: job.customerName, item: job.itemDescription, jobNumber: job.jobNumber });
   return `https://wa.me/${withCountryCode}?text=${encodeURIComponent(message)}`;
 }
 
 type JobItem = { id: string; name: string; quantity: number; notes: string | null };
 
-export function JobDetailClient({ job, items }: { job: Job; items: JobItem[] }) {
+export function JobDetailClient({ job, items, lang }: { job: Job; items: JobItem[]; lang: Lang }) {
+  const { t } = useTranslation(lang);
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -164,7 +167,7 @@ export function JobDetailClient({ job, items }: { job: Job; items: JobItem[] }) 
           </div>
           {job.status === "ready" && (
             <a
-              href={whatsappReadyLink(job)}
+              href={whatsappReadyLink(job, t)}
               target="_blank"
               rel="noopener noreferrer"
               className="text-center text-xs font-medium text-brand-dark underline"

@@ -3,19 +3,22 @@
 import { useMemo, useState } from "react";
 import { PageHeader } from "@/app/components/PageHeader";
 import { EmptyState } from "@/app/components/EmptyState";
+import { useTranslation } from "@/lib/i18n/useTranslation";
+import type { Lang } from "@/lib/i18n/dictionary";
 
 type Customer = { id: string; name: string; phone: string };
 
 export function OffersClient({
   shopName,
   customers,
+  lang,
 }: {
   shopName: string;
   customers: Customer[];
+  lang: Lang;
 }) {
-  const [message, setMessage] = useState(
-    `🎉 Special offer at ${shopName}! Visit us this week for great deals. See you soon!`,
-  );
+  const { t } = useTranslation(lang);
+  const [message, setMessage] = useState(t("wa.offerDefault", { shop: shopName }));
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [sentIds, setSentIds] = useState<Set<string>>(new Set());

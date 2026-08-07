@@ -14,6 +14,7 @@ import { EmptyState } from "@/app/components/EmptyState";
 import { PageHeader } from "@/app/components/PageHeader";
 import { SearchableSelect } from "@/app/components/SearchableSelect";
 import type { Lang } from "@/lib/i18n/dictionary";
+import { useTranslation } from "@/lib/i18n/useTranslation";
 import { ContactPickerButton } from "@/app/components/ContactPickerButton";
 
 type Customer = { id: string; name: string; phone: string };
@@ -53,6 +54,7 @@ export function RequestsClient({
   requests: Request[];
   lang: Lang;
 }) {
+  const { t } = useTranslation(lang);
   const [showForm, setShowForm] = useState(false);
   const nameRef = useRef<HTMLInputElement>(null);
   const phoneRef = useRef<HTMLInputElement>(null);
@@ -217,7 +219,7 @@ export function RequestsClient({
       {available.length > 0 && (
         <Section title="Ready — notify customer" tone="brand">
           {available.map((r) => (
-            <RequestCard key={r.id} r={r} shopName={shopName}>
+            <RequestCard key={r.id} r={r} shopName={shopName} lang={lang}>
               <button
                 disabled={isPending}
                 onClick={() => startTransition(() => markRequestFulfilledAction(r.id))}
@@ -235,7 +237,7 @@ export function RequestsClient({
           <EmptyState text="Nothing pending — you're all caught up! 👍" />
         ) : (
           pending.map((r) => (
-            <RequestCard key={r.id} r={r} shopName={shopName}>
+            <RequestCard key={r.id} r={r} shopName={shopName} lang={lang}>
               <div className="flex gap-2">
                 <button
                   disabled={isPending}
@@ -260,7 +262,7 @@ export function RequestsClient({
       {closed.length > 0 && (
         <Section title="History">
           {closed.map((r) => (
-            <RequestCard key={r.id} r={r} shopName={shopName} muted />
+            <RequestCard key={r.id} r={r} shopName={shopName} lang={lang} muted />
           ))}
         </Section>
       )}
@@ -292,14 +294,17 @@ function Section({
 function RequestCard({
   r,
   shopName,
+  lang,
   muted,
   children,
 }: {
   r: Request;
   shopName: string;
+  lang: Lang;
   muted?: boolean;
   children?: React.ReactNode;
 }) {
+  const { t } = useTranslation(lang);
   return (
     <li
       className={`flex flex-col gap-2 rounded-lg border border-border p-3.5 ${
@@ -326,7 +331,7 @@ function RequestCard({
       <div className="flex items-center justify-between gap-2">
         {r.status === "available" && (
           <a
-            href={buildWhatsAppLink(r, shopName)}
+            href={buildWhatsAppLink(r, shopName, t)}
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-1.5 rounded-lg bg-[#25D366] px-3 py-1.5 text-xs font-medium text-white"
@@ -355,13 +360,15 @@ function StatusBadge({ status }: { status: Request["status"] }) {
   );
 }
 
-function buildWhatsAppLink(r: Request, shopName: string) {
+function buildWhatsAppLink(
+  r: Request,
+  shopName: string,
+  t: (key: string, values?: Record<string, string | number>) => string,
+) {
   const digits = r.customerPhone.replace(/\D/g, "");
   const withCountryCode = digits.length === 10 ? `91${digits}` : digits;
-  const advanceLine = r.advanceAmount > 0 ? ` Your advance of ${formatMoney(r.advanceAmount)} is on file.` : "";
-  const message =
-    `Hi ${r.customerName}, good news from ${shopName} — the item you asked for ` +
-    `(${r.itemDescription}) is now available.${advanceLine} Please visit to collect it. Thank you!`;
+  const advanceLine = r.advanceAmount > 0 ? t("wa.requestAdvanceNote", { amount: formatMoney(r.advanceAmount) }) : "";
+  const message = t("wa.requestAvailable", { name: r.customerName, shop: shopName, item: r.itemDescription, advance: advanceLine });
   return `https://wa.me/${withCountryCode}?text=${encodeURIComponent(message)}`;
 }
 

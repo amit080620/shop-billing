@@ -149,6 +149,17 @@ export function ReturnClient({
         <input type="hidden" name="refundMethod" value={refundMethod} />
       </div>
 
+      <label className="flex flex-col gap-1.5 text-sm">
+        <span className="font-medium text-foreground">Manager PIN (if your shop uses one)</span>
+        <input
+          name="managerPin"
+          type="text"
+          inputMode="numeric"
+          placeholder="Leave blank if not set up"
+          className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand"
+        />
+      </label>
+
       {state?.error && <p className="text-sm text-danger">{state.error}</p>}
       <SubmitButton />
     </form>

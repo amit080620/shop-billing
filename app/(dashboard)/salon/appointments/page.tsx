@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { requireSession } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { getTranslator } from "@/lib/i18n/server";
 import { PageHeader } from "@/app/components/PageHeader";
 import { EmptyState } from "@/app/components/EmptyState";
 import { AppointmentRow } from "./AppointmentRow";
@@ -16,6 +17,7 @@ export default async function AppointmentsPage({
   searchParams: Promise<{ date?: string }>;
 }) {
   const session = await requireSession();
+  const { lang } = await getTranslator();
   const { date } = await searchParams;
   const selectedDate = date || todayIso();
   const admin = createSupabaseAdminClient();
@@ -69,6 +71,7 @@ export default async function AppointmentsPage({
           {appointments.map((a) => (
             <AppointmentRow
               key={a.id}
+              lang={lang}
               appointment={{
                 id: a.id,
                 customerName: a.customer_name,

@@ -3,6 +3,8 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { updateReservationStatusAction, deleteReservationAction } from "@/lib/actions/reservations";
+import { useTranslation } from "@/lib/i18n/useTranslation";
+import type { Lang } from "@/lib/i18n/dictionary";
 
 type Reservation = {
   id: string;
@@ -30,14 +32,15 @@ const STATUS_TONE: Record<string, string> = {
   no_show: "bg-danger/15 text-danger",
 };
 
-function whatsappConfirmLink(r: Reservation) {
+function whatsappConfirmLink(r: Reservation, t: (key: string, values?: Record<string, string | number>) => string) {
   const digits = r.customerPhone.replace(/\D/g, "");
   const withCountryCode = digits.length === 10 ? `91${digits}` : digits;
-  const message = `Hi ${r.customerName}, your table for ${r.partySize} at ${r.time} is confirmed. See you then!`;
+  const message = t("wa.reservationConfirm", { name: r.customerName, partySize: r.partySize, time: r.time });
   return `https://wa.me/${withCountryCode}?text=${encodeURIComponent(message)}`;
 }
 
-export function ReservationRow({ reservation }: { reservation: Reservation }) {
+export function ReservationRow({ reservation, lang }: { reservation: Reservation; lang: Lang }) {
+  const { t } = useTranslation(lang);
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -75,7 +78,7 @@ export function ReservationRow({ reservation }: { reservation: Reservation }) {
         <div className="mt-2 flex flex-wrap gap-1.5">
           {reservation.status === "booked" && (
             <a
-              href={whatsappConfirmLink(reservation)}
+              href={whatsappConfirmLink(reservation, t)}
               target="_blank"
               rel="noopener noreferrer"
               className="rounded-lg border border-brand bg-brand-soft px-2.5 py-1 text-xs font-medium text-brand-dark"
