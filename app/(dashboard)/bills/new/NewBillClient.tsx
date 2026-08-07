@@ -460,6 +460,7 @@ export function NewBillClient({
             products={products.filter((p) => p.metalType)}
             goldRate={goldRate}
             silverRate={silverRate}
+            lang={lang}
             onAdd={addJewelleryItem}
           />
         )}
@@ -1094,11 +1095,13 @@ function JewelleryCalculator({
   products,
   goldRate,
   silverRate,
+  lang,
   onAdd,
 }: {
   products: Product[];
   goldRate: number | null;
   silverRate: number | null;
+  lang: Lang;
   onAdd: (name: string, amount: number, gstPercent: number) => void;
 }) {
   const [open, setOpen] = useState(false);
@@ -1151,7 +1154,7 @@ function JewelleryCalculator({
       </p>
 
       <SearchableSelect
-        lang={undefined}
+        lang={lang}
         items={products}
         getKey={(p) => p.id}
         getLabel={(p) => p.name}

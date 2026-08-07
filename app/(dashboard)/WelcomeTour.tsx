@@ -204,12 +204,42 @@ const SALON_SLIDES: Slide[] = [
   },
 ];
 
+const JEWELLERY_SLIDES: Slide[] = [
+  {
+    icon: "👋",
+    title: "Welcome — this app is set up for your jewellery business",
+    body: "A quick 30-second look at where everything lives — you can always come back to this from More → Help.",
+  },
+  {
+    icon: "⚖️",
+    title: "Set today's rate first",
+    body: "Every morning, go to More → Jewellery → Today's rate and enter the gold/silver rate per gram. Every item billed that day uses this rate automatically.",
+  },
+  {
+    icon: "💍",
+    title: "Bill by weight",
+    body: "In Sell, tap \"Add jewellery item by weight\" — pick a saved design or type one in, enter the weight in grams, and it calculates metal value + making charge + wastage instantly.",
+  },
+  {
+    icon: "🧮",
+    title: "Making charges & wastage",
+    body: "Set each item's making charge (₹/gram, flat, or %) and wastage % once under More → Items — the calculator picks it up automatically from then on.",
+  },
+  {
+    icon: "⚙️",
+    title: "One last thing",
+    body: "If you haven't already, set your shop's state under More → GST & shop profile — billing is blocked until that's filled in, since it decides CGST+SGST vs IGST on every invoice.",
+    cta: { label: "Go to GST profile", href: "/settings" },
+  },
+];
+
 function slidesFor(businessType: string) {
   if (businessType === "restaurant") return RESTAURANT_SLIDES;
   if (businessType === "rental") return RENTAL_SLIDES;
   if (businessType === "transport") return TRANSPORT_SLIDES;
   if (businessType === "service") return SERVICE_SLIDES;
   if (businessType === "salon") return SALON_SLIDES;
+  if (businessType === "jewellery") return JEWELLERY_SLIDES;
   return RETAIL_SLIDES;
 }
 
