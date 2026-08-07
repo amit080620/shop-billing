@@ -59,6 +59,8 @@ type Product = {
   makingChargeType: "per_gram" | "flat" | "percent" | null;
   makingChargeValue: number | null;
   wastagePercent: number | null;
+  bulkMinQty: number | null;
+  bulkPrice: number | null;
 };
 type Category = { id: string; name: string };
 
@@ -95,6 +97,7 @@ export function ProductsClient({
   const showPharmaSection = !["restaurant", "transport", "rental"].includes(businessType);
   const showWarrantySection = ["hardware", "general", "mart"].includes(businessType);
   const showMrpField = ["grocery", "mart", "general"].includes(businessType);
+  const showBulkPricingField = ["grocery", "mart", "hardware", "general"].includes(businessType);
   const showJewellerySection = businessType === "jewellery";
   const [showForm, setShowForm] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -333,6 +336,28 @@ export function ProductsClient({
               placeholder="e.g. 55"
               defaultValue={editingProduct?.mrp != null ? String(editingProduct.mrp) : undefined}
             />
+          )}
+          {showBulkPricingField && (
+            <div className="grid grid-cols-2 gap-3">
+              <Field
+                name="bulkMinQty"
+                label="Bulk qty (optional)"
+                type="number"
+                min="0"
+                step="0.01"
+                placeholder="e.g. 10"
+                defaultValue={editingProduct?.bulkMinQty != null ? String(editingProduct.bulkMinQty) : undefined}
+              />
+              <Field
+                name="bulkPrice"
+                label="Bulk price/unit (₹)"
+                type="number"
+                min="0"
+                step="0.01"
+                placeholder="e.g. 45"
+                defaultValue={editingProduct?.bulkPrice != null ? String(editingProduct.bulkPrice) : undefined}
+              />
+            </div>
           )}
           <div className="flex flex-col gap-1.5 text-sm">
             <span className="font-medium text-foreground">{t("products.barcode")}</span>
@@ -607,6 +632,11 @@ export function ProductsClient({
                   {p.hasWarranty && p.warrantyMonths && (
                     <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-brand-soft px-2 py-0.5 text-[11px] font-medium text-brand-dark">
                       🛡️ {p.warrantyMonths}mo warranty
+                    </span>
+                  )}
+                  {p.bulkMinQty && p.bulkPrice && (
+                    <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-brand-soft px-2 py-0.5 text-[11px] font-medium text-brand-dark">
+                      📦 {p.bulkMinQty}+ @ {formatMoney(p.bulkPrice)}
                     </span>
                   )}
                   {p.isPharma && (

@@ -44,6 +44,8 @@ export async function createProductAction(
     makingChargeType: formData.get("makingChargeType") || null,
     makingChargeValue: formData.get("makingChargeValue") || null,
     wastagePercent: formData.get("wastagePercent") || null,
+    bulkMinQty: formData.get("bulkMinQty") || null,
+    bulkPrice: formData.get("bulkPrice") || null,
   });
   if (!parsed.success) {
     return { error: parsed.error.issues[0].message };
@@ -96,6 +98,8 @@ export async function createProductAction(
     making_charge_type: parsed.data.makingChargeType ?? null,
     making_charge_value: parsed.data.makingChargeValue ?? null,
     wastage_percent: parsed.data.wastagePercent ?? null,
+    bulk_min_qty: parsed.data.bulkMinQty ?? null,
+    bulk_price: parsed.data.bulkPrice ?? null,
   });
   if (error) {
     if (error.code === "23505") {
@@ -147,6 +151,8 @@ export async function updateProductAction(
     makingChargeType: formData.get("makingChargeType") || null,
     makingChargeValue: formData.get("makingChargeValue") || null,
     wastagePercent: formData.get("wastagePercent") || null,
+    bulkMinQty: formData.get("bulkMinQty") || null,
+    bulkPrice: formData.get("bulkPrice") || null,
   });
   if (!parsed.success) {
     return { error: parsed.error.issues[0].message };
@@ -187,6 +193,8 @@ export async function updateProductAction(
       making_charge_type: parsed.data.makingChargeType ?? null,
       making_charge_value: parsed.data.makingChargeValue ?? null,
       wastage_percent: parsed.data.wastagePercent ?? null,
+      bulk_min_qty: parsed.data.bulkMinQty ?? null,
+      bulk_price: parsed.data.bulkPrice ?? null,
     })
     .eq("id", productId)
     .eq("shop_id", session.shopId); // ownership check baked into the query

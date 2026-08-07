@@ -38,6 +38,8 @@ type Product = {
   makingChargeType: "per_gram" | "flat" | "percent" | null;
   makingChargeValue: number | null;
   wastagePercent: number | null;
+  bulkMinQty: number | null;
+  bulkPrice: number | null;
 };
 type Customer = { id: string; name: string; phone: string; gstin: string | null; state_code: string | null };
 type CartLine = {
@@ -56,6 +58,9 @@ type CartLine = {
   unitsPerPack: number | null;
   looseUnitName: string | null;
   saleMode: "pack" | "loose";
+  regularPrice: number;
+  bulkMinQty: number | null;
+  bulkPrice: number | null;
 };
 
 function SubmitButton({ blocked, generatingLabel, submitLabel }: { blocked: boolean; generatingLabel: string; submitLabel: string }) {
@@ -207,12 +212,20 @@ export function NewBillClient({
     }
   }
 
+  function priceForQuantity(regularPrice: number, bulkMinQty: number | null, bulkPrice: number | null, quantity: number) {
+    if (bulkMinQty && bulkPrice && quantity >= bulkMinQty) return bulkPrice;
+    return regularPrice;
+  }
+
   function addProduct(p: Product) {
     setCart((prev) => {
       const existing = prev.find((c) => c.productId === p.id);
       if (existing) {
+        const newQty = existing.quantity + 1;
         return prev.map((c) =>
-          c.productId === p.id ? { ...c, quantity: c.quantity + 1 } : c,
+          c.productId === p.id
+            ? { ...c, quantity: newQty, price: priceForQuantity(c.regularPrice, c.bulkMinQty, c.bulkPrice, newQty) }
+            : c,
         );
       }
       return [
@@ -220,7 +233,7 @@ export function NewBillClient({
         {
           productId: p.id,
           name: p.name,
-          price: p.price,
+          price: priceForQuantity(p.price, p.bulkMinQty, p.bulkPrice, 1),
           packPrice: p.price,
           gstPercent: p.gstPercent,
           hsnCode: p.hsnCode,
@@ -233,6 +246,9 @@ export function NewBillClient({
           unitsPerPack: p.unitsPerPack,
           looseUnitName: p.looseUnitName,
           saleMode: "pack",
+          regularPrice: p.price,
+          bulkMinQty: p.bulkMinQty,
+          bulkPrice: p.bulkPrice,
         },
       ];
     });
@@ -267,6 +283,9 @@ export function NewBillClient({
         unitsPerPack: null,
         looseUnitName: null,
         saleMode: "pack",
+        regularPrice: amount,
+        bulkMinQty: null,
+        bulkPrice: null,
       },
     ]);
     setTripInfo({ vehicleId, km, driverName, loadWeight, loadUnit });
@@ -292,6 +311,9 @@ export function NewBillClient({
         unitsPerPack: null,
         looseUnitName: null,
         saleMode: "pack",
+        regularPrice: amount,
+        bulkMinQty: null,
+        bulkPrice: null,
       },
     ]);
   }
@@ -300,7 +322,15 @@ export function NewBillClient({
     setCart((prev) =>
       quantity <= 0
         ? prev.filter((c) => c.productId !== productId)
-        : prev.map((c) => (c.productId === productId ? { ...c, quantity } : c)),
+        : prev.map((c) =>
+            c.productId === productId
+              ? {
+                  ...c,
+                  quantity,
+                  price: c.saleMode === "pack" ? priceForQuantity(c.regularPrice, c.bulkMinQty, c.bulkPrice, quantity) : c.price,
+                }
+              : c,
+          ),
     );
   }
 
@@ -452,7 +482,7 @@ export function NewBillClient({
               );
               return {
                 data: r.product
-                  ? { ...r.product, packPrice: r.product.price, trackInventory: false, stockQuantity: 0, lowStockThreshold: 0, requiresPrescription: false, unitsPerPack: null, looseUnitName: null, metalType: null, purity: null, makingChargeType: null, makingChargeValue: null, wastagePercent: null }
+                  ? { ...r.product, packPrice: r.product.price, trackInventory: false, stockQuantity: 0, lowStockThreshold: 0, requiresPrescription: false, unitsPerPack: null, looseUnitName: null, metalType: null, purity: null, makingChargeType: null, makingChargeValue: null, wastagePercent: null, bulkMinQty: null, bulkPrice: null }
                   : undefined,
                 error: r.error,
               };
@@ -490,6 +520,13 @@ export function NewBillClient({
                       <p className="text-xs text-muted">
                         {formatMoney(line.price)}/{line.saleMode === "loose" ? line.looseUnitName : line.unit} · GST {line.gstPercent}%
                       </p>
+                      {line.bulkMinQty && line.bulkPrice && (
+                        <p className="text-[11px] text-brand">
+                          {line.price === line.bulkPrice
+                            ? `📦 Bulk price applied (${line.bulkMinQty}+)`
+                            : `📦 ${line.bulkMinQty}+ gets ${formatMoney(line.bulkPrice)}/unit`}
+                        </p>
+                      )}
                       {line.unitsPerPack && line.looseUnitName && (
                         <div className="mt-1 flex gap-1.5">
                           <button

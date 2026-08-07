@@ -147,6 +147,8 @@ export interface Database {
           making_charge_type: "per_gram" | "flat" | "percent" | null;
           making_charge_value: number | null;
           wastage_percent: number | null;
+          bulk_min_qty: number | null;
+          bulk_price: number | null;
           created_at: string;
         };
         Insert: {
@@ -183,6 +185,8 @@ export interface Database {
           making_charge_type?: "per_gram" | "flat" | "percent" | null;
           making_charge_value?: number | null;
           wastage_percent?: number | null;
+          bulk_min_qty?: number | null;
+          bulk_price?: number | null;
           created_at?: string;
         };
         Update: {
@@ -219,6 +223,8 @@ export interface Database {
           making_charge_type?: "per_gram" | "flat" | "percent" | null;
           making_charge_value?: number | null;
           wastage_percent?: number | null;
+          bulk_min_qty?: number | null;
+          bulk_price?: number | null;
           created_at?: string;
         };
         Relationships: [

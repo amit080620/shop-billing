@@ -60,6 +60,8 @@ export const productSchema = z.object({
   makingChargeType: z.enum(["per_gram", "flat", "percent"]).nullable().optional(),
   makingChargeValue: z.coerce.number().min(0).nullable().optional(),
   wastagePercent: z.coerce.number().min(0).max(30).nullable().optional(),
+  bulkMinQty: z.coerce.number().min(0).nullable().optional(),
+  bulkPrice: z.coerce.number().min(0).nullable().optional(),
 });
 export type ProductInput = z.infer<typeof productSchema>;
 

@@ -1067,3 +1067,11 @@ create table if not exists appointments (
 alter table appointments enable row level security;
 create index if not exists idx_appointments_shop_date on appointments(shop_id, appointment_date);
 create index if not exists idx_appointments_customer on appointments(customer_id);
+
+-- ─── Bulk/wholesale pricing tier ───────────────────────────────────────────
+-- One simple tier per product (e.g. "10+ units at ₹45 instead of ₹50") —
+-- covers the common Indian retail/hardware/grocery pattern without
+-- needing a full multi-tier pricing engine. Applied automatically in
+-- New Bill based on the quantity in the cart.
+alter table products add column if not exists bulk_min_qty numeric(12, 3);
+alter table products add column if not exists bulk_price numeric(12, 2);
