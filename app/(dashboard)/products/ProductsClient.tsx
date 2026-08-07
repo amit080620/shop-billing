@@ -53,6 +53,7 @@ type Product = {
   looseUnitName: string | null;
   hasWarranty: boolean;
   warrantyMonths: number | null;
+  mrp: number | null;
 };
 type Category = { id: string; name: string };
 
@@ -88,6 +89,7 @@ export function ProductsClient({
   const showRentalSection = !["restaurant", "pharmacy", "transport"].includes(businessType);
   const showPharmaSection = !["restaurant", "transport", "rental"].includes(businessType);
   const showWarrantySection = ["hardware", "general", "mart"].includes(businessType);
+  const showMrpField = ["grocery", "mart", "general"].includes(businessType);
   const [showForm, setShowForm] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [trackInventory, setTrackInventory] = useState(false);
@@ -315,6 +317,17 @@ export function ProductsClient({
               </select>
             </label>
           </div>
+          {showMrpField && (
+            <Field
+              name="mrp"
+              label="MRP (₹, optional — leave blank for loose/unpackaged items)"
+              type="number"
+              step="0.01"
+              min="0"
+              placeholder="e.g. 55"
+              defaultValue={editingProduct?.mrp != null ? String(editingProduct.mrp) : undefined}
+            />
+          )}
           <div className="flex flex-col gap-1.5 text-sm">
             <span className="font-medium text-foreground">{t("products.barcode")}</span>
             <input
@@ -442,44 +455,52 @@ export function ProductsClient({
               onChange={(e) => setIsPharma(e.target.checked)}
               className="h-4 w-4 rounded border-border"
             />
-            {t("products.trackBatch")}
+            {businessType === "pharmacy" ? t("products.trackBatch") : "Track with batch & expiry date"}
           </label>
           {isPharma && (
             <div className="flex flex-col gap-3 rounded-lg border border-dashed border-brand bg-brand-soft p-3">
-              <Field name="saltComposition" label={t("products.saltComposition")} placeholder={t("products.saltPlaceholder")} defaultValue={editingProduct?.saltComposition ?? undefined} />
-              <label className="flex items-center gap-2 text-sm text-brand-dark">
-                <input
-                  type="checkbox"
-                  name="requiresPrescription"
-                  checked={requiresPrescription}
-                  onChange={(e) => setRequiresPrescription(e.target.checked)}
-                  className="h-4 w-4 rounded border-border"
-                />
-                {t("products.requiresRx")}
-              </label>
-              <div className="grid grid-cols-2 gap-3">
-                <label className="flex flex-col gap-1.5 text-xs text-brand-dark">
-                  {t("products.drugSchedule")}
-                  <select
-                    name="drugSchedule"
-                    defaultValue={editingProduct?.drugSchedule ?? ""}
-                    className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand"
-                  >
-                    <option value="">{t("products.notClassified")}</option>
-                    <option value="otc">{t("products.scheduleOtc")}</option>
-                    <option value="h">{t("products.scheduleH")}</option>
-                    <option value="h1">{t("products.scheduleH1")}</option>
-                    <option value="x">{t("products.scheduleX")}</option>
-                    <option value="g">{t("products.scheduleG")}</option>
-                  </select>
-                </label>
-                <Field name="rackLocation" label={t("products.rackLocation")} placeholder={t("products.rackPlaceholder")} defaultValue={editingProduct?.rackLocation ?? undefined} />
-              </div>
+              {businessType === "pharmacy" && (
+                <>
+                  <Field name="saltComposition" label={t("products.saltComposition")} placeholder={t("products.saltPlaceholder")} defaultValue={editingProduct?.saltComposition ?? undefined} />
+                  <label className="flex items-center gap-2 text-sm text-brand-dark">
+                    <input
+                      type="checkbox"
+                      name="requiresPrescription"
+                      checked={requiresPrescription}
+                      onChange={(e) => setRequiresPrescription(e.target.checked)}
+                      className="h-4 w-4 rounded border-border"
+                    />
+                    {t("products.requiresRx")}
+                  </label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <label className="flex flex-col gap-1.5 text-xs text-brand-dark">
+                      {t("products.drugSchedule")}
+                      <select
+                        name="drugSchedule"
+                        defaultValue={editingProduct?.drugSchedule ?? ""}
+                        className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand"
+                      >
+                        <option value="">{t("products.notClassified")}</option>
+                        <option value="otc">{t("products.scheduleOtc")}</option>
+                        <option value="h">{t("products.scheduleH")}</option>
+                        <option value="h1">{t("products.scheduleH1")}</option>
+                        <option value="x">{t("products.scheduleX")}</option>
+                        <option value="g">{t("products.scheduleG")}</option>
+                      </select>
+                    </label>
+                    <Field name="rackLocation" label={t("products.rackLocation")} placeholder={t("products.rackPlaceholder")} defaultValue={editingProduct?.rackLocation ?? undefined} />
+                  </div>
+                </>
+              )}
               <div className="grid grid-cols-2 gap-3">
                 <Field name="unitsPerPack" label={t("products.unitsPerPack")} type="number" min="1" step="1" placeholder={t("products.unitsPerPackPlaceholder")} defaultValue={editingProduct?.unitsPerPack != null ? String(editingProduct.unitsPerPack) : undefined} />
                 <Field name="looseUnitName" label={t("products.looseUnitName")} placeholder={t("products.looseUnitPlaceholder")} defaultValue={editingProduct?.looseUnitName ?? undefined} />
               </div>
-              <p className="text-xs text-brand-dark">{t("products.pharmaExplain")}</p>
+              <p className="text-xs text-brand-dark">
+                {businessType === "pharmacy"
+                  ? t("products.pharmaExplain")
+                  : "Fill in units-per-pack + loose unit name to sell individual pieces from a pack (e.g. loose biscuits from a box), not just the whole pack. After saving, add stock with expiry dates via the batch manager on this item — billing automatically sells the earliest-expiring batch first."}
+              </p>
             </div>
           )}
           </>
@@ -584,6 +605,9 @@ export function ProductsClient({
                   )}
                 </div>
                 <div className="flex shrink-0 flex-col items-end gap-1.5">
+                  {p.mrp != null && p.mrp > p.price && (
+                    <p className="text-xs text-muted line-through">{formatMoney(p.mrp)}</p>
+                  )}
                   <p className="text-sm font-semibold text-foreground">
                     {formatMoney(p.price)}
                   </p>

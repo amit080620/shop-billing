@@ -98,6 +98,7 @@ export default async function NewBillPage() {
       customers={customers ?? []}
       frequentProductIds={frequentProductIds}
       vehicles={(vehicles ?? []).map((v) => ({ id: v.id, name: v.name, ratePerKm: Number(v.rate_per_km) }))}
+      businessType={session.businessType}
     />
   );
 }

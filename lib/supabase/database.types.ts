@@ -141,6 +141,7 @@ export interface Database {
           loose_unit_name: string | null;
           has_warranty: boolean;
           warranty_months: number | null;
+          mrp: number | null;
           created_at: string;
         };
         Insert: {
@@ -171,6 +172,7 @@ export interface Database {
           loose_unit_name?: string | null;
           has_warranty?: boolean;
           warranty_months?: number | null;
+          mrp?: number | null;
           created_at?: string;
         };
         Update: {
@@ -201,6 +203,7 @@ export interface Database {
           loose_unit_name?: string | null;
           has_warranty?: boolean;
           warranty_months?: number | null;
+          mrp?: number | null;
           created_at?: string;
         };
         Relationships: [
@@ -277,6 +280,7 @@ export interface Database {
           void_reason: string | null;
           doctor_name: string | null;
           patient_name: string | null;
+          service_provider_name: string | null;
           total: number;
           paid_amount: number;
           credit_amount: number;
@@ -306,6 +310,7 @@ export interface Database {
           void_reason?: string | null;
           doctor_name?: string | null;
           patient_name?: string | null;
+          service_provider_name?: string | null;
           total?: number;
           paid_amount?: number;
           credit_amount?: number;
@@ -335,6 +340,7 @@ export interface Database {
           void_reason?: string | null;
           doctor_name?: string | null;
           patient_name?: string | null;
+          service_provider_name?: string | null;
           total?: number;
           paid_amount?: number;
           credit_amount?: number;
@@ -365,6 +371,7 @@ export interface Database {
           batch_id: string | null;
           warranty_months: number | null;
           warranty_expires_on: string | null;
+          mrp: number | null;
         };
         Insert: {
           id?: string;
@@ -378,6 +385,7 @@ export interface Database {
           batch_id?: string | null;
           warranty_months?: number | null;
           warranty_expires_on?: string | null;
+          mrp?: number | null;
           line_subtotal: number;
           cgst_amount?: number;
           sgst_amount?: number;
@@ -579,6 +587,87 @@ export interface Database {
           { foreignKeyName: "purchase_items_purchase_id_fkey"; columns: ["purchase_id"]; isOneToOne: false; referencedRelation: "purchases"; referencedColumns: ["id"] },
           { foreignKeyName: "purchase_items_product_id_fkey"; columns: ["product_id"]; isOneToOne: false; referencedRelation: "products"; referencedColumns: ["id"] },
         ];
+      };
+      service_jobs: {
+        Row: {
+          id: string;
+          shop_id: string;
+          job_number: string;
+          financial_year: string;
+          customer_id: string | null;
+          customer_name: string;
+          customer_phone: string;
+          item_description: string;
+          issue_description: string | null;
+          status: "received" | "in_progress" | "ready" | "delivered" | "cancelled";
+          technician_name: string | null;
+          estimated_cost: number | null;
+          final_cost: number | null;
+          advance_paid: number;
+          expected_date: string | null;
+          ready_at: string | null;
+          delivered_at: string | null;
+          bill_id: string | null;
+          notes: string | null;
+          staff_id: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          shop_id: string;
+          job_number: string;
+          financial_year: string;
+          customer_id?: string | null;
+          customer_name: string;
+          customer_phone: string;
+          item_description: string;
+          issue_description?: string | null;
+          status?: "received" | "in_progress" | "ready" | "delivered" | "cancelled";
+          technician_name?: string | null;
+          estimated_cost?: number | null;
+          final_cost?: number | null;
+          advance_paid?: number;
+          expected_date?: string | null;
+          ready_at?: string | null;
+          delivered_at?: string | null;
+          bill_id?: string | null;
+          notes?: string | null;
+          staff_id: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          shop_id?: string;
+          job_number?: string;
+          financial_year?: string;
+          customer_id?: string | null;
+          customer_name?: string;
+          customer_phone?: string;
+          item_description?: string;
+          issue_description?: string | null;
+          status?: "received" | "in_progress" | "ready" | "delivered" | "cancelled";
+          technician_name?: string | null;
+          estimated_cost?: number | null;
+          final_cost?: number | null;
+          advance_paid?: number;
+          expected_date?: string | null;
+          ready_at?: string | null;
+          delivered_at?: string | null;
+          bill_id?: string | null;
+          notes?: string | null;
+          staff_id?: string;
+          created_at?: string;
+        };
+        Relationships: [
+          { foreignKeyName: "service_jobs_shop_id_fkey"; columns: ["shop_id"]; isOneToOne: false; referencedRelation: "shops"; referencedColumns: ["id"] },
+          { foreignKeyName: "service_jobs_bill_id_fkey"; columns: ["bill_id"]; isOneToOne: false; referencedRelation: "bills"; referencedColumns: ["id"] },
+        ];
+      };
+      job_counters: {
+        Row: { shop_id: string; financial_year: string; last_number: number };
+        Insert: { shop_id: string; financial_year: string; last_number?: number };
+        Update: { shop_id?: string; financial_year?: string; last_number?: number };
+        Relationships: [];
       };
       vehicles: {
         Row: { id: string; shop_id: string; name: string; vehicle_number: string | null; rate_per_km: number; is_active: boolean; created_at: string };
@@ -1448,6 +1537,10 @@ export interface Database {
         Returns: number;
       };
       next_return_number: {
+        Args: { p_shop_id: string; p_financial_year: string };
+        Returns: number;
+      };
+      next_job_number: {
         Args: { p_shop_id: string; p_financial_year: string };
         Returns: number;
       };

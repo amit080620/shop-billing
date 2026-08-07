@@ -46,9 +46,27 @@ function tabsFor(businessType: string, t: (key: string) => string) {
     { href: "/more", label: t("nav.more"), icon: MoreIcon },
   ];
 
+  const SERVICE_TABS = [
+    { href: "/", label: t("nav.home"), icon: HomeIcon },
+    { href: "/service/new", label: "New job", icon: BuyIcon },
+    { href: "/service", label: "Jobs", icon: ServiceIcon },
+    { href: "/reports", label: t("nav.reports"), icon: ReportIcon },
+    { href: "/more", label: t("nav.more"), icon: MoreIcon },
+  ];
+
+  const SALON_TABS = [
+    { href: "/", label: t("nav.home"), icon: HomeIcon },
+    { href: "/bills/new", label: t("nav.sell"), icon: SellIcon },
+    { href: "/salon", label: "Staff", icon: SalonNavIcon },
+    { href: "/reports", label: t("nav.reports"), icon: ReportIcon },
+    { href: "/more", label: t("nav.more"), icon: MoreIcon },
+  ];
+
   if (businessType === "restaurant") return RESTAURANT_TABS;
   if (businessType === "rental") return RENTAL_TABS;
   if (businessType === "transport") return TRANSPORT_TABS;
+  if (businessType === "service") return SERVICE_TABS;
+  if (businessType === "salon") return SALON_TABS;
   return RETAIL_TABS;
 }
 
@@ -165,6 +183,21 @@ function TruckNavIcon({ active }: { active: boolean }) {
       <path d="M13 9h4l3 3v4h-7V9Z" />
       <circle cx="6" cy="18" r="1.6" />
       <circle cx="16.5" cy="18" r="1.6" />
+    </svg>
+  );
+}
+function ServiceIcon({ active }: { active: boolean }) {
+  return (
+    <svg {...iconProps(active)}>
+      <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76Z" />
+    </svg>
+  );
+}
+function SalonNavIcon({ active }: { active: boolean }) {
+  return (
+    <svg {...iconProps(active)}>
+      <circle cx="12" cy="8" r="3.5" />
+      <path d="M5 20c0-3.5 3-6 7-6s7 2.5 7 6" />
     </svg>
   );
 }

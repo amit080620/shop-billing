@@ -38,6 +38,7 @@ export async function createProductAction(
     looseUnitName: formData.get("looseUnitName"),
     hasWarranty: formData.get("hasWarranty") === "on",
     warrantyMonths: formData.get("warrantyMonths") || null,
+    mrp: formData.get("mrp") || null,
   });
   if (!parsed.success) {
     return { error: parsed.error.issues[0].message };
@@ -84,6 +85,7 @@ export async function createProductAction(
     loose_unit_name: parsed.data.looseUnitName ?? null,
     has_warranty: parsed.data.hasWarranty,
     warranty_months: parsed.data.warrantyMonths ?? null,
+    mrp: parsed.data.mrp ?? null,
   });
   if (error) {
     if (error.code === "23505") {
@@ -129,6 +131,7 @@ export async function updateProductAction(
     looseUnitName: formData.get("looseUnitName"),
     hasWarranty: formData.get("hasWarranty") === "on",
     warrantyMonths: formData.get("warrantyMonths") || null,
+    mrp: formData.get("mrp") || null,
   });
   if (!parsed.success) {
     return { error: parsed.error.issues[0].message };
@@ -163,6 +166,7 @@ export async function updateProductAction(
       loose_unit_name: parsed.data.looseUnitName ?? null,
       has_warranty: parsed.data.hasWarranty,
       warranty_months: parsed.data.warrantyMonths ?? null,
+      mrp: parsed.data.mrp ?? null,
     })
     .eq("id", productId)
     .eq("shop_id", session.shopId); // ownership check baked into the query

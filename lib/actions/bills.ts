@@ -13,11 +13,11 @@ export type ActionState = { error?: string } | null;
  * submission and the offline-sync path — one source of truth for invoice
  * numbering, GST calculation, and stock decrement, so the two can never
  * silently drift apart. */
-async function createBillCore(
+export async function createBillCore(
   session: SessionContext,
   parsedData: BillInput,
 ): Promise<{ billId: string; invoiceNumber: string } | { error: string }> {
-  const { customerId, items, discountType, discountValue, paidAmount, paymentMethod, doctorName, patientName, tripVehicleId, tripKm, tripDriverName, tripLoadWeight, tripLoadUnit } = parsedData;
+  const { customerId, items, discountType, discountValue, paidAmount, paymentMethod, doctorName, patientName, tripVehicleId, tripKm, tripDriverName, tripLoadWeight, tripLoadUnit, serviceProviderName } = parsedData;
 
   const admin = createSupabaseAdminClient();
 
@@ -28,7 +28,7 @@ async function createBillCore(
   const { data: dbProducts, error: productsError } = productIds.length
     ? await admin
         .from("products")
-        .select("id, name, price, gst_percent, hsn_code, track_inventory, stock_quantity, is_pharma, requires_prescription, has_warranty, warranty_months")
+        .select("id, name, price, gst_percent, hsn_code, track_inventory, stock_quantity, is_pharma, requires_prescription, has_warranty, warranty_months, mrp")
         .eq("shop_id", session.shopId)
         .in("id", productIds)
     : { data: [], error: null };
@@ -74,6 +74,7 @@ async function createBillCore(
       unitPrice: product ? Number(product.price) : item.unitPrice,
       gstPercent: product ? Number(product.gst_percent) : item.gstPercent,
       warrantyMonths: product?.has_warranty ? product.warranty_months : null,
+      mrp: product?.mrp ? Number(product.mrp) : null,
     };
   });
 
@@ -119,6 +120,7 @@ async function createBillCore(
       credit_amount: totals.balanceAmount,
       doctor_name: needsPrescription ? doctorName : null,
       patient_name: needsPrescription ? patientName : null,
+      service_provider_name: serviceProviderName ?? null,
     })
     .select("id")
     .single();
@@ -142,6 +144,7 @@ async function createBillCore(
       unit_price: item.unitPrice,
       gst_percent: item.gstPercent,
       warranty_months: item.warrantyMonths,
+      mrp: item.mrp,
       warranty_expires_on: warrantyExpiresOn,
       line_subtotal: line.lineSubtotal,
       cgst_amount: line.cgst,

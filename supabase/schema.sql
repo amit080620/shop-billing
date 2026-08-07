@@ -912,3 +912,81 @@ alter table products add column if not exists warranty_months integer;
 -- the time, same reasoning as bill_items.hsn_code being a snapshot.
 alter table bill_items add column if not exists warranty_months integer;
 alter table bill_items add column if not exists warranty_expires_on date;
+
+-- ─── Grocery/Mart: MRP tracking ────────────────────────────────────────
+-- Optional — only packaged/branded goods carry an MRP, loose items (rice,
+-- dal from a sack) don't. Same snapshot pattern as warranty/HSN: the
+-- bill_items copy is what was true at sale time, so a later MRP change
+-- doesn't rewrite history.
+alter table products add column if not exists mrp numeric(12, 2);
+alter table bill_items add column if not exists mrp numeric(12, 2);
+
+-- ─── Repair & Services business type (mobile repair, laundry, tailoring,
+-- AC/appliance repair, watch repair — anything that runs on "item comes
+-- in, work happens, item goes out") ────────────────────────────────────
+alter table shops drop constraint if exists shops_business_type_check;
+alter table shops add constraint shops_business_type_check
+  check (business_type in ('grocery', 'restaurant', 'mart', 'hardware', 'pharmacy', 'rental', 'transport', 'service', 'general'));
+
+create table if not exists job_counters (
+  shop_id uuid not null references shops(id) on delete cascade,
+  financial_year text not null,
+  last_number integer not null default 0,
+  primary key (shop_id, financial_year)
+);
+alter table job_counters enable row level security;
+
+create or replace function next_job_number(p_shop_id uuid, p_financial_year text)
+returns integer
+language plpgsql
+as $$
+declare
+  v_number integer;
+begin
+  insert into job_counters (shop_id, financial_year, last_number)
+  values (p_shop_id, p_financial_year, 1)
+  on conflict (shop_id, financial_year)
+  do update set last_number = job_counters.last_number + 1
+  returning last_number into v_number;
+  return v_number;
+end;
+$$;
+
+create table if not exists service_jobs (
+  id uuid primary key default uuid_generate_v4(),
+  shop_id uuid not null references shops(id) on delete cascade,
+  job_number text not null,
+  financial_year text not null,
+  customer_id uuid references customers(id),
+  customer_name text not null,
+  customer_phone text not null,
+  item_description text not null,
+  issue_description text,
+  status text not null default 'received' check (status in ('received', 'in_progress', 'ready', 'delivered', 'cancelled')),
+  technician_name text,
+  estimated_cost numeric(12, 2),
+  final_cost numeric(12, 2),
+  advance_paid numeric(12, 2) not null default 0,
+  expected_date date,
+  ready_at timestamptz,
+  delivered_at timestamptz,
+  bill_id uuid references bills(id) on delete set null,
+  notes text,
+  staff_id uuid not null references staff(id),
+  created_at timestamptz not null default now()
+);
+alter table service_jobs enable row level security;
+create index if not exists idx_service_jobs_shop on service_jobs(shop_id);
+create index if not exists idx_service_jobs_status on service_jobs(shop_id, status);
+create index if not exists idx_service_jobs_customer on service_jobs(customer_id);
+
+-- ─── Salon / Spa business type ────────────────────────────────────────────
+alter table shops drop constraint if exists shops_business_type_check;
+alter table shops add constraint shops_business_type_check
+  check (business_type in ('grocery', 'restaurant', 'mart', 'hardware', 'pharmacy', 'rental', 'transport', 'service', 'salon', 'general'));
+
+-- Which stylist/staff performed the services on this bill — a salon
+-- customer's single visit is usually one continuous service by one
+-- person, so this lives at the bill level (same reasoning as Restaurant's
+-- waiter_name on the order), not per line item.
+alter table bills add column if not exists service_provider_name text;

@@ -26,7 +26,7 @@ export default async function PrintBillPage({
   const { data: bill } = await admin
     .from("bills")
     .select(
-      "id, invoice_number, subtotal, discount_type, discount_value, discount_amount, taxable_amount, supply_type, cgst_amount, sgst_amount, igst_amount, gst_amount, payment_method, status, void_reason, voided_at, total, paid_amount, credit_amount, created_at, customers ( name, phone, gstin, address )",
+      "id, invoice_number, subtotal, discount_type, discount_value, discount_amount, taxable_amount, supply_type, cgst_amount, sgst_amount, igst_amount, gst_amount, payment_method, status, void_reason, voided_at, total, paid_amount, credit_amount, created_at, service_provider_name, customers ( name, phone, gstin, address )",
     )
     .eq("id", id)
     .eq("shop_id", session.shopId) // ownership check
@@ -36,7 +36,7 @@ export default async function PrintBillPage({
 
   const { data: items } = await admin
     .from("bill_items")
-    .select("product_name, hsn_code, quantity, unit_price, gst_percent, cgst_amount, sgst_amount, igst_amount, line_total, warranty_months, warranty_expires_on")
+    .select("product_name, hsn_code, quantity, unit_price, gst_percent, cgst_amount, sgst_amount, igst_amount, line_total, warranty_months, warranty_expires_on, mrp")
     .eq("bill_id", id)
     .order("product_name");
 
@@ -174,6 +174,7 @@ export default async function PrintBillPage({
 
       <div className={`mt-2 border-t border-dashed border-gray-400 pt-2 ${isThermal ? "" : "text-sm text-gray-700"}`}>
         <p>Bill to: {customer?.name ?? "Walk-in customer"}</p>
+        {bill.service_provider_name && <p>Stylist: {bill.service_provider_name}</p>}
         {customer?.phone && <p className={isThermal ? "text-[9px]" : "text-xs text-gray-500"}>{customer.phone}</p>}
         {customer?.gstin && <p className={isThermal ? "text-[9px]" : "text-xs text-gray-500"}>GSTIN: {customer.gstin}</p>}
         <p className={isThermal ? "text-[9px] text-gray-600" : "text-xs text-gray-500"}>
@@ -204,7 +205,12 @@ export default async function PrintBillPage({
               </td>
               {!isThermal && <td className="py-1 text-gray-500">{item.hsn_code ?? "—"}</td>}
               <td className="py-1 text-right">{item.quantity}</td>
-              <td className="py-1 text-right">{formatMoney(item.unit_price)}</td>
+              <td className="py-1 text-right">
+                {item.mrp != null && item.mrp > item.unit_price && (
+                  <div className="text-xs text-gray-400 line-through">{formatMoney(item.mrp)}</div>
+                )}
+                {formatMoney(item.unit_price)}
+              </td>
               <td className="py-1 text-right">{formatMoney(item.line_total)}</td>
             </tr>
           ))}
@@ -212,6 +218,15 @@ export default async function PrintBillPage({
       </table>
 
       <div className={`mt-3 flex flex-col gap-1 border-t border-dashed border-gray-400 pt-2 ${isThermal ? "" : "text-sm"}`}>
+        {(() => {
+          const totalMrpSavings = (items ?? []).reduce(
+            (s, item) => s + (item.mrp != null && item.mrp > item.unit_price ? (item.mrp - item.unit_price) * item.quantity : 0),
+            0,
+          );
+          return totalMrpSavings > 0 ? (
+            <SummaryRow label="You saved (off MRP)" value={formatMoney(totalMrpSavings)} />
+          ) : null;
+        })()}
         <SummaryRow label="Subtotal" value={formatMoney(bill.subtotal)} />
         {bill.discount_amount > 0 && (
           <SummaryRow

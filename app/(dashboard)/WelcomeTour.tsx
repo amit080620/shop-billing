@@ -141,10 +141,75 @@ const TRANSPORT_SLIDES: Slide[] = [
   },
 ];
 
+const SERVICE_SLIDES: Slide[] = [
+  {
+    icon: "👋",
+    title: "Welcome — this app is set up for repairs & services",
+    body: "A quick 30-second look at where everything lives — you can always come back to this from More → Help.",
+  },
+  {
+    icon: "🔧",
+    title: "Job cards",
+    body: "When an item comes in for service, tap + New job — capture the customer, the item, what needs doing, and an estimate. It gets a job number automatically.",
+  },
+  {
+    icon: "📋",
+    title: "Track progress",
+    body: "Move a job through Received → In progress → Ready as work happens. Staff always know what's pending and what's waiting for pickup.",
+  },
+  {
+    icon: "💬",
+    title: "Notify on WhatsApp",
+    body: "Once a job is marked Ready, one tap sends the customer a WhatsApp message letting them know their item is ready for pickup.",
+  },
+  {
+    icon: "🧾",
+    title: "Deliver & bill",
+    body: "When the customer picks up, tap Deliver & bill — enter the final charge and it generates a real, numbered invoice automatically, counting any advance already paid.",
+  },
+  {
+    icon: "⚙️",
+    title: "One last thing",
+    body: "If you haven't already, set your shop's state under More → GST & shop profile — billing is blocked until that's filled in, since it decides CGST+SGST vs IGST on every invoice.",
+    cta: { label: "Go to GST profile", href: "/settings" },
+  },
+];
+
+const SALON_SLIDES: Slide[] = [
+  {
+    icon: "👋",
+    title: "Welcome — this app is set up for your salon/spa",
+    body: "A quick 30-second look at where everything lives — you can always come back to this from More → Help.",
+  },
+  {
+    icon: "💇",
+    title: "Services",
+    body: "Your haircuts, facials, treatments live under More → Services — same as any product: name, price, GST%. Loose combos (e.g. haircut + beard) can just be added as separate lines on the same bill.",
+  },
+  {
+    icon: "🧾",
+    title: "One bill, tag the stylist",
+    body: "In Sell, add the services given — a \"Stylist / staff\" field lets you note who actually did the work, right on the same bill.",
+  },
+  {
+    icon: "📊",
+    title: "Staff-wise revenue",
+    body: "More → Salon → Staff-wise revenue shows who's bringing in how much over any date range — handy when working out commission.",
+  },
+  {
+    icon: "⚙️",
+    title: "One last thing",
+    body: "If you haven't already, set your shop's state under More → GST & shop profile — billing is blocked until that's filled in, since it decides CGST+SGST vs IGST on every invoice.",
+    cta: { label: "Go to GST profile", href: "/settings" },
+  },
+];
+
 function slidesFor(businessType: string) {
   if (businessType === "restaurant") return RESTAURANT_SLIDES;
   if (businessType === "rental") return RENTAL_SLIDES;
   if (businessType === "transport") return TRANSPORT_SLIDES;
+  if (businessType === "service") return SERVICE_SLIDES;
+  if (businessType === "salon") return SALON_SLIDES;
   return RETAIL_SLIDES;
 }
 

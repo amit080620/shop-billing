@@ -1,4 +1,4 @@
-export type BusinessType = "grocery" | "restaurant" | "mart" | "hardware" | "pharmacy" | "rental" | "transport" | "general";
+export type BusinessType = "grocery" | "restaurant" | "mart" | "hardware" | "pharmacy" | "rental" | "transport" | "service" | "salon" | "general";
 
 export const BUSINESS_TYPES: { value: BusinessType; label: string; icon: string }[] = [
   { value: "grocery", label: "Grocery / Kirana", icon: "🛒" },
@@ -8,6 +8,8 @@ export const BUSINESS_TYPES: { value: BusinessType; label: string; icon: string 
   { value: "restaurant", label: "Restaurant / Café", icon: "🍽️" },
   { value: "rental", label: "Rental business", icon: "🔁" },
   { value: "transport", label: "Transport & Materials", icon: "🚚" },
+  { value: "service", label: "Repair & Services", icon: "🛠️" },
+  { value: "salon", label: "Salon / Spa", icon: "💇" },
   { value: "general", label: "General / Other", icon: "🏬" },
 ];
 
@@ -66,6 +68,18 @@ const TERMINOLOGY: Record<BusinessType, Terminology> = {
     productSub: "Catalog, HSN codes, GST%, stock",
     addProductLabel: "+ Material",
   },
+  service: {
+    productPlural: "Services",
+    productSingular: "Service",
+    productSub: "Service names, standard charges, GST%",
+    addProductLabel: "+ Service",
+  },
+  salon: {
+    productPlural: "Services",
+    productSingular: "Service",
+    productSub: "Haircuts, treatments, packages — name, price, GST%",
+    addProductLabel: "+ Service",
+  },
   general: {
     productPlural: "Products",
     productSingular: "Product",
@@ -87,6 +101,8 @@ export function getTerminology(businessType: string): Terminology {
 const UNIT_PRIORITY: Record<BusinessType, string[]> = {
   restaurant: ["PLATE", "NOS", "BOWL", "GLASS", "PCS", "KG", "LTR"],
   transport: ["TON", "QTL", "BAG", "KG", "CFT", "CUM", "NOS", "LTR"],
+  service: ["NOS", "PCS"],
+  salon: ["NOS", "PCS"],
   pharmacy: ["STRIP", "BOX", "BOTTLE", "NOS", "ML", "KG", "GM"],
   rental: ["NOS", "PCS", "SET", "KG"],
   hardware: ["PCS", "NOS", "MTR", "BOX", "KG", "SET"],

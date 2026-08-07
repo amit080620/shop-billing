@@ -73,6 +73,12 @@ export default async function MorePage() {
         </MenuGroup>
       )}
 
+      {session.businessType === "salon" && (
+        <MenuGroup title="Salon">
+          <MenuLink href="/salon" label="Staff-wise revenue" sub="Who's bringing in how much" icon={SalonIcon} />
+        </MenuGroup>
+      )}
+
       <MenuGroup title="People">
         <MenuLink href="/customers" label={t("more.customers")} sub={t("more.customers.sub")} icon={PeopleIcon} />
         <MenuLink href="/vendors" label={t("more.vendors")} sub={t("more.vendors.sub")} icon={TruckIcon} />
@@ -306,6 +312,14 @@ function WarrantyIcon({ className }: { className?: string }) {
     <svg {...iconProps(className)}>
       <path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6l-8-3Z" />
       <path d="m9 12 2 2 4-4" />
+    </svg>
+  );
+}
+function SalonIcon({ className }: { className?: string }) {
+  return (
+    <svg {...iconProps(className)}>
+      <circle cx="12" cy="8" r="3.5" />
+      <path d="M5 20c0-3.5 3-6 7-6s7 2.5 7 6" />
     </svg>
   );
 }

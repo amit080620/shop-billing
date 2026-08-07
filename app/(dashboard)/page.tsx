@@ -92,6 +92,10 @@ export default async function DashboardPage() {
         <PharmacyHome session={session} t={t} />
       ) : session.businessType === "transport" ? (
         <TransportHome session={session} t={t} />
+      ) : session.businessType === "service" ? (
+        <ServiceHome session={session} t={t} />
+      ) : session.businessType === "salon" ? (
+        <SalonHome session={session} t={t} />
       ) : (
         <RetailHome session={session} t={t} />
       )}
@@ -191,6 +195,192 @@ async function RetailHome({
                 </li>
               );
             })}
+          </ul>
+        )}
+      </section>
+    </>
+  );
+}
+
+// ─── Salon / Spa ────────────────────────────────────────────────────────
+async function SalonHome({
+  session,
+  t,
+}: {
+  session: Awaited<ReturnType<typeof requireSession>>;
+  t: (key: string, vars?: Record<string, string | number>) => string;
+}) {
+  const admin = createSupabaseAdminClient();
+  const startOfToday = new Date();
+  startOfToday.setHours(0, 0, 0, 0);
+  const startOfWeek = new Date();
+  startOfWeek.setDate(startOfWeek.getDate() - 6);
+  startOfWeek.setHours(0, 0, 0, 0);
+
+  const [todayBills, weekBills, recentBills] = await Promise.all([
+    admin.from("bills").select("total, service_provider_name").eq("shop_id", session.shopId).eq("status", "active").gte("created_at", startOfToday.toISOString()),
+    admin.from("bills").select("total, created_at").eq("shop_id", session.shopId).eq("status", "active").gte("created_at", startOfWeek.toISOString()),
+    admin
+      .from("bills")
+      .select("id, total, credit_amount, service_provider_name, created_at, customers ( name )")
+      .eq("shop_id", session.shopId)
+      .eq("status", "active")
+      .order("created_at", { ascending: false })
+      .limit(5),
+  ]);
+
+  const todayTotal = sum(todayBills.data?.map((b) => b.total));
+  const todayStaffCount = new Set((todayBills.data ?? []).map((b) => b.service_provider_name).filter(Boolean)).size;
+  const trend = buildSevenDayTrend(weekBills.data ?? [], "created_at");
+
+  return (
+    <>
+      <section className="rounded-xl border border-border bg-surface p-4 shadow-sm">
+        <div className="mb-1 flex items-center justify-between">
+          <p className="text-xs font-medium text-muted">Last 7 days</p>
+          <p className="text-sm font-semibold text-foreground">{formatMoney(sum(trend.map((d) => d.total)))}</p>
+        </div>
+        <SalesTrendChart data={trend} />
+      </section>
+
+      <section className="grid grid-cols-2 gap-3">
+        <StatCard label={t("home.todaySales")} value={formatMoney(todayTotal)} href="/daily-summary" icon="💰" />
+        <StatCard label="Staff active today" value={String(todayStaffCount)} href="/salon" icon="💇" />
+      </section>
+
+      <Link
+        href="/bills/new"
+        className="flex items-center justify-center gap-2 rounded-xl px-4 py-4 text-center font-semibold text-white shadow-md"
+        style={{ background: "linear-gradient(135deg, var(--brand-light), var(--brand-dark))" }}
+      >
+        <PlusIcon />
+        {t("home.newBill")}
+      </Link>
+
+      <section>
+        <h2 className="mb-2 text-sm font-semibold text-foreground">{t("home.recentBills")}</h2>
+        {!recentBills.data || recentBills.data.length === 0 ? (
+          <EmptyState text={t("home.noBillsYet")} />
+        ) : (
+          <ul className="flex flex-col gap-2">
+            {recentBills.data.map((bill) => {
+              const customerName = Array.isArray(bill.customers) ? bill.customers[0]?.name : (bill.customers as { name: string } | null)?.name;
+              return (
+                <li key={bill.id}>
+                  <Link href={`/print/bill/${bill.id}`} className="flex items-center justify-between rounded-lg border border-border bg-surface px-3.5 py-3 shadow-sm">
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium text-foreground">{customerName ?? t("common.walkinCustomer")}</p>
+                      <p className="text-xs text-muted">
+                        {formatDateTime(bill.created_at)}
+                        {bill.service_provider_name ? ` · ${bill.service_provider_name}` : ""}
+                      </p>
+                    </div>
+                    <div className="shrink-0 text-right">
+                      <p className="text-sm font-semibold text-foreground">{formatMoney(bill.total)}</p>
+                      {bill.credit_amount > 0 && <p className="text-xs text-credit">{formatMoney(bill.credit_amount)} {t("home.credit")}</p>}
+                    </div>
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </section>
+    </>
+  );
+}
+
+// ─── Repair & Services ──────────────────────────────────────────────────
+async function ServiceHome({
+  session,
+  t,
+}: {
+  session: Awaited<ReturnType<typeof requireSession>>;
+  t: (key: string, vars?: Record<string, string | number>) => string;
+}) {
+  const admin = createSupabaseAdminClient();
+  const startOfToday = new Date();
+  startOfToday.setHours(0, 0, 0, 0);
+  const startOfWeek = new Date();
+  startOfWeek.setDate(startOfWeek.getDate() - 6);
+  startOfWeek.setHours(0, 0, 0, 0);
+
+  const [todayBills, weekBills, { data: openJobs }, { data: readyJobs }] = await Promise.all([
+    admin.from("bills").select("total").eq("shop_id", session.shopId).eq("status", "active").gte("created_at", startOfToday.toISOString()),
+    admin.from("bills").select("total, created_at").eq("shop_id", session.shopId).eq("status", "active").gte("created_at", startOfWeek.toISOString()),
+    admin.from("service_jobs").select("id").eq("shop_id", session.shopId).in("status", ["received", "in_progress"]),
+    admin.from("service_jobs").select("id").eq("shop_id", session.shopId).eq("status", "ready"),
+  ]);
+
+  const { data: recentJobs } = await admin
+    .from("service_jobs")
+    .select("id, job_number, customer_name, item_description, status, created_at")
+    .eq("shop_id", session.shopId)
+    .order("created_at", { ascending: false })
+    .limit(5);
+
+  const todayTotal = sum(todayBills.data?.map((b) => b.total));
+  const trend = buildSevenDayTrend(weekBills.data ?? [], "created_at");
+
+  const STATUS_LABELS: Record<string, string> = {
+    received: "Received",
+    in_progress: "In progress",
+    ready: "Ready",
+    delivered: "Delivered",
+    cancelled: "Cancelled",
+  };
+
+  return (
+    <>
+      <section className="rounded-xl border border-border bg-surface p-4 shadow-sm">
+        <div className="mb-1 flex items-center justify-between">
+          <p className="text-xs font-medium text-muted">Last 7 days</p>
+          <p className="text-sm font-semibold text-foreground">{formatMoney(sum(trend.map((d) => d.total)))}</p>
+        </div>
+        <SalesTrendChart data={trend} />
+      </section>
+
+      <section className="grid grid-cols-2 gap-3">
+        <StatCard label={t("home.todaySales")} value={formatMoney(todayTotal)} href="/daily-summary" icon="💰" />
+        <StatCard label="Jobs in progress" value={String(openJobs?.length ?? 0)} href="/service" icon="🔧" />
+        <StatCard
+          label="Ready for pickup"
+          value={String(readyJobs?.length ?? 0)}
+          tone={(readyJobs?.length ?? 0) > 0 ? "credit" : "default"}
+          href="/service?status=ready"
+          icon="🔔"
+          className="col-span-2"
+        />
+      </section>
+
+      <Link
+        href="/service/new"
+        className="flex items-center justify-center gap-2 rounded-xl px-4 py-4 text-center font-semibold text-white shadow-md"
+        style={{ background: "linear-gradient(135deg, var(--brand-light), var(--brand-dark))" }}
+      >
+        <PlusIcon />
+        + New job
+      </Link>
+
+      <section>
+        <h2 className="mb-2 text-sm font-semibold text-foreground">Recent jobs</h2>
+        {!recentJobs || recentJobs.length === 0 ? (
+          <EmptyState text="No jobs yet — tap + New job when an item comes in for service." />
+        ) : (
+          <ul className="flex flex-col gap-2">
+            {recentJobs.map((j) => (
+              <li key={j.id}>
+                <Link href={`/service/${j.id}`} className="flex items-center justify-between rounded-lg border border-border bg-surface px-3.5 py-3 shadow-sm">
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium text-foreground">{j.item_description}</p>
+                    <p className="text-xs text-muted">{j.customer_name} · #{j.job_number}</p>
+                  </div>
+                  <span className="shrink-0 rounded-full bg-brand-soft px-2.5 py-1 text-xs font-medium text-brand-dark">
+                    {STATUS_LABELS[j.status]}
+                  </span>
+                </Link>
+              </li>
+            ))}
           </ul>
         )}
       </section>

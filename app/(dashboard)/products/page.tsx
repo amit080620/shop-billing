@@ -14,7 +14,7 @@ export default async function ProductsPage() {
     admin
       .from("products")
       .select(
-        "id, name, price, gst_percent, hsn_code, barcode, unit, category_id, track_inventory, stock_quantity, low_stock_threshold, is_rentable, rental_rate_hourly, rental_rate_daily, rental_rate_weekly, rental_rate_monthly, security_deposit, is_pharma, requires_prescription, salt_composition, rack_location, drug_schedule, units_per_pack, loose_unit_name, has_warranty, warranty_months, categories ( name )",
+        "id, name, price, gst_percent, hsn_code, barcode, unit, category_id, track_inventory, stock_quantity, low_stock_threshold, is_rentable, rental_rate_hourly, rental_rate_daily, rental_rate_weekly, rental_rate_monthly, security_deposit, is_pharma, requires_prescription, salt_composition, rack_location, drug_schedule, units_per_pack, loose_unit_name, has_warranty, warranty_months, mrp, categories ( name )",
       )
       .eq("shop_id", session.shopId)
       .order("name"),
@@ -56,6 +56,7 @@ export default async function ProductsPage() {
         looseUnitName: p.loose_unit_name,
         hasWarranty: p.has_warranty,
         warrantyMonths: p.warranty_months !== null ? Number(p.warranty_months) : null,
+        mrp: p.mrp !== null ? Number(p.mrp) : null,
         categoryName: Array.isArray(p.categories)
           ? p.categories[0]?.name
           : (p.categories as { name: string } | null)?.name ?? null,

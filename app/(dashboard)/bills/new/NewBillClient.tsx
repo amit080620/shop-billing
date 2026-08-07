@@ -74,6 +74,7 @@ export function NewBillClient({
   frequentProductIds,
   shopContext,
   vehicles,
+  businessType,
 }: {
   shopStateCode: string;
   products: Product[];
@@ -81,6 +82,7 @@ export function NewBillClient({
   lang: Lang;
   frequentProductIds: string[];
   vehicles: { id: string; name: string; ratePerKm: number }[];
+  businessType: string;
   shopContext: {
     shopId: string;
     shopName: string;
@@ -148,6 +150,7 @@ export function NewBillClient({
   const [paymentMethod, setPaymentMethod] = useState<"cash" | "card" | "upi" | "online" | "other">("cash");
   const [doctorName, setDoctorName] = useState("");
   const [patientName, setPatientName] = useState("");
+  const [serviceProviderName, setServiceProviderName] = useState("");
   const [tripInfo, setTripInfo] = useState<{ vehicleId: string; km: number; driverName: string; loadWeight: number | null; loadUnit: string } | null>(null);
 
   const supplyType = useMemo(
@@ -563,6 +566,7 @@ export function NewBillClient({
     tripDriverName: tripInfo?.driverName ?? "",
     tripLoadWeight: tripInfo?.loadWeight ?? null,
     tripLoadUnit: tripInfo?.loadUnit ?? "",
+    serviceProviderName,
   });
 
   return (
@@ -734,6 +738,18 @@ export function NewBillClient({
             movement above this value. Generate one on the GST e-way bill portal before the
             vehicle leaves.
           </p>
+        )}
+
+        {businessType === "salon" && (
+          <label className="flex flex-col gap-1.5 text-sm">
+            <span className="font-medium text-foreground">Stylist / staff (optional)</span>
+            <input
+              value={serviceProviderName}
+              onChange={(e) => setServiceProviderName(e.target.value)}
+              placeholder="Who performed the service?"
+              className="rounded-lg border border-border bg-surface px-3.5 py-2.5 text-sm outline-none focus:border-brand"
+            />
+          </label>
         )}
 
         {cart.some((c) => c.requiresPrescription) && (
