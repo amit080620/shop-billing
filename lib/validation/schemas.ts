@@ -60,6 +60,7 @@ export const productSchema = z.object({
   makingChargeType: z.enum(["per_gram", "flat", "percent"]).nullable().optional(),
   makingChargeValue: z.coerce.number().min(0).nullable().optional(),
   wastagePercent: z.coerce.number().min(0).max(30).nullable().optional(),
+  hallmarkNumber: optionalText(30),
   bulkMinQty: z.coerce.number().min(0).nullable().optional(),
   bulkPrice: z.coerce.number().min(0).nullable().optional(),
 });

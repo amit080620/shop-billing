@@ -10,7 +10,7 @@ export default async function VehiclesPage() {
 
   const { data: vehicles } = await admin
     .from("vehicles")
-    .select("id, name, vehicle_number, rate_per_km, is_active")
+    .select("id, name, vehicle_number, rate_per_km, is_active, rc_expiry, insurance_expiry, puc_expiry, fitness_expiry")
     .eq("shop_id", session.shopId)
     .order("created_at", { ascending: false });
 
@@ -23,6 +23,10 @@ export default async function VehiclesPage() {
         vehicleNumber: v.vehicle_number,
         ratePerKm: Number(v.rate_per_km),
         isActive: v.is_active,
+        rcExpiry: v.rc_expiry,
+        insuranceExpiry: v.insurance_expiry,
+        pucExpiry: v.puc_expiry,
+        fitnessExpiry: v.fitness_expiry,
       }))}
     />
   );

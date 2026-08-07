@@ -40,6 +40,7 @@ type Product = {
   wastagePercent: number | null;
   bulkMinQty: number | null;
   bulkPrice: number | null;
+  hallmarkNumber: string | null;
 };
 type Customer = { id: string; name: string; phone: string; gstin: string | null; state_code: string | null };
 type CartLine = {
@@ -482,7 +483,7 @@ export function NewBillClient({
               );
               return {
                 data: r.product
-                  ? { ...r.product, packPrice: r.product.price, trackInventory: false, stockQuantity: 0, lowStockThreshold: 0, requiresPrescription: false, unitsPerPack: null, looseUnitName: null, metalType: null, purity: null, makingChargeType: null, makingChargeValue: null, wastagePercent: null, bulkMinQty: null, bulkPrice: null }
+                  ? { ...r.product, packPrice: r.product.price, trackInventory: false, stockQuantity: 0, lowStockThreshold: 0, requiresPrescription: false, unitsPerPack: null, looseUnitName: null, metalType: null, purity: null, makingChargeType: null, makingChargeValue: null, wastagePercent: null, bulkMinQty: null, bulkPrice: null, hallmarkNumber: null }
                   : undefined,
                 error: r.error,
               };
@@ -1173,6 +1174,7 @@ function JewelleryCalculator({
 }) {
   const [open, setOpen] = useState(false);
   const [itemName, setItemName] = useState("");
+  const [hallmarkNumber, setHallmarkNumber] = useState("");
   const [metalType, setMetalType] = useState<"gold" | "silver">(goldRate ? "gold" : "silver");
   const [weight, setWeight] = useState<number | "">("");
   const [makingChargeType, setMakingChargeType] = useState<"per_gram" | "flat" | "percent">("per_gram");
@@ -1182,6 +1184,7 @@ function JewelleryCalculator({
 
   function selectProduct(p: Product) {
     setItemName(p.name);
+    if (p.hallmarkNumber) setHallmarkNumber(p.hallmarkNumber);
     if (p.metalType) setMetalType(p.metalType);
     if (p.makingChargeType) setMakingChargeType(p.makingChargeType);
     if (p.makingChargeValue != null) setMakingChargeValue(p.makingChargeValue);
@@ -1234,6 +1237,12 @@ function JewelleryCalculator({
         value={itemName}
         onChange={(e) => setItemName(e.target.value)}
         placeholder="Item name (e.g. Gold ring, 22K)"
+        className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand"
+      />
+      <input
+        value={hallmarkNumber}
+        onChange={(e) => setHallmarkNumber(e.target.value)}
+        placeholder="Hallmark / HUID number (optional)"
         className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand"
       />
 
@@ -1317,9 +1326,11 @@ function JewelleryCalculator({
           type="button"
           disabled={!rate || !itemName.trim() || w <= 0 || total <= 0}
           onClick={() => {
-            onAdd(itemName.trim(), total, typeof gstPercent === "number" ? gstPercent : 0);
+            const fullName = hallmarkNumber.trim() ? `${itemName.trim()} (HUID: ${hallmarkNumber.trim()})` : itemName.trim();
+            onAdd(fullName, total, typeof gstPercent === "number" ? gstPercent : 0);
             setOpen(false);
             setItemName("");
+            setHallmarkNumber("");
             setWeight("");
             setMakingChargeValue("");
             setWastagePercent("");

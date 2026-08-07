@@ -21,7 +21,9 @@ import { CameraBarcodeScanner } from "@/app/components/CameraBarcodeScanner";
 import { BarcodeScanInput } from "@/app/components/BarcodeScanInput";
 import { BulkImportExport } from "./BulkImportExport";
 import { COMMON_GST_RATES, UNITS } from "@/lib/constants/states";
+import { COMMON_MEDICINE_NAMES } from "@/lib/constants/commonMedicines";
 import { getUnitsForBusinessType } from "@/lib/businessType";
+import { SearchableSelect } from "@/app/components/SearchableSelect";
 import { useTranslation } from "@/lib/i18n/useTranslation";
 import type { Lang } from "@/lib/i18n/dictionary";
 
@@ -61,6 +63,7 @@ type Product = {
   wastagePercent: number | null;
   bulkMinQty: number | null;
   bulkPrice: number | null;
+  hallmarkNumber: string | null;
 };
 type Category = { id: string; name: string };
 
@@ -308,7 +311,25 @@ export function ProductsClient({
           {editingProduct && (
             <p className="text-xs font-medium text-brand">{t("products.editing", { name: editingProduct.name })}</p>
           )}
-          <Field name="name" label={t("products.name")} placeholder={t("products.namePlaceholder")} required defaultValue={editingProduct?.name} />
+          <Field id="product-name-input" name="name" label={t("products.name")} placeholder={t("products.namePlaceholder")} required defaultValue={editingProduct?.name} />
+          {businessType === "pharmacy" && !editingProduct && (
+            <div className="flex flex-col gap-1">
+              <SearchableSelect
+                lang={lang}
+                items={COMMON_MEDICINE_NAMES}
+                getKey={(m) => m}
+                getLabel={(m) => m}
+                onSelect={(m) => {
+                  const input = document.getElementById("product-name-input") as HTMLInputElement | null;
+                  if (input) input.value = m;
+                }}
+                placeholder="Search common generic names to fill in above"
+              />
+              <p className="text-[11px] text-muted">
+                Starter list of common generic names — not exhaustive, always verify strength/formulation against the pack.
+              </p>
+            </div>
+          )}
           <div className="grid grid-cols-2 gap-3">
             <Field name="price" label={t("products.price")} type="number" step="0.01" min="0" required defaultValue={editingProduct ? String(editingProduct.price) : undefined} />
             <label className="flex flex-col gap-1.5 text-sm">
@@ -504,6 +525,7 @@ export function ProductsClient({
                 <Field name="makingChargeValue" label="Making charge value" type="number" min="0" step="0.01" defaultValue={editingProduct?.makingChargeValue != null ? String(editingProduct.makingChargeValue) : undefined} />
               </div>
               <Field name="wastagePercent" label="Wastage % (optional)" type="number" min="0" max="30" step="0.01" placeholder="e.g. 5" defaultValue={editingProduct?.wastagePercent != null ? String(editingProduct.wastagePercent) : undefined} />
+              <Field name="hallmarkNumber" label="Hallmark / BIS number (optional)" placeholder="e.g. HUID code" defaultValue={editingProduct?.hallmarkNumber ?? undefined} />
             </div>
           )}
           {showPharmaSection && (
@@ -732,6 +754,7 @@ function Field(props: {
   min?: string;
   max?: string;
   defaultValue?: string;
+  id?: string;
 }) {
   const { name, label, ...rest } = props;
   return (

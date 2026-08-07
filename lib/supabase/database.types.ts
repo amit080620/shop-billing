@@ -149,6 +149,7 @@ export interface Database {
           wastage_percent: number | null;
           bulk_min_qty: number | null;
           bulk_price: number | null;
+          hallmark_number: string | null;
           created_at: string;
         };
         Insert: {
@@ -187,6 +188,7 @@ export interface Database {
           wastage_percent?: number | null;
           bulk_min_qty?: number | null;
           bulk_price?: number | null;
+          hallmark_number?: string | null;
           created_at?: string;
         };
         Update: {
@@ -225,6 +227,7 @@ export interface Database {
           wastage_percent?: number | null;
           bulk_min_qty?: number | null;
           bulk_price?: number | null;
+          hallmark_number?: string | null;
           created_at?: string;
         };
         Relationships: [
@@ -393,6 +396,7 @@ export interface Database {
           warranty_months: number | null;
           warranty_expires_on: string | null;
           mrp: number | null;
+          hallmark_number: string | null;
         };
         Insert: {
           id?: string;
@@ -407,6 +411,7 @@ export interface Database {
           warranty_months?: number | null;
           warranty_expires_on?: string | null;
           mrp?: number | null;
+          hallmark_number?: string | null;
           line_subtotal: number;
           cgst_amount?: number;
           sgst_amount?: number;
@@ -609,6 +614,54 @@ export interface Database {
           { foreignKeyName: "purchase_items_product_id_fkey"; columns: ["product_id"]; isOneToOne: false; referencedRelation: "products"; referencedColumns: ["id"] },
         ];
       };
+      restaurant_reservations: {
+        Row: {
+          id: string;
+          shop_id: string;
+          customer_id: string | null;
+          customer_name: string;
+          customer_phone: string;
+          party_size: number;
+          reservation_date: string;
+          reservation_time: string;
+          table_preference: string | null;
+          status: "booked" | "confirmed" | "seated" | "cancelled" | "no_show";
+          notes: string | null;
+          staff_id: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          shop_id: string;
+          customer_id?: string | null;
+          customer_name: string;
+          customer_phone: string;
+          party_size?: number;
+          reservation_date: string;
+          reservation_time: string;
+          table_preference?: string | null;
+          status?: "booked" | "confirmed" | "seated" | "cancelled" | "no_show";
+          notes?: string | null;
+          staff_id: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          shop_id?: string;
+          customer_id?: string | null;
+          customer_name?: string;
+          customer_phone?: string;
+          party_size?: number;
+          reservation_date?: string;
+          reservation_time?: string;
+          table_preference?: string | null;
+          status?: "booked" | "confirmed" | "seated" | "cancelled" | "no_show";
+          notes?: string | null;
+          staff_id?: string;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
       appointments: {
         Row: {
           id: string;
@@ -720,6 +773,14 @@ export interface Database {
           { foreignKeyName: "metal_rates_shop_id_fkey"; columns: ["shop_id"]; isOneToOne: false; referencedRelation: "shops"; referencedColumns: ["id"] },
         ];
       };
+      service_job_items: {
+        Row: { id: string; job_id: string; item_name: string; quantity: number; notes: string | null; created_at: string };
+        Insert: { id?: string; job_id: string; item_name: string; quantity?: number; notes?: string | null; created_at?: string };
+        Update: { id?: string; job_id?: string; item_name?: string; quantity?: number; notes?: string | null; created_at?: string };
+        Relationships: [
+          { foreignKeyName: "service_job_items_job_id_fkey"; columns: ["job_id"]; isOneToOne: false; referencedRelation: "service_jobs"; referencedColumns: ["id"] },
+        ];
+      };
       service_jobs: {
         Row: {
           id: string;
@@ -802,9 +863,9 @@ export interface Database {
         Relationships: [];
       };
       vehicles: {
-        Row: { id: string; shop_id: string; name: string; vehicle_number: string | null; rate_per_km: number; is_active: boolean; created_at: string };
-        Insert: { id?: string; shop_id: string; name: string; vehicle_number?: string | null; rate_per_km?: number; is_active?: boolean; created_at?: string };
-        Update: { id?: string; shop_id?: string; name?: string; vehicle_number?: string | null; rate_per_km?: number; is_active?: boolean; created_at?: string };
+        Row: { id: string; shop_id: string; name: string; vehicle_number: string | null; rate_per_km: number; is_active: boolean; rc_expiry: string | null; insurance_expiry: string | null; puc_expiry: string | null; fitness_expiry: string | null; created_at: string };
+        Insert: { id?: string; shop_id: string; name: string; vehicle_number?: string | null; rate_per_km?: number; is_active?: boolean; rc_expiry?: string | null; insurance_expiry?: string | null; puc_expiry?: string | null; fitness_expiry?: string | null; created_at?: string };
+        Update: { id?: string; shop_id?: string; name?: string; vehicle_number?: string | null; rate_per_km?: number; is_active?: boolean; rc_expiry?: string | null; insurance_expiry?: string | null; puc_expiry?: string | null; fitness_expiry?: string | null; created_at?: string };
         Relationships: [
           { foreignKeyName: "vehicles_shop_id_fkey"; columns: ["shop_id"]; isOneToOne: false; referencedRelation: "shops"; referencedColumns: ["id"] },
         ];

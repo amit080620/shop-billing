@@ -23,7 +23,7 @@ export async function createJobAction(
 
   const customerName = formData.get("customerName");
   const customerPhone = formData.get("customerPhone");
-  const itemDescription = formData.get("itemDescription");
+  const itemsRaw = formData.get("items");
   const issueDescription = formData.get("issueDescription");
   const estimatedCost = formData.get("estimatedCost");
   const expectedDate = formData.get("expectedDate");
@@ -32,7 +32,23 @@ export async function createJobAction(
 
   if (typeof customerName !== "string" || !customerName.trim()) return { error: "Enter the customer's name" };
   if (typeof customerPhone !== "string" || !customerPhone.trim()) return { error: "Enter a phone number" };
-  if (typeof itemDescription !== "string" || !itemDescription.trim()) return { error: "Describe the item (e.g. Samsung phone, cracked screen)" };
+
+  let items: { name: string; quantity: number; notes?: string }[] = [];
+  try {
+    items = typeof itemsRaw === "string" ? JSON.parse(itemsRaw) : [];
+  } catch {
+    items = [];
+  }
+  items = items.filter((i) => i.name?.trim());
+  if (items.length === 0) return { error: "Add at least one item (e.g. Samsung phone, cracked screen)" };
+
+  // A short, human-readable summary for everywhere else a job is shown
+  // as a single line (job list, KDS-style cards, the eventual bill line
+  // item) — the itemized breakdown itself lives in service_job_items.
+  const itemDescription =
+    items.length === 1
+      ? items[0].name.trim()
+      : `${items.length} items: ${items.map((i) => i.name.trim()).join(", ")}`;
 
   const financialYear = currentFinancialYear();
   const { data: issuedNumber } = await admin.rpc("next_job_number", {
@@ -50,7 +66,7 @@ export async function createJobAction(
       customer_id: typeof customerId === "string" && customerId ? customerId : null,
       customer_name: customerName.trim(),
       customer_phone: customerPhone.trim(),
-      item_description: itemDescription.trim(),
+      item_description: itemDescription,
       issue_description: typeof issueDescription === "string" && issueDescription.trim() ? issueDescription.trim() : null,
       estimated_cost: estimatedCost ? Number(estimatedCost) : null,
       expected_date: typeof expectedDate === "string" && expectedDate ? expectedDate : null,
@@ -62,6 +78,20 @@ export async function createJobAction(
   if (error || !job) {
     console.error("Could not create job", error);
     return { error: "Could not create job" };
+  }
+
+  const { error: itemsError } = await admin.from("service_job_items").insert(
+    items.map((i) => ({
+      job_id: job.id,
+      item_name: i.name.trim(),
+      quantity: i.quantity && i.quantity > 0 ? i.quantity : 1,
+      notes: i.notes?.trim() || null,
+    })),
+  );
+  if (itemsError) {
+    // The job itself is already saved — losing the itemized breakdown is
+    // a real gap for staff, but not a reason to fail the whole booking.
+    console.error("Could not save job items", itemsError);
   }
 
   revalidatePath("/service");
@@ -161,7 +191,8 @@ export async function deliverJobAction(
       delivered_at: new Date().toISOString(),
       bill_id: result.billId,
     })
-    .eq("id", jobId);
+    .eq("id", jobId)
+    .eq("shop_id", session.shopId);
 
   revalidatePath("/service");
   revalidatePath(`/service/${jobId}`);

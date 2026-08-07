@@ -30,7 +30,7 @@ export default async function NewBillPage() {
   const [{ data: products }, { data: customers }, { data: recentBills }, { data: shop }, { data: vehicles }, { data: metalRates }] = await Promise.all([
     admin
       .from("products")
-      .select("id, name, price, gst_percent, hsn_code, barcode, unit, track_inventory, stock_quantity, low_stock_threshold, requires_prescription, units_per_pack, loose_unit_name, metal_type, purity, making_charge_type, making_charge_value, wastage_percent, bulk_min_qty, bulk_price")
+      .select("id, name, price, gst_percent, hsn_code, barcode, unit, track_inventory, stock_quantity, low_stock_threshold, requires_prescription, units_per_pack, loose_unit_name, metal_type, purity, making_charge_type, making_charge_value, wastage_percent, bulk_min_qty, bulk_price, hallmark_number")
       .eq("shop_id", session.shopId)
       .order("name"),
     admin
@@ -102,6 +102,7 @@ export default async function NewBillPage() {
         wastagePercent: p.wastage_percent !== null ? Number(p.wastage_percent) : null,
         bulkMinQty: p.bulk_min_qty !== null ? Number(p.bulk_min_qty) : null,
         bulkPrice: p.bulk_price !== null ? Number(p.bulk_price) : null,
+        hallmarkNumber: p.hallmark_number,
       }))}
       customers={customers ?? []}
       frequentProductIds={frequentProductIds}

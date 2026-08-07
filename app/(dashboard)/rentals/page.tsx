@@ -46,6 +46,9 @@ export default async function RentalsPage() {
         <Link href="/rentals/history" className="shrink-0 rounded-full border border-border px-3 py-1.5 text-xs font-medium text-muted">
           {t("rentalsPage.pastLink")}
         </Link>
+        <Link href="/rentals/availability" className="shrink-0 rounded-full border border-border px-3 py-1.5 text-xs font-medium text-muted">
+          📅 Availability calendar
+        </Link>
       </div>
 
       {withOverdue.length === 0 ? (

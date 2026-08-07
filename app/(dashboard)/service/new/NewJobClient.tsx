@@ -9,6 +9,7 @@ import { PageHeader } from "@/app/components/PageHeader";
 import { SearchableSelect } from "@/app/components/SearchableSelect";
 
 type Customer = { id: string; name: string; phone: string };
+type JobItem = { name: string; quantity: number; notes: string };
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -24,6 +25,17 @@ export function NewJobClient({ customers }: { customers: Customer[] }) {
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
+  const [items, setItems] = useState<JobItem[]>([{ name: "", quantity: 1, notes: "" }]);
+
+  function updateItem(index: number, patch: Partial<JobItem>) {
+    setItems((prev) => prev.map((it, i) => (i === index ? { ...it, ...patch } : it)));
+  }
+  function addItemRow() {
+    setItems((prev) => [...prev, { name: "", quantity: 1, notes: "" }]);
+  }
+  function removeItemRow(index: number) {
+    setItems((prev) => (prev.length > 1 ? prev.filter((_, i) => i !== index) : prev));
+  }
 
   const [state, formAction] = useActionState(
     async (prev: { error?: string } | null, formData: FormData) => {
@@ -93,15 +105,49 @@ export function NewJobClient({ customers }: { customers: Customer[] }) {
           </label>
         </div>
 
-        <label className="flex flex-col gap-1.5 text-sm">
-          <span className="font-medium text-foreground">Item</span>
-          <input
-            name="itemDescription"
-            placeholder="e.g. Samsung Galaxy phone, cracked screen"
-            required
-            className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-brand"
-          />
-        </label>
+        <input
+          type="hidden"
+          name="items"
+          value={JSON.stringify(items.filter((i) => i.name.trim()).map((i) => ({ name: i.name, quantity: i.quantity, notes: i.notes })))}
+        />
+
+        <div className="flex flex-col gap-2">
+          <span className="text-sm font-medium text-foreground">Items being dropped off</span>
+          {items.map((item, i) => (
+            <div key={i} className="flex flex-col gap-1.5 rounded-lg border border-border bg-surface p-2.5">
+              <div className="flex gap-2">
+                <input
+                  value={item.name}
+                  onChange={(e) => updateItem(i, { name: e.target.value })}
+                  placeholder={i === 0 ? "e.g. Samsung Galaxy phone, cracked screen" : "e.g. Blue shirt"}
+                  className="flex-1 rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-brand"
+                />
+                <input
+                  type="number"
+                  min={1}
+                  step="1"
+                  value={item.quantity}
+                  onChange={(e) => updateItem(i, { quantity: Number(e.target.value) || 1 })}
+                  className="w-16 rounded-lg border border-border px-2 py-2 text-sm outline-none focus:border-brand"
+                />
+                {items.length > 1 && (
+                  <button type="button" onClick={() => removeItemRow(i)} className="text-xs font-medium text-danger">
+                    Remove
+                  </button>
+                )}
+              </div>
+              <input
+                value={item.notes}
+                onChange={(e) => updateItem(i, { notes: e.target.value })}
+                placeholder="Notes for this item (optional)"
+                className="rounded-lg border border-border px-3 py-1.5 text-xs outline-none focus:border-brand"
+              />
+            </div>
+          ))}
+          <button type="button" onClick={addItemRow} className="self-start text-sm font-medium text-brand">
+            + Add another item
+          </button>
+        </div>
 
         <label className="flex flex-col gap-1.5 text-sm">
           <span className="font-medium text-foreground">What needs to be done? (optional)</span>

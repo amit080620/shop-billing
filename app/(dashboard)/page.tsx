@@ -552,13 +552,23 @@ async function TransportHome({
       .order("created_at", { ascending: false })
       .limit(5),
     admin.from("transport_trips").select("id, km").eq("shop_id", session.shopId).gte("created_at", startOfToday.toISOString()),
-    admin.from("vehicles").select("id").eq("shop_id", session.shopId).eq("is_active", true),
+    admin.from("vehicles").select("id, name, rc_expiry, insurance_expiry, puc_expiry, fitness_expiry").eq("shop_id", session.shopId).eq("is_active", true),
   ]);
 
   const todayTotal = sum(todayBills.data?.map((b) => b.total));
   const roundsToday = todayTrips?.length ?? 0;
   const kmToday = (todayTrips ?? []).reduce((s, t) => s + Number(t.km), 0);
   const trend = buildSevenDayTrend(weekBills.data ?? [], "created_at");
+
+  // Same 30-day window as the Vehicles page — flags anything expired or
+  // about to expire so it surfaces right on Home, not just when the
+  // owner happens to open Vehicles.
+  const docLabels: Record<string, string> = { rc_expiry: "RC", insurance_expiry: "Insurance", puc_expiry: "PUC", fitness_expiry: "Fitness" };
+  const expiringVehicleDocs = (vehicles ?? []).flatMap((v) =>
+    (["rc_expiry", "insurance_expiry", "puc_expiry", "fitness_expiry"] as const)
+      .map((field) => ({ vehicleName: v.name, field, date: v[field] }))
+      .filter((d) => d.date && Math.ceil((new Date(d.date).getTime() - Date.now()) / (1000 * 60 * 60 * 24)) <= 30),
+  );
 
   return (
     <>
@@ -569,6 +579,20 @@ async function TransportHome({
         </div>
         <SalesTrendChart data={trend} />
       </section>
+
+      {expiringVehicleDocs.length > 0 && (
+        <Link href="/transport/vehicles" className="flex flex-col gap-1 rounded-xl border border-credit bg-credit-soft px-4 py-3">
+          <p className="text-xs font-semibold text-credit">⚠️ Vehicle documents need attention</p>
+          {expiringVehicleDocs.slice(0, 3).map((d, i) => {
+            const days = Math.ceil((new Date(d.date!).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+            return (
+              <p key={i} className="text-xs text-credit">
+                {d.vehicleName} — {docLabels[d.field]} {days < 0 ? "expired" : `expires in ${days}d`}
+              </p>
+            );
+          })}
+        </Link>
+      )}
 
       <section className="grid grid-cols-2 gap-3">
         <StatCard label={t("home.todaySales")} value={formatMoney(todayTotal)} href="/daily-summary" icon="💰" />

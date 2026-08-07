@@ -72,6 +72,30 @@ export async function updateVehicleAction(
   return {};
 }
 
+export async function updateVehicleDocumentsAction(
+  vehicleId: string,
+  documents: { rcExpiry: string | null; insuranceExpiry: string | null; pucExpiry: string | null; fitnessExpiry: string | null },
+): Promise<{ error?: string }> {
+  const session = await requireSession();
+  const admin = createSupabaseAdminClient();
+  const { error } = await admin
+    .from("vehicles")
+    .update({
+      rc_expiry: documents.rcExpiry || null,
+      insurance_expiry: documents.insuranceExpiry || null,
+      puc_expiry: documents.pucExpiry || null,
+      fitness_expiry: documents.fitnessExpiry || null,
+    })
+    .eq("id", vehicleId)
+    .eq("shop_id", session.shopId);
+  if (error) {
+    console.error("Could not update vehicle documents", error);
+    return { error: "Could not save documents" };
+  }
+  revalidatePath("/transport/vehicles");
+  return {};
+}
+
 export async function deleteVehicleAction(vehicleId: string): Promise<{ error?: string }> {
   const session = await requireSession();
   const admin = createSupabaseAdminClient();

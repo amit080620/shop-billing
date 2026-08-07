@@ -9,17 +9,21 @@ function daysBetween(from: Date, to: Date) {
   return Math.ceil((to.getTime() - from.getTime()) / (1000 * 60 * 60 * 24));
 }
 
-/** Blue while there's plenty of runway, shifting to saffron as the
- * current period runs low, red once it's genuinely urgent or overdue —
- * same "quota bar" read as Claude's own usage indicator, so both the
- * shop owner and admin can tell the state at a glance without reading
- * any numbers. Threshold is on % of the CURRENT period elapsed, not raw
- * days left, so a 30-day and a 365-day plan both feel equally urgent at
- * the same relative point. */
-function toneFor(percentUsed: number, isExpired: boolean): { bar: string; text: string; chipBg: string } {
-  if (isExpired || percentUsed >= 95) return { bar: "#DC2626", text: "#DC2626", chipBg: "#FEE2E2" };
-  if (percentUsed >= 75) return { bar: "#FF7A18", text: "#B45309", chipBg: "#FFEDD5" };
-  return { bar: "#2563EB", text: "#1D4ED8", chipBg: "#DBEAFE" };
+/** The whole card's background shifts — blue while there's plenty of
+ * runway, saffron as the current period runs low, red once it's
+ * genuinely urgent or overdue — same "quota bar" read as Claude's own
+ * usage indicator, so both the shop owner and admin can tell the state
+ * at a glance without reading any numbers. Threshold is on % of the
+ * CURRENT period elapsed, not raw days left, so a 30-day and a 365-day
+ * plan both feel equally urgent at the same relative point. */
+function toneFor(percentUsed: number, isExpired: boolean): { gradient: string; chipBg: string; chipText: string } {
+  if (isExpired || percentUsed >= 95) {
+    return { gradient: "linear-gradient(135deg, #EF4444, #B91C1C)", chipBg: "rgba(255,255,255,0.9)", chipText: "#B91C1C" };
+  }
+  if (percentUsed >= 75) {
+    return { gradient: "linear-gradient(135deg, #FF9F45, #FF7A18)", chipBg: "rgba(255,255,255,0.9)", chipText: "#B45309" };
+  }
+  return { gradient: "linear-gradient(135deg, #60A5FA, #2563EB)", chipBg: "rgba(255,255,255,0.9)", chipText: "#1D4ED8" };
 }
 
 export async function SubscriptionCard() {
@@ -51,7 +55,7 @@ export async function SubscriptionCard() {
 
   // The current period's start is the last recharge, or account
   // creation if there's never been one — used only to compute the %
-  // elapsed for the progress bar's color, not shown directly.
+  // elapsed for the card's color, not shown directly.
   const periodStart = lastTransaction ? new Date(lastTransaction.created_at) : new Date(shop.created_at);
   const totalDays = Math.max(1, daysBetween(periodStart, validUntil));
   const daysElapsed = Math.max(0, daysBetween(periodStart, today));
@@ -73,42 +77,34 @@ export async function SubscriptionCard() {
   );
 
   return (
-    <div className="mx-auto w-full max-w-xs overflow-hidden rounded-xl border border-border bg-surface shadow-sm">
-      <div className="flex items-center justify-between px-3.5 pt-3.5">
-        <p className="text-xs font-semibold text-foreground">{t("subscription.title")}</p>
+    <div className="overflow-hidden rounded-2xl shadow-sm" style={{ background: tone.gradient }}>
+      <div className="flex items-center justify-between px-4 pt-4">
+        <p className="text-sm font-semibold text-white/95">{t("subscription.title")}</p>
         <span
-          className="rounded-full px-2 py-0.5 text-[10px] font-semibold"
-          style={{ backgroundColor: tone.chipBg, color: tone.text }}
+          className="rounded-full px-2.5 py-0.5 text-[11px] font-semibold"
+          style={{ backgroundColor: tone.chipBg, color: tone.chipText }}
         >
           {isExpired ? t("subscription.expired") : percentUsed >= 75 ? t("subscription.expiringSoon") : t("subscription.active")}
         </span>
       </div>
 
-      <div className="px-3.5 pt-2">
-        <div className="flex items-baseline gap-1.5">
-          <p className="text-xl font-bold text-foreground">{isExpired ? 0 : daysRemaining}</p>
-          <p className="text-[11px] text-muted">
-            {isExpired ? t("subscription.daysOverdue", { days: Math.abs(daysRemaining) }) : t("subscription.daysRemaining")}
-          </p>
-        </div>
-        <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-background">
-          <div
-            className="h-full rounded-full transition-all"
-            style={{ width: `${isExpired ? 100 : percentUsed}%`, backgroundColor: tone.bar }}
-          />
-        </div>
+      <div className="px-4 pt-3">
+        <p className="text-3xl font-bold text-white">{isExpired ? 0 : daysRemaining}</p>
+        <p className="text-xs text-white/90">
+          {isExpired ? t("subscription.daysOverdue", { days: Math.abs(daysRemaining) }) : t("subscription.daysRemaining")}
+        </p>
       </div>
 
-      <div className="mt-2.5 flex items-center justify-between border-t border-border px-3.5 py-2 text-[11px] text-muted">
+      <div className="mt-3 flex items-center justify-between border-t border-white/20 px-4 py-3 text-xs text-white/90">
         <span>{t("subscription.validUntil")}</span>
-        <span className="font-medium text-foreground">{dateFormat(validUntil)}</span>
+        <span className="font-medium text-white">{dateFormat(validUntil)}</span>
       </div>
 
       <a
         href={`https://wa.me/${SUPPORT_WHATSAPP_NUMBER}?text=${whatsappMessage}`}
         target="_blank"
         rel="noopener noreferrer"
-        className="flex items-center justify-center gap-1.5 border-t border-border px-3.5 py-2.5 text-xs font-semibold text-brand"
+        className="flex items-center justify-center gap-2 border-t border-white/20 px-4 py-3 text-sm font-semibold text-white"
       >
         💬 {t("subscription.rechargeContact")}
       </a>

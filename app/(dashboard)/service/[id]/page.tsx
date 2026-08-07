@@ -22,6 +22,12 @@ export default async function JobDetailPage({
     return <p className="text-sm text-muted">Job not found.</p>;
   }
 
+  const { data: items } = await admin
+    .from("service_job_items")
+    .select("id, item_name, quantity, notes")
+    .eq("job_id", id)
+    .order("created_at", { ascending: true });
+
   return (
     <JobDetailClient
       job={{
@@ -42,6 +48,7 @@ export default async function JobDetailPage({
         deliveredAt: job.delivered_at,
         billId: job.bill_id,
       }}
+      items={(items ?? []).map((i) => ({ id: i.id, name: i.item_name, quantity: Number(i.quantity), notes: i.notes }))}
     />
   );
 }

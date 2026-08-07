@@ -40,7 +40,9 @@ function whatsappReadyLink(job: Job) {
   return `https://wa.me/${withCountryCode}?text=${encodeURIComponent(message)}`;
 }
 
-export function JobDetailClient({ job }: { job: Job }) {
+type JobItem = { id: string; name: string; quantity: number; notes: string | null };
+
+export function JobDetailClient({ job, items }: { job: Job; items: JobItem[] }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -78,6 +80,20 @@ export function JobDetailClient({ job }: { job: Job }) {
           {STATUS_LABELS[job.status]}
         </span>
       </div>
+
+      {items.length > 1 && (
+        <div className="rounded-lg border border-border bg-surface px-3.5 py-2.5">
+          <p className="text-xs text-muted">Items ({items.length})</p>
+          <ul className="mt-1 flex flex-col gap-1">
+            {items.map((item) => (
+              <li key={item.id} className="text-sm text-foreground">
+                {item.name} {item.quantity > 1 ? `× ${item.quantity}` : ""}
+                {item.notes && <span className="text-xs text-muted"> — {item.notes}</span>}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {job.issueDescription && (
         <div className="rounded-lg border border-border bg-surface px-3.5 py-2.5">

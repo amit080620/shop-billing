@@ -4,14 +4,40 @@ import { useActionState, useState, useTransition } from "react";
 import { useFormStatus } from "react-dom";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { createVehicleAction, toggleVehicleActiveAction, updateVehicleAction, deleteVehicleAction } from "@/lib/actions/transport";
+import { createVehicleAction, toggleVehicleActiveAction, updateVehicleAction, updateVehicleDocumentsAction, deleteVehicleAction } from "@/lib/actions/transport";
 import { formatMoney } from "@/lib/format";
 import { PageHeader } from "@/app/components/PageHeader";
 import { EmptyState } from "@/app/components/EmptyState";
 import { useTranslation } from "@/lib/i18n/useTranslation";
 import type { Lang } from "@/lib/i18n/dictionary";
 
-type Vehicle = { id: string; name: string; vehicleNumber: string | null; ratePerKm: number; isActive: boolean };
+type Vehicle = {
+  id: string;
+  name: string;
+  vehicleNumber: string | null;
+  ratePerKm: number;
+  isActive: boolean;
+  rcExpiry: string | null;
+  insuranceExpiry: string | null;
+  pucExpiry: string | null;
+  fitnessExpiry: string | null;
+};
+
+const DOC_LABELS: Record<string, string> = { rcExpiry: "RC", insuranceExpiry: "Insurance", pucExpiry: "PUC", fitnessExpiry: "Fitness" };
+
+function daysUntil(dateStr: string) {
+  return Math.ceil((new Date(dateStr).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+}
+
+/** Flags any document that's expired or expiring within 30 days — the
+ * window a transport operator actually needs to act (renew RC/insurance/
+ * PUC/fitness before an inspection or highway checkpoint catches it). */
+function expiringDocs(v: Vehicle) {
+  const fields = ["rcExpiry", "insuranceExpiry", "pucExpiry", "fitnessExpiry"] as const;
+  return fields
+    .map((f) => ({ field: f, date: v[f] }))
+    .filter((d): d is { field: typeof fields[number]; date: string } => !!d.date && daysUntil(d.date) <= 30);
+}
 
 function SubmitButton({ label, pendingLabel }: { label: string; pendingLabel: string }) {
   const { pending } = useFormStatus();
@@ -101,6 +127,21 @@ export function VehiclesClient({ vehicles, lang }: { vehicles: Vehicle[]; lang: 
                 </div>
                 <p className="text-sm font-semibold text-foreground">{formatMoney(v.ratePerKm)}/km</p>
               </div>
+              {expiringDocs(v).length > 0 && (
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {expiringDocs(v).map((d) => {
+                    const days = daysUntil(d.date);
+                    return (
+                      <span
+                        key={d.field}
+                        className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${days < 0 ? "bg-danger/15 text-danger" : "bg-credit-soft text-credit"}`}
+                      >
+                        ⚠️ {DOC_LABELS[d.field]} {days < 0 ? "expired" : `expires in ${days}d`}
+                      </span>
+                    );
+                  })}
+                </div>
+              )}
               <div className="mt-2 flex gap-2">
                 <button
                   onClick={() => setEditingId(v.id)}
@@ -160,6 +201,10 @@ function VehicleEditRow({
   const [name, setName] = useState(vehicle.name);
   const [vehicleNumber, setVehicleNumber] = useState(vehicle.vehicleNumber ?? "");
   const [ratePerKm, setRatePerKm] = useState<number | "">(vehicle.ratePerKm);
+  const [rcExpiry, setRcExpiry] = useState(vehicle.rcExpiry ?? "");
+  const [insuranceExpiry, setInsuranceExpiry] = useState(vehicle.insuranceExpiry ?? "");
+  const [pucExpiry, setPucExpiry] = useState(vehicle.pucExpiry ?? "");
+  const [fitnessExpiry, setFitnessExpiry] = useState(vehicle.fitnessExpiry ?? "");
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
@@ -184,6 +229,27 @@ function VehicleEditRow({
         onChange={(e) => setRatePerKm(e.target.value === "" ? "" : Number(e.target.value))}
         className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand"
       />
+
+      <p className="mt-1 text-xs font-medium text-brand-dark">Document expiry dates (optional)</p>
+      <div className="grid grid-cols-2 gap-2">
+        <label className="flex flex-col gap-1 text-[11px] text-brand-dark">
+          RC
+          <input type="date" value={rcExpiry} onChange={(e) => setRcExpiry(e.target.value)} className="rounded-lg border border-border bg-surface px-2 py-1.5 text-xs outline-none focus:border-brand" />
+        </label>
+        <label className="flex flex-col gap-1 text-[11px] text-brand-dark">
+          Insurance
+          <input type="date" value={insuranceExpiry} onChange={(e) => setInsuranceExpiry(e.target.value)} className="rounded-lg border border-border bg-surface px-2 py-1.5 text-xs outline-none focus:border-brand" />
+        </label>
+        <label className="flex flex-col gap-1 text-[11px] text-brand-dark">
+          PUC
+          <input type="date" value={pucExpiry} onChange={(e) => setPucExpiry(e.target.value)} className="rounded-lg border border-border bg-surface px-2 py-1.5 text-xs outline-none focus:border-brand" />
+        </label>
+        <label className="flex flex-col gap-1 text-[11px] text-brand-dark">
+          Fitness
+          <input type="date" value={fitnessExpiry} onChange={(e) => setFitnessExpiry(e.target.value)} className="rounded-lg border border-border bg-surface px-2 py-1.5 text-xs outline-none focus:border-brand" />
+        </label>
+      </div>
+
       {error && <p className="text-xs text-danger">{error}</p>}
       <div className="flex gap-2">
         <button
@@ -194,6 +260,12 @@ function VehicleEditRow({
                 setError(result.error);
                 return;
               }
+              await updateVehicleDocumentsAction(vehicle.id, {
+                rcExpiry: rcExpiry || null,
+                insuranceExpiry: insuranceExpiry || null,
+                pucExpiry: pucExpiry || null,
+                fitnessExpiry: fitnessExpiry || null,
+              });
               onDone();
             })
           }

@@ -1075,3 +1075,49 @@ create index if not exists idx_appointments_customer on appointments(customer_id
 -- New Bill based on the quantity in the cart.
 alter table products add column if not exists bulk_min_qty numeric(12, 3);
 alter table products add column if not exists bulk_price numeric(12, 2);
+
+-- ─── Jewellery: hallmark/BIS number ────────────────────────────────────────
+alter table products add column if not exists hallmark_number text;
+alter table bill_items add column if not exists hallmark_number text;
+
+-- ─── Transport: vehicle document expiry tracking ──────────────────────────
+alter table vehicles add column if not exists rc_expiry date;
+alter table vehicles add column if not exists insurance_expiry date;
+alter table vehicles add column if not exists puc_expiry date;
+alter table vehicles add column if not exists fitness_expiry date;
+
+-- ─── Repair & Services: itemized job contents ─────────────────────────────
+-- A single job (e.g. one laundry drop-off) can contain several distinct
+-- items (5 shirts, 2 pants) — service_jobs.item_description stays as the
+-- short summary shown everywhere else (job list, KDS-style cards, the
+-- bill line item), while this table holds the actual itemized list so
+-- nothing gets lost or miscounted at pickup.
+create table if not exists service_job_items (
+  id uuid primary key default uuid_generate_v4(),
+  job_id uuid not null references service_jobs(id) on delete cascade,
+  item_name text not null,
+  quantity numeric(10, 2) not null default 1,
+  notes text,
+  created_at timestamptz not null default now()
+);
+alter table service_job_items enable row level security;
+create index if not exists idx_service_job_items_job on service_job_items(job_id);
+
+-- ─── Restaurant: table reservations ────────────────────────────────────────
+create table if not exists restaurant_reservations (
+  id uuid primary key default uuid_generate_v4(),
+  shop_id uuid not null references shops(id) on delete cascade,
+  customer_id uuid references customers(id),
+  customer_name text not null,
+  customer_phone text not null,
+  party_size integer not null default 2,
+  reservation_date date not null,
+  reservation_time text not null,
+  table_preference text,
+  status text not null default 'booked' check (status in ('booked', 'confirmed', 'seated', 'cancelled', 'no_show')),
+  notes text,
+  staff_id uuid not null references staff(id),
+  created_at timestamptz not null default now()
+);
+alter table restaurant_reservations enable row level security;
+create index if not exists idx_restaurant_reservations_shop_date on restaurant_reservations(shop_id, reservation_date);

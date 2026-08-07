@@ -44,6 +44,7 @@ export async function createProductAction(
     makingChargeType: formData.get("makingChargeType") || null,
     makingChargeValue: formData.get("makingChargeValue") || null,
     wastagePercent: formData.get("wastagePercent") || null,
+    hallmarkNumber: formData.get("hallmarkNumber"),
     bulkMinQty: formData.get("bulkMinQty") || null,
     bulkPrice: formData.get("bulkPrice") || null,
   });
@@ -100,6 +101,7 @@ export async function createProductAction(
     wastage_percent: parsed.data.wastagePercent ?? null,
     bulk_min_qty: parsed.data.bulkMinQty ?? null,
     bulk_price: parsed.data.bulkPrice ?? null,
+    hallmark_number: parsed.data.hallmarkNumber ?? null,
   });
   if (error) {
     if (error.code === "23505") {
@@ -151,6 +153,7 @@ export async function updateProductAction(
     makingChargeType: formData.get("makingChargeType") || null,
     makingChargeValue: formData.get("makingChargeValue") || null,
     wastagePercent: formData.get("wastagePercent") || null,
+    hallmarkNumber: formData.get("hallmarkNumber"),
     bulkMinQty: formData.get("bulkMinQty") || null,
     bulkPrice: formData.get("bulkPrice") || null,
   });
@@ -195,6 +198,7 @@ export async function updateProductAction(
       wastage_percent: parsed.data.wastagePercent ?? null,
       bulk_min_qty: parsed.data.bulkMinQty ?? null,
       bulk_price: parsed.data.bulkPrice ?? null,
+      hallmark_number: parsed.data.hallmarkNumber ?? null,
     })
     .eq("id", productId)
     .eq("shop_id", session.shopId); // ownership check baked into the query

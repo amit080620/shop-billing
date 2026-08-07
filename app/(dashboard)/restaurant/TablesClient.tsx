@@ -123,6 +123,9 @@ export function TablesClient({ tables, lang }: { tables: Table[]; lang: Lang }) 
         <Link href="/restaurant/combos" className="shrink-0 rounded-full border border-border px-3 py-1.5 text-xs font-medium text-muted">
           🍱 Combos
         </Link>
+        <Link href="/restaurant/reservations" className="shrink-0 rounded-full border border-border px-3 py-1.5 text-xs font-medium text-muted">
+          📅 Reservations
+        </Link>
       </div>
 
       {requests.length > 0 && (
