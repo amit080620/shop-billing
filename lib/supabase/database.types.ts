@@ -603,6 +603,109 @@ export interface Database {
           { foreignKeyName: "purchase_items_product_id_fkey"; columns: ["product_id"]; isOneToOne: false; referencedRelation: "products"; referencedColumns: ["id"] },
         ];
       };
+      appointments: {
+        Row: {
+          id: string;
+          shop_id: string;
+          customer_id: string | null;
+          customer_name: string;
+          customer_phone: string;
+          service_name: string;
+          stylist_name: string | null;
+          appointment_date: string;
+          appointment_time: string;
+          status: "booked" | "confirmed" | "arrived" | "completed" | "cancelled" | "no_show";
+          notes: string | null;
+          bill_id: string | null;
+          staff_id: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          shop_id: string;
+          customer_id?: string | null;
+          customer_name: string;
+          customer_phone: string;
+          service_name: string;
+          stylist_name?: string | null;
+          appointment_date: string;
+          appointment_time: string;
+          status?: "booked" | "confirmed" | "arrived" | "completed" | "cancelled" | "no_show";
+          notes?: string | null;
+          bill_id?: string | null;
+          staff_id: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          shop_id?: string;
+          customer_id?: string | null;
+          customer_name?: string;
+          customer_phone?: string;
+          service_name?: string;
+          stylist_name?: string | null;
+          appointment_date?: string;
+          appointment_time?: string;
+          status?: "booked" | "confirmed" | "arrived" | "completed" | "cancelled" | "no_show";
+          notes?: string | null;
+          bill_id?: string | null;
+          staff_id?: string;
+          created_at?: string;
+        };
+        Relationships: [
+          { foreignKeyName: "appointments_bill_id_fkey"; columns: ["bill_id"]; isOneToOne: false; referencedRelation: "bills"; referencedColumns: ["id"] },
+        ];
+      };
+      jewellery_exchanges: {
+        Row: {
+          id: string;
+          shop_id: string;
+          bill_id: string | null;
+          metal_type: "gold" | "silver";
+          description: string | null;
+          gross_weight: number;
+          purity_percent: number;
+          net_weight: number;
+          rate_per_gram: number;
+          exchange_value: number;
+          customer_id: string | null;
+          staff_id: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          shop_id: string;
+          bill_id?: string | null;
+          metal_type: "gold" | "silver";
+          description?: string | null;
+          gross_weight: number;
+          purity_percent: number;
+          net_weight: number;
+          rate_per_gram: number;
+          exchange_value: number;
+          customer_id?: string | null;
+          staff_id: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          shop_id?: string;
+          bill_id?: string | null;
+          metal_type?: "gold" | "silver";
+          description?: string | null;
+          gross_weight?: number;
+          purity_percent?: number;
+          net_weight?: number;
+          rate_per_gram?: number;
+          exchange_value?: number;
+          customer_id?: string | null;
+          staff_id?: string;
+          created_at?: string;
+        };
+        Relationships: [
+          { foreignKeyName: "jewellery_exchanges_bill_id_fkey"; columns: ["bill_id"]; isOneToOne: false; referencedRelation: "bills"; referencedColumns: ["id"] },
+        ];
+      };
       metal_rates: {
         Row: { id: string; shop_id: string; metal_type: "gold" | "silver"; rate_per_gram: number; effective_date: string; created_at: string };
         Insert: { id?: string; shop_id: string; metal_type: "gold" | "silver"; rate_per_gram: number; effective_date?: string; created_at?: string };

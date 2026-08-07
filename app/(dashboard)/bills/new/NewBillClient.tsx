@@ -160,6 +160,14 @@ export function NewBillClient({
   const [doctorName, setDoctorName] = useState("");
   const [patientName, setPatientName] = useState("");
   const [serviceProviderName, setServiceProviderName] = useState("");
+  const [exchangeInfo, setExchangeInfo] = useState<{
+    metal: "gold" | "silver";
+    description: string;
+    grossWeight: number;
+    purityPercent: number;
+    ratePerGram: number;
+    value: number;
+  } | null>(null);
   const [tripInfo, setTripInfo] = useState<{ vehicleId: string; km: number; driverName: string; loadWeight: number | null; loadUnit: string } | null>(null);
 
   const supplyType = useMemo(
@@ -610,6 +618,12 @@ export function NewBillClient({
     tripLoadWeight: tripInfo?.loadWeight ?? null,
     tripLoadUnit: tripInfo?.loadUnit ?? "",
     serviceProviderName,
+    exchangeMetal: exchangeInfo?.metal ?? null,
+    exchangeDescription: exchangeInfo?.description ?? "",
+    exchangeGrossWeight: exchangeInfo?.grossWeight ?? null,
+    exchangePurityPercent: exchangeInfo?.purityPercent ?? null,
+    exchangeRatePerGram: exchangeInfo?.ratePerGram ?? null,
+    exchangeValue: exchangeInfo?.value ?? null,
   });
 
   return (
@@ -703,6 +717,22 @@ export function NewBillClient({
         <div className="my-1 h-px bg-border" />
         <Row label={t("bill.total")} value={formatMoney(totals.total)} bold />
       </section>
+
+      {businessType === "jewellery" && (
+        <ExchangeCalculator
+          exchangeInfo={exchangeInfo}
+          onSet={(info) => {
+            setExchangeInfo(info);
+            setPaidAmount((prev) => (typeof prev === "number" ? prev : 0) + info.value);
+          }}
+          onClear={() => {
+            if (exchangeInfo) {
+              setPaidAmount((prev) => Math.max(0, (typeof prev === "number" ? prev : 0) - exchangeInfo.value));
+            }
+            setExchangeInfo(null);
+          }}
+        />
+      )}
 
       <section className="flex flex-col gap-3 rounded-xl border border-border bg-surface shadow-sm p-4">
         <p className="text-sm font-medium text-foreground">{t("bill.howMuchPaid")}</p>
@@ -1260,6 +1290,139 @@ function JewelleryCalculator({
           className="btn-primary-sm disabled:opacity-60"
         >
           Add to bill
+        </button>
+        <button type="button" onClick={() => setOpen(false)} className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-muted">
+          Cancel
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function ExchangeCalculator({
+  exchangeInfo,
+  onSet,
+  onClear,
+}: {
+  exchangeInfo: { metal: "gold" | "silver"; description: string; grossWeight: number; purityPercent: number; ratePerGram: number; value: number } | null;
+  onSet: (info: { metal: "gold" | "silver"; description: string; grossWeight: number; purityPercent: number; ratePerGram: number; value: number }) => void;
+  onClear: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [metal, setMetal] = useState<"gold" | "silver">("gold");
+  const [description, setDescription] = useState("");
+  const [grossWeight, setGrossWeight] = useState<number | "">("");
+  const [purityPercent, setPurityPercent] = useState<number | "">(91.6);
+  const [ratePerGram, setRatePerGram] = useState<number | "">("");
+
+  function round2(n: number) {
+    return Math.round((n + Number.EPSILON) * 100) / 100;
+  }
+
+  const gw = typeof grossWeight === "number" ? grossWeight : 0;
+  const purity = typeof purityPercent === "number" ? purityPercent : 0;
+  const rate = typeof ratePerGram === "number" ? ratePerGram : 0;
+  const netWeight = round2(gw * (purity / 100));
+  const value = round2(netWeight * rate);
+
+  if (exchangeInfo) {
+    return (
+      <div className="flex items-center justify-between rounded-xl border border-brand bg-brand-soft px-3.5 py-3">
+        <div>
+          <p className="text-sm font-medium text-brand-dark">
+            ♻️ Old {exchangeInfo.metal} exchange {exchangeInfo.description ? `— ${exchangeInfo.description}` : ""}
+          </p>
+          <p className="text-xs text-brand-dark/80">
+            {exchangeInfo.grossWeight}g gross · {exchangeInfo.purityPercent}% purity · {formatMoney(exchangeInfo.value)}
+          </p>
+        </div>
+        <button onClick={onClear} className="text-xs font-medium text-danger">
+          Remove
+        </button>
+      </div>
+    );
+  }
+
+  if (!open) {
+    return (
+      <button type="button" onClick={() => setOpen(true)} className="self-start text-sm font-medium text-brand">
+        ♻️ Customer exchanging old gold/silver?
+      </button>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-2 rounded-xl border border-dashed border-brand bg-brand-soft p-4">
+      <p className="text-sm font-semibold text-brand-dark">Old gold/silver exchange</p>
+      <p className="text-xs text-brand-dark/80">
+        This value is treated as part of the payment — it reduces what the customer needs to pay in cash, and is kept as a separate record for your own melting/refining books.
+      </p>
+
+      <div className="grid grid-cols-2 gap-2">
+        <select
+          value={metal}
+          onChange={(e) => setMetal(e.target.value as "gold" | "silver")}
+          className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand"
+        >
+          <option value="gold">Gold</option>
+          <option value="silver">Silver</option>
+        </select>
+        <input
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          placeholder="Old item (optional)"
+          className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand"
+        />
+      </div>
+
+      <div className="grid grid-cols-3 gap-2">
+        <input
+          type="number"
+          min={0}
+          step="0.001"
+          value={grossWeight}
+          onChange={(e) => setGrossWeight(e.target.value === "" ? "" : Number(e.target.value))}
+          placeholder="Weight (g)"
+          className="rounded-lg border border-border bg-surface px-2 py-2 text-xs outline-none focus:border-brand"
+        />
+        <input
+          type="number"
+          min={0}
+          max={100}
+          step="0.1"
+          value={purityPercent}
+          onChange={(e) => setPurityPercent(e.target.value === "" ? "" : Number(e.target.value))}
+          placeholder="Purity %"
+          className="rounded-lg border border-border bg-surface px-2 py-2 text-xs outline-none focus:border-brand"
+        />
+        <input
+          type="number"
+          min={0}
+          step="0.01"
+          value={ratePerGram}
+          onChange={(e) => setRatePerGram(e.target.value === "" ? "" : Number(e.target.value))}
+          placeholder="Rate ₹/g"
+          className="rounded-lg border border-border bg-surface px-2 py-2 text-xs outline-none focus:border-brand"
+        />
+      </div>
+
+      {netWeight > 0 && (
+        <p className="text-xs text-brand-dark">
+          Net weight (after purity): {netWeight}g × ₹{rate}/g = <strong>{formatMoney(value)}</strong>
+        </p>
+      )}
+
+      <div className="flex gap-2">
+        <button
+          type="button"
+          disabled={gw <= 0 || purity <= 0 || rate <= 0}
+          onClick={() => {
+            onSet({ metal, description: description.trim(), grossWeight: gw, purityPercent: purity, ratePerGram: rate, value });
+            setOpen(false);
+          }}
+          className="btn-primary-sm disabled:opacity-60"
+        >
+          Apply to payment
         </button>
         <button type="button" onClick={() => setOpen(false)} className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-muted">
           Cancel

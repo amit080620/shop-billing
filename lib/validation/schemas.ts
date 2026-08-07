@@ -146,6 +146,12 @@ export const billSchema = z.object({
   tripLoadWeight: z.coerce.number().min(0).nullable().optional(),
   tripLoadUnit: optionalText(10),
   serviceProviderName: optionalText(80),
+  exchangeMetal: z.enum(["gold", "silver"]).nullable().optional(),
+  exchangeDescription: optionalText(120),
+  exchangeGrossWeight: z.coerce.number().min(0).nullable().optional(),
+  exchangePurityPercent: z.coerce.number().min(0).max(100).nullable().optional(),
+  exchangeRatePerGram: z.coerce.number().min(0).nullable().optional(),
+  exchangeValue: z.coerce.number().min(0).nullable().optional(),
 });
 export type BillInput = z.infer<typeof billSchema>;
 

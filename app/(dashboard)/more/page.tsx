@@ -82,6 +82,7 @@ export default async function MorePage() {
       {session.businessType === "jewellery" && (
         <MenuGroup title="Jewellery">
           <MenuLink href="/jewellery/rates" label="Today's rate" sub="Set gold/silver rate per gram" icon={JewelleryIcon} />
+          <MenuLink href="/jewellery/exchanges" label="Exchange history" sub="Old gold/silver taken in" icon={ClockIcon} />
         </MenuGroup>
       )}
 

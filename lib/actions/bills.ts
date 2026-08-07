@@ -17,7 +17,12 @@ export async function createBillCore(
   session: SessionContext,
   parsedData: BillInput,
 ): Promise<{ billId: string; invoiceNumber: string } | { error: string }> {
-  const { customerId, items, discountType, discountValue, paidAmount, paymentMethod, doctorName, patientName, tripVehicleId, tripKm, tripDriverName, tripLoadWeight, tripLoadUnit, serviceProviderName } = parsedData;
+  const { customerId, items, discountType, discountValue, paidAmount, paymentMethod, doctorName, patientName, tripVehicleId, tripKm, tripDriverName, tripLoadWeight, tripLoadUnit, serviceProviderName, exchangeMetal, exchangeDescription, exchangeGrossWeight, exchangePurityPercent, exchangeRatePerGram, exchangeValue } = parsedData;
+
+  // Old-gold/silver exchange is money-equivalent handed over at the
+  // counter — it counts toward what's "paid", same as cash, without
+  // touching the taxable value of the new item being sold.
+  const effectivePaidAmount = round2(paidAmount + (exchangeValue ?? 0));
 
   const admin = createSupabaseAdminClient();
 
@@ -82,7 +87,7 @@ export async function createBillCore(
     items: verifiedItems,
     discountType,
     discountValue,
-    paidAmount,
+    paidAmount: effectivePaidAmount,
     supplyType,
   });
 
@@ -188,6 +193,25 @@ export async function createBillCore(
         load_unit: tripLoadUnit ?? null,
       });
     }
+  }
+
+  // Jewellery — old gold/silver exchange record, for the shop's own
+  // melting/refining bookkeeping. Best-effort: the bill itself is
+  // already valid and correctly totalled either way.
+  if (exchangeMetal && exchangeGrossWeight && exchangeGrossWeight > 0 && exchangeValue) {
+    await admin.from("jewellery_exchanges").insert({
+      shop_id: session.shopId,
+      bill_id: bill.id,
+      metal_type: exchangeMetal,
+      description: exchangeDescription ?? null,
+      gross_weight: exchangeGrossWeight,
+      purity_percent: exchangePurityPercent ?? 100,
+      net_weight: round2(exchangeGrossWeight * ((exchangePurityPercent ?? 100) / 100)),
+      rate_per_gram: exchangeRatePerGram ?? 0,
+      exchange_value: exchangeValue,
+      customer_id: customerId,
+      staff_id: session.userId,
+    });
   }
 
   // Stock decrement — best-effort (the bill is already committed at this

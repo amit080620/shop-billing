@@ -57,7 +57,7 @@ function tabsFor(businessType: string, t: (key: string) => string) {
   const SALON_TABS = [
     { href: "/", label: t("nav.home"), icon: HomeIcon },
     { href: "/bills/new", label: t("nav.sell"), icon: SellIcon },
-    { href: "/salon", label: "Staff", icon: SalonNavIcon },
+    { href: "/salon/appointments", label: "Appointments", icon: SalonNavIcon },
     { href: "/reports", label: t("nav.reports"), icon: ReportIcon },
     { href: "/more", label: t("nav.more"), icon: MoreIcon },
   ];

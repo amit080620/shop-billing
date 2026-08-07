@@ -324,7 +324,9 @@ async function SalonHome({
   startOfWeek.setDate(startOfWeek.getDate() - 6);
   startOfWeek.setHours(0, 0, 0, 0);
 
-  const [todayBills, weekBills, recentBills] = await Promise.all([
+  const todayIso = `${startOfToday.getFullYear()}-${String(startOfToday.getMonth() + 1).padStart(2, "0")}-${String(startOfToday.getDate()).padStart(2, "0")}`;
+
+  const [todayBills, weekBills, recentBills, { data: todayAppointments }] = await Promise.all([
     admin.from("bills").select("total, service_provider_name").eq("shop_id", session.shopId).eq("status", "active").gte("created_at", startOfToday.toISOString()),
     admin.from("bills").select("total, created_at").eq("shop_id", session.shopId).eq("status", "active").gte("created_at", startOfWeek.toISOString()),
     admin
@@ -334,10 +336,16 @@ async function SalonHome({
       .eq("status", "active")
       .order("created_at", { ascending: false })
       .limit(5),
+    admin
+      .from("appointments")
+      .select("id, customer_name, service_name, appointment_time, status")
+      .eq("shop_id", session.shopId)
+      .eq("appointment_date", todayIso)
+      .in("status", ["booked", "confirmed", "arrived"])
+      .order("appointment_time", { ascending: true }),
   ]);
 
   const todayTotal = sum(todayBills.data?.map((b) => b.total));
-  const todayStaffCount = new Set((todayBills.data ?? []).map((b) => b.service_provider_name).filter(Boolean)).size;
   const trend = buildSevenDayTrend(weekBills.data ?? [], "created_at");
 
   return (
@@ -352,8 +360,31 @@ async function SalonHome({
 
       <section className="grid grid-cols-2 gap-3">
         <StatCard label={t("home.todaySales")} value={formatMoney(todayTotal)} href="/daily-summary" icon="💰" />
-        <StatCard label="Staff active today" value={String(todayStaffCount)} href="/salon" icon="💇" />
+        <StatCard label="Appointments today" value={String(todayAppointments?.length ?? 0)} href="/salon/appointments" icon="📅" />
       </section>
+
+      {todayAppointments && todayAppointments.length > 0 && (
+        <section>
+          <h2 className="mb-2 text-sm font-semibold text-foreground">Today&apos;s appointments</h2>
+          <ul className="flex flex-col gap-2">
+            {todayAppointments.slice(0, 4).map((a) => (
+              <Link
+                key={a.id}
+                href="/salon/appointments"
+                className="flex items-center justify-between rounded-lg border border-border bg-surface px-3.5 py-2.5 shadow-sm"
+              >
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-medium text-foreground">{a.customer_name} · {a.service_name}</p>
+                  <p className="text-xs text-muted">{a.appointment_time}</p>
+                </div>
+                <span className="shrink-0 rounded-full bg-brand-soft px-2 py-0.5 text-[11px] font-medium text-brand-dark capitalize">
+                  {a.status}
+                </span>
+              </Link>
+            ))}
+          </ul>
+        </section>
+      )}
 
       <Link
         href="/bills/new"

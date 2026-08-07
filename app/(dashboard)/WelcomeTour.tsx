@@ -187,6 +187,11 @@ const SALON_SLIDES: Slide[] = [
     body: "Your haircuts, facials, treatments live under More → Services — same as any product: name, price, GST%. Loose combos (e.g. haircut + beard) can just be added as separate lines on the same bill.",
   },
   {
+    icon: "📅",
+    title: "Book appointments",
+    body: "Bottom tab → Appointments lets you book a slot for a customer in advance — date, time, service, stylist. On the day, mark them Arrived, then Completed once done.",
+  },
+  {
     icon: "🧾",
     title: "One bill, tag the stylist",
     body: "In Sell, add the services given — a \"Stylist / staff\" field lets you note who actually did the work, right on the same bill.",

@@ -1020,3 +1020,50 @@ alter table products add column if not exists purity text;
 alter table products add column if not exists making_charge_type text check (making_charge_type in ('per_gram', 'flat', 'percent'));
 alter table products add column if not exists making_charge_value numeric(12, 2);
 alter table products add column if not exists wastage_percent numeric(5, 2);
+
+-- ─── Jewellery: old gold/silver exchange ──────────────────────────────────
+-- Exchange value is treated as a payment method, not a discount — it's
+-- money-equivalent handed over at the counter, same as cash, so it adds
+-- straight into paid_amount on the bill rather than touching the taxable
+-- value or discount fields (which stay tied to the actual sale price of
+-- the new item). This table is purely the shop's own record of what
+-- old material came in, for their own melting/refining bookkeeping.
+create table if not exists jewellery_exchanges (
+  id uuid primary key default uuid_generate_v4(),
+  shop_id uuid not null references shops(id) on delete cascade,
+  bill_id uuid references bills(id) on delete set null,
+  metal_type text not null check (metal_type in ('gold', 'silver')),
+  description text,
+  gross_weight numeric(10, 3) not null,
+  purity_percent numeric(5, 2) not null,
+  net_weight numeric(10, 3) not null,
+  rate_per_gram numeric(12, 2) not null,
+  exchange_value numeric(12, 2) not null,
+  customer_id uuid references customers(id),
+  staff_id uuid not null references staff(id),
+  created_at timestamptz not null default now()
+);
+alter table jewellery_exchanges enable row level security;
+create index if not exists idx_jewellery_exchanges_shop on jewellery_exchanges(shop_id);
+create index if not exists idx_jewellery_exchanges_bill on jewellery_exchanges(bill_id);
+
+-- ─── Salon: appointment booking ────────────────────────────────────────────
+create table if not exists appointments (
+  id uuid primary key default uuid_generate_v4(),
+  shop_id uuid not null references shops(id) on delete cascade,
+  customer_id uuid references customers(id),
+  customer_name text not null,
+  customer_phone text not null,
+  service_name text not null,
+  stylist_name text,
+  appointment_date date not null,
+  appointment_time text not null,
+  status text not null default 'booked' check (status in ('booked', 'confirmed', 'arrived', 'completed', 'cancelled', 'no_show')),
+  notes text,
+  bill_id uuid references bills(id) on delete set null,
+  staff_id uuid not null references staff(id),
+  created_at timestamptz not null default now()
+);
+alter table appointments enable row level security;
+create index if not exists idx_appointments_shop_date on appointments(shop_id, appointment_date);
+create index if not exists idx_appointments_customer on appointments(customer_id);
