@@ -79,6 +79,12 @@ export default async function MorePage() {
         </MenuGroup>
       )}
 
+      {session.businessType === "jewellery" && (
+        <MenuGroup title="Jewellery">
+          <MenuLink href="/jewellery/rates" label="Today's rate" sub="Set gold/silver rate per gram" icon={JewelleryIcon} />
+        </MenuGroup>
+      )}
+
       <MenuGroup title="People">
         <MenuLink href="/customers" label={t("more.customers")} sub={t("more.customers.sub")} icon={PeopleIcon} />
         <MenuLink href="/vendors" label={t("more.vendors")} sub={t("more.vendors.sub")} icon={TruckIcon} />
@@ -320,6 +326,14 @@ function SalonIcon({ className }: { className?: string }) {
     <svg {...iconProps(className)}>
       <circle cx="12" cy="8" r="3.5" />
       <path d="M5 20c0-3.5 3-6 7-6s7 2.5 7 6" />
+    </svg>
+  );
+}
+function JewelleryIcon({ className }: { className?: string }) {
+  return (
+    <svg {...iconProps(className)}>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 7v10M9 9.5a2.5 2.5 0 0 1 2.5-2.5h1a2.5 2.5 0 0 1 0 5h-1a2.5 2.5 0 0 0 0 5h1a2.5 2.5 0 0 0 2.5-2.5" />
     </svg>
   );
 }

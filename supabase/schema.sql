@@ -990,3 +990,33 @@ alter table shops add constraint shops_business_type_check
 -- person, so this lives at the bill level (same reasoning as Restaurant's
 -- waiter_name on the order), not per line item.
 alter table bills add column if not exists service_provider_name text;
+
+-- ─── Jewellery business type ───────────────────────────────────────────────
+-- Deliberately built as a calculator that produces one plain billed line
+-- item (exactly like the Transport charge picker) rather than changing
+-- how the cart/billing engine works — every other vertical's billing
+-- stays untouched and just as reliable.
+alter table shops drop constraint if exists shops_business_type_check;
+alter table shops add constraint shops_business_type_check
+  check (business_type in ('grocery', 'restaurant', 'mart', 'hardware', 'pharmacy', 'rental', 'transport', 'service', 'salon', 'jewellery', 'general'));
+
+-- Gold/silver rate changes daily and applies uniformly to every item of
+-- that metal — one rate per shop per metal per day, not per product.
+create table if not exists metal_rates (
+  id uuid primary key default uuid_generate_v4(),
+  shop_id uuid not null references shops(id) on delete cascade,
+  metal_type text not null check (metal_type in ('gold', 'silver')),
+  rate_per_gram numeric(12, 2) not null,
+  effective_date date not null default current_date,
+  created_at timestamptz not null default now()
+);
+alter table metal_rates enable row level security;
+create unique index if not exists idx_metal_rates_shop_metal_date on metal_rates(shop_id, metal_type, effective_date);
+
+-- Per-item jewellery attributes — all optional, only meaningful when the
+-- item is actually priced by weight.
+alter table products add column if not exists metal_type text check (metal_type in ('gold', 'silver'));
+alter table products add column if not exists purity text;
+alter table products add column if not exists making_charge_type text check (making_charge_type in ('per_gram', 'flat', 'percent'));
+alter table products add column if not exists making_charge_value numeric(12, 2);
+alter table products add column if not exists wastage_percent numeric(5, 2);

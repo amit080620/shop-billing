@@ -33,6 +33,11 @@ type Product = {
   requiresPrescription: boolean;
   unitsPerPack: number | null;
   looseUnitName: string | null;
+  metalType: "gold" | "silver" | null;
+  purity: string | null;
+  makingChargeType: "per_gram" | "flat" | "percent" | null;
+  makingChargeValue: number | null;
+  wastagePercent: number | null;
 };
 type Customer = { id: string; name: string; phone: string; gstin: string | null; state_code: string | null };
 type CartLine = {
@@ -75,6 +80,8 @@ export function NewBillClient({
   shopContext,
   vehicles,
   businessType,
+  goldRate,
+  silverRate,
 }: {
   shopStateCode: string;
   products: Product[];
@@ -83,6 +90,8 @@ export function NewBillClient({
   frequentProductIds: string[];
   vehicles: { id: string; name: string; ratePerKm: number }[];
   businessType: string;
+  goldRate: number | null;
+  silverRate: number | null;
   shopContext: {
     shopId: string;
     shopName: string;
@@ -255,6 +264,30 @@ export function NewBillClient({
     setTripInfo({ vehicleId, km, driverName, loadWeight, loadUnit });
   }
 
+  function addJewelleryItem(name: string, amount: number, gstPercent: number) {
+    const uniqueId = `__jewellery_${Date.now()}_${Math.random().toString(36).slice(2, 7)}__`;
+    setCart((prev) => [
+      ...prev,
+      {
+        productId: uniqueId,
+        name: `💍 ${name}`,
+        price: amount,
+        packPrice: amount,
+        gstPercent,
+        hsnCode: null,
+        unit: "item",
+        quantity: 1,
+        trackInventory: false,
+        stockQuantity: 0,
+        lowStockThreshold: 0,
+        requiresPrescription: false,
+        unitsPerPack: null,
+        looseUnitName: null,
+        saleMode: "pack",
+      },
+    ]);
+  }
+
   function updateQuantity(productId: string, quantity: number) {
     setCart((prev) =>
       quantity <= 0
@@ -411,7 +444,7 @@ export function NewBillClient({
               );
               return {
                 data: r.product
-                  ? { ...r.product, packPrice: r.product.price, trackInventory: false, stockQuantity: 0, lowStockThreshold: 0, requiresPrescription: false, unitsPerPack: null, looseUnitName: null }
+                  ? { ...r.product, packPrice: r.product.price, trackInventory: false, stockQuantity: 0, lowStockThreshold: 0, requiresPrescription: false, unitsPerPack: null, looseUnitName: null, metalType: null, purity: null, makingChargeType: null, makingChargeValue: null, wastagePercent: null }
                   : undefined,
                 error: r.error,
               };
@@ -421,6 +454,15 @@ export function NewBillClient({
         </section>
 
         {vehicles.length > 0 && <TransportChargePicker vehicles={vehicles} onAdd={addTransportCharge} />}
+
+        {businessType === "jewellery" && (goldRate || silverRate) && (
+          <JewelleryCalculator
+            products={products.filter((p) => p.metalType)}
+            goldRate={goldRate}
+            silverRate={silverRate}
+            onAdd={addJewelleryItem}
+          />
+        )}
 
         {cart.length > 0 && (
           <section className="flex flex-col gap-2">
@@ -547,7 +589,7 @@ export function NewBillClient({
   const payload = JSON.stringify({
     customerId: customerMode === "existing" ? selectedCustomer?.id ?? null : null,
     items: cart.map((c) => ({
-      productId: c.productId === "__transport_charge__" ? null : c.productId,
+      productId: c.productId === "__transport_charge__" || c.productId.startsWith("__jewellery_") ? null : c.productId,
       description: c.name,
       hsnCode: c.hsnCode,
       quantity: c.quantity,
@@ -1035,6 +1077,182 @@ function TransportChargePicker({
             setKm("");
             setDriverName("");
             setLoadWeight("");
+          }}
+          className="btn-primary-sm disabled:opacity-60"
+        >
+          Add to bill
+        </button>
+        <button type="button" onClick={() => setOpen(false)} className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-muted">
+          Cancel
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function JewelleryCalculator({
+  products,
+  goldRate,
+  silverRate,
+  onAdd,
+}: {
+  products: Product[];
+  goldRate: number | null;
+  silverRate: number | null;
+  onAdd: (name: string, amount: number, gstPercent: number) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [itemName, setItemName] = useState("");
+  const [metalType, setMetalType] = useState<"gold" | "silver">(goldRate ? "gold" : "silver");
+  const [weight, setWeight] = useState<number | "">("");
+  const [makingChargeType, setMakingChargeType] = useState<"per_gram" | "flat" | "percent">("per_gram");
+  const [makingChargeValue, setMakingChargeValue] = useState<number | "">("");
+  const [wastagePercent, setWastagePercent] = useState<number | "">("");
+  const [gstPercent, setGstPercent] = useState<number | "">(3);
+
+  function selectProduct(p: Product) {
+    setItemName(p.name);
+    if (p.metalType) setMetalType(p.metalType);
+    if (p.makingChargeType) setMakingChargeType(p.makingChargeType);
+    if (p.makingChargeValue != null) setMakingChargeValue(p.makingChargeValue);
+    if (p.wastagePercent != null) setWastagePercent(p.wastagePercent);
+    setGstPercent(p.gstPercent);
+  }
+
+  const rate = metalType === "gold" ? goldRate : silverRate;
+  const w = typeof weight === "number" ? weight : 0;
+  const metalValue = rate ? round2(w * rate) : 0;
+  const wastageAmount = wastagePercent ? round2(metalValue * (Number(wastagePercent) / 100)) : 0;
+  const makingCharge =
+    makingChargeType === "per_gram"
+      ? round2(w * (Number(makingChargeValue) || 0))
+      : makingChargeType === "flat"
+        ? Number(makingChargeValue) || 0
+        : round2((metalValue + wastageAmount) * ((Number(makingChargeValue) || 0) / 100));
+  const total = round2(metalValue + wastageAmount + makingCharge);
+
+  function round2(n: number) {
+    return Math.round((n + Number.EPSILON) * 100) / 100;
+  }
+
+  if (!open) {
+    return (
+      <button type="button" onClick={() => setOpen(true)} className="self-start text-sm font-medium text-brand">
+        💍 Add jewellery item by weight
+      </button>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-2 rounded-lg border border-dashed border-brand bg-brand-soft p-3">
+      <p className="text-xs text-brand-dark">
+        Today&apos;s rate — {goldRate ? `Gold ₹${goldRate}/g` : "Gold not set"}
+        {silverRate ? ` · Silver ₹${silverRate}/g` : ""}
+      </p>
+
+      <SearchableSelect
+        lang={undefined}
+        items={products}
+        getKey={(p) => p.id}
+        getLabel={(p) => p.name}
+        getSubLabel={(p) => p.purity ?? ""}
+        onSelect={selectProduct}
+        placeholder="Pick a saved design (optional)"
+      />
+
+      <input
+        value={itemName}
+        onChange={(e) => setItemName(e.target.value)}
+        placeholder="Item name (e.g. Gold ring, 22K)"
+        className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand"
+      />
+
+      <div className="grid grid-cols-2 gap-2">
+        <select
+          value={metalType}
+          onChange={(e) => setMetalType(e.target.value as "gold" | "silver")}
+          className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand"
+        >
+          <option value="gold">Gold</option>
+          <option value="silver">Silver</option>
+        </select>
+        <input
+          type="number"
+          min={0}
+          step="0.001"
+          value={weight}
+          onChange={(e) => setWeight(e.target.value === "" ? "" : Number(e.target.value))}
+          placeholder="Weight (grams)"
+          className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand"
+        />
+      </div>
+
+      <div className="grid grid-cols-3 gap-2">
+        <select
+          value={makingChargeType}
+          onChange={(e) => setMakingChargeType(e.target.value as typeof makingChargeType)}
+          className="rounded-lg border border-border bg-surface px-2 py-2 text-xs outline-none focus:border-brand"
+        >
+          <option value="per_gram">₹/gram</option>
+          <option value="flat">Flat ₹</option>
+          <option value="percent">%</option>
+        </select>
+        <input
+          type="number"
+          min={0}
+          step="0.01"
+          value={makingChargeValue}
+          onChange={(e) => setMakingChargeValue(e.target.value === "" ? "" : Number(e.target.value))}
+          placeholder="Making"
+          className="rounded-lg border border-border bg-surface px-2 py-2 text-xs outline-none focus:border-brand"
+        />
+        <input
+          type="number"
+          min={0}
+          max={30}
+          step="0.01"
+          value={wastagePercent}
+          onChange={(e) => setWastagePercent(e.target.value === "" ? "" : Number(e.target.value))}
+          placeholder="Wastage %"
+          className="rounded-lg border border-border bg-surface px-2 py-2 text-xs outline-none focus:border-brand"
+        />
+      </div>
+
+      <label className="flex items-center gap-2 text-xs text-brand-dark">
+        GST %
+        <input
+          type="number"
+          min={0}
+          max={28}
+          step="0.01"
+          value={gstPercent}
+          onChange={(e) => setGstPercent(e.target.value === "" ? "" : Number(e.target.value))}
+          className="w-16 rounded-lg border border-border bg-surface px-2 py-1 text-xs outline-none focus:border-brand"
+        />
+      </label>
+
+      {rate ? (
+        <div className="rounded-lg bg-surface px-3 py-2 text-xs text-foreground">
+          <div className="flex justify-between"><span>Metal value ({w}g × ₹{rate})</span><span>{formatMoney(metalValue)}</span></div>
+          {wastageAmount > 0 && <div className="flex justify-between"><span>Wastage ({wastagePercent}%)</span><span>{formatMoney(wastageAmount)}</span></div>}
+          <div className="flex justify-between"><span>Making charge</span><span>{formatMoney(makingCharge)}</span></div>
+          <div className="mt-1 flex justify-between border-t border-border pt-1 font-semibold"><span>Total</span><span>{formatMoney(total)}</span></div>
+        </div>
+      ) : (
+        <p className="text-xs text-danger">Set today&apos;s {metalType} rate first (More → Jewellery → Today&apos;s rate).</p>
+      )}
+
+      <div className="flex gap-2">
+        <button
+          type="button"
+          disabled={!rate || !itemName.trim() || w <= 0 || total <= 0}
+          onClick={() => {
+            onAdd(itemName.trim(), total, typeof gstPercent === "number" ? gstPercent : 0);
+            setOpen(false);
+            setItemName("");
+            setWeight("");
+            setMakingChargeValue("");
+            setWastagePercent("");
           }}
           className="btn-primary-sm disabled:opacity-60"
         >

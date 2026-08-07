@@ -39,6 +39,11 @@ export async function createProductAction(
     hasWarranty: formData.get("hasWarranty") === "on",
     warrantyMonths: formData.get("warrantyMonths") || null,
     mrp: formData.get("mrp") || null,
+    metalType: formData.get("metalType") || null,
+    purity: formData.get("purity"),
+    makingChargeType: formData.get("makingChargeType") || null,
+    makingChargeValue: formData.get("makingChargeValue") || null,
+    wastagePercent: formData.get("wastagePercent") || null,
   });
   if (!parsed.success) {
     return { error: parsed.error.issues[0].message };
@@ -86,6 +91,11 @@ export async function createProductAction(
     has_warranty: parsed.data.hasWarranty,
     warranty_months: parsed.data.warrantyMonths ?? null,
     mrp: parsed.data.mrp ?? null,
+    metal_type: parsed.data.metalType ?? null,
+    purity: parsed.data.purity ?? null,
+    making_charge_type: parsed.data.makingChargeType ?? null,
+    making_charge_value: parsed.data.makingChargeValue ?? null,
+    wastage_percent: parsed.data.wastagePercent ?? null,
   });
   if (error) {
     if (error.code === "23505") {
@@ -132,6 +142,11 @@ export async function updateProductAction(
     hasWarranty: formData.get("hasWarranty") === "on",
     warrantyMonths: formData.get("warrantyMonths") || null,
     mrp: formData.get("mrp") || null,
+    metalType: formData.get("metalType") || null,
+    purity: formData.get("purity"),
+    makingChargeType: formData.get("makingChargeType") || null,
+    makingChargeValue: formData.get("makingChargeValue") || null,
+    wastagePercent: formData.get("wastagePercent") || null,
   });
   if (!parsed.success) {
     return { error: parsed.error.issues[0].message };
@@ -167,6 +182,11 @@ export async function updateProductAction(
       has_warranty: parsed.data.hasWarranty,
       warranty_months: parsed.data.warrantyMonths ?? null,
       mrp: parsed.data.mrp ?? null,
+      metal_type: parsed.data.metalType ?? null,
+      purity: parsed.data.purity ?? null,
+      making_charge_type: parsed.data.makingChargeType ?? null,
+      making_charge_value: parsed.data.makingChargeValue ?? null,
+      wastage_percent: parsed.data.wastagePercent ?? null,
     })
     .eq("id", productId)
     .eq("shop_id", session.shopId); // ownership check baked into the query

@@ -1,4 +1,4 @@
-export type BusinessType = "grocery" | "restaurant" | "mart" | "hardware" | "pharmacy" | "rental" | "transport" | "service" | "salon" | "general";
+export type BusinessType = "grocery" | "restaurant" | "mart" | "hardware" | "pharmacy" | "rental" | "transport" | "service" | "salon" | "jewellery" | "general";
 
 export const BUSINESS_TYPES: { value: BusinessType; label: string; icon: string }[] = [
   { value: "grocery", label: "Grocery / Kirana", icon: "🛒" },
@@ -10,6 +10,7 @@ export const BUSINESS_TYPES: { value: BusinessType; label: string; icon: string 
   { value: "transport", label: "Transport & Materials", icon: "🚚" },
   { value: "service", label: "Repair & Services", icon: "🛠️" },
   { value: "salon", label: "Salon / Spa", icon: "💇" },
+  { value: "jewellery", label: "Jewellery", icon: "💍" },
   { value: "general", label: "General / Other", icon: "🏬" },
 ];
 
@@ -80,6 +81,12 @@ const TERMINOLOGY: Record<BusinessType, Terminology> = {
     productSub: "Haircuts, treatments, packages — name, price, GST%",
     addProductLabel: "+ Service",
   },
+  jewellery: {
+    productPlural: "Items",
+    productSingular: "Item",
+    productSub: "Design, metal, purity, making charges",
+    addProductLabel: "+ Item",
+  },
   general: {
     productPlural: "Products",
     productSingular: "Product",
@@ -103,6 +110,7 @@ const UNIT_PRIORITY: Record<BusinessType, string[]> = {
   transport: ["TON", "QTL", "BAG", "KG", "CFT", "CUM", "NOS", "LTR"],
   service: ["NOS", "PCS"],
   salon: ["NOS", "PCS"],
+  jewellery: ["GM", "NOS"],
   pharmacy: ["STRIP", "BOX", "BOTTLE", "NOS", "ML", "KG", "GM"],
   rental: ["NOS", "PCS", "SET", "KG"],
   hardware: ["PCS", "NOS", "MTR", "BOX", "KG", "SET"],

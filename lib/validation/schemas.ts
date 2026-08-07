@@ -55,6 +55,11 @@ export const productSchema = z.object({
   hasWarranty: z.coerce.boolean().default(false),
   warrantyMonths: z.coerce.number().int().min(0).max(240).nullable().optional(),
   mrp: z.coerce.number().min(0).nullable().optional(),
+  metalType: z.enum(["gold", "silver"]).nullable().optional(),
+  purity: optionalText(20),
+  makingChargeType: z.enum(["per_gram", "flat", "percent"]).nullable().optional(),
+  makingChargeValue: z.coerce.number().min(0).nullable().optional(),
+  wastagePercent: z.coerce.number().min(0).max(30).nullable().optional(),
 });
 export type ProductInput = z.infer<typeof productSchema>;
 
@@ -86,7 +91,7 @@ export const LOGO_ALLOWED_TYPES = ["image/png", "image/jpeg", "image/webp", "ima
 export const shopSettingsSchema = z.object({
   name: z.string().trim().min(1, "Shop name is required").max(120),
   businessType: z
-    .enum(["grocery", "restaurant", "mart", "hardware", "pharmacy", "rental", "transport", "service", "salon", "general"])
+    .enum(["grocery", "restaurant", "mart", "hardware", "pharmacy", "rental", "transport", "service", "salon", "jewellery", "general"])
     .default("general"),
   legalName: optionalText(160),
   gstin: optionalGstin,
@@ -173,7 +178,7 @@ export const staffInviteSchema = z.object({
 export const signupSchema = z.object({
   shopName: z.string().trim().min(1, "Shop name is required").max(120),
   businessType: z
-    .enum(["grocery", "restaurant", "mart", "hardware", "pharmacy", "rental", "transport", "service", "salon", "general"])
+    .enum(["grocery", "restaurant", "mart", "hardware", "pharmacy", "rental", "transport", "service", "salon", "jewellery", "general"])
     .default("general"),
   ownerName: z.string().trim().min(1, "Your name is required").max(80),
   email: z.string().trim().email(),

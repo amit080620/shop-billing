@@ -142,6 +142,11 @@ export interface Database {
           has_warranty: boolean;
           warranty_months: number | null;
           mrp: number | null;
+          metal_type: "gold" | "silver" | null;
+          purity: string | null;
+          making_charge_type: "per_gram" | "flat" | "percent" | null;
+          making_charge_value: number | null;
+          wastage_percent: number | null;
           created_at: string;
         };
         Insert: {
@@ -173,6 +178,11 @@ export interface Database {
           has_warranty?: boolean;
           warranty_months?: number | null;
           mrp?: number | null;
+          metal_type?: "gold" | "silver" | null;
+          purity?: string | null;
+          making_charge_type?: "per_gram" | "flat" | "percent" | null;
+          making_charge_value?: number | null;
+          wastage_percent?: number | null;
           created_at?: string;
         };
         Update: {
@@ -204,6 +214,11 @@ export interface Database {
           has_warranty?: boolean;
           warranty_months?: number | null;
           mrp?: number | null;
+          metal_type?: "gold" | "silver" | null;
+          purity?: string | null;
+          making_charge_type?: "per_gram" | "flat" | "percent" | null;
+          making_charge_value?: number | null;
+          wastage_percent?: number | null;
           created_at?: string;
         };
         Relationships: [
@@ -586,6 +601,14 @@ export interface Database {
         Relationships: [
           { foreignKeyName: "purchase_items_purchase_id_fkey"; columns: ["purchase_id"]; isOneToOne: false; referencedRelation: "purchases"; referencedColumns: ["id"] },
           { foreignKeyName: "purchase_items_product_id_fkey"; columns: ["product_id"]; isOneToOne: false; referencedRelation: "products"; referencedColumns: ["id"] },
+        ];
+      };
+      metal_rates: {
+        Row: { id: string; shop_id: string; metal_type: "gold" | "silver"; rate_per_gram: number; effective_date: string; created_at: string };
+        Insert: { id?: string; shop_id: string; metal_type: "gold" | "silver"; rate_per_gram: number; effective_date?: string; created_at?: string };
+        Update: { id?: string; shop_id?: string; metal_type?: "gold" | "silver"; rate_per_gram?: number; effective_date?: string; created_at?: string };
+        Relationships: [
+          { foreignKeyName: "metal_rates_shop_id_fkey"; columns: ["shop_id"]; isOneToOne: false; referencedRelation: "shops"; referencedColumns: ["id"] },
         ];
       };
       service_jobs: {

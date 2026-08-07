@@ -54,6 +54,11 @@ type Product = {
   hasWarranty: boolean;
   warrantyMonths: number | null;
   mrp: number | null;
+  metalType: "gold" | "silver" | null;
+  purity: string | null;
+  makingChargeType: "per_gram" | "flat" | "percent" | null;
+  makingChargeValue: number | null;
+  wastagePercent: number | null;
 };
 type Category = { id: string; name: string };
 
@@ -90,6 +95,7 @@ export function ProductsClient({
   const showPharmaSection = !["restaurant", "transport", "rental"].includes(businessType);
   const showWarrantySection = ["hardware", "general", "mart"].includes(businessType);
   const showMrpField = ["grocery", "mart", "general"].includes(businessType);
+  const showJewellerySection = businessType === "jewellery";
   const [showForm, setShowForm] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [trackInventory, setTrackInventory] = useState(false);
@@ -444,6 +450,36 @@ export function ProductsClient({
                 />
               )}
             </>
+          )}
+          {showJewellerySection && (
+            <div className="flex flex-col gap-3 rounded-lg border border-dashed border-brand bg-brand-soft p-3">
+              <p className="text-xs text-brand-dark">
+                Fill these in to price this item by weight in New Bill — set today&apos;s rate first under More → Jewellery → Today&apos;s rate.
+              </p>
+              <div className="grid grid-cols-2 gap-3">
+                <label className="flex flex-col gap-1.5 text-xs text-brand-dark">
+                  Metal
+                  <select name="metalType" defaultValue={editingProduct?.metalType ?? ""} className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand">
+                    <option value="">Not weight-priced</option>
+                    <option value="gold">Gold</option>
+                    <option value="silver">Silver</option>
+                  </select>
+                </label>
+                <Field name="purity" label="Purity" placeholder="e.g. 22K, 916" defaultValue={editingProduct?.purity ?? undefined} />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <label className="flex flex-col gap-1.5 text-xs text-brand-dark">
+                  Making charge type
+                  <select name="makingChargeType" defaultValue={editingProduct?.makingChargeType ?? "per_gram"} className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand">
+                    <option value="per_gram">₹ per gram</option>
+                    <option value="flat">Flat ₹</option>
+                    <option value="percent">% of metal value</option>
+                  </select>
+                </label>
+                <Field name="makingChargeValue" label="Making charge value" type="number" min="0" step="0.01" defaultValue={editingProduct?.makingChargeValue != null ? String(editingProduct.makingChargeValue) : undefined} />
+              </div>
+              <Field name="wastagePercent" label="Wastage % (optional)" type="number" min="0" max="30" step="0.01" placeholder="e.g. 5" defaultValue={editingProduct?.wastagePercent != null ? String(editingProduct.wastagePercent) : undefined} />
+            </div>
           )}
           {showPharmaSection && (
           <>

@@ -27,10 +27,10 @@ export default async function NewBillPage() {
   const last30 = new Date();
   last30.setDate(last30.getDate() - 30);
 
-  const [{ data: products }, { data: customers }, { data: recentBills }, { data: shop }, { data: vehicles }] = await Promise.all([
+  const [{ data: products }, { data: customers }, { data: recentBills }, { data: shop }, { data: vehicles }, { data: metalRates }] = await Promise.all([
     admin
       .from("products")
-      .select("id, name, price, gst_percent, hsn_code, barcode, unit, track_inventory, stock_quantity, low_stock_threshold, requires_prescription, units_per_pack, loose_unit_name")
+      .select("id, name, price, gst_percent, hsn_code, barcode, unit, track_inventory, stock_quantity, low_stock_threshold, requires_prescription, units_per_pack, loose_unit_name, metal_type, purity, making_charge_type, making_charge_value, wastage_percent")
       .eq("shop_id", session.shopId)
       .order("name"),
     admin
@@ -46,6 +46,7 @@ export default async function NewBillPage() {
       .gte("created_at", last30.toISOString()),
     admin.from("shops").select("invoice_prefix").eq("id", session.shopId).single(),
     admin.from("vehicles").select("id, name, rate_per_km").eq("shop_id", session.shopId).eq("is_active", true).order("name"),
+    admin.from("metal_rates").select("metal_type, rate_per_gram, effective_date").eq("shop_id", session.shopId).order("effective_date", { ascending: false }).limit(20),
   ]);
 
   // "Frequently sold" quick-add chips — a real speed win for repeat items
@@ -94,10 +95,17 @@ export default async function NewBillPage() {
         requiresPrescription: p.requires_prescription,
         unitsPerPack: p.units_per_pack !== null ? Number(p.units_per_pack) : null,
         looseUnitName: p.loose_unit_name,
+        metalType: p.metal_type,
+        purity: p.purity,
+        makingChargeType: p.making_charge_type,
+        makingChargeValue: p.making_charge_value !== null ? Number(p.making_charge_value) : null,
+        wastagePercent: p.wastage_percent !== null ? Number(p.wastage_percent) : null,
       }))}
       customers={customers ?? []}
       frequentProductIds={frequentProductIds}
       vehicles={(vehicles ?? []).map((v) => ({ id: v.id, name: v.name, ratePerKm: Number(v.rate_per_km) }))}
+      goldRate={metalRates?.find((r) => r.metal_type === "gold") ? Number(metalRates.find((r) => r.metal_type === "gold")!.rate_per_gram) : null}
+      silverRate={metalRates?.find((r) => r.metal_type === "silver") ? Number(metalRates.find((r) => r.metal_type === "silver")!.rate_per_gram) : null}
       businessType={session.businessType}
     />
   );
