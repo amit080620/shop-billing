@@ -1747,6 +1747,9 @@ export interface Database {
           payment_method: "cash" | "card" | "upi" | "online" | "other";
           paid_amount: number;
           credit_amount: number;
+          edited_at: string | null;
+          edited_by: string | null;
+          edit_reason: string | null;
           notes: string | null;
           created_at: string;
         };
@@ -1777,6 +1780,9 @@ export interface Database {
           payment_method?: "cash" | "card" | "upi" | "online" | "other";
           paid_amount?: number;
           credit_amount?: number;
+          edited_at?: string | null;
+          edited_by?: string | null;
+          edit_reason?: string | null;
           notes?: string | null;
           created_at?: string;
         };
@@ -1807,6 +1813,9 @@ export interface Database {
           payment_method?: "cash" | "card" | "upi" | "online" | "other";
           paid_amount?: number;
           credit_amount?: number;
+          edited_at?: string | null;
+          edited_by?: string | null;
+          edit_reason?: string | null;
           notes?: string | null;
           created_at?: string;
         };

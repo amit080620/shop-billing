@@ -1,9 +1,11 @@
 import Link from "next/link";
-import { requireSession } from "@/lib/auth";
+import { requireSession, hasPermission } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { formatMoney } from "@/lib/format";
 import { getTranslator } from "@/lib/i18n/server";
 import { ReturnForm } from "./ReturnForm";
+import { EditRentalQuantitiesButton } from "./EditRentalQuantitiesButton";
+import { EditRentalChargesButton } from "./EditRentalChargesButton";
 
 export default async function RentalDetailPage({
   params,
@@ -46,6 +48,15 @@ export default async function RentalDetailPage({
       >
         🖨️ Print rental slip
       </Link>
+
+      {rental.edited_at && (
+        <div className="rounded-lg border border-credit bg-credit-soft px-4 py-2.5 text-sm text-credit">
+          <p className="font-semibold">This rental was corrected after it was first created.</p>
+          <p className="mt-0.5 text-xs">
+            Reason: {rental.edit_reason} · {new Date(rental.edited_at).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" })}
+          </p>
+        </div>
+      )}
 
       <div>
         <h1 className="text-lg font-semibold text-foreground">#{rental.rental_number}</h1>
@@ -101,6 +112,12 @@ export default async function RentalDetailPage({
             </li>
           ))}
         </ul>
+        {hasPermission(session, "edit_bills") && (rental.status === "booked" || rental.status === "active") && (
+          <EditRentalQuantitiesButton
+            rentalId={rental.id}
+            items={(items ?? []).map((i) => ({ id: i.id, productName: i.product_name, quantity: Number(i.quantity) }))}
+          />
+        )}
       </section>
 
       <section className="rounded-xl border border-border bg-surface shadow-sm p-4">
@@ -118,6 +135,15 @@ export default async function RentalDetailPage({
         <Row label={t("rentalsPage.total")} value={formatMoney(rental.total)} bold />
         <Row label={t("rentalsPage.paid")} value={formatMoney(rental.paid_amount)} />
         {rental.credit_amount > 0 && <Row label={t("rentalsPage.balanceDue")} value={formatMoney(rental.credit_amount)} bold />}
+        {hasPermission(session, "edit_bills") && rental.status === "returned" && (
+          <EditRentalChargesButton
+            rentalId={rental.id}
+            damageCharge={Number(rental.damage_charge)}
+            lateFee={Number(rental.late_fee)}
+            securityDepositReturned={Number(rental.security_deposit_returned)}
+            securityDepositCollected={Number(rental.security_deposit_collected)}
+          />
+        )}
       </section>
 
       {(rental.status === "booked" || rental.status === "active") && (

@@ -1436,3 +1436,8 @@ create index if not exists idx_gym_attendance_shop_date on gym_attendance(shop_i
 -- creating duplicate "currently in gym" rows.
 create unique index if not exists idx_gym_attendance_one_open_per_member
   on gym_attendance(member_id) where checked_out_at is null;
+
+-- ─── Rental edit — audit trail (mirrors bills) ─────────────────────────────
+alter table rentals add column if not exists edited_at timestamptz;
+alter table rentals add column if not exists edited_by uuid references staff(id);
+alter table rentals add column if not exists edit_reason text;

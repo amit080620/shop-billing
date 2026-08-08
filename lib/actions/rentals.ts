@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { requireSession, requireOwner } from "../auth";
+import { requireSession, requireOwner, hasPermission } from "../auth";
 import { createSupabaseAdminClient } from "../supabase/admin";
 import { rentalSchema, calculateRentalTotals } from "../validation/schemas";
 import { determineSupplyType, financialYearFor, round2 } from "../gst";
@@ -302,4 +302,148 @@ export async function cancelRentalAction(rentalId: string, reason: string) {
     .eq("id", rentalId)
     .eq("shop_id", session.shopId);
   revalidatePath("/rentals");
+}
+
+/** Corrects item quantities on a rental that hasn't been returned yet —
+ * recalculates subtotal/tax/deposit/total the exact same way the
+ * original booking did. Mirrors the bill quantity-edit pattern. The
+ * rental number never changes; who/when/why is recorded. */
+export async function editRentalQuantitiesAction(
+  rentalId: string,
+  lineUpdates: { rentalItemId: string; newQuantity: number }[],
+  reason: string,
+): Promise<{ error?: string }> {
+  const session = await requireSession();
+  if (!hasPermission(session, "edit_bills")) return { error: "You don't have permission to edit rentals — ask the owner." };
+  if (!reason.trim()) return { error: "Enter a reason for this edit" };
+
+  const admin = createSupabaseAdminClient();
+
+  const { data: rental } = await admin
+    .from("rentals")
+    .select("id, status, supply_type, delivery_charge, paid_amount")
+    .eq("id", rentalId)
+    .eq("shop_id", session.shopId)
+    .single();
+  if (!rental) return { error: "Rental not found" };
+  if (rental.status === "returned" || rental.status === "cancelled") return { error: "Can't edit quantities on a returned/cancelled rental" };
+
+  const { data: items } = await admin
+    .from("rental_items")
+    .select("id, quantity, rate, duration, gst_percent, deposit_per_unit")
+    .eq("rental_id", rentalId);
+  if (!items || items.length === 0) return { error: "No items on this rental" };
+
+  const updateByItemId = new Map(lineUpdates.map((u) => [u.rentalItemId, u.newQuantity]));
+  for (const u of lineUpdates) {
+    if (!u.newQuantity || u.newQuantity <= 0) return { error: "Quantity must be greater than 0" };
+  }
+
+  const updatedItems = items.map((item) => ({
+    ...item,
+    quantity: updateByItemId.get(item.id) ?? Number(item.quantity),
+  }));
+
+  const totals = calculateRentalTotals({
+    items: updatedItems.map((i) => ({
+      quantity: Number(i.quantity),
+      rate: Number(i.rate),
+      duration: Number(i.duration),
+      gstPercent: Number(i.gst_percent),
+      depositPerUnit: Number(i.deposit_per_unit ?? 0),
+    })),
+    deliveryCharge: Number(rental.delivery_charge),
+    paidAmount: Number(rental.paid_amount),
+    supplyType: rental.supply_type,
+  });
+
+  await Promise.all(
+    updatedItems
+      .filter((i) => updateByItemId.get(i.id) !== undefined)
+      .map((i) => admin.from("rental_items").update({ quantity: i.quantity }).eq("id", i.id)),
+  );
+
+  const { error } = await admin
+    .from("rentals")
+    .update({
+      subtotal: totals.subtotal,
+      cgst_amount: totals.cgstAmount,
+      sgst_amount: totals.sgstAmount,
+      igst_amount: totals.igstAmount,
+      security_deposit_collected: totals.depositTotal,
+      total: totals.total,
+      paid_amount: totals.paidAmount,
+      credit_amount: totals.balanceAmount,
+      edited_at: new Date().toISOString(),
+      edited_by: session.userId,
+      edit_reason: reason.trim(),
+    })
+    .eq("id", rentalId);
+  if (error) {
+    console.error("Could not save rental edit", error);
+    return { error: "Could not save changes" };
+  }
+
+  revalidatePath(`/rentals/${rentalId}`);
+  return {};
+}
+
+/** Corrects the return-time figures (damage charge, late fee, deposit
+ * returned) on an already-returned rental — the most common real-world
+ * "oops, staff estimated that wrong" fix for a rental specifically. */
+export async function editRentalChargesAction(
+  rentalId: string,
+  charges: { damageCharge: number; lateFee: number; securityDepositReturned: number },
+  reason: string,
+): Promise<{ error?: string }> {
+  const session = await requireSession();
+  if (!hasPermission(session, "edit_bills")) return { error: "You don't have permission to edit rentals — ask the owner." };
+  if (!reason.trim()) return { error: "Enter a reason for this edit" };
+
+  const damageCharge = Math.max(0, round2(charges.damageCharge));
+  const lateFee = Math.max(0, round2(charges.lateFee));
+  const depositReturned = Math.max(0, round2(charges.securityDepositReturned));
+
+  const admin = createSupabaseAdminClient();
+  const { data: rental } = await admin
+    .from("rentals")
+    .select("id, status, security_deposit_collected, credit_amount, damage_charge, late_fee, security_deposit_returned")
+    .eq("id", rentalId)
+    .eq("shop_id", session.shopId)
+    .single();
+  if (!rental) return { error: "Rental not found" };
+  if (rental.status !== "returned") return { error: "This rental hasn't been returned yet" };
+
+  const depositCollected = Number(rental.security_deposit_collected);
+  if (depositReturned > depositCollected) return { error: "Deposit returned can't exceed deposit collected" };
+
+  const extraCharges = round2(damageCharge + lateFee);
+  const shortfall = Math.max(0, round2(extraCharges - depositCollected));
+
+  // Undo the old shortfall that was previously added to credit_amount,
+  // then apply the new one — keeps credit_amount correct no matter how
+  // many times this gets corrected.
+  const oldExtraCharges = round2(Number(rental.damage_charge) + Number(rental.late_fee));
+  const oldShortfall = Math.max(0, round2(oldExtraCharges - depositCollected));
+  const newCreditAmount = Math.max(0, round2(Number(rental.credit_amount) - oldShortfall + shortfall));
+
+  const { error } = await admin
+    .from("rentals")
+    .update({
+      damage_charge: damageCharge,
+      late_fee: lateFee,
+      security_deposit_returned: depositReturned,
+      credit_amount: newCreditAmount,
+      edited_at: new Date().toISOString(),
+      edited_by: session.userId,
+      edit_reason: reason.trim(),
+    })
+    .eq("id", rentalId);
+  if (error) {
+    console.error("Could not save rental charge edit", error);
+    return { error: "Could not save changes" };
+  }
+
+  revalidatePath(`/rentals/${rentalId}`);
+  return {};
 }
