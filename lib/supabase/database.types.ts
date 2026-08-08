@@ -85,6 +85,7 @@ export interface Database {
           name: string;
           role: "owner" | "manager" | "staff";
           permissions: string[];
+          branch_id: string | null;
           created_at: string;
         };
         Insert: {
@@ -93,6 +94,7 @@ export interface Database {
           name: string;
           role: "owner" | "manager" | "staff";
           permissions?: string[];
+          branch_id?: string | null;
           created_at?: string;
         };
         Update: {
@@ -101,6 +103,7 @@ export interface Database {
           name?: string;
           role?: "owner" | "manager" | "staff";
           permissions?: string[];
+          branch_id?: string | null;
           created_at?: string;
         };
         Relationships: [
@@ -335,6 +338,7 @@ export interface Database {
           total: number;
           paid_amount: number;
           credit_amount: number;
+          branch_id: string | null;
           created_at: string;
         };
         Insert: {
@@ -365,6 +369,7 @@ export interface Database {
           total?: number;
           paid_amount?: number;
           credit_amount?: number;
+          branch_id?: string | null;
           created_at?: string;
         };
         Update: {
@@ -395,6 +400,7 @@ export interface Database {
           total?: number;
           paid_amount?: number;
           credit_amount?: number;
+          branch_id?: string | null;
           created_at?: string;
         };
         Relationships: [
@@ -781,6 +787,12 @@ export interface Database {
         Row: { shop_id: string; financial_year: string; last_number: number };
         Insert: { shop_id: string; financial_year: string; last_number?: number };
         Update: { shop_id?: string; financial_year?: string; last_number?: number };
+        Relationships: [];
+      };
+      branches: {
+        Row: { id: string; shop_id: string; name: string; address: string | null; is_active: boolean; created_at: string };
+        Insert: { id?: string; shop_id: string; name: string; address?: string | null; is_active?: boolean; created_at?: string };
+        Update: { id?: string; shop_id?: string; name?: string; address?: string | null; is_active?: boolean; created_at?: string };
         Relationships: [];
       };
       petty_cash_entries: {

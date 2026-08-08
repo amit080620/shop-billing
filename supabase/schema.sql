@@ -1348,3 +1348,24 @@ create index if not exists idx_petty_cash_entries_shop_date on petty_cash_entrie
 -- always implicitly has every permission); this column is what actually
 -- gates sensitive actions now.
 alter table staff add column if not exists permissions jsonb not null default '[]'::jsonb;
+
+-- ─── Multi-branch support (within one shop account) ────────────────────────
+-- Deliberately NOT separate logins per branch — staff.id is permanently
+-- tied 1:1 to its auth user (a foundational assumption throughout the
+-- app), so true "switch between independent shops" would mean rewriting
+-- authentication itself. This instead tags bills and staff with a
+-- branch under the SAME shop, so the owner gets real per-branch
+-- visibility (who sold what, where) without that risk.
+create table if not exists branches (
+  id uuid primary key default uuid_generate_v4(),
+  shop_id uuid not null references shops(id) on delete cascade,
+  name text not null,
+  address text,
+  is_active boolean not null default true,
+  created_at timestamptz not null default now()
+);
+alter table branches enable row level security;
+create index if not exists idx_branches_shop on branches(shop_id);
+
+alter table staff add column if not exists branch_id uuid references branches(id) on delete set null;
+alter table bills add column if not exists branch_id uuid references branches(id) on delete set null;

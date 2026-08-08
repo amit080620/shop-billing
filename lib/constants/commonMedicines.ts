@@ -80,4 +80,57 @@ export const COMMON_MEDICINE_NAMES: string[] = [
   // Others / general OTC
   "Activated Charcoal", "Glycerin Suppository", "Povidone Iodine",
   "Hydrogen Peroxide", "ORS + Zinc", "Rabies Immunoglobulin",
+
+  // Anti-hypertensive (additional)
+  "Losartan + Hydrochlorothiazide", "Amlodipine + Atenolol", "Bisoprolol",
+  "Carvedilol", "Prazosin", "Clonidine", "Methyldopa", "Nebivolol",
+
+  // Diabetes (additional)
+  "Vildagliptin", "Empagliflozin", "Dapagliflozin", "Linagliptin",
+  "Metformin + Glimepiride", "Insulin Glargine", "Insulin Aspart",
+
+  // Antibiotics (additional)
+  "Amikacin", "Gentamicin", "Doxycycline Hyclate", "Tinidazole",
+  "Nitrofurantoin", "Rifaximin", "Piperacillin + Tazobactam", "Meropenem",
+
+  // Cardiac / heart failure
+  "Ivabradine", "Sacubitril + Valsartan", "Isosorbide Dinitrate",
+  "Ranolazine", "Trimetazidine",
+
+  // Respiratory (additional)
+  "Formoterol", "Tiotropium", "Fluticasone", "Montelukast + Levocetirizine",
+  "Acetylcysteine", "Ipratropium Bromide",
+
+  // GI (additional)
+  "Domperidone + Rabeprazole", "Mesalamine", "Ursodeoxycholic Acid",
+  "Rifaximin (IBS)", "Prucalopride", "Bisacodyl", "Ispaghula Husk",
+
+  // Pain / neuropathic
+  "Pregabalin", "Gabapentin", "Duloxetine", "Amitriptyline",
+  "Diclofenac + Paracetamol", "Thiocolchicoside",
+
+  // Skin (additional)
+  "Adapalene", "Benzoyl Peroxide", "Tretinoin", "Salicylic Acid",
+  "Ketoconazole (shampoo)", "Coal Tar", "Tacrolimus (topical)",
+
+  // Ophthalmology (additional)
+  "Timolol (eye drops)", "Latanoprost (eye drops)", "Carboxymethylcellulose (eye drops)",
+  "Moxifloxacin (eye drops)", "Ketotifen (eye drops)",
+
+  // Women's health / hormones (additional)
+  "Progesterone", "Estradiol", "Ethinylestradiol + Levonorgestrel",
+  "Dydrogesterone", "Letrozole",
+
+  // Pediatric-common
+  "Paracetamol (syrup)", "Amoxicillin (syrup)", "ORS (pediatric)",
+  "Zinc Sulphate (syrup)", "Cetirizine (syrup)", "Multivitamin (drops)",
+
+  // Anti-viral
+  "Acyclovir", "Oseltamivir", "Valacyclovir",
+
+  // Immunosuppressant / autoimmune
+  "Hydroxychloroquine", "Methotrexate", "Sulfasalazine", "Azathioprine",
+
+  // Anesthesia / pre-op (common OTC-adjacent)
+  "Lidocaine (topical)", "Ondansetron (injection)",
 ];

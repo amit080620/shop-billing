@@ -101,12 +101,18 @@ export async function createBillCore(
   }
   const invoiceNumber = `${financialYear}/${String(issuedNumber).padStart(5, "0")}`;
 
+  // Auto-tag the bill with whichever branch this staff member is
+  // assigned to — the owner (or unassigned staff) end up with a null
+  // branch_id, which reports treat as "unassigned/shop-wide", not an error.
+  const { data: staffRow } = await admin.from("staff").select("branch_id").eq("id", session.userId).single();
+
   const { data: bill, error: billError } = await admin
     .from("bills")
     .insert({
       shop_id: session.shopId,
       customer_id: customerId,
       staff_id: session.userId,
+      branch_id: staffRow?.branch_id ?? null,
       invoice_number: invoiceNumber,
       financial_year: financialYear,
       subtotal: totals.subtotal,

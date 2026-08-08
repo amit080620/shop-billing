@@ -20,15 +20,26 @@ function todayIso() {
 export default async function DailySummaryPage({
   searchParams,
 }: {
-  searchParams: Promise<{ date?: string }>;
+  searchParams: Promise<{ date?: string; branch?: string }>;
 }) {
-  const { date: dateParam } = await searchParams;
+  const { date: dateParam, branch: branchFilter } = await searchParams;
   const date = dateParam || todayIso();
   const session = await requireSession();
   const admin = createSupabaseAdminClient();
 
+  const { data: branches } = await admin.from("branches").select("id, name").eq("shop_id", session.shopId).order("name");
+
   const startOfDay = new Date(`${date}T00:00:00`);
   const endOfDay = new Date(`${date}T23:59:59.999`);
+
+  let billsQuery = admin
+    .from("bills")
+    .select("payment_method, paid_amount, credit_amount")
+    .eq("shop_id", session.shopId)
+    .eq("status", "active")
+    .gte("created_at", startOfDay.toISOString())
+    .lte("created_at", endOfDay.toISOString());
+  if (branchFilter) billsQuery = billsQuery.eq("branch_id", branchFilter);
 
   const [
     { data: bills },
@@ -38,13 +49,7 @@ export default async function DailySummaryPage({
     { data: restaurantOrders },
     { data: rentals },
   ] = await Promise.all([
-    admin
-      .from("bills")
-      .select("payment_method, paid_amount, credit_amount")
-      .eq("shop_id", session.shopId)
-      .eq("status", "active")
-      .gte("created_at", startOfDay.toISOString())
-      .lte("created_at", endOfDay.toISOString()),
+    billsQuery,
     admin
       .from("payments")
       .select("payment_method, amount")
@@ -143,6 +148,30 @@ export default async function DailySummaryPage({
         }
         action={<DatePicker date={date} />}
       />
+      {branches && branches.length > 0 && (
+        <form className="flex gap-2 overflow-x-auto pb-1">
+          <input type="hidden" name="date" value={date} />
+          <button
+            type="submit"
+            name="branch"
+            value=""
+            className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium ${!branchFilter ? "border-brand bg-brand-soft text-brand-dark" : "border-border text-muted"}`}
+          >
+            All branches
+          </button>
+          {branches.map((b) => (
+            <button
+              key={b.id}
+              type="submit"
+              name="branch"
+              value={b.id}
+              className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium ${branchFilter === b.id ? "border-brand bg-brand-soft text-brand-dark" : "border-border text-muted"}`}
+            >
+              {b.name}
+            </button>
+          ))}
+        </form>
+      )}
       <p className="text-xs text-muted">
         Use this at closing time to match your cash drawer — everything below is broken down by
         how it was paid.

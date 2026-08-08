@@ -114,6 +114,12 @@ export default async function MorePage() {
         <MenuLink href="/petty-cash" label="Petty cash" sub="Small day-to-day cash expenses" icon={PettyCashIcon} />
       </MenuGroup>
 
+      {session.role === "owner" && (
+        <MenuGroup title="Locations">
+          <MenuLink href="/branches" label="Branches" sub="Multiple locations, one account" icon={BranchIcon} />
+        </MenuGroup>
+      )}
+
       <MenuGroup title="People">
         <MenuLink href="/customers" label={session.businessType === "clinic" ? "Patients" : t("more.customers")} sub={session.businessType === "clinic" ? "Patient records and history" : t("more.customers.sub")} icon={PeopleIcon} />
         <MenuLink href="/vendors" label={t("more.vendors")} sub={t("more.vendors.sub")} icon={TruckIcon} />
@@ -395,6 +401,13 @@ function PettyCashIcon({ className }: { className?: string }) {
     <svg {...iconProps(className)}>
       <rect x="2" y="6" width="20" height="12" rx="2" />
       <circle cx="12" cy="12" r="2.5" />
+    </svg>
+  );
+}
+function BranchIcon({ className }: { className?: string }) {
+  return (
+    <svg {...iconProps(className)}>
+      <path d="M3 21h18M5 21V7l7-4 7 4v14M9 9h1M14 9h1M9 13h1M14 13h1M9 17h1M14 17h1" />
     </svg>
   );
 }
