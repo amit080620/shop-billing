@@ -33,6 +33,11 @@ export default async function LoginPage() {
           { name: "password", label: t("auth.password"), type: "password" },
         ]}
       />
+      <p className="mt-3 text-center text-sm">
+        <Link href="/forgot-password" className="font-medium text-brand">
+          Forgot password?
+        </Link>
+      </p>
     </AuthShell>
   );
 }

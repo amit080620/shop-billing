@@ -155,6 +155,9 @@ export function SettingsClient({
         </div>
       </div>
       {imageError && <p className="text-sm text-danger">{imageError}</p>}
+      <p className="-mt-2 text-xs text-muted">
+        Best size: about 800×200px for the letterhead banner, 800×150px for the footer (wide, short strips work best on an A4 print) — PNG/JPG/WEBP, under 2MB.
+      </p>
 
       <label className="flex flex-col gap-1.5 text-sm">
         <span className="font-medium text-foreground">Footer (clinic timings, address, contact, disclaimer)</span>

@@ -44,7 +44,7 @@ export function BookingSettingsClient({
   unavailableDates: string[];
 }) {
   const router = useRouter();
-  const [slotDuration, setSlotDuration] = useState(initialSlotDuration);
+  const [slotDuration, setSlotDuration] = useState(String(initialSlotDuration));
   const [enabled, setEnabled] = useState(initialEnabled);
   const [hours, setHours] = useState<WorkingHours>(initialHours);
   const [doctorName, setDoctorName] = useState(initialDoctorName);
@@ -110,7 +110,7 @@ export function BookingSettingsClient({
     setSaved(false);
     startTransition(async () => {
       const result = await saveBookingSettingsAction({
-        slotDurationMinutes: slotDuration,
+        slotDurationMinutes: Math.max(5, Number(slotDuration) || 20),
         workingHours: hours,
         isPublicBookingEnabled: enabled,
         doctorName,
@@ -190,6 +190,7 @@ export function BookingSettingsClient({
             </div>
           </div>
           {photoError && <p className="text-xs text-danger">{photoError}</p>}
+          <p className="text-xs text-muted">Best size: a square photo, about 400×400px (like a passport photo) — PNG/JPG/WEBP, under 2MB.</p>
         </div>
       )}
 
@@ -223,7 +224,7 @@ export function BookingSettingsClient({
           min={5}
           step={5}
           value={slotDuration}
-          onChange={(e) => setSlotDuration(Number(e.target.value) || 20)}
+          onChange={(e) => setSlotDuration(e.target.value)}
           className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand"
         />
       </label>

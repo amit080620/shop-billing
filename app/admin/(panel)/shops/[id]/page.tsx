@@ -3,6 +3,7 @@ import { requireSuperAdmin } from "@/lib/admin-auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { RechargeForm } from "./RechargeForm";
 import { BusinessTypeForm } from "./BusinessTypeForm";
+import { AdminResetPasswordButton } from "./AdminResetPasswordButton";
 
 export default async function AdminShopDetailPage({
   params,
@@ -24,6 +25,16 @@ export default async function AdminShopDetailPage({
     admin.from("staff").select("id, name, role").eq("shop_id", id),
     admin.from("bills").select("id", { count: "exact", head: true }).eq("shop_id", id),
   ]);
+
+  // Email lives in Supabase Auth, not the staff table — one lookup per
+  // staff member via the admin API, so the panel can show who actually
+  // owns each login and reset it if they're locked out.
+  const staffWithEmail = await Promise.all(
+    (staff ?? []).map(async (s) => {
+      const { data: authUser } = await admin.auth.admin.getUserById(s.id);
+      return { ...s, email: authUser?.user?.email ?? null };
+    }),
+  );
 
   if (!shop) {
     return <p className="text-sm text-gray-400">Shop not found.</p>;
@@ -62,11 +73,15 @@ export default async function AdminShopDetailPage({
       <BusinessTypeForm shopId={shop.id} businessType={shop.business_type} locked={shop.business_type_locked} />
 
       <section className="rounded-xl border border-gray-800 bg-gray-900 p-3">
-        <p className="text-xs font-medium text-gray-400">Staff ({staff?.length ?? 0})</p>
-        <ul className="mt-1.5 flex flex-col gap-1">
-          {(staff ?? []).map((s) => (
+        <p className="text-xs font-medium text-gray-400">Staff ({staffWithEmail.length})</p>
+        <ul className="mt-1.5 flex flex-col gap-2">
+          {staffWithEmail.map((s) => (
             <li key={s.id} className="text-xs text-gray-300">
-              {s.name} · {s.role}
+              <p>
+                {s.name} · {s.role}
+              </p>
+              {s.email && <p className="text-gray-500">{s.email}</p>}
+              <AdminResetPasswordButton userId={s.id} name={s.name} />
             </li>
           ))}
         </ul>

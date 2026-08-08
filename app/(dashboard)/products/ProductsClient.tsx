@@ -670,6 +670,7 @@ export function ProductsClient({
 
       {deleteError && <p className="rounded-lg bg-credit-soft px-3.5 py-2.5 text-sm text-credit">{deleteError}</p>}
       {imageError && <p className="rounded-lg bg-credit-soft px-3.5 py-2.5 text-sm text-credit">{imageError}</p>}
+      <p className="text-xs text-muted">Tap the 📷 on any item to add a photo — best size: a square image, about 500×500px, under 2MB.</p>
 
       {filtered.length === 0 ? (
         <EmptyState text={t("products.emptyShelf")} />

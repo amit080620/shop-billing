@@ -114,3 +114,40 @@ export async function logoutAction() {
   await supabase.auth.signOut();
   redirect("/login");
 }
+
+export async function forgotPasswordAction(
+  _prev: { error?: string; success?: boolean } | null,
+  formData: FormData,
+): Promise<{ error?: string; success?: boolean }> {
+  const email = formData.get("email");
+  if (typeof email !== "string" || !email.trim()) return { error: "Enter your email" };
+
+  const supabase = await createSupabaseServerClient();
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+  const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+    redirectTo: `${siteUrl}/reset-password`,
+  });
+
+  // Always report success even if the email doesn't exist — this is
+  // intentional and standard practice, since confirming "no account
+  // with that email" would let anyone probe which emails have accounts.
+  if (error) console.error("Could not send password reset email", error);
+  return { success: true };
+}
+
+export async function resetPasswordAction(
+  _prev: { error?: string } | null,
+  formData: FormData,
+): Promise<{ error?: string } | null> {
+  const password = formData.get("password");
+  if (typeof password !== "string" || password.length < 6) return { error: "Password must be at least 6 characters" };
+
+  const supabase = await createSupabaseServerClient();
+  const { error } = await supabase.auth.updateUser({ password });
+  if (error) {
+    console.error("Could not reset password", error);
+    return { error: "Could not reset password — the link may have expired. Request a new one." };
+  }
+
+  redirect("/");
+}

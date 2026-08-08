@@ -304,7 +304,7 @@ function LogoUploadSection({ currentLogoUrl }: { currentLogoUrl: string | null }
           )}
         </div>
       </div>
-      <p className="text-xs text-muted">PNG, JPG, WEBP or SVG, under 2MB. Appears on invoices and the dashboard.</p>
+      <p className="text-xs text-muted">Best size: a square image, about 400×400px — PNG, JPG, WEBP or SVG, under 2MB. Appears on invoices and the dashboard.</p>
       {state?.error && <p className="text-sm text-credit">{state.error}</p>}
     </section>
   );

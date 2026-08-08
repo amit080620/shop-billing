@@ -83,3 +83,23 @@ export async function rechargeShopAction(
   revalidatePath("/admin");
   return { success: true };
 }
+
+/** Super-admin resets a shop user's password directly — the one path
+ * available when someone is completely locked out (forgot password AND
+ * no longer has access to their registered email, or the owner has no
+ * one above them to reset it for them otherwise). */
+export async function adminResetUserPasswordAction(
+  userId: string,
+  newPassword: string,
+): Promise<{ error?: string; success?: boolean }> {
+  await requireSuperAdmin();
+  if (!newPassword || newPassword.length < 6) return { error: "Password must be at least 6 characters" };
+
+  const admin = createSupabaseAdminClient();
+  const { error } = await admin.auth.admin.updateUserById(userId, { password: newPassword });
+  if (error) {
+    console.error("Could not reset user password from admin panel", error);
+    return { error: "Could not reset password" };
+  }
+  return { success: true };
+}

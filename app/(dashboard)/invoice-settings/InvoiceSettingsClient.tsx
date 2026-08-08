@@ -186,6 +186,9 @@ export function InvoiceSettingsClient({
         </div>
       </div>
       {imageError && <p className="text-sm text-danger">{imageError}</p>}
+      <p className="-mt-2 text-xs text-muted">
+        Best size: about 800×200px for the header banner, 800×150px for the footer (wide, short strips work best on an A4 print) — PNG/JPG/WEBP, under 2MB.
+      </p>
       <p className="-mt-2 text-xs text-muted">A header image (e.g. a printed letterhead banner) shows above your shop name; a footer image (e.g. a stamp or signature) shows at the bottom.</p>
 
       <div className="flex flex-col gap-2">

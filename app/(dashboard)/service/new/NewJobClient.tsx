@@ -129,7 +129,7 @@ export function NewJobClient({ customers, lang }: { customers: Customer[]; lang:
                   min={1}
                   step="1"
                   value={item.quantity}
-                  onChange={(e) => updateItem(i, { quantity: Number(e.target.value) || 1 })}
+                  onChange={(e) => updateItem(i, { quantity: e.target.value === "" ? 0 : Number(e.target.value) })}
                   className="w-16 rounded-lg border border-border px-2 py-2 text-sm outline-none focus:border-brand"
                 />
                 {items.length > 1 && (
