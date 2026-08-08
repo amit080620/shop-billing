@@ -223,7 +223,7 @@ async function ClinicHome({
 
   const todayIso = `${startOfToday.getFullYear()}-${String(startOfToday.getMonth() + 1).padStart(2, "0")}-${String(startOfToday.getDate()).padStart(2, "0")}`;
 
-  const [todayBills, weekBills, recentPrescriptions, { data: todayAppointments }] = await Promise.all([
+  const [todayBills, weekBills, recentPrescriptions, { data: todayAppointments }, { data: overdueFollowUps }] = await Promise.all([
     admin.from("bills").select("total").eq("shop_id", session.shopId).eq("status", "active").gte("created_at", startOfToday.toISOString()),
     admin.from("bills").select("total, created_at").eq("shop_id", session.shopId).eq("status", "active").gte("created_at", startOfWeek.toISOString()),
     admin
@@ -239,6 +239,14 @@ async function ClinicHome({
       .eq("appointment_date", todayIso)
       .in("status", ["booked", "confirmed", "arrived", "in_consultation"])
       .order("appointment_time", { ascending: true }),
+    admin
+      .from("prescriptions")
+      .select("id, patient_name, patient_phone, follow_up_date")
+      .eq("shop_id", session.shopId)
+      .lt("follow_up_date", todayIso)
+      .not("follow_up_date", "is", null)
+      .order("follow_up_date", { ascending: false })
+      .limit(10),
   ]);
 
   const todayTotal = sum(todayBills.data?.map((b) => b.total));
@@ -253,6 +261,18 @@ async function ClinicHome({
         </div>
         <SalesTrendChart data={trend} />
       </section>
+
+      {overdueFollowUps && overdueFollowUps.length > 0 && (
+        <div className="flex flex-col gap-1 rounded-xl border border-credit bg-credit-soft px-4 py-3">
+          <p className="text-xs font-semibold text-credit">⚠️ {overdueFollowUps.length} patient(s) missed their follow-up date</p>
+          {overdueFollowUps.slice(0, 3).map((f) => (
+            <p key={f.id} className="text-xs text-credit">
+              {f.patient_name} — was due {new Date(f.follow_up_date!).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
+              {f.patient_phone ? ` · ${f.patient_phone}` : ""}
+            </p>
+          ))}
+        </div>
+      )}
 
       <section className="grid grid-cols-2 gap-3">
         <StatCard label={t("home.todaySales")} value={formatMoney(todayTotal)} href="/daily-summary" icon="💰" />
@@ -565,11 +585,18 @@ async function ServiceHome({
   startOfWeek.setDate(startOfWeek.getDate() - 6);
   startOfWeek.setHours(0, 0, 0, 0);
 
-  const [todayBills, weekBills, { data: openJobs }, { data: readyJobs }] = await Promise.all([
+  const [todayBills, weekBills, { data: openJobs }, { data: readyJobs }, { data: overdueJobs }] = await Promise.all([
     admin.from("bills").select("total").eq("shop_id", session.shopId).eq("status", "active").gte("created_at", startOfToday.toISOString()),
     admin.from("bills").select("total, created_at").eq("shop_id", session.shopId).eq("status", "active").gte("created_at", startOfWeek.toISOString()),
     admin.from("service_jobs").select("id").eq("shop_id", session.shopId).in("status", ["received", "in_progress"]),
     admin.from("service_jobs").select("id").eq("shop_id", session.shopId).eq("status", "ready"),
+    admin
+      .from("service_jobs")
+      .select("id, job_number, customer_name, item_description, expected_date")
+      .eq("shop_id", session.shopId)
+      .in("status", ["received", "in_progress", "ready"])
+      .lt("expected_date", `${startOfToday.getFullYear()}-${String(startOfToday.getMonth() + 1).padStart(2, "0")}-${String(startOfToday.getDate()).padStart(2, "0")}`)
+      .not("expected_date", "is", null),
   ]);
 
   const { data: recentJobs } = await admin
@@ -599,6 +626,17 @@ async function ServiceHome({
         </div>
         <SalesTrendChart data={trend} />
       </section>
+
+      {overdueJobs && overdueJobs.length > 0 && (
+        <Link href="/service?status=all" className="flex flex-col gap-1 rounded-xl border border-credit bg-credit-soft px-4 py-3">
+          <p className="text-xs font-semibold text-credit">⚠️ {overdueJobs.length} job(s) past their expected date</p>
+          {overdueJobs.slice(0, 3).map((j) => (
+            <p key={j.id} className="text-xs text-credit">
+              {j.customer_name} — {j.item_description} (Job #{j.job_number})
+            </p>
+          ))}
+        </Link>
+      )}
 
       <section className="grid grid-cols-2 gap-3">
         <StatCard label={t("home.todaySales")} value={formatMoney(todayTotal)} href="/daily-summary" icon="💰" />
@@ -965,7 +1003,7 @@ async function RentalHome({ shopId }: { shopId: string }) {
   startOfWeek.setHours(0, 0, 0, 0);
 
   const [{ data: active }, { data: recentRentals }, { data: weekRentals }] = await Promise.all([
-    admin.from("rentals").select("id, end_date").eq("shop_id", shopId).in("status", ["booked", "active"]),
+    admin.from("rentals").select("id, end_date, rental_number, customers ( name )").eq("shop_id", shopId).in("status", ["booked", "active"]),
     admin
       .from("rentals")
       .select("id, rental_number, total, created_at, customers ( name )")
@@ -976,7 +1014,8 @@ async function RentalHome({ shopId }: { shopId: string }) {
   ]);
 
   const activeCount = active?.length ?? 0;
-  const overdueCount = (active ?? []).filter((r) => new Date(r.end_date) < now).length;
+  const overdueRentals = (active ?? []).filter((r) => new Date(r.end_date) < now);
+  const overdueCount = overdueRentals.length;
   const trend = buildSevenDayTrend(weekRentals ?? [], "created_at");
 
   return (
@@ -988,6 +1027,20 @@ async function RentalHome({ shopId }: { shopId: string }) {
         </div>
         <SalesTrendChart data={trend} />
       </section>
+
+      {overdueRentals.length > 0 && (
+        <Link href="/rentals" className="flex flex-col gap-1 rounded-xl border border-credit bg-credit-soft px-4 py-3">
+          <p className="text-xs font-semibold text-credit">⚠️ {overdueRentals.length} rental(s) not returned yet</p>
+          {overdueRentals.slice(0, 3).map((r) => {
+            const customerName = Array.isArray(r.customers) ? r.customers[0]?.name : (r.customers as { name: string } | null)?.name;
+            return (
+              <p key={r.id} className="text-xs text-credit">
+                {customerName ?? "Customer"} — #{r.rental_number}, was due {new Date(r.end_date).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
+              </p>
+            );
+          })}
+        </Link>
+      )}
 
       <section className="grid grid-cols-2 gap-3">
         <StatCard label="Active & booked" value={String(activeCount)} href="/rentals" icon="🔁" />
