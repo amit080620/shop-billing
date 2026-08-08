@@ -9,6 +9,7 @@ import { customerNounFor } from "@/lib/businessType";
 import { PrintButton } from "./PrintButton";
 import { WhatsAppSendButton } from "./WhatsAppSendButton";
 import { VoidBillButton } from "./VoidBillButton";
+import { EditBillButton } from "./EditBillButton";
 import { DownloadImageButton } from "./DownloadImageButton";
 
 export default async function PrintBillPage({
@@ -35,7 +36,7 @@ export default async function PrintBillPage({
   const { data: bill } = await admin
     .from("bills")
     .select(
-      "id, invoice_number, subtotal, discount_type, discount_value, discount_amount, taxable_amount, supply_type, cgst_amount, sgst_amount, igst_amount, gst_amount, payment_method, status, void_reason, voided_at, total, paid_amount, credit_amount, created_at, service_provider_name, customers ( name, phone, gstin, address )",
+      "id, invoice_number, subtotal, discount_type, discount_value, discount_amount, taxable_amount, supply_type, cgst_amount, sgst_amount, igst_amount, gst_amount, payment_method, status, void_reason, voided_at, total, paid_amount, credit_amount, created_at, service_provider_name, edited_at, edit_reason, customers ( name, phone, gstin, address )",
     )
     .eq("id", id)
     .eq("shop_id", session.shopId) // ownership check
@@ -45,7 +46,7 @@ export default async function PrintBillPage({
 
   const { data: items } = await admin
     .from("bill_items")
-    .select("product_name, hsn_code, quantity, unit_price, gst_percent, cgst_amount, sgst_amount, igst_amount, line_total, warranty_months, warranty_expires_on, mrp")
+    .select("id, product_name, hsn_code, quantity, unit_price, gst_percent, cgst_amount, sgst_amount, igst_amount, line_total, warranty_months, warranty_expires_on, mrp")
     .eq("bill_id", id)
     .order("product_name");
 
@@ -132,6 +133,13 @@ export default async function PrintBillPage({
             ↩️ Return / Exchange
           </Link>
         )}
+        {hasPermission(session, "edit_bills") && bill.status === "active" && (
+          <EditBillButton
+            billId={bill.id}
+            invoiceNumber={bill.invoice_number}
+            items={(items ?? []).map((i) => ({ id: i.id, productName: i.product_name, quantity: Number(i.quantity) }))}
+          />
+        )}
         {hasPermission(session, "void_bills") && bill.status === "active" && (
           <VoidBillButton billId={bill.id} invoiceNumber={bill.invoice_number} />
         )}
@@ -146,6 +154,15 @@ export default async function PrintBillPage({
           <p className="mt-1 text-xs">
             It&apos;s excluded from all totals, balances, and GST reports. Kept here only for
             record-keeping — nothing prints on it below except as a reference copy.
+          </p>
+        </div>
+      )}
+
+      {bill.edited_at && (
+        <div className="no-print mb-4 rounded-lg border border-credit bg-credit-soft px-4 py-3 text-sm text-credit">
+          <p className="font-semibold">This invoice was corrected after it was first created.</p>
+          <p className="mt-0.5">
+            Reason: {bill.edit_reason} · {formatDateTime(bill.edited_at)}
           </p>
         </div>
       )}

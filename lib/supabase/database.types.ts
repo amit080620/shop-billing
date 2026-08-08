@@ -339,6 +339,9 @@ export interface Database {
           paid_amount: number;
           credit_amount: number;
           branch_id: string | null;
+          edited_at: string | null;
+          edited_by: string | null;
+          edit_reason: string | null;
           created_at: string;
         };
         Insert: {
@@ -370,6 +373,9 @@ export interface Database {
           paid_amount?: number;
           credit_amount?: number;
           branch_id?: string | null;
+          edited_at?: string | null;
+          edited_by?: string | null;
+          edit_reason?: string | null;
           created_at?: string;
         };
         Update: {
@@ -401,6 +407,9 @@ export interface Database {
           paid_amount?: number;
           credit_amount?: number;
           branch_id?: string | null;
+          edited_at?: string | null;
+          edited_by?: string | null;
+          edit_reason?: string | null;
           created_at?: string;
         };
         Relationships: [

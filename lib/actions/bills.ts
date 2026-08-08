@@ -391,3 +391,102 @@ export async function voidBillAction(
   revalidatePath("/reminders");
   return null;
 }
+
+/** A genuine post-creation edit — distinct from Void. Only quantities on
+ * existing line items are editable (not adding/removing which products
+ * are on the bill), which keeps the recalculation and stock-adjustment
+ * logic safe and predictable while covering the most common real-world
+ * mistake: a wrong quantity typed in a hurry. The invoice number and
+ * created_at never change — this keeps the GST invoice sequence intact —
+ * but who/when/why is recorded on the bill for a clear audit trail. */
+export async function editBillQuantitiesAction(
+  billId: string,
+  lineUpdates: { billItemId: string; newQuantity: number }[],
+  reason: string,
+): Promise<{ error?: string }> {
+  const session = await requireSession();
+  if (!hasPermission(session, "edit_bills")) return { error: "You don't have permission to edit bills — ask the owner." };
+  if (!reason.trim()) return { error: "Enter a reason for this edit" };
+
+  const admin = createSupabaseAdminClient();
+
+  const { data: bill } = await admin
+    .from("bills")
+    .select("id, shop_id, status, discount_type, discount_value, supply_type, paid_amount")
+    .eq("id", billId)
+    .eq("shop_id", session.shopId)
+    .single();
+  if (!bill) return { error: "Bill not found" };
+  if (bill.status !== "active") return { error: "Can't edit a voided bill" };
+
+  const { data: items } = await admin
+    .from("bill_items")
+    .select("id, product_id, quantity, unit_price, gst_percent")
+    .eq("bill_id", billId);
+  if (!items || items.length === 0) return { error: "No items on this bill" };
+
+  const updateByItemId = new Map(lineUpdates.map((u) => [u.billItemId, u.newQuantity]));
+  for (const u of lineUpdates) {
+    if (!u.newQuantity || u.newQuantity <= 0) return { error: "Quantity must be greater than 0" };
+  }
+
+  // Stock delta: restore each item's OLD quantity, then deduct the NEW
+  // one — net effect is correct whether the edit increases or decreases
+  // quantity, without needing a separate "was already restored" flag.
+  for (const item of items) {
+    const newQty = updateByItemId.get(item.id);
+    if (newQty === undefined || newQty === Number(item.quantity) || !item.product_id) continue;
+
+    const { data: product } = await admin.from("products").select("stock_quantity, track_inventory").eq("id", item.product_id).single();
+    if (product?.track_inventory) {
+      const delta = Number(item.quantity) - newQty; // positive = give stock back, negative = take more
+      const newStock = Math.max(0, Number(product.stock_quantity) + delta);
+      await admin.from("products").update({ stock_quantity: newStock }).eq("id", item.product_id);
+    }
+  }
+
+  const updatedItems = items.map((item) => ({
+    ...item,
+    quantity: updateByItemId.get(item.id) ?? Number(item.quantity),
+  }));
+
+  const totals = calculateTransactionTotals({
+    items: updatedItems.map((i) => ({ quantity: Number(i.quantity), unitPrice: Number(i.unit_price), gstPercent: Number(i.gst_percent) })),
+    discountType: bill.discount_type,
+    discountValue: Number(bill.discount_value),
+    paidAmount: Number(bill.paid_amount),
+    supplyType: bill.supply_type,
+  });
+
+  await Promise.all(
+    updatedItems
+      .filter((i) => updateByItemId.get(i.id) !== undefined)
+      .map((i) => admin.from("bill_items").update({ quantity: i.quantity }).eq("id", i.id)),
+  );
+
+  const { error } = await admin
+    .from("bills")
+    .update({
+      subtotal: totals.subtotal,
+      discount_amount: totals.discountAmount,
+      taxable_amount: totals.taxableAmount,
+      cgst_amount: totals.cgstAmount,
+      sgst_amount: totals.sgstAmount,
+      igst_amount: totals.igstAmount,
+      gst_amount: totals.gstAmount,
+      total: totals.total,
+      paid_amount: totals.paidAmount,
+      credit_amount: totals.balanceAmount,
+      edited_at: new Date().toISOString(),
+      edited_by: session.userId,
+      edit_reason: reason.trim(),
+    })
+    .eq("id", billId);
+  if (error) {
+    console.error("Could not save bill edit", error);
+    return { error: "Could not save changes" };
+  }
+
+  revalidatePath(`/print/bill/${billId}`);
+  return {};
+}

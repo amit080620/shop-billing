@@ -1369,3 +1369,13 @@ create index if not exists idx_branches_shop on branches(shop_id);
 
 alter table staff add column if not exists branch_id uuid references branches(id) on delete set null;
 alter table bills add column if not exists branch_id uuid references branches(id) on delete set null;
+
+-- ─── Bill editing (owner/permission only) — audit trail ────────────────────
+-- A genuine post-creation edit, distinct from Void — the invoice number
+-- and created_at never change (keeps the GST invoice sequence intact),
+-- but who edited it, when, and why is recorded so there's a clear trail
+-- if a tax inspector or the owner ever asks "why does this differ from
+-- what was printed originally".
+alter table bills add column if not exists edited_at timestamptz;
+alter table bills add column if not exists edited_by uuid references staff(id);
+alter table bills add column if not exists edit_reason text;

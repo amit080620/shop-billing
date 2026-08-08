@@ -127,7 +127,7 @@ const UNIT_PRIORITY: Record<BusinessType, string[]> = {
   jewellery: ["GM", "NOS"],
   clinic: ["NOS"],
   pharmacy: ["STRIP", "BOX", "BOTTLE", "NOS", "ML", "KG", "GM"],
-  rental: ["NOS", "PCS", "SET", "KG"],
+  rental: ["DAY", "HRS", "NOS", "PCS", "SET", "KG"],
   hardware: ["PCS", "NOS", "MTR", "BOX", "KG", "SET"],
   grocery: ["KG", "GM", "LTR", "ML", "NOS", "PKT", "BOX", "DZN"],
   mart: ["KG", "GM", "LTR", "ML", "NOS", "PKT", "BOX", "DZN"],

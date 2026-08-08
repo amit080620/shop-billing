@@ -28,9 +28,9 @@ function tabsFor(businessType: string, t: (key: string) => string) {
 
   const RENTAL_TABS = [
     { href: "/", label: t("nav.home"), icon: HomeIcon },
+    { href: "/bills/new", label: t("nav.sell"), icon: SellIcon },
     { href: "/rentals/new", label: t("nav.newRental"), icon: BuyIcon },
     { href: "/rentals", label: t("nav.rentals"), icon: TableIcon },
-    { href: "/reports", label: t("nav.reports"), icon: ReportIcon },
     { href: "/more", label: t("nav.more"), icon: MoreIcon },
   ];
 
