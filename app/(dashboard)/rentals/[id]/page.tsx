@@ -39,6 +39,14 @@ export default async function RentalDetailPage({
         {t("rentalsPage.backToRentals")}
       </Link>
 
+      <Link
+        href={`/print/rental/${rental.id}`}
+        target="_blank"
+        className="self-start rounded-lg border border-brand bg-brand-soft px-3 py-1.5 text-xs font-medium text-brand-dark"
+      >
+        🖨️ Print rental slip
+      </Link>
+
       <div>
         <h1 className="text-lg font-semibold text-foreground">#{rental.rental_number}</h1>
         <p className="text-sm text-muted">

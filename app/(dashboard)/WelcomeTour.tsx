@@ -272,6 +272,40 @@ const CLINIC_SLIDES: Slide[] = [
   },
 ];
 
+const GYM_SLIDES: Slide[] = [
+  {
+    icon: "👋",
+    title: "Welcome — this app is set up for your gym",
+    body: "A quick 30-second look at where everything lives — you can always come back to this from More → Help.",
+  },
+  {
+    icon: "📋",
+    title: "Set up your plans first",
+    body: "More → Gym → Membership plans — add Monthly, Quarterly, Yearly (or whatever you offer), with price and any PT sessions included.",
+  },
+  {
+    icon: "🏋️",
+    title: "Sell a membership",
+    body: "Bottom tab → Sell — pick or add a member, pick a plan, take payment. A real GST invoice is generated automatically, and their membership starts right then.",
+  },
+  {
+    icon: "✅",
+    title: "Daily check-ins",
+    body: "Bottom tab → Attendance — search a member and check them in when they arrive. Home shows how many are in the gym right now.",
+  },
+  {
+    icon: "🟡",
+    title: "Expiry alerts",
+    body: "Home automatically shows members whose membership is expiring within 7 days, so renewals never get missed.",
+  },
+  {
+    icon: "⚙️",
+    title: "One last thing",
+    body: "If you haven't already, set your shop's state under More → GST & shop profile — billing is blocked until that's filled in, since it decides CGST+SGST vs IGST on every invoice.",
+    cta: { label: "Go to GST profile", href: "/settings" },
+  },
+];
+
 function slidesFor(businessType: string) {
   if (businessType === "restaurant") return RESTAURANT_SLIDES;
   if (businessType === "rental") return RENTAL_SLIDES;
@@ -280,6 +314,7 @@ function slidesFor(businessType: string) {
   if (businessType === "salon") return SALON_SLIDES;
   if (businessType === "jewellery") return JEWELLERY_SLIDES;
   if (businessType === "clinic") return CLINIC_SLIDES;
+  if (businessType === "gym") return GYM_SLIDES;
   return RETAIL_SLIDES;
 }
 

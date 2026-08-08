@@ -100,6 +100,8 @@ export default async function DashboardPage() {
         <JewelleryHome session={session} t={t} />
       ) : session.businessType === "clinic" ? (
         <ClinicHome session={session} t={t} />
+      ) : session.businessType === "gym" ? (
+        <GymHome session={session} t={t} />
       ) : (
         <RetailHome session={session} t={t} />
       )}
@@ -202,6 +204,92 @@ async function RetailHome({
           </ul>
         )}
       </section>
+    </>
+  );
+}
+
+// ─── Gym / Fitness ──────────────────────────────────────────────────────
+async function GymHome({
+  session,
+  t,
+}: {
+  session: Awaited<ReturnType<typeof requireSession>>;
+  t: (key: string, vars?: Record<string, string | number>) => string;
+}) {
+  const admin = createSupabaseAdminClient();
+  const startOfToday = new Date();
+  startOfToday.setHours(0, 0, 0, 0);
+  const startOfWeek = new Date();
+  startOfWeek.setDate(startOfWeek.getDate() - 6);
+  startOfWeek.setHours(0, 0, 0, 0);
+  const todayIso = `${startOfToday.getFullYear()}-${String(startOfToday.getMonth() + 1).padStart(2, "0")}-${String(startOfToday.getDate()).padStart(2, "0")}`;
+  const in7Days = new Date();
+  in7Days.setDate(in7Days.getDate() + 7);
+  const in7DaysIso = `${in7Days.getFullYear()}-${String(in7Days.getMonth() + 1).padStart(2, "0")}-${String(in7Days.getDate()).padStart(2, "0")}`;
+
+  const [todayBills, weekBills, { data: todayAttendance }, { data: expiringMemberships }] = await Promise.all([
+    admin.from("bills").select("total").eq("shop_id", session.shopId).eq("status", "active").gte("created_at", startOfToday.toISOString()),
+    admin.from("bills").select("total, created_at").eq("shop_id", session.shopId).eq("status", "active").gte("created_at", startOfWeek.toISOString()),
+    admin.from("gym_attendance").select("id").eq("shop_id", session.shopId).gte("checked_in_at", startOfToday.toISOString()),
+    admin
+      .from("memberships")
+      .select("id, plan_name, end_date, customers ( name, phone )")
+      .eq("shop_id", session.shopId)
+      .eq("status", "active")
+      .lte("end_date", in7DaysIso)
+      .order("end_date", { ascending: true }),
+  ]);
+
+  const todayTotal = sum(todayBills.data?.map((b) => b.total));
+  const trend = buildSevenDayTrend(weekBills.data ?? [], "created_at");
+
+  return (
+    <>
+      <section className="rounded-xl border border-border bg-surface p-4 shadow-sm">
+        <div className="mb-1 flex items-center justify-between">
+          <p className="text-xs font-medium text-muted">Last 7 days</p>
+          <p className="text-sm font-semibold text-foreground">{formatMoney(sum(trend.map((d) => d.total)))}</p>
+        </div>
+        <SalesTrendChart data={trend} />
+      </section>
+
+      {expiringMemberships && expiringMemberships.length > 0 && (
+        <Link href="/gym/members" className="flex flex-col gap-1 rounded-xl border border-credit bg-credit-soft px-4 py-3">
+          <p className="text-xs font-semibold text-credit">⚠️ {expiringMemberships.length} membership(s) expiring within 7 days</p>
+          {expiringMemberships.slice(0, 3).map((m) => {
+            const customer = Array.isArray(m.customers) ? m.customers[0] : (m.customers as { name: string; phone: string } | null);
+            const days = Math.ceil((new Date(m.end_date).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+            return (
+              <p key={m.id} className="text-xs text-credit">
+                {customer?.name ?? "Member"} — {m.plan_name}, {days < 0 ? `expired ${Math.abs(days)}d ago` : `expires in ${days}d`}
+              </p>
+            );
+          })}
+        </Link>
+      )}
+
+      <section className="grid grid-cols-2 gap-3">
+        <StatCard label={t("home.todaySales")} value={formatMoney(todayTotal)} href="/daily-summary" icon="💰" />
+        <StatCard label="Check-ins today" value={String(todayAttendance?.length ?? 0)} href="/gym/attendance" icon="✅" />
+      </section>
+
+      <div className="grid grid-cols-2 gap-3">
+        <Link
+          href="/gym/members/new"
+          className="flex flex-col items-center justify-center gap-1 rounded-xl px-4 py-4 text-center font-semibold text-white shadow-md"
+          style={{ background: "linear-gradient(135deg, var(--brand-light), var(--brand-dark))" }}
+        >
+          <span>🏋️</span>
+          Sell membership
+        </Link>
+        <Link
+          href="/gym/attendance"
+          className="flex flex-col items-center justify-center gap-1 rounded-xl border border-brand bg-brand-soft px-4 py-4 text-center font-semibold text-brand-dark"
+        >
+          <span>✅</span>
+          Check in a member
+        </Link>
+      </div>
     </>
   );
 }

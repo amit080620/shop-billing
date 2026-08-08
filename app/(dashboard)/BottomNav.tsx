@@ -78,6 +78,14 @@ function tabsFor(businessType: string, t: (key: string) => string) {
     { href: "/more", label: t("nav.more"), icon: MoreIcon },
   ];
 
+  const GYM_TABS = [
+    { href: "/", label: t("nav.home"), icon: HomeIcon },
+    { href: "/gym/members/new", label: "Sell", icon: SellIcon },
+    { href: "/gym/attendance", label: "Attendance", icon: GymNavIcon },
+    { href: "/gym/members", label: "Members", icon: TableIcon },
+    { href: "/more", label: t("nav.more"), icon: MoreIcon },
+  ];
+
   if (businessType === "restaurant") return RESTAURANT_TABS;
   if (businessType === "rental") return RENTAL_TABS;
   if (businessType === "transport") return TRANSPORT_TABS;
@@ -85,6 +93,7 @@ function tabsFor(businessType: string, t: (key: string) => string) {
   if (businessType === "salon") return SALON_TABS;
   if (businessType === "jewellery") return JEWELLERY_TABS;
   if (businessType === "clinic") return CLINIC_TABS;
+  if (businessType === "gym") return GYM_TABS;
   return RETAIL_TABS;
 }
 
@@ -233,6 +242,14 @@ function ClinicNavIcon({ active }: { active: boolean }) {
       <path d="M14 3v4a1 1 0 0 0 1 1h4" />
       <path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2Z" />
       <path d="M9 13h6M9 17h4" />
+    </svg>
+  );
+}
+function GymNavIcon({ active }: { active: boolean }) {
+  return (
+    <svg {...iconProps(active)}>
+      <path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z" />
+      <path d="M16 8 2 22M17.5 15H9" />
     </svg>
   );
 }

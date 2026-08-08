@@ -101,6 +101,15 @@ export default async function MorePage() {
         </MenuGroup>
       )}
 
+      {session.businessType === "gym" && (
+        <MenuGroup title="Gym">
+          <MenuLink href="/gym/members" label="Members" sub="View members, expiry status, PT sessions" icon={GymIcon} />
+          <MenuLink href="/gym/members/new" label="Sell membership" sub="New sign-up or renewal" icon={GymIcon} />
+          <MenuLink href="/gym/plans" label="Membership plans" sub="Set up Monthly, Quarterly, Yearly plans" icon={GymIcon} />
+          <MenuLink href="/gym/attendance" label="Attendance" sub="Check-in / check-out log" icon={GymIcon} />
+        </MenuGroup>
+      )}
+
       <MenuGroup title="Sell online">
         <MenuLink href="/catalog-settings" label="Catalog link" sub="Share a link customers can browse & order from" icon={CatalogIcon} />
         <MenuLink href="/catalog-orders" label="Catalog orders" sub="Review orders that came in" icon={CatalogIcon} />
@@ -408,6 +417,14 @@ function BranchIcon({ className }: { className?: string }) {
   return (
     <svg {...iconProps(className)}>
       <path d="M3 21h18M5 21V7l7-4 7 4v14M9 9h1M14 9h1M9 13h1M14 13h1M9 17h1M14 17h1" />
+    </svg>
+  );
+}
+function GymIcon({ className }: { className?: string }) {
+  return (
+    <svg {...iconProps(className)}>
+      <path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z" />
+      <path d="M16 8 2 22M17.5 15H9" />
     </svg>
   );
 }
