@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { requireOwner, requireSession } from "../auth";
+import { requireOwner } from "../auth";
 import { createSupabaseAdminClient } from "../supabase/admin";
 
 export type ActionState = { error?: string } | null;

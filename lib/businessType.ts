@@ -1,4 +1,4 @@
-export type BusinessType = "grocery" | "restaurant" | "mart" | "hardware" | "pharmacy" | "rental" | "transport" | "service" | "salon" | "jewellery" | "clinic" | "general";
+export type BusinessType = "grocery" | "restaurant" | "mart" | "hardware" | "pharmacy" | "rental" | "transport" | "service" | "salon" | "jewellery" | "clinic" | "gym" | "general";
 
 export const BUSINESS_TYPES: { value: BusinessType; label: string; icon: string; colors: [string, string] }[] = [
   { value: "grocery", label: "Grocery / Kirana", icon: "🛒", colors: ["#34D399", "#059669"] },
@@ -12,6 +12,7 @@ export const BUSINESS_TYPES: { value: BusinessType; label: string; icon: string;
   { value: "salon", label: "Salon / Spa", icon: "💇", colors: ["#F472B6", "#DB2777"] },
   { value: "jewellery", label: "Jewellery", icon: "💍", colors: ["#FCD34D", "#B45309"] },
   { value: "clinic", label: "Clinic / Doctor", icon: "🩺", colors: ["#2DD4BF", "#0D9488"] },
+  { value: "gym", label: "Gym / Fitness", icon: "🏋️", colors: ["#F97316", "#C2410C"] },
   { value: "general", label: "General / Other", icon: "🏬", colors: ["#94A3B8", "#475569"] },
 ];
 
@@ -26,7 +27,9 @@ type Terminology = {
  * app would otherwise say a generic "Walk-in customer" fallback, since
  * that reads oddly on a doctor's printed prescription or bill. */
 export function customerNounFor(businessType: string): string {
-  return businessType === "clinic" ? "Patient" : "Customer";
+  if (businessType === "clinic") return "Patient";
+  if (businessType === "gym") return "Member";
+  return "Customer";
 }
 
 // Deliberately just word-choice — every business type still has the exact
@@ -101,6 +104,12 @@ const TERMINOLOGY: Record<BusinessType, Terminology> = {
     productSub: "Consultation, procedures — name, fee, GST%",
     addProductLabel: "+ Service",
   },
+  gym: {
+    productPlural: "Products",
+    productSingular: "Product",
+    productSub: "Protein, supplements, merchandise — name, price, GST%",
+    addProductLabel: "+ Product",
+  },
   general: {
     productPlural: "Products",
     productSingular: "Product",
@@ -126,6 +135,7 @@ const UNIT_PRIORITY: Record<BusinessType, string[]> = {
   salon: ["NOS", "PCS"],
   jewellery: ["GM", "NOS"],
   clinic: ["NOS"],
+  gym: ["NOS"],
   pharmacy: ["STRIP", "BOX", "BOTTLE", "NOS", "ML", "KG", "GM"],
   rental: ["DAY", "HRS", "NOS", "PCS", "SET", "KG"],
   hardware: ["PCS", "NOS", "MTR", "BOX", "KG", "SET"],

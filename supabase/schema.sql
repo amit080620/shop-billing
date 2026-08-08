@@ -1109,7 +1109,7 @@ create index if not exists idx_restaurant_reservations_shop_date on restaurant_r
 -- ─── Clinic / Doctor business type ─────────────────────────────────────────
 alter table shops drop constraint if exists shops_business_type_check;
 alter table shops add constraint shops_business_type_check
-  check (business_type in ('grocery', 'restaurant', 'mart', 'hardware', 'pharmacy', 'rental', 'transport', 'service', 'salon', 'jewellery', 'clinic', 'general'));
+  check (business_type in ('grocery', 'restaurant', 'mart', 'hardware', 'pharmacy', 'rental', 'transport', 'service', 'salon', 'jewellery', 'clinic', 'gym', 'general'));
 
 -- Patient-specific optional fields, added to the existing customers table
 -- rather than a separate "patients" table — a clinic's patients ARE its
@@ -1379,3 +1379,60 @@ alter table bills add column if not exists branch_id uuid references branches(id
 alter table bills add column if not exists edited_at timestamptz;
 alter table bills add column if not exists edited_by uuid references staff(id);
 alter table bills add column if not exists edit_reason text;
+
+-- ─── Gym / Fitness business type ────────────────────────────────────────────
+-- Members ARE customers (same ledger/history pattern as Clinic patients),
+-- with a few extra fitness-specific fields, plus assigned trainer (a
+-- staff member).
+alter table customers add column if not exists assigned_trainer_id uuid references staff(id) on delete set null;
+alter table customers add column if not exists fitness_goal text;
+alter table customers add column if not exists height_cm numeric(5, 1);
+alter table customers add column if not exists weight_kg numeric(5, 1);
+
+create table if not exists membership_plans (
+  id uuid primary key default uuid_generate_v4(),
+  shop_id uuid not null references shops(id) on delete cascade,
+  name text not null,
+  duration_days integer not null,
+  price numeric(12, 2) not null,
+  pt_sessions_included integer not null default 0,
+  is_active boolean not null default true,
+  created_at timestamptz not null default now()
+);
+alter table membership_plans enable row level security;
+create index if not exists idx_membership_plans_shop on membership_plans(shop_id);
+
+create table if not exists memberships (
+  id uuid primary key default uuid_generate_v4(),
+  shop_id uuid not null references shops(id) on delete cascade,
+  member_id uuid not null references customers(id) on delete cascade,
+  plan_id uuid references membership_plans(id) on delete set null,
+  plan_name text not null,
+  start_date date not null,
+  end_date date not null,
+  status text not null default 'active' check (status in ('active', 'frozen', 'cancelled', 'expired')),
+  pt_sessions_total integer not null default 0,
+  pt_sessions_used integer not null default 0,
+  bill_id uuid references bills(id) on delete set null,
+  frozen_days_used integer not null default 0,
+  staff_id uuid not null references staff(id),
+  created_at timestamptz not null default now()
+);
+alter table memberships enable row level security;
+create index if not exists idx_memberships_shop_member on memberships(shop_id, member_id);
+create index if not exists idx_memberships_shop_status on memberships(shop_id, status, end_date);
+
+create table if not exists gym_attendance (
+  id uuid primary key default uuid_generate_v4(),
+  shop_id uuid not null references shops(id) on delete cascade,
+  member_id uuid not null references customers(id) on delete cascade,
+  checked_in_at timestamptz not null default now(),
+  checked_out_at timestamptz
+);
+alter table gym_attendance enable row level security;
+create index if not exists idx_gym_attendance_shop_date on gym_attendance(shop_id, checked_in_at);
+-- A member can only have one open (not-yet-checked-out) attendance row
+-- at a time — prevents a double check-in from the same phone/kiosk
+-- creating duplicate "currently in gym" rows.
+create unique index if not exists idx_gym_attendance_one_open_per_member
+  on gym_attendance(member_id) where checked_out_at is null;

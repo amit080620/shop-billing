@@ -97,7 +97,7 @@ export const LOGO_ALLOWED_TYPES = ["image/png", "image/jpeg", "image/webp", "ima
 export const shopSettingsSchema = z.object({
   name: z.string().trim().min(1, "Shop name is required").max(120),
   businessType: z
-    .enum(["grocery", "restaurant", "mart", "hardware", "pharmacy", "rental", "transport", "service", "salon", "jewellery", "clinic", "general"])
+    .enum(["grocery", "restaurant", "mart", "hardware", "pharmacy", "rental", "transport", "service", "salon", "jewellery", "clinic", "gym", "general"])
     .default("general"),
   legalName: optionalText(160),
   gstin: optionalGstin,
@@ -190,7 +190,7 @@ export const staffInviteSchema = z.object({
 export const signupSchema = z.object({
   shopName: z.string().trim().min(1, "Shop name is required").max(120),
   businessType: z
-    .enum(["grocery", "restaurant", "mart", "hardware", "pharmacy", "rental", "transport", "service", "salon", "jewellery", "clinic", "general"])
+    .enum(["grocery", "restaurant", "mart", "hardware", "pharmacy", "rental", "transport", "service", "salon", "jewellery", "clinic", "gym", "general"])
     .default("general"),
   ownerName: z.string().trim().min(1, "Your name is required").max(80),
   email: z.string().trim().email(),

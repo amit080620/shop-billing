@@ -54,7 +54,6 @@ export function RequestsClient({
   requests: Request[];
   lang: Lang;
 }) {
-  const { t } = useTranslation(lang);
   const [showForm, setShowForm] = useState(false);
   const nameRef = useRef<HTMLInputElement>(null);
   const phoneRef = useRef<HTMLInputElement>(null);

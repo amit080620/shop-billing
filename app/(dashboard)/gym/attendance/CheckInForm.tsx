@@ -1,0 +1,46 @@
+"use client";
+
+import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { checkInMemberAction } from "@/lib/actions/gym";
+import { SearchableSelect } from "@/app/components/SearchableSelect";
+import type { Lang } from "@/lib/i18n/dictionary";
+
+type Member = { id: string; name: string; phone: string };
+
+export function CheckInForm({ lang, members }: { lang: Lang; members: Member[] }) {
+  const router = useRouter();
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
+
+  return (
+    <div className="flex flex-col gap-2 rounded-xl border border-dashed border-brand bg-brand-soft p-4">
+      <p className="text-sm font-medium text-brand-dark">✅ Check in a member</p>
+      <SearchableSelect
+        lang={lang}
+        items={members}
+        getKey={(m) => m.id}
+        getLabel={(m) => m.name}
+        getSubLabel={(m) => m.phone}
+        onSelect={(m) => {
+          setError(null);
+          setSuccess(null);
+          startTransition(async () => {
+            const result = await checkInMemberAction(m.id);
+            if (result.error) {
+              setError(result.error);
+              return;
+            }
+            setSuccess(`${m.name} checked in`);
+            router.refresh();
+          });
+        }}
+        placeholder="Search member name or phone…"
+      />
+      {isPending && <p className="text-xs text-brand-dark">Checking in…</p>}
+      {error && <p className="text-xs text-danger">{error}</p>}
+      {success && <p className="text-xs text-brand-dark">{success}</p>}
+    </div>
+  );
+}

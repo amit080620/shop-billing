@@ -267,6 +267,10 @@ export interface Database {
           gender: "male" | "female" | "other" | null;
           blood_group: string | null;
           known_allergies: string | null;
+          assigned_trainer_id: string | null;
+          fitness_goal: string | null;
+          height_cm: number | null;
+          weight_kg: number | null;
           created_at: string;
         };
         Insert: {
@@ -282,6 +286,10 @@ export interface Database {
           gender?: "male" | "female" | "other" | null;
           blood_group?: string | null;
           known_allergies?: string | null;
+          assigned_trainer_id?: string | null;
+          fitness_goal?: string | null;
+          height_cm?: number | null;
+          weight_kg?: number | null;
           created_at?: string;
         };
         Update: {
@@ -297,10 +305,15 @@ export interface Database {
           gender?: "male" | "female" | "other" | null;
           blood_group?: string | null;
           known_allergies?: string | null;
+          assigned_trainer_id?: string | null;
+          fitness_goal?: string | null;
+          height_cm?: number | null;
+          weight_kg?: number | null;
           created_at?: string;
         };
         Relationships: [
           { foreignKeyName: "customers_shop_id_fkey"; columns: ["shop_id"]; isOneToOne: false; referencedRelation: "shops"; referencedColumns: ["id"] },
+          { foreignKeyName: "customers_assigned_trainer_id_fkey"; columns: ["assigned_trainer_id"]; isOneToOne: false; referencedRelation: "staff"; referencedColumns: ["id"] },
         ];
       };
       invoice_counters: {
@@ -797,6 +810,74 @@ export interface Database {
         Insert: { shop_id: string; financial_year: string; last_number?: number };
         Update: { shop_id?: string; financial_year?: string; last_number?: number };
         Relationships: [];
+      };
+      membership_plans: {
+        Row: { id: string; shop_id: string; name: string; duration_days: number; price: number; pt_sessions_included: number; is_active: boolean; created_at: string };
+        Insert: { id?: string; shop_id: string; name: string; duration_days: number; price: number; pt_sessions_included?: number; is_active?: boolean; created_at?: string };
+        Update: { id?: string; shop_id?: string; name?: string; duration_days?: number; price?: number; pt_sessions_included?: number; is_active?: boolean; created_at?: string };
+        Relationships: [];
+      };
+      memberships: {
+        Row: {
+          id: string;
+          shop_id: string;
+          member_id: string;
+          plan_id: string | null;
+          plan_name: string;
+          start_date: string;
+          end_date: string;
+          status: "active" | "frozen" | "cancelled" | "expired";
+          pt_sessions_total: number;
+          pt_sessions_used: number;
+          bill_id: string | null;
+          frozen_days_used: number;
+          staff_id: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          shop_id: string;
+          member_id: string;
+          plan_id?: string | null;
+          plan_name: string;
+          start_date: string;
+          end_date: string;
+          status?: "active" | "frozen" | "cancelled" | "expired";
+          pt_sessions_total?: number;
+          pt_sessions_used?: number;
+          bill_id?: string | null;
+          frozen_days_used?: number;
+          staff_id: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          shop_id?: string;
+          member_id?: string;
+          plan_id?: string | null;
+          plan_name?: string;
+          start_date?: string;
+          end_date?: string;
+          status?: "active" | "frozen" | "cancelled" | "expired";
+          pt_sessions_total?: number;
+          pt_sessions_used?: number;
+          bill_id?: string | null;
+          frozen_days_used?: number;
+          staff_id?: string;
+          created_at?: string;
+        };
+        Relationships: [
+          { foreignKeyName: "memberships_bill_id_fkey"; columns: ["bill_id"]; isOneToOne: false; referencedRelation: "bills"; referencedColumns: ["id"] },
+          { foreignKeyName: "memberships_member_id_fkey"; columns: ["member_id"]; isOneToOne: false; referencedRelation: "customers"; referencedColumns: ["id"] },
+        ];
+      };
+      gym_attendance: {
+        Row: { id: string; shop_id: string; member_id: string; checked_in_at: string; checked_out_at: string | null };
+        Insert: { id?: string; shop_id: string; member_id: string; checked_in_at?: string; checked_out_at?: string | null };
+        Update: { id?: string; shop_id?: string; member_id?: string; checked_in_at?: string; checked_out_at?: string | null };
+        Relationships: [
+          { foreignKeyName: "gym_attendance_member_id_fkey"; columns: ["member_id"]; isOneToOne: false; referencedRelation: "customers"; referencedColumns: ["id"] },
+        ];
       };
       branches: {
         Row: { id: string; shop_id: string; name: string; address: string | null; is_active: boolean; created_at: string };
