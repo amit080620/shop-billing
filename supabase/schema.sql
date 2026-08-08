@@ -1283,3 +1283,22 @@ create table if not exists catalog_order_request_items (
 );
 alter table catalog_order_request_items enable row level security;
 create index if not exists idx_catalog_order_request_items_request on catalog_order_request_items(request_id);
+
+-- ─── Invoice design settings (all business types) ──────────────────────────
+-- The shop's own branding on top of the fixed billing layout — a tagline,
+-- footer message, optional terms & bank details, and an accent colour.
+-- Deliberately NOT a drag-and-drop canvas editor: the actual GST-correct
+-- invoice structure (line items, tax breakup, totals) is what every
+-- report and reconciliation depends on, so it stays fixed — only the
+-- branding elements around it are customisable. The same accent_color is
+-- reused on prescriptions too, so one setting brands both documents.
+create table if not exists invoice_settings (
+  shop_id uuid primary key references shops(id) on delete cascade,
+  tagline text,
+  footer_text text,
+  terms_and_conditions text,
+  bank_details text,
+  accent_color text not null default '#0f6b5c',
+  updated_at timestamptz not null default now()
+);
+alter table invoice_settings enable row level security;

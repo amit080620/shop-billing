@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import Link from "next/link";
@@ -10,8 +11,21 @@ import { EmptyState } from "@/app/components/EmptyState";
 import { PageHeader } from "@/app/components/PageHeader";
 import { ContactPickerButton } from "@/app/components/ContactPickerButton";
 import { INDIAN_STATES } from "@/lib/constants/states";
+import { BulkImportExportCustomers } from "./BulkImportExportCustomers";
 
-type Customer = { id: string; name: string; phone: string; balance: number };
+type Customer = {
+  id: string;
+  name: string;
+  phone: string;
+  balance: number;
+  gstin?: string | null;
+  address?: string | null;
+  stateCode?: string | null;
+  dateOfBirth?: string | null;
+  gender?: string | null;
+  bloodGroup?: string | null;
+  knownAllergies?: string | null;
+};
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -28,9 +42,12 @@ function SubmitButton() {
 
 export function CustomersClient({
   initialCustomers,
+  isClinic,
 }: {
   initialCustomers: Customer[];
+  isClinic: boolean;
 }) {
+  const router = useRouter();
   const [showForm, setShowForm] = useState(false);
   const nameRef = useRef<HTMLInputElement>(null);
   const phoneRef = useRef<HTMLInputElement>(null);
@@ -69,6 +86,8 @@ export function CustomersClient({
           </button>
         }
       />
+
+      <BulkImportExportCustomers customers={initialCustomers} isClinic={isClinic} onImported={() => router.refresh()} />
 
       {showForm && (
         <form

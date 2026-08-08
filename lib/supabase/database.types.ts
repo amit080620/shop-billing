@@ -686,6 +686,12 @@ export interface Database {
         };
         Relationships: [];
       };
+      invoice_settings: {
+        Row: { shop_id: string; tagline: string | null; footer_text: string | null; terms_and_conditions: string | null; bank_details: string | null; accent_color: string; updated_at: string };
+        Insert: { shop_id: string; tagline?: string | null; footer_text?: string | null; terms_and_conditions?: string | null; bank_details?: string | null; accent_color?: string; updated_at?: string };
+        Update: { shop_id?: string; tagline?: string | null; footer_text?: string | null; terms_and_conditions?: string | null; bank_details?: string | null; accent_color?: string; updated_at?: string };
+        Relationships: [];
+      };
       prescription_settings: {
         Row: { shop_id: string; header_text: string | null; footer_text: string | null; show_shop_logo: boolean; custom_field_labels: string[]; updated_at: string };
         Insert: { shop_id: string; header_text?: string | null; footer_text?: string | null; show_shop_logo?: boolean; custom_field_labels?: string[]; updated_at?: string };

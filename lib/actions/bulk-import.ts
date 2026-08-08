@@ -164,3 +164,96 @@ export async function bulkImportProductsAction(rows: ImportRow[]): Promise<Impor
   revalidatePath("/pharmacy/expiry");
   return { inserted: data?.length ?? 0, errors };
 }
+
+// ─── Customers / Patients ────────────────────────────────────────────────
+// "Patient import/export" for Clinic and "Customer import/export" for
+// every other business are the exact same thing under the hood — a
+// clinic's patients ARE its customers, just with a few extra optional
+// medical fields (see the customers table). One importer serves both.
+
+type CustomerImportRow = {
+  name: string;
+  phone: string;
+  gstin: string;
+  address: string;
+  stateCode: string;
+  dateOfBirth: string;
+  gender: string;
+  bloodGroup: string;
+  knownAllergies: string;
+};
+
+export type CustomerImportResult = {
+  inserted: number;
+  errors: { row: number; name: string; message: string }[];
+};
+
+const VALID_GENDERS = new Set(["male", "female", "other"]);
+
+export async function bulkImportCustomersAction(rows: CustomerImportRow[]): Promise<CustomerImportResult> {
+  const session = await requireSession();
+  const admin = createSupabaseAdminClient();
+
+  const errors: CustomerImportResult["errors"] = [];
+  const validRows: (CustomerImportRow & { rowIndex: number })[] = [];
+
+  rows.forEach((row, i) => {
+    if (!row.name?.trim()) {
+      errors.push({ row: i + 2, name: row.name || "(blank)", message: "Missing name" });
+      return;
+    }
+    if (!row.phone?.trim()) {
+      errors.push({ row: i + 2, name: row.name, message: "Missing phone number" });
+      return;
+    }
+    if (row.gender && !VALID_GENDERS.has(row.gender.toLowerCase())) {
+      errors.push({ row: i + 2, name: row.name, message: `gender must be one of: male, female, other (got "${row.gender}")` });
+      return;
+    }
+    validRows.push({ ...row, rowIndex: i + 2 });
+  });
+
+  if (validRows.length === 0) return { inserted: 0, errors };
+
+  // Skip rows whose phone number already exists for this shop, rather
+  // than creating duplicate customer records on a re-import.
+  const phones = validRows.map((r) => r.phone.trim());
+  const { data: existing } = await admin.from("customers").select("phone").eq("shop_id", session.shopId).in("phone", phones);
+  const existingPhones = new Set((existing ?? []).map((c) => c.phone));
+
+  const toInsert = validRows.filter((r) => !existingPhones.has(r.phone.trim()));
+  const skippedDuplicates = validRows.length - toInsert.length;
+
+  if (toInsert.length === 0) {
+    return { inserted: 0, errors: [...errors, ...(skippedDuplicates > 0 ? [{ row: 0, name: "", message: `${skippedDuplicates} row(s) skipped — phone number already exists` }] : [])] };
+  }
+
+  const { error, data: inserted } = await admin
+    .from("customers")
+    .insert(
+      toInsert.map((row) => ({
+        shop_id: session.shopId,
+        name: row.name.trim(),
+        phone: row.phone.trim(),
+        gstin: row.gstin?.trim() || null,
+        address: row.address?.trim() || null,
+        state_code: row.stateCode?.trim() || null,
+        date_of_birth: row.dateOfBirth?.trim() || null,
+        gender: (row.gender?.trim().toLowerCase() as "male" | "female" | "other" | undefined) || null,
+        blood_group: row.bloodGroup?.trim() || null,
+        known_allergies: row.knownAllergies?.trim() || null,
+      })),
+    )
+    .select("id");
+
+  if (error) {
+    console.error("Bulk customer import failed", error);
+    return { inserted: 0, errors: [...errors, { row: 0, name: "", message: "Could not save — please try again" }] };
+  }
+
+  revalidatePath("/customers");
+  return {
+    inserted: inserted?.length ?? 0,
+    errors: skippedDuplicates > 0 ? [...errors, { row: 0, name: "", message: `${skippedDuplicates} row(s) skipped — phone number already exists` }] : errors,
+  };
+}

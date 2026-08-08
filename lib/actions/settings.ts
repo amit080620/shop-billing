@@ -131,3 +131,33 @@ export async function removeLogoAction() {
   revalidatePath("/settings");
   revalidatePath("/");
 }
+
+export async function saveInvoiceSettingsAction(settings: {
+  tagline: string;
+  footerText: string;
+  termsAndConditions: string;
+  bankDetails: string;
+  accentColor: string;
+}): Promise<{ error?: string }> {
+  const session = await requireOwner();
+  const admin = createSupabaseAdminClient();
+
+  const isValidHex = /^#[0-9A-Fa-f]{6}$/.test(settings.accentColor);
+  if (!isValidHex) return { error: "Enter a valid colour (e.g. #0F6B5C)" };
+
+  const { error } = await admin.from("invoice_settings").upsert({
+    shop_id: session.shopId,
+    tagline: settings.tagline || null,
+    footer_text: settings.footerText || null,
+    terms_and_conditions: settings.termsAndConditions || null,
+    bank_details: settings.bankDetails || null,
+    accent_color: settings.accentColor,
+    updated_at: new Date().toISOString(),
+  });
+  if (error) {
+    console.error("Could not save invoice settings", error);
+    return { error: "Could not save settings" };
+  }
+  revalidatePath("/invoice-settings");
+  return {};
+}

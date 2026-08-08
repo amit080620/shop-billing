@@ -10,7 +10,7 @@ export default async function CustomersPage() {
     await Promise.all([
       admin
         .from("customers")
-        .select("id, name, phone")
+        .select("id, name, phone, gstin, address, state_code, date_of_birth, gender, blood_group, known_allergies")
         .eq("shop_id", session.shopId)
         .order("name"),
       admin
@@ -41,8 +41,15 @@ export default async function CustomersPage() {
     id: c.id,
     name: c.name,
     phone: c.phone,
+    gstin: c.gstin,
+    address: c.address,
+    stateCode: c.state_code,
+    dateOfBirth: c.date_of_birth,
+    gender: c.gender,
+    bloodGroup: c.blood_group,
+    knownAllergies: c.known_allergies,
     balance: Math.max(0, balances.get(c.id) ?? 0),
   }));
 
-  return <CustomersClient initialCustomers={withBalance} />;
+  return <CustomersClient initialCustomers={withBalance} isClinic={session.businessType === "clinic"} />;
 }

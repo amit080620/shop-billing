@@ -25,6 +25,12 @@ export default async function PrintBillPage({
   const { lang } = await getTranslator();
   const admin = createSupabaseAdminClient();
 
+  const { data: invoiceSettings } = await admin
+    .from("invoice_settings")
+    .select("tagline, footer_text, terms_and_conditions, bank_details, accent_color")
+    .eq("shop_id", session.shopId)
+    .maybeSingle();
+
   const { data: bill } = await admin
     .from("bills")
     .select(
@@ -156,10 +162,18 @@ export default async function PrintBillPage({
           />
         )}
         <div className="flex flex-1 items-center justify-between">
-          <h1 className={isThermal ? "text-sm font-bold" : "text-xl font-bold"}>
-            {session.shopName}
-          </h1>
-          <p className={isThermal ? "text-[9px] font-semibold" : "text-sm font-semibold text-gray-700"}>
+          <div>
+            <h1 className={isThermal ? "text-sm font-bold" : "text-xl font-bold"}>
+              {session.shopName}
+            </h1>
+            {invoiceSettings?.tagline && (
+              <p className={isThermal ? "text-[8px] text-gray-500" : "text-xs text-gray-500"}>{invoiceSettings.tagline}</p>
+            )}
+          </div>
+          <p
+            className={isThermal ? "text-[9px] font-semibold" : "text-sm font-semibold"}
+            style={{ color: invoiceSettings?.accent_color ?? undefined }}
+          >
             Tax Invoice
           </p>
         </div>
@@ -272,8 +286,26 @@ export default async function PrintBillPage({
         </div>
       )}
 
+      {invoiceSettings?.bank_details && (
+        <div className={`mt-3 border-t border-dashed border-gray-300 pt-2 ${isThermal ? "text-[9px]" : "text-xs text-gray-600"}`}>
+          <p className="font-semibold text-gray-700">Bank details</p>
+          {invoiceSettings.bank_details.split("\n").map((line, i) => (
+            <p key={i}>{line}</p>
+          ))}
+        </div>
+      )}
+
+      {invoiceSettings?.terms_and_conditions && (
+        <div className={`mt-2 ${isThermal ? "text-[8px] text-gray-500" : "text-[10px] text-gray-500"}`}>
+          <p className="font-semibold">Terms & conditions</p>
+          {invoiceSettings.terms_and_conditions.split("\n").map((line, i) => (
+            <p key={i}>{line}</p>
+          ))}
+        </div>
+      )}
+
       <p className={`mt-6 text-center ${isThermal ? "text-[10px]" : "text-xs text-gray-500"}`}>
-        Thank you for your business!
+        {invoiceSettings?.footer_text || "Thank you for your business!"}
       </p>
       </div>
     </div>

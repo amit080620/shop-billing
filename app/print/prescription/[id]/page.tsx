@@ -14,7 +14,7 @@ export default async function PrintPrescriptionPage({
   const session = await requireSession();
   const admin = createSupabaseAdminClient();
 
-  const [{ data: prescription }, { data: settings }, { data: shop }] = await Promise.all([
+  const [{ data: prescription }, { data: settings }, { data: shop }, { data: invoiceSettings }] = await Promise.all([
     admin
       .from("prescriptions")
       .select("*, customers ( name, phone, address )")
@@ -23,6 +23,7 @@ export default async function PrintPrescriptionPage({
       .single(),
     admin.from("prescription_settings").select("header_text, footer_text, show_shop_logo").eq("shop_id", session.shopId).maybeSingle(),
     admin.from("shops").select("name, logo_url").eq("id", session.shopId).single(),
+    admin.from("invoice_settings").select("accent_color").eq("shop_id", session.shopId).maybeSingle(),
   ]);
 
   if (!prescription) notFound();
@@ -46,7 +47,7 @@ export default async function PrintPrescriptionPage({
   return (
     <div className="relative mx-auto max-w-2xl bg-white p-8 text-black">
       {/* Letterhead */}
-      <div className="flex items-start justify-between gap-4 border-b-2 border-gray-800 pb-4">
+      <div className="flex items-start justify-between gap-4 border-b-2 pb-4" style={{ borderColor: invoiceSettings?.accent_color ?? "#1f2937" }}>
         <div className="flex items-center gap-3">
           {settings?.show_shop_logo !== false && shop?.logo_url && (
             // eslint-disable-next-line @next/next/no-img-element -- print page, static shop-uploaded logo
@@ -95,7 +96,7 @@ export default async function PrintPrescriptionPage({
       {/* Rx */}
       {items && items.length > 0 && (
         <div className="mt-5">
-          <p className="text-2xl font-serif italic text-gray-800">℞</p>
+          <p className="text-2xl font-serif italic" style={{ color: invoiceSettings?.accent_color ?? "#1f2937" }}>℞</p>
           <ul className="mt-1 flex flex-col gap-3">
             {items.map((item, i) => (
               <li key={i} className="border-b border-dashed border-gray-200 pb-2 text-sm">
