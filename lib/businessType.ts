@@ -1,18 +1,18 @@
 export type BusinessType = "grocery" | "restaurant" | "mart" | "hardware" | "pharmacy" | "rental" | "transport" | "service" | "salon" | "jewellery" | "clinic" | "general";
 
-export const BUSINESS_TYPES: { value: BusinessType; label: string; icon: string }[] = [
-  { value: "grocery", label: "Grocery / Kirana", icon: "🛒" },
-  { value: "mart", label: "Supermarket / Mart", icon: "🏪" },
-  { value: "hardware", label: "Hardware / Electrical", icon: "🔧" },
-  { value: "pharmacy", label: "Pharmacy / Medical", icon: "💊" },
-  { value: "restaurant", label: "Restaurant / Café", icon: "🍽️" },
-  { value: "rental", label: "Rental business", icon: "🔁" },
-  { value: "transport", label: "Transport & Materials", icon: "🚚" },
-  { value: "service", label: "Repair & Services", icon: "🛠️" },
-  { value: "salon", label: "Salon / Spa", icon: "💇" },
-  { value: "jewellery", label: "Jewellery", icon: "💍" },
-  { value: "clinic", label: "Clinic / Doctor", icon: "🩺" },
-  { value: "general", label: "General / Other", icon: "🏬" },
+export const BUSINESS_TYPES: { value: BusinessType; label: string; icon: string; colors: [string, string] }[] = [
+  { value: "grocery", label: "Grocery / Kirana", icon: "🛒", colors: ["#34D399", "#059669"] },
+  { value: "mart", label: "Supermarket / Mart", icon: "🏪", colors: ["#60A5FA", "#2563EB"] },
+  { value: "hardware", label: "Hardware / Electrical", icon: "🔧", colors: ["#FB923C", "#EA580C"] },
+  { value: "pharmacy", label: "Pharmacy / Medical", icon: "💊", colors: ["#F87171", "#DC2626"] },
+  { value: "restaurant", label: "Restaurant / Café", icon: "🍽️", colors: ["#FBBF24", "#D97706"] },
+  { value: "rental", label: "Rental business", icon: "🔁", colors: ["#818CF8", "#4F46E5"] },
+  { value: "transport", label: "Transport & Materials", icon: "🚚", colors: ["#38BDF8", "#0284C7"] },
+  { value: "service", label: "Repair & Services", icon: "🛠️", colors: ["#A78BFA", "#7C3AED"] },
+  { value: "salon", label: "Salon / Spa", icon: "💇", colors: ["#F472B6", "#DB2777"] },
+  { value: "jewellery", label: "Jewellery", icon: "💍", colors: ["#FCD34D", "#B45309"] },
+  { value: "clinic", label: "Clinic / Doctor", icon: "🩺", colors: ["#2DD4BF", "#0D9488"] },
+  { value: "general", label: "General / Other", icon: "🏬", colors: ["#94A3B8", "#475569"] },
 ];
 
 type Terminology = {

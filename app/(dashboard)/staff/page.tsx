@@ -8,7 +8,7 @@ export default async function StaffPage() {
 
   const { data: staff } = await admin
     .from("staff")
-    .select("id, name, role, created_at")
+    .select("id, name, role, permissions, created_at")
     .eq("shop_id", session.shopId)
     .order("created_at");
 
@@ -19,6 +19,7 @@ export default async function StaffPage() {
         id: s.id,
         name: s.name,
         role: s.role,
+        permissions: (s.permissions as string[] | null) ?? [],
       }))}
     />
   );

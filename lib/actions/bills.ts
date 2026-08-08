@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { requireSession, requireOwner, type SessionContext } from "../auth";
+import { requireSession, hasPermission, type SessionContext } from "../auth";
 import { createSupabaseAdminClient } from "../supabase/admin";
 import { billSchema, calculateTransactionTotals, type BillInput } from "../validation/schemas";
 import { determineSupplyType, financialYearFor, round2 } from "../gst";
@@ -320,7 +320,8 @@ export async function voidBillAction(
   _prev: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
-  const session = await requireOwner();
+  const session = await requireSession();
+  if (!hasPermission(session, "void_bills")) return { error: "You don't have permission to void bills — ask the owner." };
   const billId = formData.get("billId");
   const reason = formData.get("reason");
   if (typeof billId !== "string" || typeof reason !== "string" || !reason.trim()) {

@@ -6,8 +6,9 @@ import { useFormStatus } from "react-dom";
 import Link from "next/link";
 import { addStaffAction, removeStaffAction } from "@/lib/actions/staff";
 import { EditStaffButton } from "./EditStaffButton";
+import { PermissionsButton } from "./PermissionsButton";
 
-type StaffMember = { id: string; name: string; role: "owner" | "manager" | "staff" };
+type StaffMember = { id: string; name: string; role: "owner" | "manager" | "staff"; permissions: string[] };
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -121,6 +122,7 @@ export function StaffClient({
               <p className="text-xs text-muted capitalize">{s.role}</p>
             </div>
             <EditStaffButton staff={s} isSelf={s.id === currentUserId} />
+            {s.role !== "owner" && <PermissionsButton staffId={s.id} staffName={s.name} initialPermissions={s.permissions} />}
             {s.id !== currentUserId && (
               <button
                 disabled={isPending}

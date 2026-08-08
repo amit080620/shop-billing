@@ -110,6 +110,10 @@ export default async function MorePage() {
         <MenuLink href="/invoice-settings" label="Invoice design" sub="Tagline, footer, terms, accent colour" icon={InvoiceDesignIcon} />
       </MenuGroup>
 
+      <MenuGroup title="Money">
+        <MenuLink href="/petty-cash" label="Petty cash" sub="Small day-to-day cash expenses" icon={PettyCashIcon} />
+      </MenuGroup>
+
       <MenuGroup title="People">
         <MenuLink href="/customers" label={t("more.customers")} sub={t("more.customers.sub")} icon={PeopleIcon} />
         <MenuLink href="/vendors" label={t("more.vendors")} sub={t("more.vendors.sub")} icon={TruckIcon} />
@@ -383,6 +387,14 @@ function InvoiceDesignIcon({ className }: { className?: string }) {
   return (
     <svg {...iconProps(className)}>
       <path d="M4 19V5M4 19h16M8 15l3-4 3 3 4-6" />
+    </svg>
+  );
+}
+function PettyCashIcon({ className }: { className?: string }) {
+  return (
+    <svg {...iconProps(className)}>
+      <rect x="2" y="6" width="20" height="12" rx="2" />
+      <circle cx="12" cy="12" r="2.5" />
     </svg>
   );
 }

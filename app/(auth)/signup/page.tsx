@@ -34,9 +34,8 @@ export default async function SignupPage() {
           {
             name: "businessType",
             label: "What kind of business is this?",
-            type: "select",
-            placeholder: "Choose one",
-            options: BUSINESS_TYPES.map((b) => ({ value: b.value, label: `${b.icon} ${b.label}` })),
+            type: "grid",
+            gridOptions: BUSINESS_TYPES.map((b) => ({ value: b.value, label: b.label.split(" / ")[0], icon: b.icon, colors: b.colors })),
           },
           { name: "ownerName", label: t("signup.ownerName"), type: "text", placeholder: "Rakesh Sharma" },
           { name: "email", label: t("auth.email"), type: "email", placeholder: "you@example.com" },

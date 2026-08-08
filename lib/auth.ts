@@ -3,6 +3,7 @@ import "server-only";
 import { redirect } from "next/navigation";
 import { getAuthenticatedUser } from "./supabase/server";
 import { createSupabaseAdminClient } from "./supabase/admin";
+import type { PermissionKey } from "./permissions";
 
 export type SessionContext = {
   userId: string;
@@ -11,6 +12,7 @@ export type SessionContext = {
   shopName: string;
   staffName: string;
   role: "owner" | "manager" | "staff";
+  permissions: string[];
   shopStateCode: string | null;
   shopGstin: string | null;
   shopLogoUrl: string | null;
@@ -40,7 +42,7 @@ export async function requireSession(): Promise<SessionContext> {
     admin
       .from("staff")
       .select(
-        "id, name, role, shop_id, shops ( name, state_code, gstin, gst_scheme, logo_url, upi_id, subscription_valid_until, business_type, business_type_locked )",
+        "id, name, role, permissions, shop_id, shops ( name, state_code, gstin, gst_scheme, logo_url, upi_id, subscription_valid_until, business_type, business_type_locked )",
       )
       .eq("id", user.id)
       .single(),
@@ -64,6 +66,7 @@ export async function requireSession(): Promise<SessionContext> {
     shopName: shop?.name ?? "My Shop",
     staffName: staff.name,
     role: staff.role,
+    permissions: (staff.permissions as string[] | null) ?? [],
     shopStateCode: shop?.state_code ?? null,
     shopGstin: shop?.gstin ?? null,
     shopLogoUrl: shop?.logo_url ?? null,
@@ -77,6 +80,21 @@ export async function requireSession(): Promise<SessionContext> {
 export async function requireOwner(): Promise<SessionContext> {
   const session = await requireSession();
   if (session.role !== "owner") {
+    redirect("/");
+  }
+  return session;
+}
+
+/** Owner implicitly has every permission — the checkbox grid only
+ * governs manager/staff accounts. */
+export function hasPermission(session: SessionContext, key: PermissionKey): boolean {
+  if (session.role === "owner") return true;
+  return session.permissions.includes(key);
+}
+
+export async function requirePermission(key: PermissionKey): Promise<SessionContext> {
+  const session = await requireSession();
+  if (!hasPermission(session, key)) {
     redirect("/");
   }
   return session;

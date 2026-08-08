@@ -128,3 +128,22 @@ export async function removeStaffAction(staffId: string): Promise<{ error?: stri
   revalidatePath("/staff");
   return {};
 }
+
+export async function savePermissionsAction(staffId: string, permissions: string[]): Promise<{ error?: string }> {
+  const session = await requireOwner();
+
+  if (staffId === session.userId) return { error: "The owner account always has every permission — nothing to change here." };
+
+  const admin = createSupabaseAdminClient();
+  const { data: existing } = await admin.from("staff").select("id, role").eq("id", staffId).eq("shop_id", session.shopId).single();
+  if (!existing) return { error: "Staff member not found" };
+  if (existing.role === "owner") return { error: "Owner accounts always have every permission." };
+
+  const { error } = await admin.from("staff").update({ permissions }).eq("id", staffId).eq("shop_id", session.shopId);
+  if (error) {
+    console.error("Could not save permissions", error);
+    return { error: "Could not save permissions" };
+  }
+  revalidatePath("/staff");
+  return {};
+}

@@ -1322,3 +1322,29 @@ alter table booking_settings add column if not exists doctor_photo_url text;
 -- ordinary array of ISO dates is enough; the public booking page filters
 -- these out entirely rather than trying to compute partial-day exceptions.
 alter table booking_settings add column if not exists unavailable_dates jsonb not null default '[]'::jsonb;
+
+-- ─── Petty cash (all business types) ───────────────────────────────────────
+-- Small day-to-day cash outflows (tea, stationery, auto fare, local
+-- purchases) that never go through the Purchases/Vendor flow — every
+-- shop needs somewhere to log these so "cash in hand" actually
+-- reconciles at day's end.
+create table if not exists petty_cash_entries (
+  id uuid primary key default uuid_generate_v4(),
+  shop_id uuid not null references shops(id) on delete cascade,
+  description text not null,
+  amount numeric(12, 2) not null check (amount > 0),
+  category text,
+  staff_id uuid not null references staff(id),
+  created_at timestamptz not null default now()
+);
+alter table petty_cash_entries enable row level security;
+create index if not exists idx_petty_cash_entries_shop_date on petty_cash_entries(shop_id, created_at);
+
+-- ─── Granular staff permissions ────────────────────────────────────────────
+-- Replaces the rigid owner/manager/staff role split for anything beyond
+-- basic login — the owner ticks exactly what each staff member can do,
+-- stored as a simple list of permission keys. role stays for the basic
+-- "can this person log in as owner/manager/staff" distinction (owner
+-- always implicitly has every permission); this column is what actually
+-- gates sensitive actions now.
+alter table staff add column if not exists permissions jsonb not null default '[]'::jsonb;

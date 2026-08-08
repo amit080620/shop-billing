@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { requireSession } from "../auth";
+import { requireSession, hasPermission } from "../auth";
 import { createSupabaseAdminClient } from "../supabase/admin";
 import { splitTax, financialYearFor, round2 } from "../gst";
 
@@ -15,6 +15,7 @@ export async function createReturnAction(
   formData: FormData,
 ): Promise<ActionState> {
   const session = await requireSession();
+  if (!hasPermission(session, "process_returns")) return { error: "You don't have permission to process returns — ask the owner." };
   const admin = createSupabaseAdminClient();
 
   const billId = formData.get("billId");

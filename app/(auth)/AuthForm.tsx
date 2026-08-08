@@ -37,6 +37,7 @@ type Field = {
   type: string;
   placeholder?: string;
   options?: { value: string; label: string }[];
+  gridOptions?: { value: string; label: string; icon: string; colors: [string, string] }[];
 };
 
 export function AuthForm({
@@ -52,13 +53,35 @@ export function AuthForm({
 }) {
   const [state, formAction] = useActionState(action, null);
   const [visibleFields, setVisibleFields] = useState<Record<string, boolean>>({});
+  const [gridSelections, setGridSelections] = useState<Record<string, string>>({});
 
   return (
     <form action={formAction} className="flex flex-col gap-4">
       {fields.map((f) => (
         <label key={f.name} className="flex flex-col gap-1.5 text-sm">
           <span className="font-medium text-foreground">{f.label}</span>
-          {f.options ? (
+          {f.gridOptions ? (
+            <div className="grid grid-cols-3 gap-2.5">
+              <input type="hidden" name={f.name} value={gridSelections[f.name] ?? ""} required />
+              {f.gridOptions.map((opt) => {
+                const selected = gridSelections[f.name] === opt.value;
+                return (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => setGridSelections((prev) => ({ ...prev, [f.name]: opt.value }))}
+                    className={`flex flex-col items-center gap-1.5 rounded-2xl border-2 p-3 text-center transition-transform ${
+                      selected ? "border-foreground shadow-md scale-[1.03]" : "border-transparent"
+                    }`}
+                    style={{ background: `linear-gradient(135deg, ${opt.colors[0]}, ${opt.colors[1]})` }}
+                  >
+                    <span className="text-2xl drop-shadow-sm">{opt.icon}</span>
+                    <span className="text-[11px] font-semibold leading-tight text-white drop-shadow-sm">{opt.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          ) : f.options ? (
             <select
               name={f.name}
               required

@@ -84,6 +84,7 @@ export interface Database {
           shop_id: string;
           name: string;
           role: "owner" | "manager" | "staff";
+          permissions: string[];
           created_at: string;
         };
         Insert: {
@@ -91,6 +92,7 @@ export interface Database {
           shop_id: string;
           name: string;
           role: "owner" | "manager" | "staff";
+          permissions?: string[];
           created_at?: string;
         };
         Update: {
@@ -98,6 +100,7 @@ export interface Database {
           shop_id?: string;
           name?: string;
           role?: "owner" | "manager" | "staff";
+          permissions?: string[];
           created_at?: string;
         };
         Relationships: [
@@ -778,6 +781,12 @@ export interface Database {
         Row: { shop_id: string; financial_year: string; last_number: number };
         Insert: { shop_id: string; financial_year: string; last_number?: number };
         Update: { shop_id?: string; financial_year?: string; last_number?: number };
+        Relationships: [];
+      };
+      petty_cash_entries: {
+        Row: { id: string; shop_id: string; description: string; amount: number; category: string | null; staff_id: string; created_at: string };
+        Insert: { id?: string; shop_id: string; description: string; amount: number; category?: string | null; staff_id: string; created_at?: string };
+        Update: { id?: string; shop_id?: string; description?: string; amount?: number; category?: string | null; staff_id?: string; created_at?: string };
         Relationships: [];
       };
       prescriptions: {

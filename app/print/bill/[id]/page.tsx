@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { requireSession } from "@/lib/auth";
+import { requireSession, hasPermission } from "@/lib/auth";
 import { getTranslator } from "@/lib/i18n/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { formatMoney, formatDateTime } from "@/lib/format";
@@ -124,7 +124,7 @@ export default async function PrintBillPage({
           area in that PDF is also tappable in most PDF viewers, opening the customer&apos;s UPI
           app directly.
         </p>
-        {bill.status === "active" && (
+        {bill.status === "active" && hasPermission(session, "process_returns") && (
           <Link
             href={`/returns/new?billId=${bill.id}`}
             className="no-print block rounded-lg border border-brand px-4 py-2.5 text-center text-sm font-medium text-brand-dark"
@@ -132,7 +132,7 @@ export default async function PrintBillPage({
             ↩️ Return / Exchange
           </Link>
         )}
-        {session.role === "owner" && bill.status === "active" && (
+        {hasPermission(session, "void_bills") && bill.status === "active" && (
           <VoidBillButton billId={bill.id} invoiceNumber={bill.invoice_number} />
         )}
       </div>
