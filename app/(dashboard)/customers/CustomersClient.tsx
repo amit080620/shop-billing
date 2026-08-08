@@ -71,7 +71,7 @@ export function CustomersClient({
   return (
     <div className="flex flex-col gap-4">
       <PageHeader
-        title="Customers"
+        title={isClinic ? "Patients" : "Customers"}
         icon={
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
             <circle cx="9" cy="8" r="3" />
@@ -82,7 +82,7 @@ export function CustomersClient({
         }
         action={
           <button onClick={() => setShowForm((v) => !v)} className="btn-primary-sm">
-            + Customer
+            + {isClinic ? "Patient" : "Customer"}
           </button>
         }
       />

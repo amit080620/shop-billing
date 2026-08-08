@@ -369,7 +369,7 @@ export async function generateBillFromPrescriptionAction(
   });
   if ("error" in result) return { error: result.error };
 
-  await admin.from("prescriptions").update({ bill_id: result.billId }).eq("id", prescriptionId);
+  await admin.from("prescriptions").update({ bill_id: result.billId }).eq("id", prescriptionId).eq("shop_id", session.shopId);
 
   revalidatePath("/clinic");
   return { billId: result.billId };

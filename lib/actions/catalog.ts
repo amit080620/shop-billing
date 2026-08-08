@@ -175,7 +175,8 @@ export async function acceptCatalogOrderAction(
   await admin
     .from("catalog_order_requests")
     .update({ status: "accepted", bill_id: result.billId })
-    .eq("id", requestId);
+    .eq("id", requestId)
+    .eq("shop_id", session.shopId);
 
   revalidatePath("/catalog-orders");
   return { billId: result.billId };

@@ -115,7 +115,7 @@ export default async function MorePage() {
       </MenuGroup>
 
       <MenuGroup title="People">
-        <MenuLink href="/customers" label={t("more.customers")} sub={t("more.customers.sub")} icon={PeopleIcon} />
+        <MenuLink href="/customers" label={session.businessType === "clinic" ? "Patients" : t("more.customers")} sub={session.businessType === "clinic" ? "Patient records and history" : t("more.customers.sub")} icon={PeopleIcon} />
         <MenuLink href="/vendors" label={t("more.vendors")} sub={t("more.vendors.sub")} icon={TruckIcon} />
         {session.role === "owner" && (
           <MenuLink href="/staff" label={t("more.staff")} sub={t("more.staff.sub")} icon={UsersIcon} />
