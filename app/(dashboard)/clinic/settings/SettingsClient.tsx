@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { savePrescriptionSettingsAction } from "@/lib/actions/clinic";
+import { uploadSettingsImageAction } from "@/lib/actions/settings";
 import { PageHeader } from "@/app/components/PageHeader";
 
 export function SettingsClient({
@@ -11,11 +12,15 @@ export function SettingsClient({
   footerText: initialFooterText,
   showShopLogo: initialShowShopLogo,
   customFieldLabels: initialLabels,
+  headerImageUrl,
+  footerImageUrl,
 }: {
   headerText: string;
   footerText: string;
   showShopLogo: boolean;
   customFieldLabels: string[];
+  headerImageUrl: string | null;
+  footerImageUrl: string | null;
 }) {
   const router = useRouter();
   const [headerText, setHeaderText] = useState(initialHeaderText);
@@ -25,6 +30,19 @@ export function SettingsClient({
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const [isPending, startTransition] = useTransition();
+  const [uploadingImage, setUploadingImage] = useState<"header" | "footer" | null>(null);
+  const [imageError, setImageError] = useState<string | null>(null);
+
+  async function handleImageUpload(kind: "prescription_header" | "prescription_footer", file: File) {
+    setUploadingImage(kind === "prescription_header" ? "header" : "footer");
+    setImageError(null);
+    const formData = new FormData();
+    formData.append("image", file);
+    const result = await uploadSettingsImageAction(kind, formData);
+    if (result.error) setImageError(result.error);
+    setUploadingImage(null);
+    router.refresh();
+  }
 
   function updateLabel(index: number, value: string) {
     setLabels((prev) => prev.map((l, i) => (i === index ? value : l)));
@@ -87,6 +105,56 @@ export function SettingsClient({
         <input type="checkbox" checked={showShopLogo} onChange={(e) => setShowShopLogo(e.target.checked)} className="h-4 w-4 rounded border-border" />
         Also show clinic logo (from More → Settings) at the top
       </label>
+
+      <div className="grid grid-cols-2 gap-3">
+        <div className="flex flex-col gap-1.5 text-sm">
+          <span className="font-medium text-foreground">Letterhead banner (optional)</span>
+          <label className="relative flex h-20 cursor-pointer items-center justify-center overflow-hidden rounded-lg border border-dashed border-border bg-surface text-xs text-muted">
+            {headerImageUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element -- small settings preview
+              <img src={headerImageUrl} alt="" className="h-full w-full object-contain" />
+            ) : uploadingImage === "header" ? (
+              "Uploading…"
+            ) : (
+              "Tap to upload"
+            )}
+            <input
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) handleImageUpload("prescription_header", file);
+                e.target.value = "";
+              }}
+            />
+          </label>
+        </div>
+        <div className="flex flex-col gap-1.5 text-sm">
+          <span className="font-medium text-foreground">Footer image / stamp (optional)</span>
+          <label className="relative flex h-20 cursor-pointer items-center justify-center overflow-hidden rounded-lg border border-dashed border-border bg-surface text-xs text-muted">
+            {footerImageUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element -- small settings preview
+              <img src={footerImageUrl} alt="" className="h-full w-full object-contain" />
+            ) : uploadingImage === "footer" ? (
+              "Uploading…"
+            ) : (
+              "Tap to upload"
+            )}
+            <input
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) handleImageUpload("prescription_footer", file);
+                e.target.value = "";
+              }}
+            />
+          </label>
+        </div>
+      </div>
+      {imageError && <p className="text-sm text-danger">{imageError}</p>}
 
       <label className="flex flex-col gap-1.5 text-sm">
         <span className="font-medium text-foreground">Footer (clinic timings, address, contact, disclaimer)</span>

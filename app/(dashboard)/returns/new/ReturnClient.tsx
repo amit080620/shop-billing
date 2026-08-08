@@ -28,11 +28,13 @@ export function ReturnClient({
   billId,
   invoiceNumber,
   customerName,
+  businessType,
   items,
 }: {
   billId: string;
   invoiceNumber: string;
   customerName: string | null;
+  businessType: string;
   items: BillItem[];
 }) {
   const [quantities, setQuantities] = useState<Record<string, number>>({});
@@ -81,7 +83,7 @@ export function ReturnClient({
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-lg font-semibold text-foreground">Return / Exchange</h1>
-          <p className="text-xs text-muted">Invoice #{invoiceNumber} · {customerName ?? "Walk-in"}</p>
+          <p className="text-xs text-muted">Invoice #{invoiceNumber} · {customerName ?? (businessType === "clinic" ? "Walk-in patient" : "Walk-in")}</p>
         </div>
         <Link href={`/print/bill/${billId}`} className="text-sm text-brand">
           ← Bill

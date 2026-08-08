@@ -7,6 +7,7 @@ import Link from "next/link";
 import { createReservationAction } from "@/lib/actions/reservations";
 import { PageHeader } from "@/app/components/PageHeader";
 import { SearchableSelect } from "@/app/components/SearchableSelect";
+import type { Lang } from "@/lib/i18n/dictionary";
 
 type Customer = { id: string; name: string; phone: string };
 
@@ -24,7 +25,7 @@ function todayIso() {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
-export function NewReservationClient({ customers }: { customers: Customer[] }) {
+export function NewReservationClient({ customers, lang }: { customers: Customer[]; lang: Lang }) {
   const router = useRouter();
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [customerName, setCustomerName] = useState("");
@@ -62,6 +63,7 @@ export function NewReservationClient({ customers }: { customers: Customer[] }) {
         <label className="flex flex-col gap-1.5 text-sm">
           <span className="font-medium text-foreground">Customer</span>
           <SearchableSelect
+            lang={lang}
             items={customers}
             getKey={(c) => c.id}
             getLabel={(c) => c.name}

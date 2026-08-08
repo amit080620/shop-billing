@@ -60,6 +60,7 @@ export default async function NewReturnPage({
       billId={bill.id}
       invoiceNumber={bill.invoice_number}
       customerName={customer?.name ?? null}
+      businessType={session.businessType}
       items={(billItems ?? [])
         .map((item) => ({
           id: item.id,

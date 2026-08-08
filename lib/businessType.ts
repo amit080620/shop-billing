@@ -22,6 +22,13 @@ type Terminology = {
   addProductLabel: string;
 };
 
+/** "Patient" for a clinic, "Customer" everywhere else — used anywhere the
+ * app would otherwise say a generic "Walk-in customer" fallback, since
+ * that reads oddly on a doctor's printed prescription or bill. */
+export function customerNounFor(businessType: string): string {
+  return businessType === "clinic" ? "Patient" : "Customer";
+}
+
 // Deliberately just word-choice — every business type still has the exact
 // same underlying features (billing, GST, inventory, customers, rentals).
 // Verticals that genuinely need different WORKFLOWS (a restaurant's table

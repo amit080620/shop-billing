@@ -7,11 +7,13 @@ import { createPrescriptionAction, type PrescriptionItemInput } from "@/lib/acti
 import { PageHeader } from "@/app/components/PageHeader";
 import { SearchableSelect } from "@/app/components/SearchableSelect";
 import { COMMON_MEDICINE_NAMES } from "@/lib/constants/commonMedicines";
+import type { Lang } from "@/lib/i18n/dictionary";
 
 type Patient = { id: string; name: string; phone: string; dateOfBirth: string | null; gender: string | null };
 type MedicineRow = PrescriptionItemInput & { key: string };
 
 const FREQUENCY_PRESETS = ["1-0-0", "0-1-0", "0-0-1", "1-0-1", "1-1-1", "1-1-0", "SOS"];
+const INSTRUCTION_PRESETS = ["Before food", "After food", "With food", "Empty stomach", "At bedtime"];
 
 function todayIso() {
   const d = new Date();
@@ -28,12 +30,14 @@ export function NewPrescriptionClient({
   appointmentId,
   prefillPatientName,
   prefillPatientPhone,
+  lang,
 }: {
   patients: Patient[];
   fieldLabels: string[];
   appointmentId: string | null;
   prefillPatientName: string;
   prefillPatientPhone: string;
+  lang: Lang;
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -110,6 +114,7 @@ export function NewPrescriptionClient({
       <section className="flex flex-col gap-2">
         <p className="text-sm font-medium text-foreground">Patient</p>
         <SearchableSelect
+          lang={lang}
           items={patients}
           getKey={(p) => p.id}
           getLabel={(p) => p.name}
@@ -181,6 +186,7 @@ export function NewPrescriptionClient({
             <div className="flex gap-2">
               <div className="flex-1">
                 <SearchableSelect
+                  lang={lang}
                   items={COMMON_MEDICINE_NAMES}
                   getKey={(m) => m}
                   getLabel={(m) => m}
@@ -233,6 +239,20 @@ export function NewPrescriptionClient({
                 placeholder="or type frequency"
                 className="w-28 rounded-full border border-border px-2 py-0.5 text-[11px] outline-none focus:border-brand"
               />
+            </div>
+            <div className="flex flex-wrap gap-1">
+              {INSTRUCTION_PRESETS.map((p) => (
+                <button
+                  key={p}
+                  type="button"
+                  onClick={() => updateMedicine(med.key, { instructions: p })}
+                  className={`rounded-full border px-2 py-0.5 text-[11px] font-medium ${
+                    med.instructions === p ? "border-brand bg-brand-soft text-brand-dark" : "border-border text-muted"
+                  }`}
+                >
+                  {p}
+                </button>
+              ))}
             </div>
             <input
               value={med.instructions}

@@ -331,7 +331,7 @@ export function ProductsClient({
             <p className="text-xs font-medium text-brand">{t("products.editing", { name: editingProduct.name })}</p>
           )}
           <Field id="product-name-input" name="name" label={t("products.name")} placeholder={t("products.namePlaceholder")} required defaultValue={editingProduct?.name} />
-          {businessType === "pharmacy" && !editingProduct && (
+          {["pharmacy", "clinic"].includes(businessType) && !editingProduct && (
             <div className="flex flex-col gap-1">
               <SearchableSelect
                 lang={lang}
@@ -581,11 +581,11 @@ export function ProductsClient({
               onChange={(e) => setIsPharma(e.target.checked)}
               className="h-4 w-4 rounded border-border"
             />
-            {businessType === "pharmacy" ? t("products.trackBatch") : "Track with batch & expiry date"}
+            {["pharmacy", "clinic"].includes(businessType) ? t("products.trackBatch") : "Track with batch & expiry date"}
           </label>
           {isPharma && (
             <div className="flex flex-col gap-3 rounded-lg border border-dashed border-brand bg-brand-soft p-3">
-              {businessType === "pharmacy" && (
+              {["pharmacy", "clinic"].includes(businessType) && (
                 <>
                   <Field name="saltComposition" label={t("products.saltComposition")} placeholder={t("products.saltPlaceholder")} defaultValue={editingProduct?.saltComposition ?? undefined} />
                   <label className="flex items-center gap-2 text-sm text-brand-dark">
@@ -623,7 +623,7 @@ export function ProductsClient({
                 <Field name="looseUnitName" label={t("products.looseUnitName")} placeholder={t("products.looseUnitPlaceholder")} defaultValue={editingProduct?.looseUnitName ?? undefined} />
               </div>
               <p className="text-xs text-brand-dark">
-                {businessType === "pharmacy"
+                {["pharmacy", "clinic"].includes(businessType)
                   ? t("products.pharmaExplain")
                   : "Fill in units-per-pack + loose unit name to sell individual pieces from a pack (e.g. loose biscuits from a box), not just the whole pack. After saving, add stock with expiry dates via the batch manager on this item — billing automatically sells the earliest-expiring batch first."}
               </p>

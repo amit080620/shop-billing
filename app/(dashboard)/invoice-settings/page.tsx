@@ -8,7 +8,7 @@ export default async function InvoiceSettingsPage() {
 
   const { data: settings } = await admin
     .from("invoice_settings")
-    .select("tagline, footer_text, terms_and_conditions, bank_details, accent_color")
+    .select("tagline, footer_text, terms_and_conditions, bank_details, accent_color, header_image_url, footer_image_url")
     .eq("shop_id", session.shopId)
     .maybeSingle();
 
@@ -20,6 +20,8 @@ export default async function InvoiceSettingsPage() {
       termsAndConditions={settings?.terms_and_conditions ?? ""}
       bankDetails={settings?.bank_details ?? ""}
       accentColor={settings?.accent_color ?? "#0f6b5c"}
+      headerImageUrl={settings?.header_image_url ?? null}
+      footerImageUrl={settings?.footer_image_url ?? null}
     />
   );
 }

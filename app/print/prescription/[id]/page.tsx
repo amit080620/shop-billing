@@ -21,7 +21,7 @@ export default async function PrintPrescriptionPage({
       .eq("id", id)
       .eq("shop_id", session.shopId)
       .single(),
-    admin.from("prescription_settings").select("header_text, footer_text, show_shop_logo").eq("shop_id", session.shopId).maybeSingle(),
+    admin.from("prescription_settings").select("header_text, footer_text, show_shop_logo, header_image_url, footer_image_url").eq("shop_id", session.shopId).maybeSingle(),
     admin.from("shops").select("name, logo_url").eq("id", session.shopId).single(),
     admin.from("invoice_settings").select("accent_color").eq("shop_id", session.shopId).maybeSingle(),
   ]);
@@ -47,6 +47,10 @@ export default async function PrintPrescriptionPage({
   return (
     <div className="relative mx-auto max-w-2xl bg-white p-8 text-black">
       {/* Letterhead */}
+      {settings?.header_image_url && (
+        // eslint-disable-next-line @next/next/no-img-element -- print page
+        <img src={settings.header_image_url} alt="" className="mb-2 max-h-20 w-full object-contain" />
+      )}
       <div className="flex items-start justify-between gap-4 border-b-2 pb-4" style={{ borderColor: invoiceSettings?.accent_color ?? "#1f2937" }}>
         <div className="flex items-center gap-3">
           {settings?.show_shop_logo !== false && shop?.logo_url && (
@@ -123,6 +127,11 @@ export default async function PrintPrescriptionPage({
           <p className="text-sm font-semibold text-gray-900">{prescription.doctor_name}</p>
           <p className="text-xs text-gray-500">Signature</p>
         </div>
+      )}
+
+      {settings?.footer_image_url && (
+        // eslint-disable-next-line @next/next/no-img-element -- print page
+        <img src={settings.footer_image_url} alt="" className="mt-6 max-h-16 w-full object-contain" />
       )}
 
       {settings?.footer_text && (

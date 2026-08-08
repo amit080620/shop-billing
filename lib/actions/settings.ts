@@ -161,3 +161,54 @@ export async function saveInvoiceSettingsAction(settings: {
   revalidatePath("/invoice-settings");
   return {};
 }
+
+type SettingsImageKind = "invoice_header" | "invoice_footer" | "prescription_header" | "prescription_footer" | "doctor_photo";
+
+/** One shared uploader for every header/footer/profile image across
+ * Invoice, Prescription, and Booking settings — same validation, same
+ * bucket (shop-logos, reused rather than creating five near-identical
+ * buckets), just a different destination column per kind. */
+export async function uploadSettingsImageAction(kind: SettingsImageKind, formData: FormData): Promise<{ error?: string; url?: string }> {
+  const session = await requireOwner();
+  const admin = createSupabaseAdminClient();
+
+  const file = formData.get("image");
+  if (!(file instanceof File) || file.size === 0) return { error: "Choose an image file" };
+  if (file.size > LOGO_MAX_BYTES) return { error: "Image must be under 2MB" };
+  if (!LOGO_ALLOWED_TYPES.includes(file.type)) return { error: "Use a PNG, JPG, or WEBP image" };
+
+  const extension = file.name.split(".").pop() || "png";
+  const path = `${session.shopId}/${kind}.${extension}`;
+
+  const { error: uploadError } = await admin.storage.from("shop-logos").upload(path, file, { upsert: true, contentType: file.type });
+  if (uploadError) {
+    console.error("Could not upload settings image", uploadError);
+    return { error: "Could not upload image" };
+  }
+
+  const { data: publicUrlData } = admin.storage.from("shop-logos").getPublicUrl(path);
+  const url = `${publicUrlData.publicUrl}?v=${Date.now()}`;
+
+  const targets: Record<SettingsImageKind, { table: "invoice_settings" | "prescription_settings" | "booking_settings"; column: string }> = {
+    invoice_header: { table: "invoice_settings", column: "header_image_url" },
+    invoice_footer: { table: "invoice_settings", column: "footer_image_url" },
+    prescription_header: { table: "prescription_settings", column: "header_image_url" },
+    prescription_footer: { table: "prescription_settings", column: "footer_image_url" },
+    doctor_photo: { table: "booking_settings", column: "doctor_photo_url" },
+  };
+  const target = targets[kind];
+
+  const { error: updateError } = await admin
+    .from(target.table)
+    .upsert({ shop_id: session.shopId, [target.column]: url } as never, { onConflict: "shop_id" });
+  if (updateError) {
+    console.error("Could not save settings image url", updateError);
+    return { error: "Uploaded, but could not save. Try again." };
+  }
+
+  revalidatePath("/invoice-settings");
+  revalidatePath("/clinic/settings");
+  revalidatePath("/clinic/settings/booking");
+  revalidatePath("/salon/settings/booking");
+  return { url };
+}

@@ -39,12 +39,16 @@ export default async function MorePage() {
         </div>
       </MenuGroup>
 
-      {session.businessType === "pharmacy" && (
-        <MenuGroup title="Pharmacy">
+      {(session.businessType === "pharmacy" || session.businessType === "clinic") && (
+        <MenuGroup title="Medicine stock">
           <MenuLink href="/pharmacy/expiry" label="Expiry alerts" sub="Medicines nearing or past expiry" icon={ExpiryIcon} />
-          <MenuLink href="/pharmacy/doctors" label="Doctor-wise sales" sub="Prescriptions by doctor" icon={ClockIcon} />
-          <MenuLink href="/pharmacy/schedule-x-register" label="Schedule X register" sub="Narcotic sales compliance record" icon={RegisterIcon} />
           <MenuLink href="/pharmacy/write-offs" label="Write-off history" sub="Stock lost to expiry or damage" icon={BellIcon} />
+          {session.businessType === "pharmacy" && (
+            <>
+              <MenuLink href="/pharmacy/doctors" label="Doctor-wise sales" sub="Prescriptions by doctor" icon={ClockIcon} />
+              <MenuLink href="/pharmacy/schedule-x-register" label="Schedule X register" sub="Narcotic sales compliance record" icon={RegisterIcon} />
+            </>
+          )}
         </MenuGroup>
       )}
 

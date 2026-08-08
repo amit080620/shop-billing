@@ -7,6 +7,7 @@ import Link from "next/link";
 import { createJobAction } from "@/lib/actions/service";
 import { PageHeader } from "@/app/components/PageHeader";
 import { SearchableSelect } from "@/app/components/SearchableSelect";
+import type { Lang } from "@/lib/i18n/dictionary";
 
 type Customer = { id: string; name: string; phone: string };
 type JobItem = { name: string; quantity: number; notes: string };
@@ -20,7 +21,7 @@ function SubmitButton() {
   );
 }
 
-export function NewJobClient({ customers }: { customers: Customer[] }) {
+export function NewJobClient({ customers, lang }: { customers: Customer[]; lang: Lang }) {
   const router = useRouter();
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [customerName, setCustomerName] = useState("");
@@ -68,6 +69,7 @@ export function NewJobClient({ customers }: { customers: Customer[] }) {
         <label className="flex flex-col gap-1.5 text-sm">
           <span className="font-medium text-foreground">Customer</span>
           <SearchableSelect
+            lang={lang}
             items={customers}
             getKey={(c) => c.id}
             getLabel={(c) => c.name}

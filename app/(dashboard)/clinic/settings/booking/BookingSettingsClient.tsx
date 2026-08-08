@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { saveBookingSettingsAction, type WorkingHours } from "@/lib/actions/clinic";
+import { uploadSettingsImageAction } from "@/lib/actions/settings";
 import { PageHeader } from "@/app/components/PageHeader";
 
 const DAYS: { key: string; label: string }[] = [
@@ -16,26 +17,67 @@ const DAYS: { key: string; label: string }[] = [
   { key: "sun", label: "Sunday" },
 ];
 
+function todayIso() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
 export function BookingSettingsClient({
   slotDurationMinutes: initialSlotDuration,
   workingHours: initialHours,
   isPublicBookingEnabled: initialEnabled,
   publicToken,
   businessType,
+  doctorName: initialDoctorName,
+  doctorQualifications: initialDoctorQualifications,
+  doctorPhotoUrl,
+  unavailableDates: initialUnavailableDates,
 }: {
   slotDurationMinutes: number;
   workingHours: WorkingHours;
   isPublicBookingEnabled: boolean;
   publicToken: string | null;
   businessType: string;
+  doctorName: string;
+  doctorQualifications: string;
+  doctorPhotoUrl: string | null;
+  unavailableDates: string[];
 }) {
   const router = useRouter();
   const [slotDuration, setSlotDuration] = useState(initialSlotDuration);
   const [enabled, setEnabled] = useState(initialEnabled);
   const [hours, setHours] = useState<WorkingHours>(initialHours);
+  const [doctorName, setDoctorName] = useState(initialDoctorName);
+  const [doctorQualifications, setDoctorQualifications] = useState(initialDoctorQualifications);
+  const [unavailableDates, setUnavailableDates] = useState<string[]>(initialUnavailableDates);
+  const [newLeaveDate, setNewLeaveDate] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const [isPending, startTransition] = useTransition();
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [photoError, setPhotoError] = useState<string | null>(null);
+
+  const isClinic = businessType === "clinic";
+
+  async function handlePhotoUpload(file: File) {
+    setUploadingPhoto(true);
+    setPhotoError(null);
+    const formData = new FormData();
+    formData.append("image", file);
+    const result = await uploadSettingsImageAction("doctor_photo", formData);
+    if (result.error) setPhotoError(result.error);
+    setUploadingPhoto(false);
+    router.refresh();
+  }
+
+  function addLeaveDate() {
+    if (!newLeaveDate || unavailableDates.includes(newLeaveDate)) return;
+    setUnavailableDates((prev) => [...prev, newLeaveDate].sort());
+    setNewLeaveDate("");
+  }
+  function removeLeaveDate(date: string) {
+    setUnavailableDates((prev) => prev.filter((d) => d !== date));
+  }
 
   const backLink = businessType === "salon" ? "/salon" : "/clinic";
   const noun = businessType === "salon" ? "customer" : "patient";
@@ -67,7 +109,14 @@ export function BookingSettingsClient({
   function save() {
     setSaved(false);
     startTransition(async () => {
-      const result = await saveBookingSettingsAction({ slotDurationMinutes: slotDuration, workingHours: hours, isPublicBookingEnabled: enabled });
+      const result = await saveBookingSettingsAction({
+        slotDurationMinutes: slotDuration,
+        workingHours: hours,
+        isPublicBookingEnabled: enabled,
+        doctorName,
+        doctorQualifications,
+        unavailableDates,
+      });
       if (result.error) {
         setError(result.error);
         return;
@@ -100,6 +149,49 @@ export function BookingSettingsClient({
         <span className="text-sm font-medium text-foreground">Enable public booking link</span>
         <input type="checkbox" checked={enabled} onChange={(e) => setEnabled(e.target.checked)} className="h-5 w-5 rounded border-border" />
       </label>
+
+      {isClinic && (
+        <div className="flex flex-col gap-3 rounded-xl border border-border bg-surface p-4 shadow-sm">
+          <p className="text-sm font-medium text-foreground">Doctor profile — shown on your booking link</p>
+          <div className="flex items-center gap-3">
+            <label className="relative flex h-16 w-16 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-full border border-dashed border-border bg-background text-[10px] text-muted">
+              {doctorPhotoUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element -- small settings preview
+                <img src={doctorPhotoUrl} alt="" className="h-full w-full object-cover" />
+              ) : uploadingPhoto ? (
+                "…"
+              ) : (
+                "📷"
+              )}
+              <input
+                type="file"
+                accept="image/png,image/jpeg,image/webp"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) handlePhotoUpload(file);
+                  e.target.value = "";
+                }}
+              />
+            </label>
+            <div className="flex flex-1 flex-col gap-2">
+              <input
+                value={doctorName}
+                onChange={(e) => setDoctorName(e.target.value)}
+                placeholder="Dr. Ramesh Kumar"
+                className="rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-brand"
+              />
+              <input
+                value={doctorQualifications}
+                onChange={(e) => setDoctorQualifications(e.target.value)}
+                placeholder="MBBS, MD (Medicine)"
+                className="rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-brand"
+              />
+            </div>
+          </div>
+          {photoError && <p className="text-xs text-danger">{photoError}</p>}
+        </div>
+      )}
 
       {publicUrl && enabled && (
         <div className="flex flex-col gap-2 rounded-xl border border-dashed border-brand bg-brand-soft p-4">
@@ -175,6 +267,37 @@ export function BookingSettingsClient({
             )}
           </div>
         ))}
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <p className="text-sm font-medium text-foreground">Leave / holiday dates</p>
+        <p className="text-xs text-muted">
+          Blocks a specific date entirely from booking, even if it falls on a normally-working day above — use this for personal leave, festivals, or any day you won&apos;t be available.
+        </p>
+        <div className="flex gap-2">
+          <input
+            type="date"
+            value={newLeaveDate}
+            min={todayIso()}
+            onChange={(e) => setNewLeaveDate(e.target.value)}
+            className="flex-1 rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand"
+          />
+          <button onClick={addLeaveDate} disabled={!newLeaveDate} className="rounded-lg border border-brand px-3 py-2 text-xs font-medium text-brand-dark disabled:opacity-50">
+            + Add
+          </button>
+        </div>
+        {unavailableDates.length > 0 && (
+          <ul className="flex flex-wrap gap-1.5">
+            {unavailableDates.map((date) => (
+              <li key={date} className="flex items-center gap-1.5 rounded-full border border-danger/30 bg-danger/10 px-2.5 py-1 text-xs text-danger">
+                {new Date(date).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+                <button onClick={() => removeLeaveDate(date)} className="font-bold">
+                  ✕
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
 
       {error && <p className="text-sm text-danger">{error}</p>}

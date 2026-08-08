@@ -1302,3 +1302,23 @@ create table if not exists invoice_settings (
   updated_at timestamptz not null default now()
 );
 alter table invoice_settings enable row level security;
+
+-- ─── Header/footer images (invoice + prescription) and doctor profile ─────
+alter table invoice_settings add column if not exists header_image_url text;
+alter table invoice_settings add column if not exists footer_image_url text;
+alter table prescription_settings add column if not exists header_image_url text;
+alter table prescription_settings add column if not exists footer_image_url text;
+
+-- Doctor profile shown on the public booking link (name, photo,
+-- qualifications) — separate from the letterhead text, since a clinic
+-- with multiple doctors may want the booking page to clearly show which
+-- doctor the patient is booking with.
+alter table booking_settings add column if not exists doctor_name text;
+alter table booking_settings add column if not exists doctor_qualifications text;
+alter table booking_settings add column if not exists doctor_photo_url text;
+
+-- Specific dates the doctor/salon is NOT available (leave, holiday) even
+-- though it falls on a normally-working day per working_hours — an
+-- ordinary array of ISO dates is enough; the public booking page filters
+-- these out entirely rather than trying to compute partial-day exceptions.
+alter table booking_settings add column if not exists unavailable_dates jsonb not null default '[]'::jsonb;

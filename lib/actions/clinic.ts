@@ -96,6 +96,9 @@ export async function saveBookingSettingsAction(settings: {
   slotDurationMinutes: number;
   workingHours: WorkingHours;
   isPublicBookingEnabled: boolean;
+  doctorName?: string;
+  doctorQualifications?: string;
+  unavailableDates?: string[];
 }): Promise<{ error?: string }> {
   const session = await requireSession();
   const admin = createSupabaseAdminClient();
@@ -104,6 +107,9 @@ export async function saveBookingSettingsAction(settings: {
     slot_duration_minutes: settings.slotDurationMinutes,
     working_hours: settings.workingHours,
     is_public_booking_enabled: settings.isPublicBookingEnabled,
+    doctor_name: settings.doctorName || null,
+    doctor_qualifications: settings.doctorQualifications || null,
+    unavailable_dates: settings.unavailableDates ?? [],
     updated_at: new Date().toISOString(),
   });
   if (error) {

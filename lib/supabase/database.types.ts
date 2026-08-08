@@ -687,15 +687,15 @@ export interface Database {
         Relationships: [];
       };
       invoice_settings: {
-        Row: { shop_id: string; tagline: string | null; footer_text: string | null; terms_and_conditions: string | null; bank_details: string | null; accent_color: string; updated_at: string };
-        Insert: { shop_id: string; tagline?: string | null; footer_text?: string | null; terms_and_conditions?: string | null; bank_details?: string | null; accent_color?: string; updated_at?: string };
-        Update: { shop_id?: string; tagline?: string | null; footer_text?: string | null; terms_and_conditions?: string | null; bank_details?: string | null; accent_color?: string; updated_at?: string };
+        Row: { shop_id: string; tagline: string | null; footer_text: string | null; terms_and_conditions: string | null; bank_details: string | null; accent_color: string; header_image_url: string | null; footer_image_url: string | null; updated_at: string };
+        Insert: { shop_id: string; tagline?: string | null; footer_text?: string | null; terms_and_conditions?: string | null; bank_details?: string | null; accent_color?: string; header_image_url?: string | null; footer_image_url?: string | null; updated_at?: string };
+        Update: { shop_id?: string; tagline?: string | null; footer_text?: string | null; terms_and_conditions?: string | null; bank_details?: string | null; accent_color?: string; header_image_url?: string | null; footer_image_url?: string | null; updated_at?: string };
         Relationships: [];
       };
       prescription_settings: {
-        Row: { shop_id: string; header_text: string | null; footer_text: string | null; show_shop_logo: boolean; custom_field_labels: string[]; updated_at: string };
-        Insert: { shop_id: string; header_text?: string | null; footer_text?: string | null; show_shop_logo?: boolean; custom_field_labels?: string[]; updated_at?: string };
-        Update: { shop_id?: string; header_text?: string | null; footer_text?: string | null; show_shop_logo?: boolean; custom_field_labels?: string[]; updated_at?: string };
+        Row: { shop_id: string; header_text: string | null; footer_text: string | null; show_shop_logo: boolean; custom_field_labels: string[]; header_image_url: string | null; footer_image_url: string | null; updated_at: string };
+        Insert: { shop_id: string; header_text?: string | null; footer_text?: string | null; show_shop_logo?: boolean; custom_field_labels?: string[]; header_image_url?: string | null; footer_image_url?: string | null; updated_at?: string };
+        Update: { shop_id?: string; header_text?: string | null; footer_text?: string | null; show_shop_logo?: boolean; custom_field_labels?: string[]; header_image_url?: string | null; footer_image_url?: string | null; updated_at?: string };
         Relationships: [];
       };
       catalog_settings: {
@@ -721,9 +721,9 @@ export interface Database {
         ];
       };
       booking_settings: {
-        Row: { shop_id: string; slot_duration_minutes: number; working_hours: Record<string, { start: string; end: string }[]>; is_public_booking_enabled: boolean; public_token: string; updated_at: string };
-        Insert: { shop_id: string; slot_duration_minutes?: number; working_hours?: Record<string, { start: string; end: string }[]>; is_public_booking_enabled?: boolean; public_token?: string; updated_at?: string };
-        Update: { shop_id?: string; slot_duration_minutes?: number; working_hours?: Record<string, { start: string; end: string }[]>; is_public_booking_enabled?: boolean; public_token?: string; updated_at?: string };
+        Row: { shop_id: string; slot_duration_minutes: number; working_hours: Record<string, { start: string; end: string }[]>; is_public_booking_enabled: boolean; public_token: string; doctor_name: string | null; doctor_qualifications: string | null; doctor_photo_url: string | null; unavailable_dates: string[]; updated_at: string };
+        Insert: { shop_id: string; slot_duration_minutes?: number; working_hours?: Record<string, { start: string; end: string }[]>; is_public_booking_enabled?: boolean; public_token?: string; doctor_name?: string | null; doctor_qualifications?: string | null; doctor_photo_url?: string | null; unavailable_dates?: string[]; updated_at?: string };
+        Update: { shop_id?: string; slot_duration_minutes?: number; working_hours?: Record<string, { start: string; end: string }[]>; is_public_booking_enabled?: boolean; public_token?: string; doctor_name?: string | null; doctor_qualifications?: string | null; doctor_photo_url?: string | null; unavailable_dates?: string[]; updated_at?: string };
         Relationships: [];
       };
       clinic_appointments: {

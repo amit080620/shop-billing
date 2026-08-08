@@ -15,7 +15,7 @@ export default async function PublicBookingPage({
 
   const { data: settings } = await admin
     .from("booking_settings")
-    .select("shop_id, slot_duration_minutes, working_hours, is_public_booking_enabled")
+    .select("shop_id, slot_duration_minutes, working_hours, is_public_booking_enabled, doctor_name, doctor_qualifications, doctor_photo_url, unavailable_dates")
     .eq("public_token", token)
     .maybeSingle();
 
@@ -46,13 +46,14 @@ export default async function PublicBookingPage({
   }
 
   const workingHours = (settings.working_hours as Record<string, { start: string; end: string }[]>) ?? {};
+  const unavailableDates = new Set((settings.unavailable_dates as string[]) ?? []);
 
   const days = Array.from({ length: DAYS_AHEAD }, (_, i) => {
     const date = new Date();
     date.setDate(date.getDate() + i);
     const dateIso = date.toISOString().slice(0, 10);
     const dayKey = dayKeyFor(date);
-    const ranges = workingHours[dayKey] ?? [];
+    const ranges = unavailableDates.has(dateIso) ? [] : workingHours[dayKey] ?? [];
     const slots = computeAvailableSlots(ranges, settings.slot_duration_minutes, bookedByDate.get(dateIso) ?? []);
     return {
       date: dateIso,
@@ -67,6 +68,9 @@ export default async function PublicBookingPage({
       shopName={shop.name}
       shopLogoUrl={shop.logo_url}
       isClinic={isClinic}
+      doctorName={settings.doctor_name}
+      doctorQualifications={settings.doctor_qualifications}
+      doctorPhotoUrl={settings.doctor_photo_url}
       days={days}
     />
   );

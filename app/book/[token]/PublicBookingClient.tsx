@@ -10,12 +10,18 @@ export function PublicBookingClient({
   shopName,
   shopLogoUrl,
   isClinic,
+  doctorName,
+  doctorQualifications,
+  doctorPhotoUrl,
   days,
 }: {
   token: string;
   shopName: string;
   shopLogoUrl: string | null;
   isClinic: boolean;
+  doctorName: string | null;
+  doctorQualifications: string | null;
+  doctorPhotoUrl: string | null;
   days: Day[];
 }) {
   const [selectedDate, setSelectedDate] = useState(days[0]?.date ?? "");
@@ -70,13 +76,23 @@ export function PublicBookingClient({
   return (
     <div className="mx-auto flex min-h-screen max-w-md flex-col gap-4 px-4 py-6">
       <div className="flex items-center gap-3">
-        {shopLogoUrl && (
-          // eslint-disable-next-line @next/next/no-img-element -- public page, shop-uploaded logo
-          <img src={shopLogoUrl} alt="" className="h-12 w-12 rounded-full object-cover" />
+        {(doctorPhotoUrl || shopLogoUrl) && (
+          // eslint-disable-next-line @next/next/no-img-element -- public page, shop/doctor-uploaded photo
+          <img src={doctorPhotoUrl ?? shopLogoUrl ?? undefined} alt="" className="h-14 w-14 rounded-full object-cover" />
         )}
         <div>
-          <p className="text-lg font-semibold text-foreground">{shopName}</p>
-          <p className="text-xs text-muted">{isClinic ? "Book your appointment" : "Book your slot"}</p>
+          {doctorName ? (
+            <>
+              <p className="text-lg font-semibold text-foreground">{doctorName}</p>
+              {doctorQualifications && <p className="text-xs text-muted">{doctorQualifications}</p>}
+              <p className="text-xs text-muted">{shopName}</p>
+            </>
+          ) : (
+            <>
+              <p className="text-lg font-semibold text-foreground">{shopName}</p>
+              <p className="text-xs text-muted">{isClinic ? "Book your appointment" : "Book your slot"}</p>
+            </>
+          )}
         </div>
       </div>
 

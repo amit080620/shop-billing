@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { saveInvoiceSettingsAction } from "@/lib/actions/settings";
+import { saveInvoiceSettingsAction, uploadSettingsImageAction } from "@/lib/actions/settings";
 import { PageHeader } from "@/app/components/PageHeader";
 
 const PRESET_COLORS = ["#0f6b5c", "#B45309", "#1D4ED8", "#B91C1C", "#7C3AED", "#0E7490"];
@@ -15,6 +15,8 @@ export function InvoiceSettingsClient({
   termsAndConditions: initialTerms,
   bankDetails: initialBank,
   accentColor: initialColor,
+  headerImageUrl,
+  footerImageUrl,
 }: {
   isOwner: boolean;
   tagline: string;
@@ -22,6 +24,8 @@ export function InvoiceSettingsClient({
   termsAndConditions: string;
   bankDetails: string;
   accentColor: string;
+  headerImageUrl: string | null;
+  footerImageUrl: string | null;
 }) {
   const router = useRouter();
   const [tagline, setTagline] = useState(initialTagline);
@@ -32,6 +36,19 @@ export function InvoiceSettingsClient({
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const [isPending, startTransition] = useTransition();
+  const [uploadingImage, setUploadingImage] = useState<"header" | "footer" | null>(null);
+  const [imageError, setImageError] = useState<string | null>(null);
+
+  async function handleImageUpload(kind: "invoice_header" | "invoice_footer", file: File) {
+    setUploadingImage(kind === "invoice_header" ? "header" : "footer");
+    setImageError(null);
+    const formData = new FormData();
+    formData.append("image", file);
+    const result = await uploadSettingsImageAction(kind, formData);
+    if (result.error) setImageError(result.error);
+    setUploadingImage(null);
+    router.refresh();
+  }
 
   if (!isOwner) {
     return (
@@ -119,6 +136,57 @@ export function InvoiceSettingsClient({
           className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand"
         />
       </label>
+
+      <div className="grid grid-cols-2 gap-3">
+        <div className="flex flex-col gap-1.5 text-sm">
+          <span className="font-medium text-foreground">Header image (optional)</span>
+          <label className="relative flex h-20 cursor-pointer items-center justify-center overflow-hidden rounded-lg border border-dashed border-border bg-surface text-xs text-muted">
+            {headerImageUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element -- small settings preview
+              <img src={headerImageUrl} alt="" className="h-full w-full object-contain" />
+            ) : uploadingImage === "header" ? (
+              "Uploading…"
+            ) : (
+              "Tap to upload"
+            )}
+            <input
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) handleImageUpload("invoice_header", file);
+                e.target.value = "";
+              }}
+            />
+          </label>
+        </div>
+        <div className="flex flex-col gap-1.5 text-sm">
+          <span className="font-medium text-foreground">Footer image (optional)</span>
+          <label className="relative flex h-20 cursor-pointer items-center justify-center overflow-hidden rounded-lg border border-dashed border-border bg-surface text-xs text-muted">
+            {footerImageUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element -- small settings preview
+              <img src={footerImageUrl} alt="" className="h-full w-full object-contain" />
+            ) : uploadingImage === "footer" ? (
+              "Uploading…"
+            ) : (
+              "Tap to upload"
+            )}
+            <input
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) handleImageUpload("invoice_footer", file);
+                e.target.value = "";
+              }}
+            />
+          </label>
+        </div>
+      </div>
+      {imageError && <p className="text-sm text-danger">{imageError}</p>}
+      <p className="-mt-2 text-xs text-muted">A header image (e.g. a printed letterhead banner) shows above your shop name; a footer image (e.g. a stamp or signature) shows at the bottom.</p>
 
       <div className="flex flex-col gap-2">
         <span className="text-sm font-medium text-foreground">Accent colour</span>

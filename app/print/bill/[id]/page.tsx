@@ -5,6 +5,7 @@ import { getTranslator } from "@/lib/i18n/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { formatMoney, formatDateTime } from "@/lib/format";
 import { buildUpiLink, generateQrDataUrl } from "@/lib/qr";
+import { customerNounFor } from "@/lib/businessType";
 import { PrintButton } from "./PrintButton";
 import { WhatsAppSendButton } from "./WhatsAppSendButton";
 import { VoidBillButton } from "./VoidBillButton";
@@ -27,7 +28,7 @@ export default async function PrintBillPage({
 
   const { data: invoiceSettings } = await admin
     .from("invoice_settings")
-    .select("tagline, footer_text, terms_and_conditions, bank_details, accent_color")
+    .select("tagline, footer_text, terms_and_conditions, bank_details, accent_color, header_image_url, footer_image_url")
     .eq("shop_id", session.shopId)
     .maybeSingle();
 
@@ -150,6 +151,10 @@ export default async function PrintBillPage({
       )}
 
       <div id="invoice-capture-area" className="bg-white">
+      {invoiceSettings?.header_image_url && (
+        // eslint-disable-next-line @next/next/no-img-element -- print page, needs to render for print dialog
+        <img src={invoiceSettings.header_image_url} alt="" className={`mb-2 w-full object-contain ${isThermal ? "max-h-12" : "max-h-20"}`} />
+      )}
       <div className="mb-1 flex items-center gap-3">
         {session.shopLogoUrl && (
           // Plain <img>, not next/image — this render also feeds the browser
@@ -190,7 +195,7 @@ export default async function PrintBillPage({
       </div>
 
       <div className={`mt-2 border-t border-dashed border-gray-400 pt-2 ${isThermal ? "" : "text-sm text-gray-700"}`}>
-        <p>Bill to: {customer?.name ?? "Walk-in customer"}</p>
+        <p>Bill to: {customer?.name ?? `Walk-in ${customerNounFor(session.businessType).toLowerCase()}`}</p>
         {bill.service_provider_name && <p>Stylist: {bill.service_provider_name}</p>}
         {customer?.phone && <p className={isThermal ? "text-[9px]" : "text-xs text-gray-500"}>{customer.phone}</p>}
         {customer?.gstin && <p className={isThermal ? "text-[9px]" : "text-xs text-gray-500"}>GSTIN: {customer.gstin}</p>}
@@ -302,6 +307,11 @@ export default async function PrintBillPage({
             <p key={i}>{line}</p>
           ))}
         </div>
+      )}
+
+      {invoiceSettings?.footer_image_url && (
+        // eslint-disable-next-line @next/next/no-img-element -- print page, needs to render for print dialog
+        <img src={invoiceSettings.footer_image_url} alt="" className={`mt-4 w-full object-contain ${isThermal ? "max-h-10" : "max-h-16"}`} />
       )}
 
       <p className={`mt-6 text-center ${isThermal ? "text-[10px]" : "text-xs text-gray-500"}`}>

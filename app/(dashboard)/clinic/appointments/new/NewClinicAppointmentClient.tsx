@@ -7,6 +7,7 @@ import Link from "next/link";
 import { createClinicAppointmentAction } from "@/lib/actions/clinic";
 import { PageHeader } from "@/app/components/PageHeader";
 import { SearchableSelect } from "@/app/components/SearchableSelect";
+import type { Lang } from "@/lib/i18n/dictionary";
 
 type Patient = { id: string; name: string; phone: string };
 
@@ -24,7 +25,7 @@ function todayIso() {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
-export function NewClinicAppointmentClient({ patients }: { patients: Patient[] }) {
+export function NewClinicAppointmentClient({ patients, lang }: { patients: Patient[]; lang: Lang }) {
   const router = useRouter();
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [patientName, setPatientName] = useState("");
@@ -62,6 +63,7 @@ export function NewClinicAppointmentClient({ patients }: { patients: Patient[] }
         <label className="flex flex-col gap-1.5 text-sm">
           <span className="font-medium text-foreground">Patient</span>
           <SearchableSelect
+            lang={lang}
             items={patients}
             getKey={(p) => p.id}
             getLabel={(p) => p.name}

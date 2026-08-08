@@ -1,5 +1,6 @@
 import { requireSession } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { getTranslator } from "@/lib/i18n/server";
 import { NewPrescriptionClient } from "./NewPrescriptionClient";
 
 export default async function NewPrescriptionPage({
@@ -8,6 +9,7 @@ export default async function NewPrescriptionPage({
   searchParams: Promise<{ appointmentId?: string; patientName?: string; patientPhone?: string }>;
 }) {
   const session = await requireSession();
+  const { lang } = await getTranslator();
   const { appointmentId, patientName, patientPhone } = await searchParams;
   const admin = createSupabaseAdminClient();
 
@@ -18,6 +20,7 @@ export default async function NewPrescriptionPage({
 
   return (
     <NewPrescriptionClient
+      lang={lang}
       patients={(patients ?? []).map((p) => ({
         id: p.id,
         name: p.name,
