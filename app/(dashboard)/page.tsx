@@ -98,6 +98,8 @@ export default async function DashboardPage() {
         <SalonHome session={session} t={t} />
       ) : session.businessType === "jewellery" ? (
         <JewelleryHome session={session} t={t} />
+      ) : session.businessType === "clinic" ? (
+        <ClinicHome session={session} t={t} />
       ) : (
         <RetailHome session={session} t={t} />
       )}
@@ -197,6 +199,126 @@ async function RetailHome({
                 </li>
               );
             })}
+          </ul>
+        )}
+      </section>
+    </>
+  );
+}
+
+// ─── Clinic / Doctor ────────────────────────────────────────────────────
+async function ClinicHome({
+  session,
+  t,
+}: {
+  session: Awaited<ReturnType<typeof requireSession>>;
+  t: (key: string, vars?: Record<string, string | number>) => string;
+}) {
+  const admin = createSupabaseAdminClient();
+  const startOfToday = new Date();
+  startOfToday.setHours(0, 0, 0, 0);
+  const startOfWeek = new Date();
+  startOfWeek.setDate(startOfWeek.getDate() - 6);
+  startOfWeek.setHours(0, 0, 0, 0);
+
+  const todayIso = `${startOfToday.getFullYear()}-${String(startOfToday.getMonth() + 1).padStart(2, "0")}-${String(startOfToday.getDate()).padStart(2, "0")}`;
+
+  const [todayBills, weekBills, recentPrescriptions, { data: todayAppointments }] = await Promise.all([
+    admin.from("bills").select("total").eq("shop_id", session.shopId).eq("status", "active").gte("created_at", startOfToday.toISOString()),
+    admin.from("bills").select("total, created_at").eq("shop_id", session.shopId).eq("status", "active").gte("created_at", startOfWeek.toISOString()),
+    admin
+      .from("prescriptions")
+      .select("id, prescription_number, patient_name, created_at")
+      .eq("shop_id", session.shopId)
+      .order("created_at", { ascending: false })
+      .limit(5),
+    admin
+      .from("clinic_appointments")
+      .select("id, patient_name, reason_for_visit, appointment_time, status")
+      .eq("shop_id", session.shopId)
+      .eq("appointment_date", todayIso)
+      .in("status", ["booked", "confirmed", "arrived", "in_consultation"])
+      .order("appointment_time", { ascending: true }),
+  ]);
+
+  const todayTotal = sum(todayBills.data?.map((b) => b.total));
+  const trend = buildSevenDayTrend(weekBills.data ?? [], "created_at");
+
+  return (
+    <>
+      <section className="rounded-xl border border-border bg-surface p-4 shadow-sm">
+        <div className="mb-1 flex items-center justify-between">
+          <p className="text-xs font-medium text-muted">Last 7 days</p>
+          <p className="text-sm font-semibold text-foreground">{formatMoney(sum(trend.map((d) => d.total)))}</p>
+        </div>
+        <SalesTrendChart data={trend} />
+      </section>
+
+      <section className="grid grid-cols-2 gap-3">
+        <StatCard label={t("home.todaySales")} value={formatMoney(todayTotal)} href="/daily-summary" icon="💰" />
+        <StatCard label="Appointments today" value={String(todayAppointments?.length ?? 0)} href="/clinic/appointments" icon="📅" />
+      </section>
+
+      <div className="grid grid-cols-2 gap-3">
+        <Link
+          href="/clinic/prescriptions/new"
+          className="flex flex-col items-center justify-center gap-1 rounded-xl px-4 py-4 text-center font-semibold text-white shadow-md"
+          style={{ background: "linear-gradient(135deg, var(--brand-light), var(--brand-dark))" }}
+        >
+          <span>📝</span>
+          New prescription
+        </Link>
+        <Link
+          href="/clinic/appointments/new"
+          className="flex flex-col items-center justify-center gap-1 rounded-xl border border-brand bg-brand-soft px-4 py-4 text-center font-semibold text-brand-dark"
+        >
+          <span>📅</span>
+          Book appointment
+        </Link>
+      </div>
+
+      {todayAppointments && todayAppointments.length > 0 && (
+        <section>
+          <h2 className="mb-2 text-sm font-semibold text-foreground">Today&apos;s appointments</h2>
+          <ul className="flex flex-col gap-2">
+            {todayAppointments.slice(0, 4).map((a) => (
+              <Link
+                key={a.id}
+                href="/clinic/appointments"
+                className="flex items-center justify-between rounded-lg border border-border bg-surface px-3.5 py-2.5 shadow-sm"
+              >
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-medium text-foreground">
+                    {a.patient_name}
+                    {a.reason_for_visit ? ` · ${a.reason_for_visit}` : ""}
+                  </p>
+                  <p className="text-xs text-muted">{a.appointment_time}</p>
+                </div>
+                <span className="shrink-0 rounded-full bg-brand-soft px-2 py-0.5 text-[11px] font-medium text-brand-dark capitalize">
+                  {a.status}
+                </span>
+              </Link>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      <section>
+        <h2 className="mb-2 text-sm font-semibold text-foreground">Recent prescriptions</h2>
+        {!recentPrescriptions.data || recentPrescriptions.data.length === 0 ? (
+          <EmptyState text="No prescriptions written yet." />
+        ) : (
+          <ul className="flex flex-col gap-2">
+            {recentPrescriptions.data.map((rx) => (
+              <li key={rx.id}>
+                <Link href={`/print/prescription/${rx.id}`} className="flex items-center justify-between rounded-lg border border-border bg-surface px-3.5 py-3 shadow-sm">
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium text-foreground">{rx.patient_name}</p>
+                    <p className="text-xs text-muted">#{rx.prescription_number} · {formatDateTime(rx.created_at)}</p>
+                  </div>
+                </Link>
+              </li>
+            ))}
           </ul>
         )}
       </section>

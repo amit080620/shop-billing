@@ -45,6 +45,9 @@ export async function createProductAction(
     makingChargeValue: formData.get("makingChargeValue") || null,
     wastagePercent: formData.get("wastagePercent") || null,
     hallmarkNumber: formData.get("hallmarkNumber"),
+    offerPrice: formData.get("offerPrice") || null,
+    offerLabel: formData.get("offerLabel"),
+    showInCatalog: formData.get("showInCatalog") !== "off",
     bulkMinQty: formData.get("bulkMinQty") || null,
     bulkPrice: formData.get("bulkPrice") || null,
   });
@@ -102,6 +105,9 @@ export async function createProductAction(
     bulk_min_qty: parsed.data.bulkMinQty ?? null,
     bulk_price: parsed.data.bulkPrice ?? null,
     hallmark_number: parsed.data.hallmarkNumber ?? null,
+    offer_price: parsed.data.offerPrice ?? null,
+    offer_label: parsed.data.offerLabel ?? null,
+    show_in_catalog: parsed.data.showInCatalog,
   });
   if (error) {
     if (error.code === "23505") {
@@ -154,6 +160,9 @@ export async function updateProductAction(
     makingChargeValue: formData.get("makingChargeValue") || null,
     wastagePercent: formData.get("wastagePercent") || null,
     hallmarkNumber: formData.get("hallmarkNumber"),
+    offerPrice: formData.get("offerPrice") || null,
+    offerLabel: formData.get("offerLabel"),
+    showInCatalog: formData.get("showInCatalog") !== "off",
     bulkMinQty: formData.get("bulkMinQty") || null,
     bulkPrice: formData.get("bulkPrice") || null,
   });
@@ -199,6 +208,9 @@ export async function updateProductAction(
       bulk_min_qty: parsed.data.bulkMinQty ?? null,
       bulk_price: parsed.data.bulkPrice ?? null,
       hallmark_number: parsed.data.hallmarkNumber ?? null,
+      offer_price: parsed.data.offerPrice ?? null,
+      offer_label: parsed.data.offerLabel ?? null,
+      show_in_catalog: parsed.data.showInCatalog,
     })
     .eq("id", productId)
     .eq("shop_id", session.shopId); // ownership check baked into the query
@@ -386,4 +398,41 @@ export async function generateBarcodeAction(
   }
 
   return { error: "Could not generate a unique barcode — try again" };
+}
+
+const PRODUCT_IMAGE_MAX_BYTES = 2 * 1024 * 1024;
+const PRODUCT_IMAGE_ALLOWED_TYPES = ["image/png", "image/jpeg", "image/webp"];
+
+export async function uploadProductImageAction(productId: string, formData: FormData): Promise<{ error?: string; imageUrl?: string }> {
+  const session = await requireSession();
+  const admin = createSupabaseAdminClient();
+
+  const file = formData.get("image");
+  if (!(file instanceof File) || file.size === 0) return { error: "Choose an image file" };
+  if (file.size > PRODUCT_IMAGE_MAX_BYTES) return { error: "Image must be under 2MB" };
+  if (!PRODUCT_IMAGE_ALLOWED_TYPES.includes(file.type)) return { error: "Use a PNG, JPG, or WEBP image" };
+
+  const { data: product } = await admin.from("products").select("id").eq("id", productId).eq("shop_id", session.shopId).single();
+  if (!product) return { error: "Item not found" };
+
+  const extension = file.name.split(".").pop() || "jpg";
+  const path = `${session.shopId}/${productId}.${extension}`;
+
+  const { error: uploadError } = await admin.storage.from("product-images").upload(path, file, { upsert: true, contentType: file.type });
+  if (uploadError) {
+    console.error("Could not upload product image", uploadError);
+    return { error: "Could not upload image" };
+  }
+
+  const { data: publicUrlData } = admin.storage.from("product-images").getPublicUrl(path);
+  const imageUrl = `${publicUrlData.publicUrl}?v=${Date.now()}`;
+
+  const { error: updateError } = await admin.from("products").update({ image_url: imageUrl }).eq("id", productId);
+  if (updateError) {
+    console.error("Could not save product image url", updateError);
+    return { error: "Uploaded, but could not save. Try again." };
+  }
+
+  revalidatePath("/products");
+  return { imageUrl };
 }

@@ -1,6 +1,6 @@
 import "server-only";
 import { redirect } from "next/navigation";
-import { createSupabaseServerClient } from "./supabase/server";
+import { getAuthenticatedUser } from "./supabase/server";
 import { createSupabaseAdminClient } from "./supabase/admin";
 
 export type SuperAdminContext = {
@@ -14,10 +14,7 @@ export type SuperAdminContext = {
  * owner/staff member's normal login will never pass this check, even
  * though both use the same underlying Supabase Auth session mechanism. */
 export async function requireSuperAdmin(): Promise<SuperAdminContext> {
-  const supabase = await createSupabaseServerClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) redirect("/admin/login");
 

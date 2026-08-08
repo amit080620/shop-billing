@@ -832,10 +832,6 @@ alter table table_order_request_items enable row level security;
 create index if not exists idx_table_order_request_items_request on table_order_request_items(request_id);
 
 -- ─── Transport & Materials business type ──────────────────────────────────
-alter table shops drop constraint if exists shops_business_type_check;
-alter table shops add constraint shops_business_type_check
-  check (business_type in ('grocery', 'restaurant', 'mart', 'hardware', 'pharmacy', 'rental', 'transport', 'general'));
-
 create table if not exists vehicles (
   id uuid primary key default uuid_generate_v4(),
   shop_id uuid not null references shops(id) on delete cascade,
@@ -924,10 +920,6 @@ alter table bill_items add column if not exists mrp numeric(12, 2);
 -- ─── Repair & Services business type (mobile repair, laundry, tailoring,
 -- AC/appliance repair, watch repair — anything that runs on "item comes
 -- in, work happens, item goes out") ────────────────────────────────────
-alter table shops drop constraint if exists shops_business_type_check;
-alter table shops add constraint shops_business_type_check
-  check (business_type in ('grocery', 'restaurant', 'mart', 'hardware', 'pharmacy', 'rental', 'transport', 'service', 'general'));
-
 create table if not exists job_counters (
   shop_id uuid not null references shops(id) on delete cascade,
   financial_year text not null,
@@ -981,10 +973,6 @@ create index if not exists idx_service_jobs_status on service_jobs(shop_id, stat
 create index if not exists idx_service_jobs_customer on service_jobs(customer_id);
 
 -- ─── Salon / Spa business type ────────────────────────────────────────────
-alter table shops drop constraint if exists shops_business_type_check;
-alter table shops add constraint shops_business_type_check
-  check (business_type in ('grocery', 'restaurant', 'mart', 'hardware', 'pharmacy', 'rental', 'transport', 'service', 'salon', 'general'));
-
 -- Which stylist/staff performed the services on this bill — a salon
 -- customer's single visit is usually one continuous service by one
 -- person, so this lives at the bill level (same reasoning as Restaurant's
@@ -996,10 +984,6 @@ alter table bills add column if not exists service_provider_name text;
 -- item (exactly like the Transport charge picker) rather than changing
 -- how the cart/billing engine works — every other vertical's billing
 -- stays untouched and just as reliable.
-alter table shops drop constraint if exists shops_business_type_check;
-alter table shops add constraint shops_business_type_check
-  check (business_type in ('grocery', 'restaurant', 'mart', 'hardware', 'pharmacy', 'rental', 'transport', 'service', 'salon', 'jewellery', 'general'));
-
 -- Gold/silver rate changes daily and applies uniformly to every item of
 -- that metal — one rate per shop per metal per day, not per product.
 create table if not exists metal_rates (
@@ -1249,3 +1233,53 @@ create table if not exists booking_settings (
 );
 alter table booking_settings enable row level security;
 create unique index if not exists idx_booking_settings_public_token on booking_settings(public_token);
+
+-- ─── Public catalog / ordering link (all business types) ──────────────────
+-- Same pattern as the QR table-ordering system built for Restaurant,
+-- generalised: any shop can share one link where anyone can browse their
+-- catalog (with photos/price/offers) and submit an order request — never
+-- an instant sale, always reviewed by staff first, since there's no
+-- online payment or live stock lock involved.
+
+alter table products add column if not exists image_url text;
+alter table products add column if not exists offer_price numeric(12, 2);
+alter table products add column if not exists offer_label text;
+alter table products add column if not exists show_in_catalog boolean not null default true;
+
+insert into storage.buckets (id, name, public)
+values ('product-images', 'product-images', true)
+on conflict (id) do nothing;
+
+create table if not exists catalog_settings (
+  shop_id uuid primary key references shops(id) on delete cascade,
+  is_enabled boolean not null default false,
+  public_token uuid not null default uuid_generate_v4(),
+  banner_text text,
+  updated_at timestamptz not null default now()
+);
+alter table catalog_settings enable row level security;
+create unique index if not exists idx_catalog_settings_public_token on catalog_settings(public_token);
+
+create table if not exists catalog_order_requests (
+  id uuid primary key default uuid_generate_v4(),
+  shop_id uuid not null references shops(id) on delete cascade,
+  customer_name text not null,
+  customer_phone text not null,
+  notes text,
+  status text not null default 'pending' check (status in ('pending', 'accepted', 'rejected')),
+  bill_id uuid references bills(id) on delete set null,
+  created_at timestamptz not null default now()
+);
+alter table catalog_order_requests enable row level security;
+create index if not exists idx_catalog_order_requests_shop on catalog_order_requests(shop_id, status);
+
+create table if not exists catalog_order_request_items (
+  id uuid primary key default uuid_generate_v4(),
+  request_id uuid not null references catalog_order_requests(id) on delete cascade,
+  product_id uuid references products(id) on delete set null,
+  product_name text not null,
+  quantity numeric(10, 2) not null default 1,
+  price_at_request numeric(12, 2) not null
+);
+alter table catalog_order_request_items enable row level security;
+create index if not exists idx_catalog_order_request_items_request on catalog_order_request_items(request_id);

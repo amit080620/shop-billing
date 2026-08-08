@@ -13,6 +13,7 @@ import {
   deleteCategoryAction,
   deleteProductAction,
   generateBarcodeAction,
+  uploadProductImageAction,
 } from "@/lib/actions/products";
 import { formatMoney } from "@/lib/format";
 import { EmptyState } from "@/app/components/EmptyState";
@@ -64,6 +65,10 @@ type Product = {
   bulkMinQty: number | null;
   bulkPrice: number | null;
   hallmarkNumber: string | null;
+  imageUrl: string | null;
+  offerPrice: number | null;
+  offerLabel: string | null;
+  showInCatalog: boolean;
 };
 type Category = { id: string; name: string };
 
@@ -165,6 +170,20 @@ export function ProductsClient({
     setGeneratingBarcodeFor(productId);
     await generateBarcodeAction(productId);
     setGeneratingBarcodeFor(null);
+    router.refresh();
+  }
+
+  const [uploadingImageFor, setUploadingImageFor] = useState<string | null>(null);
+  const [imageError, setImageError] = useState<string | null>(null);
+
+  async function handleUploadImage(productId: string, file: File) {
+    setUploadingImageFor(productId);
+    setImageError(null);
+    const formData = new FormData();
+    formData.append("image", file);
+    const result = await uploadProductImageAction(productId, formData);
+    if (result.error) setImageError(result.error);
+    setUploadingImageFor(null);
     router.refresh();
   }
   const [search, setSearch] = useState("");
@@ -396,6 +415,30 @@ export function ProductsClient({
               }}
             />
           </div>
+          <div className="flex flex-col gap-3 rounded-lg border border-dashed border-brand bg-brand-soft p-3">
+            <p className="text-xs text-brand-dark">Public catalog — shown on your shareable order link (More → Catalog link)</p>
+            <label className="flex items-center gap-2 text-sm text-foreground">
+              <input
+                type="checkbox"
+                name="showInCatalog"
+                defaultChecked={editingProduct?.showInCatalog ?? true}
+                className="h-4 w-4 rounded border-border"
+              />
+              Show this item in the public catalog
+            </label>
+            <div className="grid grid-cols-2 gap-3">
+              <Field
+                name="offerPrice"
+                label="Offer price (₹, optional)"
+                type="number"
+                min="0"
+                step="0.01"
+                placeholder="Leave blank for no offer"
+                defaultValue={editingProduct?.offerPrice != null ? String(editingProduct.offerPrice) : undefined}
+              />
+              <Field name="offerLabel" label="Offer badge (optional)" placeholder="e.g. Diwali Sale" defaultValue={editingProduct?.offerLabel ?? undefined} />
+            </div>
+          </div>
           <div className="grid grid-cols-2 gap-3">
             <Field name="hsnCode" label={t("products.hsnCode")} placeholder={t("products.hsnPlaceholder")} defaultValue={editingProduct?.hsnCode ?? undefined} />
             <label className="flex flex-col gap-1.5 text-sm">
@@ -626,6 +669,7 @@ export function ProductsClient({
       )}
 
       {deleteError && <p className="rounded-lg bg-credit-soft px-3.5 py-2.5 text-sm text-credit">{deleteError}</p>}
+      {imageError && <p className="rounded-lg bg-credit-soft px-3.5 py-2.5 text-sm text-credit">{imageError}</p>}
 
       {filtered.length === 0 ? (
         <EmptyState text={t("products.emptyShelf")} />
@@ -639,6 +683,26 @@ export function ProductsClient({
                 className="flex items-center justify-between gap-3 rounded-lg border border-border bg-surface shadow-sm px-3.5 py-3"
                 style={tone ? { borderLeft: `3px solid ${TONE_COLORS[tone]}` } : undefined}
               >
+                <label className="relative flex h-12 w-12 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-lg border border-dashed border-border bg-background text-[10px] text-muted">
+                  {p.imageUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element -- small user-uploaded thumbnail, next/image adds no value here
+                    <img src={p.imageUrl} alt="" className="h-full w-full object-cover" />
+                  ) : uploadingImageFor === p.id ? (
+                    "…"
+                  ) : (
+                    "📷"
+                  )}
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) handleUploadImage(p.id, file);
+                      e.target.value = "";
+                    }}
+                  />
+                </label>
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium text-foreground">{p.name}</p>
                   <p className="text-xs text-muted">
@@ -646,6 +710,11 @@ export function ProductsClient({
                     {p.hsnCode ? ` · HSN ${p.hsnCode}` : ""}
                     {p.barcode ? ` · 🏷 ${p.barcode}` : ""}
                   </p>
+                  {p.offerPrice != null && (
+                    <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-danger/15 px-2 py-0.5 text-[11px] font-medium text-danger">
+                      🏷️ {p.offerLabel || "Offer"}: {formatMoney(p.offerPrice)}
+                    </span>
+                  )}
                   {p.isRentable && (
                     <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-brand-soft px-2 py-0.5 text-[11px] font-medium text-brand-dark">
                       {t("products.forRent")}

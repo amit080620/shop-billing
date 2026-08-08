@@ -61,6 +61,9 @@ export const productSchema = z.object({
   makingChargeValue: z.coerce.number().min(0).nullable().optional(),
   wastagePercent: z.coerce.number().min(0).max(30).nullable().optional(),
   hallmarkNumber: optionalText(30),
+  offerPrice: z.coerce.number().min(0).nullable().optional(),
+  offerLabel: optionalText(40),
+  showInCatalog: z.coerce.boolean().default(true),
   bulkMinQty: z.coerce.number().min(0).nullable().optional(),
   bulkPrice: z.coerce.number().min(0).nullable().optional(),
 });

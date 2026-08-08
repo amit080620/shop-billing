@@ -1,7 +1,7 @@
 import "server-only";
 
 import { redirect } from "next/navigation";
-import { createSupabaseServerClient } from "./supabase/server";
+import { getAuthenticatedUser } from "./supabase/server";
 import { createSupabaseAdminClient } from "./supabase/admin";
 
 export type SessionContext = {
@@ -28,11 +28,7 @@ export type SessionContext = {
  * what matters is that callers use this ONE helper instead of re-querying.
  */
 export async function requireSession(): Promise<SessionContext> {
-  const supabase = await createSupabaseServerClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     redirect("/login");

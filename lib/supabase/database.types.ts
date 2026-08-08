@@ -150,6 +150,10 @@ export interface Database {
           bulk_min_qty: number | null;
           bulk_price: number | null;
           hallmark_number: string | null;
+          image_url: string | null;
+          offer_price: number | null;
+          offer_label: string | null;
+          show_in_catalog: boolean;
           created_at: string;
         };
         Insert: {
@@ -189,6 +193,10 @@ export interface Database {
           bulk_min_qty?: number | null;
           bulk_price?: number | null;
           hallmark_number?: string | null;
+          image_url?: string | null;
+          offer_price?: number | null;
+          offer_label?: string | null;
+          show_in_catalog?: boolean;
           created_at?: string;
         };
         Update: {
@@ -228,6 +236,10 @@ export interface Database {
           bulk_min_qty?: number | null;
           bulk_price?: number | null;
           hallmark_number?: string | null;
+          image_url?: string | null;
+          offer_price?: number | null;
+          offer_label?: string | null;
+          show_in_catalog?: boolean;
           created_at?: string;
         };
         Relationships: [
@@ -679,6 +691,28 @@ export interface Database {
         Insert: { shop_id: string; header_text?: string | null; footer_text?: string | null; show_shop_logo?: boolean; custom_field_labels?: string[]; updated_at?: string };
         Update: { shop_id?: string; header_text?: string | null; footer_text?: string | null; show_shop_logo?: boolean; custom_field_labels?: string[]; updated_at?: string };
         Relationships: [];
+      };
+      catalog_settings: {
+        Row: { shop_id: string; is_enabled: boolean; public_token: string; banner_text: string | null; updated_at: string };
+        Insert: { shop_id: string; is_enabled?: boolean; public_token?: string; banner_text?: string | null; updated_at?: string };
+        Update: { shop_id?: string; is_enabled?: boolean; public_token?: string; banner_text?: string | null; updated_at?: string };
+        Relationships: [];
+      };
+      catalog_order_requests: {
+        Row: { id: string; shop_id: string; customer_name: string; customer_phone: string; notes: string | null; status: "pending" | "accepted" | "rejected"; bill_id: string | null; created_at: string };
+        Insert: { id?: string; shop_id: string; customer_name: string; customer_phone: string; notes?: string | null; status?: "pending" | "accepted" | "rejected"; bill_id?: string | null; created_at?: string };
+        Update: { id?: string; shop_id?: string; customer_name?: string; customer_phone?: string; notes?: string | null; status?: "pending" | "accepted" | "rejected"; bill_id?: string | null; created_at?: string };
+        Relationships: [
+          { foreignKeyName: "catalog_order_requests_bill_id_fkey"; columns: ["bill_id"]; isOneToOne: false; referencedRelation: "bills"; referencedColumns: ["id"] },
+        ];
+      };
+      catalog_order_request_items: {
+        Row: { id: string; request_id: string; product_id: string | null; product_name: string; quantity: number; price_at_request: number };
+        Insert: { id?: string; request_id: string; product_id?: string | null; product_name: string; quantity?: number; price_at_request: number };
+        Update: { id?: string; request_id?: string; product_id?: string | null; product_name?: string; quantity?: number; price_at_request?: number };
+        Relationships: [
+          { foreignKeyName: "catalog_order_request_items_request_id_fkey"; columns: ["request_id"]; isOneToOne: false; referencedRelation: "catalog_order_requests"; referencedColumns: ["id"] },
+        ];
       };
       booking_settings: {
         Row: { shop_id: string; slot_duration_minutes: number; working_hours: Record<string, { start: string; end: string }[]>; is_public_booking_enabled: boolean; public_token: string; updated_at: string };

@@ -33,3 +33,41 @@ export async function createSupabaseServerClient() {
     },
   );
 }
+
+/**
+ * Wraps supabase.auth.getUser() so an invalid/expired refresh token never
+ * surfaces as an unhandled AuthApiError — this happens naturally whenever
+ * a browser holds onto old session cookies past their refresh window
+ * (e.g. after a long time away, or the project's JWT secret rotated).
+ * Treats any auth failure as "not logged in" rather than throwing, and
+ * proactively signs out to clear the stale cookies so the next request
+ * starts clean instead of hitting the same broken refresh repeatedly.
+ */
+export async function getAuthenticatedUser() {
+  const supabase = await createSupabaseServerClient();
+  try {
+    const {
+      data: { user },
+      error,
+    } = await supabase.auth.getUser();
+
+    if (error) {
+      if (error.code === "refresh_token_not_found" || error.status === 400) {
+        await supabase.auth.signOut();
+      }
+      return null;
+    }
+    return user;
+  } catch {
+    // A thrown AuthApiError (some SDK paths throw rather than return an
+    // error field) or a transient network failure calling Supabase Auth
+    // itself — either way, the caller should treat this as "no session"
+    // and redirect to login, not crash the page.
+    try {
+      await supabase.auth.signOut();
+    } catch {
+      // Already broken; nothing more to clean up.
+    }
+    return null;
+  }
+}

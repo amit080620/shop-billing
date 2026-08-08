@@ -238,6 +238,40 @@ const JEWELLERY_SLIDES: Slide[] = [
   },
 ];
 
+const CLINIC_SLIDES: Slide[] = [
+  {
+    icon: "👋",
+    title: "Welcome — this app is set up for your clinic",
+    body: "A quick 30-second look at where everything lives — you can always come back to this from More → Help.",
+  },
+  {
+    icon: "🧾",
+    title: "Set your prescription pad first",
+    body: "More → Clinic → Prescription pad settings — add your letterhead (name, qualifications, reg. no.) and the Rx fields you actually use (Chief Complaint, Diagnosis, Lab Tests — add as many as you like).",
+  },
+  {
+    icon: "📅",
+    title: "Book appointments",
+    body: "Bottom tab → Appointments lets you book a patient's visit in advance. You can also share an online booking link from More → Clinic → Online booking, so patients book their own slot.",
+  },
+  {
+    icon: "📝",
+    title: "Write a prescription",
+    body: "Bottom tab → New Rx — search medicines from the built-in library as you type, fill in your custom fields, and print a clean, letterhead-style prescription.",
+  },
+  {
+    icon: "💊",
+    title: "Prescription → bill",
+    body: "On the printed prescription, tap Generate bill — medicines that match your product catalog bill at real prices and reduce real stock, everything else still bills as a normal line.",
+  },
+  {
+    icon: "⚙️",
+    title: "One last thing",
+    body: "If you haven't already, set your shop's state under More → GST & shop profile — billing is blocked until that's filled in, since it decides CGST+SGST vs IGST on every invoice.",
+    cta: { label: "Go to GST profile", href: "/settings" },
+  },
+];
+
 function slidesFor(businessType: string) {
   if (businessType === "restaurant") return RESTAURANT_SLIDES;
   if (businessType === "rental") return RENTAL_SLIDES;
@@ -245,6 +279,7 @@ function slidesFor(businessType: string) {
   if (businessType === "service") return SERVICE_SLIDES;
   if (businessType === "salon") return SALON_SLIDES;
   if (businessType === "jewellery") return JEWELLERY_SLIDES;
+  if (businessType === "clinic") return CLINIC_SLIDES;
   return RETAIL_SLIDES;
 }
 
