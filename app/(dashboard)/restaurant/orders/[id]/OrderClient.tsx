@@ -23,7 +23,7 @@ import type { Lang } from "@/lib/i18n/dictionary";
 
 type Product = { id: string; name: string; price: number; category: string };
 type Combo = { id: string; name: string; price: number };
-type Item = { id: string; productName: string; quantity: number; unitPrice: number; lineTotal: number; status: "pending" | "ready" | "served" };
+type Item = { id: string; productName: string; quantity: number; unitPrice: number; lineTotal: number; status: "pending" | "ready" | "served" | "cancelled" };
 type Order = {
   id: string;
   orderNumber: string;

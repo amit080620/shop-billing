@@ -1441,3 +1441,18 @@ create unique index if not exists idx_gym_attendance_one_open_per_member
 alter table rentals add column if not exists edited_at timestamptz;
 alter table rentals add column if not exists edited_by uuid references staff(id);
 alter table rentals add column if not exists edit_reason text;
+
+-- ─── KDS: order revision tracking ──────────────────────────────────────────
+-- Previously, removing an item already sent to the kitchen just silently
+-- deleted the row — the KDS screen would lose it on the next poll with
+-- no indication anything changed, even if the cook was already
+-- preparing it. Now: an item already sent to kitchen (kot_printed=true)
+-- gets marked 'cancelled' instead of deleted, so it stays visible
+-- (struck through) until acknowledged, and the whole ticket flashes
+-- "revised" so kitchen staff notice without having to compare orders
+-- from memory.
+alter table restaurant_order_items drop constraint if exists restaurant_order_items_status_check;
+alter table restaurant_order_items add constraint restaurant_order_items_status_check
+  check (status in ('pending', 'ready', 'served', 'cancelled'));
+
+alter table restaurant_orders add column if not exists revised_at timestamptz;

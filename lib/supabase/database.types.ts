@@ -1409,6 +1409,7 @@ export interface Database {
           settled_at: string | null;
           cancelled_at: string | null;
           cancel_reason: string | null;
+          revised_at: string | null;
           created_at: string;
         };
         Insert: {
@@ -1437,6 +1438,7 @@ export interface Database {
           settled_at?: string | null;
           cancelled_at?: string | null;
           cancel_reason?: string | null;
+          revised_at?: string | null;
           created_at?: string;
         };
         Update: {
@@ -1465,6 +1467,7 @@ export interface Database {
           settled_at?: string | null;
           cancelled_at?: string | null;
           cancel_reason?: string | null;
+          revised_at?: string | null;
           created_at?: string;
         };
         Relationships: [
@@ -1487,7 +1490,7 @@ export interface Database {
           igst_amount: number;
           line_total: number;
           kot_printed: boolean;
-          status: "pending" | "ready" | "served";
+          status: "pending" | "ready" | "served" | "cancelled";
           created_at: string;
         };
         Insert: {
@@ -1504,7 +1507,7 @@ export interface Database {
           igst_amount?: number;
           line_total: number;
           kot_printed?: boolean;
-          status?: "pending" | "ready" | "served";
+          status?: "pending" | "ready" | "served" | "cancelled";
           created_at?: string;
         };
         Update: {
@@ -1521,7 +1524,7 @@ export interface Database {
           igst_amount?: number;
           line_total?: number;
           kot_printed?: boolean;
-          status?: "pending" | "ready" | "served";
+          status?: "pending" | "ready" | "served" | "cancelled";
           created_at?: string;
         };
         Relationships: [

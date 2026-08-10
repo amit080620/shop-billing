@@ -253,8 +253,39 @@ export async function removeOrderItemAction(orderItemId: string, orderId: string
     .single();
   if (!order || order.status !== "open") return { error: "This order is no longer open" };
 
-  await admin.from("restaurant_order_items").delete().eq("id", orderItemId).eq("order_id", orderId);
+  const { data: item } = await admin.from("restaurant_order_items").select("id, kot_printed, status").eq("id", orderItemId).eq("order_id", orderId).single();
+  if (!item) return { error: "Item not found" };
+
+  if (item.kot_printed && item.status !== "served") {
+    // Already sent to the kitchen — the cook may be mid-preparation, so
+    // this can't just vanish. Mark it cancelled (stays visible, struck
+    // through, on the KDS) and flag the whole ticket as revised so it
+    // flashes for attention instead of silently changing on the next poll.
+    await admin.from("restaurant_order_items").update({ status: "cancelled" }).eq("id", orderItemId);
+    await admin.from("restaurant_orders").update({ revised_at: new Date().toISOString() }).eq("id", orderId);
+  } else {
+    // Never sent to the kitchen (or already served) — nothing on the
+    // KDS to confuse, safe to remove outright.
+    await admin.from("restaurant_order_items").delete().eq("id", orderItemId).eq("order_id", orderId);
+  }
+
   await recalcOrderTotals(orderId);
+  revalidatePath(`/restaurant/orders/${orderId}`);
+  return {};
+}
+
+/** Kitchen taps this once they've seen a revised ticket — clears the
+ * flash and permanently removes any cancelled items from view (their
+ * job here is done, no reason to keep clutter on screen). */
+export async function acknowledgeRevisionAction(orderId: string): Promise<{ error?: string }> {
+  const session = await requireSession();
+  const admin = createSupabaseAdminClient();
+
+  const { data: order } = await admin.from("restaurant_orders").select("id").eq("id", orderId).eq("shop_id", session.shopId).single();
+  if (!order) return { error: "Order not found" };
+
+  await admin.from("restaurant_order_items").delete().eq("order_id", orderId).eq("status", "cancelled");
+  await admin.from("restaurant_orders").update({ revised_at: null }).eq("id", orderId);
   revalidatePath(`/restaurant/orders/${orderId}`);
   return {};
 }
