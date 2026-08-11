@@ -18,7 +18,8 @@ export async function createReservationAction(
   const partySize = formData.get("partySize");
   const reservationDate = formData.get("reservationDate");
   const reservationTime = formData.get("reservationTime");
-  const tablePreference = formData.get("tablePreference");
+  const tableId = formData.get("tableId");
+  const tokenAmount = formData.get("tokenAmount");
   const notes = formData.get("notes");
   const customerId = formData.get("customerId");
 
@@ -35,7 +36,8 @@ export async function createReservationAction(
     party_size: partySize ? Math.max(1, Number(partySize)) : 2,
     reservation_date: reservationDate,
     reservation_time: reservationTime,
-    table_preference: typeof tablePreference === "string" && tablePreference.trim() ? tablePreference.trim() : null,
+    table_id: typeof tableId === "string" && tableId ? tableId : null,
+    token_amount: tokenAmount ? Math.max(0, Number(tokenAmount)) : 0,
     notes: typeof notes === "string" && notes.trim() ? notes.trim() : null,
     staff_id: session.userId,
   });
@@ -45,18 +47,27 @@ export async function createReservationAction(
   }
 
   revalidatePath("/restaurant/reservations");
+  revalidatePath("/restaurant");
   return null;
 }
 
 export async function updateReservationStatusAction(
   reservationId: string,
   status: "booked" | "confirmed" | "seated" | "cancelled" | "no_show",
+  refund?: { refundType: "none" | "partial" | "full"; refundAmount: number },
 ): Promise<{ error?: string }> {
   const session = await requireSession();
   const admin = createSupabaseAdminClient();
+
+  const updates: { status: typeof status; refund_type?: "none" | "partial" | "full"; refund_amount?: number } = { status };
+  if ((status === "cancelled" || status === "no_show") && refund) {
+    updates.refund_type = refund.refundType;
+    updates.refund_amount = refund.refundAmount;
+  }
+
   const { error } = await admin
     .from("restaurant_reservations")
-    .update({ status })
+    .update(updates)
     .eq("id", reservationId)
     .eq("shop_id", session.shopId);
   if (error) {
@@ -64,6 +75,7 @@ export async function updateReservationStatusAction(
     return { error: "Could not update reservation" };
   }
   revalidatePath("/restaurant/reservations");
+  revalidatePath("/restaurant");
   return {};
 }
 
@@ -76,5 +88,6 @@ export async function deleteReservationAction(reservationId: string): Promise<{ 
     return { error: "Could not delete reservation" };
   }
   revalidatePath("/restaurant/reservations");
+  revalidatePath("/restaurant");
   return {};
 }

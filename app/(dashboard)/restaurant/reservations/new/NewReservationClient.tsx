@@ -25,7 +25,7 @@ function todayIso() {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
-export function NewReservationClient({ customers, lang }: { customers: Customer[]; lang: Lang }) {
+export function NewReservationClient({ customers, tables, lang }: { customers: Customer[]; tables: { id: string; name: string }[]; lang: Lang }) {
   const router = useRouter();
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [customerName, setCustomerName] = useState("");
@@ -117,12 +117,28 @@ export function NewReservationClient({ customers, lang }: { customers: Customer[
         </div>
 
         <label className="flex flex-col gap-1.5 text-sm">
-          <span className="font-medium text-foreground">Table preference (optional)</span>
+          <span className="font-medium text-foreground">Table (optional — blocks it for this slot)</span>
+          <select name="tableId" className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-brand">
+            <option value="">No specific table</option>
+            {tables.map((t) => (
+              <option key={t.id} value={t.id}>
+                {t.name}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label className="flex flex-col gap-1.5 text-sm">
+          <span className="font-medium text-foreground">Token / advance amount (₹, optional)</span>
           <input
-            name="tablePreference"
-            placeholder="e.g. Window seat, outdoor"
+            name="tokenAmount"
+            type="number"
+            min="0"
+            step="0.01"
+            placeholder="e.g. 500"
             className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-brand"
           />
+          <span className="text-xs text-muted">Automatically deducted from their final bill when they&apos;re seated and billed.</span>
         </label>
 
         <label className="flex flex-col gap-1.5 text-sm">

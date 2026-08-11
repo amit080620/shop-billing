@@ -165,6 +165,21 @@ export async function startOrderAction(tableId: string): Promise<{ orderId?: str
 
   const orderNumber = `${financialYear}/T${String(issuedNumber).padStart(5, "0")}`;
 
+  // If this table has an active reservation for today, link it —
+  // whatever token was collected then automatically comes off this
+  // bill at settle time, no separate step for staff to remember.
+  const todayIso = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, "0")}-${String(new Date().getDate()).padStart(2, "0")}`;
+  const { data: matchingReservation } = await admin
+    .from("restaurant_reservations")
+    .select("id")
+    .eq("shop_id", session.shopId)
+    .eq("table_id", tableId)
+    .eq("reservation_date", todayIso)
+    .in("status", ["booked", "confirmed"])
+    .order("reservation_time", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+
   const { data: order, error } = await admin
     .from("restaurant_orders")
     .insert({
@@ -174,6 +189,7 @@ export async function startOrderAction(tableId: string): Promise<{ orderId?: str
       order_number: orderNumber,
       financial_year: financialYear,
       supply_type: determineSupplyType(session.shopStateCode, null),
+      reservation_id: matchingReservation?.id ?? null,
     })
     .select("id")
     .single();
@@ -194,8 +210,13 @@ export async function startOrderAction(tableId: string): Promise<{ orderId?: str
     return { error: "Could not start order" };
   }
 
+  if (matchingReservation) {
+    await admin.from("restaurant_reservations").update({ status: "seated" }).eq("id", matchingReservation.id);
+  }
+
   await admin.from("restaurant_tables").update({ status: "occupied" }).eq("id", tableId);
   revalidatePath("/restaurant");
+  revalidatePath("/restaurant/reservations");
   return { orderId: order.id };
 }
 
@@ -336,7 +357,7 @@ export async function settleOrderAction(
 
   const { data: order } = await admin
     .from("restaurant_orders")
-    .select("id, status, table_id, total, taxable_amount, discount_value, discount_type")
+    .select("id, status, table_id, total, taxable_amount, discount_value, discount_type, reservation_id")
     .eq("id", orderId)
     .eq("shop_id", session.shopId)
     .single();
@@ -348,19 +369,30 @@ export async function settleOrderAction(
     await recalcOrderTotals(orderId);
   }
 
-  if (payments.length === 0) return { error: "Add at least one payment" };
+  if (payments.length === 0 && !order.reservation_id) return { error: "Add at least one payment" };
   if (payments.some((p) => !Number.isFinite(p.amount) || p.amount <= 0)) {
     return { error: "Each payment amount must be greater than 0" };
   }
 
+  // A reservation token collected at booking time counts as already
+  // paid — recorded as its own payment row (method "other", noted in
+  // the amount) so it's traceable on the bill rather than an invisible
+  // top-up nobody can explain later.
+  let tokenAlreadyPaid = 0;
+  if (order.reservation_id) {
+    const { data: reservation } = await admin.from("restaurant_reservations").select("token_amount").eq("id", order.reservation_id).single();
+    tokenAlreadyPaid = round2(Number(reservation?.token_amount ?? 0));
+  }
+
   const { data: freshOrder } = await admin.from("restaurant_orders").select("total").eq("id", orderId).single();
   const total = Number(freshOrder?.total ?? order.total);
-  const paidAmount = round2(payments.reduce((s, p) => s + p.amount, 0));
+  const paidAmount = round2(payments.reduce((s, p) => s + p.amount, 0) + tokenAlreadyPaid);
   const creditAmount = round2(Math.max(0, total - paidAmount));
 
-  const { error: paymentsError } = await admin.from("restaurant_order_payments").insert(
-    payments.map((p) => ({ order_id: orderId, payment_method: p.method, amount: p.amount })),
-  );
+  const paymentRows = payments.map((p) => ({ order_id: orderId, payment_method: p.method, amount: p.amount }));
+  if (tokenAlreadyPaid > 0) paymentRows.push({ order_id: orderId, payment_method: "other" as const, amount: tokenAlreadyPaid });
+
+  const { error: paymentsError } = await admin.from("restaurant_order_payments").insert(paymentRows);
   if (paymentsError) return { error: "Could not save payment" };
 
   await admin

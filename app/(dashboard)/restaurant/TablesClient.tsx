@@ -16,7 +16,16 @@ import { EmptyState } from "@/app/components/EmptyState";
 import { useTranslation } from "@/lib/i18n/useTranslation";
 import type { Lang } from "@/lib/i18n/dictionary";
 
-type Table = { id: string; name: string; status: "free" | "occupied"; openOrderId: string | null; openOrderTotal: number; readyCount: number; qrToken: string };
+type Table = {
+  id: string;
+  name: string;
+  status: "free" | "occupied";
+  openOrderId: string | null;
+  openOrderTotal: number;
+  readyCount: number;
+  qrToken: string;
+  reservation: { customerName: string; time: string; partySize: number } | null;
+};
 type PendingRequest = { id: string; tableId: string; tableName: string; customerName: string | null; createdAt: string; items: { name: string; quantity: number }[] };
 
 export function TablesClient({ tables, lang }: { tables: Table[]; lang: Lang }) {
@@ -177,11 +186,22 @@ export function TablesClient({ tables, lang }: { tables: Table[]; lang: Lang }) 
               onClick={() => handleTableTap(table)}
               className={`relative flex flex-col items-center justify-center gap-1 rounded-xl border p-4 shadow-sm ${
                 isPending ? "opacity-60" : ""
-              } ${table.status === "occupied" ? "border-danger bg-red-50" : "border-brand bg-brand-soft"}`}
+              } ${
+                table.status === "occupied"
+                  ? "border-danger bg-red-50"
+                  : table.reservation
+                    ? "border-amber-500 bg-amber-50"
+                    : "border-brand bg-brand-soft"
+              }`}
             >
               {table.readyCount > 0 && (
                 <span className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-brand text-[10px] font-bold text-white">
                   🔔
+                </span>
+              )}
+              {!table.readyCount && table.status !== "occupied" && table.reservation && (
+                <span className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-amber-500 text-[10px] font-bold text-white">
+                  📅
                 </span>
               )}
               <button
@@ -194,11 +214,15 @@ export function TablesClient({ tables, lang }: { tables: Table[]; lang: Lang }) 
               >
                 ▦
               </button>
-              <span className={`text-sm font-semibold ${table.status === "occupied" ? "text-danger" : "text-brand-dark"}`}>
+              <span className={`text-sm font-semibold ${table.status === "occupied" ? "text-danger" : table.reservation ? "text-amber-700" : "text-brand-dark"}`}>
                 {table.name}
               </span>
-              <span className={`text-[11px] ${table.status === "occupied" ? "text-danger" : "text-brand-dark"}`}>
-                {table.status === "occupied" ? formatMoney(table.openOrderTotal) : t("tables.free")}
+              <span className={`text-[11px] ${table.status === "occupied" ? "text-danger" : table.reservation ? "text-amber-700" : "text-brand-dark"}`}>
+                {table.status === "occupied"
+                  ? formatMoney(table.openOrderTotal)
+                  : table.reservation
+                    ? `📅 ${table.reservation.time} — ${table.reservation.customerName}`
+                    : t("tables.free")}
               </span>
             </div>
           ))}

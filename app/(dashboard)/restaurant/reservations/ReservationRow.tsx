@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { updateReservationStatusAction, deleteReservationAction } from "@/lib/actions/reservations";
 import { useTranslation } from "@/lib/i18n/useTranslation";
+import { formatMoney } from "@/lib/format";
 import type { Lang } from "@/lib/i18n/dictionary";
 
 type Reservation = {
@@ -12,9 +13,10 @@ type Reservation = {
   customerPhone: string;
   partySize: number;
   time: string;
-  tablePreference: string | null;
+  tableName: string | null;
   status: "booked" | "confirmed" | "seated" | "cancelled" | "no_show";
   notes: string | null;
+  tokenAmount: number;
 };
 
 const STATUS_LABELS: Record<string, string> = {
@@ -44,16 +46,29 @@ export function ReservationRow({ reservation, lang }: { reservation: Reservation
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [refundFlow, setRefundFlow] = useState<"cancelled" | "no_show" | null>(null);
 
-  function setStatus(status: Reservation["status"]) {
+  function setStatus(status: Reservation["status"], refund?: { refundType: "none" | "partial" | "full"; refundAmount: number }) {
     startTransition(async () => {
-      const result = await updateReservationStatusAction(reservation.id, status);
+      const result = await updateReservationStatusAction(reservation.id, status, refund);
       if (result.error) {
         setError(result.error);
         return;
       }
+      setRefundFlow(null);
       router.refresh();
     });
+  }
+
+  // A token was collected — cancelling/no-show needs a refund decision
+  // before it's final, since "the money just disappears" is exactly
+  // the kind of silent surprise that causes disputes later.
+  function requestStop(status: "cancelled" | "no_show") {
+    if (reservation.tokenAmount > 0) {
+      setRefundFlow(status);
+    } else {
+      setStatus(status);
+    }
   }
 
   return (
@@ -63,8 +78,9 @@ export function ReservationRow({ reservation, lang }: { reservation: Reservation
           <p className="text-sm font-semibold text-foreground">{reservation.time} · {reservation.partySize} pax</p>
           <p className="text-xs text-muted">
             {reservation.customerName} · {reservation.customerPhone}
-            {reservation.tablePreference ? ` · ${reservation.tablePreference}` : ""}
+            {reservation.tableName ? ` · ${reservation.tableName}` : ""}
           </p>
+          {reservation.tokenAmount > 0 && <p className="text-xs text-brand">Token collected: {formatMoney(reservation.tokenAmount)}</p>}
           {reservation.notes && <p className="text-xs text-muted">{reservation.notes}</p>}
         </div>
         <span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-medium ${STATUS_TONE[reservation.status]}`}>
@@ -89,11 +105,15 @@ export function ReservationRow({ reservation, lang }: { reservation: Reservation
           <button onClick={() => setStatus("seated")} disabled={isPending} className="rounded-lg border border-border px-2.5 py-1 text-xs font-medium text-foreground disabled:opacity-60">
             Mark seated
           </button>
-          <button onClick={() => setStatus("no_show")} disabled={isPending} className="rounded-lg border border-danger px-2.5 py-1 text-xs font-medium text-danger disabled:opacity-60">
+          <button onClick={() => requestStop("no_show")} disabled={isPending} className="rounded-lg border border-danger px-2.5 py-1 text-xs font-medium text-danger disabled:opacity-60">
             No-show
           </button>
           <button
             onClick={() => {
+              if (reservation.tokenAmount > 0) {
+                requestStop("cancelled");
+                return;
+              }
               if (!confirm("Cancel this reservation?")) return;
               startTransition(async () => {
                 await deleteReservationAction(reservation.id);
@@ -105,6 +125,45 @@ export function ReservationRow({ reservation, lang }: { reservation: Reservation
           >
             Cancel
           </button>
+        </div>
+      )}
+
+      {refundFlow && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 sm:items-center" onClick={() => setRefundFlow(null)}>
+          <div className="w-full max-w-sm rounded-t-2xl bg-surface p-5 sm:rounded-2xl" onClick={(e) => e.stopPropagation()}>
+            <p className="text-sm font-semibold text-foreground">
+              {refundFlow === "cancelled" ? "Cancel" : "Mark no-show for"} {reservation.customerName}
+            </p>
+            <p className="mt-1 text-xs text-muted">
+              A token of {formatMoney(reservation.tokenAmount)} was collected. What happens to it?
+            </p>
+            <div className="mt-3 flex flex-col gap-2">
+              <button
+                onClick={() => setStatus(refundFlow, { refundType: "full", refundAmount: reservation.tokenAmount })}
+                disabled={isPending}
+                className="rounded-lg border border-border px-3 py-2.5 text-left text-sm text-foreground disabled:opacity-60"
+              >
+                💯 Full refund — {formatMoney(reservation.tokenAmount)} back to customer
+              </button>
+              <button
+                onClick={() => setStatus(refundFlow, { refundType: "partial", refundAmount: reservation.tokenAmount / 2 })}
+                disabled={isPending}
+                className="rounded-lg border border-border px-3 py-2.5 text-left text-sm text-foreground disabled:opacity-60"
+              >
+                ➗ 50% refund — {formatMoney(reservation.tokenAmount / 2)} back, {formatMoney(reservation.tokenAmount / 2)} kept
+              </button>
+              <button
+                onClick={() => setStatus(refundFlow, { refundType: "none", refundAmount: 0 })}
+                disabled={isPending}
+                className="rounded-lg border border-border px-3 py-2.5 text-left text-sm text-foreground disabled:opacity-60"
+              >
+                🚫 No refund — full {formatMoney(reservation.tokenAmount)} kept
+              </button>
+            </div>
+            <button onClick={() => setRefundFlow(null)} className="mt-3 w-full rounded-lg border border-border px-4 py-2 text-sm font-medium text-muted">
+              {t("common.cancel")}
+            </button>
+          </div>
         </div>
       )}
     </li>

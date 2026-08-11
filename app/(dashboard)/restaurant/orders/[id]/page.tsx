@@ -24,10 +24,13 @@ export default async function OrderPage({
     return <p className="text-sm text-muted">Order not found.</p>;
   }
 
-  const [{ data: items }, { data: products }, { data: combos }] = await Promise.all([
+  const [{ data: items }, { data: products }, { data: combos }, { data: linkedReservation }] = await Promise.all([
     admin.from("restaurant_order_items").select("*").eq("order_id", id).order("created_at"),
     admin.from("products").select("id, name, price, gst_percent, category_id, categories ( name )").eq("shop_id", session.shopId).order("name"),
     admin.from("combos").select("id, name, price").eq("shop_id", session.shopId).eq("is_active", true).order("name"),
+    order.reservation_id
+      ? admin.from("restaurant_reservations").select("token_amount").eq("id", order.reservation_id).maybeSingle()
+      : Promise.resolve({ data: null }),
   ]);
 
   const { data: otherOpenOrders } = await admin
@@ -56,6 +59,7 @@ export default async function OrderPage({
         tableName: table?.name ?? "Table",
         orderType: order.order_type,
         waiterName: order.waiter_name,
+        reservationTokenAmount: linkedReservation ? Number(linkedReservation.token_amount) : 0,
       }}
       items={(items ?? []).map((i) => ({
         id: i.id,

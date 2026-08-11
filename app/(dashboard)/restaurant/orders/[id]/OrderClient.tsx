@@ -37,6 +37,7 @@ type Order = {
   igstAmount: number;
   total: number;
   tableName: string;
+  reservationTokenAmount: number;
 };
 
 export function OrderClient({
@@ -68,9 +69,11 @@ export function OrderClient({
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [waiterName, setWaiterName] = useState(order.waiterName ?? "");
 
-  function addItem(p: Product) {
+  const [pickingProduct, setPickingProduct] = useState<Product | null>(null);
+
+  function addItem(p: Product, quantity: number) {
     startTransition(async () => {
-      const result = await addOrderItemAction(order.id, p.id, 1);
+      const result = await addOrderItemAction(order.id, p.id, quantity);
       if (result.error) setError(result.error);
       router.refresh();
     });
@@ -225,7 +228,7 @@ export function OrderClient({
                 <button
                   key={p.id}
                   type="button"
-                  onClick={() => addItem(p)}
+                  onClick={() => setPickingProduct(p)}
                   className="flex flex-col items-start gap-0.5 rounded-lg border border-border bg-surface px-3 py-2.5 text-left"
                 >
                   <span className="truncate text-sm font-medium text-foreground">{p.name}</span>
@@ -240,7 +243,7 @@ export function OrderClient({
               getKey={(p) => p.id}
               getLabel={(p) => p.name}
               getSubLabel={(p) => formatMoney(p.price)}
-              onSelect={addItem}
+              onSelect={(p) => setPickingProduct(p)}
               placeholder={t("order.searchMenu")}
             />
           )}
@@ -334,6 +337,7 @@ export function OrderClient({
         <SettleModal
           orderId={order.id}
           total={order.total}
+          reservationTokenAmount={order.reservationTokenAmount}
           onClose={() => setShowSettle(false)}
           onDone={() => router.push("/restaurant")}
           t={t}
@@ -380,6 +384,79 @@ export function OrderClient({
           }
         }
       `}</style>
+      {pickingProduct && (
+        <QuantityPickerModal
+          product={pickingProduct}
+          onConfirm={(qty) => {
+            addItem(pickingProduct, qty);
+            setPickingProduct(null);
+          }}
+          onClose={() => setPickingProduct(null)}
+        />
+      )}
+    </div>
+  );
+}
+
+function QuantityPickerModal({
+  product,
+  onConfirm,
+  onClose,
+}: {
+  product: Product;
+  onConfirm: (quantity: number) => void;
+  onClose: () => void;
+}) {
+  const [quantity, setQuantity] = useState(1);
+  const quickPicks = [1, 2, 3, 4, 5, 6];
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 sm:items-center" onClick={onClose}>
+      <div className="w-full max-w-sm rounded-t-2xl bg-surface p-5 sm:rounded-2xl" onClick={(e) => e.stopPropagation()}>
+        <p className="text-sm font-semibold text-foreground">{product.name}</p>
+        <p className="text-xs text-muted">{formatMoney(product.price)} each</p>
+
+        <div className="mt-4 flex items-center justify-center gap-4">
+          <button
+            onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+            className="flex h-11 w-11 items-center justify-center rounded-full border border-border text-xl font-bold text-foreground"
+          >
+            −
+          </button>
+          <span className="w-12 text-center text-3xl font-bold text-foreground">{quantity}</span>
+          <button
+            onClick={() => setQuantity((q) => q + 1)}
+            className="flex h-11 w-11 items-center justify-center rounded-full border border-border text-xl font-bold text-foreground"
+          >
+            +
+          </button>
+        </div>
+
+        <div className="mt-4 flex justify-center gap-1.5">
+          {quickPicks.map((n) => (
+            <button
+              key={n}
+              onClick={() => setQuantity(n)}
+              className={`h-9 w-9 rounded-full border text-sm font-semibold ${
+                quantity === n ? "border-brand bg-brand-soft text-brand-dark" : "border-border text-muted"
+              }`}
+            >
+              {n}
+            </button>
+          ))}
+        </div>
+
+        <p className="mt-4 text-center text-sm text-muted">Total: {formatMoney(product.price * quantity)}</p>
+
+        <div className="mt-4 flex gap-2">
+          <button onClick={() => onConfirm(quantity)} className="btn-primary flex-1 text-center">
+            Add {quantity} to order
+          </button>
+          <button onClick={onClose} className="rounded-lg border border-border px-4 py-2 text-sm font-medium text-muted">
+            Cancel
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
@@ -463,24 +540,27 @@ function BillPrintView({
 function SettleModal({
   orderId,
   total,
+  reservationTokenAmount,
   onClose,
   onDone,
   t,
 }: {
   orderId: string;
   total: number;
+  reservationTokenAmount: number;
   onClose: () => void;
   onDone: () => void;
   t: Translator;
 }) {
   const [discountValue, setDiscountValue] = useState(0);
   const [splitCount, setSplitCount] = useState(1);
-  const [payments, setPayments] = useState<SettlePayment[]>([{ method: "cash", amount: total }]);
+  const netTotal = Math.max(0, total - discountValue);
+  const stillDue = Math.max(0, netTotal - reservationTokenAmount);
+  const [payments, setPayments] = useState<SettlePayment[]>([{ method: "cash", amount: stillDue }]);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
-  const netTotal = Math.max(0, total - discountValue);
-  const perPerson = splitCount > 1 ? Math.round((netTotal / splitCount) * 100) / 100 : null;
+  const perPerson = splitCount > 1 ? Math.round((stillDue / splitCount) * 100) / 100 : null;
 
   const paidTotal = payments.reduce((s, p) => s + (p.amount || 0), 0);
 
@@ -564,15 +644,23 @@ function SettleModal({
           <button onClick={addPaymentRow} className="self-start text-xs text-brand">{t("order.splitPayment")}</button>
         </div>
 
+        {reservationTokenAmount > 0 && (
+          <div className="mt-3 flex justify-between text-sm">
+            <span className="text-muted">🎫 Reservation token already paid</span>
+            <span className="font-semibold text-brand">− {formatMoney(reservationTokenAmount)}</span>
+          </div>
+        )}
         <div className="mt-3 flex justify-between text-sm">
           <span className="text-muted">{t("order.billTotal")}</span>
           <span className="font-semibold text-foreground">{formatMoney(total)}</span>
         </div>
         <div className="flex justify-between text-sm">
           <span className="text-muted">{t("order.collectingNow")}</span>
-          <span className={`font-semibold ${paidTotal < total ? "text-credit" : "text-brand"}`}>{formatMoney(paidTotal)}</span>
+          <span className={`font-semibold ${paidTotal + reservationTokenAmount < total ? "text-credit" : "text-brand"}`}>{formatMoney(paidTotal)}</span>
         </div>
-        {paidTotal < total && <p className="text-xs text-credit">{formatMoney(total - paidTotal)} {t("order.willGoOnCredit")}</p>}
+        {paidTotal + reservationTokenAmount < total && (
+          <p className="text-xs text-credit">{formatMoney(total - paidTotal - reservationTokenAmount)} {t("order.willGoOnCredit")}</p>
+        )}
 
         {error && <p className="mt-2 text-xs text-danger">{error}</p>}
 

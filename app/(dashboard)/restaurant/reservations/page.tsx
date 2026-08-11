@@ -24,7 +24,7 @@ export default async function ReservationsPage({
 
   const { data: reservations } = await admin
     .from("restaurant_reservations")
-    .select("id, customer_name, customer_phone, party_size, reservation_time, table_preference, status, notes")
+    .select("id, customer_name, customer_phone, party_size, reservation_time, status, notes, token_amount, restaurant_tables ( name )")
     .eq("shop_id", session.shopId)
     .eq("reservation_date", selectedDate)
     .order("reservation_time", { ascending: true });
@@ -68,22 +68,26 @@ export default async function ReservationsPage({
         <EmptyState text="No reservations booked for this date." />
       ) : (
         <ul className="flex flex-col gap-2">
-          {reservations.map((r) => (
-            <ReservationRow
-              key={r.id}
-              lang={lang}
-              reservation={{
-                id: r.id,
-                customerName: r.customer_name,
-                customerPhone: r.customer_phone,
-                partySize: r.party_size,
-                time: r.reservation_time,
-                tablePreference: r.table_preference,
-                status: r.status,
-                notes: r.notes,
-              }}
-            />
-          ))}
+          {reservations.map((r) => {
+            const table = Array.isArray(r.restaurant_tables) ? r.restaurant_tables[0] : (r.restaurant_tables as { name: string } | null);
+            return (
+              <ReservationRow
+                key={r.id}
+                lang={lang}
+                reservation={{
+                  id: r.id,
+                  customerName: r.customer_name,
+                  customerPhone: r.customer_phone,
+                  partySize: r.party_size,
+                  time: r.reservation_time,
+                  tableName: table?.name ?? null,
+                  status: r.status,
+                  notes: r.notes,
+                  tokenAmount: Number(r.token_amount),
+                }}
+              />
+            );
+          })}
         </ul>
       )}
     </div>

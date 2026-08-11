@@ -8,11 +8,10 @@ export default async function NewReservationPage() {
   const { lang } = await getTranslator();
   const admin = createSupabaseAdminClient();
 
-  const { data: customers } = await admin
-    .from("customers")
-    .select("id, name, phone")
-    .eq("shop_id", session.shopId)
-    .order("name");
+  const [{ data: customers }, { data: tables }] = await Promise.all([
+    admin.from("customers").select("id, name, phone").eq("shop_id", session.shopId).order("name"),
+    admin.from("restaurant_tables").select("id, name").eq("shop_id", session.shopId).order("name"),
+  ]);
 
-  return <NewReservationClient customers={customers ?? []} lang={lang} />;
+  return <NewReservationClient customers={customers ?? []} tables={tables ?? []} lang={lang} />;
 }

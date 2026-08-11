@@ -680,6 +680,10 @@ export interface Database {
           reservation_date: string;
           reservation_time: string;
           table_preference: string | null;
+          table_id: string | null;
+          token_amount: number;
+          refund_amount: number;
+          refund_type: "none" | "partial" | "full" | null;
           status: "booked" | "confirmed" | "seated" | "cancelled" | "no_show";
           notes: string | null;
           staff_id: string;
@@ -695,6 +699,10 @@ export interface Database {
           reservation_date: string;
           reservation_time: string;
           table_preference?: string | null;
+          table_id?: string | null;
+          token_amount?: number;
+          refund_amount?: number;
+          refund_type?: "none" | "partial" | "full" | null;
           status?: "booked" | "confirmed" | "seated" | "cancelled" | "no_show";
           notes?: string | null;
           staff_id: string;
@@ -710,12 +718,18 @@ export interface Database {
           reservation_date?: string;
           reservation_time?: string;
           table_preference?: string | null;
+          table_id?: string | null;
+          token_amount?: number;
+          refund_amount?: number;
+          refund_type?: "none" | "partial" | "full" | null;
           status?: "booked" | "confirmed" | "seated" | "cancelled" | "no_show";
           notes?: string | null;
           staff_id?: string;
           created_at?: string;
         };
-        Relationships: [];
+        Relationships: [
+          { foreignKeyName: "restaurant_reservations_table_id_fkey"; columns: ["table_id"]; isOneToOne: false; referencedRelation: "restaurant_tables"; referencedColumns: ["id"] },
+        ];
       };
       invoice_settings: {
         Row: { shop_id: string; tagline: string | null; footer_text: string | null; terms_and_conditions: string | null; bank_details: string | null; accent_color: string; header_image_url: string | null; footer_image_url: string | null; updated_at: string };
@@ -1410,6 +1424,7 @@ export interface Database {
           cancelled_at: string | null;
           cancel_reason: string | null;
           revised_at: string | null;
+          reservation_id: string | null;
           created_at: string;
         };
         Insert: {
@@ -1439,6 +1454,7 @@ export interface Database {
           cancelled_at?: string | null;
           cancel_reason?: string | null;
           revised_at?: string | null;
+          reservation_id?: string | null;
           created_at?: string;
         };
         Update: {
@@ -1468,6 +1484,7 @@ export interface Database {
           cancelled_at?: string | null;
           cancel_reason?: string | null;
           revised_at?: string | null;
+          reservation_id?: string | null;
           created_at?: string;
         };
         Relationships: [

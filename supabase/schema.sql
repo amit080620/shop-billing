@@ -1456,3 +1456,20 @@ alter table restaurant_order_items add constraint restaurant_order_items_status_
   check (status in ('pending', 'ready', 'served', 'cancelled'));
 
 alter table restaurant_orders add column if not exists revised_at timestamptz;
+
+-- ─── Reservation: real table blocking + token/refund ───────────────────────
+-- table_preference was free text — didn't actually reserve a real table,
+-- so nothing stopped a walk-in from being seated there anyway. Now a
+-- reservation can be tied to an actual table (table_id), and that
+-- table shows as reserved/blocked for that slot until the reservation
+-- is seated, cancelled, or marked no-show.
+alter table restaurant_reservations add column if not exists table_id uuid references restaurant_tables(id) on delete set null;
+alter table restaurant_reservations add column if not exists token_amount numeric(12, 2) not null default 0;
+alter table restaurant_reservations add column if not exists refund_amount numeric(12, 2) not null default 0;
+alter table restaurant_reservations add column if not exists refund_type text check (refund_type in ('none', 'partial', 'full'));
+
+-- Links a reservation's token straight through to the actual table
+-- order, so when the guest is finally billed, whatever they already
+-- paid as a token comes off the total automatically — no separate
+-- manual step to remember.
+alter table restaurant_orders add column if not exists reservation_id uuid references restaurant_reservations(id) on delete set null;

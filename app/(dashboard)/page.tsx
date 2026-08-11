@@ -222,7 +222,6 @@ async function GymHome({
   const startOfWeek = new Date();
   startOfWeek.setDate(startOfWeek.getDate() - 6);
   startOfWeek.setHours(0, 0, 0, 0);
-  const todayIso = `${startOfToday.getFullYear()}-${String(startOfToday.getMonth() + 1).padStart(2, "0")}-${String(startOfToday.getDate()).padStart(2, "0")}`;
   const in7Days = new Date();
   in7Days.setDate(in7Days.getDate() + 7);
   const in7DaysIso = `${in7Days.getFullYear()}-${String(in7Days.getMonth() + 1).padStart(2, "0")}-${String(in7Days.getDate()).padStart(2, "0")}`;
