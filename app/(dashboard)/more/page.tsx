@@ -105,8 +105,11 @@ export default async function MorePage() {
         <MenuGroup title="Gym">
           <MenuLink href="/gym/members" label="Members" sub="View members, expiry status, PT sessions" icon={GymIcon} />
           <MenuLink href="/gym/members/new" label="Sell membership" sub="New sign-up or renewal" icon={GymIcon} />
+          <MenuLink href="/gym/leads" label="Leads" sub="Trial enquiries and walk-ins" icon={GymIcon} />
+          <MenuLink href="/gym/classes" label="Classes" sub="Yoga, Zumba — weekly schedule & bookings" icon={GymIcon} />
           <MenuLink href="/gym/plans" label="Membership plans" sub="Set up Monthly, Quarterly, Yearly plans" icon={GymIcon} />
           <MenuLink href="/gym/attendance" label="Attendance" sub="Check-in / check-out log" icon={GymIcon} />
+          <MenuLink href="/gym/kiosk-settings" label="Self check-in kiosk" sub="Members check themselves in — no staff needed" icon={GymIcon} />
         </MenuGroup>
       )}
 
@@ -130,7 +133,12 @@ export default async function MorePage() {
       )}
 
       <MenuGroup title="People">
-        <MenuLink href="/customers" label={session.businessType === "clinic" ? "Patients" : t("more.customers")} sub={session.businessType === "clinic" ? "Patient records and history" : t("more.customers.sub")} icon={PeopleIcon} />
+        <MenuLink
+          href="/customers"
+          label={session.businessType === "clinic" ? "Patients" : session.businessType === "gym" ? "Members" : t("more.customers")}
+          sub={session.businessType === "clinic" ? "Patient records and history" : session.businessType === "gym" ? "Member records and history" : t("more.customers.sub")}
+          icon={PeopleIcon}
+        />
         <MenuLink href="/vendors" label={t("more.vendors")} sub={t("more.vendors.sub")} icon={TruckIcon} />
         {session.role === "owner" && (
           <MenuLink href="/staff" label={t("more.staff")} sub={t("more.staff.sub")} icon={UsersIcon} />

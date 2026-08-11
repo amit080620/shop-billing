@@ -118,7 +118,7 @@ export async function addComboToOrderAction(orderId: string, comboId: string): P
 
   const { data: order } = await admin
     .from("restaurant_orders")
-    .select("id, status")
+    .select("id, status, table_id")
     .eq("id", orderId)
     .eq("shop_id", session.shopId)
     .single();
@@ -152,6 +152,8 @@ export async function addComboToOrderAction(orderId: string, comboId: string): P
     return { error: "Could not add combo" };
   }
 
+  await admin.from("restaurant_tables").update({ status: "occupied" }).eq("id", order.table_id);
+  revalidatePath("/restaurant");
   revalidatePath(`/restaurant/orders/${orderId}`);
   return {};
 }

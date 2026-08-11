@@ -14,9 +14,14 @@ type Customer = {
   gender?: string | null;
   bloodGroup?: string | null;
   knownAllergies?: string | null;
+  fitnessGoal?: string | null;
+  heightCm?: number | null;
+  weightKg?: number | null;
 };
 
-const HEADERS = ["name", "phone", "gstin", "address", "stateCode", "dateOfBirth", "gender", "bloodGroup", "knownAllergies"];
+const BASE_HEADERS = ["name", "phone", "gstin", "address", "stateCode", "dateOfBirth", "gender"];
+const CLINIC_HEADERS = ["bloodGroup", "knownAllergies"];
+const GYM_HEADERS = ["fitnessGoal", "heightCm", "weightKg"];
 
 function normalizeKey(k: string) {
   return k.trim().toLowerCase().replace(/[\s_-]/g, "");
@@ -26,37 +31,37 @@ export function BulkImportExportCustomers({
   customers,
   onImported,
   isClinic,
+  isGym,
 }: {
   customers: Customer[];
   onImported: () => void;
   isClinic: boolean;
+  isGym: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   const [result, setResult] = useState<CustomerImportResult | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const noun = isClinic ? "patients" : "customers";
+  const noun = isClinic ? "patients" : isGym ? "members" : "customers";
+  const headers = [...BASE_HEADERS, ...(isClinic ? CLINIC_HEADERS : isGym ? GYM_HEADERS : [])];
 
   function downloadTemplate() {
     const sample = isClinic
-      ? [["Rahul Sharma", "9876543210", "", "12 MG Road, Pune", "27", "1990-05-14", "male", "B+", "Penicillin"]]
-      : [["Rahul Sharma", "9876543210", "", "12 MG Road, Pune", "27", "", "", "", ""]];
-    downloadCsv(`${noun}-import-template.csv`, HEADERS, sample);
+      ? ["Rahul Sharma", "9876543210", "", "12 MG Road, Pune", "27", "1990-05-14", "male", "B+", "Penicillin"]
+      : isGym
+        ? ["Rahul Sharma", "9876543210", "", "12 MG Road, Pune", "27", "1990-05-14", "male", "Weight Loss", "175", "78"]
+        : ["Rahul Sharma", "9876543210", "", "12 MG Road, Pune", "27", "", ""];
+    downloadCsv(`${noun}-import-template.csv`, headers, [sample]);
   }
 
   function exportCustomers() {
-    const rows = customers.map((c) => [
-      c.name,
-      c.phone,
-      c.gstin ?? "",
-      c.address ?? "",
-      c.stateCode ?? "",
-      c.dateOfBirth ?? "",
-      c.gender ?? "",
-      c.bloodGroup ?? "",
-      c.knownAllergies ?? "",
-    ]);
-    downloadCsv(`${noun}-export.csv`, HEADERS, rows);
+    const rows = customers.map((c) => {
+      const base = [c.name, c.phone, c.gstin ?? "", c.address ?? "", c.stateCode ?? "", c.dateOfBirth ?? "", c.gender ?? ""];
+      if (isClinic) return [...base, c.bloodGroup ?? "", c.knownAllergies ?? ""];
+      if (isGym) return [...base, c.fitnessGoal ?? "", c.heightCm?.toString() ?? "", c.weightKg?.toString() ?? ""];
+      return base;
+    });
+    downloadCsv(`${noun}-export.csv`, headers, rows);
   }
 
   async function handleFile(file: File) {
@@ -86,6 +91,9 @@ export function BulkImportExportCustomers({
           gender: get("gender"),
           bloodGroup: get("bloodGroup"),
           knownAllergies: get("knownAllergies"),
+          fitnessGoal: get("fitnessGoal"),
+          heightCm: get("heightCm"),
+          weightKg: get("weightKg"),
         };
       });
       const res = await bulkImportCustomersAction(rows);

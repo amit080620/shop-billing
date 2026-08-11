@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { requireSession } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { getTranslator } from "@/lib/i18n/server";
 import { PageHeader } from "@/app/components/PageHeader";
 import { EmptyState } from "@/app/components/EmptyState";
 import { MemberRow } from "./MemberRow";
@@ -15,15 +16,24 @@ type MembershipRow = {
   pt_sessions_used: number;
 };
 
-export default async function GymMembersPage() {
+export default async function GymMembersPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ mine?: string }>;
+}) {
   const session = await requireSession();
+  const { lang } = await getTranslator();
+  const { mine } = await searchParams;
+  const showMineOnly = mine === "1" && session.role !== "owner";
   const admin = createSupabaseAdminClient();
 
-  const { data: members } = await admin
+  let query = admin
     .from("customers")
     .select("id, name, phone, assigned_trainer_id, staff:assigned_trainer_id ( name )")
     .eq("shop_id", session.shopId)
     .order("name");
+  if (showMineOnly) query = query.eq("assigned_trainer_id", session.userId);
+  const { data: members } = await query;
 
   const memberIds = (members ?? []).map((m) => m.id);
   const { data: memberships } = memberIds.length
@@ -57,6 +67,22 @@ export default async function GymMembersPage() {
         }
       />
       <div className="flex gap-2 overflow-x-auto pb-1">
+        {session.role !== "owner" && (
+          <>
+            <Link
+              href="/gym/members"
+              className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium ${!showMineOnly ? "border-brand bg-brand-soft text-brand-dark" : "border-border text-muted"}`}
+            >
+              All members
+            </Link>
+            <Link
+              href="/gym/members?mine=1"
+              className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium ${showMineOnly ? "border-brand bg-brand-soft text-brand-dark" : "border-border text-muted"}`}
+            >
+              👤 My members
+            </Link>
+          </>
+        )}
         <Link href="/gym/plans" className="shrink-0 rounded-full border border-border px-3 py-1.5 text-xs font-medium text-muted">
           📋 Plans
         </Link>
@@ -65,7 +91,9 @@ export default async function GymMembersPage() {
         </Link>
       </div>
 
-      {(!members || members.length === 0) ? (
+      {showMineOnly && (!members || members.length === 0) ? (
+        <EmptyState text="No members assigned to you yet." />
+      ) : (!members || members.length === 0) ? (
         <EmptyState text="No members yet — sell your first membership to get started." />
       ) : (
         <ul className="flex flex-col gap-2">
@@ -75,6 +103,7 @@ export default async function GymMembersPage() {
             return (
               <MemberRow
                 key={m.id}
+                lang={lang}
                 member={{
                   id: m.id,
                   name: m.name,

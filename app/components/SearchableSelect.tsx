@@ -91,6 +91,7 @@ export function SearchableSelect<T>({
   const [voiceSupported, setVoiceSupported] = useState(false);
   const [voiceError, setVoiceError] = useState<string | null>(null);
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setVoiceSupported(getSpeechRecognition() !== null);
@@ -150,6 +151,7 @@ export function SearchableSelect<T>({
   return (
     <div className="relative">
       <input
+        ref={inputRef}
         value={query}
         onChange={(e) => {
           setQuery(e.target.value);
@@ -185,6 +187,7 @@ export function SearchableSelect<T>({
                 type="button"
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={() => {
+                  inputRef.current?.blur();
                   onSelect(item);
                   setQuery("");
                   setOpen(false);

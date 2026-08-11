@@ -681,7 +681,13 @@ export function NewBillClient({
 
       <section className="rounded-xl border border-border bg-surface shadow-sm p-4">
         <p className="text-sm font-medium text-foreground">
-          {customerMode === "existing" ? selectedCustomer?.name : businessType === "clinic" ? "Walk-in patient" : t("common.walkinCustomer")}
+          {customerMode === "existing"
+            ? selectedCustomer?.name
+            : businessType === "clinic"
+              ? "Walk-in patient"
+              : businessType === "gym"
+                ? "Walk-in member"
+                : t("common.walkinCustomer")}
         </p>
         <ul className="mt-2 flex flex-col gap-1.5">
           {cart.map((line) => (

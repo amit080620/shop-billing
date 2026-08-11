@@ -206,6 +206,7 @@ export async function savePrescriptionSettingsAction(settings: {
   footerText: string;
   showShopLogo: boolean;
   customFieldLabels: string[];
+  specialty: string;
 }): Promise<{ error?: string }> {
   const session = await requireSession();
   const admin = createSupabaseAdminClient();
@@ -215,6 +216,7 @@ export async function savePrescriptionSettingsAction(settings: {
     footer_text: settings.footerText || null,
     show_shop_logo: settings.showShopLogo,
     custom_field_labels: settings.customFieldLabels,
+    specialty: settings.specialty as "general" | "dental" | "cardiology" | "dermatology" | "physiotherapy" | "orthopedic" | "ent" | "gynecology" | "pediatric" | "psychiatry",
     updated_at: new Date().toISOString(),
   });
   if (error) {
@@ -247,6 +249,8 @@ export async function createPrescriptionAction(input: {
   followUpDate: string | null;
   appointmentId: string | null;
   items: PrescriptionItemInput[];
+  dentalChart?: Record<string, string>;
+  vitals?: Record<string, string | number>;
 }): Promise<{ error?: string; prescriptionId?: string }> {
   const session = await requireSession();
   const admin = createSupabaseAdminClient();
@@ -275,6 +279,8 @@ export async function createPrescriptionAction(input: {
       doctor_name: input.doctorName || null,
       custom_sections: input.customSections.filter((s) => s.value.trim()),
       follow_up_date: input.followUpDate || null,
+      dental_chart: input.dentalChart && Object.keys(input.dentalChart).length > 0 ? input.dentalChart : null,
+      vitals: input.vitals && Object.keys(input.vitals).length > 0 ? input.vitals : null,
       staff_id: session.userId,
     })
     .select("id")
@@ -373,4 +379,90 @@ export async function generateBillFromPrescriptionAction(
 
   revalidatePath("/clinic");
   return { billId: result.billId };
+}
+
+// ─── Pediatric growth tracking (plain trend, no percentile overlay) ───────
+
+export async function addGrowthLogAction(input: {
+  patientId: string;
+  heightCm: number | null;
+  weightKg: number | null;
+  headCircumferenceCm: number | null;
+  note: string;
+}): Promise<{ error?: string }> {
+  const session = await requireSession();
+  const admin = createSupabaseAdminClient();
+
+  if (!input.heightCm && !input.weightKg && !input.headCircumferenceCm && !input.note.trim()) {
+    return { error: "Enter at least a height, weight, head circumference, or note" };
+  }
+
+  const { error } = await admin.from("growth_logs").insert({
+    shop_id: session.shopId,
+    patient_id: input.patientId,
+    height_cm: input.heightCm,
+    weight_kg: input.weightKg,
+    head_circumference_cm: input.headCircumferenceCm,
+    note: input.note.trim() || null,
+    staff_id: session.userId,
+  });
+  if (error) return { error: "Could not save growth entry" };
+  revalidatePath(`/customers/${input.patientId}`);
+  return {};
+}
+
+// ─── Patient photos (before/after documentation) ───────────────────────
+
+const PHOTO_MAX_BYTES = 4 * 1024 * 1024;
+const PHOTO_ALLOWED_TYPES = ["image/png", "image/jpeg", "image/webp"];
+
+export async function uploadPatientPhotoAction(
+  patientId: string,
+  label: "before" | "after" | "other",
+  note: string,
+  formData: FormData,
+): Promise<{ error?: string }> {
+  const session = await requireSession();
+  const admin = createSupabaseAdminClient();
+
+  const file = formData.get("image");
+  if (!(file instanceof File) || file.size === 0) return { error: "Choose an image" };
+  if (file.size > PHOTO_MAX_BYTES) return { error: "Image must be under 4MB" };
+  if (!PHOTO_ALLOWED_TYPES.includes(file.type)) return { error: "Use a PNG, JPG, or WEBP image" };
+
+  const extension = file.name.split(".").pop() || "jpg";
+  const path = `${session.shopId}/${patientId}/${Date.now()}.${extension}`;
+
+  const { error: uploadError } = await admin.storage.from("patient-photos").upload(path, file, { contentType: file.type });
+  if (uploadError) {
+    console.error("Could not upload patient photo", uploadError);
+    return { error: "Could not upload photo" };
+  }
+
+  const { data: publicUrlData } = admin.storage.from("patient-photos").getPublicUrl(path);
+
+  const { error } = await admin.from("patient_photos").insert({
+    shop_id: session.shopId,
+    patient_id: patientId,
+    photo_url: publicUrlData.publicUrl,
+    label,
+    note: note.trim() || null,
+    staff_id: session.userId,
+  });
+  if (error) {
+    console.error("Could not save patient photo record", error);
+    return { error: "Uploaded, but could not save the record" };
+  }
+
+  revalidatePath(`/customers/${patientId}`);
+  return {};
+}
+
+export async function deletePatientPhotoAction(photoId: string, patientId: string): Promise<{ error?: string }> {
+  const session = await requireSession();
+  const admin = createSupabaseAdminClient();
+  const { error } = await admin.from("patient_photos").delete().eq("id", photoId).eq("shop_id", session.shopId);
+  if (error) return { error: "Could not delete photo" };
+  revalidatePath(`/customers/${patientId}`);
+  return {};
 }

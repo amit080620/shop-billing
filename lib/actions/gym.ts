@@ -226,3 +226,316 @@ export async function checkOutMemberAction(attendanceId: string): Promise<{ erro
   revalidatePath("/gym/attendance");
   return {};
 }
+
+// ─── Workout Plans ────────────────────────────────────────────────────────
+
+export type ExerciseInput = { muscleGroup: string; exerciseName: string; sets: number | null; reps: string; restSeconds: number | null };
+
+export async function createWorkoutPlanAction(input: {
+  memberId: string;
+  title: string;
+  notes: string;
+  exercises: ExerciseInput[];
+}): Promise<{ error?: string }> {
+  const session = await requireSession();
+  const admin = createSupabaseAdminClient();
+
+  if (!input.title.trim()) return { error: "Enter a plan title" };
+  const validExercises = input.exercises.filter((e) => e.exerciseName.trim());
+  if (validExercises.length === 0) return { error: "Add at least one exercise" };
+
+  const { data: plan, error } = await admin
+    .from("workout_plans")
+    .insert({ shop_id: session.shopId, member_id: input.memberId, title: input.title.trim(), notes: input.notes.trim() || null, staff_id: session.userId })
+    .select("id")
+    .single();
+  if (error || !plan) return { error: "Could not create workout plan" };
+
+  await admin.from("workout_exercises").insert(
+    validExercises.map((e, i) => ({
+      plan_id: plan.id,
+      muscle_group: e.muscleGroup || null,
+      exercise_name: e.exerciseName.trim(),
+      sets: e.sets,
+      reps: e.reps || null,
+      rest_seconds: e.restSeconds,
+      sort_order: i,
+    })),
+  );
+
+  revalidatePath("/gym/members");
+  return {};
+}
+
+export async function deleteWorkoutPlanAction(planId: string): Promise<{ error?: string }> {
+  const session = await requireSession();
+  const admin = createSupabaseAdminClient();
+  const { error } = await admin.from("workout_plans").delete().eq("id", planId).eq("shop_id", session.shopId);
+  if (error) return { error: "Could not delete plan" };
+  revalidatePath("/gym/members");
+  return {};
+}
+
+// ─── Diet Plans ───────────────────────────────────────────────────────────
+
+export type MealInput = { mealSlot: "breakfast" | "mid_morning" | "lunch" | "evening" | "dinner" | "post_workout"; foodItems: string; calories: number | null };
+
+export async function createDietPlanAction(input: {
+  memberId: string;
+  goal: string;
+  notes: string;
+  meals: MealInput[];
+}): Promise<{ error?: string }> {
+  const session = await requireSession();
+  const admin = createSupabaseAdminClient();
+
+  const validMeals = input.meals.filter((m) => m.foodItems.trim());
+  if (validMeals.length === 0) return { error: "Add at least one meal" };
+
+  const { data: plan, error } = await admin
+    .from("diet_plans")
+    .insert({ shop_id: session.shopId, member_id: input.memberId, goal: input.goal || null, notes: input.notes.trim() || null, staff_id: session.userId })
+    .select("id")
+    .single();
+  if (error || !plan) return { error: "Could not create diet plan" };
+
+  await admin.from("diet_meals").insert(
+    validMeals.map((m, i) => ({
+      plan_id: plan.id,
+      meal_slot: m.mealSlot,
+      food_items: m.foodItems.trim(),
+      calories: m.calories,
+      sort_order: i,
+    })),
+  );
+
+  revalidatePath("/gym/members");
+  return {};
+}
+
+export async function deleteDietPlanAction(planId: string): Promise<{ error?: string }> {
+  const session = await requireSession();
+  const admin = createSupabaseAdminClient();
+  const { error } = await admin.from("diet_plans").delete().eq("id", planId).eq("shop_id", session.shopId);
+  if (error) return { error: "Could not delete plan" };
+  revalidatePath("/gym/members");
+  return {};
+}
+
+// ─── Progress tracking ──────────────────────────────────────────────────
+
+export async function addProgressLogAction(input: {
+  memberId: string;
+  weightKg: number | null;
+  bodyFatPercent: number | null;
+  note: string;
+}): Promise<{ error?: string }> {
+  const session = await requireSession();
+  const admin = createSupabaseAdminClient();
+
+  if (!input.weightKg && !input.bodyFatPercent && !input.note.trim()) return { error: "Enter at least a weight, body fat %, or note" };
+
+  const { error } = await admin.from("progress_logs").insert({
+    shop_id: session.shopId,
+    member_id: input.memberId,
+    weight_kg: input.weightKg,
+    body_fat_percent: input.bodyFatPercent,
+    note: input.note.trim() || null,
+    staff_id: session.userId,
+  });
+  if (error) return { error: "Could not save progress entry" };
+  revalidatePath("/gym/members");
+  return {};
+}
+
+// ─── Simple leads tracker ──────────────────────────────────────────────
+
+export async function createLeadAction(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const session = await requireSession();
+  const admin = createSupabaseAdminClient();
+
+  const name = formData.get("name");
+  const phone = formData.get("phone");
+  const source = formData.get("source");
+  const interestedPlan = formData.get("interestedPlan");
+
+  if (typeof name !== "string" || !name.trim()) return { error: "Enter the lead's name" };
+  if (typeof phone !== "string" || !phone.trim()) return { error: "Enter a phone number" };
+
+  const { error } = await admin.from("leads").insert({
+    shop_id: session.shopId,
+    name: name.trim(),
+    phone: phone.trim(),
+    source: typeof source === "string" && source ? source : null,
+    interested_plan: typeof interestedPlan === "string" && interestedPlan.trim() ? interestedPlan.trim() : null,
+    staff_id: session.userId,
+  });
+  if (error) {
+    console.error("Could not create lead", error);
+    return { error: "Could not save lead" };
+  }
+  revalidatePath("/gym/leads");
+  return null;
+}
+
+export async function updateLeadStatusAction(leadId: string, status: "new" | "contacted" | "trial" | "converted" | "lost"): Promise<{ error?: string }> {
+  const session = await requireSession();
+  const admin = createSupabaseAdminClient();
+  const { error } = await admin.from("leads").update({ status }).eq("id", leadId).eq("shop_id", session.shopId);
+  if (error) return { error: "Could not update lead" };
+  revalidatePath("/gym/leads");
+  return {};
+}
+
+export async function deleteLeadAction(leadId: string): Promise<{ error?: string }> {
+  const session = await requireSession();
+  const admin = createSupabaseAdminClient();
+  const { error } = await admin.from("leads").delete().eq("id", leadId).eq("shop_id", session.shopId);
+  if (error) return { error: "Could not delete lead" };
+  revalidatePath("/gym/leads");
+  return {};
+}
+
+// ─── Simple class schedule ──────────────────────────────────────────────
+
+export async function createClassAction(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const session = await requireOwner();
+  const admin = createSupabaseAdminClient();
+
+  const name = formData.get("name");
+  const trainerId = formData.get("trainerId");
+  const dayOfWeek = formData.get("dayOfWeek");
+  const startTime = formData.get("startTime");
+  const durationMinutes = formData.get("durationMinutes");
+  const capacity = formData.get("capacity");
+
+  if (typeof name !== "string" || !name.trim()) return { error: "Enter a class name" };
+  if (dayOfWeek === null || typeof startTime !== "string" || !startTime) return { error: "Pick a day and time" };
+
+  const { error } = await admin.from("gym_classes").insert({
+    shop_id: session.shopId,
+    name: name.trim(),
+    trainer_id: typeof trainerId === "string" && trainerId ? trainerId : null,
+    day_of_week: Number(dayOfWeek),
+    start_time: startTime,
+    duration_minutes: durationMinutes ? Number(durationMinutes) : 60,
+    capacity: capacity ? Number(capacity) : 15,
+  });
+  if (error) {
+    console.error("Could not create class", error);
+    return { error: "Could not create class" };
+  }
+  revalidatePath("/gym/classes");
+  return null;
+}
+
+export async function toggleClassActiveAction(classId: string, isActive: boolean): Promise<{ error?: string }> {
+  const session = await requireOwner();
+  const admin = createSupabaseAdminClient();
+  const { error } = await admin.from("gym_classes").update({ is_active: isActive }).eq("id", classId).eq("shop_id", session.shopId);
+  if (error) return { error: "Could not update class" };
+  revalidatePath("/gym/classes");
+  return {};
+}
+
+export async function deleteClassAction(classId: string): Promise<{ error?: string }> {
+  const session = await requireOwner();
+  const admin = createSupabaseAdminClient();
+  const { error } = await admin.from("gym_classes").delete().eq("id", classId).eq("shop_id", session.shopId);
+  if (error) return { error: "Could not delete class" };
+  revalidatePath("/gym/classes");
+  return {};
+}
+
+export async function bookClassAction(classId: string, memberId: string, classDate: string): Promise<{ error?: string }> {
+  const session = await requireSession();
+  const admin = createSupabaseAdminClient();
+
+  const { data: cls } = await admin.from("gym_classes").select("id, capacity").eq("id", classId).eq("shop_id", session.shopId).single();
+  if (!cls) return { error: "Class not found" };
+
+  const { count } = await admin.from("gym_class_bookings").select("id", { count: "exact", head: true }).eq("class_id", classId).eq("class_date", classDate);
+  if ((count ?? 0) >= cls.capacity) return { error: "This class is full" };
+
+  const { error } = await admin.from("gym_class_bookings").insert({ class_id: classId, member_id: memberId, class_date: classDate });
+  if (error) {
+    if (error.code === "23505") return { error: "This member is already booked into this class" };
+    return { error: "Could not book class" };
+  }
+  revalidatePath("/gym/classes");
+  return {};
+}
+
+export async function cancelClassBookingAction(bookingId: string): Promise<{ error?: string }> {
+  const session = await requireSession();
+  const admin = createSupabaseAdminClient();
+  const { data: booking } = await admin
+    .from("gym_class_bookings")
+    .select("id, gym_classes!inner(shop_id)")
+    .eq("id", bookingId)
+    .single();
+  if (!booking) return { error: "Booking not found" };
+  const cls = Array.isArray(booking.gym_classes) ? booking.gym_classes[0] : booking.gym_classes;
+  if (cls?.shop_id !== session.shopId) return { error: "Booking not found" };
+
+  const { error } = await admin.from("gym_class_bookings").delete().eq("id", bookingId);
+  if (error) return { error: "Could not cancel booking" };
+  revalidatePath("/gym/classes");
+  return {};
+}
+
+// ─── Self-service check-in kiosk ─────────────────────────────────────────
+
+export async function saveKioskSettingsAction(isEnabled: boolean): Promise<{ error?: string }> {
+  const session = await requireOwner();
+  const admin = createSupabaseAdminClient();
+  const { error } = await admin
+    .from("gym_kiosk_settings")
+    .upsert({ shop_id: session.shopId, is_enabled: isEnabled, updated_at: new Date().toISOString() }, { onConflict: "shop_id" });
+  if (error) return { error: "Could not save kiosk settings" };
+  revalidatePath("/gym/kiosk-settings");
+  return {};
+}
+
+/** No auth — a member types their own phone number on a tablet left at
+ * the entrance and checks themselves in. This is the whole point: it
+ * removes staff from the loop entirely for routine daily check-ins. */
+export async function publicKioskCheckInAction(
+  token: string,
+  phone: string,
+): Promise<{ error?: string; memberName?: string; alreadyIn?: boolean }> {
+  const admin = createSupabaseAdminClient();
+
+  const { data: settings } = await admin.from("gym_kiosk_settings").select("shop_id, is_enabled").eq("public_token", token).maybeSingle();
+  if (!settings || !settings.is_enabled) return { error: "Check-in is not available right now — please ask at the desk." };
+
+  const digits = phone.replace(/\D/g, "");
+  if (digits.length < 10) return { error: "Enter your full 10-digit phone number" };
+  const last10 = digits.slice(-10);
+
+  const { data: member } = await admin.from("customers").select("id, name, phone").eq("shop_id", settings.shop_id).ilike("phone", `%${last10}`).maybeSingle();
+  if (!member) return { error: "We couldn't find that number — please check with the desk to register." };
+
+  const { data: alreadyOpen } = await admin
+    .from("gym_attendance")
+    .select("id")
+    .eq("member_id", member.id)
+    .is("checked_out_at", null)
+    .maybeSingle();
+  if (alreadyOpen) return { memberName: member.name, alreadyIn: true };
+
+  const { error } = await admin.from("gym_attendance").insert({ shop_id: settings.shop_id, member_id: member.id });
+  if (error) {
+    if (error.code === "23505") return { memberName: member.name, alreadyIn: true };
+    console.error("Kiosk check-in failed", error);
+    return { error: "Could not check in — please try again or ask at the desk." };
+  }
+
+  return { memberName: member.name };
+}

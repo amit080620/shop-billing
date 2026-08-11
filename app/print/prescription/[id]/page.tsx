@@ -83,6 +83,30 @@ export default async function PrintPrescriptionPage({
         {(prescription.patient_phone || customer?.phone) && <span className="text-gray-600">{prescription.patient_phone || customer?.phone}</span>}
       </div>
 
+      {/* Vitals */}
+      {prescription.vitals && Object.keys(prescription.vitals as Record<string, string>).length > 0 && (
+        <div className="mt-4 rounded-lg border border-gray-200 p-2.5">
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Vitals</p>
+          <p className="text-xs text-gray-700">
+            {Object.entries(prescription.vitals as Record<string, string>)
+              .map(([k, v]) => `${k.replace(/([A-Z])/g, " $1").trim()}: ${v}`)
+              .join(" · ")}
+          </p>
+        </div>
+      )}
+
+      {/* Dental chart */}
+      {prescription.dental_chart && Object.keys(prescription.dental_chart as Record<string, string>).length > 0 && (
+        <div className="mt-4 rounded-lg border border-gray-200 p-2.5">
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Tooth chart</p>
+          <p className="text-xs text-gray-700">
+            {Object.entries(prescription.dental_chart as Record<string, string>)
+              .map(([tooth, condition]) => `#${tooth}: ${condition.replace("_", " ")}`)
+              .join(" · ")}
+          </p>
+        </div>
+      )}
+
       {/* Custom sections */}
       {customSections.filter((s) => s.value.trim()).length > 0 && (
         <div className="mt-4 flex flex-col gap-2.5">

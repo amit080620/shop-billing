@@ -181,6 +181,9 @@ type CustomerImportRow = {
   gender: string;
   bloodGroup: string;
   knownAllergies: string;
+  fitnessGoal: string;
+  heightCm: string;
+  weightKg: string;
 };
 
 export type CustomerImportResult = {
@@ -242,6 +245,9 @@ export async function bulkImportCustomersAction(rows: CustomerImportRow[]): Prom
         gender: (row.gender?.trim().toLowerCase() as "male" | "female" | "other" | undefined) || null,
         blood_group: row.bloodGroup?.trim() || null,
         known_allergies: row.knownAllergies?.trim() || null,
+        fitness_goal: row.fitnessGoal?.trim() || null,
+        height_cm: row.heightCm?.trim() ? Number(row.heightCm) : null,
+        weight_kg: row.weightKg?.trim() ? Number(row.weightKg) : null,
       })),
     )
     .select("id");

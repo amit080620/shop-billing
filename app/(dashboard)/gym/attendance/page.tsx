@@ -14,8 +14,10 @@ export default async function GymAttendancePage() {
 
   const startOfToday = new Date();
   startOfToday.setHours(0, 0, 0, 0);
+  const last30Days = new Date();
+  last30Days.setDate(last30Days.getDate() - 30);
 
-  const [{ data: todayAttendance }, { data: members }] = await Promise.all([
+  const [{ data: todayAttendance }, { data: members }, { data: recentCheckIns }] = await Promise.all([
     admin
       .from("gym_attendance")
       .select("id, member_id, checked_in_at, checked_out_at, customers ( name, phone )")
@@ -23,7 +25,16 @@ export default async function GymAttendancePage() {
       .gte("checked_in_at", startOfToday.toISOString())
       .order("checked_in_at", { ascending: false }),
     admin.from("customers").select("id, name, phone").eq("shop_id", session.shopId).order("name"),
+    admin.from("gym_attendance").select("checked_in_at").eq("shop_id", session.shopId).gte("checked_in_at", last30Days.toISOString()),
   ]);
+
+  const hourCounts = new Array(24).fill(0);
+  for (const row of recentCheckIns ?? []) {
+    const hour = new Date(row.checked_in_at).getHours();
+    hourCounts[hour]++;
+  }
+  const maxHourCount = Math.max(...hourCounts, 1);
+  const peakHour = hourCounts.indexOf(maxHourCount);
 
   const currentlyIn = (todayAttendance ?? []).filter((a) => !a.checked_out_at).length;
 
@@ -53,7 +64,36 @@ export default async function GymAttendancePage() {
         </div>
       </div>
 
+      {(recentCheckIns?.length ?? 0) >= 5 && (
+        <div className="rounded-xl border border-border bg-surface p-3.5 shadow-sm">
+          <p className="text-xs font-medium text-muted">Busiest hour (last 30 days)</p>
+          <p className="mt-0.5 text-sm font-semibold text-foreground">
+            {peakHour === 0 ? "12 AM" : peakHour < 12 ? `${peakHour} AM` : peakHour === 12 ? "12 PM" : `${peakHour - 12} PM`} — {maxHourCount} check-ins
+          </p>
+          <div className="mt-2 flex h-16 items-end gap-[2px]">
+            {hourCounts.map((count, hour) => (
+              <div
+                key={hour}
+                className={`flex-1 rounded-t ${hour === peakHour ? "bg-brand" : "bg-brand-soft"}`}
+                style={{ height: `${Math.max(6, (count / maxHourCount) * 100)}%` }}
+                title={`${hour}:00 — ${count} check-ins`}
+              />
+            ))}
+          </div>
+          <div className="mt-1 flex justify-between text-[9px] text-muted">
+            <span>12 AM</span>
+            <span>12 PM</span>
+            <span>11 PM</span>
+          </div>
+        </div>
+      )}
+
       <CheckInForm lang={lang} members={members ?? []} />
+
+      <Link href="/gym/kiosk-settings" className="flex items-center justify-between rounded-xl border border-dashed border-brand bg-brand-soft px-4 py-3 text-sm">
+        <span className="text-brand-dark">📱 Set up self check-in kiosk — members check themselves in</span>
+        <span className="text-brand-dark">→</span>
+      </Link>
 
       {(!todayAttendance || todayAttendance.length === 0) ? (
         <EmptyState text="No check-ins yet today." />

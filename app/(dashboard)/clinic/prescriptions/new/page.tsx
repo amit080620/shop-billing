@@ -15,7 +15,7 @@ export default async function NewPrescriptionPage({
 
   const [{ data: patients }, { data: settings }] = await Promise.all([
     admin.from("customers").select("id, name, phone, date_of_birth, gender").eq("shop_id", session.shopId).order("name"),
-    admin.from("prescription_settings").select("custom_field_labels").eq("shop_id", session.shopId).maybeSingle(),
+    admin.from("prescription_settings").select("custom_field_labels, specialty").eq("shop_id", session.shopId).maybeSingle(),
   ]);
 
   return (
@@ -29,6 +29,7 @@ export default async function NewPrescriptionPage({
         gender: p.gender,
       }))}
       fieldLabels={settings?.custom_field_labels ?? ["Chief Complaint", "Diagnosis", "Advice"]}
+      specialty={settings?.specialty ?? "general"}
       appointmentId={appointmentId ?? null}
       prefillPatientName={patientName ?? ""}
       prefillPatientPhone={patientPhone ?? ""}

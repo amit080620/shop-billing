@@ -5,9 +5,12 @@ import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import Link from "next/link";
 import { recordPaymentAction } from "@/lib/actions/customers";
+import { addGrowthLogAction, uploadPatientPhotoAction, deletePatientPhotoAction } from "@/lib/actions/clinic";
 import { formatMoney, formatDateTime } from "@/lib/format";
 import { EmptyState } from "@/app/components/EmptyState";
 import { DownloadStatementButton } from "./DownloadStatementButton";
+import { useRouter } from "next/navigation";
+import { useTransition } from "react";
 import { EditCustomerButton } from "./EditCustomerButton";
 import { PaymentMethodPicker } from "@/app/components/PaymentMethodPicker";
 import { useTranslation } from "@/lib/i18n/useTranslation";
@@ -44,6 +47,9 @@ export function LedgerClient({
   payments,
   returns,
   lang,
+  specialty,
+  growthLogs,
+  photos,
 }: {
   customer: { id: string; name: string; phone: string; gstin: string | null; address: string | null; stateCode: string | null };
   shopName: string;
@@ -52,6 +58,9 @@ export function LedgerClient({
   payments: Payment[];
   returns: Return[];
   lang: Lang;
+  specialty: string;
+  growthLogs: { id: string; heightCm: number | null; weightKg: number | null; headCircumferenceCm: number | null; note: string | null; createdAt: string }[];
+  photos: { id: string; photoUrl: string; label: string; note: string | null; createdAt: string }[];
 }) {
   const { t } = useTranslation(lang);
   const [showPaymentForm, setShowPaymentForm] = useState(false);
@@ -107,6 +116,9 @@ export function LedgerClient({
           )}
         </div>
       </div>
+
+      {specialty === "pediatric" && <GrowthChart patientId={customer.id} logs={growthLogs} />}
+      {specialty === "dermatology" && <PatientPhotos patientId={customer.id} photos={photos} />}
 
       <div className="flex gap-2">
         <button
@@ -294,5 +306,197 @@ function WhatsAppIcon() {
     <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
       <path d="M12 2C6.5 2 2 6.5 2 12c0 1.8.5 3.5 1.3 5L2 22l5.2-1.3c1.4.8 3.1 1.3 4.8 1.3 5.5 0 10-4.5 10-10S17.5 2 12 2zm0 18c-1.6 0-3.1-.4-4.4-1.2l-.3-.2-3.1.8.8-3-.2-.3C4 14.8 3.6 13.4 3.6 12c0-4.6 3.8-8.4 8.4-8.4s8.4 3.8 8.4 8.4-3.8 8.4-8.4 8.4zm4.6-6.3c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1-.2.2-.7.8-.8.9-.2.2-.3.2-.5.1-.2-.1-1-.4-1.9-1.2-.7-.6-1.2-1.4-1.3-1.6-.1-.2 0-.4.1-.5.1-.1.2-.3.4-.4.1-.1.2-.2.2-.4.1-.1 0-.3 0-.4C10.4 9.4 10 8.4 9.8 8c-.2-.4-.3-.3-.5-.3h-.4c-.1 0-.4 0-.6.3-.2.2-.8.8-.8 2s.9 2.3 1 2.4c.1.2 1.7 2.6 4.1 3.6.6.2 1 .4 1.4.5.6.2 1.1.2 1.5.1.5-.1 1.5-.6 1.7-1.2.2-.6.2-1.1.1-1.2 0-.1-.2-.2-.4-.3z" />
     </svg>
+  );
+}
+
+// ─── Pediatric growth chart — plain trend, no percentile overlay ──────────
+function GrowthChart({
+  patientId,
+  logs,
+}: {
+  patientId: string;
+  logs: { id: string; heightCm: number | null; weightKg: number | null; headCircumferenceCm: number | null; note: string | null; createdAt: string }[];
+}) {
+  const router = useRouter();
+  const [showForm, setShowForm] = useState(false);
+  const [height, setHeight] = useState("");
+  const [weight, setWeight] = useState("");
+  const [headCirc, setHeadCirc] = useState("");
+  const [note, setNote] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
+
+  const maxWeight = Math.max(...logs.map((l) => l.weightKg ?? 0), 1);
+
+  function save() {
+    startTransition(async () => {
+      const result = await addGrowthLogAction({
+        patientId,
+        heightCm: height ? Number(height) : null,
+        weightKg: weight ? Number(weight) : null,
+        headCircumferenceCm: headCirc ? Number(headCirc) : null,
+        note,
+      });
+      if (result.error) {
+        setError(result.error);
+        return;
+      }
+      setHeight("");
+      setWeight("");
+      setHeadCirc("");
+      setNote("");
+      setShowForm(false);
+      router.refresh();
+    });
+  }
+
+  return (
+    <section className="flex flex-col gap-2 rounded-xl border border-border bg-surface p-4 shadow-sm">
+      <div className="flex items-center justify-between">
+        <p className="text-sm font-semibold text-foreground">📈 Growth chart</p>
+        <button onClick={() => setShowForm((v) => !v)} className="text-xs font-medium text-brand">
+          + Add entry
+        </button>
+      </div>
+      <p className="text-xs text-muted">A plain trend of measurements over time — no percentile comparison, you interpret it.</p>
+
+      {showForm && (
+        <div className="flex flex-col gap-2 rounded-lg border border-dashed border-brand bg-brand-soft p-3">
+          <div className="grid grid-cols-3 gap-2">
+            <input type="number" step="0.1" value={height} onChange={(e) => setHeight(e.target.value)} placeholder="Height (cm)" className="rounded-lg border border-border bg-surface px-2 py-1.5 text-xs outline-none focus:border-brand" />
+            <input type="number" step="0.1" value={weight} onChange={(e) => setWeight(e.target.value)} placeholder="Weight (kg)" className="rounded-lg border border-border bg-surface px-2 py-1.5 text-xs outline-none focus:border-brand" />
+            <input type="number" step="0.1" value={headCirc} onChange={(e) => setHeadCirc(e.target.value)} placeholder="Head (cm)" className="rounded-lg border border-border bg-surface px-2 py-1.5 text-xs outline-none focus:border-brand" />
+          </div>
+          <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Note (optional)" className="rounded-lg border border-border bg-surface px-2 py-1.5 text-xs outline-none focus:border-brand" />
+          {error && <p className="text-xs text-danger">{error}</p>}
+          <button onClick={save} disabled={isPending} className="self-start rounded-lg bg-brand px-3 py-1.5 text-xs font-medium text-white disabled:opacity-60">
+            {isPending ? "Saving…" : "Save entry"}
+          </button>
+        </div>
+      )}
+
+      {logs.length === 0 ? (
+        <p className="text-xs text-muted">No entries yet.</p>
+      ) : (
+        <>
+          {logs.some((l) => l.weightKg) && (
+            <div className="flex h-24 items-end gap-1.5 rounded-lg border border-border bg-background p-2">
+              {logs
+                .filter((l) => l.weightKg)
+                .map((l) => (
+                  <div key={l.id} className="flex flex-1 flex-col items-center justify-end gap-1">
+                    <div className="w-full rounded-t bg-brand" style={{ height: `${Math.max(8, (l.weightKg! / maxWeight) * 100)}%` }} />
+                    <span className="text-[8px] text-muted">{l.weightKg}</span>
+                  </div>
+                ))}
+            </div>
+          )}
+          <ul className="flex flex-col gap-1">
+            {logs
+              .slice()
+              .reverse()
+              .slice(0, 5)
+              .map((l) => (
+                <li key={l.id} className="text-xs text-muted">
+                  {new Date(l.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short" })} —
+                  {l.heightCm ? ` ${l.heightCm}cm` : ""}
+                  {l.weightKg ? ` ${l.weightKg}kg` : ""}
+                  {l.headCircumferenceCm ? ` HC:${l.headCircumferenceCm}cm` : ""}
+                  {l.note ? ` — ${l.note}` : ""}
+                </li>
+              ))}
+          </ul>
+        </>
+      )}
+    </section>
+  );
+}
+
+// ─── Dermatology before/after photos ──────────────────────────────────────
+function PatientPhotos({
+  patientId,
+  photos,
+}: {
+  patientId: string;
+  photos: { id: string; photoUrl: string; label: string; note: string | null; createdAt: string }[];
+}) {
+  const router = useRouter();
+  const [label, setLabel] = useState<"before" | "after" | "other">("before");
+  const [note, setNote] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
+
+  function handleUpload(file: File) {
+    setError(null);
+    const formData = new FormData();
+    formData.append("image", file);
+    startTransition(async () => {
+      const result = await uploadPatientPhotoAction(patientId, label, note, formData);
+      if (result.error) {
+        setError(result.error);
+        return;
+      }
+      setNote("");
+      router.refresh();
+    });
+  }
+
+  return (
+    <section className="flex flex-col gap-2 rounded-xl border border-border bg-surface p-4 shadow-sm">
+      <p className="text-sm font-semibold text-foreground">📷 Before / after photos</p>
+
+      <div className="flex flex-wrap items-center gap-2">
+        {(["before", "after", "other"] as const).map((l) => (
+          <button
+            key={l}
+            onClick={() => setLabel(l)}
+            className={`rounded-full border px-2.5 py-1 text-xs font-medium capitalize ${label === l ? "border-brand bg-brand-soft text-brand-dark" : "border-border text-muted"}`}
+          >
+            {l}
+          </button>
+        ))}
+        <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Note (optional)" className="flex-1 rounded-lg border border-border bg-background px-2 py-1.5 text-xs outline-none focus:border-brand" />
+      </div>
+      <label className="self-start rounded-lg border border-dashed border-brand bg-brand-soft px-3 py-1.5 text-xs font-medium text-brand-dark">
+        {isPending ? "Uploading…" : "+ Upload photo"}
+        <input
+          type="file"
+          accept="image/png,image/jpeg,image/webp"
+          className="hidden"
+          disabled={isPending}
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (file) handleUpload(file);
+            e.target.value = "";
+          }}
+        />
+      </label>
+      {error && <p className="text-xs text-danger">{error}</p>}
+
+      {photos.length === 0 ? (
+        <p className="text-xs text-muted">No photos yet.</p>
+      ) : (
+        <div className="grid grid-cols-3 gap-2">
+          {photos.map((p) => (
+            <div key={p.id} className="relative flex flex-col gap-1">
+              {/* eslint-disable-next-line @next/next/no-img-element -- patient-uploaded photo */}
+              <img src={p.photoUrl} alt={p.label} className="aspect-square w-full rounded-lg object-cover" />
+              <span className="rounded-full bg-background px-1.5 py-0.5 text-center text-[9px] font-medium capitalize text-muted">{p.label}</span>
+              <button
+                onClick={() =>
+                  startTransition(async () => {
+                    await deletePatientPhotoAction(p.id, patientId);
+                    router.refresh();
+                  })
+                }
+                className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-black/60 text-[10px] text-white"
+              >
+                ✕
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
   );
 }

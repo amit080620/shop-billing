@@ -10,7 +10,7 @@ export default async function CustomersPage() {
     await Promise.all([
       admin
         .from("customers")
-        .select("id, name, phone, gstin, address, state_code, date_of_birth, gender, blood_group, known_allergies")
+        .select("id, name, phone, gstin, address, state_code, date_of_birth, gender, blood_group, known_allergies, fitness_goal, height_cm, weight_kg")
         .eq("shop_id", session.shopId)
         .order("name"),
       admin
@@ -48,8 +48,11 @@ export default async function CustomersPage() {
     gender: c.gender,
     bloodGroup: c.blood_group,
     knownAllergies: c.known_allergies,
+    fitnessGoal: c.fitness_goal,
+    heightCm: c.height_cm ? Number(c.height_cm) : null,
+    weightKg: c.weight_kg ? Number(c.weight_kg) : null,
     balance: Math.max(0, balances.get(c.id) ?? 0),
   }));
 
-  return <CustomersClient initialCustomers={withBalance} isClinic={session.businessType === "clinic"} />;
+  return <CustomersClient initialCustomers={withBalance} isClinic={session.businessType === "clinic"} isGym={session.businessType === "gym"} />;
 }

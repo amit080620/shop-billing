@@ -31,6 +31,7 @@ export function NewPrescriptionClient({
   prefillPatientName,
   prefillPatientPhone,
   lang,
+  specialty,
 }: {
   patients: Patient[];
   fieldLabels: string[];
@@ -38,10 +39,13 @@ export function NewPrescriptionClient({
   prefillPatientName: string;
   prefillPatientPhone: string;
   lang: Lang;
+  specialty: string;
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [dentalChart, setDentalChart] = useState<Record<string, string>>({});
+  const [vitals, setVitals] = useState<Record<string, string>>({});
 
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [patientName, setPatientName] = useState(prefillPatientName);
@@ -85,6 +89,8 @@ export function NewPrescriptionClient({
         followUpDate: followUpDate || null,
         appointmentId,
         items: medicines.filter((m) => m.medicineName.trim()),
+        dentalChart: Object.keys(dentalChart).length > 0 ? dentalChart : undefined,
+        vitals: Object.keys(vitals).length > 0 ? vitals : undefined,
       });
       if (result.error || !result.prescriptionId) {
         setError(result.error ?? "Could not save prescription");
@@ -164,6 +170,9 @@ export function NewPrescriptionClient({
           </select>
         </div>
       </section>
+
+      {specialty === "dental" && <ToothChart chart={dentalChart} onChange={setDentalChart} />}
+      {specialty in VITALS_FIELDS && <VitalsPanel specialty={specialty} vitals={vitals} onChange={setVitals} />}
 
       {/* Custom Rx sections — fully driven by clinic settings, no hard limit */}
       {sections.map((section, i) => (
@@ -294,5 +303,156 @@ export function NewPrescriptionClient({
         {isPending ? "Saving…" : "Save & print prescription"}
       </button>
     </div>
+  );
+}
+
+// ─── Dental: visual tooth chart (FDI notation) ─────────────────────────
+// Tap a tooth to cycle through its condition — this is purely a record
+// of what the doctor observed, nothing here is calculated or diagnosed.
+const TOOTH_CONDITIONS = ["healthy", "cavity", "filled", "missing", "crown", "root_canal"] as const;
+const CONDITION_COLORS: Record<string, string> = {
+  healthy: "bg-surface border-border text-muted",
+  cavity: "bg-red-100 border-red-400 text-red-700",
+  filled: "bg-blue-100 border-blue-400 text-blue-700",
+  missing: "bg-gray-200 border-gray-400 text-gray-500",
+  crown: "bg-amber-100 border-amber-400 text-amber-700",
+  root_canal: "bg-purple-100 border-purple-400 text-purple-700",
+};
+const CONDITION_LABELS: Record<string, string> = {
+  healthy: "Healthy",
+  cavity: "Cavity",
+  filled: "Filled",
+  missing: "Missing",
+  crown: "Crown",
+  root_canal: "Root canal",
+};
+const UPPER_RIGHT = [18, 17, 16, 15, 14, 13, 12, 11];
+const UPPER_LEFT = [21, 22, 23, 24, 25, 26, 27, 28];
+const LOWER_LEFT = [31, 32, 33, 34, 35, 36, 37, 38];
+const LOWER_RIGHT = [48, 47, 46, 45, 44, 43, 42, 41];
+
+function ToothChart({ chart, onChange }: { chart: Record<string, string>; onChange: (chart: Record<string, string>) => void }) {
+  function cycleTooth(tooth: number) {
+    const current = chart[tooth] ?? "healthy";
+    const nextIndex = (TOOTH_CONDITIONS.indexOf(current as (typeof TOOTH_CONDITIONS)[number]) + 1) % TOOTH_CONDITIONS.length;
+    const next = TOOTH_CONDITIONS[nextIndex];
+    const updated = { ...chart };
+    if (next === "healthy") delete updated[tooth];
+    else updated[tooth] = next;
+    onChange(updated);
+  }
+
+  function ToothButton({ tooth }: { tooth: number }) {
+    const condition = chart[tooth] ?? "healthy";
+    return (
+      <button
+        type="button"
+        onClick={() => cycleTooth(tooth)}
+        className={`flex h-9 w-9 items-center justify-center rounded-lg border text-[11px] font-semibold ${CONDITION_COLORS[condition]}`}
+        title={CONDITION_LABELS[condition]}
+      >
+        {tooth}
+      </button>
+    );
+  }
+
+  return (
+    <section className="flex flex-col gap-2 rounded-xl border border-border bg-surface p-3.5">
+      <p className="text-sm font-semibold text-foreground">🦷 Tooth chart</p>
+      <p className="text-xs text-muted">Tap a tooth to cycle its condition — a record of what you observed.</p>
+      <div className="flex flex-col items-center gap-1">
+        <div className="flex gap-1">
+          {UPPER_RIGHT.map((t) => (
+            <ToothButton key={t} tooth={t} />
+          ))}
+          <span className="w-2" />
+          {UPPER_LEFT.map((t) => (
+            <ToothButton key={t} tooth={t} />
+          ))}
+        </div>
+        <div className="flex gap-1">
+          {LOWER_RIGHT.map((t) => (
+            <ToothButton key={t} tooth={t} />
+          ))}
+          <span className="w-2" />
+          {LOWER_LEFT.map((t) => (
+            <ToothButton key={t} tooth={t} />
+          ))}
+        </div>
+      </div>
+      <div className="mt-1 flex flex-wrap gap-2">
+        {TOOTH_CONDITIONS.filter((c) => c !== "healthy").map((c) => (
+          <span key={c} className={`rounded-full border px-2 py-0.5 text-[10px] font-medium ${CONDITION_COLORS[c]}`}>
+            {CONDITION_LABELS[c]}
+          </span>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+// ─── Vitals panel: plain structured capture, no scoring ────────────────
+const VITALS_FIELDS: Record<string, { key: string; label: string; placeholder: string }[]> = {
+  cardiology: [
+    { key: "bpSystolic", label: "BP — Systolic (mmHg)", placeholder: "120" },
+    { key: "bpDiastolic", label: "BP — Diastolic (mmHg)", placeholder: "80" },
+    { key: "pulse", label: "Pulse (bpm)", placeholder: "72" },
+    { key: "spo2", label: "SpO2 (%)", placeholder: "98" },
+  ],
+  physiotherapy: [
+    { key: "affectedArea", label: "Affected area", placeholder: "e.g. Lower back" },
+    { key: "painScale", label: "Patient-reported pain (0-10)", placeholder: "5" },
+    { key: "rangeOfMotion", label: "Range of motion notes", placeholder: "e.g. Limited flexion" },
+  ],
+  orthopedic: [
+    { key: "affectedJoint", label: "Affected joint/bone", placeholder: "e.g. Right knee" },
+    { key: "mobility", label: "Mobility notes", placeholder: "e.g. Weight-bearing with support" },
+    { key: "swelling", label: "Swelling / tenderness", placeholder: "e.g. Mild swelling noted" },
+  ],
+  ophthalmology: [
+    { key: "visualAcuityRight", label: "Visual acuity — Right eye", placeholder: "e.g. 6/6" },
+    { key: "visualAcuityLeft", label: "Visual acuity — Left eye", placeholder: "e.g. 6/9" },
+    { key: "pinholeTest", label: "Pinhole test result", placeholder: "e.g. Improves to 6/6" },
+    { key: "iop", label: "IOP — Intraocular pressure (mmHg)", placeholder: "e.g. 16 / 15" },
+    { key: "colorVision", label: "Colour vision", placeholder: "e.g. Normal" },
+  ],
+  gynecology: [
+    { key: "lmp", label: "LMP — Last menstrual period", placeholder: "DD/MM/YYYY" },
+    { key: "gravidaPara", label: "Gravida / Para (G/P)", placeholder: "e.g. G2P1" },
+    { key: "cycleRegularity", label: "Cycle regularity", placeholder: "e.g. Regular, 28 days" },
+  ],
+  ent: [
+    { key: "ear", label: "Ear examination", placeholder: "e.g. Right — clear, Left — wax" },
+    { key: "nose", label: "Nose examination", placeholder: "e.g. Mild congestion" },
+    { key: "throat", label: "Throat examination", placeholder: "e.g. Mild redness" },
+  ],
+  psychiatry: [
+    { key: "mood", label: "Mood", placeholder: "e.g. Low, anxious" },
+    { key: "affect", label: "Affect", placeholder: "e.g. Flat, reactive" },
+    { key: "sleep", label: "Sleep pattern", placeholder: "e.g. Disturbed, 4-5 hrs" },
+    { key: "appetite", label: "Appetite", placeholder: "e.g. Reduced" },
+  ],
+};
+
+function VitalsPanel({ specialty, vitals, onChange }: { specialty: string; vitals: Record<string, string>; onChange: (v: Record<string, string>) => void }) {
+  const fields = VITALS_FIELDS[specialty] ?? [];
+  return (
+    <section className="flex flex-col gap-2 rounded-xl border border-border bg-surface p-3.5">
+      <p className="text-sm font-semibold text-foreground">📋 Vitals & notes</p>
+      <p className="text-xs text-muted">Plain record of what you measured/observed — nothing here is auto-scored.</p>
+      <div className="grid grid-cols-2 gap-2">
+        {fields.map((f) => (
+          <label key={f.key} className="flex flex-col gap-1 text-xs">
+            <span className="text-muted">{f.label}</span>
+            <input
+              value={vitals[f.key] ?? ""}
+              onChange={(e) => onChange({ ...vitals, [f.key]: e.target.value })}
+              placeholder={f.placeholder}
+              className="rounded-lg border border-border bg-background px-2.5 py-1.5 text-sm outline-none focus:border-brand"
+            />
+          </label>
+        ))}
+      </div>
+    </section>
   );
 }

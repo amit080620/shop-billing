@@ -264,19 +264,6 @@ export function OrderClient({
         </section>
       )}
 
-      {initialItems.length > 0 && (
-        <button
-          onClick={() => setCartOpen(true)}
-          className="no-print fixed inset-x-0 bottom-16 z-30 mx-auto flex w-full max-w-md items-center justify-between rounded-t-xl px-4 py-3 text-sm font-semibold text-white shadow-lg"
-          style={{ background: "linear-gradient(135deg, var(--brand-light), var(--brand-dark))" }}
-        >
-          <span>
-            🛒 {initialItems.reduce((s, i) => s + i.quantity, 0)} item{initialItems.reduce((s, i) => s + i.quantity, 0) === 1 ? "" : "s"}
-          </span>
-          <span>{formatMoney(order.total)} · ▲ View order</span>
-        </button>
-      )}
-
       {(cartOpen || initialItems.length === 0) && (
         <div
           className={
@@ -363,20 +350,34 @@ export function OrderClient({
 
       {error && <p className="no-print text-sm text-danger">{error}</p>}
 
-      {!isReadOnly && initialItems.length > 0 && (
-        <div className="no-print fixed inset-x-0 bottom-16 flex gap-2 border-t border-border bg-surface p-3">
-          <button onClick={printKot} disabled={isPending} className="flex-1 rounded-lg border border-border px-2 py-2.5 text-xs font-medium text-foreground disabled:opacity-60">
-            {t("order.printKot")}
+      {initialItems.length > 0 && (
+        <div className="no-print fixed inset-x-0 bottom-16 z-30 flex flex-col border-t border-border bg-surface shadow-lg">
+          <button
+            onClick={() => setCartOpen(true)}
+            className="flex w-full items-center justify-between px-4 py-2.5 text-sm font-semibold text-white"
+            style={{ background: "linear-gradient(135deg, var(--brand-light), var(--brand-dark))" }}
+          >
+            <span>
+              🛒 {initialItems.reduce((s, i) => s + i.quantity, 0)} item{initialItems.reduce((s, i) => s + i.quantity, 0) === 1 ? "" : "s"}
+            </span>
+            <span>{formatMoney(order.total)} · ▲ View order</span>
           </button>
-          <button onClick={() => setShowBillPrint(true)} className="flex-1 rounded-lg border border-border px-2 py-2.5 text-xs font-medium text-foreground">
-            {t("order.printBill")}
-          </button>
-          <button onClick={() => setShowSettle(true)} className="flex-1 rounded-lg bg-brand px-2 py-2.5 text-xs font-medium text-white">
-            {t("order.settle")}
-          </button>
-          <button onClick={() => setShowCancel(true)} className="rounded-lg border border-danger px-2 py-2.5 text-xs font-medium text-danger">
-            ✕
-          </button>
+          {!isReadOnly && (
+            <div className="flex gap-2 p-3">
+              <button onClick={printKot} disabled={isPending} className="flex-1 rounded-lg border border-border px-2 py-2.5 text-xs font-medium text-foreground disabled:opacity-60">
+                {t("order.printKot")}
+              </button>
+              <button onClick={() => setShowBillPrint(true)} className="flex-1 rounded-lg border border-border px-2 py-2.5 text-xs font-medium text-foreground">
+                {t("order.printBill")}
+              </button>
+              <button onClick={() => setShowSettle(true)} className="flex-1 rounded-lg bg-brand px-2 py-2.5 text-xs font-medium text-white">
+                {t("order.settle")}
+              </button>
+              <button onClick={() => setShowCancel(true)} className="rounded-lg border border-danger px-2 py-2.5 text-xs font-medium text-danger">
+                ✕
+              </button>
+            </div>
+          )}
         </div>
       )}
 

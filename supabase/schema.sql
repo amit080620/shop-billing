@@ -1473,3 +1473,191 @@ alter table restaurant_reservations add column if not exists refund_type text ch
 -- paid as a token comes off the total automatically — no separate
 -- manual step to remember.
 alter table restaurant_orders add column if not exists reservation_id uuid references restaurant_reservations(id) on delete set null;
+
+-- ─── Gym: Workout plans, Diet plans, Progress tracking ─────────────────────
+create table if not exists workout_plans (
+  id uuid primary key default uuid_generate_v4(),
+  shop_id uuid not null references shops(id) on delete cascade,
+  member_id uuid not null references customers(id) on delete cascade,
+  title text not null,
+  notes text,
+  staff_id uuid not null references staff(id),
+  created_at timestamptz not null default now()
+);
+alter table workout_plans enable row level security;
+create index if not exists idx_workout_plans_shop_member on workout_plans(shop_id, member_id);
+
+create table if not exists workout_exercises (
+  id uuid primary key default uuid_generate_v4(),
+  plan_id uuid not null references workout_plans(id) on delete cascade,
+  muscle_group text,
+  exercise_name text not null,
+  sets integer,
+  reps text,
+  rest_seconds integer,
+  sort_order integer not null default 0
+);
+alter table workout_exercises enable row level security;
+create index if not exists idx_workout_exercises_plan on workout_exercises(plan_id);
+
+create table if not exists diet_plans (
+  id uuid primary key default uuid_generate_v4(),
+  shop_id uuid not null references shops(id) on delete cascade,
+  member_id uuid not null references customers(id) on delete cascade,
+  goal text,
+  notes text,
+  staff_id uuid not null references staff(id),
+  created_at timestamptz not null default now()
+);
+alter table diet_plans enable row level security;
+create index if not exists idx_diet_plans_shop_member on diet_plans(shop_id, member_id);
+
+create table if not exists diet_meals (
+  id uuid primary key default uuid_generate_v4(),
+  plan_id uuid not null references diet_plans(id) on delete cascade,
+  meal_slot text not null check (meal_slot in ('breakfast', 'mid_morning', 'lunch', 'evening', 'dinner', 'post_workout')),
+  food_items text not null,
+  calories numeric(6, 1),
+  sort_order integer not null default 0
+);
+alter table diet_meals enable row level security;
+create index if not exists idx_diet_meals_plan on diet_meals(plan_id);
+
+-- Simple progress log a trainer/member updates over time — weight is the
+-- one number every gym actually tracks consistently; body-fat% is
+-- optional since not every gym has the equipment to measure it.
+create table if not exists progress_logs (
+  id uuid primary key default uuid_generate_v4(),
+  shop_id uuid not null references shops(id) on delete cascade,
+  member_id uuid not null references customers(id) on delete cascade,
+  weight_kg numeric(5, 1),
+  body_fat_percent numeric(4, 1),
+  note text,
+  staff_id uuid not null references staff(id),
+  created_at timestamptz not null default now()
+);
+alter table progress_logs enable row level security;
+create index if not exists idx_progress_logs_shop_member on progress_logs(shop_id, member_id, created_at);
+
+-- ─── Gym: simple lead tracker ───────────────────────────────────────────────
+-- Deliberately a flat list with a status dropdown, not a full Kanban
+-- pipeline — covers the real day-to-day need (who to follow up with)
+-- without the larger drag-and-drop board/stage-automation build.
+create table if not exists leads (
+  id uuid primary key default uuid_generate_v4(),
+  shop_id uuid not null references shops(id) on delete cascade,
+  name text not null,
+  phone text not null,
+  source text,
+  interested_plan text,
+  status text not null default 'new' check (status in ('new', 'contacted', 'trial', 'converted', 'lost')),
+  notes text,
+  staff_id uuid not null references staff(id),
+  created_at timestamptz not null default now()
+);
+alter table leads enable row level security;
+create index if not exists idx_leads_shop_status on leads(shop_id, status);
+
+-- ─── Gym: simple class schedule (no live capacity/waitlist engine) ────────
+-- A recurring weekly schedule (Yoga Mon/Wed/Fri 6am) plus a simple
+-- attendee list per date — enough to plan and see who's coming, without
+-- the real-time booking/waitlist/capacity-lock engine a large studio
+-- chain would eventually need.
+create table if not exists gym_classes (
+  id uuid primary key default uuid_generate_v4(),
+  shop_id uuid not null references shops(id) on delete cascade,
+  name text not null,
+  trainer_id uuid references staff(id) on delete set null,
+  day_of_week integer not null check (day_of_week between 0 and 6),
+  start_time time not null,
+  duration_minutes integer not null default 60,
+  capacity integer not null default 15,
+  is_active boolean not null default true,
+  created_at timestamptz not null default now()
+);
+alter table gym_classes enable row level security;
+create index if not exists idx_gym_classes_shop on gym_classes(shop_id);
+
+create table if not exists gym_class_bookings (
+  id uuid primary key default uuid_generate_v4(),
+  class_id uuid not null references gym_classes(id) on delete cascade,
+  member_id uuid not null references customers(id) on delete cascade,
+  class_date date not null,
+  created_at timestamptz not null default now(),
+  unique (class_id, member_id, class_date)
+);
+alter table gym_class_bookings enable row level security;
+create index if not exists idx_gym_class_bookings_class_date on gym_class_bookings(class_id, class_date);
+
+-- ─── Gym: self-service check-in kiosk ──────────────────────────────────────
+-- The real bottleneck the owner described: staff manually searching and
+-- tapping "check in" for every single member is not scalable. This lets
+-- a member check themselves in by typing their own phone number on a
+-- tablet/phone left open at the entrance — no staff involvement per
+-- member. Same public-link pattern as booking_settings/catalog_settings.
+create table if not exists gym_kiosk_settings (
+  shop_id uuid primary key references shops(id) on delete cascade,
+  is_enabled boolean not null default false,
+  public_token uuid unique not null default uuid_generate_v4(),
+  updated_at timestamptz not null default now()
+);
+alter table gym_kiosk_settings enable row level security;
+
+-- ─── Clinic: specialty-aware consultation (safe, structured data only) ────
+-- Deliberately NO scoring/risk-calculation/diagnosis-suggestion logic —
+-- that is clinical decision support and needs regulatory validation an
+-- app like this cannot provide. What's built instead is structured DATA
+-- CAPTURE that looks and feels specialty-specific: a real tooth chart
+-- for Dental, a vitals panel for Cardiology/General/Physio — the doctor
+-- still makes every clinical judgment themselves.
+alter table prescription_settings add column if not exists specialty text not null default 'general'
+  check (specialty in ('general', 'dental', 'cardiology', 'dermatology', 'physiotherapy', 'orthopedic', 'ent', 'gynecology', 'pediatric', 'psychiatry'));
+
+-- Snapshot per prescription — {"11": "cavity", "22": "missing", ...} using
+-- standard adult dental notation (11-18, 21-28, 31-38, 41-48).
+alter table prescriptions add column if not exists dental_chart jsonb;
+
+-- Plain structured vitals — every field optional, no derived/calculated
+-- values stored.
+alter table prescriptions add column if not exists vitals jsonb;
+
+-- ─── Clinic: add Ophthalmology specialty, growth logs, patient photos ─────
+alter table prescription_settings drop constraint if exists prescription_settings_specialty_check;
+alter table prescription_settings add constraint prescription_settings_specialty_check
+  check (specialty in ('general', 'dental', 'cardiology', 'dermatology', 'physiotherapy', 'orthopedic', 'ent', 'gynecology', 'pediatric', 'psychiatry', 'ophthalmology'));
+
+-- Pediatric growth tracking — deliberately a plain trend over time, no
+-- percentile/WHO-curve overlay and no "normal vs abnormal" flagging.
+-- The doctor plots and interprets it themselves; this just saves them
+-- re-measuring from old paper charts.
+create table if not exists growth_logs (
+  id uuid primary key default uuid_generate_v4(),
+  shop_id uuid not null references shops(id) on delete cascade,
+  patient_id uuid not null references customers(id) on delete cascade,
+  height_cm numeric(5, 1),
+  weight_kg numeric(5, 1),
+  head_circumference_cm numeric(5, 1),
+  note text,
+  staff_id uuid not null references staff(id),
+  created_at timestamptz not null default now()
+);
+alter table growth_logs enable row level security;
+create index if not exists idx_growth_logs_shop_patient on growth_logs(shop_id, patient_id, created_at);
+
+-- Dermatology (or any specialty) before/after photo documentation.
+insert into storage.buckets (id, name, public)
+values ('patient-photos', 'patient-photos', true)
+on conflict (id) do nothing;
+
+create table if not exists patient_photos (
+  id uuid primary key default uuid_generate_v4(),
+  shop_id uuid not null references shops(id) on delete cascade,
+  patient_id uuid not null references customers(id) on delete cascade,
+  photo_url text not null,
+  label text not null default 'before' check (label in ('before', 'after', 'other')),
+  note text,
+  staff_id uuid not null references staff(id),
+  created_at timestamptz not null default now()
+);
+alter table patient_photos enable row level security;
+create index if not exists idx_patient_photos_shop_patient on patient_photos(shop_id, patient_id, created_at);

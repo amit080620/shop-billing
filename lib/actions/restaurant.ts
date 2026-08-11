@@ -214,7 +214,10 @@ export async function startOrderAction(tableId: string): Promise<{ orderId?: str
     await admin.from("restaurant_reservations").update({ status: "seated" }).eq("id", matchingReservation.id);
   }
 
-  await admin.from("restaurant_tables").update({ status: "occupied" }).eq("id", tableId);
+  // Deliberately NOT marking the table occupied here — an order with
+  // zero items (staff tapped in just to look, then went back) should
+  // leave the table free/green. It only turns red once the first real
+  // item lands, in addOrderItemAction below.
   revalidatePath("/restaurant");
   revalidatePath("/restaurant/reservations");
   return { orderId: order.id };
@@ -230,7 +233,7 @@ export async function addOrderItemAction(
 
   const { data: order } = await admin
     .from("restaurant_orders")
-    .select("id, status")
+    .select("id, status, table_id")
     .eq("id", orderId)
     .eq("shop_id", session.shopId)
     .single();
@@ -257,8 +260,10 @@ export async function addOrderItemAction(
   });
   if (error) return { error: "Could not add item" };
 
+  await admin.from("restaurant_tables").update({ status: "occupied" }).eq("id", order.table_id);
   await recalcOrderTotals(orderId);
   revalidatePath(`/restaurant/orders/${orderId}`);
+  revalidatePath("/restaurant");
   return {};
 }
 
@@ -307,7 +312,7 @@ export async function removeOrderItemAction(orderItemId: string, orderId: string
 
   const { data: order } = await admin
     .from("restaurant_orders")
-    .select("id, status")
+    .select("id, status, table_id")
     .eq("id", orderId)
     .eq("shop_id", session.shopId)
     .single();
@@ -329,8 +334,21 @@ export async function removeOrderItemAction(orderItemId: string, orderId: string
     await admin.from("restaurant_order_items").delete().eq("id", orderItemId).eq("order_id", orderId);
   }
 
+  // If that was the last active item, the table is genuinely empty
+  // again — same principle as never marking it occupied in the first
+  // place until something real was actually ordered.
+  const { count: remaining } = await admin
+    .from("restaurant_order_items")
+    .select("id", { count: "exact", head: true })
+    .eq("order_id", orderId)
+    .neq("status", "cancelled");
+  if (!remaining) {
+    await admin.from("restaurant_tables").update({ status: "free" }).eq("id", order.table_id);
+  }
+
   await recalcOrderTotals(orderId);
   revalidatePath(`/restaurant/orders/${orderId}`);
+  revalidatePath("/restaurant");
   return {};
 }
 

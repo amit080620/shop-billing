@@ -14,6 +14,7 @@ export function SettingsClient({
   customFieldLabels: initialLabels,
   headerImageUrl,
   footerImageUrl,
+  specialty: initialSpecialty,
 }: {
   headerText: string;
   footerText: string;
@@ -21,11 +22,13 @@ export function SettingsClient({
   customFieldLabels: string[];
   headerImageUrl: string | null;
   footerImageUrl: string | null;
+  specialty: string;
 }) {
   const router = useRouter();
   const [headerText, setHeaderText] = useState(initialHeaderText);
   const [footerText, setFooterText] = useState(initialFooterText);
   const [showShopLogo, setShowShopLogo] = useState(initialShowShopLogo);
+  const [specialty, setSpecialty] = useState(initialSpecialty);
   const [labels, setLabels] = useState<string[]>(initialLabels.length > 0 ? initialLabels : [""]);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
@@ -62,6 +65,7 @@ export function SettingsClient({
         footerText,
         showShopLogo,
         customFieldLabels: labels.map((l) => l.trim()).filter(Boolean),
+        specialty,
       });
       if (result.error) {
         setError(result.error);
@@ -89,6 +93,24 @@ export function SettingsClient({
       <Link href="/clinic" className="text-sm text-muted">
         ← Clinic
       </Link>
+
+      <label className="flex flex-col gap-1.5 text-sm">
+        <span className="font-medium text-foreground">Specialty</span>
+        <select value={specialty} onChange={(e) => setSpecialty(e.target.value)} className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand">
+          <option value="general">General / Other</option>
+          <option value="dental">Dental — adds a visual tooth chart</option>
+          <option value="cardiology">Cardiology — adds a vitals panel</option>
+          <option value="physiotherapy">Physiotherapy — adds a vitals panel</option>
+          <option value="orthopedic">Orthopedic — adds a vitals panel</option>
+          <option value="ophthalmology">Ophthalmology / Eye — adds a vitals panel</option>
+          <option value="gynecology">Gynecology — adds a vitals panel</option>
+          <option value="ent">ENT — adds a vitals panel</option>
+          <option value="psychiatry">Psychiatry — adds a vitals panel</option>
+          <option value="dermatology">Dermatology — adds before/after photos</option>
+          <option value="pediatric">Pediatric — adds a growth chart</option>
+        </select>
+        <p className="text-xs text-muted">Changes what shows up on the New Prescription screen — just extra structured fields to fill in, nothing is auto-calculated or diagnosed.</p>
+      </label>
 
       <label className="flex flex-col gap-1.5 text-sm">
         <span className="font-medium text-foreground">Header (doctor name, qualifications, registration no.)</span>

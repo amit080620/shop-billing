@@ -226,7 +226,7 @@ async function GymHome({
   in7Days.setDate(in7Days.getDate() + 7);
   const in7DaysIso = `${in7Days.getFullYear()}-${String(in7Days.getMonth() + 1).padStart(2, "0")}-${String(in7Days.getDate()).padStart(2, "0")}`;
 
-  const [todayBills, weekBills, { data: todayAttendance }, { data: expiringMemberships }] = await Promise.all([
+  const [todayBills, weekBills, { data: todayAttendance }, { data: expiringMemberships }, { data: allActiveMemberships }] = await Promise.all([
     admin.from("bills").select("total").eq("shop_id", session.shopId).eq("status", "active").gte("created_at", startOfToday.toISOString()),
     admin.from("bills").select("total, created_at").eq("shop_id", session.shopId).eq("status", "active").gte("created_at", startOfWeek.toISOString()),
     admin.from("gym_attendance").select("id").eq("shop_id", session.shopId).gte("checked_in_at", startOfToday.toISOString()),
@@ -237,7 +237,23 @@ async function GymHome({
       .eq("status", "active")
       .lte("end_date", in7DaysIso)
       .order("end_date", { ascending: true }),
+    admin
+      .from("memberships")
+      .select("id, pt_sessions_total, pt_sessions_used, customers ( name )")
+      .eq("shop_id", session.shopId)
+      .eq("status", "active")
+      .gt("pt_sessions_total", 0),
   ]);
+
+  // "3 or fewer sessions remaining" — a natural renewal-prompt moment,
+  // computed here rather than filtered in SQL since it's a difference
+  // between two columns.
+  const lowPtSessions = (allActiveMemberships ?? [])
+    .map((m) => {
+      const customer = Array.isArray(m.customers) ? m.customers[0] : (m.customers as { name: string } | null);
+      return { id: m.id, memberName: customer?.name ?? "Member", remaining: m.pt_sessions_total - m.pt_sessions_used };
+    })
+    .filter((m) => m.remaining > 0 && m.remaining <= 3);
 
   const todayTotal = sum(todayBills.data?.map((b) => b.total));
   const trend = buildSevenDayTrend(weekBills.data ?? [], "created_at");
@@ -264,6 +280,17 @@ async function GymHome({
               </p>
             );
           })}
+        </Link>
+      )}
+
+      {lowPtSessions.length > 0 && (
+        <Link href="/gym/members" className="flex flex-col gap-1 rounded-xl border border-amber-500 bg-amber-50 px-4 py-3">
+          <p className="text-xs font-semibold text-amber-700">🏋️ {lowPtSessions.length} member(s) running low on PT sessions</p>
+          {lowPtSessions.slice(0, 3).map((m) => (
+            <p key={m.id} className="text-xs text-amber-700">
+              {m.memberName} — {m.remaining} session{m.remaining === 1 ? "" : "s"} left
+            </p>
+          ))}
         </Link>
       )}
 

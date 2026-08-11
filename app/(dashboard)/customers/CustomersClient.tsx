@@ -43,9 +43,11 @@ function SubmitButton() {
 export function CustomersClient({
   initialCustomers,
   isClinic,
+  isGym,
 }: {
   initialCustomers: Customer[];
   isClinic: boolean;
+  isGym: boolean;
 }) {
   const router = useRouter();
   const [showForm, setShowForm] = useState(false);
@@ -71,7 +73,7 @@ export function CustomersClient({
   return (
     <div className="flex flex-col gap-4">
       <PageHeader
-        title={isClinic ? "Patients" : "Customers"}
+        title={isClinic ? "Patients" : isGym ? "Members" : "Customers"}
         icon={
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
             <circle cx="9" cy="8" r="3" />
@@ -82,12 +84,12 @@ export function CustomersClient({
         }
         action={
           <button onClick={() => setShowForm((v) => !v)} className="btn-primary-sm">
-            + {isClinic ? "Patient" : "Customer"}
+            + {isClinic ? "Patient" : isGym ? "Member" : "Customer"}
           </button>
         }
       />
 
-      <BulkImportExportCustomers customers={initialCustomers} isClinic={isClinic} onImported={() => router.refresh()} />
+      <BulkImportExportCustomers customers={initialCustomers} isClinic={isClinic} isGym={isGym} onImported={() => router.refresh()} />
 
       {showForm && (
         <form

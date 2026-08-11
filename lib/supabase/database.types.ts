@@ -738,9 +738,9 @@ export interface Database {
         Relationships: [];
       };
       prescription_settings: {
-        Row: { shop_id: string; header_text: string | null; footer_text: string | null; show_shop_logo: boolean; custom_field_labels: string[]; header_image_url: string | null; footer_image_url: string | null; updated_at: string };
-        Insert: { shop_id: string; header_text?: string | null; footer_text?: string | null; show_shop_logo?: boolean; custom_field_labels?: string[]; header_image_url?: string | null; footer_image_url?: string | null; updated_at?: string };
-        Update: { shop_id?: string; header_text?: string | null; footer_text?: string | null; show_shop_logo?: boolean; custom_field_labels?: string[]; header_image_url?: string | null; footer_image_url?: string | null; updated_at?: string };
+        Row: { shop_id: string; header_text: string | null; footer_text: string | null; show_shop_logo: boolean; custom_field_labels: string[]; header_image_url: string | null; footer_image_url: string | null; specialty: "general" | "dental" | "cardiology" | "dermatology" | "physiotherapy" | "orthopedic" | "ent" | "gynecology" | "pediatric" | "psychiatry" | "ophthalmology"; updated_at: string };
+        Insert: { shop_id: string; header_text?: string | null; footer_text?: string | null; show_shop_logo?: boolean; custom_field_labels?: string[]; header_image_url?: string | null; footer_image_url?: string | null; specialty?: "general" | "dental" | "cardiology" | "dermatology" | "physiotherapy" | "orthopedic" | "ent" | "gynecology" | "pediatric" | "psychiatry" | "ophthalmology"; updated_at?: string };
+        Update: { shop_id?: string; header_text?: string | null; footer_text?: string | null; show_shop_logo?: boolean; custom_field_labels?: string[]; header_image_url?: string | null; footer_image_url?: string | null; specialty?: "general" | "dental" | "cardiology" | "dermatology" | "physiotherapy" | "orthopedic" | "ent" | "gynecology" | "pediatric" | "psychiatry" | "ophthalmology"; updated_at?: string };
         Relationships: [];
       };
       catalog_settings: {
@@ -823,6 +823,81 @@ export interface Database {
         Row: { shop_id: string; financial_year: string; last_number: number };
         Insert: { shop_id: string; financial_year: string; last_number?: number };
         Update: { shop_id?: string; financial_year?: string; last_number?: number };
+        Relationships: [];
+      };
+      gym_kiosk_settings: {
+        Row: { shop_id: string; is_enabled: boolean; public_token: string; updated_at: string };
+        Insert: { shop_id: string; is_enabled?: boolean; public_token?: string; updated_at?: string };
+        Update: { shop_id?: string; is_enabled?: boolean; public_token?: string; updated_at?: string };
+        Relationships: [];
+      };
+      gym_classes: {
+        Row: { id: string; shop_id: string; name: string; trainer_id: string | null; day_of_week: number; start_time: string; duration_minutes: number; capacity: number; is_active: boolean; created_at: string };
+        Insert: { id?: string; shop_id: string; name: string; trainer_id?: string | null; day_of_week: number; start_time: string; duration_minutes?: number; capacity?: number; is_active?: boolean; created_at?: string };
+        Update: { id?: string; shop_id?: string; name?: string; trainer_id?: string | null; day_of_week?: number; start_time?: string; duration_minutes?: number; capacity?: number; is_active?: boolean; created_at?: string };
+        Relationships: [
+          { foreignKeyName: "gym_classes_trainer_id_fkey"; columns: ["trainer_id"]; isOneToOne: false; referencedRelation: "staff"; referencedColumns: ["id"] },
+        ];
+      };
+      gym_class_bookings: {
+        Row: { id: string; class_id: string; member_id: string; class_date: string; created_at: string };
+        Insert: { id?: string; class_id: string; member_id: string; class_date: string; created_at?: string };
+        Update: { id?: string; class_id?: string; member_id?: string; class_date?: string; created_at?: string };
+        Relationships: [
+          { foreignKeyName: "gym_class_bookings_class_id_fkey"; columns: ["class_id"]; isOneToOne: false; referencedRelation: "gym_classes"; referencedColumns: ["id"] },
+          { foreignKeyName: "gym_class_bookings_member_id_fkey"; columns: ["member_id"]; isOneToOne: false; referencedRelation: "customers"; referencedColumns: ["id"] },
+        ];
+      };
+      leads: {
+        Row: { id: string; shop_id: string; name: string; phone: string; source: string | null; interested_plan: string | null; status: "new" | "contacted" | "trial" | "converted" | "lost"; notes: string | null; staff_id: string; created_at: string };
+        Insert: { id?: string; shop_id: string; name: string; phone: string; source?: string | null; interested_plan?: string | null; status?: "new" | "contacted" | "trial" | "converted" | "lost"; notes?: string | null; staff_id: string; created_at?: string };
+        Update: { id?: string; shop_id?: string; name?: string; phone?: string; source?: string | null; interested_plan?: string | null; status?: "new" | "contacted" | "trial" | "converted" | "lost"; notes?: string | null; staff_id?: string; created_at?: string };
+        Relationships: [];
+      };
+      workout_plans: {
+        Row: { id: string; shop_id: string; member_id: string; title: string; notes: string | null; staff_id: string; created_at: string };
+        Insert: { id?: string; shop_id: string; member_id: string; title: string; notes?: string | null; staff_id: string; created_at?: string };
+        Update: { id?: string; shop_id?: string; member_id?: string; title?: string; notes?: string | null; staff_id?: string; created_at?: string };
+        Relationships: [];
+      };
+      workout_exercises: {
+        Row: { id: string; plan_id: string; muscle_group: string | null; exercise_name: string; sets: number | null; reps: string | null; rest_seconds: number | null; sort_order: number };
+        Insert: { id?: string; plan_id: string; muscle_group?: string | null; exercise_name: string; sets?: number | null; reps?: string | null; rest_seconds?: number | null; sort_order?: number };
+        Update: { id?: string; plan_id?: string; muscle_group?: string | null; exercise_name?: string; sets?: number | null; reps?: string | null; rest_seconds?: number | null; sort_order?: number };
+        Relationships: [
+          { foreignKeyName: "workout_exercises_plan_id_fkey"; columns: ["plan_id"]; isOneToOne: false; referencedRelation: "workout_plans"; referencedColumns: ["id"] },
+        ];
+      };
+      diet_plans: {
+        Row: { id: string; shop_id: string; member_id: string; goal: string | null; notes: string | null; staff_id: string; created_at: string };
+        Insert: { id?: string; shop_id: string; member_id: string; goal?: string | null; notes?: string | null; staff_id: string; created_at?: string };
+        Update: { id?: string; shop_id?: string; member_id?: string; goal?: string | null; notes?: string | null; staff_id?: string; created_at?: string };
+        Relationships: [];
+      };
+      diet_meals: {
+        Row: { id: string; plan_id: string; meal_slot: "breakfast" | "mid_morning" | "lunch" | "evening" | "dinner" | "post_workout"; food_items: string; calories: number | null; sort_order: number };
+        Insert: { id?: string; plan_id: string; meal_slot: "breakfast" | "mid_morning" | "lunch" | "evening" | "dinner" | "post_workout"; food_items: string; calories?: number | null; sort_order?: number };
+        Update: { id?: string; plan_id?: string; meal_slot?: "breakfast" | "mid_morning" | "lunch" | "evening" | "dinner" | "post_workout"; food_items?: string; calories?: number | null; sort_order?: number };
+        Relationships: [
+          { foreignKeyName: "diet_meals_plan_id_fkey"; columns: ["plan_id"]; isOneToOne: false; referencedRelation: "diet_plans"; referencedColumns: ["id"] },
+        ];
+      };
+      growth_logs: {
+        Row: { id: string; shop_id: string; patient_id: string; height_cm: number | null; weight_kg: number | null; head_circumference_cm: number | null; note: string | null; staff_id: string; created_at: string };
+        Insert: { id?: string; shop_id: string; patient_id: string; height_cm?: number | null; weight_kg?: number | null; head_circumference_cm?: number | null; note?: string | null; staff_id: string; created_at?: string };
+        Update: { id?: string; shop_id?: string; patient_id?: string; height_cm?: number | null; weight_kg?: number | null; head_circumference_cm?: number | null; note?: string | null; staff_id?: string; created_at?: string };
+        Relationships: [];
+      };
+      patient_photos: {
+        Row: { id: string; shop_id: string; patient_id: string; photo_url: string; label: "before" | "after" | "other"; note: string | null; staff_id: string; created_at: string };
+        Insert: { id?: string; shop_id: string; patient_id: string; photo_url: string; label?: "before" | "after" | "other"; note?: string | null; staff_id: string; created_at?: string };
+        Update: { id?: string; shop_id?: string; patient_id?: string; photo_url?: string; label?: "before" | "after" | "other"; note?: string | null; staff_id?: string; created_at?: string };
+        Relationships: [];
+      };
+      progress_logs: {
+        Row: { id: string; shop_id: string; member_id: string; weight_kg: number | null; body_fat_percent: number | null; note: string | null; staff_id: string; created_at: string };
+        Insert: { id?: string; shop_id: string; member_id: string; weight_kg?: number | null; body_fat_percent?: number | null; note?: string | null; staff_id: string; created_at?: string };
+        Update: { id?: string; shop_id?: string; member_id?: string; weight_kg?: number | null; body_fat_percent?: number | null; note?: string | null; staff_id?: string; created_at?: string };
         Relationships: [];
       };
       membership_plans: {
@@ -920,6 +995,8 @@ export interface Database {
           doctor_name: string | null;
           custom_sections: { label: string; value: string }[];
           follow_up_date: string | null;
+          dental_chart: Record<string, string> | null;
+          vitals: Record<string, string | number> | null;
           bill_id: string | null;
           staff_id: string;
           created_at: string;
@@ -938,6 +1015,8 @@ export interface Database {
           doctor_name?: string | null;
           custom_sections?: { label: string; value: string }[];
           follow_up_date?: string | null;
+          dental_chart?: Record<string, string> | null;
+          vitals?: Record<string, string | number> | null;
           bill_id?: string | null;
           staff_id: string;
           created_at?: string;
@@ -956,6 +1035,8 @@ export interface Database {
           doctor_name?: string | null;
           custom_sections?: { label: string; value: string }[];
           follow_up_date?: string | null;
+          dental_chart?: Record<string, string> | null;
+          vitals?: Record<string, string | number> | null;
           bill_id?: string | null;
           staff_id?: string;
           created_at?: string;

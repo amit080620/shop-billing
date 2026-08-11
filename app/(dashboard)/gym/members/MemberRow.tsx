@@ -4,6 +4,8 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { freezeMembershipAction, cancelMembershipAction, recordPtSessionAction, checkInMemberAction } from "@/lib/actions/gym";
+import { useTranslation } from "@/lib/i18n/useTranslation";
+import type { Lang } from "@/lib/i18n/dictionary";
 
 type Membership = {
   id: string;
@@ -19,7 +21,8 @@ function daysUntil(dateStr: string) {
   return Math.ceil((new Date(dateStr).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
 }
 
-export function MemberRow({ member }: { member: Member }) {
+export function MemberRow({ member, lang }: { member: Member; lang: Lang }) {
+  const { t } = useTranslation(lang);
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -35,7 +38,9 @@ export function MemberRow({ member }: { member: Member }) {
     <li className="rounded-xl border border-border bg-surface shadow-sm p-3.5">
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
-          <p className="text-sm font-semibold text-foreground">{member.name}</p>
+          <Link href={`/gym/members/${member.id}`} className="text-sm font-semibold text-foreground underline-offset-2 hover:underline">
+            {member.name}
+          </Link>
           <p className="text-xs text-muted">
             {member.phone}
             {member.trainerName ? ` · Trainer: ${member.trainerName}` : ""}
@@ -88,6 +93,22 @@ export function MemberRow({ member }: { member: Member }) {
         >
           ✅ Check in
         </button>
+        {m && m.status === "active" && (tone === "soon" || tone === "expired") && (
+          <a
+            href={`https://wa.me/${member.phone.replace(/\D/g, "").length === 10 ? `91${member.phone.replace(/\D/g, "")}` : member.phone.replace(/\D/g, "")}?text=${encodeURIComponent(
+              t("wa.gymExpiryReminder", {
+                name: member.name,
+                plan: m.planName,
+                date: new Date(m.endDate).toLocaleDateString("en-IN", { day: "numeric", month: "short" }),
+              }),
+            )}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="rounded-lg border border-credit bg-credit-soft px-2.5 py-1 text-xs font-medium text-credit"
+          >
+            💬 Remind
+          </a>
+        )}
         {m && m.status === "active" && m.ptSessionsTotal > m.ptSessionsUsed && (
           <button
             onClick={() =>

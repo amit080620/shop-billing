@@ -23,6 +23,20 @@ export default async function CustomerLedgerPage({
 
   if (!customer) notFound();
 
+  const { data: prescriptionSettings } = session.businessType === "clinic"
+    ? await admin.from("prescription_settings").select("specialty").eq("shop_id", session.shopId).maybeSingle()
+    : { data: null };
+  const specialty = prescriptionSettings?.specialty ?? "general";
+
+  const [{ data: growthLogs }, { data: photos }] = await Promise.all([
+    specialty === "pediatric"
+      ? admin.from("growth_logs").select("id, height_cm, weight_kg, head_circumference_cm, note, created_at").eq("patient_id", id).eq("shop_id", session.shopId).order("created_at", { ascending: true })
+      : Promise.resolve({ data: [] }),
+    specialty === "dermatology"
+      ? admin.from("patient_photos").select("id, photo_url, label, note, created_at").eq("patient_id", id).eq("shop_id", session.shopId).order("created_at", { ascending: false })
+      : Promise.resolve({ data: [] }),
+  ]);
+
   const [{ data: bills }, { data: payments }, { data: returns }] = await Promise.all([
     admin
       .from("bills")
@@ -72,6 +86,16 @@ export default async function CustomerLedgerPage({
   return (
     <LedgerClient
       lang={lang}
+      specialty={specialty}
+      growthLogs={(growthLogs ?? []).map((g) => ({
+        id: g.id,
+        heightCm: g.height_cm ? Number(g.height_cm) : null,
+        weightKg: g.weight_kg ? Number(g.weight_kg) : null,
+        headCircumferenceCm: g.head_circumference_cm ? Number(g.head_circumference_cm) : null,
+        note: g.note,
+        createdAt: g.created_at,
+      }))}
+      photos={(photos ?? []).map((p) => ({ id: p.id, photoUrl: p.photo_url, label: p.label, note: p.note, createdAt: p.created_at }))}
       customer={{
         id: customer.id,
         name: customer.name,
