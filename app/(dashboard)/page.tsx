@@ -102,6 +102,8 @@ export default async function DashboardPage() {
         <ClinicHome session={session} t={t} />
       ) : session.businessType === "gym" ? (
         <GymHome session={session} t={t} />
+      ) : session.businessType === "lab" ? (
+        <LabHome session={session} t={t} />
       ) : (
         <RetailHome session={session} t={t} />
       )}
@@ -204,6 +206,106 @@ async function RetailHome({
           </ul>
         )}
       </section>
+    </>
+  );
+}
+
+// ─── Lab / Diagnostics ──────────────────────────────────────────────────
+async function LabHome({
+  session,
+  t,
+}: {
+  session: Awaited<ReturnType<typeof requireSession>>;
+  t: (key: string, vars?: Record<string, string | number>) => string;
+}) {
+  const admin = createSupabaseAdminClient();
+  const startOfToday = new Date();
+  startOfToday.setHours(0, 0, 0, 0);
+  const startOfWeek = new Date();
+  startOfWeek.setDate(startOfWeek.getDate() - 6);
+  startOfWeek.setHours(0, 0, 0, 0);
+
+  const [todayBills, weekBills, { data: pendingOrders }, { data: homeCollections }] = await Promise.all([
+    admin.from("bills").select("total").eq("shop_id", session.shopId).eq("status", "active").gte("created_at", startOfToday.toISOString()),
+    admin.from("bills").select("total, created_at").eq("shop_id", session.shopId).eq("status", "active").gte("created_at", startOfWeek.toISOString()),
+    admin
+      .from("lab_orders")
+      .select("id, order_number, patient_name, status")
+      .eq("shop_id", session.shopId)
+      .in("status", ["booked", "sample_collected", "received_at_lab", "processing"])
+      .order("created_at", { ascending: true }),
+    admin
+      .from("lab_orders")
+      .select("id, patient_name, home_address, collection_slot")
+      .eq("shop_id", session.shopId)
+      .eq("collection_type", "home_collection")
+      .eq("status", "booked")
+      .gte("created_at", startOfToday.toISOString()),
+  ]);
+
+  const todayTotal = sum(todayBills.data?.map((b) => b.total));
+  const trend = buildSevenDayTrend(weekBills.data ?? [], "created_at");
+  const STATUS_LABELS: Record<string, string> = { booked: "Booked", sample_collected: "Collected", received_at_lab: "Received", processing: "Processing" };
+
+  return (
+    <>
+      <section className="rounded-xl border border-border bg-surface p-4 shadow-sm">
+        <div className="mb-1 flex items-center justify-between">
+          <p className="text-xs font-medium text-muted">Last 7 days</p>
+          <p className="text-sm font-semibold text-foreground">{formatMoney(sum(trend.map((d) => d.total)))}</p>
+        </div>
+        <SalesTrendChart data={trend} />
+      </section>
+
+      {homeCollections && homeCollections.length > 0 && (
+        <Link href="/lab/orders" className="flex flex-col gap-1 rounded-xl border border-amber-500 bg-amber-50 px-4 py-3">
+          <p className="text-xs font-semibold text-amber-700">🏠 {homeCollections.length} home collection(s) today</p>
+          {homeCollections.slice(0, 3).map((o) => (
+            <p key={o.id} className="text-xs text-amber-700">
+              {o.patient_name} — {o.collection_slot ?? "no slot set"}
+            </p>
+          ))}
+        </Link>
+      )}
+
+      <section className="grid grid-cols-2 gap-3">
+        <StatCard label={t("home.todaySales")} value={formatMoney(todayTotal)} href="/daily-summary" icon="💰" />
+        <StatCard label="Pending orders" value={String(pendingOrders?.length ?? 0)} href="/lab/orders" icon="🧪" />
+      </section>
+
+      <div className="grid grid-cols-2 gap-3">
+        <Link
+          href="/lab/orders/new"
+          className="flex flex-col items-center justify-center gap-1 rounded-xl px-4 py-4 text-center font-semibold text-white shadow-md"
+          style={{ background: "linear-gradient(135deg, var(--brand-light), var(--brand-dark))" }}
+        >
+          <span>🧪</span>
+          New order
+        </Link>
+        <Link
+          href="/lab/orders"
+          className="flex flex-col items-center justify-center gap-1 rounded-xl border border-brand bg-brand-soft px-4 py-4 text-center font-semibold text-brand-dark"
+        >
+          <span>📋</span>
+          View orders
+        </Link>
+      </div>
+
+      {pendingOrders && pendingOrders.length > 0 && (
+        <section>
+          <h2 className="mb-2 text-sm font-semibold text-foreground">Pending orders</h2>
+          <ul className="flex flex-col gap-2">
+            {pendingOrders.slice(0, 5).map((o) => (
+              <Link key={o.id} href={`/lab/orders/${o.id}`} className="flex items-center justify-between rounded-lg border border-border bg-surface px-3.5 py-2.5 shadow-sm">
+                <p className="truncate text-sm font-medium text-foreground">
+                  {o.patient_name} · #{o.order_number}
+                </p>
+                <span className="shrink-0 rounded-full bg-brand-soft px-2 py-0.5 text-[11px] font-medium text-brand-dark">{STATUS_LABELS[o.status]}</span>
+              </Link>
+            ))}
+          </ul>
+        </section>
+      )}
     </>
   );
 }

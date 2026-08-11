@@ -113,6 +113,14 @@ export default async function MorePage() {
         </MenuGroup>
       )}
 
+      {session.businessType === "lab" && (
+        <MenuGroup title="Lab">
+          <MenuLink href="/lab/orders" label="Orders" sub="Booked, in-progress, and completed orders" icon={LabIcon} />
+          <MenuLink href="/lab/orders/new" label="New order" sub="Book tests for a patient" icon={LabIcon} />
+          <MenuLink href="/lab/tests" label="Test catalog & packages" sub="Set up tests, prices, reference ranges" icon={LabIcon} />
+        </MenuGroup>
+      )}
+
       <MenuGroup title="Sell online">
         <MenuLink href="/catalog-settings" label="Catalog link" sub="Share a link customers can browse & order from" icon={CatalogIcon} />
         <MenuLink href="/catalog-orders" label="Catalog orders" sub="Review orders that came in" icon={CatalogIcon} />
@@ -433,6 +441,14 @@ function GymIcon({ className }: { className?: string }) {
     <svg {...iconProps(className)}>
       <path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z" />
       <path d="M16 8 2 22M17.5 15H9" />
+    </svg>
+  );
+}
+function LabIcon({ className }: { className?: string }) {
+  return (
+    <svg {...iconProps(className)}>
+      <path d="M9 2v6.5L4 18a2 2 0 0 0 1.8 3h12.4a2 2 0 0 0 1.8-3l-5-9.5V2" />
+      <path d="M9 2h6M6 15h12" />
     </svg>
   );
 }

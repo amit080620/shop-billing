@@ -848,6 +848,108 @@ export interface Database {
           { foreignKeyName: "gym_class_bookings_member_id_fkey"; columns: ["member_id"]; isOneToOne: false; referencedRelation: "customers"; referencedColumns: ["id"] },
         ];
       };
+      lab_tests: {
+        Row: { id: string; shop_id: string; name: string; category: string | null; sample_type: "blood" | "urine" | "stool" | "swab" | "other"; price: number; gst_percent: number; turnaround_hours: number; reference_range: string | null; unit: string | null; is_active: boolean; created_at: string };
+        Insert: { id?: string; shop_id: string; name: string; category?: string | null; sample_type?: "blood" | "urine" | "stool" | "swab" | "other"; price: number; gst_percent?: number; turnaround_hours?: number; reference_range?: string | null; unit?: string | null; is_active?: boolean; created_at?: string };
+        Update: { id?: string; shop_id?: string; name?: string; category?: string | null; sample_type?: "blood" | "urine" | "stool" | "swab" | "other"; price?: number; gst_percent?: number; turnaround_hours?: number; reference_range?: string | null; unit?: string | null; is_active?: boolean; created_at?: string };
+        Relationships: [];
+      };
+      lab_packages: {
+        Row: { id: string; shop_id: string; name: string; price: number; gst_percent: number; is_active: boolean; created_at: string };
+        Insert: { id?: string; shop_id: string; name: string; price: number; gst_percent?: number; is_active?: boolean; created_at?: string };
+        Update: { id?: string; shop_id?: string; name?: string; price?: number; gst_percent?: number; is_active?: boolean; created_at?: string };
+        Relationships: [];
+      };
+      lab_package_tests: {
+        Row: { id: string; package_id: string; test_id: string };
+        Insert: { id?: string; package_id: string; test_id: string };
+        Update: { id?: string; package_id?: string; test_id?: string };
+        Relationships: [
+          { foreignKeyName: "lab_package_tests_package_id_fkey"; columns: ["package_id"]; isOneToOne: false; referencedRelation: "lab_packages"; referencedColumns: ["id"] },
+          { foreignKeyName: "lab_package_tests_test_id_fkey"; columns: ["test_id"]; isOneToOne: false; referencedRelation: "lab_tests"; referencedColumns: ["id"] },
+        ];
+      };
+      lab_orders: {
+        Row: {
+          id: string;
+          shop_id: string;
+          order_number: string;
+          financial_year: string;
+          patient_id: string | null;
+          patient_name: string;
+          patient_phone: string;
+          patient_age: string | null;
+          patient_gender: "male" | "female" | "other" | null;
+          referring_doctor_name: string | null;
+          collection_type: "walk_in" | "home_collection";
+          home_address: string | null;
+          collection_slot: string | null;
+          phlebotomist_id: string | null;
+          status: "booked" | "sample_collected" | "received_at_lab" | "processing" | "report_ready" | "delivered" | "cancelled";
+          bill_id: string | null;
+          staff_id: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          shop_id: string;
+          order_number: string;
+          financial_year: string;
+          patient_id?: string | null;
+          patient_name: string;
+          patient_phone: string;
+          patient_age?: string | null;
+          patient_gender?: "male" | "female" | "other" | null;
+          referring_doctor_name?: string | null;
+          collection_type?: "walk_in" | "home_collection";
+          home_address?: string | null;
+          collection_slot?: string | null;
+          phlebotomist_id?: string | null;
+          status?: "booked" | "sample_collected" | "received_at_lab" | "processing" | "report_ready" | "delivered" | "cancelled";
+          bill_id?: string | null;
+          staff_id: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          shop_id?: string;
+          order_number?: string;
+          financial_year?: string;
+          patient_id?: string | null;
+          patient_name?: string;
+          patient_phone?: string;
+          patient_age?: string | null;
+          patient_gender?: "male" | "female" | "other" | null;
+          referring_doctor_name?: string | null;
+          collection_type?: "walk_in" | "home_collection";
+          home_address?: string | null;
+          collection_slot?: string | null;
+          phlebotomist_id?: string | null;
+          status?: "booked" | "sample_collected" | "received_at_lab" | "processing" | "report_ready" | "delivered" | "cancelled";
+          bill_id?: string | null;
+          staff_id?: string;
+          created_at?: string;
+        };
+        Relationships: [
+          { foreignKeyName: "lab_orders_bill_id_fkey"; columns: ["bill_id"]; isOneToOne: false; referencedRelation: "bills"; referencedColumns: ["id"] },
+          { foreignKeyName: "lab_orders_patient_id_fkey"; columns: ["patient_id"]; isOneToOne: false; referencedRelation: "customers"; referencedColumns: ["id"] },
+          { foreignKeyName: "lab_orders_phlebotomist_id_fkey"; columns: ["phlebotomist_id"]; isOneToOne: false; referencedRelation: "staff"; referencedColumns: ["id"] },
+        ];
+      };
+      lab_order_items: {
+        Row: { id: string; order_id: string; test_id: string | null; test_name: string; reference_range: string | null; unit: string | null; result_value: string | null; result_flag: "normal" | "high" | "low" | null; price: number; gst_percent: number };
+        Insert: { id?: string; order_id: string; test_id?: string | null; test_name: string; reference_range?: string | null; unit?: string | null; result_value?: string | null; result_flag?: "normal" | "high" | "low" | null; price: number; gst_percent?: number };
+        Update: { id?: string; order_id?: string; test_id?: string | null; test_name?: string; reference_range?: string | null; unit?: string | null; result_value?: string | null; result_flag?: "normal" | "high" | "low" | null; price?: number; gst_percent?: number };
+        Relationships: [
+          { foreignKeyName: "lab_order_items_order_id_fkey"; columns: ["order_id"]; isOneToOne: false; referencedRelation: "lab_orders"; referencedColumns: ["id"] },
+        ];
+      };
+      lab_order_counters: {
+        Row: { shop_id: string; financial_year: string; last_number: number };
+        Insert: { shop_id: string; financial_year: string; last_number?: number };
+        Update: { shop_id?: string; financial_year?: string; last_number?: number };
+        Relationships: [];
+      };
       leads: {
         Row: { id: string; shop_id: string; name: string; phone: string; source: string | null; interested_plan: string | null; status: "new" | "contacted" | "trial" | "converted" | "lost"; notes: string | null; staff_id: string; created_at: string };
         Insert: { id?: string; shop_id: string; name: string; phone: string; source?: string | null; interested_plan?: string | null; status?: "new" | "contacted" | "trial" | "converted" | "lost"; notes?: string | null; staff_id: string; created_at?: string };
@@ -2145,6 +2247,10 @@ export interface Database {
         Returns: number;
       };
       next_prescription_number: {
+        Args: { p_shop_id: string; p_financial_year: string };
+        Returns: number;
+      };
+      next_lab_order_number: {
         Args: { p_shop_id: string; p_financial_year: string };
         Returns: number;
       };

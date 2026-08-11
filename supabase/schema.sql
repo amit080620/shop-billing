@@ -1109,7 +1109,7 @@ create index if not exists idx_restaurant_reservations_shop_date on restaurant_r
 -- ─── Clinic / Doctor business type ─────────────────────────────────────────
 alter table shops drop constraint if exists shops_business_type_check;
 alter table shops add constraint shops_business_type_check
-  check (business_type in ('grocery', 'restaurant', 'mart', 'hardware', 'pharmacy', 'rental', 'transport', 'service', 'salon', 'jewellery', 'clinic', 'gym', 'general'));
+  check (business_type in ('grocery', 'restaurant', 'mart', 'hardware', 'pharmacy', 'rental', 'transport', 'service', 'salon', 'jewellery', 'clinic', 'gym', 'lab', 'general'));
 
 -- Patient-specific optional fields, added to the existing customers table
 -- rather than a separate "patients" table — a clinic's patients ARE its
@@ -1661,3 +1661,112 @@ create table if not exists patient_photos (
 );
 alter table patient_photos enable row level security;
 create index if not exists idx_patient_photos_shop_patient on patient_photos(shop_id, patient_id, created_at);
+
+-- ─── Lab / Diagnostics business type ────────────────────────────────────────
+-- Reference ranges shown alongside a result (Result | Range | Unit | H/L
+-- flag) are standard lab-report practice — a simple arithmetic
+-- comparison, exactly what every printed lab report already shows.
+-- Deliberately NOT built: any "impression/interpretation" text, risk
+-- score, or diagnosis suggestion — that is clinical decision-making the
+-- lab technician/pathologist does, never this software.
+
+create table if not exists lab_tests (
+  id uuid primary key default uuid_generate_v4(),
+  shop_id uuid not null references shops(id) on delete cascade,
+  name text not null,
+  category text,
+  sample_type text not null default 'blood' check (sample_type in ('blood', 'urine', 'stool', 'swab', 'other')),
+  price numeric(12, 2) not null,
+  gst_percent numeric(5, 2) not null default 0,
+  turnaround_hours integer not null default 24,
+  reference_range text,
+  unit text,
+  is_active boolean not null default true,
+  created_at timestamptz not null default now()
+);
+alter table lab_tests enable row level security;
+create index if not exists idx_lab_tests_shop on lab_tests(shop_id);
+
+-- A package/profile bundles several tests under one price (e.g. "Full
+-- Body Checkup"), same idea as a restaurant combo.
+create table if not exists lab_packages (
+  id uuid primary key default uuid_generate_v4(),
+  shop_id uuid not null references shops(id) on delete cascade,
+  name text not null,
+  price numeric(12, 2) not null,
+  gst_percent numeric(5, 2) not null default 0,
+  is_active boolean not null default true,
+  created_at timestamptz not null default now()
+);
+alter table lab_packages enable row level security;
+
+create table if not exists lab_package_tests (
+  id uuid primary key default uuid_generate_v4(),
+  package_id uuid not null references lab_packages(id) on delete cascade,
+  test_id uuid not null references lab_tests(id) on delete cascade
+);
+alter table lab_package_tests enable row level security;
+create index if not exists idx_lab_package_tests_package on lab_package_tests(package_id);
+
+-- One order = one patient visit/booking, can contain several individual
+-- tests and/or packages.
+create table if not exists lab_orders (
+  id uuid primary key default uuid_generate_v4(),
+  shop_id uuid not null references shops(id) on delete cascade,
+  order_number text not null,
+  financial_year text not null,
+  patient_id uuid references customers(id) on delete set null,
+  patient_name text not null,
+  patient_phone text not null,
+  patient_age text,
+  patient_gender text check (patient_gender in ('male', 'female', 'other')),
+  referring_doctor_name text,
+  collection_type text not null default 'walk_in' check (collection_type in ('walk_in', 'home_collection')),
+  home_address text,
+  collection_slot text,
+  phlebotomist_id uuid references staff(id) on delete set null,
+  status text not null default 'booked' check (status in ('booked', 'sample_collected', 'received_at_lab', 'processing', 'report_ready', 'delivered', 'cancelled')),
+  bill_id uuid references bills(id) on delete set null,
+  staff_id uuid not null references staff(id),
+  created_at timestamptz not null default now()
+);
+alter table lab_orders enable row level security;
+create index if not exists idx_lab_orders_shop_status on lab_orders(shop_id, status);
+create index if not exists idx_lab_orders_shop_patient on lab_orders(shop_id, patient_id);
+
+create table if not exists lab_order_items (
+  id uuid primary key default uuid_generate_v4(),
+  order_id uuid not null references lab_orders(id) on delete cascade,
+  test_id uuid references lab_tests(id) on delete set null,
+  test_name text not null,
+  reference_range text,
+  unit text,
+  result_value text,
+  result_flag text check (result_flag in ('normal', 'high', 'low', null)),
+  price numeric(12, 2) not null,
+  gst_percent numeric(5, 2) not null default 0
+);
+alter table lab_order_items enable row level security;
+create index if not exists idx_lab_order_items_order on lab_order_items(order_id);
+
+create table if not exists lab_order_counters (
+  shop_id uuid not null references shops(id) on delete cascade,
+  financial_year text not null,
+  last_number integer not null default 0,
+  primary key (shop_id, financial_year)
+);
+alter table lab_order_counters enable row level security;
+
+create or replace function next_lab_order_number(p_shop_id uuid, p_financial_year text)
+returns integer language plpgsql as $$
+declare
+  v_number integer;
+begin
+  insert into lab_order_counters (shop_id, financial_year, last_number)
+  values (p_shop_id, p_financial_year, 1)
+  on conflict (shop_id, financial_year)
+  do update set last_number = lab_order_counters.last_number + 1
+  returning last_number into v_number;
+  return v_number;
+end;
+$$;

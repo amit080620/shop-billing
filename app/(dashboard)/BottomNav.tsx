@@ -86,6 +86,14 @@ function tabsFor(businessType: string, t: (key: string) => string) {
     { href: "/more", label: t("nav.more"), icon: MoreIcon },
   ];
 
+  const LAB_TABS = [
+    { href: "/", label: t("nav.home"), icon: HomeIcon },
+    { href: "/lab/orders/new", label: "New order", icon: SellIcon },
+    { href: "/lab/orders", label: "Orders", icon: TableIcon },
+    { href: "/lab/tests", label: "Tests", icon: LabNavIcon },
+    { href: "/more", label: t("nav.more"), icon: MoreIcon },
+  ];
+
   if (businessType === "restaurant") return RESTAURANT_TABS;
   if (businessType === "rental") return RENTAL_TABS;
   if (businessType === "transport") return TRANSPORT_TABS;
@@ -94,6 +102,7 @@ function tabsFor(businessType: string, t: (key: string) => string) {
   if (businessType === "jewellery") return JEWELLERY_TABS;
   if (businessType === "clinic") return CLINIC_TABS;
   if (businessType === "gym") return GYM_TABS;
+  if (businessType === "lab") return LAB_TABS;
   return RETAIL_TABS;
 }
 
@@ -250,6 +259,14 @@ function GymNavIcon({ active }: { active: boolean }) {
     <svg {...iconProps(active)}>
       <path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z" />
       <path d="M16 8 2 22M17.5 15H9" />
+    </svg>
+  );
+}
+function LabNavIcon({ active }: { active: boolean }) {
+  return (
+    <svg {...iconProps(active)}>
+      <path d="M9 2v6.5L4 18a2 2 0 0 0 1.8 3h12.4a2 2 0 0 0 1.8-3l-5-9.5V2" />
+      <path d="M9 2h6M6 15h12" />
     </svg>
   );
 }

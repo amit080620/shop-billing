@@ -306,6 +306,40 @@ const GYM_SLIDES: Slide[] = [
   },
 ];
 
+const LAB_SLIDES: Slide[] = [
+  {
+    icon: "👋",
+    title: "Welcome — this app is set up for your lab",
+    body: "A quick 30-second look at where everything lives — you can always come back to this from More → Help.",
+  },
+  {
+    icon: "🧪",
+    title: "Set up your test catalog first",
+    body: "More → Lab → Test catalog & packages — add each test with its price and reference range, and bundle common ones into packages like 'Full Body Checkup'.",
+  },
+  {
+    icon: "📋",
+    title: "Book an order",
+    body: "Bottom tab → New order — pick or add a patient, choose tests/packages, and mark Walk-in or Home collection (with address and preferred time slot).",
+  },
+  {
+    icon: "🚦",
+    title: "Track the sample through your pipeline",
+    body: "Every order moves through Booked → Sample collected → Received at lab → Processing → Report ready → Delivered — one tap to advance at each stage.",
+  },
+  {
+    icon: "📝",
+    title: "Enter results",
+    body: "On the order page, type each result — the reference range shows right next to it, and it's flagged High/Low only by comparing to that range, same as a printed report. Nothing is auto-diagnosed.",
+  },
+  {
+    icon: "⚙️",
+    title: "One last thing",
+    body: "If you haven't already, set your shop's state under More → GST & shop profile — billing is blocked until that's filled in, since it decides CGST+SGST vs IGST on every invoice.",
+    cta: { label: "Go to GST profile", href: "/settings" },
+  },
+];
+
 function slidesFor(businessType: string) {
   if (businessType === "restaurant") return RESTAURANT_SLIDES;
   if (businessType === "rental") return RENTAL_SLIDES;
@@ -315,6 +349,7 @@ function slidesFor(businessType: string) {
   if (businessType === "jewellery") return JEWELLERY_SLIDES;
   if (businessType === "clinic") return CLINIC_SLIDES;
   if (businessType === "gym") return GYM_SLIDES;
+  if (businessType === "lab") return LAB_SLIDES;
   return RETAIL_SLIDES;
 }
 
