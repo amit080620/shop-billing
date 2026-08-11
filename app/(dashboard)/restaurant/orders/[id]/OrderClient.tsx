@@ -6,6 +6,7 @@ import Link from "next/link";
 import {
   addOrderItemAction,
   removeOrderItemAction,
+  updateOrderItemQuantityAction,
   getNewKotItemsAction,
   settleOrderAction,
   cancelOrderAction,
@@ -66,6 +67,7 @@ export function OrderClient({
   const [showSettle, setShowSettle] = useState(false);
   const [showCancel, setShowCancel] = useState(false);
   const [showMerge, setShowMerge] = useState(false);
+  const [cartOpen, setCartOpen] = useState(false);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [waiterName, setWaiterName] = useState(order.waiterName ?? "");
 
@@ -90,6 +92,18 @@ export function OrderClient({
   function removeItem(itemId: string) {
     startTransition(async () => {
       const result = await removeOrderItemAction(itemId, order.id);
+      if (result.error) setError(result.error);
+      router.refresh();
+    });
+  }
+
+  function changeQuantity(itemId: string, newQuantity: number) {
+    if (newQuantity <= 0) {
+      removeItem(itemId);
+      return;
+    }
+    startTransition(async () => {
+      const result = await updateOrderItemQuantityAction(itemId, order.id, newQuantity);
       if (result.error) setError(result.error);
       router.refresh();
     });
@@ -250,55 +264,102 @@ export function OrderClient({
         </section>
       )}
 
-      <section className="no-print flex flex-col gap-2">
-        <p className="text-sm font-medium text-foreground">{t("order.orderLabel")}</p>
-        {initialItems.length === 0 ? (
-          <p className="rounded-lg border border-dashed border-border px-3.5 py-6 text-center text-sm text-muted">
-            {t("order.noItemsYet")}
-          </p>
-        ) : (
-          <ul className="flex flex-col gap-2">
-            {initialItems.map((item) => (
-              <li key={item.id} className="flex items-center justify-between gap-3 rounded-lg border border-border bg-surface px-3.5 py-2.5">
-                <div className="min-w-0 flex-1">
-                  <span className="truncate text-sm text-foreground">{item.productName} × {item.quantity}</span>
-                  {item.status === "ready" && (
-                    <span className="ml-2 rounded-full bg-brand-soft px-2 py-0.5 text-[11px] font-medium text-brand-dark">🔔 Ready</span>
-                  )}
-                  {item.status === "served" && (
-                    <span className="ml-2 rounded-full bg-background px-2 py-0.5 text-[11px] font-medium text-muted">✓ Served</span>
-                  )}
-                </div>
-                <span className="shrink-0 text-sm font-medium text-foreground">{formatMoney(item.lineTotal)}</span>
-                {!isReadOnly && item.status === "ready" && (
-                  <button
-                    onClick={() =>
-                      startTransition(async () => {
-                        await markItemServedAction(item.id, order.id);
-                        router.refresh();
-                      })
-                    }
-                    className="shrink-0 rounded-lg border border-brand bg-brand-soft px-2 py-1 text-xs font-medium text-brand-dark"
-                  >
-                    Served
-                  </button>
-                )}
-                {!isReadOnly && item.status !== "served" && (
-                  <button onClick={() => removeItem(item.id)} className="shrink-0 text-xs text-danger">
-                    ✕
-                  </button>
-                )}
-              </li>
-            ))}
-          </ul>
-        )}
-        {initialItems.length > 0 && (
-          <div className="flex justify-between rounded-lg bg-brand-soft px-3.5 py-2.5 text-sm">
-            <span className="text-brand-dark">{t("order.total")}</span>
-            <span className="font-semibold text-brand-dark">{formatMoney(order.total)}</span>
-          </div>
-        )}
-      </section>
+      {initialItems.length > 0 && (
+        <button
+          onClick={() => setCartOpen(true)}
+          className="no-print fixed inset-x-0 bottom-16 z-30 mx-auto flex w-full max-w-md items-center justify-between rounded-t-xl px-4 py-3 text-sm font-semibold text-white shadow-lg"
+          style={{ background: "linear-gradient(135deg, var(--brand-light), var(--brand-dark))" }}
+        >
+          <span>
+            🛒 {initialItems.reduce((s, i) => s + i.quantity, 0)} item{initialItems.reduce((s, i) => s + i.quantity, 0) === 1 ? "" : "s"}
+          </span>
+          <span>{formatMoney(order.total)} · ▲ View order</span>
+        </button>
+      )}
+
+      {(cartOpen || initialItems.length === 0) && (
+        <div
+          className={
+            initialItems.length === 0
+              ? "no-print flex flex-col gap-2"
+              : "no-print fixed inset-0 z-40 flex items-end justify-center bg-black/50"
+          }
+          onClick={() => initialItems.length > 0 && setCartOpen(false)}
+        >
+          <section
+            className={initialItems.length === 0 ? "flex flex-col gap-2" : "flex max-h-[80vh] w-full max-w-md flex-col gap-2 overflow-y-auto rounded-t-2xl bg-background p-4"}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-medium text-foreground">{t("order.orderLabel")}</p>
+              {initialItems.length > 0 && (
+                <button onClick={() => setCartOpen(false)} className="text-xs text-muted">
+                  ✕ Close
+                </button>
+              )}
+            </div>
+            {initialItems.length === 0 ? (
+              <p className="rounded-lg border border-dashed border-border px-3.5 py-6 text-center text-sm text-muted">
+                {t("order.noItemsYet")}
+              </p>
+            ) : (
+              <ul className="flex flex-col gap-2">
+                {initialItems.map((item) => (
+                  <li key={item.id} className="flex items-center justify-between gap-2 rounded-lg border border-border bg-surface px-3.5 py-2.5">
+                    <div className="min-w-0 flex-1">
+                      <span className="truncate text-sm text-foreground">{item.productName}</span>
+                      {item.status === "ready" && (
+                        <span className="ml-2 rounded-full bg-brand-soft px-2 py-0.5 text-[11px] font-medium text-brand-dark">🔔 Ready</span>
+                      )}
+                      {item.status === "served" && (
+                        <span className="ml-2 rounded-full bg-background px-2 py-0.5 text-[11px] font-medium text-muted">✓ Served</span>
+                      )}
+                    </div>
+                    {!isReadOnly && item.status !== "served" && item.status !== "cancelled" ? (
+                      <div className="flex shrink-0 items-center gap-1 rounded-lg border border-border">
+                        <button onClick={() => changeQuantity(item.id, item.quantity - 1)} className="px-2 py-1 text-sm font-bold text-foreground">
+                          −
+                        </button>
+                        <span className="w-6 text-center text-sm font-semibold text-foreground">{item.quantity}</span>
+                        <button onClick={() => changeQuantity(item.id, item.quantity + 1)} className="px-2 py-1 text-sm font-bold text-foreground">
+                          +
+                        </button>
+                      </div>
+                    ) : (
+                      <span className="shrink-0 text-sm text-muted">× {item.quantity}</span>
+                    )}
+                    <span className="shrink-0 text-sm font-medium text-foreground">{formatMoney(item.lineTotal)}</span>
+                    {!isReadOnly && item.status === "ready" && (
+                      <button
+                        onClick={() =>
+                          startTransition(async () => {
+                            await markItemServedAction(item.id, order.id);
+                            router.refresh();
+                          })
+                        }
+                        className="shrink-0 rounded-lg border border-brand bg-brand-soft px-2 py-1 text-xs font-medium text-brand-dark"
+                      >
+                        Served
+                      </button>
+                    )}
+                    {!isReadOnly && item.status !== "served" && (
+                      <button onClick={() => removeItem(item.id)} className="shrink-0 text-xs text-danger">
+                        ✕
+                      </button>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+            {initialItems.length > 0 && (
+              <div className="flex justify-between rounded-lg bg-brand-soft px-3.5 py-2.5 text-sm">
+                <span className="text-brand-dark">{t("order.total")}</span>
+                <span className="font-semibold text-brand-dark">{formatMoney(order.total)}</span>
+              </div>
+            )}
+          </section>
+        </div>
+      )}
 
       {error && <p className="no-print text-sm text-danger">{error}</p>}
 

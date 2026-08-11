@@ -262,6 +262,45 @@ export async function addOrderItemAction(
   return {};
 }
 
+/** Correcting a quantity is the far more common real-world edit than
+ * removing an item outright — "make it 3 plates instead of 2" — so this
+ * adjusts the SAME line in place rather than forcing staff to delete
+ * and re-add. If the item was already sent to the kitchen, the change
+ * still needs to reach them: same revision flag/blink as a cancellation,
+ * since a cook halfway through 2 plates needs to know it's now 3 (or 1)
+ * just as much as if the dish had been cancelled outright. */
+export async function updateOrderItemQuantityAction(orderItemId: string, orderId: string, newQuantity: number): Promise<{ error?: string }> {
+  const session = await requireSession();
+  const admin = createSupabaseAdminClient();
+
+  if (!Number.isFinite(newQuantity) || newQuantity <= 0) return { error: "Quantity must be greater than 0 — use the remove button instead" };
+
+  const { data: order } = await admin.from("restaurant_orders").select("id, status").eq("id", orderId).eq("shop_id", session.shopId).single();
+  if (!order || order.status !== "open") return { error: "This order is no longer open" };
+
+  const { data: item } = await admin
+    .from("restaurant_order_items")
+    .select("id, quantity, unit_price, gst_percent, kot_printed, status")
+    .eq("id", orderItemId)
+    .eq("order_id", orderId)
+    .single();
+  if (!item) return { error: "Item not found" };
+  if (item.status === "served" || item.status === "cancelled") return { error: "Can't change quantity on a served/cancelled item" };
+  if (Number(item.quantity) === newQuantity) return {};
+
+  const lineTotal = round2(newQuantity * Number(item.unit_price));
+
+  await admin.from("restaurant_order_items").update({ quantity: newQuantity, line_total: lineTotal }).eq("id", orderItemId);
+
+  if (item.kot_printed) {
+    await admin.from("restaurant_orders").update({ revised_at: new Date().toISOString() }).eq("id", orderId);
+  }
+
+  await recalcOrderTotals(orderId);
+  revalidatePath(`/restaurant/orders/${orderId}`);
+  return {};
+}
+
 export async function removeOrderItemAction(orderItemId: string, orderId: string): Promise<{ error?: string }> {
   const session = await requireSession();
   const admin = createSupabaseAdminClient();
