@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { requireSession } from "../auth";
+import { requireSession, requireOwner } from "../auth";
 import { createSupabaseAdminClient } from "../supabase/admin";
 import { determineSupplyType, financialYearFor, round2, splitTax } from "../gst";
 
@@ -475,16 +475,9 @@ export async function settleOrderAction(
     .eq("order_id", orderId)
     .not("product_id", "is", null);
   for (const item of items ?? []) {
-    const { data: product } = await admin
-      .from("products")
-      .select("id, track_inventory, stock_quantity")
-      .eq("id", item.product_id)
-      .single();
+    const { data: product } = await admin.from("products").select("id, track_inventory").eq("id", item.product_id).single();
     if (!product?.track_inventory) continue;
-    await admin
-      .from("products")
-      .update({ stock_quantity: Math.max(0, round2(Number(product.stock_quantity) - Number(item.quantity))) })
-      .eq("id", product.id);
+    await admin.rpc("decrement_stock", { p_product_id: product.id, p_quantity: Number(item.quantity) });
   }
 
   revalidatePath("/restaurant");
@@ -643,5 +636,17 @@ export async function mergeTableAction(primaryOrderId: string, secondaryOrderId:
 
   revalidatePath("/restaurant");
   revalidatePath(`/restaurant/orders/${primaryOrderId}`);
+  return {};
+}
+
+export async function saveKdsSettingsAction(columns: number, fontScale: "normal" | "large" | "extra_large"): Promise<{ error?: string }> {
+  const session = await requireOwner();
+  const admin = createSupabaseAdminClient();
+  const { error } = await admin
+    .from("kds_settings")
+    .upsert({ shop_id: session.shopId, columns, font_scale: fontScale, updated_at: new Date().toISOString() }, { onConflict: "shop_id" });
+  if (error) return { error: "Could not save KDS settings" };
+  revalidatePath("/restaurant-kds");
+  revalidatePath("/restaurant/kds-settings");
   return {};
 }

@@ -8,7 +8,7 @@ import { addStaffAction, removeStaffAction } from "@/lib/actions/staff";
 import { EditStaffButton } from "./EditStaffButton";
 import { PermissionsButton } from "./PermissionsButton";
 
-type StaffMember = { id: string; name: string; role: "owner" | "manager" | "staff"; permissions: string[] };
+type StaffMember = { id: string; name: string; role: "owner" | "manager" | "staff"; permissions: string[]; email: string | null };
 
 function SubmitButton() {
   const { pending } = useFormStatus();

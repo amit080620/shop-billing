@@ -183,7 +183,7 @@ export async function deliverJobAction(
   });
   if ("error" in result) return { error: result.error };
 
-  await admin
+  const { error: linkError } = await admin
     .from("service_jobs")
     .update({
       status: "delivered",
@@ -193,6 +193,14 @@ export async function deliverJobAction(
     })
     .eq("id", jobId)
     .eq("shop_id", session.shopId);
+  if (linkError) {
+    console.error("Could not link bill to service job", linkError);
+    await admin
+      .from("bills")
+      .update({ status: "voided", voided_at: new Date().toISOString(), void_reason: "Automatic: could not link invoice to service job" })
+      .eq("id", result.billId);
+    return { error: "Could not finish delivering this job — the invoice was voided automatically. Please try again." };
+  }
 
   revalidatePath("/service");
   revalidatePath(`/service/${jobId}`);

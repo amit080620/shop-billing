@@ -1770,3 +1770,84 @@ begin
   return v_number;
 end;
 $$;
+
+-- ─── PHASE 1: Atomic stock decrement (fixes overselling race condition) ────
+-- Previously: app code READ stock_quantity, computed new value, then
+-- WROTE it back — two concurrent sales of the last unit could both read
+-- the same starting value and both "succeed", silently overselling.
+-- This does the read+subtract+write as ONE atomic UPDATE statement —
+-- Postgres serializes concurrent UPDATEs to the same row automatically,
+-- so the second call always sees the first call's already-decremented
+-- value. Behavior is unchanged otherwise (never blocks a sale, clamps
+-- at zero) — this only fixes the race, not the business rule.
+create or replace function decrement_stock(p_product_id uuid, p_quantity numeric)
+returns void language sql as $$
+  update products
+  set stock_quantity = greatest(0, stock_quantity - p_quantity)
+  where id = p_product_id;
+$$;
+
+create or replace function increment_stock(p_product_id uuid, p_quantity numeric)
+returns void language sql as $$
+  update products
+  set stock_quantity = stock_quantity + p_quantity
+  where id = p_product_id;
+$$;
+
+-- ─── PHASE 1: Comprehensive audit log ───────────────────────────────────────
+-- One central table for every sensitive action across the whole app —
+-- previously this was scattered (edited_at/edited_by only on bills and
+-- rentals, nothing for staff/permission changes, void reasons, etc.).
+-- `details` is a free-form JSONB snapshot (old/new values, reason) so
+-- new event types never need a schema change.
+create table if not exists audit_logs (
+  id uuid primary key default uuid_generate_v4(),
+  shop_id uuid not null references shops(id) on delete cascade,
+  staff_id uuid references staff(id) on delete set null,
+  action text not null,
+  entity_type text not null,
+  entity_id text,
+  details jsonb,
+  created_at timestamptz not null default now()
+);
+alter table audit_logs enable row level security;
+create index if not exists idx_audit_logs_shop_created on audit_logs(shop_id, created_at desc);
+create index if not exists idx_audit_logs_shop_entity on audit_logs(shop_id, entity_type, entity_id);
+
+-- ─── Restaurant: KDS display settings ───────────────────────────────────────
+-- How many ticket cards per row, and font size — configurable per shop
+-- since a TV mounted far from the kitchen line needs bigger text than
+-- one sitting right next to the pass.
+create table if not exists kds_settings (
+  shop_id uuid primary key references shops(id) on delete cascade,
+  columns integer not null default 3 check (columns between 1 and 4),
+  font_scale text not null default 'normal' check (font_scale in ('normal', 'large', 'extra_large')),
+  updated_at timestamptz not null default now()
+);
+alter table kds_settings enable row level security;
+
+-- ─── PHASE 2: Login rate limiting ────────────────────────────────────────────
+-- Tracks every login attempt (success or fail) per email. Before
+-- attempting sign-in, the app checks: 5+ failed attempts for this email
+-- in the last 15 minutes → block, regardless of whether the password
+-- given this time is actually correct. Blocks targeted brute-forcing of
+-- one account without needing external infra (Redis, WAF).
+create table if not exists login_attempts (
+  id uuid primary key default uuid_generate_v4(),
+  email text not null,
+  succeeded boolean not null default false,
+  created_at timestamptz not null default now()
+);
+alter table login_attempts enable row level security;
+create index if not exists idx_login_attempts_email_time on login_attempts(email, created_at desc);
+
+-- ─── PHASE 2: Password-reset request rate limiting ─────────────────────────
+-- Separate from login_attempts — this guards against someone spamming a
+-- victim's inbox with reset emails, not credential brute-forcing.
+create table if not exists password_reset_requests (
+  id uuid primary key default uuid_generate_v4(),
+  email text not null,
+  created_at timestamptz not null default now()
+);
+alter table password_reset_requests enable row level security;
+create index if not exists idx_password_reset_requests_email_time on password_reset_requests(email, created_at desc);

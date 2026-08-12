@@ -15,7 +15,9 @@ export default async function JobDetailPage({
 
   const { data: job } = await admin
     .from("service_jobs")
-    .select("*")
+    .select(
+      "id, job_number, customer_name, customer_phone, item_description, issue_description, status, technician_name, estimated_cost, final_cost, advance_paid, expected_date, created_at, ready_at, delivered_at, bill_id",
+    )
     .eq("id", id)
     .eq("shop_id", session.shopId)
     .single();

@@ -86,8 +86,28 @@ export async function loginAction(
     return { error: parsed.error.issues[0].message };
   }
 
+  const admin = createSupabaseAdminClient();
+  const email = parsed.data.email.trim().toLowerCase();
+
+  // Rate limit: 5+ failed attempts for this email in the last 15
+  // minutes blocks further tries, regardless of whether this password
+  // happens to be correct — stops targeted brute-forcing of one account.
+  const fifteenMinAgo = new Date(Date.now() - 15 * 60 * 1000).toISOString();
+  const { count: recentFailures } = await admin
+    .from("login_attempts")
+    .select("id", { count: "exact", head: true })
+    .eq("email", email)
+    .eq("succeeded", false)
+    .gte("created_at", fifteenMinAgo);
+  if ((recentFailures ?? 0) >= 5) {
+    return { error: "Too many failed attempts. Please wait 15 minutes and try again." };
+  }
+
   const supabase = await createSupabaseServerClient();
   const { data: authData, error } = await supabase.auth.signInWithPassword(parsed.data);
+
+  await admin.from("login_attempts").insert({ email, succeeded: !error && !!authData?.user });
+
   if (error || !authData.user) {
     return { error: "Incorrect email or password" };
   }
@@ -95,7 +115,6 @@ export async function loginAction(
   // Restaurant staff/managers live on the Tables screen all day — send
   // them straight there instead of the generic Home dashboard. Owners
   // still land on Home, since they care about the overview first.
-  const admin = createSupabaseAdminClient();
   const { data: staffRow } = await admin
     .from("staff")
     .select("role, shop_id, shops ( business_type )")
@@ -109,9 +128,22 @@ export async function loginAction(
   redirect("/");
 }
 
-export async function logoutAction() {
+/** Signs out only this browser/device — other devices where the same
+ * account is logged in stay logged in. Supabase's default signOut()
+ * scope is 'global' (every device), which is why this needs to be
+ * explicit rather than relying on the default. */
+export async function logoutThisDeviceAction() {
   const supabase = await createSupabaseServerClient();
-  await supabase.auth.signOut();
+  await supabase.auth.signOut({ scope: "local" });
+  redirect("/login");
+}
+
+/** Signs out everywhere — every device currently logged into this
+ * account, not just the one this was triggered from. Useful if a
+ * device was lost or a password was just changed for safety. */
+export async function logoutAllDevicesAction() {
+  const supabase = await createSupabaseServerClient();
+  await supabase.auth.signOut({ scope: "global" });
   redirect("/login");
 }
 
@@ -121,6 +153,24 @@ export async function forgotPasswordAction(
 ): Promise<{ error?: string; success?: boolean }> {
   const email = formData.get("email");
   if (typeof email !== "string" || !email.trim()) return { error: "Enter your email" };
+  const normalizedEmail = email.trim().toLowerCase();
+
+  const admin = createSupabaseAdminClient();
+
+  // Max 3 reset emails per address per hour — guards against someone
+  // spamming a victim's inbox, without needing external infra.
+  const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+  const { count: recentRequests } = await admin
+    .from("password_reset_requests")
+    .select("id", { count: "exact", head: true })
+    .eq("email", normalizedEmail)
+    .gte("created_at", oneHourAgo);
+  if ((recentRequests ?? 0) >= 3) {
+    // Same "always succeed" principle as below — don't reveal whether
+    // the limit hit is because of a real account or an unknown email.
+    return { success: true };
+  }
+  await admin.from("password_reset_requests").insert({ email: normalizedEmail });
 
   const supabase = await createSupabaseServerClient();
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";

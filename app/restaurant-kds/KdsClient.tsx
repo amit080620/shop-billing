@@ -16,7 +16,19 @@ type Ticket = {
   items: Item[];
 };
 
-export function KdsClient({ shopName, initialTickets, lang }: { shopName: string; initialTickets: Ticket[]; lang: Lang }) {
+export function KdsClient({
+  shopName,
+  initialTickets,
+  lang,
+  columns = 3,
+  fontScale = "normal",
+}: {
+  shopName: string;
+  initialTickets: Ticket[];
+  lang: Lang;
+  columns?: number;
+  fontScale?: "normal" | "large" | "extra_large";
+}) {
   const { t } = useTranslation(lang);
   const router = useRouter();
   const [now, setNow] = useState(Date.now());
@@ -123,7 +135,10 @@ export function KdsClient({ shopName, initialTickets, lang }: { shopName: string
     });
   }
 
-  const visibleTickets = initialTickets.filter((tk) => tk.items.some((i) => i.status !== "served"));
+  // Kitchen's job ends once every item is ready — serving the table is
+  // the waiter's separate step, tracked elsewhere. Waiting for "served"
+  // here meant a ticket marked ready on the KDS just sat there.
+  const visibleTickets = initialTickets.filter((tk) => tk.items.some((i) => i.status === "pending") || tk.revisedAt);
 
   // ─── TV-remote navigation ────────────────────────────────────────────
   // A D-pad/remote sends arrow-key events. Browsers on some TV/set-top
@@ -133,7 +148,8 @@ export function KdsClient({ shopName, initialTickets, lang }: { shopName: string
   // focus explicitly here keeps that pointer from ever appearing, and
   // gives a clean, deliberate highlight instead of the browser's
   // default (often invisible-on-a-TV) focus ring.
-  const columns = 3;
+  // columns now comes from props (owner-configurable), used below for
+  // both the grid layout and arrow-key navigation math.
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
       if (visibleTickets.length === 0) return;
@@ -186,6 +202,13 @@ export function KdsClient({ shopName, initialTickets, lang }: { shopName: string
     return () => window.removeEventListener("mousemove", onMouseMove);
   }, []);
 
+  const sizes =
+    fontScale === "extra_large"
+      ? { table: "text-2xl", order: "text-sm", item: "text-lg", qty: "text-2xl" }
+      : fontScale === "large"
+        ? { table: "text-xl", order: "text-xs", item: "text-base", qty: "text-xl" }
+        : { table: "text-base", order: "text-[10px]", item: "text-sm", qty: "text-base" };
+
   return (
     <div className={`min-h-screen bg-gray-950 p-3 text-white ${showCursor ? "" : "cursor-none"}`}>
       <div className="mb-3 flex items-center justify-between">
@@ -203,7 +226,7 @@ export function KdsClient({ shopName, initialTickets, lang }: { shopName: string
           {t("kds.empty")}
         </div>
       ) : (
-        <div className="grid grid-cols-2 gap-2.5 md:grid-cols-3 xl:grid-cols-4">
+        <div className="grid gap-2.5" style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}>
           {visibleTickets.map((ticket, index) => {
             const age = Math.floor((now - new Date(ticket.createdAt).getTime()) / 60000);
             const isRevised = !!ticket.revisedAt;
@@ -236,10 +259,10 @@ export function KdsClient({ shopName, initialTickets, lang }: { shopName: string
                   </button>
                 )}
                 <div className="flex items-center justify-between">
-                  <p className="text-base font-bold">{ticket.tableName}</p>
+                  <p className={`${sizes.table} font-bold`}>{ticket.tableName}</p>
                   <span className="text-xs font-semibold text-gray-300">{age}m</span>
                 </div>
-                <p className="text-[10px] text-gray-400">#{ticket.orderNumber}</p>
+                <p className={`${sizes.order} text-gray-400`}>#{ticket.orderNumber}</p>
                 <ul className="mt-0.5 flex flex-col gap-1">
                   {ticket.items.map((item) => {
                     const effectiveStatus = localOverrides[item.id] ?? item.status;
@@ -250,7 +273,7 @@ export function KdsClient({ shopName, initialTickets, lang }: { shopName: string
                         <button
                           onClick={() => toggleReady(item.id, effectiveStatus)}
                           disabled={isCancelled}
-                          className={`flex w-full items-baseline justify-between rounded-lg px-2 py-1 text-left text-sm ${
+                          className={`flex w-full items-baseline justify-between rounded-lg px-2 py-1 text-left ${sizes.item} ${
                             isCancelled
                               ? "bg-red-900/40 text-red-300 line-through"
                               : isReady
@@ -262,7 +285,7 @@ export function KdsClient({ shopName, initialTickets, lang }: { shopName: string
                             {isCancelled ? "❌ " : isReady ? "✓ " : ""}
                             {item.name}
                           </span>
-                          <span className="ml-2 shrink-0 text-base font-bold">×{item.quantity}</span>
+                          <span className={`ml-2 shrink-0 ${sizes.qty} font-bold`}>×{item.quantity}</span>
                         </button>
                       </li>
                     );

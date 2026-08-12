@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
@@ -44,16 +44,25 @@ export function CustomersClient({
   initialCustomers,
   isClinic,
   isGym,
+  page,
+  pageSize,
+  totalCount,
+  initialSearch,
 }: {
   initialCustomers: Customer[];
   isClinic: boolean;
   isGym: boolean;
+  page: number;
+  pageSize: number;
+  totalCount: number;
+  initialSearch: string;
 }) {
   const router = useRouter();
   const [showForm, setShowForm] = useState(false);
   const nameRef = useRef<HTMLInputElement>(null);
   const phoneRef = useRef<HTMLInputElement>(null);
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState(initialSearch);
+  const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
 
   const [state, formAction] = useActionState(
     async (prev: { error?: string } | null, formData: FormData) => {
@@ -64,11 +73,26 @@ export function CustomersClient({
     null,
   );
 
-  const filtered = initialCustomers.filter(
-    (c) =>
-      c.name.toLowerCase().includes(search.toLowerCase()) ||
-      c.phone.includes(search),
-  );
+  // Server-side search — debounced so typing doesn't fire a request
+  // per keystroke. Resets to page 1 whenever the query changes.
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const params = new URLSearchParams();
+      if (search) params.set("q", search);
+      router.push(`/customers${params.toString() ? `?${params.toString()}` : ""}`);
+    }, 400);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search]);
+
+  function goToPage(nextPage: number) {
+    const params = new URLSearchParams();
+    if (search) params.set("q", search);
+    params.set("page", String(nextPage));
+    router.push(`/customers?${params.toString()}`);
+  }
+
+  const filtered = initialCustomers;
 
   return (
     <div className="flex flex-col gap-4">
@@ -89,7 +113,7 @@ export function CustomersClient({
         }
       />
 
-      <BulkImportExportCustomers customers={initialCustomers} isClinic={isClinic} isGym={isGym} onImported={() => router.refresh()} />
+      <BulkImportExportCustomers isClinic={isClinic} isGym={isGym} onImported={() => router.refresh()} />
 
       {showForm && (
         <form
@@ -194,6 +218,28 @@ export function CustomersClient({
             </li>
           ))}
         </ul>
+      )}
+
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between rounded-lg border border-border bg-surface px-3.5 py-2.5">
+          <button
+            onClick={() => goToPage(page - 1)}
+            disabled={page <= 1}
+            className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-foreground disabled:opacity-40"
+          >
+            ← Previous
+          </button>
+          <p className="text-xs text-muted">
+            Page {page} of {totalPages} · {totalCount} total
+          </p>
+          <button
+            onClick={() => goToPage(page + 1)}
+            disabled={page >= totalPages}
+            className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-foreground disabled:opacity-40"
+          >
+            Next →
+          </button>
+        </div>
       )}
     </div>
   );

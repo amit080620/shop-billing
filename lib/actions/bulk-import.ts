@@ -263,3 +263,45 @@ export async function bulkImportCustomersAction(rows: CustomerImportRow[]): Prom
     errors: skippedDuplicates > 0 ? [...errors, { row: 0, name: "", message: `${skippedDuplicates} row(s) skipped — phone number already exists` }] : errors,
   };
 }
+
+/** Used only by the "Export all" button — deliberately independent of
+ * the list page's pagination, so exporting always gets every customer
+ * regardless of how many pages the on-screen list is split into. */
+export async function fetchAllCustomersForExportAction(): Promise<{
+  id: string;
+  name: string;
+  phone: string;
+  gstin: string | null;
+  address: string | null;
+  stateCode: string | null;
+  dateOfBirth: string | null;
+  gender: string | null;
+  bloodGroup: string | null;
+  knownAllergies: string | null;
+  fitnessGoal: string | null;
+  heightCm: number | null;
+  weightKg: number | null;
+}[]> {
+  const session = await requireSession();
+  const admin = createSupabaseAdminClient();
+  const { data } = await admin
+    .from("customers")
+    .select("id, name, phone, gstin, address, state_code, date_of_birth, gender, blood_group, known_allergies, fitness_goal, height_cm, weight_kg")
+    .eq("shop_id", session.shopId)
+    .order("name");
+  return (data ?? []).map((c) => ({
+    id: c.id,
+    name: c.name,
+    phone: c.phone,
+    gstin: c.gstin,
+    address: c.address,
+    stateCode: c.state_code,
+    dateOfBirth: c.date_of_birth,
+    gender: c.gender,
+    bloodGroup: c.blood_group,
+    knownAllergies: c.known_allergies,
+    fitnessGoal: c.fitness_goal,
+    heightCm: c.height_cm ? Number(c.height_cm) : null,
+    weightKg: c.weight_kg ? Number(c.weight_kg) : null,
+  }));
+}

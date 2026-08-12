@@ -16,7 +16,7 @@ export default async function PrintRentalSlipPage({
   const [{ data: rental }, { data: invoiceSettings }] = await Promise.all([
     admin
       .from("rentals")
-      .select("*, customers ( name, phone, address )")
+      .select("rental_number, created_at, start_date, end_date, total, security_deposit_collected, paid_amount, customers ( name, phone, address )")
       .eq("id", id)
       .eq("shop_id", session.shopId)
       .single(),

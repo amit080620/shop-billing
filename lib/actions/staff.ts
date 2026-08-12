@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { requireOwner } from "../auth";
 import { createSupabaseAdminClient } from "../supabase/admin";
 import { staffInviteSchema } from "../validation/schemas";
+import { logAuditEvent } from "../audit";
 
 export type ActionState = { error?: string } | null;
 
@@ -45,6 +46,16 @@ export async function addStaffAction(
     await admin.auth.admin.deleteUser(authData.user.id);
     return { error: "Could not add staff member" };
   }
+
+  await logAuditEvent({
+    admin,
+    shopId: session.shopId,
+    staffId: session.userId,
+    action: "staff_added",
+    entityType: "staff",
+    entityId: authData.user.id,
+    details: { name: parsed.data.name, role: parsed.data.role, email: parsed.data.email },
+  });
 
   revalidatePath("/staff");
   return null;
@@ -111,6 +122,8 @@ export async function removeStaffAction(staffId: string): Promise<{ error?: stri
   if (staffId === session.userId) return { error: "You can't remove yourself." };
 
   const admin = createSupabaseAdminClient();
+  const { data: existing } = await admin.from("staff").select("name, role").eq("id", staffId).eq("shop_id", session.shopId).single();
+
   const { error } = await admin.from("staff").delete().eq("id", staffId).eq("shop_id", session.shopId);
   if (error) {
     // Foreign key violation — this staff member has bills, orders, or
@@ -125,6 +138,17 @@ export async function removeStaffAction(staffId: string): Promise<{ error?: stri
     return { error: "Could not remove staff member" };
   }
   await admin.auth.admin.deleteUser(staffId);
+
+  await logAuditEvent({
+    admin,
+    shopId: session.shopId,
+    staffId: session.userId,
+    action: "staff_removed",
+    entityType: "staff",
+    entityId: staffId,
+    details: { name: existing?.name, role: existing?.role },
+  });
+
   revalidatePath("/staff");
   return {};
 }
@@ -135,7 +159,7 @@ export async function savePermissionsAction(staffId: string, permissions: string
   if (staffId === session.userId) return { error: "The owner account always has every permission — nothing to change here." };
 
   const admin = createSupabaseAdminClient();
-  const { data: existing } = await admin.from("staff").select("id, role").eq("id", staffId).eq("shop_id", session.shopId).single();
+  const { data: existing } = await admin.from("staff").select("id, name, role, permissions").eq("id", staffId).eq("shop_id", session.shopId).single();
   if (!existing) return { error: "Staff member not found" };
   if (existing.role === "owner") return { error: "Owner accounts always have every permission." };
 
@@ -144,6 +168,17 @@ export async function savePermissionsAction(staffId: string, permissions: string
     console.error("Could not save permissions", error);
     return { error: "Could not save permissions" };
   }
+
+  await logAuditEvent({
+    admin,
+    shopId: session.shopId,
+    staffId: session.userId,
+    action: "staff_permissions_changed",
+    entityType: "staff",
+    entityId: staffId,
+    details: { staffName: existing.name, before: existing.permissions, after: permissions },
+  });
+
   revalidatePath("/staff");
   return {};
 }

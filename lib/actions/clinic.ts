@@ -375,7 +375,15 @@ export async function generateBillFromPrescriptionAction(
   });
   if ("error" in result) return { error: result.error };
 
-  await admin.from("prescriptions").update({ bill_id: result.billId }).eq("id", prescriptionId).eq("shop_id", session.shopId);
+  const { error: linkError } = await admin.from("prescriptions").update({ bill_id: result.billId }).eq("id", prescriptionId).eq("shop_id", session.shopId);
+  if (linkError) {
+    console.error("Could not link bill to prescription", linkError);
+    await admin
+      .from("bills")
+      .update({ status: "voided", voided_at: new Date().toISOString(), void_reason: "Automatic: could not link invoice to prescription" })
+      .eq("id", result.billId);
+    return { error: "Could not finish generating this bill — the invoice was voided automatically. Please try again." };
+  }
 
   revalidatePath("/clinic");
   return { billId: result.billId };

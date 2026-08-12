@@ -17,7 +17,9 @@ export default async function PrintPrescriptionPage({
   const [{ data: prescription }, { data: settings }, { data: shop }, { data: invoiceSettings }] = await Promise.all([
     admin
       .from("prescriptions")
-      .select("*, customers ( name, phone, address )")
+      .select(
+        "id, prescription_number, patient_name, patient_age, patient_gender, patient_phone, doctor_name, custom_sections, follow_up_date, vitals, dental_chart, bill_id, created_at, customers ( name, phone, address )",
+      )
       .eq("id", id)
       .eq("shop_id", session.shopId)
       .single(),

@@ -19,7 +19,9 @@ export default async function RentalDetailPage({
 
   const { data: rental } = await admin
     .from("rentals")
-    .select("*, customers ( name, phone )")
+    .select(
+      "id, rental_number, status, start_date, end_date, actual_return_date, subtotal, cgst_amount, sgst_amount, igst_amount, delivery_charge, security_deposit_collected, damage_charge, late_fee, security_deposit_returned, total, paid_amount, credit_amount, edited_at, edit_reason, customers ( name, phone )",
+    )
     .eq("id", id)
     .eq("shop_id", session.shopId)
     .single();
@@ -30,7 +32,7 @@ export default async function RentalDetailPage({
 
   const { data: items } = await admin
     .from("rental_items")
-    .select("*")
+    .select("id, product_name, quantity, line_total, rate, rate_type, duration, deposit_per_unit, condition_on_return, damage_notes")
     .eq("rental_id", id);
 
   const customer = Array.isArray(rental.customers) ? rental.customers[0] : rental.customers;

@@ -172,11 +172,19 @@ export async function acceptCatalogOrderAction(
   });
   if ("error" in result) return { error: result.error };
 
-  await admin
+  const { error: linkError } = await admin
     .from("catalog_order_requests")
     .update({ status: "accepted", bill_id: result.billId })
     .eq("id", requestId)
     .eq("shop_id", session.shopId);
+  if (linkError) {
+    console.error("Could not link bill to catalog order", linkError);
+    await admin
+      .from("bills")
+      .update({ status: "voided", voided_at: new Date().toISOString(), void_reason: "Automatic: could not link invoice to catalog order" })
+      .eq("id", result.billId);
+    return { error: "Could not finish accepting this order — the invoice was voided automatically. Please try again." };
+  }
 
   revalidatePath("/catalog-orders");
   return { billId: result.billId };

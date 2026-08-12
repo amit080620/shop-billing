@@ -29,6 +29,7 @@ export default async function ProductsPage() {
     <ProductsClient
       lang={lang}
       businessType={session.businessType}
+      isOwner={session.role === "owner"}
       initialProducts={(products ?? []).map((p) => ({
         id: p.id,
         name: p.name,

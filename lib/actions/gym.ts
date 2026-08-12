@@ -135,7 +135,16 @@ export async function sellMembershipAction(input: {
   });
   if (membershipError) {
     console.error("Could not create membership record", membershipError);
-    return { error: "Bill was created, but the membership record failed — please contact support." };
+    // Void (not delete) the bill — a customer being charged with no
+    // membership record to show for it is a real "took the money,
+    // delivered nothing" bug. Voiding keeps the GST invoice number
+    // sequence intact (no gap) and leaves a clear audit trail, while
+    // still excluding it from revenue and reports like any voided bill.
+    await admin
+      .from("bills")
+      .update({ status: "voided", voided_at: new Date().toISOString(), void_reason: "Automatic: membership record failed to save" })
+      .eq("id", billResult.billId);
+    return { error: "Could not create the membership — the invoice was voided automatically, nothing was charged. Please try again." };
   }
 
   revalidatePath("/gym");

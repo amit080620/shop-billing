@@ -15,7 +15,9 @@ export default async function OrderPage({
 
   const { data: order } = await admin
     .from("restaurant_orders")
-    .select("*, restaurant_tables ( name )")
+    .select(
+      "id, order_number, status, subtotal, discount_amount, cgst_amount, sgst_amount, igst_amount, total, order_type, waiter_name, reservation_id, restaurant_tables ( name )",
+    )
     .eq("id", id)
     .eq("shop_id", session.shopId)
     .single();
@@ -25,7 +27,7 @@ export default async function OrderPage({
   }
 
   const [{ data: items }, { data: products }, { data: combos }, { data: linkedReservation }] = await Promise.all([
-    admin.from("restaurant_order_items").select("*").eq("order_id", id).order("created_at"),
+    admin.from("restaurant_order_items").select("id, product_name, quantity, unit_price, line_total, status").eq("order_id", id).order("created_at"),
     admin.from("products").select("id, name, price, gst_percent, category_id, categories ( name )").eq("shop_id", session.shopId).order("name"),
     admin.from("combos").select("id, name, price").eq("shop_id", session.shopId).eq("is_active", true).order("name"),
     order.reservation_id

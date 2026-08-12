@@ -14,7 +14,9 @@ export default async function ReturnDetailPage({
 
   const { data: ret } = await admin
     .from("returns")
-    .select("*, bills ( invoice_number ), customers ( name, phone )")
+    .select(
+      "return_number, bill_id, created_at, subtotal, cgst_amount, sgst_amount, igst_amount, total, refund_method, reason, bills ( invoice_number ), customers ( name, phone )",
+    )
     .eq("id", id)
     .eq("shop_id", session.shopId)
     .single();
@@ -23,7 +25,7 @@ export default async function ReturnDetailPage({
     return <p className="text-sm text-muted">Return not found.</p>;
   }
 
-  const { data: items } = await admin.from("return_items").select("*").eq("return_id", id);
+  const { data: items } = await admin.from("return_items").select("id, product_name, quantity, line_total").eq("return_id", id);
 
   const bill = Array.isArray(ret.bills) ? ret.bills[0] : ret.bills;
   const customer = Array.isArray(ret.customers) ? ret.customers[0] : ret.customers;

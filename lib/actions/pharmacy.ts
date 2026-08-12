@@ -28,7 +28,7 @@ export async function addBatchAction(
 
   const { data: product } = await admin
     .from("products")
-    .select("id, stock_quantity")
+    .select("id")
     .eq("id", productId)
     .eq("shop_id", session.shopId)
     .single();
@@ -52,10 +52,8 @@ export async function addBatchAction(
   // Keep the product's aggregate stock in sync with the sum of its batches,
   // so the rest of the app (stock badges, New Bill, low-stock alerts) sees
   // one consistent number without needing to know batches exist.
-  await admin
-    .from("products")
-    .update({ stock_quantity: Number(product.stock_quantity) + quantity, track_inventory: true })
-    .eq("id", productId);
+  await admin.rpc("increment_stock", { p_product_id: productId, p_quantity: quantity });
+  await admin.from("products").update({ track_inventory: true }).eq("id", productId);
 
   revalidatePath(`/pharmacy/batches/${productId}`);
   revalidatePath("/products");
@@ -76,7 +74,7 @@ export async function deleteBatchAction(batchId: string, productId: string): Pro
 
   const { data: product } = await admin
     .from("products")
-    .select("id, stock_quantity")
+    .select("id")
     .eq("id", productId)
     .eq("shop_id", session.shopId)
     .single();
@@ -96,10 +94,7 @@ export async function deleteBatchAction(batchId: string, productId: string): Pro
   }
 
   if (product) {
-    await admin
-      .from("products")
-      .update({ stock_quantity: Math.max(0, Number(product.stock_quantity) - Number(batch.quantity)) })
-      .eq("id", productId);
+    await admin.rpc("decrement_stock", { p_product_id: productId, p_quantity: Number(batch.quantity) });
   }
 
   revalidatePath(`/pharmacy/batches/${productId}`);
@@ -140,7 +135,7 @@ export async function writeOffBatchAction(
 
   const { data: product } = await admin
     .from("products")
-    .select("id, name, stock_quantity")
+    .select("id, name")
     .eq("id", productId)
     .eq("shop_id", session.shopId)
     .single();
@@ -168,10 +163,7 @@ export async function writeOffBatchAction(
     .from("medicine_batches")
     .update({ quantity: round2(Number(batch.quantity) - quantity) })
     .eq("id", batchId);
-  await admin
-    .from("products")
-    .update({ stock_quantity: Math.max(0, round2(Number(product.stock_quantity) - quantity)) })
-    .eq("id", productId);
+  await admin.rpc("decrement_stock", { p_product_id: productId, p_quantity: quantity });
 
   revalidatePath(`/pharmacy/batches/${productId}`);
   revalidatePath("/products");

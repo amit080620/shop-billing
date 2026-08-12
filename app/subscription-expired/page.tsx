@@ -1,6 +1,6 @@
 import { getAuthenticatedUser } from "@/lib/supabase/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
-import { logoutAction } from "@/lib/actions/auth";
+import { logoutThisDeviceAction } from "@/lib/actions/auth";
 
 export default async function SubscriptionExpiredPage() {
   const user = await getAuthenticatedUser();
@@ -32,7 +32,7 @@ export default async function SubscriptionExpiredPage() {
           Contact whoever manages your subscription to renew it.
         </p>
       </div>
-      <form action={logoutAction}>
+      <form action={logoutThisDeviceAction}>
         <button type="submit" className="rounded-lg border border-border px-4 py-2 text-sm font-medium text-muted">
           Log out
         </button>

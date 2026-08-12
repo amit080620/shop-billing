@@ -6,6 +6,7 @@ import { requireSession, hasPermission, type SessionContext } from "../auth";
 import { createSupabaseAdminClient } from "../supabase/admin";
 import { billSchema, calculateTransactionTotals, type BillInput } from "../validation/schemas";
 import { determineSupplyType, financialYearFor, round2 } from "../gst";
+import { logAuditEvent } from "../audit";
 
 export type ActionState = { error?: string } | null;
 
@@ -259,11 +260,11 @@ export async function createBillCore(
       }
     }
 
-    const newQuantity = Math.max(0, Number(product.stock_quantity) - item.stockQuantity);
-    const { error: stockError } = await admin
-      .from("products")
-      .update({ stock_quantity: newQuantity })
-      .eq("id", product.id);
+    // Atomic — the decrement happens inside the database as one UPDATE,
+    // not read-then-write from application code, so two concurrent
+    // sales of the same product can never both read the same stale
+    // stock value and silently oversell.
+    const { error: stockError } = await admin.rpc("decrement_stock", { p_product_id: product.id, p_quantity: item.stockQuantity });
     if (stockError) console.error("Could not update stock for product", product.id, stockError);
   }
 
@@ -363,10 +364,7 @@ export async function voidBillAction(
       if (!item.product_id) continue;
       const product = productMap.get(item.product_id);
       if (!product?.track_inventory) continue;
-      await admin
-        .from("products")
-        .update({ stock_quantity: Number(product.stock_quantity) + Number(item.quantity) })
-        .eq("id", item.product_id);
+      await admin.rpc("increment_stock", { p_product_id: item.product_id, p_quantity: Number(item.quantity) });
     }
   }
 
@@ -384,6 +382,16 @@ export async function voidBillAction(
     console.error("Could not void bill", error);
     return { error: "Could not void bill" };
   }
+
+  await logAuditEvent({
+    admin,
+    shopId: session.shopId,
+    staffId: session.userId,
+    action: "bill_voided",
+    entityType: "bill",
+    entityId: billId,
+    details: { reason: reason.trim() },
+  });
 
   revalidatePath("/");
   revalidatePath(`/print/bill/${billId}`);
@@ -437,11 +445,11 @@ export async function editBillQuantitiesAction(
     const newQty = updateByItemId.get(item.id);
     if (newQty === undefined || newQty === Number(item.quantity) || !item.product_id) continue;
 
-    const { data: product } = await admin.from("products").select("stock_quantity, track_inventory").eq("id", item.product_id).single();
+    const { data: product } = await admin.from("products").select("track_inventory").eq("id", item.product_id).single();
     if (product?.track_inventory) {
       const delta = Number(item.quantity) - newQty; // positive = give stock back, negative = take more
-      const newStock = Math.max(0, Number(product.stock_quantity) + delta);
-      await admin.from("products").update({ stock_quantity: newStock }).eq("id", item.product_id);
+      if (delta > 0) await admin.rpc("increment_stock", { p_product_id: item.product_id, p_quantity: delta });
+      else if (delta < 0) await admin.rpc("decrement_stock", { p_product_id: item.product_id, p_quantity: Math.abs(delta) });
     }
   }
 
@@ -486,6 +494,16 @@ export async function editBillQuantitiesAction(
     console.error("Could not save bill edit", error);
     return { error: "Could not save changes" };
   }
+
+  await logAuditEvent({
+    admin,
+    shopId: session.shopId,
+    staffId: session.userId,
+    action: "bill_quantities_edited",
+    entityType: "bill",
+    entityId: billId,
+    details: { reason: reason.trim(), changes: lineUpdates },
+  });
 
   revalidatePath(`/print/bill/${billId}`);
   return {};

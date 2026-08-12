@@ -170,7 +170,7 @@ export async function createReturnAction(
     if (!row.product_id) continue;
     const { data: product } = await admin
       .from("products")
-      .select("id, track_inventory, stock_quantity")
+      .select("id, track_inventory")
       .eq("id", row.product_id)
       .single();
     if (!product?.track_inventory) continue;
@@ -190,10 +190,7 @@ export async function createReturnAction(
       }
     }
 
-    await admin
-      .from("products")
-      .update({ stock_quantity: round2(Number(product.stock_quantity) + row.quantity) })
-      .eq("id", product.id);
+    await admin.rpc("increment_stock", { p_product_id: product.id, p_quantity: row.quantity });
   }
 
   revalidatePath(`/print/bill/${billId}`);

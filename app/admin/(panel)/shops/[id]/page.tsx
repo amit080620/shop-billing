@@ -15,7 +15,7 @@ export default async function AdminShopDetailPage({
   const admin = createSupabaseAdminClient();
 
   const [{ data: shop }, { data: transactions }, { data: staff }, { data: bills }] = await Promise.all([
-    admin.from("shops").select("*").eq("id", id).single(),
+    admin.from("shops").select("id, name, legal_name, gstin, city, state, wallet_balance, subscription_valid_until, business_type, business_type_locked").eq("id", id).single(),
     admin
       .from("subscription_transactions")
       .select("id, amount, new_valid_until, note, created_at")

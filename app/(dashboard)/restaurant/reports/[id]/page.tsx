@@ -16,7 +16,7 @@ export default async function RestaurantBillDetailPage({
 
   const { data: order } = await admin
     .from("restaurant_orders")
-    .select("*, restaurant_tables ( name )")
+    .select("order_number, subtotal, discount_amount, cgst_amount, sgst_amount, igst_amount, total, settled_at, restaurant_tables ( name )")
     .eq("id", id)
     .eq("shop_id", session.shopId)
     .single();
@@ -24,8 +24,8 @@ export default async function RestaurantBillDetailPage({
   if (!order) return <p className="text-sm text-muted">{t("rreports.notFound")}</p>;
 
   const [{ data: items }, { data: payments }] = await Promise.all([
-    admin.from("restaurant_order_items").select("*").eq("order_id", id),
-    admin.from("restaurant_order_payments").select("*").eq("order_id", id),
+    admin.from("restaurant_order_items").select("id, product_name, quantity, line_total").eq("order_id", id),
+    admin.from("restaurant_order_payments").select("id, payment_method, amount").eq("order_id", id),
   ]);
 
   const table = Array.isArray(order.restaurant_tables) ? order.restaurant_tables[0] : order.restaurant_tables;

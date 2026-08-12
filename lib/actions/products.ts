@@ -1,9 +1,10 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { requireSession } from "../auth";
+import { requireSession, requireOwner } from "../auth";
 import { createSupabaseAdminClient } from "../supabase/admin";
 import { productSchema, categorySchema } from "../validation/schemas";
+import { logAuditEvent } from "../audit";
 
 export type ActionState = { error?: string } | null;
 
@@ -240,13 +241,59 @@ export async function deleteProductAction(productId: string): Promise<{ error?: 
     // deleting it would orphan that history, so Postgres blocks it. The
     // item can just be left in the catalog and not sold going forward —
     // there's no "hide" toggle for regular products yet, but not selling
-    // it achieves the same practical result.
+    // it achieves the same practical result. Owners can force-delete
+    // anyway via forceDeleteProductAction below.
     if (error.code === "23503") {
       return { error: "This item has past sales, rentals, or orders on record and can't be deleted — you can just stop selling it instead." };
     }
     console.error("Could not delete product", error);
     return { error: "Could not delete item" };
   }
+  revalidatePath("/products");
+  return {};
+}
+
+/** Owner-only escalation of the delete above. Bills, restaurant orders,
+ * rentals, and returns all keep the item's name as plain text on their
+ * own rows for exactly this reason — unlinking product_id there loses
+ * nothing from those historical records, it only clears the pointer
+ * back to a catalog entry that's about to stop existing. A product
+ * still listed inside an ACTIVE combo is different: that combo's
+ * composition would break, so this still blocks on that case and asks
+ * the owner to remove it from the combo first. */
+export async function forceDeleteProductAction(productId: string): Promise<{ error?: string }> {
+  const session = await requireOwner();
+  const admin = createSupabaseAdminClient();
+
+  const { data: product } = await admin.from("products").select("id").eq("id", productId).eq("shop_id", session.shopId).single();
+  if (!product) return { error: "Item not found" };
+
+  const { count: comboUsage } = await admin.from("combo_items").select("id", { count: "exact", head: true }).eq("product_id", productId);
+  if ((comboUsage ?? 0) > 0) {
+    return { error: "This item is part of a combo — remove it from the combo first, then delete it." };
+  }
+
+  await Promise.all([
+    admin.from("restaurant_order_items").update({ product_id: null }).eq("product_id", productId),
+    admin.from("rental_items").update({ product_id: null }).eq("product_id", productId),
+    admin.from("return_items").update({ product_id: null }).eq("product_id", productId),
+  ]);
+
+  const { error } = await admin.from("products").delete().eq("id", productId).eq("shop_id", session.shopId);
+  if (error) {
+    console.error("Could not force-delete product", error);
+    return { error: "Could not delete item" };
+  }
+
+  await logAuditEvent({
+    admin,
+    shopId: session.shopId,
+    staffId: session.userId,
+    action: "product_force_deleted",
+    entityType: "product",
+    entityId: productId,
+  });
+
   revalidatePath("/products");
   return {};
 }

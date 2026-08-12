@@ -30,5 +30,15 @@ export default async function KdsPage() {
     };
   });
 
-  return <KdsClient shopName={session.shopName} initialTickets={tickets} lang={lang} />;
+  const { data: kdsSettings } = await admin.from("kds_settings").select("columns, font_scale").eq("shop_id", session.shopId).maybeSingle();
+
+  return (
+    <KdsClient
+      shopName={session.shopName}
+      initialTickets={tickets}
+      lang={lang}
+      columns={kdsSettings?.columns ?? 3}
+      fontScale={kdsSettings?.font_scale ?? "normal"}
+    />
+  );
 }

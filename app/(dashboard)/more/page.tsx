@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { requireSession } from "@/lib/auth";
-import { logoutAction } from "@/lib/actions/auth";
+import { LogoutButton } from "./LogoutButton";
 import { getTranslator } from "@/lib/i18n/server";
 import { getTheme } from "@/lib/theme";
 import { ThemeToggle } from "@/app/components/ThemeToggle";
@@ -55,6 +55,7 @@ export default async function MorePage() {
       {session.businessType === "restaurant" && (
         <MenuGroup title="Restaurant">
           <MenuLink href="/restaurant-kds" label="Kitchen display (TV)" sub="Big-screen view for the kitchen" icon={KitchenIcon} />
+          <MenuLink href="/restaurant/kds-settings" label="Kitchen display settings" sub="Cards per row, text size" icon={KitchenIcon} />
           <MenuLink href="/restaurant/combos" label="Combo deals" sub="Bundle menu items at a set price" icon={BoxIcon} />
           <MenuLink href="/restaurant/reports" label="Restaurant sales" sub="Day-wise & month-wise reports" icon={ClockIcon} />
         </MenuGroup>
@@ -149,7 +150,10 @@ export default async function MorePage() {
         />
         <MenuLink href="/vendors" label={t("more.vendors")} sub={t("more.vendors.sub")} icon={TruckIcon} />
         {session.role === "owner" && (
-          <MenuLink href="/staff" label={t("more.staff")} sub={t("more.staff.sub")} icon={UsersIcon} />
+          <>
+            <MenuLink href="/staff" label={t("more.staff")} sub={t("more.staff.sub")} icon={UsersIcon} />
+            <MenuLink href="/audit-log" label="Audit log" sub="Who did what, and when" icon={UsersIcon} />
+          </>
         )}
       </MenuGroup>
 
@@ -180,14 +184,7 @@ export default async function MorePage() {
         {t("more.loggedInAs")} {session.staffName} ({session.email})
       </div>
 
-      <form action={logoutAction}>
-        <button
-          type="submit"
-          className="w-full rounded-lg border border-border px-4 py-3 text-sm font-medium text-danger transition active:scale-[0.98]"
-        >
-          {t("more.logout")}
-        </button>
-      </form>
+      <LogoutButton logoutLabel={t("more.logout")} thisDeviceLabel="Log out of this device" allDevicesLabel="Log out of all devices" />
     </div>
   );
 }

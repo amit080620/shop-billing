@@ -273,7 +273,19 @@ export async function billLabOrderAction(orderId: string, paymentMethod: "cash" 
   });
   if ("error" in result) return { error: result.error };
 
-  await admin.from("lab_orders").update({ bill_id: result.billId }).eq("id", orderId).eq("shop_id", session.shopId);
+  const { error: linkError } = await admin.from("lab_orders").update({ bill_id: result.billId }).eq("id", orderId).eq("shop_id", session.shopId);
+  if (linkError) {
+    // If the order can't be linked to this bill, a retry would create a
+    // SECOND bill for the same order (the "already billed" guard above
+    // checks order.bill_id, which never got set). Void this one rather
+    // than risk a duplicate invoice for the same tests.
+    console.error("Could not link bill to lab order", linkError);
+    await admin
+      .from("bills")
+      .update({ status: "voided", voided_at: new Date().toISOString(), void_reason: "Automatic: could not link invoice to lab order" })
+      .eq("id", result.billId);
+    return { error: "Could not finish billing this order — the invoice was voided automatically. Please try again." };
+  }
   revalidatePath(`/lab/orders/${orderId}`);
   return { billId: result.billId };
 }

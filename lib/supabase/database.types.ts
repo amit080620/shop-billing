@@ -825,6 +825,12 @@ export interface Database {
         Update: { shop_id?: string; financial_year?: string; last_number?: number };
         Relationships: [];
       };
+      kds_settings: {
+        Row: { shop_id: string; columns: number; font_scale: "normal" | "large" | "extra_large"; updated_at: string };
+        Insert: { shop_id: string; columns?: number; font_scale?: "normal" | "large" | "extra_large"; updated_at?: string };
+        Update: { shop_id?: string; columns?: number; font_scale?: "normal" | "large" | "extra_large"; updated_at?: string };
+        Relationships: [];
+      };
       gym_kiosk_settings: {
         Row: { shop_id: string; is_enabled: boolean; public_token: string; updated_at: string };
         Insert: { shop_id: string; is_enabled?: boolean; public_token?: string; updated_at?: string };
@@ -948,6 +954,26 @@ export interface Database {
         Row: { shop_id: string; financial_year: string; last_number: number };
         Insert: { shop_id: string; financial_year: string; last_number?: number };
         Update: { shop_id?: string; financial_year?: string; last_number?: number };
+        Relationships: [];
+      };
+      audit_logs: {
+        Row: { id: string; shop_id: string; staff_id: string | null; action: string; entity_type: string; entity_id: string | null; details: Record<string, unknown> | null; created_at: string };
+        Insert: { id?: string; shop_id: string; staff_id?: string | null; action: string; entity_type: string; entity_id?: string | null; details?: Record<string, unknown> | null; created_at?: string };
+        Update: { id?: string; shop_id?: string; staff_id?: string | null; action?: string; entity_type?: string; entity_id?: string | null; details?: Record<string, unknown> | null; created_at?: string };
+        Relationships: [
+          { foreignKeyName: "audit_logs_staff_id_fkey"; columns: ["staff_id"]; isOneToOne: false; referencedRelation: "staff"; referencedColumns: ["id"] },
+        ];
+      };
+      password_reset_requests: {
+        Row: { id: string; email: string; created_at: string };
+        Insert: { id?: string; email: string; created_at?: string };
+        Update: { id?: string; email?: string; created_at?: string };
+        Relationships: [];
+      };
+      login_attempts: {
+        Row: { id: string; email: string; succeeded: boolean; created_at: string };
+        Insert: { id?: string; email: string; succeeded?: boolean; created_at?: string };
+        Update: { id?: string; email?: string; succeeded?: boolean; created_at?: string };
         Relationships: [];
       };
       leads: {
@@ -2253,6 +2279,14 @@ export interface Database {
       next_lab_order_number: {
         Args: { p_shop_id: string; p_financial_year: string };
         Returns: number;
+      };
+      decrement_stock: {
+        Args: { p_product_id: string; p_quantity: number };
+        Returns: undefined;
+      };
+      increment_stock: {
+        Args: { p_product_id: string; p_quantity: number };
+        Returns: undefined;
       };
     };
     Enums: Record<string, never>;

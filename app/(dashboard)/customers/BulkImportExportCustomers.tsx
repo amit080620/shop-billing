@@ -1,23 +1,8 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { bulkImportCustomersAction, type CustomerImportResult } from "@/lib/actions/bulk-import";
+import { bulkImportCustomersAction, fetchAllCustomersForExportAction, type CustomerImportResult } from "@/lib/actions/bulk-import";
 import { downloadCsv } from "@/app/components/downloadCsv";
-
-type Customer = {
-  name: string;
-  phone: string;
-  gstin?: string | null;
-  address?: string | null;
-  stateCode?: string | null;
-  dateOfBirth?: string | null;
-  gender?: string | null;
-  bloodGroup?: string | null;
-  knownAllergies?: string | null;
-  fitnessGoal?: string | null;
-  heightCm?: number | null;
-  weightKg?: number | null;
-};
 
 const BASE_HEADERS = ["name", "phone", "gstin", "address", "stateCode", "dateOfBirth", "gender"];
 const CLINIC_HEADERS = ["bloodGroup", "knownAllergies"];
@@ -28,18 +13,17 @@ function normalizeKey(k: string) {
 }
 
 export function BulkImportExportCustomers({
-  customers,
   onImported,
   isClinic,
   isGym,
 }: {
-  customers: Customer[];
   onImported: () => void;
   isClinic: boolean;
   isGym: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
   const [result, setResult] = useState<CustomerImportResult | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const noun = isClinic ? "patients" : isGym ? "members" : "customers";
@@ -54,14 +38,20 @@ export function BulkImportExportCustomers({
     downloadCsv(`${noun}-import-template.csv`, headers, [sample]);
   }
 
-  function exportCustomers() {
-    const rows = customers.map((c) => {
-      const base = [c.name, c.phone, c.gstin ?? "", c.address ?? "", c.stateCode ?? "", c.dateOfBirth ?? "", c.gender ?? ""];
-      if (isClinic) return [...base, c.bloodGroup ?? "", c.knownAllergies ?? ""];
-      if (isGym) return [...base, c.fitnessGoal ?? "", c.heightCm?.toString() ?? "", c.weightKg?.toString() ?? ""];
-      return base;
-    });
-    downloadCsv(`${noun}-export.csv`, headers, rows);
+  async function exportCustomers() {
+    setIsExporting(true);
+    try {
+      const all = await fetchAllCustomersForExportAction();
+      const rows = all.map((c) => {
+        const base = [c.name, c.phone, c.gstin ?? "", c.address ?? "", c.stateCode ?? "", c.dateOfBirth ?? "", c.gender ?? ""];
+        if (isClinic) return [...base, c.bloodGroup ?? "", c.knownAllergies ?? ""];
+        if (isGym) return [...base, c.fitnessGoal ?? "", c.heightCm?.toString() ?? "", c.weightKg?.toString() ?? ""];
+        return base;
+      });
+      downloadCsv(`${noun}-export.csv`, headers, rows);
+    } finally {
+      setIsExporting(false);
+    }
   }
 
   async function handleFile(file: File) {
@@ -131,10 +121,10 @@ export function BulkImportExportCustomers({
         <button
           type="button"
           onClick={exportCustomers}
-          disabled={customers.length === 0}
+          disabled={isExporting}
           className="rounded-lg border border-border bg-surface px-3 py-1.5 text-xs font-medium text-foreground disabled:opacity-50"
         >
-          Export current {noun}
+          {isExporting ? "Exporting…" : `Export all ${noun}`}
         </button>
       </div>
       <label className="flex flex-col gap-1.5 text-sm">

@@ -34,7 +34,7 @@ export default async function BatchesPage({
 
   const { data: batches } = await admin
     .from("medicine_batches")
-    .select("*")
+    .select("id, batch_number, expiry_date, quantity, manufacturer, purchase_price")
     .eq("product_id", productId)
     .order("expiry_date", { ascending: true });
 

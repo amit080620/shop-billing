@@ -128,11 +128,7 @@ export async function createPurchaseAction(
   for (const item of items) {
     const product = item.productId ? productMap.get(item.productId) : undefined;
     if (!product?.track_inventory) continue;
-    const newQuantity = Number(product.stock_quantity) + item.quantity;
-    const { error: stockError } = await admin
-      .from("products")
-      .update({ stock_quantity: newQuantity })
-      .eq("id", product.id);
+    const { error: stockError } = await admin.rpc("increment_stock", { p_product_id: product.id, p_quantity: item.quantity });
     if (stockError) console.error("Could not update stock for product", product.id, stockError);
   }
 

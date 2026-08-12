@@ -12,6 +12,7 @@ import {
   renameCategoryAction,
   deleteCategoryAction,
   deleteProductAction,
+  forceDeleteProductAction,
   generateBarcodeAction,
   uploadProductImageAction,
 } from "@/lib/actions/products";
@@ -87,12 +88,14 @@ export function ProductsClient({
   terminology,
   lang,
   businessType,
+  isOwner,
 }: {
   initialProducts: Product[];
   categories: Category[];
   terminology: { productPlural: string; productSingular: string; productSub: string; addProductLabel: string };
   lang: Lang;
   businessType: string;
+  isOwner: boolean;
 }) {
   const { t } = useTranslation(lang);
   const orderedUnits = getUnitsForBusinessType(businessType, UNITS);
@@ -145,6 +148,7 @@ export function ProductsClient({
   const router = useRouter();
   const [generatingBarcodeFor, setGeneratingBarcodeFor] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [blockedProductId, setBlockedProductId] = useState<string | null>(null);
 
   function openNewProductForm() {
     setEditingProduct(null);
@@ -782,12 +786,29 @@ export function ProductsClient({
                         startTransition(async () => {
                           const result = await deleteProductAction(p.id);
                           setDeleteError(result?.error ?? null);
+                          setBlockedProductId(result?.error ? p.id : null);
                         })
                       }
                       className="text-xs font-medium text-danger disabled:opacity-50"
                     >
                       {t("products.delete")}
                     </button>
+                    {isOwner && blockedProductId === p.id && (
+                      <button
+                        disabled={isPending}
+                        onClick={() => {
+                          if (!confirm(`"${p.name}" has past sales/orders on record. Delete it anyway? Old invoices keep the item's name but will no longer link back to this catalog entry.`)) return;
+                          startTransition(async () => {
+                            const result = await forceDeleteProductAction(p.id);
+                            setDeleteError(result?.error ?? null);
+                            setBlockedProductId(result?.error ? p.id : null);
+                          });
+                        }}
+                        className="text-xs font-medium text-danger underline disabled:opacity-50"
+                      >
+                        Force delete
+                      </button>
+                    )}
                   </div>
                 </div>
               </li>

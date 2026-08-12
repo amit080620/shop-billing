@@ -5,7 +5,7 @@ import { useFormStatus } from "react-dom";
 import { useRouter } from "next/navigation";
 import { updateStaffAction } from "@/lib/actions/staff";
 
-type StaffMember = { id: string; name: string; role: "owner" | "manager" | "staff" };
+type StaffMember = { id: string; name: string; role: "owner" | "manager" | "staff"; email: string | null };
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -64,6 +64,11 @@ export function EditStaffButton({ staff, isSelf }: { staff: StaffMember; isSelf:
           </label>
           <label className="flex flex-col gap-1.5 text-sm">
             <span className="font-medium text-foreground">Reset password (optional)</span>
+            {staff.email && (
+              <p className="rounded-lg bg-background px-3 py-2 text-xs text-muted">
+                Login email: <span className="font-medium text-foreground">{staff.email}</span>
+              </p>
+            )}
             <input
               name="newPassword"
               type="text"

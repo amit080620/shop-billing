@@ -12,6 +12,16 @@ export default async function StaffPage() {
     .eq("shop_id", session.shopId)
     .order("created_at");
 
+  // staff.id is the same id as the Supabase Auth user (1:1) — email
+  // lives in Auth, not the staff table, so it's fetched per-row here.
+  const emails = await Promise.all(
+    (staff ?? []).map(async (s) => {
+      const { data } = await admin.auth.admin.getUserById(s.id);
+      return [s.id, data.user?.email ?? null] as const;
+    }),
+  );
+  const emailById = new Map(emails);
+
   return (
     <StaffClient
       currentUserId={session.userId}
@@ -20,6 +30,7 @@ export default async function StaffPage() {
         name: s.name,
         role: s.role,
         permissions: (s.permissions as string[] | null) ?? [],
+        email: emailById.get(s.id) ?? null,
       }))}
     />
   );
