@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { bulkImportCustomersAction, fetchAllCustomersForExportAction, type CustomerImportResult } from "@/lib/actions/bulk-import";
+import { startBulkImportCustomersAction, getBulkImportJobStatusAction, fetchAllCustomersForExportAction, type CustomerImportResult } from "@/lib/actions/bulk-import";
 import { downloadCsv } from "@/app/components/downloadCsv";
 
 const BASE_HEADERS = ["name", "phone", "gstin", "address", "stateCode", "dateOfBirth", "gender"];
@@ -62,6 +62,7 @@ export function BulkImportExportCustomers({
       const lines = text.split(/\r?\n/).filter((l) => l.trim());
       if (lines.length < 2) {
         setResult({ inserted: 0, errors: [{ row: 0, name: "", message: "File is empty" }] });
+        setIsImporting(false);
         return;
       }
       const headerRow = lines[0].split(",").map((h) => normalizeKey(h.replace(/^"|"$/g, "")));
@@ -86,11 +87,33 @@ export function BulkImportExportCustomers({
           weightKg: get("weightKg"),
         };
       });
-      const res = await bulkImportCustomersAction(rows);
-      setResult(res);
-      if (res.inserted > 0) onImported();
+
+      const started = await startBulkImportCustomersAction(rows);
+      if ("error" in started) {
+        setResult({ inserted: 0, errors: [{ row: 0, name: "", message: started.error }] });
+        setIsImporting(false);
+        return;
+      }
+
+      // Poll every second — the actual insert runs in the background
+      // (Next.js after()), so this request already returned instantly;
+      // this is just checking in on progress rather than blocking on it.
+      const poll = setInterval(async () => {
+        const status = await getBulkImportJobStatusAction(started.jobId);
+        if ("error" in status) {
+          clearInterval(poll);
+          setIsImporting(false);
+          return;
+        }
+        if (status.status === "completed" && status.result) {
+          clearInterval(poll);
+          setResult(status.result);
+          setIsImporting(false);
+          if (status.result.inserted > 0) onImported();
+        }
+      }, 1000);
+      return;
     } finally {
-      setIsImporting(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
     }
   }
@@ -141,7 +164,7 @@ export function BulkImportExportCustomers({
           className="text-xs text-muted file:mr-3 file:rounded-lg file:border file:border-border file:bg-surface file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-foreground"
         />
       </label>
-      {isImporting && <p className="text-xs text-muted">Importing…</p>}
+      {isImporting && <p className="text-xs text-muted">Importing in the background — this page will update automatically…</p>}
       {result && (
         <div className="rounded-lg bg-surface p-3 text-xs">
           <p className="font-medium text-brand-dark">{result.inserted} {noun} imported.</p>

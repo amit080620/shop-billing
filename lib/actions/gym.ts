@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { requireOwner, requireSession } from "../auth";
 import { createSupabaseAdminClient } from "../supabase/admin";
 import { round2 } from "../gst";
+import { logError } from "../audit";
 
 export type ActionState = { error?: string } | null;
 
@@ -135,6 +136,7 @@ export async function sellMembershipAction(input: {
   });
   if (membershipError) {
     console.error("Could not create membership record", membershipError);
+    await logError({ shopId: session.shopId, context: "gym.sellMembershipAction", message: "Could not create membership record after billing", details: { billId: billResult.billId, error: membershipError.message } });
     // Void (not delete) the bill — a customer being charged with no
     // membership record to show for it is a real "took the money,
     // delivered nothing" bug. Voiding keeps the GST invoice number

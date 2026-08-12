@@ -976,6 +976,18 @@ export interface Database {
         Update: { id?: string; email?: string; succeeded?: boolean; created_at?: string };
         Relationships: [];
       };
+      background_jobs: {
+        Row: { id: string; shop_id: string; job_type: string; status: "processing" | "completed" | "failed"; total_rows: number; processed_rows: number; result: Record<string, unknown> | null; error: string | null; staff_id: string; created_at: string; completed_at: string | null };
+        Insert: { id?: string; shop_id: string; job_type: string; status?: "processing" | "completed" | "failed"; total_rows?: number; processed_rows?: number; result?: Record<string, unknown> | null; error?: string | null; staff_id: string; created_at?: string; completed_at?: string | null };
+        Update: { id?: string; shop_id?: string; job_type?: string; status?: "processing" | "completed" | "failed"; total_rows?: number; processed_rows?: number; result?: Record<string, unknown> | null; error?: string | null; staff_id?: string; created_at?: string; completed_at?: string | null };
+        Relationships: [];
+      };
+      error_logs: {
+        Row: { id: string; shop_id: string | null; context: string; message: string; details: Record<string, unknown> | null; created_at: string };
+        Insert: { id?: string; shop_id?: string | null; context: string; message: string; details?: Record<string, unknown> | null; created_at?: string };
+        Update: { id?: string; shop_id?: string | null; context?: string; message?: string; details?: Record<string, unknown> | null; created_at?: string };
+        Relationships: [];
+      };
       leads: {
         Row: { id: string; shop_id: string; name: string; phone: string; source: string | null; interested_plan: string | null; status: "new" | "contacted" | "trial" | "converted" | "lost"; notes: string | null; staff_id: string; created_at: string };
         Insert: { id?: string; shop_id: string; name: string; phone: string; source?: string | null; interested_plan?: string | null; status?: "new" | "contacted" | "trial" | "converted" | "lost"; notes?: string | null; staff_id: string; created_at?: string };

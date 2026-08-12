@@ -153,6 +153,7 @@ export default async function MorePage() {
           <>
             <MenuLink href="/staff" label={t("more.staff")} sub={t("more.staff.sub")} icon={UsersIcon} />
             <MenuLink href="/audit-log" label="Audit log" sub="Who did what, and when" icon={UsersIcon} />
+            <MenuLink href="/error-log" label="Error log" sub="Unexpected failures caught automatically" icon={UsersIcon} />
           </>
         )}
       </MenuGroup>

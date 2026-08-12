@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 import { requireSession } from "../auth";
 import { createSupabaseAdminClient } from "../supabase/admin";
 
@@ -193,8 +194,48 @@ export type CustomerImportResult = {
 
 const VALID_GENDERS = new Set(["male", "female", "other"]);
 
-export async function bulkImportCustomersAction(rows: CustomerImportRow[]): Promise<CustomerImportResult> {
+/** Starts the import as a background job — the request returns
+ * immediately with a job id instead of making the browser wait on one
+ * long request (which risks the serverless function's execution
+ * timeout on a genuinely large CSV, e.g. migrating from another
+ * system with tens of thousands of rows). Next.js's after() runs the
+ * actual insert work after the response is already sent; the client
+ * polls getBulkImportJobStatusAction for progress. */
+export async function startBulkImportCustomersAction(rows: CustomerImportRow[]): Promise<{ jobId: string } | { error: string }> {
   const session = await requireSession();
+  const admin = createSupabaseAdminClient();
+
+  const { data: job, error: jobError } = await admin
+    .from("background_jobs")
+    .insert({ shop_id: session.shopId, job_type: "customer_import", total_rows: rows.length, staff_id: session.userId })
+    .select("id")
+    .single();
+  if (jobError || !job) return { error: "Could not start import" };
+
+  after(async () => {
+    const result = await runCustomerImport(session.shopId, rows);
+    await admin
+      .from("background_jobs")
+      .update({ status: "completed", processed_rows: rows.length, result, completed_at: new Date().toISOString() })
+      .eq("id", job.id);
+  });
+
+  return { jobId: job.id };
+}
+
+export async function getBulkImportJobStatusAction(jobId: string): Promise<{
+  status: "processing" | "completed" | "failed";
+  totalRows: number;
+  result: CustomerImportResult | null;
+} | { error: string }> {
+  const session = await requireSession();
+  const admin = createSupabaseAdminClient();
+  const { data: job } = await admin.from("background_jobs").select("status, total_rows, result").eq("id", jobId).eq("shop_id", session.shopId).single();
+  if (!job) return { error: "Job not found" };
+  return { status: job.status, totalRows: job.total_rows, result: job.result as CustomerImportResult | null };
+}
+
+async function runCustomerImport(shopId: string, rows: CustomerImportRow[]): Promise<CustomerImportResult> {
   const admin = createSupabaseAdminClient();
 
   const errors: CustomerImportResult["errors"] = [];
@@ -221,7 +262,7 @@ export async function bulkImportCustomersAction(rows: CustomerImportRow[]): Prom
   // Skip rows whose phone number already exists for this shop, rather
   // than creating duplicate customer records on a re-import.
   const phones = validRows.map((r) => r.phone.trim());
-  const { data: existing } = await admin.from("customers").select("phone").eq("shop_id", session.shopId).in("phone", phones);
+  const { data: existing } = await admin.from("customers").select("phone").eq("shop_id", shopId).in("phone", phones);
   const existingPhones = new Set((existing ?? []).map((c) => c.phone));
 
   const toInsert = validRows.filter((r) => !existingPhones.has(r.phone.trim()));
@@ -235,7 +276,7 @@ export async function bulkImportCustomersAction(rows: CustomerImportRow[]): Prom
     .from("customers")
     .insert(
       toInsert.map((row) => ({
-        shop_id: session.shopId,
+        shop_id: shopId,
         name: row.name.trim(),
         phone: row.phone.trim(),
         gstin: row.gstin?.trim() || null,

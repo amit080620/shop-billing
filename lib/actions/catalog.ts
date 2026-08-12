@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { requireSession } from "../auth";
 import { createSupabaseAdminClient } from "../supabase/admin";
 import { round2 } from "../gst";
+import { logError } from "../audit";
 
 export async function saveCatalogSettingsAction(settings: {
   isEnabled: boolean;
@@ -179,6 +180,7 @@ export async function acceptCatalogOrderAction(
     .eq("shop_id", session.shopId);
   if (linkError) {
     console.error("Could not link bill to catalog order", linkError);
+    await logError({ shopId: session.shopId, context: "catalog.acceptOrderAction", message: "Could not link invoice to catalog order", details: { requestId, billId: result.billId, error: linkError.message } });
     await admin
       .from("bills")
       .update({ status: "voided", voided_at: new Date().toISOString(), void_reason: "Automatic: could not link invoice to catalog order" })

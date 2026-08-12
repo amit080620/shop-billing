@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { requireOwner, requireSession } from "../auth";
 import { createSupabaseAdminClient } from "../supabase/admin";
 import { financialYearFor, round2 } from "../gst";
+import { logError } from "../audit";
 
 export type ActionState = { error?: string } | null;
 
@@ -280,6 +281,7 @@ export async function billLabOrderAction(orderId: string, paymentMethod: "cash" 
     // checks order.bill_id, which never got set). Void this one rather
     // than risk a duplicate invoice for the same tests.
     console.error("Could not link bill to lab order", linkError);
+    await logError({ shopId: session.shopId, context: "lab.billLabOrderAction", message: "Could not link invoice to lab order", details: { orderId, billId: result.billId, error: linkError.message } });
     await admin
       .from("bills")
       .update({ status: "voided", voided_at: new Date().toISOString(), void_reason: "Automatic: could not link invoice to lab order" })

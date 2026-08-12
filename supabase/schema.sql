@@ -1851,3 +1851,44 @@ create table if not exists password_reset_requests (
 );
 alter table password_reset_requests enable row level security;
 create index if not exists idx_password_reset_requests_email_time on password_reset_requests(email, created_at desc);
+
+-- ─── PHASE 2: Background job tracking ───────────────────────────────────────
+-- No external queue (Redis/SQS) is provisioned for this app, and Vercel
+-- Cron on the Hobby plan only runs once a day — useless for near-real-
+-- time processing. Instead this uses Next.js's after() API: the
+-- request returns immediately with a job row created, then the actual
+-- row-by-row work continues after the response is sent. The client
+-- polls this table for progress instead of waiting on one long request
+-- that risks the serverless function's execution timeout on a large file.
+create table if not exists background_jobs (
+  id uuid primary key default uuid_generate_v4(),
+  shop_id uuid not null references shops(id) on delete cascade,
+  job_type text not null,
+  status text not null default 'processing' check (status in ('processing', 'completed', 'failed')),
+  total_rows integer not null default 0,
+  processed_rows integer not null default 0,
+  result jsonb,
+  error text,
+  staff_id uuid not null references staff(id),
+  created_at timestamptz not null default now(),
+  completed_at timestamptz
+);
+alter table background_jobs enable row level security;
+create index if not exists idx_background_jobs_shop_created on background_jobs(shop_id, created_at desc);
+
+-- ─── PHASE 2: Structured error logging ──────────────────────────────────────
+-- No external service (Sentry etc.) is wired up — that needs an API key
+-- only the shop owner/developer can provision. This is the achievable
+-- middle ground: every genuinely unexpected failure gets a structured
+-- row here instead of only a console.error that vanishes once the
+-- serverless function exits, so failures are at least detectable.
+create table if not exists error_logs (
+  id uuid primary key default uuid_generate_v4(),
+  shop_id uuid references shops(id) on delete cascade,
+  context text not null,
+  message text not null,
+  details jsonb,
+  created_at timestamptz not null default now()
+);
+alter table error_logs enable row level security;
+create index if not exists idx_error_logs_shop_created on error_logs(shop_id, created_at desc);

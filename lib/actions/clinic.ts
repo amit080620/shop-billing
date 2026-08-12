@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { requireSession } from "../auth";
 import { createSupabaseAdminClient } from "../supabase/admin";
+import { logError } from "../audit";
 
 export type ActionState = { error?: string } | null;
 
@@ -378,6 +379,7 @@ export async function generateBillFromPrescriptionAction(
   const { error: linkError } = await admin.from("prescriptions").update({ bill_id: result.billId }).eq("id", prescriptionId).eq("shop_id", session.shopId);
   if (linkError) {
     console.error("Could not link bill to prescription", linkError);
+    await logError({ shopId: session.shopId, context: "clinic.generateBillFromPrescriptionAction", message: "Could not link invoice to prescription", details: { prescriptionId, billId: result.billId, error: linkError.message } });
     await admin
       .from("bills")
       .update({ status: "voided", voided_at: new Date().toISOString(), void_reason: "Automatic: could not link invoice to prescription" })

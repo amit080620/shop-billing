@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { requireSession } from "../auth";
 import { createSupabaseAdminClient } from "../supabase/admin";
 import { round2 } from "../gst";
+import { logError } from "../audit";
 
 export type ActionState = { error?: string } | null;
 
@@ -195,6 +196,7 @@ export async function deliverJobAction(
     .eq("shop_id", session.shopId);
   if (linkError) {
     console.error("Could not link bill to service job", linkError);
+    await logError({ shopId: session.shopId, context: "service.deliverJobAction", message: "Could not link invoice to service job", details: { jobId, billId: result.billId, error: linkError.message } });
     await admin
       .from("bills")
       .update({ status: "voided", voided_at: new Date().toISOString(), void_reason: "Automatic: could not link invoice to service job" })
