@@ -3,9 +3,12 @@ import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { PageHeader } from "@/app/components/PageHeader";
 import { EmptyState } from "@/app/components/EmptyState";
 import { formatDateTime } from "@/lib/format";
+import { isModuleEnabled } from "@/lib/modules";
+import { ModuleBlocked } from "@/app/components/ModuleBlocked";
 
 export default async function ErrorLogPage() {
   const session = await requireOwner();
+  if (!isModuleEnabled(session.enabledModules, "audit_log")) return <ModuleBlocked moduleKey="audit_log" />;
   const admin = createSupabaseAdminClient();
 
   const { data: logs } = await admin

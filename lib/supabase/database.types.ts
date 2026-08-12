@@ -30,6 +30,7 @@ export interface Database {
           business_type: string;
           business_type_locked: boolean;
           manager_pin: string | null;
+          enabled_modules: string[] | null;
           created_at: string;
         };
         Insert: {
@@ -52,6 +53,7 @@ export interface Database {
           business_type?: string;
           business_type_locked?: boolean;
           manager_pin?: string | null;
+          enabled_modules?: string[] | null;
           created_at?: string;
         };
         Update: {
@@ -74,6 +76,7 @@ export interface Database {
           business_type?: string;
           business_type_locked?: boolean;
           manager_pin?: string | null;
+          enabled_modules?: string[] | null;
           created_at?: string;
         };
         Relationships: [];

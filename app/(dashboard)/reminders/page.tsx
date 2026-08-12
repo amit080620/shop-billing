@@ -2,9 +2,12 @@ import { requireSession } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { getTranslator } from "@/lib/i18n/server";
 import { RemindersClient } from "./RemindersClient";
+import { isModuleEnabled } from "@/lib/modules";
+import { ModuleBlocked } from "@/app/components/ModuleBlocked";
 
 export default async function RemindersPage() {
   const session = await requireSession();
+  if (!isModuleEnabled(session.enabledModules, "whatsapp_reminders")) return <ModuleBlocked moduleKey="whatsapp_reminders" />;
   const { lang } = await getTranslator();
   const admin = createSupabaseAdminClient();
 

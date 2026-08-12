@@ -48,6 +48,7 @@ export function CustomersClient({
   pageSize,
   totalCount,
   initialSearch,
+  bulkImportExportEnabled,
 }: {
   initialCustomers: Customer[];
   isClinic: boolean;
@@ -56,6 +57,7 @@ export function CustomersClient({
   pageSize: number;
   totalCount: number;
   initialSearch: string;
+  bulkImportExportEnabled: boolean;
 }) {
   const router = useRouter();
   const [showForm, setShowForm] = useState(false);
@@ -113,7 +115,7 @@ export function CustomersClient({
         }
       />
 
-      <BulkImportExportCustomers isClinic={isClinic} isGym={isGym} onImported={() => router.refresh()} />
+      {bulkImportExportEnabled && <BulkImportExportCustomers isClinic={isClinic} isGym={isGym} onImported={() => router.refresh()} />}
 
       {showForm && (
         <form

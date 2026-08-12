@@ -4,6 +4,8 @@ import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { PageHeader } from "@/app/components/PageHeader";
 import { EmptyState } from "@/app/components/EmptyState";
 import { CatalogOrderRow } from "./CatalogOrderRow";
+import { isModuleEnabled } from "@/lib/modules";
+import { ModuleBlocked } from "@/app/components/ModuleBlocked";
 
 export default async function CatalogOrdersPage({
   searchParams,
@@ -11,6 +13,7 @@ export default async function CatalogOrdersPage({
   searchParams: Promise<{ status?: string }>;
 }) {
   const session = await requireSession();
+  if (!isModuleEnabled(session.enabledModules, "public_catalog")) return <ModuleBlocked moduleKey="public_catalog" />;
   const { status } = await searchParams;
   const activeFilter = status && status !== "all" ? status : "pending";
   const admin = createSupabaseAdminClient();

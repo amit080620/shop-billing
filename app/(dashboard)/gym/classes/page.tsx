@@ -2,9 +2,12 @@ import { requireSession } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { getTranslator } from "@/lib/i18n/server";
 import { ClassesClient } from "./ClassesClient";
+import { isModuleEnabled } from "@/lib/modules";
+import { ModuleBlocked } from "@/app/components/ModuleBlocked";
 
 export default async function GymClassesPage() {
   const session = await requireSession();
+  if (!isModuleEnabled(session.enabledModules, "class_schedule")) return <ModuleBlocked moduleKey="class_schedule" />;
   const { lang } = await getTranslator();
   const admin = createSupabaseAdminClient();
 

@@ -103,3 +103,16 @@ export async function adminResetUserPasswordAction(
   }
   return { success: true };
 }
+
+export async function adminSetShopModulesAction(shopId: string, enabledModules: string[] | null): Promise<{ error?: string }> {
+  await requireSuperAdmin();
+  const db = createSupabaseAdminClient();
+
+  const { error } = await db.from("shops").update({ enabled_modules: enabledModules }).eq("id", shopId);
+  if (error) {
+    console.error("Could not update shop modules", error);
+    return { error: "Could not save modules" };
+  }
+  revalidatePath(`/admin/shops/${shopId}`);
+  return {};
+}

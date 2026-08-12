@@ -1,6 +1,7 @@
 import { requireSession } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { CustomersClient } from "./CustomersClient";
+import { isModuleEnabled } from "@/lib/modules";
 
 const PAGE_SIZE = 50;
 
@@ -75,6 +76,7 @@ export default async function CustomersPage({
       pageSize={PAGE_SIZE}
       totalCount={count ?? 0}
       initialSearch={search}
+      bulkImportExportEnabled={isModuleEnabled(session.enabledModules, "bulk_import_export")}
     />
   );
 }

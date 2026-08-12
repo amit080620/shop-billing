@@ -8,6 +8,7 @@ import { getTerminology } from "@/lib/businessType";
 import { LanguageToggle } from "@/lib/i18n/LanguageToggle";
 import { SubscriptionCard } from "@/app/components/SubscriptionCard";
 import { InstallAppButton } from "@/app/components/InstallAppButton";
+import { isModuleEnabled } from "@/lib/modules";
 
 export default async function MorePage() {
   const session = await requireSession();
@@ -106,11 +107,17 @@ export default async function MorePage() {
         <MenuGroup title="Gym">
           <MenuLink href="/gym/members" label="Members" sub="View members, expiry status, PT sessions" icon={GymIcon} />
           <MenuLink href="/gym/members/new" label="Sell membership" sub="New sign-up or renewal" icon={GymIcon} />
-          <MenuLink href="/gym/leads" label="Leads" sub="Trial enquiries and walk-ins" icon={GymIcon} />
-          <MenuLink href="/gym/classes" label="Classes" sub="Yoga, Zumba — weekly schedule & bookings" icon={GymIcon} />
+          {isModuleEnabled(session.enabledModules, "leads_crm") && (
+            <MenuLink href="/gym/leads" label="Leads" sub="Trial enquiries and walk-ins" icon={GymIcon} />
+          )}
+          {isModuleEnabled(session.enabledModules, "class_schedule") && (
+            <MenuLink href="/gym/classes" label="Classes" sub="Yoga, Zumba — weekly schedule & bookings" icon={GymIcon} />
+          )}
           <MenuLink href="/gym/plans" label="Membership plans" sub="Set up Monthly, Quarterly, Yearly plans" icon={GymIcon} />
           <MenuLink href="/gym/attendance" label="Attendance" sub="Check-in / check-out log" icon={GymIcon} />
-          <MenuLink href="/gym/kiosk-settings" label="Self check-in kiosk" sub="Members check themselves in — no staff needed" icon={GymIcon} />
+          {isModuleEnabled(session.enabledModules, "self_checkin_kiosk") && (
+            <MenuLink href="/gym/kiosk-settings" label="Self check-in kiosk" sub="Members check themselves in — no staff needed" icon={GymIcon} />
+          )}
         </MenuGroup>
       )}
 
@@ -123,7 +130,9 @@ export default async function MorePage() {
       )}
 
       <MenuGroup title="Sell online">
-        <MenuLink href="/catalog-settings" label="Catalog link" sub="Share a link customers can browse & order from" icon={CatalogIcon} />
+        {isModuleEnabled(session.enabledModules, "public_catalog") && (
+          <MenuLink href="/catalog-settings" label="Catalog link" sub="Share a link customers can browse & order from" icon={CatalogIcon} />
+        )}
         <MenuLink href="/catalog-orders" label="Catalog orders" sub="Review orders that came in" icon={CatalogIcon} />
       </MenuGroup>
 
@@ -132,10 +141,12 @@ export default async function MorePage() {
       </MenuGroup>
 
       <MenuGroup title="Money">
-        <MenuLink href="/petty-cash" label="Petty cash" sub="Small day-to-day cash expenses" icon={PettyCashIcon} />
+        {isModuleEnabled(session.enabledModules, "petty_cash") && (
+          <MenuLink href="/petty-cash" label="Petty cash" sub="Small day-to-day cash expenses" icon={PettyCashIcon} />
+        )}
       </MenuGroup>
 
-      {session.role === "owner" && (
+      {session.role === "owner" && isModuleEnabled(session.enabledModules, "multi_branch") && (
         <MenuGroup title="Locations">
           <MenuLink href="/branches" label="Branches" sub="Multiple locations, one account" icon={BranchIcon} />
         </MenuGroup>
@@ -152,15 +163,21 @@ export default async function MorePage() {
         {session.role === "owner" && (
           <>
             <MenuLink href="/staff" label={t("more.staff")} sub={t("more.staff.sub")} icon={UsersIcon} />
-            <MenuLink href="/audit-log" label="Audit log" sub="Who did what, and when" icon={UsersIcon} />
-            <MenuLink href="/error-log" label="Error log" sub="Unexpected failures caught automatically" icon={UsersIcon} />
+            {isModuleEnabled(session.enabledModules, "audit_log") && (
+              <>
+                <MenuLink href="/audit-log" label="Audit log" sub="Who did what, and when" icon={UsersIcon} />
+                <MenuLink href="/error-log" label="Error log" sub="Unexpected failures caught automatically" icon={UsersIcon} />
+              </>
+            )}
           </>
         )}
       </MenuGroup>
 
       <MenuGroup title="Catalog">
         <MenuLink href="/products" label={terminology.productPlural} sub={terminology.productSub} icon={BoxIcon} />
-        <MenuLink href="/stock-audit" label="Stock audit" sub="Count physical stock, reconcile mismatches" icon={AuditIcon} />
+        {isModuleEnabled(session.enabledModules, "stock_audit") && (
+          <MenuLink href="/stock-audit" label="Stock audit" sub="Count physical stock, reconcile mismatches" icon={AuditIcon} />
+        )}
       </MenuGroup>
 
       <MenuGroup title="No internet?">
@@ -169,8 +186,12 @@ export default async function MorePage() {
 
       <MenuGroup title="Grow your business">
         <MenuLink href="/requests" label={t("more.requests")} sub={t("more.requests.sub")} icon={BellIcon} />
-        <MenuLink href="/reminders" label={t("more.reminders")} sub={t("more.reminders.sub")} icon={ClockIcon} />
-        <MenuLink href="/offers" label={t("more.offers")} sub={t("more.offers.sub")} icon={MegaphoneIcon} />
+        {isModuleEnabled(session.enabledModules, "whatsapp_reminders") && (
+          <MenuLink href="/reminders" label={t("more.reminders")} sub={t("more.reminders.sub")} icon={ClockIcon} />
+        )}
+        {isModuleEnabled(session.enabledModules, "offers") && (
+          <MenuLink href="/offers" label={t("more.offers")} sub={t("more.offers.sub")} icon={MegaphoneIcon} />
+        )}
         <MenuLink href="/festivals" label="Festival planner" sub="Upcoming festivals & stock-up reminders" icon={FestivalIcon} />
       </MenuGroup>
 

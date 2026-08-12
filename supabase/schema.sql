@@ -1914,3 +1914,13 @@ create table if not exists signup_attempts (
 );
 alter table signup_attempts enable row level security;
 create index if not exists idx_signup_attempts_ip_time on signup_attempts(ip_address, created_at desc);
+
+-- ─── Super Admin: per-shop module toggles ──────────────────────────────────
+-- Lets the super admin turn specific add-on features on/off per shop —
+-- "pay for what you use" style plans, and a way to reduce load by
+-- disabling modules a shop doesn't actually use (their Home dashboard
+-- stops querying that module's tables entirely once it's off).
+-- Column stores an ARRAY of enabled module keys; a shop with no row
+-- set yet (NULL) is treated as "everything enabled" so this never
+-- silently breaks any existing shop the moment it ships.
+alter table shops add column if not exists enabled_modules text[];

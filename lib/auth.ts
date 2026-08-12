@@ -21,6 +21,7 @@ export type SessionContext = {
   gstScheme: "regular" | "composition";
   businessType: string;
   businessTypeLocked: boolean;
+  enabledModules: string[] | null;
 };
 
 /**
@@ -46,7 +47,7 @@ const getCachedStaffAndShop = unstable_cache(
     const { data: staff, error } = await admin
       .from("staff")
       .select(
-        "id, name, role, permissions, shop_id, shops ( name, state_code, gstin, gst_scheme, logo_url, upi_id, subscription_valid_until, business_type, business_type_locked )",
+        "id, name, role, permissions, shop_id, shops ( name, state_code, gstin, gst_scheme, logo_url, upi_id, subscription_valid_until, business_type, business_type_locked, enabled_modules )",
       )
       .eq("id", userId)
       .single();
@@ -91,6 +92,7 @@ export async function requireSession(): Promise<SessionContext> {
     gstScheme: shop?.gst_scheme ?? "regular",
     businessType: shop?.business_type ?? "general",
     businessTypeLocked: shop?.business_type_locked ?? false,
+    enabledModules: shop?.enabled_modules ?? null,
   };
 }
 

@@ -4,9 +4,12 @@ import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { PageHeader } from "@/app/components/PageHeader";
 import { EmptyState } from "@/app/components/EmptyState";
 import { StartAuditButton } from "./StartAuditButton";
+import { isModuleEnabled } from "@/lib/modules";
+import { ModuleBlocked } from "@/app/components/ModuleBlocked";
 
 export default async function StockAuditListPage() {
   const session = await requireSession();
+  if (!isModuleEnabled(session.enabledModules, "stock_audit")) return <ModuleBlocked moduleKey="stock_audit" />;
   const admin = createSupabaseAdminClient();
 
   const { data: audits } = await admin

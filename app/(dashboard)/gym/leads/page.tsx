@@ -1,9 +1,12 @@
 import { requireSession } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { LeadsClient } from "./LeadsClient";
+import { isModuleEnabled } from "@/lib/modules";
+import { ModuleBlocked } from "@/app/components/ModuleBlocked";
 
 export default async function GymLeadsPage() {
   const session = await requireSession();
+  if (!isModuleEnabled(session.enabledModules, "leads_crm")) return <ModuleBlocked moduleKey="leads_crm" />;
   const admin = createSupabaseAdminClient();
 
   const { data: leads } = await admin

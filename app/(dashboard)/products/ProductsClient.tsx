@@ -89,6 +89,7 @@ export function ProductsClient({
   lang,
   businessType,
   isOwner,
+  bulkImportExportEnabled,
 }: {
   initialProducts: Product[];
   categories: Category[];
@@ -96,6 +97,7 @@ export function ProductsClient({
   lang: Lang;
   businessType: string;
   isOwner: boolean;
+  bulkImportExportEnabled: boolean;
 }) {
   const { t } = useTranslation(lang);
   const orderedUnits = getUnitsForBusinessType(businessType, UNITS);
@@ -254,22 +256,24 @@ export function ProductsClient({
         />
         <CameraBarcodeScanner onScan={handleInventoryScan} />
         {scanNotice && <p className="text-xs text-credit">{scanNotice}</p>}
-        <BulkImportExport
-          businessType={businessType}
-          products={initialProducts.map((p) => ({
-            name: p.name,
-            price: p.price,
-            gstPercent: p.gstPercent,
-            hsnCode: p.hsnCode,
-            barcode: p.barcode,
-            unit: p.unit,
-            categoryName: p.categoryName,
-            trackInventory: p.trackInventory,
-            stockQuantity: p.stockQuantity,
-            lowStockThreshold: p.lowStockThreshold,
-          }))}
-          onImported={() => router.refresh()}
-        />
+        {bulkImportExportEnabled && (
+          <BulkImportExport
+            businessType={businessType}
+            products={initialProducts.map((p) => ({
+              name: p.name,
+              price: p.price,
+              gstPercent: p.gstPercent,
+              hsnCode: p.hsnCode,
+              barcode: p.barcode,
+              unit: p.unit,
+              categoryName: p.categoryName,
+              trackInventory: p.trackInventory,
+              stockQuantity: p.stockQuantity,
+              lowStockThreshold: p.lowStockThreshold,
+            }))}
+            onImported={() => router.refresh()}
+          />
+        )}
       </div>
 
       {initialProducts.some((p) => p.trackInventory) && (

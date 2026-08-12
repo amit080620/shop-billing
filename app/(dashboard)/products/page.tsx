@@ -3,6 +3,7 @@ import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { getTerminology } from "@/lib/businessType";
 import { getTranslator } from "@/lib/i18n/server";
 import { ProductsClient } from "./ProductsClient";
+import { isModuleEnabled } from "@/lib/modules";
 
 export default async function ProductsPage() {
   const session = await requireSession();
@@ -30,6 +31,7 @@ export default async function ProductsPage() {
       lang={lang}
       businessType={session.businessType}
       isOwner={session.role === "owner"}
+      bulkImportExportEnabled={isModuleEnabled(session.enabledModules, "bulk_import_export")}
       initialProducts={(products ?? []).map((p) => ({
         id: p.id,
         name: p.name,

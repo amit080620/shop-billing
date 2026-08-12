@@ -3,6 +3,8 @@ import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { PageHeader } from "@/app/components/PageHeader";
 import { EmptyState } from "@/app/components/EmptyState";
 import { formatDateTime } from "@/lib/format";
+import { isModuleEnabled } from "@/lib/modules";
+import { ModuleBlocked } from "@/app/components/ModuleBlocked";
 
 const ACTION_LABELS: Record<string, string> = {
   bill_voided: "🗑️ Bill voided",
@@ -28,6 +30,7 @@ function describeDetails(action: string, details: Record<string, unknown> | null
 
 export default async function AuditLogPage() {
   const session = await requireOwner();
+  if (!isModuleEnabled(session.enabledModules, "audit_log")) return <ModuleBlocked moduleKey="audit_log" />;
   const admin = createSupabaseAdminClient();
 
   const { data: logs } = await admin

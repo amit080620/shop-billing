@@ -1,9 +1,12 @@
 import { requireSession } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { PettyCashClient } from "./PettyCashClient";
+import { isModuleEnabled } from "@/lib/modules";
+import { ModuleBlocked } from "@/app/components/ModuleBlocked";
 
 export default async function PettyCashPage() {
   const session = await requireSession();
+  if (!isModuleEnabled(session.enabledModules, "petty_cash")) return <ModuleBlocked moduleKey="petty_cash" />;
   const admin = createSupabaseAdminClient();
 
   const startOfMonth = new Date();

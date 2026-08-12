@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { requireSession } from "@/lib/auth";
 import { PageHeader } from "@/app/components/PageHeader";
+import { isModuleEnabled } from "@/lib/modules";
 
 export default async function ReportsPage() {
   const session = await requireSession();
@@ -25,16 +26,19 @@ export default async function ReportsPage() {
             label="Daily summary"
             sub="End-of-day cash reconciliation, by payment method"
           />
-          <ReportLink
-            href="/insights"
-            label="Insights"
-            sub="Fast movers & dead stock, from your own sales"
-          />
+          {isModuleEnabled(session.enabledModules, "advanced_reports") && (
+            <ReportLink
+              href="/insights"
+              label="Insights"
+              sub="Fast movers & dead stock, from your own sales"
+            />
+          )}
         </div>
       </section>
 
       <section className="flex flex-col gap-2">
         <h2 className="px-1 text-xs font-semibold uppercase tracking-wide text-muted">GST filing</h2>
+        <p className="text-xs text-muted">Always available regardless of plan — required for tax compliance.</p>
 
         {session.gstScheme === "composition" && (
           <p className="rounded-lg bg-credit-soft px-3 py-2 text-sm text-credit">

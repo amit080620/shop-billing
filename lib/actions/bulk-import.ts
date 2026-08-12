@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { after } from "next/server";
 import { requireSession } from "../auth";
 import { createSupabaseAdminClient } from "../supabase/admin";
+import { isModuleEnabled } from "../modules";
 
 export type ImportRow = {
   name: string;
@@ -43,6 +44,9 @@ const VALID_SCHEDULES = new Set(["otc", "h", "h1", "x", "g"]);
 
 export async function bulkImportProductsAction(rows: ImportRow[]): Promise<ImportResult> {
   const session = await requireSession();
+  if (!isModuleEnabled(session.enabledModules, "bulk_import_export")) {
+    return { inserted: 0, errors: [{ row: 0, name: "", message: "Bulk import/export isn't enabled for this shop." }] };
+  }
   const admin = createSupabaseAdminClient();
 
   // Resolve/create categories by name first, so every row can just
@@ -203,6 +207,7 @@ const VALID_GENDERS = new Set(["male", "female", "other"]);
  * polls getBulkImportJobStatusAction for progress. */
 export async function startBulkImportCustomersAction(rows: CustomerImportRow[]): Promise<{ jobId: string } | { error: string }> {
   const session = await requireSession();
+  if (!isModuleEnabled(session.enabledModules, "bulk_import_export")) return { error: "Bulk import/export isn't enabled for this shop." };
   const admin = createSupabaseAdminClient();
 
   const { data: job, error: jobError } = await admin
@@ -324,6 +329,7 @@ export async function fetchAllCustomersForExportAction(): Promise<{
   weightKg: number | null;
 }[]> {
   const session = await requireSession();
+  if (!isModuleEnabled(session.enabledModules, "bulk_import_export")) return [];
   const admin = createSupabaseAdminClient();
   const { data } = await admin
     .from("customers")
