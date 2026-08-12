@@ -31,7 +31,8 @@ export default async function GymMembersPage({
     .from("customers")
     .select("id, name, phone, assigned_trainer_id, staff:assigned_trainer_id ( name )")
     .eq("shop_id", session.shopId)
-    .order("name");
+    .order("name")
+    .limit(500);
   if (showMineOnly) query = query.eq("assigned_trainer_id", session.userId);
   const { data: members } = await query;
 

@@ -1,6 +1,7 @@
 import "server-only";
 
 import { redirect } from "next/navigation";
+import { unstable_cache } from "next/cache";
 import { getAuthenticatedUser } from "./supabase/server";
 import { createSupabaseAdminClient } from "./supabase/admin";
 import type { PermissionKey } from "./permissions";
@@ -29,6 +30,32 @@ export type SessionContext = {
  * lookup needs the user id from the auth check, so this stays sequential;
  * what matters is that callers use this ONE helper instead of re-querying.
  */
+// The staff+shop join runs on EVERY authenticated page load — the
+// single hottest query path in the app. This data (staff name/role/
+// permissions, shop name/state/GSTIN/subscription) changes rarely — a
+// staff member edits their profile or the owner changes a setting —
+// so a short TTL cuts a real query on nearly every request without
+// meaningfully risking stale permissions: worst case, a just-revoked
+// permission stays active for up to 10 more seconds, which is an
+// acceptable trade rather than hunting down and wiring cache
+// invalidation into every staff/shop-mutating action across the app.
+// Auth token validation itself (getAuthenticatedUser) is NEVER cached.
+const getCachedStaffAndShop = unstable_cache(
+  async (userId: string) => {
+    const admin = createSupabaseAdminClient();
+    const { data: staff, error } = await admin
+      .from("staff")
+      .select(
+        "id, name, role, permissions, shop_id, shops ( name, state_code, gstin, gst_scheme, logo_url, upi_id, subscription_valid_until, business_type, business_type_locked )",
+      )
+      .eq("id", userId)
+      .single();
+    return { staff, error };
+  },
+  ["staff-and-shop"],
+  { revalidate: 10 },
+);
+
 export async function requireSession(): Promise<SessionContext> {
   const user = await getAuthenticatedUser();
 
@@ -36,17 +63,7 @@ export async function requireSession(): Promise<SessionContext> {
     redirect("/login");
   }
 
-  const admin = createSupabaseAdminClient();
-
-  const [{ data: staff, error }, ] = await Promise.all([
-    admin
-      .from("staff")
-      .select(
-        "id, name, role, permissions, shop_id, shops ( name, state_code, gstin, gst_scheme, logo_url, upi_id, subscription_valid_until, business_type, business_type_locked )",
-      )
-      .eq("id", user.id)
-      .single(),
-  ]);
+  const { staff, error } = await getCachedStaffAndShop(user.id);
 
   if (error || !staff) {
     redirect("/login");

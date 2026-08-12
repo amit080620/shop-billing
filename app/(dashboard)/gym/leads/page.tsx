@@ -10,7 +10,8 @@ export default async function GymLeadsPage() {
     .from("leads")
     .select("id, name, phone, source, interested_plan, status, notes, created_at")
     .eq("shop_id", session.shopId)
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    .limit(500);
 
   return (
     <LeadsClient

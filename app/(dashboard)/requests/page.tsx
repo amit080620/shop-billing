@@ -15,7 +15,8 @@ export default async function RequestsPage() {
         "id, customer_name, customer_phone, item_description, advance_amount, expected_date, status, notes, created_at",
       )
       .eq("shop_id", session.shopId)
-      .order("created_at", { ascending: false }),
+      .order("created_at", { ascending: false })
+      .limit(500),
     admin.from("customers").select("id, name, phone").eq("shop_id", session.shopId).order("name"),
   ]);
 

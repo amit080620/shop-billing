@@ -1892,3 +1892,25 @@ create table if not exists error_logs (
 );
 alter table error_logs enable row level security;
 create index if not exists idx_error_logs_shop_created on error_logs(shop_id, created_at desc);
+
+-- ─── PHASE 3: Migration tracking ────────────────────────────────────────────
+-- Records which numbered migration files (supabase/migrations/) have
+-- been applied to this database — from this point forward, schema
+-- changes are tracked file-by-file instead of only living inside one
+-- ever-growing schema.sql. See supabase/migrations/README.md.
+create table if not exists schema_migrations (
+  version text primary key,
+  applied_at timestamptz not null default now()
+);
+
+-- ─── PHASE 3: Signup rate limiting ──────────────────────────────────────────
+-- Max 10 shop signups per IP per hour — guards against mass fake-shop
+-- creation (a bot spinning up many accounts), separate from login
+-- brute-forcing which login_attempts already covers.
+create table if not exists signup_attempts (
+  id uuid primary key default uuid_generate_v4(),
+  ip_address text not null,
+  created_at timestamptz not null default now()
+);
+alter table signup_attempts enable row level security;
+create index if not exists idx_signup_attempts_ip_time on signup_attempts(ip_address, created_at desc);

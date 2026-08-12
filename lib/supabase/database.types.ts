@@ -988,6 +988,18 @@ export interface Database {
         Update: { id?: string; shop_id?: string | null; context?: string; message?: string; details?: Record<string, unknown> | null; created_at?: string };
         Relationships: [];
       };
+      schema_migrations: {
+        Row: { version: string; applied_at: string };
+        Insert: { version: string; applied_at?: string };
+        Update: { version?: string; applied_at?: string };
+        Relationships: [];
+      };
+      signup_attempts: {
+        Row: { id: string; ip_address: string; created_at: string };
+        Insert: { id?: string; ip_address: string; created_at?: string };
+        Update: { id?: string; ip_address?: string; created_at?: string };
+        Relationships: [];
+      };
       leads: {
         Row: { id: string; shop_id: string; name: string; phone: string; source: string | null; interested_plan: string | null; status: "new" | "contacted" | "trial" | "converted" | "lost"; notes: string | null; staff_id: string; created_at: string };
         Insert: { id?: string; shop_id: string; name: string; phone: string; source?: string | null; interested_plan?: string | null; status?: "new" | "contacted" | "trial" | "converted" | "lost"; notes?: string | null; staff_id: string; created_at?: string };

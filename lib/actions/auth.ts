@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { headers } from "next/headers";
 import { createSupabaseServerClient } from "../supabase/server";
 import { createSupabaseAdminClient } from "../supabase/admin";
 import { signupSchema, loginSchema } from "../validation/schemas";
@@ -24,6 +25,21 @@ export async function signupAction(
   const { shopName, businessType, ownerName, email, password } = parsed.data;
 
   const admin = createSupabaseAdminClient();
+
+  // Max 10 signups per IP per hour — guards against a bot mass-creating
+  // fake shops, distinct from login_attempts (credential brute-forcing).
+  const headersList = await headers();
+  const ip = headersList.get("x-forwarded-for")?.split(",")[0]?.trim() ?? headersList.get("x-real-ip") ?? "unknown";
+  const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+  const { count: recentSignups } = await admin
+    .from("signup_attempts")
+    .select("id", { count: "exact", head: true })
+    .eq("ip_address", ip)
+    .gte("created_at", oneHourAgo);
+  if ((recentSignups ?? 0) >= 10) {
+    return { error: "Too many signup attempts from this network. Please try again later." };
+  }
+  await admin.from("signup_attempts").insert({ ip_address: ip });
 
   const { data: authData, error: authError } =
     await admin.auth.admin.createUser({

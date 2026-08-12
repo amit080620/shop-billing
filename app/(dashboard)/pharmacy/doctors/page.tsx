@@ -16,7 +16,8 @@ export default async function DoctorsReportPage() {
     .eq("shop_id", session.shopId)
     .eq("status", "active")
     .not("doctor_name", "is", null)
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    .limit(5000);
 
   const byDoctor = new Map<string, { count: number; total: number; lastDate: string }>();
   for (const b of bills ?? []) {
