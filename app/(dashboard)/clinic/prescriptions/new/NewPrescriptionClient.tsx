@@ -426,6 +426,12 @@ const VITALS_FIELDS: Record<string, { key: string; label: string; placeholder: s
     { key: "nose", label: "Nose examination", placeholder: "e.g. Mild congestion" },
     { key: "throat", label: "Throat examination", placeholder: "e.g. Mild redness" },
   ],
+  dermatology: [
+    { key: "affectedArea", label: "Affected area", placeholder: "e.g. Face, forearms" },
+    { key: "lesionType", label: "Lesion type / appearance", placeholder: "e.g. Papules, plaques, scaling" },
+    { key: "severity", label: "Severity", placeholder: "e.g. Mild, moderate, severe" },
+    { key: "duration", label: "Duration", placeholder: "e.g. 2 weeks" },
+  ],
   psychiatry: [
     { key: "mood", label: "Mood", placeholder: "e.g. Low, anxious" },
     { key: "affect", label: "Affect", placeholder: "e.g. Flat, reactive" },

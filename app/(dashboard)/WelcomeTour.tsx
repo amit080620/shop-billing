@@ -63,7 +63,7 @@ const RESTAURANT_SLIDES: Slide[] = [
   {
     icon: "💰",
     title: "Settling a table",
-    body: "When the table's ready to pay, tap Settle — you can split the payment across cash, card, and UPI. Cancelling an order needs the Manager PIN (set that up under Settings → Restaurant) so only a supervisor can void a started order.",
+    body: "When the table's ready to pay, tap Settle — you can split the payment across cash, card, and UPI. Cancelling an order needs the Manager PIN (set that up under Settings → Manager PIN) so only a supervisor can void a started order.",
   },
   {
     icon: "📊",

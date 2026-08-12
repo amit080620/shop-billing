@@ -183,7 +183,7 @@ export function SettingsClient({ shop }: { shop: ShopSettings }) {
           </p>
         </Section>
 
-        <Section title="Restaurant">
+        <Section title="Manager PIN">
           <Field
             name="managerPin"
             label="Manager PIN"
@@ -192,9 +192,9 @@ export function SettingsClient({ shop }: { shop: ShopSettings }) {
             placeholder="e.g. 1947"
           />
           <p className="text-xs text-muted">
-            Needed to cancel a started restaurant order — deliberately separate from your login
-            password, so staff never need your real account credentials. Leave blank to disable
-            order cancellation entirely.
+            Used to protect sensitive actions like cancelling a restaurant order or processing a
+            return — deliberately separate from your login password, so staff never need your
+            real account credentials. Leave blank to disable this protection entirely.
           </p>
         </Section>
 

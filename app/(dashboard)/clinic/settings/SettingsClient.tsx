@@ -106,7 +106,7 @@ export function SettingsClient({
           <option value="gynecology">Gynecology — adds a vitals panel</option>
           <option value="ent">ENT — adds a vitals panel</option>
           <option value="psychiatry">Psychiatry — adds a vitals panel</option>
-          <option value="dermatology">Dermatology — adds before/after photos</option>
+          <option value="dermatology">Dermatology — adds a vitals panel + before/after photos</option>
           <option value="pediatric">Pediatric — adds a growth chart</option>
         </select>
         <p className="text-xs text-muted">Changes what shows up on the New Prescription screen — just extra structured fields to fill in, nothing is auto-calculated or diagnosed.</p>
