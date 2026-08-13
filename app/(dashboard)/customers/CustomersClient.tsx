@@ -6,6 +6,7 @@ import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import Link from "next/link";
 import { createCustomerAction } from "@/lib/actions/customers";
+import { useToast } from "@/app/components/Toast";
 import { formatMoney } from "@/lib/format";
 import { EmptyState } from "@/app/components/EmptyState";
 import { PageHeader } from "@/app/components/PageHeader";
@@ -66,10 +67,14 @@ export function CustomersClient({
   const [search, setSearch] = useState(initialSearch);
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
 
+  const { showToast } = useToast();
   const [state, formAction] = useActionState(
     async (prev: { error?: string } | null, formData: FormData) => {
       const result = await createCustomerAction(prev, formData);
-      if (!result?.error) setShowForm(false);
+      if (!result?.error) {
+        setShowForm(false);
+        showToast(`${isClinic ? "Patient" : isGym ? "Member" : "Customer"} added`);
+      }
       return result;
     },
     null,
@@ -201,7 +206,7 @@ export function CustomersClient({
             <li key={c.id}>
               <Link
                 href={`/customers/${c.id}`}
-                className="flex items-center justify-between gap-3 rounded-lg border border-border bg-surface shadow-sm px-3.5 py-3"
+                className="hover-lift flex items-center justify-between gap-3 rounded-lg border border-border bg-surface shadow-sm px-3.5 py-3"
               >
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium text-foreground">{c.name}</p>

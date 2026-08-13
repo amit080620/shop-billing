@@ -18,6 +18,7 @@ import {
 } from "@/lib/actions/products";
 import { formatMoney } from "@/lib/format";
 import { EmptyState } from "@/app/components/EmptyState";
+import { useToast } from "@/app/components/Toast";
 import { PageHeader } from "@/app/components/PageHeader";
 import { CameraBarcodeScanner } from "@/app/components/CameraBarcodeScanner";
 import { BarcodeScanInput } from "@/app/components/BarcodeScanInput";
@@ -124,14 +125,17 @@ export function ProductsClient({
   const [filter, setFilter] = useState<string>("all");
   const [isPending, startTransition] = useTransition();
 
+  const { showToast } = useToast();
   const [productState, productAction] = useActionState(
     async (prev: { error?: string } | null, formData: FormData) => {
+      const wasEditing = !!editingProduct;
       const result = editingProduct
         ? await updateProductAction(editingProduct.id, prev, formData)
         : await createProductAction(prev, formData);
       if (!result?.error) {
         setShowForm(false);
         setEditingProduct(null);
+        showToast(wasEditing ? "Item updated" : "Item added");
       }
       return result;
     },
@@ -295,7 +299,7 @@ export function ProductsClient({
 
       <Link
         href="/products/labels"
-        className="flex items-center justify-between rounded-xl border border-border bg-surface shadow-sm px-4 py-3.5"
+        className="hover-lift flex items-center justify-between rounded-xl border border-border bg-surface shadow-sm px-4 py-3.5"
       >
         <span className="flex items-center gap-2 text-sm font-medium text-foreground">
           {t("products.printLabels")}
@@ -791,6 +795,7 @@ export function ProductsClient({
                           const result = await deleteProductAction(p.id);
                           setDeleteError(result?.error ?? null);
                           setBlockedProductId(result?.error ? p.id : null);
+                          if (!result?.error) showToast("Item deleted", "info");
                         })
                       }
                       className="text-xs font-medium text-danger disabled:opacity-50"

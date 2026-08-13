@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { useTranslation } from "@/lib/i18n/useTranslation";
 import type { Lang } from "@/lib/i18n/dictionary";
 
-function tabsFor(businessType: string, t: (key: string) => string) {
+export function tabsFor(businessType: string, t: (key: string) => string) {
   const RETAIL_TABS = [
     { href: "/", label: t("nav.home"), icon: HomeIcon },
     { href: "/bills/new", label: t("nav.sell"), icon: SellIcon },
@@ -113,7 +113,7 @@ export function BottomNav({ lang, businessType }: { lang: Lang; businessType: st
 
   return (
     <nav
-      className="no-print fixed inset-x-0 bottom-0 z-20 border-t border-border bg-surface pb-[env(safe-area-inset-bottom)]"
+      className="no-print fixed inset-x-0 bottom-0 z-20 border-t border-border bg-surface pb-[env(safe-area-inset-bottom)] md:hidden"
       style={{ boxShadow: "0 -4px 16px hsl(220 20% 40% / 0.06)" }}
     >
       <ul className="mx-auto flex max-w-lg items-stretch justify-between px-1">

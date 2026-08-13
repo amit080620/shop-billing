@@ -5,6 +5,7 @@ import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import Link from "next/link";
 import { addStaffAction, removeStaffAction } from "@/lib/actions/staff";
+import { useToast } from "@/app/components/Toast";
 import { EditStaffButton } from "./EditStaffButton";
 import { PermissionsButton } from "./PermissionsButton";
 
@@ -34,10 +35,14 @@ export function StaffClient({
   const [isPending, startTransition] = useTransition();
   const [removeError, setRemoveError] = useState<string | null>(null);
 
+  const { showToast } = useToast();
   const [state, formAction] = useActionState(
     async (prev: { error?: string } | null, formData: FormData) => {
       const result = await addStaffAction(prev, formData);
-      if (!result?.error) setShowForm(false);
+      if (!result?.error) {
+        setShowForm(false);
+        showToast("Staff member added");
+      }
       return result;
     },
     null,
@@ -130,6 +135,7 @@ export function StaffClient({
                   startTransition(async () => {
                     const result = await removeStaffAction(s.id);
                     setRemoveError(result?.error ?? null);
+                    if (!result?.error) showToast("Staff member removed", "info");
                   })
                 }
                 className="shrink-0 text-xs font-medium text-danger disabled:opacity-50"

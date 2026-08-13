@@ -5,6 +5,7 @@ import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import Link from "next/link";
 import { recordPaymentAction } from "@/lib/actions/customers";
+import { useToast } from "@/app/components/Toast";
 import { addGrowthLogAction, uploadPatientPhotoAction, deletePatientPhotoAction } from "@/lib/actions/clinic";
 import { formatMoney, formatDateTime } from "@/lib/format";
 import { EmptyState } from "@/app/components/EmptyState";
@@ -66,10 +67,14 @@ export function LedgerClient({
   const [showPaymentForm, setShowPaymentForm] = useState(false);
   const [expandedBillId, setExpandedBillId] = useState<string | null>(null);
 
+  const { showToast } = useToast();
   const [state, formAction] = useActionState(
     async (prev: { error?: string } | null, formData: FormData) => {
       const result = await recordPaymentAction(prev, formData);
-      if (!result?.error) setShowPaymentForm(false);
+      if (!result?.error) {
+        setShowPaymentForm(false);
+        showToast("Payment recorded");
+      }
       return result;
     },
     null,

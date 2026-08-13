@@ -174,3 +174,39 @@ button {
 .tap-feedback {
   transition: transform 0.12s ease, opacity 0.12s ease;
 }
+
+/* Loading spinner rotation — used inside buttons via <Spinner/> so
+   "Saving…" isn't just static text sitting there. */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.spin {
+  animation: spin 0.7s linear infinite;
+}
+
+/* Desktop hover feedback for interactive cards/rows — on a mouse-driven
+   device, nothing responding to hover is exactly the "dead" feeling
+   the app was missing; a small lift + shadow signals "this is
+   clickable" before the click even happens. Mobile ignores :hover
+   entirely (no mouse), so this only affects desktop use. */
+@media (hover: hover) {
+  .hover-lift {
+    transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+  }
+  .hover-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+    border-color: var(--brand-light);
+  }
+}
+
+/* A slightly more noticeable focus state on inputs — the existing
+   border-color transition was subtle to the point of being easy to
+   miss; a soft glow makes "you're typing here" unambiguous. */
+input:focus,
+select:focus,
+textarea:focus {
+  box-shadow: 0 0 0 3px var(--brand-soft);
+}

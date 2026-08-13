@@ -177,14 +177,14 @@ export function TablesClient({ tables, lang }: { tables: Table[]; lang: Lang }) 
       {tables.length === 0 ? (
         <EmptyState text={t("tables.empty")} />
       ) : (
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-3 gap-3 md:grid-cols-5 md:gap-4">
           {tables.map((table) => (
             <div
               key={table.id}
               role="button"
               tabIndex={0}
               onClick={() => handleTableTap(table)}
-              className={`relative flex flex-col items-center justify-center gap-1 rounded-xl border p-4 shadow-sm ${
+              className={`hover-lift relative flex flex-col items-center justify-center gap-1 rounded-xl border p-4 shadow-sm md:gap-1.5 md:rounded-2xl md:p-6 ${
                 isPending ? "opacity-60" : ""
               } ${
                 table.status === "occupied"
@@ -214,10 +214,10 @@ export function TablesClient({ tables, lang }: { tables: Table[]; lang: Lang }) 
               >
                 ▦
               </button>
-              <span className={`text-sm font-semibold ${table.status === "occupied" ? "text-danger" : table.reservation ? "text-amber-700" : "text-brand-dark"}`}>
+              <span className={`text-sm font-semibold md:text-lg ${table.status === "occupied" ? "text-danger" : table.reservation ? "text-amber-700" : "text-brand-dark"}`}>
                 {table.name}
               </span>
-              <span className={`text-[11px] ${table.status === "occupied" ? "text-danger" : table.reservation ? "text-amber-700" : "text-brand-dark"}`}>
+              <span className={`text-[11px] md:text-xs ${table.status === "occupied" ? "text-danger" : table.reservation ? "text-amber-700" : "text-brand-dark"}`}>
                 {table.status === "occupied"
                   ? formatMoney(table.openOrderTotal)
                   : table.reservation

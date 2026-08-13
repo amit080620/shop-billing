@@ -3,6 +3,7 @@ import { requireSession } from "@/lib/auth";
 import { getLang } from "@/lib/i18n/server";
 import { translate } from "@/lib/i18n/dictionary";
 import { BottomNav } from "./BottomNav";
+import { DesktopSidebar } from "./DesktopSidebar";
 import { WelcomeTour } from "./WelcomeTour";
 
 export default async function DashboardLayout({
@@ -12,11 +13,21 @@ export default async function DashboardLayout({
 }) {
   const session = await requireSession();
   const lang = await getLang();
+  const roleLabel = session.role === "owner" ? translate(lang, "role.owner") : translate(lang, "role.staff");
 
   return (
-    <div className="min-h-screen bg-background pb-24">
+    <div className="min-h-screen bg-background pb-24 md:pb-0 md:pl-60">
+      <DesktopSidebar
+        lang={lang}
+        businessType={session.businessType}
+        shopName={session.shopName}
+        staffName={session.staffName}
+        roleLabel={roleLabel}
+        shopLogoUrl={session.shopLogoUrl}
+      />
+
       <header
-        className="no-print sticky top-0 z-10 border-b border-border bg-surface/90 px-4 py-3 backdrop-blur-md"
+        className="no-print sticky top-0 z-10 border-b border-border bg-surface/90 px-4 py-3 backdrop-blur-md md:hidden"
         style={{ boxShadow: "0 1px 12px hsl(220 20% 40% / 0.05)" }}
       >
         <div className="mx-auto flex max-w-lg items-center gap-3">
@@ -39,13 +50,13 @@ export default async function DashboardLayout({
               {session.shopName}
             </p>
             <p className="text-xs text-muted">
-              {session.staffName} · {session.role === "owner" ? translate(lang, "role.owner") : translate(lang, "role.staff")}
+              {session.staffName} · {roleLabel}
             </p>
           </div>
         </div>
       </header>
 
-      <main className="page-enter mx-auto max-w-lg px-4 py-4">{children}</main>
+      <main className="page-enter mx-auto max-w-lg px-4 py-4 md:max-w-5xl md:px-8 md:py-8 xl:max-w-6xl">{children}</main>
 
       <BottomNav lang={lang} businessType={session.businessType} />
       <WelcomeTour storageKey={`tour-seen-${session.shopId}`} businessType={session.businessType} />

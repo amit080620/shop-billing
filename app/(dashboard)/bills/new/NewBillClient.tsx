@@ -13,6 +13,7 @@ import { UNITS } from "@/lib/constants/states";
 import { formatMoney } from "@/lib/format";
 import { SearchableSelect } from "@/app/components/SearchableSelect";
 import { InlineQuickAdd } from "@/app/components/InlineQuickAdd";
+import { Spinner } from "@/app/components/Spinner";
 import { BarcodeScanInput } from "@/app/components/BarcodeScanInput";
 import { CameraBarcodeScanner } from "@/app/components/CameraBarcodeScanner";
 import { useTranslation } from "@/lib/i18n/useTranslation";
@@ -70,8 +71,9 @@ function SubmitButton({ blocked, generatingLabel, submitLabel }: { blocked: bool
     <button
       type="submit"
       disabled={pending || blocked}
-      className="btn-primary w-full text-center"
+      className="btn-primary flex w-full items-center justify-center gap-2 text-center"
     >
+      {pending && <Spinner />}
       {pending ? generatingLabel : submitLabel}
     </button>
   );
