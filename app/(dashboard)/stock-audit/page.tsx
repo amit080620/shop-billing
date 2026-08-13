@@ -6,6 +6,7 @@ import { EmptyState } from "@/app/components/EmptyState";
 import { StartAuditButton } from "./StartAuditButton";
 import { isModuleEnabled } from "@/lib/modules";
 import { ModuleBlocked } from "@/app/components/ModuleBlocked";
+import { ClipboardCheck } from "lucide-react";
 
 export default async function StockAuditListPage() {
   const session = await requireSession();
@@ -24,12 +25,7 @@ export default async function StockAuditListPage() {
       <PageHeader
         title="Stock audit"
         subtitle="Count what's actually on the shelf, reconcile against the system."
-        icon={
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M9 12.5 11 14.5 15.5 10" />
-            <rect x="3" y="3" width="18" height="18" rx="2" />
-          </svg>
-        }
+        icon={<ClipboardCheck size={18} strokeWidth={1.8} />}
       />
 
       <StartAuditButton />

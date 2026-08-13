@@ -10,6 +10,7 @@ import {
   rejectTableOrderRequestAction,
   getTableQrImageAction,
 } from "@/lib/actions/table-orders";
+import { LayoutGrid } from "lucide-react";
 import { formatMoney } from "@/lib/format";
 import { PageHeader } from "@/app/components/PageHeader";
 import { EmptyState } from "@/app/components/EmptyState";
@@ -117,12 +118,7 @@ export function TablesClient({ tables, lang }: { tables: Table[]; lang: Lang }) 
             {t("tables.addTable")}
           </button>
         }
-        icon={
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <rect x="3" y="10" width="18" height="4" rx="1" />
-            <path d="M6 14v5M18 14v5" />
-          </svg>
-        }
+        icon={<LayoutGrid size={18} strokeWidth={1.8} />}
       />
 
       <div className="flex gap-2 overflow-x-auto">

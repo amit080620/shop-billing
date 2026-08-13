@@ -5,6 +5,7 @@ import { PageHeader } from "@/app/components/PageHeader";
 import { EmptyState } from "@/app/components/EmptyState";
 import { isModuleEnabled } from "@/lib/modules";
 import { ModuleBlocked } from "@/app/components/ModuleBlocked";
+import { TrendingUp } from "lucide-react";
 
 export default async function InsightsPage() {
   const session = await requireSession();
@@ -135,11 +136,7 @@ export default async function InsightsPage() {
       <PageHeader
         title="Inventory insights"
         subtitle="Based on your own sales data — no external AI involved."
-        icon={
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M4 19V5M4 19h16M8 15l3-4 3 3 4-6" />
-          </svg>
-        }
+        icon={<TrendingUp size={18} strokeWidth={1.8} />}
       />
 
       <p className="rounded-lg border border-border bg-surface shadow-sm px-3.5 py-3 text-xs text-muted">

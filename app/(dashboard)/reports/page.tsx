@@ -2,6 +2,7 @@ import Link from "next/link";
 import { requireSession } from "@/lib/auth";
 import { PageHeader } from "@/app/components/PageHeader";
 import { isModuleEnabled } from "@/lib/modules";
+import { BarChart3 } from "lucide-react";
 
 export default async function ReportsPage() {
   const session = await requireSession();
@@ -10,12 +11,7 @@ export default async function ReportsPage() {
     <div className="flex flex-col gap-4">
       <PageHeader
         title="Reports"
-        icon={
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <rect x="4" y="3.5" width="16" height="17" rx="1.5" />
-            <path d="M8 8h8M8 12h8M8 16h5" />
-          </svg>
-        }
+        icon={<BarChart3 size={18} strokeWidth={1.8} />}
       />
 
       <section className="flex flex-col gap-2">

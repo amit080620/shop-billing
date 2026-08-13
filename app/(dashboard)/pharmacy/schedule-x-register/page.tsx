@@ -4,6 +4,7 @@ import { getTranslator } from "@/lib/i18n/server";
 import { PageHeader } from "@/app/components/PageHeader";
 import { EmptyState } from "@/app/components/EmptyState";
 import { ExportRegisterButton } from "./ExportRegisterButton";
+import { BookOpen } from "lucide-react";
 
 function todayIso() {
   const d = new Date();
@@ -81,12 +82,7 @@ export default async function ScheduleXRegisterPage({
       <PageHeader
         title={t("scheduleX.title")}
         subtitle={t("scheduleX.subtitle")}
-        icon={
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <rect x="4" y="3" width="16" height="18" rx="2" />
-            <path d="M8 7h8M8 11h8M8 15h5" />
-          </svg>
-        }
+        icon={<BookOpen size={18} strokeWidth={1.8} />}
       />
 
       <form className="flex items-center gap-2" action="/pharmacy/schedule-x-register">

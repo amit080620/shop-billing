@@ -4,6 +4,7 @@ import { HELP_CONTENT } from "@/lib/helpContent";
 import { PageHeader } from "@/app/components/PageHeader";
 import { HelpAccordion } from "./HelpAccordion";
 import { WatchTourButton } from "./WatchTourButton";
+import { HelpCircle } from "lucide-react";
 
 export default async function HelpPage() {
   const session = await requireSession();
@@ -15,13 +16,7 @@ export default async function HelpPage() {
       <PageHeader
         title={t("help.title")}
         subtitle={t("help.subtitle")}
-        icon={
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="12" cy="12" r="9" />
-            <path d="M9.5 9a2.5 2.5 0 0 1 5 0c0 1.5-2.5 2-2.5 3.5" />
-            <path d="M12 17h.01" />
-          </svg>
-        }
+        icon={<HelpCircle size={18} strokeWidth={1.8} />}
       />
 
       <WatchTourButton shopId={session.shopId} label={t("help.watchTour")} />

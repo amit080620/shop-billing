@@ -6,6 +6,7 @@ import { getTranslator } from "@/lib/i18n/server";
 import { PageHeader } from "@/app/components/PageHeader";
 import { EmptyState } from "@/app/components/EmptyState";
 import { DateRangeControls } from "../DateRangeControls";
+import { BarChart3 } from "lucide-react";
 
 function todayIso() {
   const d = new Date();
@@ -104,11 +105,7 @@ export default async function ItemWiseReportPage({
       <PageHeader
         title={t("rreports.itemsTitle")}
         subtitle={t("rreports.itemsSubtitle")}
-        icon={
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M4 19V5M4 19h16M8 15l3-4 3 3 4-6" />
-          </svg>
-        }
+        icon={<BarChart3 size={18} strokeWidth={1.8} />}
       />
       <Link href="/restaurant/reports" className="text-sm text-muted">
         {t("rreports.backToDayWise")}

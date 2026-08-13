@@ -7,6 +7,7 @@ import { setTodaysMetalRateAction } from "@/lib/actions/jewellery";
 import { formatMoney } from "@/lib/format";
 import { PageHeader } from "@/app/components/PageHeader";
 import { EmptyState } from "@/app/components/EmptyState";
+import { Coins } from "lucide-react";
 
 type HistoryRow = { metalType: string; rate: number; date: string };
 
@@ -46,12 +47,7 @@ export function RatesClient({
       <PageHeader
         title="Today's rate"
         subtitle="Set the per-gram rate each morning — it applies to every gold/silver item billed today."
-        icon={
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="12" cy="12" r="9" />
-            <path d="M12 7v10M9 9.5a2.5 2.5 0 0 1 2.5-2.5h1a2.5 2.5 0 0 1 0 5h-1a2.5 2.5 0 0 0 0 5h1a2.5 2.5 0 0 0 2.5-2.5" />
-          </svg>
-        }
+        icon={<Coins size={18} strokeWidth={1.8} />}
       />
       <Link href="/products" className="text-sm text-muted">
         ← Items

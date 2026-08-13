@@ -5,11 +5,13 @@ import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import Link from "next/link";
 import { createVendorAction } from "@/lib/actions/vendors";
+import { useToast } from "@/app/components/Toast";
 import { formatMoney } from "@/lib/format";
 import { EmptyState } from "@/app/components/EmptyState";
 import { PageHeader } from "@/app/components/PageHeader";
 import { ContactPickerButton } from "@/app/components/ContactPickerButton";
 import { INDIAN_STATES } from "@/lib/constants/states";
+import { Building2 } from "lucide-react";
 
 type Vendor = { id: string; name: string; phone: string | null; gstin: string | null; balance: number };
 
@@ -32,10 +34,14 @@ export function VendorsClient({ initialVendors }: { initialVendors: Vendor[] }) 
   const phoneRef = useRef<HTMLInputElement>(null);
   const [search, setSearch] = useState("");
 
+  const { showToast } = useToast();
   const [state, formAction] = useActionState(
     async (prev: { error?: string } | null, formData: FormData) => {
       const result = await createVendorAction(prev, formData);
-      if (!result?.error) setShowForm(false);
+      if (!result?.error) {
+        setShowForm(false);
+        showToast("Vendor added");
+      }
       return result;
     },
     null,
@@ -53,14 +59,7 @@ export function VendorsClient({ initialVendors }: { initialVendors: Vendor[] }) 
     <div className="flex flex-col gap-4">
       <PageHeader
         title="Vendors"
-        icon={
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <rect x="1.5" y="7" width="13" height="9" rx="1" />
-            <path d="M14.5 10h4l3 3v3h-7z" />
-            <circle cx="6" cy="18" r="1.7" />
-            <circle cx="17.5" cy="18" r="1.7" />
-          </svg>
-        }
+        icon={<Building2 size={18} strokeWidth={1.8} />}
         action={
           <button onClick={() => setShowForm((v) => !v)} className="btn-primary-sm">
             + Vendor

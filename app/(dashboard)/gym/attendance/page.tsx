@@ -6,6 +6,7 @@ import { PageHeader } from "@/app/components/PageHeader";
 import { EmptyState } from "@/app/components/EmptyState";
 import { AttendanceRow } from "./AttendanceRow";
 import { CheckInForm } from "./CheckInForm";
+import { ClipboardCheck } from "lucide-react";
 
 export default async function GymAttendancePage() {
   const session = await requireSession();
@@ -42,12 +43,7 @@ export default async function GymAttendancePage() {
     <div className="flex flex-col gap-4">
       <PageHeader
         title="Attendance"
-        icon={
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M9 12l2 2 4-4" />
-            <circle cx="12" cy="12" r="10" />
-          </svg>
-        }
+        icon={<ClipboardCheck size={18} strokeWidth={1.8} />}
       />
       <Link href="/gym/members" className="text-sm text-muted">
         ← Members

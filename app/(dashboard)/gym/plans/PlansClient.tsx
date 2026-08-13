@@ -6,9 +6,11 @@ import { useFormStatus } from "react-dom";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createMembershipPlanAction, togglePlanActiveAction, deletePlanAction } from "@/lib/actions/gym";
+import { useToast } from "@/app/components/Toast";
 import { formatMoney } from "@/lib/format";
 import { PageHeader } from "@/app/components/PageHeader";
 import { EmptyState } from "@/app/components/EmptyState";
+import { ListChecks } from "lucide-react";
 
 type Plan = { id: string; name: string; durationDays: number; price: number; ptSessionsIncluded: number; isActive: boolean };
 
@@ -33,12 +35,14 @@ export function PlansClient({ plans }: { plans: Plan[] }) {
   const [showForm, setShowForm] = useState(false);
   const [durationDays, setDurationDays] = useState(30);
   const [isPending, startTransition] = useTransition();
+  const { showToast } = useToast();
 
   const [state, formAction] = useActionState(
     async (prev: { error?: string } | null, formData: FormData) => {
       const result = await createMembershipPlanAction(prev, formData);
       if (!result?.error) {
         setShowForm(false);
+        showToast("Plan created");
         router.refresh();
       }
       return result;
@@ -55,12 +59,7 @@ export function PlansClient({ plans }: { plans: Plan[] }) {
             + Plan
           </button>
         }
-        icon={
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z" />
-            <path d="M16 8 2 22M17.5 15H9" />
-          </svg>
-        }
+        icon={<ListChecks size={18} strokeWidth={1.8} />}
       />
       <Link href="/gym" className="text-sm text-muted">
         ← Gym
@@ -135,6 +134,7 @@ export function PlansClient({ plans }: { plans: Plan[] }) {
                       if (!confirm(`Delete "${p.name}"?`)) return;
                       startTransition(async () => {
                         await deletePlanAction(p.id);
+                        showToast("Plan deleted", "info");
                         router.refresh();
                       });
                     }}

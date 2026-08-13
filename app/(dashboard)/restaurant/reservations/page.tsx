@@ -5,6 +5,7 @@ import { getTranslator } from "@/lib/i18n/server";
 import { PageHeader } from "@/app/components/PageHeader";
 import { EmptyState } from "@/app/components/EmptyState";
 import { ReservationRow } from "./ReservationRow";
+import { CalendarCheck } from "lucide-react";
 
 function todayIso() {
   const d = new Date();
@@ -38,12 +39,7 @@ export default async function ReservationsPage({
             + Book
           </Link>
         }
-        icon={
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <rect x="3" y="4" width="18" height="17" rx="2" />
-            <path d="M3 9h18M8 2v4M16 2v4" />
-          </svg>
-        }
+        icon={<CalendarCheck size={18} strokeWidth={1.8} />}
       />
       <Link href="/restaurant" className="text-sm text-muted">
         ← Tables

@@ -5,6 +5,7 @@ import { EmptyState } from "@/app/components/EmptyState";
 import { formatDateTime } from "@/lib/format";
 import { isModuleEnabled } from "@/lib/modules";
 import { ModuleBlocked } from "@/app/components/ModuleBlocked";
+import { AlertTriangle } from "lucide-react";
 
 export default async function ErrorLogPage() {
   const session = await requireOwner();
@@ -23,12 +24,7 @@ export default async function ErrorLogPage() {
       <PageHeader
         title="Error log"
         subtitle="Unexpected failures the app caught automatically — mostly useful if something needs investigating."
-        icon={
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="12" cy="12" r="10" />
-            <path d="M12 8v5M12 16h.01" />
-          </svg>
-        }
+        icon={<AlertTriangle size={18} strokeWidth={1.8} />}
       />
 
       {(!logs || logs.length === 0) ? (

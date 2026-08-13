@@ -8,6 +8,7 @@ import { createAppointmentAction } from "@/lib/actions/appointments";
 import { PageHeader } from "@/app/components/PageHeader";
 import { SearchableSelect } from "@/app/components/SearchableSelect";
 import type { Lang } from "@/lib/i18n/dictionary";
+import { CalendarPlus } from "lucide-react";
 
 type Customer = { id: string; name: string; phone: string };
 type Service = { id: string; name: string };
@@ -48,12 +49,7 @@ export function NewAppointmentClient({ customers, services, lang }: { customers:
     <div className="flex flex-col gap-4">
       <PageHeader
         title="Book appointment"
-        icon={
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <rect x="3" y="4" width="18" height="17" rx="2" />
-            <path d="M3 9h18M8 2v4M16 2v4" />
-          </svg>
-        }
+        icon={<CalendarPlus size={18} strokeWidth={1.8} />}
       />
       <Link href="/salon/appointments" className="text-sm text-muted">
         ← Appointments

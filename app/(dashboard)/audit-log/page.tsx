@@ -5,6 +5,7 @@ import { EmptyState } from "@/app/components/EmptyState";
 import { formatDateTime } from "@/lib/format";
 import { isModuleEnabled } from "@/lib/modules";
 import { ModuleBlocked } from "@/app/components/ModuleBlocked";
+import { History } from "lucide-react";
 
 const ACTION_LABELS: Record<string, string> = {
   bill_voided: "🗑️ Bill voided",
@@ -45,11 +46,7 @@ export default async function AuditLogPage() {
       <PageHeader
         title="Audit log"
         subtitle="A record of sensitive actions — who did what, and when."
-        icon={
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M9 12h6M9 16h6M9 8h6M5 4h14a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1Z" />
-          </svg>
-        }
+        icon={<History size={18} strokeWidth={1.8} />}
       />
 
       {(!logs || logs.length === 0) ? (

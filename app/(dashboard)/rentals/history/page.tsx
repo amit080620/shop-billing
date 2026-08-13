@@ -5,6 +5,7 @@ import { formatMoney } from "@/lib/format";
 import { getTranslator } from "@/lib/i18n/server";
 import { PageHeader } from "@/app/components/PageHeader";
 import { EmptyState } from "@/app/components/EmptyState";
+import { History } from "lucide-react";
 
 export default async function RentalHistoryPage() {
   const session = await requireSession();
@@ -23,11 +24,7 @@ export default async function RentalHistoryPage() {
     <div className="flex flex-col gap-4">
       <PageHeader
         title={t("rentalsPage.historyTitle")}
-        icon={
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M3 7h18M6 7V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v2M4 7v13a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V7" />
-          </svg>
-        }
+        icon={<History size={18} strokeWidth={1.8} />}
       />
       <Link href="/rentals" className="text-sm text-brand">
         {t("rentalsPage.backToActive")}

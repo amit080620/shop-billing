@@ -5,6 +5,7 @@ import { PageHeader } from "@/app/components/PageHeader";
 import { FESTIVALS } from "@/lib/festivals";
 import { AddToCalendarButton } from "./AddToCalendarButton";
 import { FestivalNoteBox } from "./FestivalNoteBox";
+import { PartyPopper } from "lucide-react";
 
 const TRENDABLE_WINDOW_DAYS = 45; // only bother checking last-year sales for festivals coming up reasonably soon
 
@@ -92,12 +93,7 @@ export default async function FestivalsPage() {
       <PageHeader
         title="Festival planner"
         subtitle="Plan stock 15–20 days ahead of India's major festivals."
-        icon={
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <rect x="3" y="5" width="18" height="16" rx="2" />
-            <path d="M3 10h18M8 3v4M16 3v4" />
-          </svg>
-        }
+        icon={<PartyPopper size={18} strokeWidth={1.8} />}
       />
 
       <p className="rounded-lg border border-border bg-surface shadow-sm px-3.5 py-3 text-xs text-muted">

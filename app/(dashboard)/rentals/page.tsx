@@ -6,6 +6,7 @@ import { getTranslator } from "@/lib/i18n/server";
 import { PageHeader } from "@/app/components/PageHeader";
 import { EmptyState } from "@/app/components/EmptyState";
 import { MarkActiveButton } from "./MarkActiveButton";
+import { Repeat } from "lucide-react";
 
 export default async function RentalsPage() {
   const session = await requireSession();
@@ -34,12 +35,7 @@ export default async function RentalsPage() {
             {t("rentalsPage.newRental")}
           </Link>
         }
-        icon={
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M3 7h18M6 7V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v2M4 7v13a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V7" />
-            <path d="M9 12h6M9 16h4" />
-          </svg>
-        }
+        icon={<Repeat size={18} strokeWidth={1.8} />}
       />
 
       <div className="flex gap-2 overflow-x-auto">

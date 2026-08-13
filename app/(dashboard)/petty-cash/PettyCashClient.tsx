@@ -5,9 +5,11 @@ import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import { useRouter } from "next/navigation";
 import { createPettyCashEntryAction, deletePettyCashEntryAction } from "@/lib/actions/petty-cash";
+import { useToast } from "@/app/components/Toast";
 import { formatMoney, formatDateTime } from "@/lib/format";
 import { EmptyState } from "@/app/components/EmptyState";
 import { PageHeader } from "@/app/components/PageHeader";
+import { Wallet } from "lucide-react";
 
 type Entry = { id: string; description: string; amount: number; category: string | null; createdAt: string };
 
@@ -28,6 +30,7 @@ export function PettyCashClient({ entries }: { entries: Entry[] }) {
   const [category, setCategory] = useState("");
   const [isPending, startTransition] = useTransition();
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const { showToast } = useToast();
 
   const [state, formAction] = useActionState(
     async (prev: { error?: string } | null, formData: FormData) => {
@@ -35,6 +38,7 @@ export function PettyCashClient({ entries }: { entries: Entry[] }) {
       if (!result?.error) {
         setShowForm(false);
         setCategory("");
+        showToast("Expense recorded");
         router.refresh();
       }
       return result;
@@ -59,12 +63,7 @@ export function PettyCashClient({ entries }: { entries: Entry[] }) {
             + Expense
           </button>
         }
-        icon={
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <rect x="2" y="6" width="20" height="12" rx="2" />
-            <circle cx="12" cy="12" r="2.5" />
-          </svg>
-        }
+        icon={<Wallet size={18} strokeWidth={1.8} />}
       />
 
       <div className="grid grid-cols-2 gap-3">

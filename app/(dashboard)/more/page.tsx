@@ -9,6 +9,7 @@ import { LanguageToggle } from "@/lib/i18n/LanguageToggle";
 import { SubscriptionCard } from "@/app/components/SubscriptionCard";
 import { InstallAppButton } from "@/app/components/InstallAppButton";
 import { isModuleEnabled } from "@/lib/modules";
+import { Users, Bell, Clock, Truck, Package, UserCog, Settings, Megaphone, HelpCircle, PartyPopper, WifiOff, CalendarClock, ChefHat, BookOpen, ClipboardCheck, ShieldCheck, Scissors, Gem, Store, Stethoscope, Palette, Wallet, Building2, Dumbbell, FlaskConical } from "lucide-react";
 
 export default async function MorePage() {
   const session = await requireSession();
@@ -250,224 +251,78 @@ function MenuLink({
   );
 }
 
-function iconProps(className?: string) {
-  return {
-    className,
-    viewBox: "0 0 24 24",
-    fill: "none" as const,
-    stroke: "currentColor",
-    strokeWidth: 1.8,
-    strokeLinecap: "round" as const,
-    strokeLinejoin: "round" as const,
-  };
-}
-
 function PeopleIcon({ className }: { className?: string }) {
-  return (
-    <svg {...iconProps(className)}>
-      <circle cx="9" cy="8" r="3" />
-      <path d="M2 20c0-3.3 3-5.5 7-5.5s7 2.2 7 5.5" />
-      <circle cx="17" cy="8" r="2.5" />
-      <path d="M17 12.7c2.7.4 5 2.4 5 5.3" />
-    </svg>
-  );
+  return <Users className={className} size={18} strokeWidth={1.8} />;
 }
 function BellIcon({ className }: { className?: string }) {
-  return (
-    <svg {...iconProps(className)}>
-      <path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
-      <path d="M13.7 21a2 2 0 0 1-3.4 0" />
-    </svg>
-  );
+  return <Bell className={className} size={18} strokeWidth={1.8} />;
 }
 function ClockIcon({ className }: { className?: string }) {
-  return (
-    <svg {...iconProps(className)}>
-      <circle cx="12" cy="12" r="9" />
-      <path d="M12 7v5l3 3" />
-    </svg>
-  );
+  return <Clock className={className} size={18} strokeWidth={1.8} />;
 }
 function TruckIcon({ className }: { className?: string }) {
-  return (
-    <svg {...iconProps(className)}>
-      <rect x="1.5" y="7" width="13" height="9" rx="1" />
-      <path d="M14.5 10h4l3 3v3h-7z" />
-      <circle cx="6" cy="18" r="1.7" />
-      <circle cx="17.5" cy="18" r="1.7" />
-    </svg>
-  );
+  return <Truck className={className} size={18} strokeWidth={1.8} />;
 }
 function BoxIcon({ className }: { className?: string }) {
-  return (
-    <svg {...iconProps(className)}>
-      <path d="M3.5 8 12 4l8.5 4-8.5 4-8.5-4Z" />
-      <path d="M3.5 8v8L12 20l8.5-4V8" />
-      <path d="M12 12v8" />
-    </svg>
-  );
+  return <Package className={className} size={18} strokeWidth={1.8} />;
 }
 function UsersIcon({ className }: { className?: string }) {
-  return (
-    <svg {...iconProps(className)}>
-      <circle cx="8" cy="9" r="3" />
-      <path d="M2 20c0-3 2.7-5 6-5s6 2 6 5" />
-      <path d="M15 5.5a3 3 0 0 1 0 5.8" />
-      <path d="M22 20c0-2.6-2-4.6-5-5" />
-    </svg>
-  );
+  return <UserCog className={className} size={18} strokeWidth={1.8} />;
 }
 function GearIcon({ className }: { className?: string }) {
-  return (
-    <svg {...iconProps(className)}>
-      <circle cx="12" cy="12" r="3" />
-      <path d="M19.4 13a7.6 7.6 0 0 0 0-2l2-1.5-2-3.4-2.3.9a7.5 7.5 0 0 0-1.7-1L15 3.5h-6l-.4 2.5a7.5 7.5 0 0 0-1.7 1l-2.3-.9-2 3.4L4.6 11a7.6 7.6 0 0 0 0 2l-2 1.5 2 3.4 2.3-.9c.5.4 1 .8 1.7 1l.4 2.5h6l.4-2.5c.6-.2 1.2-.6 1.7-1l2.3.9 2-3.4-2-1.5Z" />
-    </svg>
-  );
+  return <Settings className={className} size={18} strokeWidth={1.8} />;
 }
 function MegaphoneIcon({ className }: { className?: string }) {
-  return (
-    <svg {...iconProps(className)}>
-      <path d="M3 11v2a2 2 0 0 0 2 2h1l2 5h2l-1.5-5H11l8 4V6l-8 4H8l-2-4H5a2 2 0 0 0-2 2Z" />
-      <path d="M17 8.5v7" />
-    </svg>
-  );
+  return <Megaphone className={className} size={18} strokeWidth={1.8} />;
 }
 function HelpIcon({ className }: { className?: string }) {
-  return (
-    <svg {...iconProps(className)}>
-      <circle cx="12" cy="12" r="9" />
-      <path d="M9.5 9a2.5 2.5 0 0 1 5 0c0 1.5-2.5 2-2.5 3.5" />
-      <path d="M12 17h.01" />
-    </svg>
-  );
+  return <HelpCircle className={className} size={18} strokeWidth={1.8} />;
 }
 function FestivalIcon({ className }: { className?: string }) {
-  return (
-    <svg {...iconProps(className)}>
-      <rect x="3" y="5" width="18" height="16" rx="2" />
-      <path d="M3 10h18M8 3v4M16 3v4" />
-    </svg>
-  );
+  return <PartyPopper className={className} size={18} strokeWidth={1.8} />;
 }
 function OfflineIcon({ className }: { className?: string }) {
-  return (
-    <svg {...iconProps(className)}>
-      <path d="M2 8.5a17 17 0 0 1 20 0" />
-      <path d="M5.5 12a11.5 11.5 0 0 1 13 0" />
-      <path d="M9 15.5a6 6 0 0 1 6 0" />
-      <path d="M12 19h.01" />
-      <path d="M3 3l18 18" />
-    </svg>
-  );
+  return <WifiOff className={className} size={18} strokeWidth={1.8} />;
 }
 function ExpiryIcon({ className }: { className?: string }) {
-  return (
-    <svg {...iconProps(className)}>
-      <path d="M9 2h6M10 2v5.5L5 15a3 3 0 0 0 2.5 4.7h9a3 3 0 0 0 2.5-4.7L14 7.5V2" />
-    </svg>
-  );
+  return <CalendarClock className={className} size={18} strokeWidth={1.8} />;
 }
 function KitchenIcon({ className }: { className?: string }) {
-  return (
-    <svg {...iconProps(className)}>
-      <rect x="2.5" y="4.5" width="19" height="13" rx="1.5" />
-      <path d="M8 21h8M12 17.5V21" />
-    </svg>
-  );
+  return <ChefHat className={className} size={18} strokeWidth={1.8} />;
 }
 function RegisterIcon({ className }: { className?: string }) {
-  return (
-    <svg {...iconProps(className)}>
-      <rect x="4" y="3" width="16" height="18" rx="2" />
-      <path d="M8 7h8M8 11h8M8 15h5" />
-    </svg>
-  );
+  return <BookOpen className={className} size={18} strokeWidth={1.8} />;
 }
 function AuditIcon({ className }: { className?: string }) {
-  return (
-    <svg {...iconProps(className)}>
-      <path d="M9 12.5 11 14.5 15.5 10" />
-      <rect x="3" y="3" width="18" height="18" rx="2" />
-    </svg>
-  );
+  return <ClipboardCheck className={className} size={18} strokeWidth={1.8} />;
 }
 function WarrantyIcon({ className }: { className?: string }) {
-  return (
-    <svg {...iconProps(className)}>
-      <path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6l-8-3Z" />
-      <path d="m9 12 2 2 4-4" />
-    </svg>
-  );
+  return <ShieldCheck className={className} size={18} strokeWidth={1.8} />;
 }
 function SalonIcon({ className }: { className?: string }) {
-  return (
-    <svg {...iconProps(className)}>
-      <circle cx="12" cy="8" r="3.5" />
-      <path d="M5 20c0-3.5 3-6 7-6s7 2.5 7 6" />
-    </svg>
-  );
+  return <Scissors className={className} size={18} strokeWidth={1.8} />;
 }
 function JewelleryIcon({ className }: { className?: string }) {
-  return (
-    <svg {...iconProps(className)}>
-      <circle cx="12" cy="12" r="9" />
-      <path d="M12 7v10M9 9.5a2.5 2.5 0 0 1 2.5-2.5h1a2.5 2.5 0 0 1 0 5h-1a2.5 2.5 0 0 0 0 5h1a2.5 2.5 0 0 0 2.5-2.5" />
-    </svg>
-  );
+  return <Gem className={className} size={18} strokeWidth={1.8} />;
 }
 function CatalogIcon({ className }: { className?: string }) {
-  return (
-    <svg {...iconProps(className)}>
-      <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z" />
-      <path d="M3 6h18M16 10a4 4 0 0 1-8 0" />
-    </svg>
-  );
+  return <Store className={className} size={18} strokeWidth={1.8} />;
 }
 function ClinicIcon({ className }: { className?: string }) {
-  return (
-    <svg {...iconProps(className)}>
-      <path d="M14 3v4a1 1 0 0 0 1 1h4" />
-      <path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2Z" />
-      <path d="M9 13h6M9 17h4" />
-    </svg>
-  );
+  return <Stethoscope className={className} size={18} strokeWidth={1.8} />;
 }
 function InvoiceDesignIcon({ className }: { className?: string }) {
-  return (
-    <svg {...iconProps(className)}>
-      <path d="M4 19V5M4 19h16M8 15l3-4 3 3 4-6" />
-    </svg>
-  );
+  return <Palette className={className} size={18} strokeWidth={1.8} />;
 }
 function PettyCashIcon({ className }: { className?: string }) {
-  return (
-    <svg {...iconProps(className)}>
-      <rect x="2" y="6" width="20" height="12" rx="2" />
-      <circle cx="12" cy="12" r="2.5" />
-    </svg>
-  );
+  return <Wallet className={className} size={18} strokeWidth={1.8} />;
 }
 function BranchIcon({ className }: { className?: string }) {
-  return (
-    <svg {...iconProps(className)}>
-      <path d="M3 21h18M5 21V7l7-4 7 4v14M9 9h1M14 9h1M9 13h1M14 13h1M9 17h1M14 17h1" />
-    </svg>
-  );
+  return <Building2 className={className} size={18} strokeWidth={1.8} />;
 }
 function GymIcon({ className }: { className?: string }) {
-  return (
-    <svg {...iconProps(className)}>
-      <path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z" />
-      <path d="M16 8 2 22M17.5 15H9" />
-    </svg>
-  );
+  return <Dumbbell className={className} size={18} strokeWidth={1.8} />;
 }
 function LabIcon({ className }: { className?: string }) {
-  return (
-    <svg {...iconProps(className)}>
-      <path d="M9 2v6.5L4 18a2 2 0 0 0 1.8 3h12.4a2 2 0 0 0 1.8-3l-5-9.5V2" />
-      <path d="M9 2h6M6 15h12" />
-    </svg>
-  );
+  return <FlaskConical className={className} size={18} strokeWidth={1.8} />;
 }

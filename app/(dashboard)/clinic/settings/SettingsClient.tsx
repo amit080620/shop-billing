@@ -6,6 +6,7 @@ import Link from "next/link";
 import { savePrescriptionSettingsAction } from "@/lib/actions/clinic";
 import { uploadSettingsImageAction } from "@/lib/actions/settings";
 import { PageHeader } from "@/app/components/PageHeader";
+import { Stethoscope } from "lucide-react";
 
 export function SettingsClient({
   headerText: initialHeaderText,
@@ -82,13 +83,7 @@ export function SettingsClient({
       <PageHeader
         title="Prescription pad settings"
         subtitle="Set your letterhead once — every prescription you print uses this."
-        icon={
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M14 3v4a1 1 0 0 0 1 1h4" />
-            <path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2Z" />
-            <path d="M9 13h6M9 17h4" />
-          </svg>
-        }
+        icon={<Stethoscope size={18} strokeWidth={1.8} />}
       />
       <Link href="/clinic" className="text-sm text-muted">
         ← Clinic

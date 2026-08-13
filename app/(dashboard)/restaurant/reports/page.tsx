@@ -6,6 +6,7 @@ import { getTranslator } from "@/lib/i18n/server";
 import { PageHeader } from "@/app/components/PageHeader";
 import { EmptyState } from "@/app/components/EmptyState";
 import { DateRangeControls } from "./DateRangeControls";
+import { BarChart3 } from "lucide-react";
 
 function todayIso() {
   const d = new Date();
@@ -52,11 +53,7 @@ export default async function RestaurantReportsPage({
     <div className="flex flex-col gap-4">
       <PageHeader
         title={t("rreports.title")}
-        icon={
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M4 19V5M4 19h16M8 15l3-4 3 3 4-6" />
-          </svg>
-        }
+        icon={<BarChart3 size={18} strokeWidth={1.8} />}
       />
 
       <DateRangeControls from={fromDate} to={toDate} lang={lang} />

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { saveInvoiceSettingsAction, uploadSettingsImageAction } from "@/lib/actions/settings";
 import { PageHeader } from "@/app/components/PageHeader";
+import { Palette, TrendingUp } from "lucide-react";
 
 const PRESET_COLORS = ["#0f6b5c", "#B45309", "#1D4ED8", "#B91C1C", "#7C3AED", "#0E7490"];
 
@@ -55,11 +56,7 @@ export function InvoiceSettingsClient({
       <div className="flex flex-col gap-3">
         <PageHeader
           title="Invoice design"
-          icon={
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M4 19V5M4 19h16M8 15l3-4 3 3 4-6" />
-            </svg>
-          }
+          icon={<Palette size={18} strokeWidth={1.8} />}
         />
         <p className="text-sm text-muted">Only the shop owner can change invoice branding.</p>
       </div>
@@ -85,11 +82,7 @@ export function InvoiceSettingsClient({
       <PageHeader
         title="Invoice design"
         subtitle="Your shop's branding on invoices and prescriptions — the line items, tax breakup, and totals stay fixed for GST accuracy; these are the parts you control."
-        icon={
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M4 19V5M4 19h16M8 15l3-4 3 3 4-6" />
-          </svg>
-        }
+        icon={<TrendingUp size={18} strokeWidth={1.8} />}
       />
       <Link href="/more" className="text-sm text-muted">
         ← More

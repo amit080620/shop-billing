@@ -16,6 +16,7 @@ import {
   generateBarcodeAction,
   uploadProductImageAction,
 } from "@/lib/actions/products";
+import { Package } from "lucide-react";
 import { formatMoney } from "@/lib/format";
 import { EmptyState } from "@/app/components/EmptyState";
 import { useToast } from "@/app/components/Toast";
@@ -222,13 +223,7 @@ export function ProductsClient({
     <div className="flex flex-col gap-4">
       <PageHeader
         title={terminology.productPlural}
-        icon={
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M3.5 8 12 4l8.5 4-8.5 4-8.5-4Z" />
-            <path d="M3.5 8v8L12 20l8.5-4V8" />
-            <path d="M12 12v8" />
-          </svg>
-        }
+        icon={<Package size={18} strokeWidth={1.8} />}
         action={
           <div className="flex gap-2">
             <button
@@ -687,7 +682,7 @@ export function ProductsClient({
       {filtered.length === 0 ? (
         <EmptyState text={t("products.emptyShelf")} />
       ) : (
-        <ul className="flex flex-col gap-2">
+        <ul className="flex flex-col gap-2 md:grid md:grid-cols-2 md:gap-3">
           {filtered.map((p) => {
             const tone = p.trackInventory ? stockTone(p.stockQuantity, p.lowStockThreshold) : null;
             return (

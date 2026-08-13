@@ -7,6 +7,7 @@ import { EmptyState } from "@/app/components/EmptyState";
 import { PageHeader } from "@/app/components/PageHeader";
 import { useTranslation } from "@/lib/i18n/useTranslation";
 import type { Lang } from "@/lib/i18n/dictionary";
+import { Bell } from "lucide-react";
 
 type Customer = { id: string; name: string; phone: string; balance: number; daysPending: number };
 
@@ -49,12 +50,7 @@ export function RemindersClient({
       <PageHeader
         title="Udhaar reminders"
         subtitle="Select customers (or Select all), then work through the list — you still hit Send in WhatsApp yourself for each one."
-        icon={
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="12" cy="12" r="9" />
-            <path d="M12 7v5l3 3" />
-          </svg>
-        }
+        icon={<Bell size={18} strokeWidth={1.8} />}
       />
 
       <div className="rounded-xl border border-border bg-credit-soft p-4">

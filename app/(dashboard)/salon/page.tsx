@@ -4,6 +4,7 @@ import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { formatMoney } from "@/lib/format";
 import { PageHeader } from "@/app/components/PageHeader";
 import { EmptyState } from "@/app/components/EmptyState";
+import { Scissors } from "lucide-react";
 
 function todayIso() {
   const d = new Date();
@@ -57,12 +58,7 @@ export default async function SalonStaffReportPage({
       <PageHeader
         title="Staff-wise revenue"
         subtitle="Who's bringing in how much — handy for commission."
-        icon={
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="12" cy="8" r="3.5" />
-            <path d="M5 20c0-3.5 3-6 7-6s7 2.5 7 6" />
-          </svg>
-        }
+        icon={<Scissors size={18} strokeWidth={1.8} />}
       />
       <Link href="/" className="text-sm text-muted">
         ← Home

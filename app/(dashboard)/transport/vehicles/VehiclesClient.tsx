@@ -10,6 +10,7 @@ import { PageHeader } from "@/app/components/PageHeader";
 import { EmptyState } from "@/app/components/EmptyState";
 import { useTranslation } from "@/lib/i18n/useTranslation";
 import type { Lang } from "@/lib/i18n/dictionary";
+import { Truck } from "lucide-react";
 
 type Vehicle = {
   id: string;
@@ -61,14 +62,7 @@ export function VehiclesClient({ vehicles, lang }: { vehicles: Vehicle[]; lang: 
       <PageHeader
         title={t("vehicles.title")}
         subtitle={t("vehicles.subtitle")}
-        icon={
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M3 13h13l3 4h2v3H3v-7Z" />
-            <path d="M16 13V8H6l-3 5" />
-            <circle cx="7" cy="19" r="1.5" />
-            <circle cx="17" cy="19" r="1.5" />
-          </svg>
-        }
+        icon={<Truck size={18} strokeWidth={1.8} />}
       />
       <Link href="/transport/reports" className="text-sm text-muted">
         {t("vehicles.reportLink")}

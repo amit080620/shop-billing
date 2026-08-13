@@ -6,6 +6,7 @@ import Link from "next/link";
 import { updateLabOrderStatusAction, saveTestResultAction, billLabOrderAction } from "@/lib/actions/lab";
 import { formatMoney } from "@/lib/format";
 import { PageHeader } from "@/app/components/PageHeader";
+import { FlaskConical } from "lucide-react";
 
 type Order = {
   id: string;
@@ -86,12 +87,7 @@ export function OrderDetailClient({ order, items }: { order: Order; items: Item[
       <PageHeader
         title={order.patientName}
         subtitle={`#${order.orderNumber} · ${order.patientPhone}`}
-        icon={
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M9 2v6.5L4 18a2 2 0 0 0 1.8 3h12.4a2 2 0 0 0 1.8-3l-5-9.5V2" />
-            <path d="M9 2h6M6 15h12" />
-          </svg>
-        }
+        icon={<FlaskConical size={18} strokeWidth={1.8} />}
       />
       <Link href="/lab/orders" className="text-sm text-muted">
         ← Orders

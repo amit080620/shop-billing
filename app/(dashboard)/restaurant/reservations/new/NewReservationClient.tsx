@@ -8,6 +8,7 @@ import { createReservationAction } from "@/lib/actions/reservations";
 import { PageHeader } from "@/app/components/PageHeader";
 import { SearchableSelect } from "@/app/components/SearchableSelect";
 import type { Lang } from "@/lib/i18n/dictionary";
+import { CalendarPlus } from "lucide-react";
 
 type Customer = { id: string; name: string; phone: string };
 
@@ -46,12 +47,7 @@ export function NewReservationClient({ customers, tables, lang }: { customers: C
     <div className="flex flex-col gap-4">
       <PageHeader
         title="Book reservation"
-        icon={
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <rect x="3" y="4" width="18" height="17" rx="2" />
-            <path d="M3 9h18M8 2v4M16 2v4" />
-          </svg>
-        }
+        icon={<CalendarPlus size={18} strokeWidth={1.8} />}
       />
       <Link href="/restaurant/reservations" className="text-sm text-muted">
         ← Reservations

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { saveKioskSettingsAction } from "@/lib/actions/gym";
 import { PageHeader } from "@/app/components/PageHeader";
+import { Tablet } from "lucide-react";
 
 export function KioskSettingsClient({ isEnabled: initialEnabled, publicToken }: { isEnabled: boolean; publicToken: string | null }) {
   const router = useRouter();
@@ -32,12 +33,7 @@ export function KioskSettingsClient({ isEnabled: initialEnabled, publicToken }: 
       <PageHeader
         title="Self check-in kiosk"
         subtitle="Leave this link open on a tablet or old phone at the entrance — members check themselves in by typing their phone number. No staff needed per member."
-        icon={
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <rect x="5" y="2" width="14" height="20" rx="2" />
-            <path d="M9 18h6" />
-          </svg>
-        }
+        icon={<Tablet size={18} strokeWidth={1.8} />}
       />
       <Link href="/gym/attendance" className="text-sm text-muted">
         ← Attendance

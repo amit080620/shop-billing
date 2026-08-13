@@ -3,6 +3,7 @@ import { requireSession } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { PageHeader } from "@/app/components/PageHeader";
 import { EmptyState } from "@/app/components/EmptyState";
+import { ShieldCheck } from "lucide-react";
 
 export default async function WarrantyLookupPage({
   searchParams,
@@ -97,12 +98,7 @@ export default async function WarrantyLookupPage({
       <PageHeader
         title="Warranty lookup"
         subtitle="Search by customer phone or invoice number to check warranty status."
-        icon={
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6l-8-3Z" />
-            <path d="m9 12 2 2 4-4" />
-          </svg>
-        }
+        icon={<ShieldCheck size={18} strokeWidth={1.8} />}
       />
       <Link href="/products" className="text-sm text-muted">
         ← Inventory

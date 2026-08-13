@@ -4,6 +4,7 @@ import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { PageHeader } from "@/app/components/PageHeader";
 import { EmptyState } from "@/app/components/EmptyState";
 import { ClinicAppointmentRow } from "./ClinicAppointmentRow";
+import { Calendar } from "lucide-react";
 
 function todayIso() {
   const d = new Date();
@@ -36,12 +37,7 @@ export default async function ClinicAppointmentsPage({
             + Book
           </Link>
         }
-        icon={
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <rect x="3" y="4" width="18" height="17" rx="2" />
-            <path d="M3 9h18M8 2v4M16 2v4" />
-          </svg>
-        }
+        icon={<Calendar size={18} strokeWidth={1.8} />}
       />
       <Link href="/clinic" className="text-sm text-muted">
         ← Clinic

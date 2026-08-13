@@ -6,9 +6,11 @@ import { useFormStatus } from "react-dom";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createLabTestAction, toggleLabTestActiveAction, deleteLabTestAction, createLabPackageAction, deleteLabPackageAction } from "@/lib/actions/lab";
+import { useToast } from "@/app/components/Toast";
 import { formatMoney } from "@/lib/format";
 import { PageHeader } from "@/app/components/PageHeader";
 import { EmptyState } from "@/app/components/EmptyState";
+import { TestTube } from "lucide-react";
 
 type Test = { id: string; name: string; category: string | null; sampleType: string; price: number; gstPercent: number; turnaroundHours: number; referenceRange: string | null; unit: string | null; isActive: boolean };
 type Package = { id: string; name: string; price: number; isActive: boolean; testNames: string[] };
@@ -31,12 +33,14 @@ export function TestsClient({ tests, packages }: { tests: Test[]; packages: Pack
   const [selectedTestIds, setSelectedTestIds] = useState<string[]>([]);
   const [packageError, setPackageError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const { showToast } = useToast();
 
   const [testState, testFormAction] = useActionState(
     async (prev: { error?: string } | null, formData: FormData) => {
       const result = await createLabTestAction(prev, formData);
       if (!result?.error) {
         setShowTestForm(false);
+        showToast("Test added");
         router.refresh();
       }
       return result;
@@ -62,12 +66,7 @@ export function TestsClient({ tests, packages }: { tests: Test[]; packages: Pack
     <div className="flex flex-col gap-4">
       <PageHeader
         title="Test catalog"
-        icon={
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M9 2v6.5L4 18a2 2 0 0 0 1.8 3h12.4a2 2 0 0 0 1.8-3l-5-9.5V2" />
-            <path d="M9 2h6M6 15h12" />
-          </svg>
-        }
+        icon={<TestTube size={18} strokeWidth={1.8} />}
       />
       <Link href="/lab/orders" className="text-sm text-muted">
         ← Orders
@@ -154,6 +153,7 @@ export function TestsClient({ tests, packages }: { tests: Test[]; packages: Pack
                           if (!confirm(`Delete "${t.name}"?`)) return;
                           startTransition(async () => {
                             await deleteLabTestAction(t.id);
+                            showToast("Test deleted", "info");
                             router.refresh();
                           });
                         }}

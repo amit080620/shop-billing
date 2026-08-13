@@ -13,6 +13,7 @@ import {
   type ExerciseInput,
   type MealInput,
 } from "@/lib/actions/gym";
+import { User } from "lucide-react";
 import { PageHeader } from "@/app/components/PageHeader";
 import { EmptyState } from "@/app/components/EmptyState";
 import type { Lang } from "@/lib/i18n/dictionary";
@@ -57,12 +58,7 @@ export function MemberDetailClient({
       <PageHeader
         title={member.name}
         subtitle={member.phone}
-        icon={
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="12" cy="8" r="4" />
-            <path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7" />
-          </svg>
-        }
+        icon={<User size={18} strokeWidth={1.8} />}
       />
       <Link href="/gym/members" className="text-sm text-muted">
         ← Members

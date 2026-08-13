@@ -6,6 +6,7 @@ import { EmptyState } from "@/app/components/EmptyState";
 import { SalesTrendChart } from "@/app/components/SalesTrendChart";
 import { getTranslator } from "@/lib/i18n/server";
 import { FESTIVALS } from "@/lib/festivals";
+import { Plus } from "lucide-react";
 
 export default async function DashboardPage() {
   const session = await requireSession();
@@ -164,7 +165,7 @@ async function RetailHome({
         <SalesTrendChart data={trend} />
       </section>
 
-      <section className="grid grid-cols-2 gap-3">
+      <section className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <StatCard label={t("home.todaySales")} value={formatMoney(todayTotal)} href="/daily-summary" icon="💰" />
         <StatCard label={t("home.last7Days")} value={formatMoney(weekTotal)} icon="📈" />
         <StatCard label={t("home.outstandingCredit")} value={formatMoney(outstanding)} tone="credit" href="/reminders" icon="🧾" />
@@ -268,7 +269,7 @@ async function LabHome({
         </Link>
       )}
 
-      <section className="grid grid-cols-2 gap-3">
+      <section className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <StatCard label={t("home.todaySales")} value={formatMoney(todayTotal)} href="/daily-summary" icon="💰" />
         <StatCard label="Pending orders" value={String(pendingOrders?.length ?? 0)} href="/lab/orders" icon="🧪" />
       </section>
@@ -396,7 +397,7 @@ async function GymHome({
         </Link>
       )}
 
-      <section className="grid grid-cols-2 gap-3">
+      <section className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <StatCard label={t("home.todaySales")} value={formatMoney(todayTotal)} href="/daily-summary" icon="💰" />
         <StatCard label="Check-ins today" value={String(todayAttendance?.length ?? 0)} href="/gym/attendance" icon="✅" />
       </section>
@@ -490,7 +491,7 @@ async function ClinicHome({
         </div>
       )}
 
-      <section className="grid grid-cols-2 gap-3">
+      <section className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <StatCard label={t("home.todaySales")} value={formatMoney(todayTotal)} href="/daily-summary" icon="💰" />
         <StatCard label="Appointments today" value={String(todayAppointments?.length ?? 0)} href="/clinic/appointments" icon="📅" />
       </section>
@@ -623,7 +624,7 @@ async function JewelleryHome({
         <span className="text-muted">›</span>
       </Link>
 
-      <section className="grid grid-cols-2 gap-3">
+      <section className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <StatCard label={t("home.todaySales")} value={formatMoney(todayTotal)} href="/daily-summary" icon="💰" />
         <StatCard label="Items" value="Manage" href="/products" icon="💍" />
       </section>
@@ -716,7 +717,7 @@ async function SalonHome({
         <SalesTrendChart data={trend} />
       </section>
 
-      <section className="grid grid-cols-2 gap-3">
+      <section className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <StatCard label={t("home.todaySales")} value={formatMoney(todayTotal)} href="/daily-summary" icon="💰" />
         <StatCard label="Appointments today" value={String(todayAppointments?.length ?? 0)} href="/salon/appointments" icon="📅" />
       </section>
@@ -854,7 +855,7 @@ async function ServiceHome({
         </Link>
       )}
 
-      <section className="grid grid-cols-2 gap-3">
+      <section className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <StatCard label={t("home.todaySales")} value={formatMoney(todayTotal)} href="/daily-summary" icon="💰" />
         <StatCard label="Jobs in progress" value={String(openJobs?.length ?? 0)} href="/service" icon="🔧" />
         <StatCard
@@ -970,7 +971,7 @@ async function TransportHome({
         </Link>
       )}
 
-      <section className="grid grid-cols-2 gap-3">
+      <section className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <StatCard label={t("home.todaySales")} value={formatMoney(todayTotal)} href="/daily-summary" icon="💰" />
         <StatCard label="Rounds today" value={String(roundsToday)} href="/transport/reports" icon="🚚" />
         <StatCard label="Active vehicles" value={String(vehicles?.length ?? 0)} href="/transport/vehicles" icon="🛻" />
@@ -1072,7 +1073,7 @@ async function PharmacyHome({
         <SalesTrendChart data={trend} />
       </section>
 
-      <section className="grid grid-cols-2 gap-3">
+      <section className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <StatCard label={t("home.todaySales")} value={formatMoney(todayTotal)} href="/daily-summary" icon="💰" />
         <StatCard
           label="Expiring soon"
@@ -1168,7 +1169,7 @@ async function RestaurantHome({ shopId }: { shopId: string }) {
         <SalesTrendChart data={trend} />
       </section>
 
-      <section className="grid grid-cols-2 gap-3">
+      <section className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <StatCard label="Tables occupied" value={`${occupied} / ${tables?.length ?? 0}`} href="/restaurant" icon="🍽" />
         <StatCard label="Orders in kitchen" value={String(openOrders?.length ?? 0)} tone={openOrders && openOrders.length > 0 ? "credit" : "default"} href="/restaurant-kds" icon="🍳" />
         <StatCard label="Today's revenue" value={formatMoney(todayRevenue)} href="/restaurant/reports" className="col-span-2" icon="💰" />
@@ -1258,7 +1259,7 @@ async function RentalHome({ shopId }: { shopId: string }) {
         </Link>
       )}
 
-      <section className="grid grid-cols-2 gap-3">
+      <section className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <StatCard label="Active & booked" value={String(activeCount)} href="/rentals" icon="🔁" />
         <StatCard label="Overdue" value={String(overdueCount)} tone={overdueCount > 0 ? "credit" : "default"} href="/rentals" icon="⏰" />
       </section>
@@ -1307,11 +1308,7 @@ function greetingKey() {
 }
 
 function PlusIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-      <path d="M12 5v14M5 12h14" />
-    </svg>
-  );
+  return <Plus size={18} strokeWidth={2.5} />;
 }
 
 function StatCard({

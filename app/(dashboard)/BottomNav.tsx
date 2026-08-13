@@ -2,6 +2,22 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import {
+  Home,
+  Receipt,
+  PackagePlus,
+  BarChart3,
+  Menu,
+  LayoutGrid,
+  ChefHat,
+  Truck,
+  Wrench,
+  Scissors,
+  Gem,
+  Stethoscope,
+  Dumbbell,
+  FlaskConical,
+} from "lucide-react";
 import { useTranslation } from "@/lib/i18n/useTranslation";
 import type { Lang } from "@/lib/i18n/dictionary";
 
@@ -140,133 +156,45 @@ export function BottomNav({ lang, businessType }: { lang: Lang; businessType: st
   );
 }
 
-function iconProps(active: boolean) {
-  return {
-    width: 22,
-    height: 22,
-    viewBox: "0 0 24 24",
-    fill: "none",
-    stroke: "currentColor",
-    strokeWidth: active ? 2.2 : 1.8,
-    strokeLinecap: "round" as const,
-    strokeLinejoin: "round" as const,
-  };
-}
-
 function HomeIcon({ active }: { active: boolean }) {
-  return (
-    <svg {...iconProps(active)}>
-      <path d="M3 11.5 12 4l9 7.5" />
-      <path d="M5 10v9a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1v-9" />
-    </svg>
-  );
+  return <Home size={22} strokeWidth={active ? 2.3 : 1.8} />;
 }
 function SellIcon({ active }: { active: boolean }) {
-  return (
-    <svg {...iconProps(active)}>
-      <path d="M4 4h2l1.5 10.5A2 2 0 0 0 9.5 16h7a2 2 0 0 0 2-1.6L20 7H6.2" />
-      <circle cx="10" cy="20" r="1.4" />
-      <circle cx="17" cy="20" r="1.4" />
-    </svg>
-  );
+  return <Receipt size={22} strokeWidth={active ? 2.3 : 1.8} />;
 }
 function BuyIcon({ active }: { active: boolean }) {
-  return (
-    <svg {...iconProps(active)}>
-      <path d="M3.5 8 12 4l8.5 4-8.5 4-8.5-4Z" />
-      <path d="M3.5 8v8L12 20l8.5-4V8" />
-      <path d="M12 12v8" />
-    </svg>
-  );
+  return <PackagePlus size={22} strokeWidth={active ? 2.3 : 1.8} />;
 }
 function ReportIcon({ active }: { active: boolean }) {
-  return (
-    <svg {...iconProps(active)}>
-      <rect x="4" y="3.5" width="16" height="17" rx="1.5" />
-      <path d="M8 8h8M8 12h8M8 16h5" />
-    </svg>
-  );
+  return <BarChart3 size={22} strokeWidth={active ? 2.3 : 1.8} />;
 }
 function MoreIcon({ active }: { active: boolean }) {
-  return (
-    <svg {...iconProps(active)}>
-      <circle cx="5" cy="12" r="1.6" />
-      <circle cx="12" cy="12" r="1.6" />
-      <circle cx="19" cy="12" r="1.6" />
-    </svg>
-  );
+  return <Menu size={22} strokeWidth={active ? 2.3 : 1.8} />;
 }
 function TableIcon({ active }: { active: boolean }) {
-  return (
-    <svg {...iconProps(active)}>
-      <rect x="3" y="10" width="18" height="4" rx="1" />
-      <path d="M6 14v5M18 14v5" />
-    </svg>
-  );
+  return <LayoutGrid size={22} strokeWidth={active ? 2.3 : 1.8} />;
 }
 function KitchenIcon({ active }: { active: boolean }) {
-  return (
-    <svg {...iconProps(active)}>
-      <rect x="2.5" y="4.5" width="19" height="13" rx="1.5" />
-      <path d="M8 21h8M12 17.5V21" />
-    </svg>
-  );
+  return <ChefHat size={22} strokeWidth={active ? 2.3 : 1.8} />;
 }
 function TruckNavIcon({ active }: { active: boolean }) {
-  return (
-    <svg {...iconProps(active)}>
-      <path d="M2 16h11V6H2v10Z" />
-      <path d="M13 9h4l3 3v4h-7V9Z" />
-      <circle cx="6" cy="18" r="1.6" />
-      <circle cx="16.5" cy="18" r="1.6" />
-    </svg>
-  );
+  return <Truck size={22} strokeWidth={active ? 2.3 : 1.8} />;
 }
 function ServiceIcon({ active }: { active: boolean }) {
-  return (
-    <svg {...iconProps(active)}>
-      <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76Z" />
-    </svg>
-  );
+  return <Wrench size={22} strokeWidth={active ? 2.3 : 1.8} />;
 }
 function SalonNavIcon({ active }: { active: boolean }) {
-  return (
-    <svg {...iconProps(active)}>
-      <circle cx="12" cy="8" r="3.5" />
-      <path d="M5 20c0-3.5 3-6 7-6s7 2.5 7 6" />
-    </svg>
-  );
+  return <Scissors size={22} strokeWidth={active ? 2.3 : 1.8} />;
 }
 function JewelleryNavIcon({ active }: { active: boolean }) {
-  return (
-    <svg {...iconProps(active)}>
-      <circle cx="12" cy="12" r="9" />
-      <path d="M12 7v10M9 9.5a2.5 2.5 0 0 1 2.5-2.5h1a2.5 2.5 0 0 1 0 5h-1a2.5 2.5 0 0 0 0 5h1a2.5 2.5 0 0 0 2.5-2.5" />
-    </svg>
-  );
+  return <Gem size={22} strokeWidth={active ? 2.3 : 1.8} />;
 }
 function ClinicNavIcon({ active }: { active: boolean }) {
-  return (
-    <svg {...iconProps(active)}>
-      <path d="M14 3v4a1 1 0 0 0 1 1h4" />
-      <path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2Z" />
-      <path d="M9 13h6M9 17h4" />
-    </svg>
-  );
+  return <Stethoscope size={22} strokeWidth={active ? 2.3 : 1.8} />;
 }
 function GymNavIcon({ active }: { active: boolean }) {
-  return (
-    <svg {...iconProps(active)}>
-      <path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z" />
-      <path d="M16 8 2 22M17.5 15H9" />
-    </svg>
-  );
+  return <Dumbbell size={22} strokeWidth={active ? 2.3 : 1.8} />;
 }
 function LabNavIcon({ active }: { active: boolean }) {
-  return (
-    <svg {...iconProps(active)}>
-      <path d="M9 2v6.5L4 18a2 2 0 0 0 1.8 3h12.4a2 2 0 0 0 1.8-3l-5-9.5V2" />
-      <path d="M9 2h6M6 15h12" />
-    </svg>
-  );
+  return <FlaskConical size={22} strokeWidth={active ? 2.3 : 1.8} />;
 }

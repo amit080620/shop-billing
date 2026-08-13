@@ -5,6 +5,7 @@ import { formatMoney } from "@/lib/format";
 import { getTranslator } from "@/lib/i18n/server";
 import { PageHeader } from "@/app/components/PageHeader";
 import { EmptyState } from "@/app/components/EmptyState";
+import { BarChart3 } from "lucide-react";
 
 function todayIso() {
   const d = new Date();
@@ -81,14 +82,7 @@ export default async function TransportReportsPage({
       <PageHeader
         title={t("treports.title")}
         subtitle={t("treports.subtitle")}
-        icon={
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M3 13h13l3 4h2v3H3v-7Z" />
-            <path d="M16 13V8H6l-3 5" />
-            <circle cx="7" cy="19" r="1.5" />
-            <circle cx="17" cy="19" r="1.5" />
-          </svg>
-        }
+        icon={<BarChart3 size={18} strokeWidth={1.8} />}
       />
       <Link href="/transport/vehicles" className="text-sm text-muted">
         {t("treports.backToVehicles")}

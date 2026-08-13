@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import { voidBillAction } from "@/lib/actions/bills";
+import { useToast } from "@/app/components/Toast";
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -20,7 +21,15 @@ function SubmitButton() {
 
 export function VoidBillButton({ billId, invoiceNumber }: { billId: string; invoiceNumber: string }) {
   const [open, setOpen] = useState(false);
-  const [state, formAction] = useActionState(voidBillAction, null);
+  const { showToast } = useToast();
+  const [state, formAction] = useActionState(
+    async (prev: { error?: string } | null, formData: FormData) => {
+      const result = await voidBillAction(prev, formData);
+      if (!result?.error) showToast("Invoice voided", "info");
+      return result;
+    },
+    null,
+  );
 
   if (!open) {
     return (

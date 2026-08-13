@@ -4,6 +4,7 @@ import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { formatMoney } from "@/lib/format";
 import { PageHeader } from "@/app/components/PageHeader";
 import { EmptyState } from "@/app/components/EmptyState";
+import { Users } from "lucide-react";
 
 function todayIso() {
   const d = new Date();
@@ -93,14 +94,7 @@ export default async function StaffCashSummaryPage({
       <PageHeader
         title="Staff-wise cash"
         subtitle="Who handled how much — across every payment method combined."
-        icon={
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="9" cy="8" r="3" />
-            <path d="M2 20c0-3.3 3-5.5 7-5.5s7 2.2 7 5.5" />
-            <circle cx="17" cy="8" r="2.5" />
-            <path d="M17 12.7c2.7.4 5 2.4 5 5.3" />
-          </svg>
-        }
+        icon={<Users size={18} strokeWidth={1.8} />}
       />
       <Link href={`/daily-summary?date=${date}`} className="text-sm text-muted">
         ← Daily summary

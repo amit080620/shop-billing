@@ -4,12 +4,14 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createComboAction, updateComboAction, toggleComboActiveAction, deleteComboAction, type ComboItemInput } from "@/lib/actions/combos";
+import { useToast } from "@/app/components/Toast";
 import { formatMoney } from "@/lib/format";
 import { PageHeader } from "@/app/components/PageHeader";
 import { EmptyState } from "@/app/components/EmptyState";
 import { SearchableSelect } from "@/app/components/SearchableSelect";
 import { useTranslation } from "@/lib/i18n/useTranslation";
 import type { Lang } from "@/lib/i18n/dictionary";
+import { Layers } from "lucide-react";
 
 type Product = { id: string; name: string; price: number };
 type Combo = { id: string; name: string; price: number; gstPercent: number; isActive: boolean; items: { name: string; quantity: number }[] };
@@ -18,6 +20,7 @@ export function CombosClient({ products, combos, lang }: { products: Product[]; 
   const { t } = useTranslation(lang);
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+  const { showToast } = useToast();
   const [showForm, setShowForm] = useState(false);
   const [editingCombo, setEditingCombo] = useState<Combo | null>(null);
   const [name, setName] = useState("");
@@ -73,6 +76,7 @@ export function CombosClient({ products, combos, lang }: { products: Product[]; 
 
   function handleCreate() {
     setError(null);
+    const wasEditing = !!editingCombo;
     startTransition(async () => {
       const result = editingCombo
         ? await updateComboAction(editingCombo.id, name, typeof price === "number" ? price : 0, typeof gstPercent === "number" ? gstPercent : 0, items)
@@ -87,6 +91,7 @@ export function CombosClient({ products, combos, lang }: { products: Product[]; 
       setItems([]);
       setEditingCombo(null);
       setShowForm(false);
+      showToast(wasEditing ? "Combo updated" : "Combo created");
       router.refresh();
     });
   }
@@ -96,12 +101,7 @@ export function CombosClient({ products, combos, lang }: { products: Product[]; 
       <PageHeader
         title={t("combos.title")}
         subtitle={t("combos.subtitle")}
-        icon={
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <rect x="3" y="7" width="18" height="13" rx="2" />
-            <path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-          </svg>
-        }
+        icon={<Layers size={18} strokeWidth={1.8} />}
         action={
           <button onClick={() => (showForm && !editingCombo ? setShowForm(false) : openNew())} className="btn-primary-sm">
             {t("combos.add")}
@@ -217,6 +217,7 @@ export function CombosClient({ products, combos, lang }: { products: Product[]; 
                     if (!confirm(t("combos.deleteConfirm"))) return;
                     startTransition(async () => {
                       await deleteComboAction(c.id);
+                      showToast("Combo deleted", "info");
                       router.refresh();
                     });
                   }}

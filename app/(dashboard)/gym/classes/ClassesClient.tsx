@@ -10,6 +10,7 @@ import { PageHeader } from "@/app/components/PageHeader";
 import { EmptyState } from "@/app/components/EmptyState";
 import { SearchableSelect } from "@/app/components/SearchableSelect";
 import type { Lang } from "@/lib/i18n/dictionary";
+import { CalendarDays } from "lucide-react";
 
 type ClassBooking = { id: string; memberId: string; memberName: string };
 type GymClass = {
@@ -90,12 +91,7 @@ export function ClassesClient({
             </button>
           ) : undefined
         }
-        icon={
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <rect x="3" y="4" width="18" height="18" rx="2" />
-            <path d="M3 10h18M8 2v4M16 2v4" />
-          </svg>
-        }
+        icon={<CalendarDays size={18} strokeWidth={1.8} />}
       />
       <Link href="/gym/members" className="text-sm text-muted">
         ← Members

@@ -4,6 +4,7 @@ import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { PageHeader } from "@/app/components/PageHeader";
 import { EmptyState } from "@/app/components/EmptyState";
 import { formatDateTime } from "@/lib/format";
+import { FlaskConical } from "lucide-react";
 
 const STATUS_LABELS: Record<string, string> = {
   booked: "Booked",
@@ -51,12 +52,7 @@ export default async function LabOrdersPage({
             + Order
           </Link>
         }
-        icon={
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M9 2v6.5L4 18a2 2 0 0 0 1.8 3h12.4a2 2 0 0 0 1.8-3l-5-9.5V2" />
-            <path d="M9 2h6M6 15h12" />
-          </svg>
-        }
+        icon={<FlaskConical size={18} strokeWidth={1.8} />}
       />
       <Link href="/lab/tests" className="text-sm text-muted">
         📋 Test catalog & packages

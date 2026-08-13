@@ -5,6 +5,7 @@ import { getTranslator } from "@/lib/i18n/server";
 import { PageHeader } from "@/app/components/PageHeader";
 import { EmptyState } from "@/app/components/EmptyState";
 import { ShareExpiryWhatsApp } from "./ShareExpiryWhatsApp";
+import { AlertCircle } from "lucide-react";
 
 function daysUntil(dateStr: string) {
   return Math.round((new Date(dateStr).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
@@ -35,12 +36,7 @@ export default async function ExpiryAlertsPage() {
       <PageHeader
         title={t("expiry.title")}
         subtitle={t("expiry.subtitle")}
-        icon={
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="12" cy="12" r="9" />
-            <path d="M12 7v5l3 3" />
-          </svg>
-        }
+        icon={<AlertCircle size={18} strokeWidth={1.8} />}
       />
 
       {(!batches || batches.length === 0) ? (

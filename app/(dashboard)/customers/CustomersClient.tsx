@@ -13,6 +13,7 @@ import { PageHeader } from "@/app/components/PageHeader";
 import { ContactPickerButton } from "@/app/components/ContactPickerButton";
 import { INDIAN_STATES } from "@/lib/constants/states";
 import { BulkImportExportCustomers } from "./BulkImportExportCustomers";
+import { Users } from "lucide-react";
 
 type Customer = {
   id: string;
@@ -105,14 +106,7 @@ export function CustomersClient({
     <div className="flex flex-col gap-4">
       <PageHeader
         title={isClinic ? "Patients" : isGym ? "Members" : "Customers"}
-        icon={
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="9" cy="8" r="3" />
-            <path d="M2 20c0-3.3 3-5.5 7-5.5s7 2.2 7 5.5" />
-            <circle cx="17" cy="8" r="2.5" />
-            <path d="M17 12.7c2.7.4 5 2.4 5 5.3" />
-          </svg>
-        }
+        icon={<Users size={18} strokeWidth={1.8} />}
         action={
           <button onClick={() => setShowForm((v) => !v)} className="btn-primary-sm">
             + {isClinic ? "Patient" : isGym ? "Member" : "Customer"}
@@ -201,7 +195,7 @@ export function CustomersClient({
       {filtered.length === 0 ? (
         <EmptyState text="No customers yet — add your first one to start tracking sales and credit." />
       ) : (
-        <ul className="flex flex-col gap-2">
+        <ul className="flex flex-col gap-2 md:grid md:grid-cols-2 md:gap-3">
           {filtered.map((c) => (
             <li key={c.id}>
               <Link

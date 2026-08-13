@@ -3,6 +3,7 @@ import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { getTranslator } from "@/lib/i18n/server";
 import { PageHeader } from "@/app/components/PageHeader";
 import { EmptyState } from "@/app/components/EmptyState";
+import { FileMinus } from "lucide-react";
 
 export default async function WriteOffsPage() {
   const session = await requireSession();
@@ -32,11 +33,7 @@ export default async function WriteOffsPage() {
       <PageHeader
         title={t("writeoffs.title")}
         subtitle={t("writeoffs.subtitle")}
-        icon={
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2m2 0v14a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V6h12Z" />
-          </svg>
-        }
+        icon={<FileMinus size={18} strokeWidth={1.8} />}
       />
 
       {(!writeoffs || writeoffs.length === 0) ? (

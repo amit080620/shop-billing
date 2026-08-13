@@ -8,6 +8,7 @@ import { PageHeader } from "@/app/components/PageHeader";
 import { SearchableSelect } from "@/app/components/SearchableSelect";
 import { COMMON_MEDICINE_NAMES } from "@/lib/constants/commonMedicines";
 import type { Lang } from "@/lib/i18n/dictionary";
+import { FileText } from "lucide-react";
 
 type Patient = { id: string; name: string; phone: string; dateOfBirth: string | null; gender: string | null };
 type MedicineRow = PrescriptionItemInput & { key: string };
@@ -104,13 +105,7 @@ export function NewPrescriptionClient({
     <div className="flex flex-col gap-4 pb-6">
       <PageHeader
         title="New prescription"
-        icon={
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M14 3v4a1 1 0 0 0 1 1h4" />
-            <path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2Z" />
-            <path d="M9 13h6M9 17h4" />
-          </svg>
-        }
+        icon={<FileText size={18} strokeWidth={1.8} />}
       />
       <Link href="/clinic" className="text-sm text-muted">
         ← Clinic

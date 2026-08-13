@@ -8,6 +8,7 @@ import { EmptyState } from "@/app/components/EmptyState";
 import { AddBatchForm } from "./AddBatchForm";
 import { DeleteBatchButton } from "./DeleteBatchButton";
 import { WriteOffButton } from "./WriteOffButton";
+import { Package } from "lucide-react";
 
 function daysUntil(dateStr: string) {
   return Math.round((new Date(dateStr).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
@@ -47,11 +48,7 @@ export default async function BatchesPage({
       <PageHeader
         title={product.name}
         subtitle={t("batches.totalAcross", { qty: Number(product.stock_quantity), unit: product.unit })}
-        icon={
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M9 2h6M10 2v5.5L5 15a3 3 0 0 0 2.5 4.7h9a3 3 0 0 0 2.5-4.7L14 7.5V2" />
-          </svg>
-        }
+        icon={<Package size={18} strokeWidth={1.8} />}
       />
 
       <AddBatchForm productId={product.id} lang={lang} />

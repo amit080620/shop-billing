@@ -12,6 +12,7 @@ import {
   deleteBranchAction,
   assignStaffBranchAction,
 } from "@/lib/actions/branches";
+import { Building2 } from "lucide-react";
 import { PageHeader } from "@/app/components/PageHeader";
 import { EmptyState } from "@/app/components/EmptyState";
 
@@ -55,11 +56,7 @@ export function BranchesClient({ branches, staff }: { branches: Branch[]; staff:
             + Branch
           </button>
         }
-        icon={
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M3 21h18M5 21V7l7-4 7 4v14M9 9h1M14 9h1M9 13h1M14 13h1M9 17h1M14 17h1" />
-          </svg>
-        }
+        icon={<Building2 size={18} strokeWidth={1.8} />}
       />
       <Link href="/more" className="text-sm text-muted">
         ← More

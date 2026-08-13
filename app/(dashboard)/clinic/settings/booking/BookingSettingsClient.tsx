@@ -6,6 +6,7 @@ import Link from "next/link";
 import { saveBookingSettingsAction, type WorkingHours } from "@/lib/actions/clinic";
 import { uploadSettingsImageAction } from "@/lib/actions/settings";
 import { PageHeader } from "@/app/components/PageHeader";
+import { CalendarClock } from "lucide-react";
 
 const DAYS: { key: string; label: string }[] = [
   { key: "mon", label: "Monday" },
@@ -134,12 +135,7 @@ export function BookingSettingsClient({
       <PageHeader
         title="Online booking"
         subtitle={`Let ${noun}s book their own slot from a link you share — no login needed for them.`}
-        icon={
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <rect x="3" y="4" width="18" height="17" rx="2" />
-            <path d="M3 9h18M8 2v4M16 2v4" />
-          </svg>
-        }
+        icon={<CalendarClock size={18} strokeWidth={1.8} />}
       />
       <Link href={backLink} className="text-sm text-muted">
         ← Back

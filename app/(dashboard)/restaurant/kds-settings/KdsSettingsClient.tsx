@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { saveKdsSettingsAction } from "@/lib/actions/restaurant";
 import { PageHeader } from "@/app/components/PageHeader";
+import { Monitor } from "lucide-react";
 
 export function KdsSettingsClient({ columns: initialColumns, fontScale: initialFontScale }: { columns: number; fontScale: "normal" | "large" | "extra_large" }) {
   const router = useRouter();
@@ -32,12 +33,7 @@ export function KdsSettingsClient({ columns: initialColumns, fontScale: initialF
       <PageHeader
         title="Kitchen display settings"
         subtitle="How tickets show on the KDS TV/screen — bigger, bolder text helps if it's mounted far from the line."
-        icon={
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <rect x="2" y="4" width="20" height="14" rx="2" />
-            <path d="M8 21h8M12 18v3" />
-          </svg>
-        }
+        icon={<Monitor size={18} strokeWidth={1.8} />}
       />
       <Link href="/restaurant-kds" target="_blank" className="text-sm text-brand">
         🖥️ Open KDS screen in a new tab

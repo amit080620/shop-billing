@@ -5,6 +5,7 @@ import { getTranslator } from "@/lib/i18n/server";
 import { PageHeader } from "@/app/components/PageHeader";
 import { EmptyState } from "@/app/components/EmptyState";
 import { MemberRow } from "./MemberRow";
+import { Users } from "lucide-react";
 
 type MembershipRow = {
   id: string;
@@ -60,12 +61,7 @@ export default async function GymMembersPage({
             + Sell membership
           </Link>
         }
-        icon={
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z" />
-            <path d="M16 8 2 22M17.5 15H9" />
-          </svg>
-        }
+        icon={<Users size={18} strokeWidth={1.8} />}
       />
       <div className="flex gap-2 overflow-x-auto pb-1">
         {session.role !== "owner" && (

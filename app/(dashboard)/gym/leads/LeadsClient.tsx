@@ -8,6 +8,7 @@ import Link from "next/link";
 import { createLeadAction, updateLeadStatusAction, deleteLeadAction } from "@/lib/actions/gym";
 import { PageHeader } from "@/app/components/PageHeader";
 import { EmptyState } from "@/app/components/EmptyState";
+import { UserPlus } from "lucide-react";
 
 type Lead = {
   id: string;
@@ -72,12 +73,7 @@ export function LeadsClient({ leads }: { leads: Lead[] }) {
             + Lead
           </button>
         }
-        icon={
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="12" cy="8" r="4" />
-            <path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7" />
-          </svg>
-        }
+        icon={<UserPlus size={18} strokeWidth={1.8} />}
       />
       <Link href="/gym/members" className="text-sm text-muted">
         ← Members
