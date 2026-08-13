@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { getTheme } from "@/lib/theme";
 import { ServiceWorkerRegistration } from "./components/ServiceWorkerRegistration";
+import { ToastProvider } from "./components/Toast";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -49,7 +50,7 @@ export default async function RootLayout({
       </head>
       <body className="font-sans antialiased">
         <ServiceWorkerRegistration />
-        {children}
+        <ToastProvider>{children}</ToastProvider>
       </body>
     </html>
   );

@@ -1924,3 +1924,10 @@ create index if not exists idx_signup_attempts_ip_time on signup_attempts(ip_add
 -- set yet (NULL) is treated as "everything enabled" so this never
 -- silently breaks any existing shop the moment it ships.
 alter table shops add column if not exists enabled_modules text[];
+
+-- ─── Round-off amount on bills ──────────────────────────────────────────────
+-- Standard GST-invoice practice: the exact taxable+tax total is rounded
+-- to the nearest whole rupee for the amount actually collected, and
+-- the tiny adjustment (never more than ±0.50) is shown as its own line
+-- on the invoice rather than silently disappearing into the total.
+alter table bills add column if not exists round_off_amount numeric(4, 2) not null default 0;

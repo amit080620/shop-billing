@@ -127,6 +127,7 @@ export async function createBillCore(
       sgst_amount: totals.sgstAmount,
       igst_amount: totals.igstAmount,
       gst_amount: totals.gstAmount,
+      round_off_amount: totals.roundOffAmount,
       total: totals.total,
       paid_amount: totals.paidAmount,
       credit_amount: totals.balanceAmount,
@@ -295,7 +296,7 @@ export async function createBillAction(
   const result = await createBillCore(session, parsed.data);
   if ("error" in result) return { error: result.error };
 
-  redirect(`/print/bill/${result.billId}`);
+  redirect(`/print/bill/${result.billId}?new=1`);
 }
 
 /** Called by the offline-sync engine — same core logic as createBillAction,
@@ -482,6 +483,7 @@ export async function editBillQuantitiesAction(
       sgst_amount: totals.sgstAmount,
       igst_amount: totals.igstAmount,
       gst_amount: totals.gstAmount,
+      round_off_amount: totals.roundOffAmount,
       total: totals.total,
       paid_amount: totals.paidAmount,
       credit_amount: totals.balanceAmount,

@@ -759,6 +759,12 @@ export function NewBillClient({
           <Row label="IGST" value={`+ ${formatMoney(totals.igstAmount)}`} />
         )}
         <div className="my-1 h-px bg-border" />
+        {totals.roundOffAmount !== 0 && (
+          <Row
+            label="Round off"
+            value={`${totals.roundOffAmount > 0 ? "+ " : "− "}${formatMoney(Math.abs(totals.roundOffAmount))}`}
+          />
+        )}
         <Row label={t("bill.total")} value={formatMoney(totals.total)} bold />
       </section>
 

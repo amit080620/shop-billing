@@ -138,3 +138,39 @@ textarea {
     opacity: 0.6;
   }
 }
+
+/* Toast notifications — the app should visibly react to what you just
+   did, not go silent and just refresh data behind the scenes. */
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+.toast-enter {
+  animation: toast-in 0.22s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+}
+
+/* A subtle, consistent "the app noticed your tap" press-feedback on
+   every button — small, but this is a large part of what makes an
+   interface feel alive instead of static. */
+button:not(:disabled):active {
+  transform: scale(0.97);
+}
+button {
+  transition: transform 0.1s ease, opacity 0.15s ease, background-color 0.15s ease;
+}
+
+/* Cards/rows that respond to touch — a light press-down instead of
+   nothing happening until the next screen paints. */
+.tap-feedback:active {
+  transform: scale(0.98);
+  opacity: 0.9;
+}
+.tap-feedback {
+  transition: transform 0.12s ease, opacity 0.12s ease;
+}

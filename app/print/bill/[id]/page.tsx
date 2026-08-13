@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
 import Link from "next/link";
 import { requireSession, hasPermission } from "@/lib/auth";
 import { getTranslator } from "@/lib/i18n/server";
@@ -8,6 +9,7 @@ import { buildUpiLink, generateQrDataUrl } from "@/lib/qr";
 import { customerNounFor } from "@/lib/businessType";
 import { PrintButton } from "./PrintButton";
 import { WhatsAppSendButton } from "./WhatsAppSendButton";
+import { BillCreatedConfirmation } from "./BillCreatedConfirmation";
 import { VoidBillButton } from "./VoidBillButton";
 import { EditBillButton } from "./EditBillButton";
 import { DownloadImageButton } from "./DownloadImageButton";
@@ -36,7 +38,7 @@ export default async function PrintBillPage({
   const { data: bill } = await admin
     .from("bills")
     .select(
-      "id, invoice_number, subtotal, discount_type, discount_value, discount_amount, taxable_amount, supply_type, cgst_amount, sgst_amount, igst_amount, gst_amount, payment_method, status, void_reason, voided_at, total, paid_amount, credit_amount, created_at, service_provider_name, edited_at, edit_reason, customers ( name, phone, gstin, address )",
+      "id, invoice_number, subtotal, discount_type, discount_value, discount_amount, taxable_amount, supply_type, cgst_amount, sgst_amount, igst_amount, gst_amount, round_off_amount, payment_method, status, void_reason, voided_at, total, paid_amount, credit_amount, created_at, service_provider_name, edited_at, edit_reason, customers ( name, phone, gstin, address )",
     )
     .eq("id", id)
     .eq("shop_id", session.shopId) // ownership check
@@ -70,6 +72,10 @@ export default async function PrintBillPage({
   }
 
   return (
+    <>
+      <Suspense fallback={null}>
+        <BillCreatedConfirmation />
+      </Suspense>
     <div
       className={`relative mx-auto bg-white text-black ${
         isThermal ? "w-[280px] p-2 font-mono text-xs" : "max-w-2xl p-8"
@@ -284,6 +290,12 @@ export default async function PrintBillPage({
         ) : (
           <SummaryRow label="IGST" value={`+ ${formatMoney(bill.igst_amount)}`} />
         )}
+        {Number(bill.round_off_amount) !== 0 && (
+          <SummaryRow
+            label="Round off"
+            value={`${Number(bill.round_off_amount) > 0 ? "+ " : "− "}${formatMoney(Math.abs(Number(bill.round_off_amount)))}`}
+          />
+        )}
         <SummaryRow label="Total" value={formatMoney(bill.total)} bold />
         <SummaryRow label={`Paid (${paymentLabel})`} value={formatMoney(bill.paid_amount)} />
         {bill.credit_amount > 0 && (
@@ -336,6 +348,7 @@ export default async function PrintBillPage({
       </p>
       </div>
     </div>
+    </>
   );
 }
 

@@ -239,7 +239,17 @@ export function calculateTransactionTotals(input: {
   });
 
   const gstAmount = round2(cgstAmount + sgstAmount + igstAmount);
-  const total = round2(taxableAmount + gstAmount);
+
+  // Round the final payable amount to the nearest whole rupee — under
+  // ₹0.50 rounds down, ₹0.50 and above rounds up (Math.round already
+  // does exactly this for positive numbers). The tiny difference is
+  // tracked as its own line rather than silently absorbed, since GST
+  // invoices conventionally show a "Round off" adjustment for
+  // transparency instead of hiding where the paise went.
+  const exactTotal = round2(taxableAmount + gstAmount);
+  const total = Math.round(exactTotal);
+  const roundOffAmount = round2(total - exactTotal);
+
   const paidAmount = round2(Math.min(input.paidAmount, total));
   const balanceAmount = round2(total - paidAmount);
 
@@ -251,6 +261,7 @@ export function calculateTransactionTotals(input: {
     sgstAmount,
     igstAmount,
     gstAmount,
+    roundOffAmount,
     total,
     paidAmount,
     balanceAmount,

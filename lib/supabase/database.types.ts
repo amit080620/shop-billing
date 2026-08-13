@@ -343,6 +343,7 @@ export interface Database {
           sgst_amount: number;
           igst_amount: number;
           gst_amount: number;
+          round_off_amount: number;
           payment_method: "cash" | "card" | "upi" | "online" | "other";
           status: "active" | "voided";
           voided_at: string | null;
@@ -377,6 +378,7 @@ export interface Database {
           sgst_amount?: number;
           igst_amount?: number;
           gst_amount?: number;
+          round_off_amount?: number;
           payment_method?: "cash" | "card" | "upi" | "online" | "other";
           status?: "active" | "voided";
           voided_at?: string | null;
@@ -411,6 +413,7 @@ export interface Database {
           sgst_amount?: number;
           igst_amount?: number;
           gst_amount?: number;
+          round_off_amount?: number;
           payment_method?: "cash" | "card" | "upi" | "online" | "other";
           status?: "active" | "voided";
           voided_at?: string | null;

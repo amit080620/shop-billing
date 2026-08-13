@@ -211,14 +211,20 @@ export function KdsClient({
 
   return (
     <div className={`min-h-screen bg-gray-950 p-3 text-white ${showCursor ? "" : "cursor-none"}`}>
-      <div className="mb-3 flex items-center justify-between">
-        <div>
-          <h1 className="text-lg font-bold">{t("kds.title", { shop: shopName })}</h1>
-          <p className="text-xs text-gray-400">{t("kds.subtitle", { count: visibleTickets.length })}</p>
-        </div>
-        <a href="/restaurant" className="rounded-lg border border-gray-700 px-3 py-1 text-xs text-gray-300">
+      <div className="mb-3 flex items-center gap-3">
+        <a
+          href="/restaurant"
+          className="flex shrink-0 items-center gap-1.5 rounded-lg border border-gray-700 px-3 py-2 text-xs font-medium text-gray-200 hover:bg-gray-800 md:px-4 md:py-2.5 md:text-sm"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="md:h-[18px] md:w-[18px]">
+            <path d="M19 12H5M12 19l-7-7 7-7" />
+          </svg>
           {t("kds.backToApp")}
         </a>
+        <div className="min-w-0">
+          <h1 className="truncate text-lg font-bold md:text-xl">{t("kds.title", { shop: shopName })}</h1>
+          <p className="text-xs text-gray-400 md:text-sm">{t("kds.subtitle", { count: visibleTickets.length })}</p>
+        </div>
       </div>
 
       {visibleTickets.length === 0 ? (
