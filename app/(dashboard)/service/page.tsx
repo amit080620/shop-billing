@@ -76,7 +76,7 @@ export default async function ServiceJobsPage({
       {(!jobs || jobs.length === 0) ? (
         <EmptyState text="No jobs here — tap + New job when an item comes in for service." />
       ) : (
-        <ul className="flex flex-col gap-2">
+        <ul className="flex flex-col gap-2 md:grid md:grid-cols-2 md:gap-3">
           {jobs.map((j) => (
             <li key={j.id}>
               <Link href={`/service/${j.id}`} className="flex items-center justify-between gap-3 rounded-lg border border-border bg-surface shadow-sm px-3.5 py-3">

@@ -281,7 +281,7 @@ function Section({
       >
         {title}
       </h2>
-      <ul className="flex flex-col gap-2">{children}</ul>
+      <ul className="flex flex-col gap-2 md:grid md:grid-cols-2 md:gap-3">{children}</ul>
     </section>
   );
 }

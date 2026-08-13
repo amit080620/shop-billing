@@ -94,7 +94,7 @@ export default async function GymAttendancePage() {
       {(!todayAttendance || todayAttendance.length === 0) ? (
         <EmptyState text="No check-ins yet today." />
       ) : (
-        <ul className="flex flex-col gap-2">
+        <ul className="flex flex-col gap-2 md:grid md:grid-cols-2 md:gap-3">
           {todayAttendance.map((a) => {
             const customer = Array.isArray(a.customers) ? a.customers[0] : (a.customers as { name: string; phone: string } | null);
             return (

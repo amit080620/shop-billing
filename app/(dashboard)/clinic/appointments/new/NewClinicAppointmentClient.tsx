@@ -5,6 +5,7 @@ import { useFormStatus } from "react-dom";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClinicAppointmentAction } from "@/lib/actions/clinic";
+import { useToast } from "@/app/components/Toast";
 import { PageHeader } from "@/app/components/PageHeader";
 import { SearchableSelect } from "@/app/components/SearchableSelect";
 import type { Lang } from "@/lib/i18n/dictionary";
@@ -32,10 +33,12 @@ export function NewClinicAppointmentClient({ patients, lang }: { patients: Patie
   const [patientName, setPatientName] = useState("");
   const [patientPhone, setPatientPhone] = useState("");
 
+  const { showToast } = useToast();
   const [state, formAction] = useActionState(
     async (prev: { error?: string } | null, formData: FormData) => {
       const result = await createClinicAppointmentAction(prev, formData);
       if (!result?.error) {
+        showToast("Appointment booked");
         router.push("/clinic/appointments");
       }
       return result;

@@ -1656,6 +1656,7 @@ export interface Database {
           cgst_amount: number;
           sgst_amount: number;
           igst_amount: number;
+          round_off_amount: number;
           total: number;
           paid_amount: number;
           credit_amount: number;
@@ -1686,6 +1687,7 @@ export interface Database {
           cgst_amount?: number;
           sgst_amount?: number;
           igst_amount?: number;
+          round_off_amount?: number;
           total?: number;
           paid_amount?: number;
           credit_amount?: number;
@@ -1716,6 +1718,7 @@ export interface Database {
           cgst_amount?: number;
           sgst_amount?: number;
           igst_amount?: number;
+          round_off_amount?: number;
           total?: number;
           paid_amount?: number;
           credit_amount?: number;

@@ -42,7 +42,7 @@ export default async function DoctorsReportPage() {
       {doctors.length === 0 ? (
         <EmptyState text={t("doctors.empty")} />
       ) : (
-        <ul className="flex flex-col gap-2">
+        <ul className="flex flex-col gap-2 md:grid md:grid-cols-2 md:gap-3">
           {doctors.map(([name, stats]) => (
             <li key={name} className="rounded-xl border border-border bg-surface shadow-sm px-4 py-3">
               <div className="flex items-center justify-between">

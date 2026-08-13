@@ -1931,3 +1931,10 @@ alter table shops add column if not exists enabled_modules text[];
 -- the tiny adjustment (never more than ±0.50) is shown as its own line
 -- on the invoice rather than silently disappearing into the total.
 alter table bills add column if not exists round_off_amount numeric(4, 2) not null default 0;
+
+-- ─── Round-off for restaurant orders ─────────────────────────────────────
+-- Restaurant orders compute their own totals (recalcOrderTotals), a
+-- separate code path from the shared calculateTransactionTotals engine
+-- — the whole-rupee round-off rule added there never applied here,
+-- which is why restaurant bills kept showing paise amounts.
+alter table restaurant_orders add column if not exists round_off_amount numeric(4, 2) not null default 0;

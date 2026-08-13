@@ -100,7 +100,7 @@ export function VehiclesClient({ vehicles, lang }: { vehicles: Vehicle[]; lang: 
       {vehicles.length === 0 ? (
         <EmptyState text={t("vehicles.empty")} />
       ) : (
-        <ul className="flex flex-col gap-2">
+        <ul className="flex flex-col gap-2 md:grid md:grid-cols-2 md:gap-3">
           {vehicles.map((v) =>
             editingId === v.id ? (
               <VehicleEditRow

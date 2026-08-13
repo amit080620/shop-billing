@@ -50,7 +50,7 @@ export default async function RentalsPage() {
       {withOverdue.length === 0 ? (
         <EmptyState text={t("rentalsPage.empty")} />
       ) : (
-        <ul className="flex flex-col gap-2">
+        <ul className="flex flex-col gap-2 md:grid md:grid-cols-2 md:gap-3">
           {withOverdue.map((r) => {
             const customerName = Array.isArray(r.customers) ? r.customers[0]?.name : (r.customers as { name: string } | null)?.name;
             return (

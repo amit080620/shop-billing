@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { sellMembershipAction } from "@/lib/actions/gym";
+import { useToast } from "@/app/components/Toast";
 import { formatMoney } from "@/lib/format";
 import { PageHeader } from "@/app/components/PageHeader";
 import { SearchableSelect } from "@/app/components/SearchableSelect";
@@ -37,6 +38,7 @@ export function SellMembershipClient({
   const [paidAmount, setPaidAmount] = useState<number | "">("");
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const { showToast } = useToast();
 
   function submit() {
     if (!selectedPlan) {
@@ -60,6 +62,7 @@ export function SellMembershipClient({
         setError(result.error ?? "Could not sell membership");
         return;
       }
+      showToast("Membership sold");
       router.push(`/print/bill/${result.billId}`);
     });
   }

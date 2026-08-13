@@ -5,6 +5,7 @@ import { useFormStatus } from "react-dom";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createAppointmentAction } from "@/lib/actions/appointments";
+import { useToast } from "@/app/components/Toast";
 import { PageHeader } from "@/app/components/PageHeader";
 import { SearchableSelect } from "@/app/components/SearchableSelect";
 import type { Lang } from "@/lib/i18n/dictionary";
@@ -34,10 +35,12 @@ export function NewAppointmentClient({ customers, services, lang }: { customers:
   const [customerPhone, setCustomerPhone] = useState("");
   const [serviceName, setServiceName] = useState("");
 
+  const { showToast } = useToast();
   const [state, formAction] = useActionState(
     async (prev: { error?: string } | null, formData: FormData) => {
       const result = await createAppointmentAction(prev, formData);
       if (!result?.error) {
+        showToast("Appointment booked");
         router.push("/salon/appointments");
       }
       return result;

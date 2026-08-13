@@ -128,7 +128,7 @@ export function LeadsClient({ leads }: { leads: Lead[] }) {
       {filtered.length === 0 ? (
         <EmptyState text="No leads here." />
       ) : (
-        <ul className="flex flex-col gap-2">
+        <ul className="flex flex-col gap-2 md:grid md:grid-cols-2 md:gap-3">
           {filtered.map((lead) => (
             <li key={lead.id} className="rounded-xl border border-border bg-surface p-3.5 shadow-sm">
               <div className="flex items-start justify-between gap-2">

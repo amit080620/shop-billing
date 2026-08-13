@@ -186,7 +186,7 @@ export function CombosClient({ products, combos, lang }: { products: Product[]; 
       {combos.length === 0 ? (
         <EmptyState text={t("combos.empty")} />
       ) : (
-        <ul className="flex flex-col gap-2">
+        <ul className="flex flex-col gap-2 md:grid md:grid-cols-2 md:gap-3">
           {combos.map((c) => (
             <li key={c.id} className={`rounded-xl border shadow-sm p-4 ${c.isActive ? "border-border bg-surface" : "border-border bg-background opacity-60"}`}>
               <div className="flex items-center justify-between">

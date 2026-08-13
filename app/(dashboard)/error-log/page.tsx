@@ -30,7 +30,7 @@ export default async function ErrorLogPage() {
       {(!logs || logs.length === 0) ? (
         <EmptyState text="Nothing logged — that's a good sign." />
       ) : (
-        <ul className="flex flex-col gap-2">
+        <ul className="flex flex-col gap-2 md:grid md:grid-cols-2 md:gap-3">
           {logs.map((log) => {
             const details = log.details as Record<string, unknown> | null;
             return (

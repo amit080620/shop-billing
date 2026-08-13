@@ -5,6 +5,7 @@ import { useFormStatus } from "react-dom";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createReservationAction } from "@/lib/actions/reservations";
+import { useToast } from "@/app/components/Toast";
 import { PageHeader } from "@/app/components/PageHeader";
 import { SearchableSelect } from "@/app/components/SearchableSelect";
 import type { Lang } from "@/lib/i18n/dictionary";
@@ -32,10 +33,12 @@ export function NewReservationClient({ customers, tables, lang }: { customers: C
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
 
+  const { showToast } = useToast();
   const [state, formAction] = useActionState(
     async (prev: { error?: string } | null, formData: FormData) => {
       const result = await createReservationAction(prev, formData);
       if (!result?.error) {
+        showToast("Reservation booked");
         router.push("/restaurant/reservations");
       }
       return result;

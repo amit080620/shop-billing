@@ -4,11 +4,13 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { saveKioskSettingsAction } from "@/lib/actions/gym";
+import { useToast } from "@/app/components/Toast";
 import { PageHeader } from "@/app/components/PageHeader";
 import { Tablet } from "lucide-react";
 
 export function KioskSettingsClient({ isEnabled: initialEnabled, publicToken }: { isEnabled: boolean; publicToken: string | null }) {
   const router = useRouter();
+  const { showToast } = useToast();
   const [isEnabled, setIsEnabled] = useState(initialEnabled);
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -24,6 +26,7 @@ export function KioskSettingsClient({ isEnabled: initialEnabled, publicToken }: 
         return;
       }
       setIsEnabled(next);
+      showToast(next ? "Kiosk enabled" : "Kiosk disabled", "info");
       router.refresh();
     });
   }

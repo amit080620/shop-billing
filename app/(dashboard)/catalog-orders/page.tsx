@@ -69,7 +69,7 @@ export default async function CatalogOrdersPage({
       {(!requests || requests.length === 0) ? (
         <EmptyState text="No orders here." />
       ) : (
-        <ul className="flex flex-col gap-2">
+        <ul className="flex flex-col gap-2 md:grid md:grid-cols-2 md:gap-3">
           {requests.map((r) => (
             <CatalogOrderRow
               key={r.id}

@@ -122,7 +122,7 @@ export function PettyCashClient({ entries }: { entries: Entry[] }) {
       {entries.length === 0 ? (
         <EmptyState text="No petty cash expenses logged yet." />
       ) : (
-        <ul className="flex flex-col gap-2">
+        <ul className="flex flex-col gap-2 md:grid md:grid-cols-2 md:gap-3">
           {entries.map((e) => (
             <li key={e.id} className="flex items-center justify-between rounded-lg border border-border bg-surface px-3.5 py-2.5 shadow-sm">
               <div className="min-w-0">

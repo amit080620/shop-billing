@@ -110,7 +110,7 @@ export default async function StaffCashSummaryPage({
       {rows.length === 0 ? (
         <EmptyState text="No transactions recorded by any staff member on this date." />
       ) : (
-        <ul className="flex flex-col gap-2">
+        <ul className="flex flex-col gap-2 md:grid md:grid-cols-2 md:gap-3">
           {rows.map((r) => {
             const net = round2(r.cashIn - r.cashOut);
             return (

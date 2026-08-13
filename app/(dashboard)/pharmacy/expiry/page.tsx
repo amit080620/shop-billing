@@ -85,7 +85,7 @@ function Group({ title, batches, t }: { title: string; batches: BatchRow[]; t: T
   return (
     <section className="flex flex-col gap-2">
       <p className="text-sm font-semibold text-foreground">{title}</p>
-      <ul className="flex flex-col gap-2">
+      <ul className="flex flex-col gap-2 md:grid md:grid-cols-2 md:gap-3">
         {batches.map((b) => {
           const product = Array.isArray(b.products) ? b.products[0] : b.products;
           const days = daysUntil(b.expiry_date);

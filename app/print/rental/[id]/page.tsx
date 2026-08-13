@@ -44,6 +44,7 @@ export default async function PrintRentalSlipPage({
       <div className="flex items-start justify-between gap-4 border-b-2 pb-4" style={{ borderColor: accentColor }}>
         <div>
           <p className="text-lg font-bold text-gray-900">{session.shopName}</p>
+          {session.shopGstin && <p className="text-xs text-gray-500">GSTIN: {session.shopGstin}</p>}
           <p className="text-xs text-gray-500">Rental Slip</p>
         </div>
         <div className="text-right text-xs text-gray-600">

@@ -116,7 +116,7 @@ export function StaffClient({
 
       {removeError && <p className="rounded-lg bg-credit-soft px-3.5 py-2.5 text-sm text-credit">{removeError}</p>}
 
-      <ul className="flex flex-col gap-2">
+      <ul className="flex flex-col gap-2 md:grid md:grid-cols-2 md:gap-3">
         {initialStaff.map((s) => (
           <li
             key={s.id}

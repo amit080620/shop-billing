@@ -63,7 +63,7 @@ export default async function ReservationsPage({
       {(!reservations || reservations.length === 0) ? (
         <EmptyState text="No reservations booked for this date." />
       ) : (
-        <ul className="flex flex-col gap-2">
+        <ul className="flex flex-col gap-2 md:grid md:grid-cols-2 md:gap-3">
           {reservations.map((r) => {
             const table = Array.isArray(r.restaurant_tables) ? r.restaurant_tables[0] : (r.restaurant_tables as { name: string } | null);
             return (

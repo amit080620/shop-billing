@@ -72,7 +72,7 @@ export default async function LabOrdersPage({
       {(!orders || orders.length === 0) ? (
         <EmptyState text="No orders here." />
       ) : (
-        <ul className="flex flex-col gap-2">
+        <ul className="flex flex-col gap-2 md:grid md:grid-cols-2 md:gap-3">
           {orders.map((o) => (
             <li key={o.id}>
               <Link href={`/lab/orders/${o.id}`} className="flex items-center justify-between rounded-xl border border-border bg-surface p-3.5 shadow-sm">

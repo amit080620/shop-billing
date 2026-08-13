@@ -61,7 +61,7 @@ export default async function ClinicAppointmentsPage({
       {(!appointments || appointments.length === 0) ? (
         <EmptyState text="No appointments booked for this date." />
       ) : (
-        <ul className="flex flex-col gap-2">
+        <ul className="flex flex-col gap-2 md:grid md:grid-cols-2 md:gap-3">
           {appointments.map((a) => (
             <ClinicAppointmentRow
               key={a.id}

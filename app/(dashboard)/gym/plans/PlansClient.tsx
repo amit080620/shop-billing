@@ -104,7 +104,7 @@ export function PlansClient({ plans }: { plans: Plan[] }) {
       {plans.length === 0 ? (
         <EmptyState text="No plans yet — add your first membership plan (e.g. Monthly, Quarterly, Yearly)." />
       ) : (
-        <ul className="flex flex-col gap-2">
+        <ul className="flex flex-col gap-2 md:grid md:grid-cols-2 md:gap-3">
           {plans.map((p) => (
             <li key={p.id} className="rounded-lg border border-border bg-surface shadow-sm px-3.5 py-3">
               <div className="flex items-start justify-between gap-2">

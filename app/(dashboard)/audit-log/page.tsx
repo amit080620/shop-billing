@@ -52,7 +52,7 @@ export default async function AuditLogPage() {
       {(!logs || logs.length === 0) ? (
         <EmptyState text="Nothing recorded yet." />
       ) : (
-        <ul className="flex flex-col gap-2">
+        <ul className="flex flex-col gap-2 md:grid md:grid-cols-2 md:gap-3">
           {logs.map((log) => {
             const staff = Array.isArray(log.staff) ? log.staff[0] : (log.staff as { name: string } | null);
             const details = log.details as Record<string, unknown> | null;

@@ -5,6 +5,7 @@ import { useFormStatus } from "react-dom";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createJobAction } from "@/lib/actions/service";
+import { useToast } from "@/app/components/Toast";
 import { PageHeader } from "@/app/components/PageHeader";
 import { SearchableSelect } from "@/app/components/SearchableSelect";
 import type { Lang } from "@/lib/i18n/dictionary";
@@ -39,10 +40,12 @@ export function NewJobClient({ customers, lang }: { customers: Customer[]; lang:
     setItems((prev) => (prev.length > 1 ? prev.filter((_, i) => i !== index) : prev));
   }
 
+  const { showToast } = useToast();
   const [state, formAction] = useActionState(
     async (prev: { error?: string } | null, formData: FormData) => {
       const result = await createJobAction(prev, formData);
       if (!result?.error) {
+        showToast("Job card created");
         router.push("/service");
       }
       return result;

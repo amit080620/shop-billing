@@ -121,7 +121,7 @@ export default async function WarrantyLookupPage({
       ) : rows.length === 0 ? (
         <EmptyState text="No warrantied items found for that search." />
       ) : (
-        <ul className="flex flex-col gap-2">
+        <ul className="flex flex-col gap-2 md:grid md:grid-cols-2 md:gap-3">
           {rows.map((r, i) => {
             const isExpired = new Date(r.warrantyExpiresOn) < new Date();
             return (

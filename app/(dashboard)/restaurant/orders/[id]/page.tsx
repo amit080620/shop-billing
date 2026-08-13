@@ -16,7 +16,7 @@ export default async function OrderPage({
   const { data: order } = await admin
     .from("restaurant_orders")
     .select(
-      "id, order_number, status, subtotal, discount_amount, cgst_amount, sgst_amount, igst_amount, total, order_type, waiter_name, reservation_id, restaurant_tables ( name )",
+      "id, order_number, status, subtotal, discount_amount, cgst_amount, sgst_amount, igst_amount, round_off_amount, total, order_type, waiter_name, reservation_id, restaurant_tables ( name )",
     )
     .eq("id", id)
     .eq("shop_id", session.shopId)
@@ -47,6 +47,7 @@ export default async function OrderPage({
   return (
     <OrderClient
       shopName={session.shopName}
+      shopGstin={session.shopGstin}
       lang={lang}
       order={{
         id: order.id,
@@ -58,6 +59,7 @@ export default async function OrderPage({
         sgstAmount: Number(order.sgst_amount),
         igstAmount: Number(order.igst_amount),
         total: Number(order.total),
+        roundOffAmount: Number(order.round_off_amount),
         tableName: table?.name ?? "Table",
         orderType: order.order_type,
         waiterName: order.waiter_name,

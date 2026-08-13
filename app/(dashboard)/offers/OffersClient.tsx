@@ -140,7 +140,7 @@ export function OffersClient({
             </section>
           )}
 
-          <ul className="flex flex-col gap-2">
+          <ul className="flex flex-col gap-2 md:grid md:grid-cols-2 md:gap-3">
             {filtered.map((c) => {
               const sent = sentIds.has(c.id);
               return (

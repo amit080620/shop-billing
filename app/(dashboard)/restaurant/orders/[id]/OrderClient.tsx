@@ -37,12 +37,14 @@ type Order = {
   sgstAmount: number;
   igstAmount: number;
   total: number;
+  roundOffAmount: number;
   tableName: string;
   reservationTokenAmount: number;
 };
 
 export function OrderClient({
   shopName,
+  shopGstin,
   lang,
   order,
   items: initialItems,
@@ -51,6 +53,7 @@ export function OrderClient({
   otherTables,
 }: {
   shopName: string;
+  shopGstin: string | null;
   lang: Lang;
   order: Order;
   items: Item[];
@@ -393,7 +396,7 @@ export function OrderClient({
       )}
 
       {showBillPrint && (
-        <BillPrintView shopName={shopName} order={order} items={initialItems} onClose={() => setShowBillPrint(false)} t={t} />
+        <BillPrintView shopName={shopName} shopGstin={shopGstin} order={order} items={initialItems} onClose={() => setShowBillPrint(false)} t={t} />
       )}
       {showSettle && (
         <SettleModal
@@ -527,12 +530,14 @@ type Translator = (key: string, vars?: Record<string, string | number>) => strin
 
 function BillPrintView({
   shopName,
+  shopGstin,
   order,
   items,
   onClose,
   t,
 }: {
   shopName: string;
+  shopGstin: string | null;
   order: Order;
   items: Item[];
   onClose: () => void;
@@ -550,6 +555,7 @@ function BillPrintView({
       </div>
       <div id="bill-print" className="mx-auto w-full max-w-sm overflow-y-auto bg-white p-6 text-black">
         <p className="text-center text-lg font-bold">{shopName}</p>
+        {shopGstin && <p className="text-center text-xs">GSTIN: {shopGstin}</p>}
         <p className="text-center text-xs">Invoice #{order.orderNumber} · {order.tableName}</p>
         <p className="text-center text-xs">{new Date().toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" })}</p>
         <hr className="my-2 border-dashed" />
@@ -577,6 +583,12 @@ function BillPrintView({
         {order.cgstAmount > 0 && <div className="flex justify-between text-xs"><span>CGST</span><span>{formatMoney(order.cgstAmount)}</span></div>}
         {order.sgstAmount > 0 && <div className="flex justify-between text-xs"><span>SGST</span><span>{formatMoney(order.sgstAmount)}</span></div>}
         {order.igstAmount > 0 && <div className="flex justify-between text-xs"><span>IGST</span><span>{formatMoney(order.igstAmount)}</span></div>}
+        {order.roundOffAmount !== 0 && (
+          <div className="flex justify-between text-xs">
+            <span>Round off</span>
+            <span>{order.roundOffAmount > 0 ? "+ " : "− "}{formatMoney(Math.abs(order.roundOffAmount))}</span>
+          </div>
+        )}
         <div className="mt-1 flex justify-between border-t border-black pt-1 text-sm font-bold"><span>{t("order.total")}</span><span>{formatMoney(order.total)}</span></div>
         <p className="mt-3 text-center text-[10px]">{t("order.thankYou")}</p>
       </div>
@@ -616,7 +628,7 @@ function SettleModal({
 }) {
   const [discountValue, setDiscountValue] = useState(0);
   const [splitCount, setSplitCount] = useState(1);
-  const netTotal = Math.max(0, total - discountValue);
+  const netTotal = Math.max(0, Math.round(total - discountValue));
   const stillDue = Math.max(0, netTotal - reservationTokenAmount);
   const [payments, setPayments] = useState<SettlePayment[]>([{ method: "cash", amount: stillDue }]);
   const [error, setError] = useState<string | null>(null);

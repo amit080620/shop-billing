@@ -79,7 +79,7 @@ export function BranchesClient({ branches, staff }: { branches: Branch[]; staff:
       {branches.length === 0 ? (
         <EmptyState text="No branches yet — add your first one, or leave this empty if you only have one location." />
       ) : (
-        <ul className="flex flex-col gap-2">
+        <ul className="flex flex-col gap-2 md:grid md:grid-cols-2 md:gap-3">
           {branches.map((b) =>
             editingId === b.id ? (
               <BranchEditRow key={b.id} branch={b} onDone={() => setEditingId(null)} />

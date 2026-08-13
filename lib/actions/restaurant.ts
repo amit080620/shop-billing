@@ -98,7 +98,9 @@ async function recalcOrderTotals(orderId: string) {
     sgst = round2(sgst + split.sgst);
     igst = round2(igst + split.igst);
   }
-  const total = round2(taxableAmount + cgst + sgst + igst);
+  const exactTotal = round2(taxableAmount + cgst + sgst + igst);
+  const total = Math.round(exactTotal);
+  const roundOffAmount = round2(total - exactTotal);
 
   await admin
     .from("restaurant_orders")
@@ -109,6 +111,7 @@ async function recalcOrderTotals(orderId: string) {
       cgst_amount: cgst,
       sgst_amount: sgst,
       igst_amount: igst,
+      round_off_amount: roundOffAmount,
       total,
     })
     .eq("id", orderId);
@@ -190,6 +193,7 @@ export async function startOrderAction(tableId: string): Promise<{ orderId?: str
       financial_year: financialYear,
       supply_type: determineSupplyType(session.shopStateCode, null),
       reservation_id: matchingReservation?.id ?? null,
+      waiter_name: session.staffName,
     })
     .select("id")
     .single();

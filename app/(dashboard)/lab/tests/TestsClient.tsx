@@ -122,7 +122,7 @@ export function TestsClient({ tests, packages }: { tests: Test[]; packages: Pack
           {tests.length === 0 ? (
             <EmptyState text="No tests yet — add your first one." />
           ) : (
-            <ul className="flex flex-col gap-2">
+            <ul className="flex flex-col gap-2 md:grid md:grid-cols-2 md:gap-3">
               {tests.map((t) => (
                 <li key={t.id} className="rounded-lg border border-border bg-surface shadow-sm px-3.5 py-3">
                   <div className="flex items-start justify-between gap-2">
