@@ -6,7 +6,26 @@ import { EmptyState } from "@/app/components/EmptyState";
 import { SalesTrendChart } from "@/app/components/SalesTrendChart";
 import { getTranslator } from "@/lib/i18n/server";
 import { FESTIVALS } from "@/lib/festivals";
-import { Plus } from "lucide-react";
+import {
+  Plus,
+  Wallet,
+  Calendar,
+  Clock,
+  Receipt,
+  FlaskConical,
+  Handshake,
+  Truck,
+  Wrench,
+  Bell,
+  Repeat,
+  MapPin,
+  TrendingDown,
+  TrendingUp,
+  Gem,
+  UtensilsCrossed,
+  ChefHat,
+  CheckCircle2,
+} from "lucide-react";
 
 export default async function DashboardPage() {
   const session = await requireSession();
@@ -166,10 +185,10 @@ async function RetailHome({
       </section>
 
       <section className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        <StatCard label={t("home.todaySales")} value={formatMoney(todayTotal)} href="/daily-summary" icon="💰" />
-        <StatCard label={t("home.last7Days")} value={formatMoney(weekTotal)} icon="📈" />
-        <StatCard label={t("home.outstandingCredit")} value={formatMoney(outstanding)} tone="credit" href="/reminders" icon="🧾" />
-        <StatCard label={t("home.payableToVendors")} value={formatMoney(outstandingPayable)} tone="credit" icon="🤝" />
+        <StatCard label={t("home.todaySales")} value={formatMoney(todayTotal)} href="/daily-summary" icon={Wallet} />
+        <StatCard label={t("home.last7Days")} value={formatMoney(weekTotal)} icon={TrendingUp} />
+        <StatCard label={t("home.outstandingCredit")} value={formatMoney(outstanding)} tone="credit" href="/reminders" icon={Receipt} />
+        <StatCard label={t("home.payableToVendors")} value={formatMoney(outstandingPayable)} tone="credit" icon={Handshake} />
       </section>
 
       <Link
@@ -270,8 +289,8 @@ async function LabHome({
       )}
 
       <section className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        <StatCard label={t("home.todaySales")} value={formatMoney(todayTotal)} href="/daily-summary" icon="💰" />
-        <StatCard label="Pending orders" value={String(pendingOrders?.length ?? 0)} href="/lab/orders" icon="🧪" />
+        <StatCard label={t("home.todaySales")} value={formatMoney(todayTotal)} href="/daily-summary" icon={Wallet} />
+        <StatCard label="Pending orders" value={String(pendingOrders?.length ?? 0)} href="/lab/orders" icon={FlaskConical} />
       </section>
 
       <div className="grid grid-cols-2 gap-3">
@@ -398,8 +417,8 @@ async function GymHome({
       )}
 
       <section className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        <StatCard label={t("home.todaySales")} value={formatMoney(todayTotal)} href="/daily-summary" icon="💰" />
-        <StatCard label="Check-ins today" value={String(todayAttendance?.length ?? 0)} href="/gym/attendance" icon="✅" />
+        <StatCard label={t("home.todaySales")} value={formatMoney(todayTotal)} href="/daily-summary" icon={Wallet} />
+        <StatCard label="Check-ins today" value={String(todayAttendance?.length ?? 0)} href="/gym/attendance" icon={CheckCircle2} />
       </section>
 
       <div className="grid grid-cols-2 gap-3">
@@ -492,8 +511,8 @@ async function ClinicHome({
       )}
 
       <section className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        <StatCard label={t("home.todaySales")} value={formatMoney(todayTotal)} href="/daily-summary" icon="💰" />
-        <StatCard label="Appointments today" value={String(todayAppointments?.length ?? 0)} href="/clinic/appointments" icon="📅" />
+        <StatCard label={t("home.todaySales")} value={formatMoney(todayTotal)} href="/daily-summary" icon={Wallet} />
+        <StatCard label="Appointments today" value={String(todayAppointments?.length ?? 0)} href="/clinic/appointments" icon={Calendar} />
       </section>
 
       <div className="grid grid-cols-2 gap-3">
@@ -625,8 +644,8 @@ async function JewelleryHome({
       </Link>
 
       <section className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        <StatCard label={t("home.todaySales")} value={formatMoney(todayTotal)} href="/daily-summary" icon="💰" />
-        <StatCard label="Items" value="Manage" href="/products" icon="💍" />
+        <StatCard label={t("home.todaySales")} value={formatMoney(todayTotal)} href="/daily-summary" icon={Wallet} />
+        <StatCard label="Items" value="Manage" href="/products" icon={Gem} />
       </section>
 
       <Link
@@ -718,8 +737,8 @@ async function SalonHome({
       </section>
 
       <section className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        <StatCard label={t("home.todaySales")} value={formatMoney(todayTotal)} href="/daily-summary" icon="💰" />
-        <StatCard label="Appointments today" value={String(todayAppointments?.length ?? 0)} href="/salon/appointments" icon="📅" />
+        <StatCard label={t("home.todaySales")} value={formatMoney(todayTotal)} href="/daily-summary" icon={Wallet} />
+        <StatCard label="Appointments today" value={String(todayAppointments?.length ?? 0)} href="/salon/appointments" icon={Calendar} />
       </section>
 
       {todayAppointments && todayAppointments.length > 0 && (
@@ -856,14 +875,14 @@ async function ServiceHome({
       )}
 
       <section className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        <StatCard label={t("home.todaySales")} value={formatMoney(todayTotal)} href="/daily-summary" icon="💰" />
-        <StatCard label="Jobs in progress" value={String(openJobs?.length ?? 0)} href="/service" icon="🔧" />
+        <StatCard label={t("home.todaySales")} value={formatMoney(todayTotal)} href="/daily-summary" icon={Wallet} />
+        <StatCard label="Jobs in progress" value={String(openJobs?.length ?? 0)} href="/service" icon={Wrench} />
         <StatCard
           label="Ready for pickup"
           value={String(readyJobs?.length ?? 0)}
           tone={(readyJobs?.length ?? 0) > 0 ? "credit" : "default"}
           href="/service?status=ready"
-          icon="🔔"
+          icon={Bell}
           className="col-span-2"
         />
       </section>
@@ -972,10 +991,10 @@ async function TransportHome({
       )}
 
       <section className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        <StatCard label={t("home.todaySales")} value={formatMoney(todayTotal)} href="/daily-summary" icon="💰" />
-        <StatCard label="Rounds today" value={String(roundsToday)} href="/transport/reports" icon="🚚" />
-        <StatCard label="Active vehicles" value={String(vehicles?.length ?? 0)} href="/transport/vehicles" icon="🛻" />
-        <StatCard label="Km covered today" value={kmToday.toLocaleString("en-IN")} icon="📍" />
+        <StatCard label={t("home.todaySales")} value={formatMoney(todayTotal)} href="/daily-summary" icon={Wallet} />
+        <StatCard label="Rounds today" value={String(roundsToday)} href="/transport/reports" icon={Truck} />
+        <StatCard label="Active vehicles" value={String(vehicles?.length ?? 0)} href="/transport/vehicles" icon={Truck} />
+        <StatCard label="Km covered today" value={kmToday.toLocaleString("en-IN")} icon={MapPin} />
       </section>
 
       <Link
@@ -1074,20 +1093,20 @@ async function PharmacyHome({
       </section>
 
       <section className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        <StatCard label={t("home.todaySales")} value={formatMoney(todayTotal)} href="/daily-summary" icon="💰" />
+        <StatCard label={t("home.todaySales")} value={formatMoney(todayTotal)} href="/daily-summary" icon={Wallet} />
         <StatCard
           label="Expiring soon"
           value={String(expiringCount)}
           tone={expiringCount > 0 ? "credit" : "default"}
           href="/pharmacy/expiry"
-          icon="⏰"
+          icon={Clock}
         />
         <StatCard
           label="Low stock"
           value={String(lowStockCount)}
           tone={lowStockCount > 0 ? "credit" : "default"}
           href="/products"
-          icon="📉"
+          icon={TrendingDown}
           className="col-span-2"
         />
       </section>
@@ -1170,9 +1189,9 @@ async function RestaurantHome({ shopId }: { shopId: string }) {
       </section>
 
       <section className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        <StatCard label="Tables occupied" value={`${occupied} / ${tables?.length ?? 0}`} href="/restaurant" icon="🍽" />
-        <StatCard label="Orders in kitchen" value={String(openOrders?.length ?? 0)} tone={openOrders && openOrders.length > 0 ? "credit" : "default"} href="/restaurant-kds" icon="🍳" />
-        <StatCard label="Today's revenue" value={formatMoney(todayRevenue)} href="/restaurant/reports" className="col-span-2" icon="💰" />
+        <StatCard label="Tables occupied" value={`${occupied} / ${tables?.length ?? 0}`} href="/restaurant" icon={UtensilsCrossed} />
+        <StatCard label="Orders in kitchen" value={String(openOrders?.length ?? 0)} tone={openOrders && openOrders.length > 0 ? "credit" : "default"} href="/restaurant-kds" icon={ChefHat} />
+        <StatCard label="Today's revenue" value={formatMoney(todayRevenue)} href="/restaurant/reports" className="col-span-2" icon={Wallet} />
       </section>
 
       <Link
@@ -1260,8 +1279,8 @@ async function RentalHome({ shopId }: { shopId: string }) {
       )}
 
       <section className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        <StatCard label="Active & booked" value={String(activeCount)} href="/rentals" icon="🔁" />
-        <StatCard label="Overdue" value={String(overdueCount)} tone={overdueCount > 0 ? "credit" : "default"} href="/rentals" icon="⏰" />
+        <StatCard label="Active & booked" value={String(activeCount)} href="/rentals" icon={Repeat} />
+        <StatCard label="Overdue" value={String(overdueCount)} tone={overdueCount > 0 ? "credit" : "default"} href="/rentals" icon={Clock} />
       </section>
 
       <Link
@@ -1317,33 +1336,33 @@ function StatCard({
   tone = "default",
   className = "",
   href,
-  icon,
+  icon: Icon,
 }: {
   label: string;
   value: string;
   tone?: "default" | "credit";
   className?: string;
   href?: string;
-  icon?: string;
+  icon?: React.ComponentType<{ size?: number; strokeWidth?: number }>;
 }) {
-  const cardClassName = `group relative overflow-hidden rounded-xl border border-border p-4 shadow-sm transition-transform active:scale-[0.98] ${
+  const cardClassName = `hover-lift group relative overflow-hidden rounded-xl border border-border p-4 shadow-sm transition-transform active:scale-[0.98] ${
     tone === "credit" ? "bg-credit-soft" : "bg-surface"
   } ${className}`;
   const content = (
     <>
       <div className="flex items-center justify-between">
         <p className={`text-xs font-medium ${tone === "credit" ? "text-credit" : "text-muted"}`}>{label}</p>
-        {icon && (
+        {Icon && (
           <span
-            className={`flex h-7 w-7 items-center justify-center rounded-lg text-sm ${
-              tone === "credit" ? "bg-white/60" : "bg-brand-soft"
+            className={`flex h-7 w-7 items-center justify-center rounded-lg ${
+              tone === "credit" ? "bg-white/60 text-credit" : "bg-brand-soft text-brand-dark"
             }`}
           >
-            {icon}
+            <Icon size={15} strokeWidth={2} />
           </span>
         )}
       </div>
-      <p className={`mt-2 text-2xl font-bold tracking-tight ${tone === "credit" ? "text-credit" : "text-foreground"}`}>
+      <p className={`mt-2 text-3xl font-bold tracking-tight ${tone === "credit" ? "text-credit" : "text-foreground"}`}>
         {value}
       </p>
     </>

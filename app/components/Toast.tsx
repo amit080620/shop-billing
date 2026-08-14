@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useCallback, useContext, useState, type ReactNode } from "react";
+import { Check, X, Info } from "lucide-react";
 
 type ToastTone = "success" | "error" | "info";
 type Toast = { id: number; message: string; tone: ToastTone };
@@ -37,7 +38,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
 }
 
 function ToastCard({ toast, onDismiss }: { toast: Toast; onDismiss: () => void }) {
-  const icon = toast.tone === "success" ? "✓" : toast.tone === "error" ? "✕" : "ℹ";
+  const Icon = toast.tone === "success" ? Check : toast.tone === "error" ? X : Info;
   const tone =
     toast.tone === "success"
       ? "border-brand bg-brand text-white"
@@ -50,7 +51,7 @@ function ToastCard({ toast, onDismiss }: { toast: Toast; onDismiss: () => void }
       onClick={onDismiss}
       className={`toast-enter pointer-events-auto flex max-w-sm items-center gap-2 rounded-xl border px-4 py-3 text-sm font-medium shadow-lg ${tone}`}
     >
-      <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/20 text-xs">{icon}</span>
+      <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/20"><Icon size={12} strokeWidth={3} /></span>
       <span className="min-w-0">{toast.message}</span>
     </div>
   );

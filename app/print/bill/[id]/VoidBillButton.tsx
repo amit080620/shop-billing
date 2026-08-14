@@ -12,7 +12,7 @@ function SubmitButton() {
     <button
       type="submit"
       disabled={pending}
-      className="rounded border border-danger px-3 py-1.5 text-sm font-medium text-danger disabled:opacity-60"
+      className="btn-destructive text-sm"
     >
       {pending ? "Voiding…" : "Confirm void"}
     </button>

@@ -5,6 +5,17 @@
      professional, product-grade feel */
   --background: #f8f9fa;
   --surface: #ffffff;
+  /* Elevation step 2 — a surface raised above another surface (e.g. an
+     inner card inside a page section). Subtly distinct from --surface
+     without needing a heavier shadow to read as "above" it. */
+  --surface-2: #f3f4f6;
+  /* Overlay — the true top layer: modals, dropdowns, popovers. */
+  --overlay: #ffffff;
+  /* The top-edge highlight — a 1px inset line that catches light on
+     the top edge of a raised surface. Combined with the surface-shift
+     and a soft shadow, this is what actually reads as "3D" rather
+     than "flat card with a shadow under it". */
+  --edge-highlight: rgba(255, 255, 255, 0.6);
   --foreground: #111827;
   --muted: #6b7280;
   --border: #e5e7eb;
@@ -48,6 +59,11 @@
      avoids OLED smearing, and keeps shadows/borders visible) */
   --background: #0f1214;
   --surface: #1a1d20;
+  /* Elevation step 2 — lighter than --surface, per "depth in dark mode
+     comes from surfaces getting lighter, not from harder shadows" */
+  --surface-2: #22262a;
+  --overlay: #24282c;
+  --edge-highlight: rgba(255, 255, 255, 0.06);
   --foreground: #f1f3f4;
   --muted: #9ca3af;
   --border: #2a2f33;
@@ -80,6 +96,8 @@
 @theme inline {
   --color-background: var(--background);
   --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-overlay: var(--overlay);
   --color-foreground: var(--foreground);
   --color-muted: var(--muted);
   --color-border: var(--border);
@@ -216,6 +234,102 @@ textarea {
   .btn-primary-sm:disabled {
     opacity: 0.6;
   }
+
+  /* Secondary — a real button, just not the loudest one on the
+     screen. Solid border, surface background, brand-colored text. */
+  .btn-secondary {
+    border-radius: var(--radius);
+    padding: 0.875rem 1.25rem;
+    font-weight: 600;
+    color: var(--brand-dark);
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    transition: border-color 0.15s ease, background-color 0.15s ease;
+  }
+  .btn-secondary:hover:not(:disabled) {
+    border-color: var(--brand-light);
+    background: var(--brand-soft);
+  }
+  .btn-secondary:active:not(:disabled) {
+    transform: scale(0.98);
+  }
+  .btn-secondary:focus-visible {
+    outline: 2px solid var(--brand-light);
+    outline-offset: 2px;
+  }
+  .btn-secondary:disabled {
+    opacity: 0.5;
+  }
+
+  /* Ghost — no border, no fill, until interacted with. For lower-
+     emphasis actions sitting next to a primary/secondary button. */
+  .btn-ghost {
+    border-radius: var(--radius);
+    padding: 0.875rem 1.25rem;
+    font-weight: 500;
+    color: var(--muted);
+    background: transparent;
+    transition: background-color 0.15s ease, color 0.15s ease;
+  }
+  .btn-ghost:hover:not(:disabled) {
+    background: var(--surface-2);
+    color: var(--foreground);
+  }
+  .btn-ghost:active:not(:disabled) {
+    transform: scale(0.98);
+  }
+  .btn-ghost:focus-visible {
+    outline: 2px solid var(--border);
+    outline-offset: 2px;
+  }
+  .btn-ghost:disabled {
+    opacity: 0.5;
+  }
+
+  /* Destructive — reserved for genuinely irreversible actions (void,
+     delete). Danger-colored, but not screaming — a soft-tinted
+     background rather than a solid red block, so it doesn't compete
+     visually with true errors/alerts elsewhere on screen. */
+  .btn-destructive {
+    border-radius: var(--radius);
+    padding: 0.875rem 1.25rem;
+    font-weight: 600;
+    color: var(--danger);
+    background: var(--danger-soft);
+    border: 1.5px solid transparent;
+    transition: border-color 0.15s ease, filter 0.15s ease;
+  }
+  .btn-destructive:hover:not(:disabled) {
+    border-color: var(--danger);
+  }
+  .btn-destructive:active:not(:disabled) {
+    transform: scale(0.98);
+  }
+  .btn-destructive:focus-visible {
+    outline: 2px solid var(--danger);
+    outline-offset: 2px;
+  }
+  .btn-destructive:disabled {
+    opacity: 0.5;
+  }
+}
+
+/* The signature moment's distinctive detail: the checkmark draws
+   itself in rather than just appearing — pathLength=1 on the SVG path
+   means the dash values are simple 0→1 regardless of actual path
+   geometry. Delayed slightly so it draws after the popup has settled. */
+@keyframes draw-check {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+.bill-checkmark {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: draw-check var(--duration-emphasis) var(--ease-signature) 150ms forwards;
 }
 
 /* Toast notifications — the app should visibly react to what you just
@@ -281,6 +395,17 @@ button {
   }
 }
 
+/* The full depth treatment — surface-shift + soft shadow + top-edge
+   highlight, all three together, per the design system's "this is
+   where 3D actually lives" principle. Reserved for genuinely elevated
+   moments (the signature confirmation, key modals) rather than every
+   card, so it keeps its impact. */
+.surface-raised {
+  background: var(--surface-2);
+  box-shadow: var(--shadow-lg), inset 0 1px 0 var(--edge-highlight);
+  border-radius: var(--radius-lg);
+}
+
 /* A slightly more noticeable focus state on inputs — the existing
    border-color transition was subtle to the point of being easy to
    miss; a soft glow makes "you're typing here" unambiguous. */
@@ -306,5 +431,41 @@ textarea:focus {
   *::after {
     transition-duration: 0.01ms !important;
     animation-duration: 0.01ms !important;
+  }
+}
+
+/* Auth-screen illustration — gentle floating motion on the back-layer
+   cards (different durations/offsets so they don't move in sync,
+   which reads as more organic/alive), plus a soft pulsing glow. This
+   is the actual "3D + animation" moment on the login/signup screens. */
+@keyframes illus-float-1 {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-8px); }
+}
+@keyframes illus-float-2 {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(6px); }
+}
+@keyframes illus-pulse {
+  0%, 100% { opacity: 0.5; transform: scale(1); }
+  50% { opacity: 0.8; transform: scale(1.04); }
+}
+.illus-float-1 {
+  animation: illus-float-1 4s ease-in-out infinite;
+  transform-origin: center;
+}
+.illus-float-2 {
+  animation: illus-float-2 3.4s ease-in-out infinite 0.3s;
+  transform-origin: center;
+}
+.illus-pulse {
+  animation: illus-pulse 2.6s ease-in-out infinite;
+  transform-origin: center;
+}
+@media (prefers-reduced-motion: reduce) {
+  .illus-float-1,
+  .illus-float-2,
+  .illus-pulse {
+    animation: none !important;
   }
 }

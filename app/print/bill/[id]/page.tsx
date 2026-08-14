@@ -74,7 +74,7 @@ export default async function PrintBillPage({
   return (
     <>
       <Suspense fallback={null}>
-        <BillCreatedConfirmation />
+        <BillCreatedConfirmation amount={formatMoney(bill.total)} />
       </Suspense>
     <div
       className={`relative mx-auto bg-white text-black ${

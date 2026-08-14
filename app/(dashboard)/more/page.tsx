@@ -43,7 +43,7 @@ export default async function MorePage() {
 
       {(session.businessType === "pharmacy" || session.businessType === "clinic") && (
         <MenuGroup title="Medicine stock">
-          <MenuLink href="/pharmacy/expiry" label="Expiry alerts" sub="Medicines nearing or past expiry" icon={ExpiryIcon} />
+          <MenuLink href="/pharmacy/expiry" label="Expiry alerts" sub="Medicines nearing or past expiry" icon={ExpiryIcon} tone="warning" />
           <MenuLink href="/pharmacy/write-offs" label="Write-off history" sub="Stock lost to expiry or damage" icon={BellIcon} />
           {session.businessType === "pharmacy" && (
             <>
@@ -56,8 +56,8 @@ export default async function MorePage() {
 
       {session.businessType === "restaurant" && (
         <MenuGroup title="Restaurant">
-          <MenuLink href="/restaurant-kds" label="Kitchen display (TV)" sub="Big-screen view for the kitchen" icon={KitchenIcon} />
-          <MenuLink href="/restaurant/kds-settings" label="Kitchen display settings" sub="Cards per row, text size" icon={KitchenIcon} />
+          <MenuLink href="/restaurant-kds" label="Kitchen display (TV)" sub="Big-screen view for the kitchen" icon={KitchenIcon} tone="secondary" />
+          <MenuLink href="/restaurant/kds-settings" label="Kitchen display settings" sub="Cards per row, text size" icon={KitchenIcon} tone="secondary" />
           <MenuLink href="/restaurant/combos" label="Combo deals" sub="Bundle menu items at a set price" icon={BoxIcon} />
           <MenuLink href="/restaurant/reports" label="Restaurant sales" sub="Day-wise & month-wise reports" icon={ClockIcon} />
         </MenuGroup>
@@ -71,62 +71,62 @@ export default async function MorePage() {
 
       {session.businessType === "transport" && (
         <MenuGroup title="Transport">
-          <MenuLink href="/transport/vehicles" label="Vehicles" sub="Manage trucks & per-km rates" icon={TruckIcon} />
+          <MenuLink href="/transport/vehicles" label="Vehicles" sub="Manage trucks & per-km rates" icon={TruckIcon} tone="secondary" />
           <MenuLink href="/transport/reports" label="Vehicle-wise trips" sub="Rounds, km & earnings per vehicle" icon={ClockIcon} />
         </MenuGroup>
       )}
 
       {["hardware", "mart", "general"].includes(session.businessType) && (
         <MenuGroup title="Hardware">
-          <MenuLink href="/warranty" label="Warranty lookup" sub="Check warranty status by phone or invoice" icon={WarrantyIcon} />
+          <MenuLink href="/warranty" label="Warranty lookup" sub="Check warranty status by phone or invoice" icon={WarrantyIcon} tone="success" />
         </MenuGroup>
       )}
 
       {session.businessType === "salon" && (
         <MenuGroup title="Salon">
-          <MenuLink href="/salon" label="Staff-wise revenue" sub="Who's bringing in how much" icon={SalonIcon} />
+          <MenuLink href="/salon" label="Staff-wise revenue" sub="Who's bringing in how much" icon={SalonIcon} tone="secondary" />
         </MenuGroup>
       )}
 
       {session.businessType === "jewellery" && (
         <MenuGroup title="Jewellery">
-          <MenuLink href="/jewellery/rates" label="Today's rate" sub="Set gold/silver rate per gram" icon={JewelleryIcon} />
+          <MenuLink href="/jewellery/rates" label="Today's rate" sub="Set gold/silver rate per gram" icon={JewelleryIcon} tone="warning" />
           <MenuLink href="/jewellery/exchanges" label="Exchange history" sub="Old gold/silver taken in" icon={ClockIcon} />
         </MenuGroup>
       )}
 
       {session.businessType === "clinic" && (
         <MenuGroup title="Clinic">
-          <MenuLink href="/clinic/appointments" label="Appointments" sub="Book & manage patient visits" icon={ClinicIcon} />
-          <MenuLink href="/clinic/prescriptions/new" label="New prescription" sub="Write an Rx for a patient" icon={ClinicIcon} />
-          <MenuLink href="/clinic/settings" label="Prescription pad settings" sub="Letterhead, header/footer, Rx fields" icon={ClinicIcon} />
-          <MenuLink href="/clinic/settings/booking" label="Online booking" sub="Working hours & shareable booking link" icon={ClinicIcon} />
+          <MenuLink href="/clinic/appointments" label="Appointments" sub="Book & manage patient visits" icon={ClinicIcon} tone="info" />
+          <MenuLink href="/clinic/prescriptions/new" label="New prescription" sub="Write an Rx for a patient" icon={ClinicIcon} tone="info" />
+          <MenuLink href="/clinic/settings" label="Prescription pad settings" sub="Letterhead, header/footer, Rx fields" icon={ClinicIcon} tone="info" />
+          <MenuLink href="/clinic/settings/booking" label="Online booking" sub="Working hours & shareable booking link" icon={ClinicIcon} tone="info" />
         </MenuGroup>
       )}
 
       {session.businessType === "gym" && (
         <MenuGroup title="Gym">
-          <MenuLink href="/gym/members" label="Members" sub="View members, expiry status, PT sessions" icon={GymIcon} />
-          <MenuLink href="/gym/members/new" label="Sell membership" sub="New sign-up or renewal" icon={GymIcon} />
+          <MenuLink href="/gym/members" label="Members" sub="View members, expiry status, PT sessions" icon={GymIcon} tone="success" />
+          <MenuLink href="/gym/members/new" label="Sell membership" sub="New sign-up or renewal" icon={GymIcon} tone="success" />
           {isModuleEnabled(session.enabledModules, "leads_crm") && (
-            <MenuLink href="/gym/leads" label="Leads" sub="Trial enquiries and walk-ins" icon={GymIcon} />
+            <MenuLink href="/gym/leads" label="Leads" sub="Trial enquiries and walk-ins" icon={GymIcon} tone="success" />
           )}
           {isModuleEnabled(session.enabledModules, "class_schedule") && (
-            <MenuLink href="/gym/classes" label="Classes" sub="Yoga, Zumba — weekly schedule & bookings" icon={GymIcon} />
+            <MenuLink href="/gym/classes" label="Classes" sub="Yoga, Zumba — weekly schedule & bookings" icon={GymIcon} tone="success" />
           )}
-          <MenuLink href="/gym/plans" label="Membership plans" sub="Set up Monthly, Quarterly, Yearly plans" icon={GymIcon} />
-          <MenuLink href="/gym/attendance" label="Attendance" sub="Check-in / check-out log" icon={GymIcon} />
+          <MenuLink href="/gym/plans" label="Membership plans" sub="Set up Monthly, Quarterly, Yearly plans" icon={GymIcon} tone="success" />
+          <MenuLink href="/gym/attendance" label="Attendance" sub="Check-in / check-out log" icon={GymIcon} tone="success" />
           {isModuleEnabled(session.enabledModules, "self_checkin_kiosk") && (
-            <MenuLink href="/gym/kiosk-settings" label="Self check-in kiosk" sub="Members check themselves in — no staff needed" icon={GymIcon} />
+            <MenuLink href="/gym/kiosk-settings" label="Self check-in kiosk" sub="Members check themselves in — no staff needed" icon={GymIcon} tone="success" />
           )}
         </MenuGroup>
       )}
 
       {session.businessType === "lab" && (
         <MenuGroup title="Lab">
-          <MenuLink href="/lab/orders" label="Orders" sub="Booked, in-progress, and completed orders" icon={LabIcon} />
-          <MenuLink href="/lab/orders/new" label="New order" sub="Book tests for a patient" icon={LabIcon} />
-          <MenuLink href="/lab/tests" label="Test catalog & packages" sub="Set up tests, prices, reference ranges" icon={LabIcon} />
+          <MenuLink href="/lab/orders" label="Orders" sub="Booked, in-progress, and completed orders" icon={LabIcon} tone="info" />
+          <MenuLink href="/lab/orders/new" label="New order" sub="Book tests for a patient" icon={LabIcon} tone="info" />
+          <MenuLink href="/lab/tests" label="Test catalog & packages" sub="Set up tests, prices, reference ranges" icon={LabIcon} tone="info" />
         </MenuGroup>
       )}
 
@@ -160,7 +160,7 @@ export default async function MorePage() {
           sub={session.businessType === "clinic" ? "Patient records and history" : session.businessType === "gym" ? "Member records and history" : t("more.customers.sub")}
           icon={PeopleIcon}
         />
-        <MenuLink href="/vendors" label={t("more.vendors")} sub={t("more.vendors.sub")} icon={TruckIcon} />
+        <MenuLink href="/vendors" label={t("more.vendors")} sub={t("more.vendors.sub")} icon={TruckIcon} tone="secondary" />
         {session.role === "owner" && (
           <>
             <MenuLink href="/staff" label={t("more.staff")} sub={t("more.staff.sub")} icon={UsersIcon} />
@@ -223,23 +223,34 @@ function MenuGroup({ title, children }: { title: string; children: React.ReactNo
   );
 }
 
+const TONE_CLASSES: Record<string, string> = {
+  brand: "bg-brand-soft text-brand-dark",
+  secondary: "bg-secondary-soft text-secondary",
+  success: "bg-success-soft text-success",
+  warning: "bg-warning-soft text-warning",
+  info: "bg-info-soft text-info",
+  danger: "bg-danger-soft text-danger",
+};
+
 function MenuLink({
   href,
   label,
   sub,
   icon: Icon,
+  tone = "brand",
 }: {
   href: string;
   label: string;
   sub: string;
   icon: (props: { className?: string }) => React.ReactElement;
+  tone?: keyof typeof TONE_CLASSES;
 }) {
   return (
     <Link
       href={href}
       className="flex items-center gap-3 px-4 py-3.5 transition active:bg-background"
     >
-      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-soft text-brand-dark">
+      <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${TONE_CLASSES[tone]}`}>
         <Icon className="h-[18px] w-[18px]" />
       </span>
       <div className="min-w-0 flex-1">

@@ -19,17 +19,17 @@ export function AuthIllustration() {
       </defs>
 
       {/* Soft ambient glow behind the whole scene */}
-      <circle cx="200" cy="190" r="150" fill="var(--brand-soft)" opacity="0.6" />
+      <circle cx="200" cy="190" r="150" fill="var(--brand-soft)" opacity="0.6" className="illus-pulse" />
 
       {/* Back layer: a floating stat/chart card, tilted for depth */}
-      <g filter="url(#softShadowSm)" transform="translate(230 60) rotate(8)">
+      <g filter="url(#softShadowSm)" transform="translate(230 60) rotate(8)" className="illus-float-1">
         <rect width="130" height="90" rx="14" fill="var(--surface)" />
         <rect x="14" y="16" width="60" height="8" rx="4" fill="var(--border)" />
         <polyline points="14,68 34,52 52,60 72,38 100,46 116,28" stroke="var(--brand)" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" fill="none" />
       </g>
 
       {/* Back layer: a floating coin/payment chip */}
-      <g filter="url(#softShadowSm)" transform="translate(48 200) rotate(-10)">
+      <g filter="url(#softShadowSm)" transform="translate(48 200) rotate(-10)" className="illus-float-2">
         <circle r="34" cx="34" cy="34" fill="url(#chipGrad)" />
         <text x="34" y="42" textAnchor="middle" fontSize="28" fontWeight="700" fill="white">₹</text>
       </g>
@@ -61,6 +61,7 @@ export function AuthIllustration() {
 
         {/* success checkmark badge, bottom-right, overlapping edge */}
         <g filter="url(#softShadowSm)" transform="translate(168 224)">
+          <circle r="34" cx="26" cy="26" fill="var(--success)" opacity="0.25" className="illus-pulse" />
           <circle r="26" cx="26" cy="26" fill="var(--success)" />
           <path d="M15 27l7 7 15-15" stroke="white" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" fill="none" />
         </g>

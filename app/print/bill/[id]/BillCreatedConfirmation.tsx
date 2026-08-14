@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 
-export function BillCreatedConfirmation() {
+export function BillCreatedConfirmation({ amount }: { amount?: string }) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
@@ -24,15 +24,30 @@ export function BillCreatedConfirmation() {
   if (!visible) return null;
 
   return (
-    <div className="no-print fixed inset-0 z-[200] flex items-center justify-center bg-black/30" onClick={() => setVisible(false)}>
-      <div className="toast-enter flex flex-col items-center gap-2 rounded-2xl bg-white px-8 py-7 shadow-2xl">
-        <div className="flex h-16 w-16 items-center justify-center rounded-full" style={{ background: "linear-gradient(135deg, var(--brand-light), var(--brand-dark))" }}>
-          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M20 6 9 17l-5-5" />
+    <div className="no-print fixed inset-0 z-[200] flex items-center justify-center bg-black/40" onClick={() => setVisible(false)}>
+      <div className="surface-raised toast-enter flex flex-col items-center gap-3 px-9 py-8">
+        <div
+          className="flex h-16 w-16 items-center justify-center rounded-full"
+          style={{ background: "linear-gradient(135deg, var(--brand-light), var(--brand-dark))" }}
+        >
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
+            <path
+              d="M20 6 9 17l-5-5"
+              stroke="white"
+              strokeWidth="3"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="bill-checkmark"
+              pathLength={1}
+            />
           </svg>
         </div>
-        <p className="text-base font-semibold text-gray-900">Bill created!</p>
+        <div className="text-center">
+          <p className="text-base font-semibold text-foreground">Bill created</p>
+          {amount && <p className="mt-0.5 text-sm text-muted">{amount}</p>}
+        </div>
       </div>
     </div>
   );
 }
+
