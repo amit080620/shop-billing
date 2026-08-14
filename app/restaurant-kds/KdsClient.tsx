@@ -1,9 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { markItemReadyAction, acknowledgeRevisionAction } from "@/lib/actions/restaurant";
 import { useTranslation } from "@/lib/i18n/useTranslation";
+import { TVNavigationProvider, TVRemoteHandler, TVFocusZone, TVFocusable } from "@/lib/tv-nav";
 import type { Lang } from "@/lib/i18n/dictionary";
 
 type Item = { id: string; name: string; quantity: number; status: "pending" | "ready" | "served" | "cancelled"; createdAt: string };
@@ -34,11 +35,9 @@ export function KdsClient({
   const [now, setNow] = useState(Date.now());
   const [, startTransition] = useTransition();
   const [localOverrides, setLocalOverrides] = useState<Partial<Record<string, "pending" | "ready">>>({});
-  const [focusedIndex, setFocusedIndex] = useState(0);
   const [showCursor, setShowCursor] = useState(false);
   const seenItemIds = useRef<Set<string> | null>(null);
   const seenRevisedIds = useRef<Set<string>>(new Set());
-  const cardRefs = useRef<Record<number, HTMLDivElement | null>>({});
 
   // Beep whenever a poll brings in an item this screen hasn't seen before
   // (a genuinely new order/item, not just a status change) — so kitchen
@@ -140,57 +139,18 @@ export function KdsClient({
   // here meant a ticket marked ready on the KDS just sat there.
   const visibleTickets = initialTickets.filter((tk) => tk.items.some((i) => i.status === "pending") || tk.revisedAt);
 
-  // ─── TV-remote navigation ────────────────────────────────────────────
-  // A D-pad/remote sends arrow-key events. Browsers on some TV/set-top
-  // boxes reveal a literal mouse-pointer graphic the moment ANY key
-  // navigation happens on a page with no properly-focusable elements —
-  // making every ticket a real focus target (tabIndex) and driving
-  // focus explicitly here keeps that pointer from ever appearing, and
-  // gives a clean, deliberate highlight instead of the browser's
-  // default (often invisible-on-a-TV) focus ring.
-  // columns now comes from props (owner-configurable), used below for
-  // both the grid layout and arrow-key navigation math.
-  const handleKeyDown = useCallback(
-    (e: KeyboardEvent) => {
-      if (visibleTickets.length === 0) return;
+  // Any keyboard/remote input hides the system cursor immediately — the
+  // actual navigation (arrow keys/Enter) is handled by TVRemoteHandler
+  // below; this listener only tracks "something on the keyboard/remote
+  // was pressed" so the (often-unwanted, TV-inappropriate) mouse
+  // pointer graphic disappears the moment real input starts.
+  useEffect(() => {
+    function onKeyDown() {
       setShowCursor(false);
-      if (e.key === "ArrowRight") {
-        e.preventDefault();
-        setFocusedIndex((i) => Math.min(visibleTickets.length - 1, i + 1));
-      } else if (e.key === "ArrowLeft") {
-        e.preventDefault();
-        setFocusedIndex((i) => Math.max(0, i - 1));
-      } else if (e.key === "ArrowDown") {
-        e.preventDefault();
-        setFocusedIndex((i) => Math.min(visibleTickets.length - 1, i + columns));
-      } else if (e.key === "ArrowUp") {
-        e.preventDefault();
-        setFocusedIndex((i) => Math.max(0, i - columns));
-      } else if (e.key === "Enter" || e.key === " ") {
-        e.preventDefault();
-        const ticket = visibleTickets[focusedIndex];
-        if (ticket) {
-          if (ticket.revisedAt) acknowledge(ticket.id);
-          else bumpTicket(ticket);
-        }
-      }
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [visibleTickets, focusedIndex],
-  );
-
-  useEffect(() => {
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [handleKeyDown]);
-
-  useEffect(() => {
-    if (focusedIndex >= visibleTickets.length) setFocusedIndex(Math.max(0, visibleTickets.length - 1));
-  }, [visibleTickets.length, focusedIndex]);
-
-  useEffect(() => {
-    cardRefs.current[focusedIndex]?.scrollIntoView({ block: "nearest", behavior: "smooth" });
-  }, [focusedIndex]);
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, []);
 
   // A real mouse moving is the only thing allowed to show the system
   // cursor — any keyboard/remote input hides it again immediately.
@@ -210,7 +170,9 @@ export function KdsClient({
         : { table: "text-base", order: "text-[10px]", item: "text-sm", qty: "text-base" };
 
   return (
-    <div className={`min-h-screen bg-gray-950 p-3 text-white ${showCursor ? "" : "cursor-none"}`}>
+    <TVNavigationProvider>
+      <TVRemoteHandler onBack={() => router.push("/restaurant")} />
+      <div className={`min-h-screen bg-gray-950 p-3 text-white ${showCursor ? "" : "cursor-none"}`}>
       <div className="mb-3 flex items-center gap-3">
         <a
           href="/restaurant"
@@ -232,30 +194,28 @@ export function KdsClient({
           {t("kds.empty")}
         </div>
       ) : (
-        <div className="grid gap-2.5" style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}>
-          {visibleTickets.map((ticket, index) => {
-            const age = Math.floor((now - new Date(ticket.createdAt).getTime()) / 60000);
-            const isRevised = !!ticket.revisedAt;
-            const isFocused = index === focusedIndex;
-            const tone = isRevised
-              ? "border-red-500 bg-red-950/50 animate-pulse"
-              : age >= 20
-                ? "border-red-500 bg-red-950/40"
-                : age >= 10
-                  ? "border-amber-500 bg-amber-950/30"
-                  : "border-emerald-600 bg-emerald-950/20";
-            return (
-              <div
-                key={ticket.id}
-                ref={(el) => {
-                  cardRefs.current[index] = el;
-                }}
-                tabIndex={0}
-                onFocus={() => setFocusedIndex(index)}
-                className={`flex flex-col gap-1.5 rounded-xl border-2 p-2.5 text-sm outline-none ${tone} ${
-                  isFocused ? "ring-4 ring-white ring-offset-2 ring-offset-gray-950" : ""
-                }`}
-              >
+        <TVFocusZone id="kds-tickets">
+          <div className="grid gap-2.5" style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}>
+            {visibleTickets.map((ticket, index) => {
+              const age = Math.floor((now - new Date(ticket.createdAt).getTime()) / 60000);
+              const isRevised = !!ticket.revisedAt;
+              const tone = isRevised
+                ? "border-red-500 bg-red-950/50 animate-pulse"
+                : age >= 20
+                  ? "border-red-500 bg-red-950/40"
+                  : age >= 10
+                    ? "border-amber-500 bg-amber-950/30"
+                    : "border-emerald-600 bg-emerald-950/20";
+              return (
+                <TVFocusable
+                  key={ticket.id}
+                  id={ticket.id}
+                  autoFocus={index === 0}
+                  onSelect={() => (isRevised ? acknowledge(ticket.id) : bumpTicket(ticket))}
+                  clickable={false}
+                  className={`flex flex-col gap-1.5 rounded-xl border-2 p-2.5 text-sm outline-none ${tone}`}
+                  focusClassName="ring-4 ring-white ring-offset-2 ring-offset-gray-950"
+                >
                 {isRevised && (
                   <button
                     onClick={() => acknowledge(ticket.id)}
@@ -297,11 +257,13 @@ export function KdsClient({
                     );
                   })}
                 </ul>
-              </div>
-            );
-          })}
-        </div>
+              </TVFocusable>
+              );
+            })}
+          </div>
+        </TVFocusZone>
       )}
-    </div>
+      </div>
+    </TVNavigationProvider>
   );
 }
