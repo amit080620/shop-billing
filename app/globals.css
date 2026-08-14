@@ -1,47 +1,80 @@
 @import "tailwindcss";
 
 :root {
-  /* Base surfaces */
-  --background: #f7f6f2;
+  /* Base surfaces — clean, cool neutrals (not warm cream) for a more
+     professional, product-grade feel */
+  --background: #f8f9fa;
   --surface: #ffffff;
-  --foreground: #1a1d1e;
-  --muted: #6b7075;
-  --border: #e7e4dd;
+  --foreground: #111827;
+  --muted: #6b7280;
+  --border: #e5e7eb;
 
-  /* Brand — deep teal, warm and trustworthy */
-  --brand: #0f6b5c;
-  --brand-dark: #0a4f44;
-  --brand-light: #178a76;
-  --brand-soft: #e3f2ee;
+  /* Brand — deep teal. This IS the brand; dark mode below keeps this
+     same hue (just brightened for contrast) rather than switching to
+     an unrelated color, so the product feels like the same brand in
+     both themes. */
+  --brand: #0d9488;
+  --brand-dark: #0f766e;
+  --brand-light: #14b8a6;
+  --brand-soft: #ecfdf9;
 
-  /* Credit / attention — warm amber-orange, not alarmist red */
-  --credit: #b3541e;
-  --credit-soft: #fbebe0;
-  --danger: #c0362c;
+  /* Secondary accent — warm amber, used deliberately and sparingly
+     (a highlight color, not a second brand color) */
+  --secondary: #f97316;
+  --secondary-soft: #fff2e5;
+
+  /* Semantic status colors */
+  --success: #16a34a;
+  --success-soft: #f0fdf4;
+  --warning: #d97706;
+  --warning-soft: #fffbeb;
+  --info: #2563eb;
+  --info-soft: #eff6ff;
+  --danger: #dc2626;
+  --danger-soft: #fef2f2;
+
+  /* Credit / amount-owed — kept distinct from --warning since it means
+     something specific (money owed), even though visually close */
+  --credit: #c2410c;
+  --credit-soft: #fff1e8;
+
+  --radius-sm: 0.5rem;
+  --radius: 0.75rem;
+  --radius-lg: 1rem;
 }
 
 .dark {
   /* Base surfaces — soft charcoal, not pure black (easier on the eyes,
      avoids OLED smearing, and keeps shadows/borders visible) */
-  --background: #15171a;
-  --surface: #1e2124;
-  --foreground: #eef0f0;
-  --muted: #9aa0a6;
-  --border: #2d3236;
+  --background: #0f1214;
+  --surface: #1a1d20;
+  --foreground: #f1f3f4;
+  --muted: #9ca3af;
+  --border: #2a2f33;
 
-  /* Brand — teal reads muddy on a dark surface, so dark mode switches the
-     accent to saffron/gold instead (also the more culturally resonant
-     choice) — every primary button, chip, and highlight follows from here. */
-  --brand: #f2a930;
-  --brand-dark: #b6791a;
-  --brand-light: #ffc966;
-  --brand-soft: #3d2f14;
+  /* Brand — same teal hue as light mode, brightened so it reads
+     clearly against a dark surface. This is the fix for "dark mode
+     shouldn't feel like a different brand" — every primary button,
+     chip, and highlight still traces back to the one brand color. */
+  --brand: #2dd4bf;
+  --brand-dark: #14b8a6;
+  --brand-light: #5eead4;
+  --brand-soft: #0f2e2a;
 
-  /* Credit / attention — kept a distinct warm coral-red so it doesn't
-     blend into the new saffron brand color */
-  --credit: #e8674f;
-  --credit-soft: #3a221c;
-  --danger: #e0665a;
+  --secondary: #fb923c;
+  --secondary-soft: #3a2412;
+
+  --success: #4ade80;
+  --success-soft: #0f2a17;
+  --warning: #fbbf24;
+  --warning-soft: #332405;
+  --info: #60a5fa;
+  --info-soft: #0f2038;
+  --danger: #f87171;
+  --danger-soft: #341313;
+
+  --credit: #f0995f;
+  --credit-soft: #3a2414;
 }
 
 @theme inline {
@@ -54,14 +87,42 @@
   --color-brand-dark: var(--brand-dark);
   --color-brand-light: var(--brand-light);
   --color-brand-soft: var(--brand-soft);
+  --color-secondary: var(--secondary);
+  --color-secondary-soft: var(--secondary-soft);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
   --color-credit: var(--credit);
   --color-credit-soft: var(--credit-soft);
   --color-danger: var(--danger);
-  --font-sans: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI",
+  --color-danger-soft: var(--danger-soft);
+  --font-sans: "Plus Jakarta Sans", "Noto Sans Devanagari", -apple-system, BlinkMacSystemFont, "Segoe UI",
     Roboto, Helvetica, Arial, sans-serif;
-  --shadow-sm: 0 1px 2px hsl(220 20% 40% / 0.06), 0 1px 1px hsl(220 20% 40% / 0.04);
-  --shadow-md: 0 4px 10px hsl(220 20% 40% / 0.08), 0 2px 4px hsl(220 20% 40% / 0.05);
-  --shadow-lg: 0 12px 24px hsl(220 20% 40% / 0.12), 0 4px 8px hsl(220 20% 40% / 0.06);
+  --shadow-sm: 0 1px 2px hsl(220 20% 15% / 0.06), 0 1px 1px hsl(220 20% 15% / 0.04);
+  --shadow-md: 0 4px 10px hsl(220 20% 15% / 0.08), 0 2px 4px hsl(220 20% 15% / 0.05);
+  --shadow-lg: 0 12px 24px hsl(220 20% 15% / 0.12), 0 4px 8px hsl(220 20% 15% / 0.06);
+
+  /* Motion tokens — one signature curve (fast start, soft landing) used
+     for every entrance in the app instead of picking a new easing per
+     component. Exits use a mirrored ease-in. */
+  --ease-signature: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-exit: cubic-bezier(0.4, 0, 1, 1);
+  --duration-micro: 120ms;
+  --duration-standard: 240ms;
+  --duration-emphasis: 480ms;
+}
+
+/* Devanagari (Hindi/Marathi) sits taller than Latin at the same
+   font-size — matras (vowel marks) above and below the baseline need
+   more breathing room or adjacent lines visually collide. This only
+   applies when the page is actually set to Hindi/Marathi (:lang), so
+   the English UI's line-height is completely unaffected. */
+:lang(hi),
+:lang(mr) {
+  line-height: 1.65;
 }
 
 * {
@@ -71,7 +132,8 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11", "tnum";
+  font-variant-numeric: tabular-nums;
 }
 
 /* Global tactile feedback — every button/link gets a smooth, snappy
@@ -104,7 +166,7 @@ textarea {
   }
 }
 .page-enter {
-  animation: fade-in-up 260ms cubic-bezier(0.16, 1, 0.3, 1);
+  animation: fade-in-up var(--duration-standard) var(--ease-signature);
 }
 
 @media print {
@@ -115,24 +177,41 @@ textarea {
 
 @layer components {
   .btn-primary {
-    border-radius: 0.75rem;
+    border-radius: var(--radius);
     padding: 0.875rem 1.25rem;
     font-weight: 600;
     color: white;
     box-shadow: var(--shadow-md);
     background: linear-gradient(135deg, var(--brand-light), var(--brand-dark));
+    transition: box-shadow 0.15s ease, transform 0.1s ease, filter 0.15s ease;
+  }
+  .btn-primary:hover:not(:disabled) {
+    filter: brightness(1.05);
+    box-shadow: var(--shadow-lg);
+  }
+  .btn-primary:focus-visible {
+    outline: 2px solid var(--brand-light);
+    outline-offset: 2px;
   }
   .btn-primary:disabled {
     opacity: 0.6;
   }
   .btn-primary-sm {
-    border-radius: 0.5rem;
+    border-radius: var(--radius-sm);
     padding: 0.375rem 0.875rem;
     font-size: 0.875rem;
     font-weight: 500;
     color: white;
     box-shadow: var(--shadow-sm);
     background: linear-gradient(135deg, var(--brand-light), var(--brand-dark));
+    transition: box-shadow 0.15s ease, filter 0.15s ease;
+  }
+  .btn-primary-sm:hover:not(:disabled) {
+    filter: brightness(1.05);
+  }
+  .btn-primary-sm:focus-visible {
+    outline: 2px solid var(--brand-light);
+    outline-offset: 2px;
   }
   .btn-primary-sm:disabled {
     opacity: 0.6;
@@ -152,7 +231,7 @@ textarea {
   }
 }
 .toast-enter {
-  animation: toast-in 0.22s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+  animation: toast-in var(--duration-standard) var(--ease-signature);
 }
 
 /* A subtle, consistent "the app noticed your tap" press-feedback on
@@ -209,4 +288,23 @@ input:focus,
 select:focus,
 textarea:focus {
   box-shadow: 0 0 0 3px var(--brand-soft);
+}
+
+/* Accessibility: prefers-reduced-motion — every animated moment above
+   gets a static fallback here rather than a single global "off"
+   switch, per the motion-system requirement. Vestibular-disorder users
+   and anyone who's set this OS-level preference get instant state
+   changes with no motion, while everyone else keeps the full effect. */
+@media (prefers-reduced-motion: reduce) {
+  .page-enter,
+  .toast-enter,
+  .spin {
+    animation: none !important;
+  }
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
 }

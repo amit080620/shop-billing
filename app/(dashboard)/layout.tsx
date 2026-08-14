@@ -28,7 +28,7 @@ export default async function DashboardLayout({
 
       <header
         className="no-print sticky top-0 z-10 border-b border-border bg-surface/90 px-4 py-3 backdrop-blur-md md:hidden"
-        style={{ boxShadow: "0 1px 12px hsl(220 20% 40% / 0.05)" }}
+        style={{ boxShadow: "var(--shadow-sm)" }}
       >
         <div className="mx-auto flex max-w-lg items-center gap-3">
           {session.shopLogoUrl ? (
@@ -41,7 +41,10 @@ export default async function DashboardLayout({
               className="h-9 w-9 shrink-0 rounded-full object-contain ring-2 ring-brand-soft"
             />
           ) : (
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand text-sm font-semibold text-white">
+            <div
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-semibold text-white shadow-sm"
+              style={{ background: "linear-gradient(135deg, var(--brand-light), var(--brand-dark))" }}
+            >
               {session.shopName.charAt(0).toUpperCase()}
             </div>
           )}
