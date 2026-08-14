@@ -1664,6 +1664,8 @@ export interface Database {
           cancelled_at: string | null;
           cancel_reason: string | null;
           revised_at: string | null;
+          first_ready_at: string | null;
+          served_at: string | null;
           reservation_id: string | null;
           created_at: string;
         };
@@ -1695,6 +1697,8 @@ export interface Database {
           cancelled_at?: string | null;
           cancel_reason?: string | null;
           revised_at?: string | null;
+          first_ready_at?: string | null;
+          served_at?: string | null;
           reservation_id?: string | null;
           created_at?: string;
         };
@@ -1726,6 +1730,8 @@ export interface Database {
           cancelled_at?: string | null;
           cancel_reason?: string | null;
           revised_at?: string | null;
+          first_ready_at?: string | null;
+          served_at?: string | null;
           reservation_id?: string | null;
           created_at?: string;
         };
@@ -1750,6 +1756,8 @@ export interface Database {
           line_total: number;
           kot_printed: boolean;
           status: "pending" | "ready" | "served" | "cancelled";
+          ready_at: string | null;
+          served_at: string | null;
           created_at: string;
         };
         Insert: {
@@ -1767,6 +1775,8 @@ export interface Database {
           line_total: number;
           kot_printed?: boolean;
           status?: "pending" | "ready" | "served" | "cancelled";
+          ready_at?: string | null;
+          served_at?: string | null;
           created_at?: string;
         };
         Update: {
@@ -1784,6 +1794,8 @@ export interface Database {
           line_total?: number;
           kot_printed?: boolean;
           status?: "pending" | "ready" | "served" | "cancelled";
+          ready_at?: string | null;
+          served_at?: string | null;
           created_at?: string;
         };
         Relationships: [

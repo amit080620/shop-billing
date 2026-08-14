@@ -1,14 +1,10 @@
 @import "tailwindcss";
 
 :root {
-  /* Base surfaces — clean, cool neutrals (not warm cream) for a more
-     professional, product-grade feel */
-  --background: #f8f9fa;
+  /* Base surfaces — exact values from The Ray Bill brand spec */
+  --background: #f7f8fc;
   --surface: #ffffff;
-  /* Elevation step 2 — a surface raised above another surface (e.g. an
-     inner card inside a page section). Subtly distinct from --surface
-     without needing a heavier shadow to read as "above" it. */
-  --surface-2: #f3f4f6;
+  --surface-2: #f2f4f9;
   /* Overlay — the true top layer: modals, dropdowns, popovers. */
   --overlay: #ffffff;
   /* The top-edge highlight — a 1px inset line that catches light on
@@ -16,81 +12,85 @@
      and a soft shadow, this is what actually reads as "3D" rather
      than "flat card with a shadow under it". */
   --edge-highlight: rgba(255, 255, 255, 0.6);
-  --foreground: #111827;
-  --muted: #6b7280;
-  --border: #e5e7eb;
+  --foreground: #373435;
+  --muted: #737078;
+  --border: #e3e6ef;
 
-  /* Brand — derived from the actual logo's real colors (sampled
-     directly from the PNG: a blue-to-magenta gradient, #2950a3 →
-     #c9187a). Previously this was an unrelated teal, which meant the
-     logo and the rest of the app were visually two different brands
-     stapled together — this is the fix for that. */
-  --brand: #3454a8;
-  --brand-dark: #253f85;
-  --brand-light: #5170c2;
-  --brand-soft: #eef1fa;
+  /* Brand — exact hex from The Ray's official brand spec (logo source
+     of truth), a Blue → Purple → Magenta family. Previously
+     approximated by sampling logo pixels; now using the authoritative
+     values so every button/icon/gradient traces to the real spec. */
+  --brand: #0427f3;
+  --brand-dark: #0427f3;
+  --brand-light: #6a2bbf;
+  --brand-soft: #eef0fe;
+  --ray-blue: #0427f3;
+  --ray-purple: #6a2bbf;
+  --ray-magenta: #cd127b;
+  --ray-gradient: linear-gradient(135deg, #0427f3 0%, #6a2bbf 52%, #cd127b 100%);
 
-  /* Secondary accent — the logo's magenta, used deliberately and
-     sparingly (matches the arrow in the mark) */
-  --secondary: #c9187a;
+  /* Secondary accent — the brand's magenta */
+  --secondary: #cd127b;
   --secondary-soft: #fce8f2;
 
-  /* Semantic status colors */
-  --success: #16a34a;
-  --success-soft: #f0fdf4;
-  --warning: #d97706;
-  --warning-soft: #fffbeb;
+  /* Semantic status colors — exact brand spec values */
+  --success: #24875d;
+  --success-soft: #f0faf5;
+  --warning: #b87519;
+  --warning-soft: #fef8ef;
   --info: #2563eb;
   --info-soft: #eff6ff;
-  --danger: #dc2626;
-  --danger-soft: #fef2f2;
+  --danger: #c21e62;
+  --danger-soft: #fdeef4;
 
   /* Credit / amount-owed — kept distinct from --warning since it means
      something specific (money owed), even though visually close */
-  --credit: #c2410c;
-  --credit-soft: #fff1e8;
+  --credit: #b87519;
+  --credit-soft: #fef8ef;
 
-  --radius-sm: 0.5rem;
-  --radius: 0.75rem;
-  --radius-lg: 1rem;
+  --radius-sm: 10px;
+  --radius: 14px;
+  --radius-lg: 18px;
+  --radius-xl: 24px;
 }
 
 .dark {
   /* Base surfaces — soft charcoal, not pure black (easier on the eyes,
      avoids OLED smearing, and keeps shadows/borders visible) */
-  --background: #0f1214;
-  --surface: #1a1d20;
+  --background: #121116;
+  --surface: #1a181d;
   /* Elevation step 2 — lighter than --surface, per "depth in dark mode
      comes from surfaces getting lighter, not from harder shadows" */
-  --surface-2: #22262a;
-  --overlay: #24282c;
+  --surface-2: #242127;
+  --overlay: #242127;
   --edge-highlight: rgba(255, 255, 255, 0.06);
-  --foreground: #f1f3f4;
-  --muted: #9ca3af;
-  --border: #2a2f33;
+  --foreground: #f7f5f7;
+  --muted: #a8a1aa;
+  --border: #35313a;
 
-  /* Brand — same blue-to-magenta family as light mode, brightened for
-     a dark surface. Still traces back to the actual logo's colors,
-     not an unrelated hue swap. */
-  --brand: #7b96e0;
-  --brand-dark: #5b7bc9;
-  --brand-light: #a3b8ed;
-  --brand-soft: #1a2340;
+  /* Brand — identical to light mode per the brand spec ("the brand
+     gradient remains the same in both themes"). #0427F3 is already a
+     vivid, saturated blue that reads clearly on a dark surface, so no
+     brightened variant is needed here. */
+  --brand: #0427f3;
+  --brand-dark: #0427f3;
+  --brand-light: #6a2bbf;
+  --brand-soft: #1c1b3d;
 
-  --secondary: #e94d9e;
-  --secondary-soft: #3d1729;
+  --secondary: #cd127b;
+  --secondary-soft: #3a1428;
 
-  --success: #4ade80;
-  --success-soft: #0f2a17;
-  --warning: #fbbf24;
-  --warning-soft: #332405;
+  --success: #2ea373;
+  --success-soft: #102420;
+  --warning: #d68f2e;
+  --warning-soft: #2c2010;
   --info: #60a5fa;
   --info-soft: #0f2038;
-  --danger: #f87171;
-  --danger-soft: #341313;
+  --danger: #dd3d7e;
+  --danger-soft: #331520;
 
-  --credit: #f0995f;
-  --credit-soft: #3a2414;
+  --credit: #d68f2e;
+  --credit-soft: #2c2010;
 }
 
 @theme inline {
@@ -466,6 +466,63 @@ textarea:focus {
   .illus-float-1,
   .illus-float-2,
   .illus-pulse {
+    animation: none !important;
+  }
+}
+
+/* ─── Ray UI Motion Pack ──────────────────────────────────────────────
+   Added as new, separate utility classes (not replacing the existing
+   page-enter/toast-in animations) so nothing already using those is
+   affected. These become available for the Dashboard/Billing/etc.
+   rollout in subsequent steps. */
+.ray-enter { animation: ray-fade-up 0.45s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.ray-pop { animation: ray-pop 0.55s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.ray-success { animation: ray-success 0.55s cubic-bezier(0.22, 1, 0.36, 1) both; }
+
+@keyframes ray-fade-up {
+  from { opacity: 0; transform: translateY(10px) scale(0.985); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes ray-pop {
+  0% { opacity: 0; transform: scale(0.86); }
+  65% { opacity: 1; transform: scale(1.045); }
+  100% { opacity: 1; transform: scale(1); }
+}
+@keyframes ray-success {
+  0% { transform: scale(0.88); opacity: 0; }
+  65% { transform: scale(1.08); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+@keyframes ray-spin { to { transform: rotate(360deg); } }
+@keyframes ray-shimmer {
+  from { background-position: 200% 0; }
+  to { background-position: -200% 0; }
+}
+@keyframes ray-shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
+}
+
+.ray-skeleton {
+  background: linear-gradient(90deg, var(--surface-2) 25%, var(--surface) 37%, var(--surface-2) 63%);
+  background-size: 400% 100%;
+  animation: ray-shimmer 1.25s ease infinite;
+  border-radius: var(--radius-sm);
+}
+
+.ray-brand-gradient-text {
+  background: var(--ray-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ray-enter,
+  .ray-pop,
+  .ray-success,
+  .ray-skeleton {
     animation: none !important;
   }
 }

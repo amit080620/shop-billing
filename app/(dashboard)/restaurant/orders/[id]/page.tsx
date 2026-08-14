@@ -16,7 +16,7 @@ export default async function OrderPage({
   const { data: order } = await admin
     .from("restaurant_orders")
     .select(
-      "id, order_number, status, subtotal, discount_amount, cgst_amount, sgst_amount, igst_amount, round_off_amount, total, order_type, waiter_name, reservation_id, restaurant_tables ( name )",
+      "id, order_number, status, subtotal, discount_amount, cgst_amount, sgst_amount, igst_amount, round_off_amount, total, order_type, waiter_name, reservation_id, created_at, first_ready_at, served_at, settled_at, restaurant_tables ( name )",
     )
     .eq("id", id)
     .eq("shop_id", session.shopId)
@@ -64,6 +64,10 @@ export default async function OrderPage({
         orderType: order.order_type,
         waiterName: order.waiter_name,
         reservationTokenAmount: linkedReservation ? Number(linkedReservation.token_amount) : 0,
+        createdAt: order.created_at,
+        firstReadyAt: order.first_ready_at,
+        servedAt: order.served_at,
+        settledAt: order.settled_at,
       }}
       items={(items ?? []).map((i) => ({
         id: i.id,

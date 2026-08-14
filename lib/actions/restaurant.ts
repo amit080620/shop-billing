@@ -572,7 +572,15 @@ export async function markItemReadyAction(itemId: string): Promise<{ error?: str
   const order = item ? (Array.isArray(item.restaurant_orders) ? item.restaurant_orders[0] : item.restaurant_orders) : null;
   if (!item || !order || order.shop_id !== session.shopId) return { error: "Item not found" };
 
-  await admin.from("restaurant_order_items").update({ status: "ready" }).eq("id", itemId);
+  const readyTime = new Date().toISOString();
+  await admin.from("restaurant_order_items").update({ status: "ready", ready_at: readyTime }).eq("id", itemId);
+  // first_ready_at is set once — the first item to become ready marks
+  // "kitchen started finishing this order"; later items don't overwrite it.
+  await admin
+    .from("restaurant_orders")
+    .update({ first_ready_at: readyTime })
+    .eq("id", item.order_id)
+    .is("first_ready_at", null);
   revalidatePath("/restaurant-kds");
   revalidatePath("/restaurant");
   revalidatePath(`/restaurant/orders/${item.order_id}`);
@@ -590,7 +598,21 @@ export async function markItemServedAction(itemId: string, orderId: string): Pro
     .single();
   if (!order) return { error: "Order not found" };
 
-  await admin.from("restaurant_order_items").update({ status: "served" }).eq("id", itemId).eq("order_id", orderId);
+  const servedTime = new Date().toISOString();
+  await admin.from("restaurant_order_items").update({ status: "served", served_at: servedTime }).eq("id", itemId).eq("order_id", orderId);
+
+  // Order-level served_at only makes sense once EVERY item (that wasn't
+  // cancelled) has actually been served — check the rest of the order
+  // before marking the whole thing "served".
+  const { data: remainingItems } = await admin
+    .from("restaurant_order_items")
+    .select("status")
+    .eq("order_id", orderId);
+  const allServed = (remainingItems ?? []).every((i) => i.status === "served" || i.status === "cancelled");
+  if (allServed) {
+    await admin.from("restaurant_orders").update({ served_at: servedTime }).eq("id", orderId).is("served_at", null);
+  }
+
   revalidatePath("/restaurant-kds");
   revalidatePath("/restaurant");
   revalidatePath(`/restaurant/orders/${orderId}`);

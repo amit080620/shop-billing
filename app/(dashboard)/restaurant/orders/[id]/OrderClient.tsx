@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { X, Bell, Check, ShoppingCart, Ticket } from "lucide-react";
+import { X, Bell, Check, ShoppingCart, Ticket, ArrowLeft } from "lucide-react";
 import {
   addOrderItemAction,
   removeOrderItemAction,
@@ -41,6 +41,10 @@ type Order = {
   roundOffAmount: number;
   tableName: string;
   reservationTokenAmount: number;
+  createdAt: string;
+  firstReadyAt: string | null;
+  servedAt: string | null;
+  settledAt: string | null;
 };
 
 export function OrderClient({
@@ -143,6 +147,8 @@ export function OrderClient({
           {t("order.backToTables")}
         </Link>
       </div>
+
+      <OrderTimeline order={order} />
 
       {!isReadOnly && (
         <div className="no-print flex gap-2">
@@ -628,6 +634,7 @@ function SettleModal({
   t: Translator;
 }) {
   const [discountValue, setDiscountValue] = useState(0);
+  const [step, setStep] = useState<"review" | "payment">("review");
   const [splitCount, setSplitCount] = useState(1);
   const netTotal = Math.max(0, Math.round(total - discountValue));
   const stillDue = Math.max(0, netTotal - reservationTokenAmount);
@@ -663,18 +670,63 @@ function SettleModal({
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 sm:items-center">
       <div className="w-full max-w-sm rounded-t-2xl bg-surface p-5 sm:rounded-2xl">
-        <p className="text-sm font-semibold text-foreground">{t("order.settleBill")}</p>
-        <label className="mt-3 flex flex-col gap-1 text-xs text-muted">
-          {t("order.discountOptional")}
-          <input
-            type="number"
-            min={0}
-            value={discountValue}
-            onChange={(e) => setDiscountValue(Number(e.target.value) || 0)}
-            className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-brand"
-          />
-        </label>
+        {step === "review" ? (
+          <>
+            <p className="text-sm font-semibold text-foreground">{t("order.settleBill")}</p>
+            <p className="mt-0.5 text-xs text-muted">Review the bill and apply a discount if needed — the customer should see the final amount before paying.</p>
 
+            <div className="mt-3 rounded-lg border border-border px-3.5 py-3">
+              <div className="flex justify-between text-sm">
+                <span className="text-muted">Bill amount</span>
+                <span className={discountValue > 0 ? "text-muted line-through" : "font-semibold text-foreground"}>{formatMoney(total)}</span>
+              </div>
+              {discountValue > 0 && (
+                <div className="mt-1 flex justify-between text-sm">
+                  <span className="text-muted">After discount</span>
+                  <span className="font-semibold text-brand-dark">{formatMoney(netTotal)}</span>
+                </div>
+              )}
+            </div>
+
+            <label className="mt-3 flex flex-col gap-1 text-xs text-muted">
+              {t("order.discountOptional")}
+              <input
+                type="number"
+                min={0}
+                value={discountValue}
+                onChange={(e) => setDiscountValue(Number(e.target.value) || 0)}
+                className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-brand"
+              />
+            </label>
+
+            <div className="mt-4 flex gap-2">
+              <button
+                onClick={() => {
+                  setPayments([{ method: "cash", amount: stillDue }]);
+                  setStep("payment");
+                }}
+                className="btn-primary flex-1 text-center"
+              >
+                {discountValue > 0 ? "Show updated bill →" : "Proceed to payment →"}
+              </button>
+              <button onClick={onClose} className="rounded-lg border border-border px-4 py-2 text-sm font-medium text-muted">
+                {t("common.cancel")}
+              </button>
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="flex items-center gap-2">
+              <button onClick={() => setStep("review")} className="text-muted">
+                <ArrowLeft size={16} />
+              </button>
+              <p className="text-sm font-semibold text-foreground">Collect payment</p>
+            </div>
+            {discountValue > 0 && (
+              <div className="mt-2 rounded-lg bg-brand-soft px-3.5 py-2.5 text-xs text-brand-dark">
+                Final bill after {formatMoney(discountValue)} discount: <span className="font-semibold">{formatMoney(netTotal)}</span> — show this to the customer before collecting payment.
+              </div>
+            )}
         <label className="mt-1 flex flex-col gap-1 text-xs text-muted">
           {t("order.splitAmong")}
           <div className="flex items-center gap-2">
@@ -727,7 +779,7 @@ function SettleModal({
         )}
         <div className="mt-3 flex justify-between text-sm">
           <span className="text-muted">{t("order.billTotal")}</span>
-          <span className="font-semibold text-foreground">{formatMoney(total)}</span>
+          <span className="font-semibold text-foreground">{formatMoney(netTotal)}</span>
         </div>
         <div className="flex justify-between text-sm">
           <span className="text-muted">{t("order.collectingNow")}</span>
@@ -747,6 +799,8 @@ function SettleModal({
             {t("common.cancel")}
           </button>
         </div>
+          </>
+        )}
       </div>
     </div>
   );
@@ -863,6 +917,29 @@ function MergeModal({
           {t("common.cancel")}
         </button>
       </div>
+    </div>
+  );
+}
+
+function OrderTimeline({ order }: { order: Order }) {
+  const steps: { label: string; time: string | null }[] = [
+    { label: "Ordered", time: order.createdAt },
+    { label: "Ready", time: order.firstReadyAt },
+    { label: "Served", time: order.servedAt },
+    { label: "Paid", time: order.settledAt },
+  ];
+  const fmt = (iso: string) =>
+    new Date(iso).toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit", hour12: true });
+
+  return (
+    <div className="no-print flex items-center gap-1 overflow-x-auto rounded-lg border border-border bg-surface px-3 py-2 text-xs">
+      {steps.map((s, i) => (
+        <div key={s.label} className="flex shrink-0 items-center gap-1">
+          {i > 0 && <span className="mx-1 h-px w-3 bg-border" />}
+          <span className={s.time ? "font-medium text-foreground" : "text-muted"}>{s.label}</span>
+          {s.time && <span className="text-muted">{fmt(s.time)}</span>}
+        </div>
+      ))}
     </div>
   );
 }

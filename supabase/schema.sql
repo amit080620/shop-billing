@@ -1938,3 +1938,19 @@ alter table bills add column if not exists round_off_amount numeric(4, 2) not nu
 -- — the whole-rupee round-off rule added there never applied here,
 -- which is why restaurant bills kept showing paise amounts.
 alter table restaurant_orders add column if not exists round_off_amount numeric(4, 2) not null default 0;
+
+-- ─── Real order-lifecycle timestamps ─────────────────────────────────────
+-- Previously only created_at/settled_at/cancelled_at existed at the order
+-- level, and items only tracked their CURRENT status (pending/ready/
+-- served) with no record of WHEN each transition happened. This meant
+-- "how long did the kitchen take" or "when was this actually served"
+-- could never be answered — only "what's the status right now".
+alter table restaurant_order_items add column if not exists ready_at timestamptz;
+alter table restaurant_order_items add column if not exists served_at timestamptz;
+
+-- Order-level "first ready" and "fully served" markers — set once, the
+-- first time any item on the order reaches that state, so the order
+-- list/detail screen can show one clear timeline without joining and
+-- aggregating item timestamps on every read.
+alter table restaurant_orders add column if not exists first_ready_at timestamptz;
+alter table restaurant_orders add column if not exists served_at timestamptz;

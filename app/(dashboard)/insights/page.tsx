@@ -15,8 +15,8 @@ export default async function InsightsPage() {
   const now = new Date();
   const last30 = new Date(now);
   last30.setDate(last30.getDate() - 30);
-  const last60 = new Date(now);
-  last60.setDate(last60.getDate() - 60);
+  const last30ForDeadStock = new Date(now);
+  last30ForDeadStock.setDate(last30ForDeadStock.getDate() - 30);
 
   const [{ data: products }, { data: recentBills }, { data: olderBills }, { data: recentOrders }, { data: olderOrders }, { data: recentRentals }, { data: olderRentals }] = await Promise.all([
     admin
@@ -29,14 +29,14 @@ export default async function InsightsPage() {
       .eq("shop_id", session.shopId)
       .eq("status", "active")
       .gte("created_at", last30.toISOString()),
-    // Wider 60-day window, used only to decide what counts as "still selling"
+    // Wider 30-day window, used only to decide what counts as "still selling"
     // for the dead-stock check below.
     admin
       .from("bills")
       .select("id")
       .eq("shop_id", session.shopId)
       .eq("status", "active")
-      .gte("created_at", last60.toISOString()),
+      .gte("created_at", last30ForDeadStock.toISOString()),
     // Restaurant orders and rentals live in their own tables, never
     // `bills` — without these, a restaurant/rental shop's insights would
     // only ever show "nothing sells" and mark everything as dead stock.
@@ -51,7 +51,7 @@ export default async function InsightsPage() {
       .select("id")
       .eq("shop_id", session.shopId)
       .eq("status", "settled")
-      .gte("settled_at", last60.toISOString()),
+      .gte("settled_at", last30ForDeadStock.toISOString()),
     admin
       .from("rentals")
       .select("id")
@@ -63,7 +63,7 @@ export default async function InsightsPage() {
       .select("id")
       .eq("shop_id", session.shopId)
       .neq("status", "cancelled")
-      .gte("created_at", last60.toISOString()),
+      .gte("created_at", last30ForDeadStock.toISOString()),
   ]);
 
   const recentOrderIds = (recentOrders ?? []).map((o) => o.id);
@@ -112,7 +112,7 @@ export default async function InsightsPage() {
     .sort((a, b) => b.revenue - a.revenue)
     .slice(0, 10);
 
-  // Dead stock — tracked items sitting with stock but no sale in 60 days.
+  // Dead stock — tracked items sitting with stock but no sale in 30 days.
   const soldRecentlyIds = new Set(
     [...(soldWithin60 ?? []), ...(soldViaOrders60 ?? []), ...(soldViaRentals60 ?? [])]
       .map((i) => i.product_id)
@@ -174,7 +174,7 @@ export default async function InsightsPage() {
 
       <section className="flex flex-col gap-2">
         <div className="flex items-center justify-between">
-          <h2 className="flex items-center gap-1.5 text-sm font-semibold text-foreground"><TrendingDown size={14} /> Dead stock (no sale in 60+ days)</h2>
+          <h2 className="flex items-center gap-1.5 text-sm font-semibold text-foreground"><TrendingDown size={14} /> Dead stock (no sale in 30+ days)</h2>
           {totalDeadValue > 0 && (
             <span className="text-xs text-credit">{formatMoney(totalDeadValue)} tied up</span>
           )}

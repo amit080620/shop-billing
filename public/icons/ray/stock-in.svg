@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" fill="none"><defs>
+      <linearGradient id="ray" x1="8" y1="8" x2="56" y2="56"><stop stop-color="#0427F3"/><stop offset=".52" stop-color="#6A2BBF"/><stop offset="1" stop-color="#CD127B"/></linearGradient>
+      <linearGradient id="soft" x1="8" y1="8" x2="56" y2="56"><stop stop-color="#A8D8FF"/><stop offset=".5" stop-color="#9B76E1"/><stop offset="1" stop-color="#FF7AB8"/></linearGradient>
+      <filter id="shadow" x="-50%" y="-50%" width="200%" height="220%"><feDropShadow dx="0" dy="4" stdDeviation="3" flood-opacity=".18"/></filter>
+    </defs><title>Stock In</title><g filter="url(#shadow)"><path d="M9 23l23-12 23 12-23 12z" fill="#F5F6FA"/><path d="M9 23v25l23 12V35z" fill="#CDD1DB"/><path d="M55 23v25L32 60V35z" fill="#ADB3C1"/><path d="M32 11v24" stroke="url(#ray)" stroke-width="3"/><animateTransform attributeName="transform" type="translate" values="-4 0;0 0;0 0" keyTimes="0;.7;1" dur="1s" repeatCount="indefinite"/></g></svg>
