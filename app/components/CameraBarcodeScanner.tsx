@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useRef, useState } from "react";
 import type { Html5Qrcode as Html5QrcodeType } from "html5-qrcode";
+import { Camera } from "lucide-react";
 
 // A browser page can never programmatically open Chrome's permission
 // dialog or site-settings screen — that's a deliberate security boundary,
@@ -9,7 +10,7 @@ import type { Html5Qrcode as Html5QrcodeType } from "html5-qrcode";
 // (or Chrome auto-blocked) camera access for a site, only the person can
 // re-enable it, via the steps in this message.
 const PERMISSION_HELP =
-  "Camera access is blocked for this site. Tap the 🔒 or ⓘ icon next to the " +
+  "Camera access is blocked for this site. Tap the lock or info icon next to the " +
   "address bar → Permissions/Site settings → Camera → Allow, then reload " +
   "this page and try again.";
 
@@ -19,7 +20,7 @@ function wait(ms: number) {
 
 export function CameraBarcodeScanner({
   onScan,
-  label = "📷 Scan with camera",
+  label = "Scan with camera",
 }: {
   onScan: (code: string) => void;
   label?: string;
@@ -125,9 +126,9 @@ export function CameraBarcodeScanner({
             setError(null);
             setActive(true);
           }}
-          className="self-start text-sm font-medium text-brand"
+          className="flex items-center gap-1.5 self-start text-sm font-medium text-brand"
         >
-          {label}
+          <Camera size={14} /> {label}
         </button>
         {error && <p className="text-xs text-credit">{error}</p>}
       </div>

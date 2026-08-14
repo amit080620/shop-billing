@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { X, Camera, Image as ImageIcon } from "lucide-react";
 
 type CameraCaptureProps = {
   onCapture: (file: Blob) => void;
@@ -79,8 +80,8 @@ export function CameraCapture({ onCapture, onCancel }: CameraCaptureProps) {
   return (
     <div className="fixed inset-0 z-[100] flex flex-col bg-black">
       <div className="flex items-center justify-between p-3">
-        <button onClick={onCancel} className="rounded-full bg-white/10 px-3 py-1.5 text-sm text-white">
-          ✕ Cancel
+        <button onClick={onCancel} className="flex items-center gap-1 rounded-full bg-white/10 px-3 py-1.5 text-sm text-white">
+          <X size={14} /> Cancel
         </button>
         <p className="text-sm text-white/80">Scan bill</p>
         <div className="w-16" />
@@ -89,7 +90,7 @@ export function CameraCapture({ onCapture, onCancel }: CameraCaptureProps) {
       <div className="relative flex-1 overflow-hidden">
         {error ? (
           <div className="flex h-full flex-col items-center justify-center gap-4 p-6 text-center">
-            <p className="text-4xl">📷</p>
+            <Camera size={40} className="text-white/70" />
             <p className="text-sm text-white/90">{error}</p>
           </div>
         ) : (
@@ -102,7 +103,7 @@ export function CameraCapture({ onCapture, onCancel }: CameraCaptureProps) {
           onClick={() => fileInputRef.current?.click()}
           className="flex flex-col items-center gap-1 rounded-full bg-white/10 px-4 py-3 text-xs text-white"
         >
-          🖼️ Gallery
+          <ImageIcon size={16} /> Gallery
         </button>
         {!error && (
           <button

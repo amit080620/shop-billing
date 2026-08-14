@@ -20,19 +20,20 @@
   --muted: #6b7280;
   --border: #e5e7eb;
 
-  /* Brand — deep teal. This IS the brand; dark mode below keeps this
-     same hue (just brightened for contrast) rather than switching to
-     an unrelated color, so the product feels like the same brand in
-     both themes. */
-  --brand: #0d9488;
-  --brand-dark: #0f766e;
-  --brand-light: #14b8a6;
-  --brand-soft: #ecfdf9;
+  /* Brand — derived from the actual logo's real colors (sampled
+     directly from the PNG: a blue-to-magenta gradient, #2950a3 →
+     #c9187a). Previously this was an unrelated teal, which meant the
+     logo and the rest of the app were visually two different brands
+     stapled together — this is the fix for that. */
+  --brand: #3454a8;
+  --brand-dark: #253f85;
+  --brand-light: #5170c2;
+  --brand-soft: #eef1fa;
 
-  /* Secondary accent — warm amber, used deliberately and sparingly
-     (a highlight color, not a second brand color) */
-  --secondary: #f97316;
-  --secondary-soft: #fff2e5;
+  /* Secondary accent — the logo's magenta, used deliberately and
+     sparingly (matches the arrow in the mark) */
+  --secondary: #c9187a;
+  --secondary-soft: #fce8f2;
 
   /* Semantic status colors */
   --success: #16a34a;
@@ -68,17 +69,16 @@
   --muted: #9ca3af;
   --border: #2a2f33;
 
-  /* Brand — same teal hue as light mode, brightened so it reads
-     clearly against a dark surface. This is the fix for "dark mode
-     shouldn't feel like a different brand" — every primary button,
-     chip, and highlight still traces back to the one brand color. */
-  --brand: #2dd4bf;
-  --brand-dark: #14b8a6;
-  --brand-light: #5eead4;
-  --brand-soft: #0f2e2a;
+  /* Brand — same blue-to-magenta family as light mode, brightened for
+     a dark surface. Still traces back to the actual logo's colors,
+     not an unrelated hue swap. */
+  --brand: #7b96e0;
+  --brand-dark: #5b7bc9;
+  --brand-light: #a3b8ed;
+  --brand-soft: #1a2340;
 
-  --secondary: #fb923c;
-  --secondary-soft: #3a2412;
+  --secondary: #e94d9e;
+  --secondary-soft: #3d1729;
 
   --success: #4ade80;
   --success-soft: #0f2a17;

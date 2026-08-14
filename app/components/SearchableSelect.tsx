@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Lang } from "@/lib/i18n/dictionary";
+import { Mic } from "lucide-react";
 
 // Web Speech API isn't in TypeScript's default DOM lib — minimal shape for
 // what's actually used here.
@@ -173,7 +174,7 @@ export function SearchableSelect<T>({
           }`}
           aria-label="Search by voice"
         >
-          🎤
+          <Mic size={14} />
         </button>
       )}
       {voiceError && (

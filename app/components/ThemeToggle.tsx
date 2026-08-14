@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { Sun, Moon } from "lucide-react";
 
 export function ThemeToggle({ theme, compact = false }: { theme: "light" | "dark"; compact?: boolean }) {
   const router = useRouter();
@@ -19,7 +20,7 @@ export function ThemeToggle({ theme, compact = false }: { theme: "light" | "dark
           theme === "light" ? "bg-brand-soft text-brand-dark" : "text-muted"
         }`}
       >
-        ☀️ Light
+        <Sun size={12} className="inline" /> Light
       </button>
       <button
         onClick={() => switchTo("dark")}
@@ -27,7 +28,7 @@ export function ThemeToggle({ theme, compact = false }: { theme: "light" | "dark
           theme === "dark" ? "bg-brand-soft text-brand-dark" : "text-muted"
         }`}
       >
-        🌙 Dark
+        <Moon size={12} className="inline" /> Dark
       </button>
     </div>
   );

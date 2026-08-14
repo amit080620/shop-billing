@@ -4,7 +4,7 @@ import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { PageHeader } from "@/app/components/PageHeader";
 import { EmptyState } from "@/app/components/EmptyState";
 import { formatDateTime } from "@/lib/format";
-import { FlaskConical } from "lucide-react";
+import { FlaskConical, ClipboardList } from "lucide-react";
 
 const STATUS_LABELS: Record<string, string> = {
   booked: "Booked",
@@ -54,8 +54,8 @@ export default async function LabOrdersPage({
         }
         icon={<FlaskConical size={18} strokeWidth={1.8} />}
       />
-      <Link href="/lab/tests" className="text-sm text-muted">
-        📋 Test catalog & packages
+      <Link href="/lab/tests" className="flex items-center gap-1 text-sm text-muted">
+        <ClipboardList size={14} /> Test catalog & packages
       </Link>
 
       <div className="flex gap-2 overflow-x-auto pb-1">
@@ -79,7 +79,7 @@ export default async function LabOrdersPage({
                 <div className="min-w-0">
                   <p className="text-sm font-semibold text-foreground">{o.patient_name}</p>
                   <p className="text-xs text-muted">
-                    #{o.order_number} · {o.collection_type === "home_collection" ? "🏠 Home" : "🚶 Walk-in"} · {formatDateTime(o.created_at)}
+                    #{o.order_number} · {o.collection_type === "home_collection" ? "Home" : "Walk-in"} · {formatDateTime(o.created_at)}
                   </p>
                 </div>
                 <span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-medium ${STATUS_TONE[o.status]}`}>{STATUS_LABELS[o.status]}</span>

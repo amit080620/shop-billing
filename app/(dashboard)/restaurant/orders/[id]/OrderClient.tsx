@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { X, Bell, Check, ShoppingCart, Ticket } from "lucide-react";
 import {
   addOrderItemAction,
   removeOrderItemAction,
@@ -283,8 +284,8 @@ export function OrderClient({
             <div className="flex items-center justify-between">
               <p className="text-sm font-medium text-foreground">{t("order.orderLabel")}</p>
               {initialItems.length > 0 && (
-                <button onClick={() => setCartOpen(false)} className="text-xs text-muted">
-                  ✕ Close
+                <button onClick={() => setCartOpen(false)} className="flex items-center gap-1 text-xs text-muted">
+                  <X size={12} /> Close
                 </button>
               )}
             </div>
@@ -299,10 +300,10 @@ export function OrderClient({
                     <div className="min-w-0 flex-1">
                       <span className="truncate text-sm text-foreground">{item.productName}</span>
                       {item.status === "ready" && (
-                        <span className="ml-2 rounded-full bg-brand-soft px-2 py-0.5 text-[11px] font-medium text-brand-dark">🔔 Ready</span>
+                        <span className="ml-2 flex w-fit items-center gap-0.5 rounded-full bg-brand-soft px-2 py-0.5 text-[11px] font-medium text-brand-dark"><Bell size={9} /> Ready</span>
                       )}
                       {item.status === "served" && (
-                        <span className="ml-2 rounded-full bg-background px-2 py-0.5 text-[11px] font-medium text-muted">✓ Served</span>
+                        <span className="ml-2 flex w-fit items-center gap-0.5 rounded-full bg-background px-2 py-0.5 text-[11px] font-medium text-muted"><Check size={9} /> Served</span>
                       )}
                     </div>
                     {!isReadOnly && item.status !== "served" && item.status !== "cancelled" ? (
@@ -334,7 +335,7 @@ export function OrderClient({
                     )}
                     {!isReadOnly && item.status !== "served" && (
                       <button onClick={() => removeItem(item.id)} className="shrink-0 text-xs text-danger">
-                        ✕
+                        <X size={13} />
                       </button>
                     )}
                   </li>
@@ -360,8 +361,8 @@ export function OrderClient({
             className="flex w-full items-center justify-between px-4 py-2.5 text-sm font-semibold text-white"
             style={{ background: "linear-gradient(135deg, var(--brand-light), var(--brand-dark))" }}
           >
-            <span>
-              🛒 {initialItems.reduce((s, i) => s + i.quantity, 0)} item{initialItems.reduce((s, i) => s + i.quantity, 0) === 1 ? "" : "s"}
+            <span className="flex items-center gap-1">
+              <ShoppingCart size={14} /> {initialItems.reduce((s, i) => s + i.quantity, 0)} item{initialItems.reduce((s, i) => s + i.quantity, 0) === 1 ? "" : "s"}
             </span>
             <span>{formatMoney(order.total)} · ▲ View order</span>
           </button>
@@ -377,7 +378,7 @@ export function OrderClient({
                 {t("order.settle")}
               </button>
               <button onClick={() => setShowCancel(true)} className="rounded-lg border border-danger px-2 py-2.5 text-xs font-medium text-danger">
-                ✕
+                <X size={14} />
               </button>
             </div>
           )}
@@ -711,7 +712,7 @@ function SettleModal({
                 className="flex-1 rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-brand"
               />
               {payments.length > 1 && (
-                <button onClick={() => removePaymentRow(i)} className="text-xs text-danger">✕</button>
+                <button onClick={() => removePaymentRow(i)} className="text-xs text-danger"><X size={13} /></button>
               )}
             </div>
           ))}
@@ -720,7 +721,7 @@ function SettleModal({
 
         {reservationTokenAmount > 0 && (
           <div className="mt-3 flex justify-between text-sm">
-            <span className="text-muted">🎫 Reservation token already paid</span>
+            <span className="flex items-center gap-1 text-muted"><Ticket size={12} /> Reservation token already paid</span>
             <span className="font-semibold text-brand">− {formatMoney(reservationTokenAmount)}</span>
           </div>
         )}

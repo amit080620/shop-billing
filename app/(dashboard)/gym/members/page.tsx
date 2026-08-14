@@ -5,7 +5,7 @@ import { getTranslator } from "@/lib/i18n/server";
 import { PageHeader } from "@/app/components/PageHeader";
 import { EmptyState } from "@/app/components/EmptyState";
 import { MemberRow } from "./MemberRow";
-import { Users } from "lucide-react";
+import { Users, User, ClipboardList, CheckCircle2 } from "lucide-react";
 
 type MembershipRow = {
   id: string;
@@ -74,17 +74,17 @@ export default async function GymMembersPage({
             </Link>
             <Link
               href="/gym/members?mine=1"
-              className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium ${showMineOnly ? "border-brand bg-brand-soft text-brand-dark" : "border-border text-muted"}`}
+              className={`flex shrink-0 items-center gap-1 rounded-full border px-3 py-1.5 text-xs font-medium ${showMineOnly ? "border-brand bg-brand-soft text-brand-dark" : "border-border text-muted"}`}
             >
-              👤 My members
+              <User size={12} /> My members
             </Link>
           </>
         )}
-        <Link href="/gym/plans" className="shrink-0 rounded-full border border-border px-3 py-1.5 text-xs font-medium text-muted">
-          📋 Plans
+        <Link href="/gym/plans" className="flex shrink-0 items-center gap-1 rounded-full border border-border px-3 py-1.5 text-xs font-medium text-muted">
+          <ClipboardList size={12} /> Plans
         </Link>
-        <Link href="/gym/attendance" className="shrink-0 rounded-full border border-border px-3 py-1.5 text-xs font-medium text-muted">
-          ✅ Attendance
+        <Link href="/gym/attendance" className="flex shrink-0 items-center gap-1 rounded-full border border-border px-3 py-1.5 text-xs font-medium text-muted">
+          <CheckCircle2 size={12} /> Attendance
         </Link>
       </div>
 

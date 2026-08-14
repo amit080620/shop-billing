@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { bulkImportProductsAction, type ImportResult } from "@/lib/actions/bulk-import";
 import { downloadCsv } from "@/app/components/downloadCsv";
+import { Download } from "lucide-react";
 
 type Product = {
   name: string;
@@ -141,7 +142,7 @@ export function BulkImportExport({ products, onImported, businessType }: { produ
         onClick={() => setOpen(true)}
         className="self-start text-sm font-medium text-brand"
       >
-        📥 Bulk import / export
+        <span className="flex items-center gap-1"><Download size={13} /> Bulk import / export</span>
       </button>
     );
   }

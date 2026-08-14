@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import { useRouter } from "next/navigation";
+import { MessageCircle, Dumbbell } from "lucide-react";
 import Link from "next/link";
 import { createLeadAction, updateLeadStatusAction, deleteLeadAction } from "@/lib/actions/gym";
 import { PageHeader } from "@/app/components/PageHeader";
@@ -164,16 +165,16 @@ export function LeadsClient({ leads }: { leads: Lead[] }) {
                   href={`https://wa.me/${lead.phone.replace(/\D/g, "").length === 10 ? `91${lead.phone.replace(/\D/g, "")}` : lead.phone.replace(/\D/g, "")}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="rounded-lg border border-brand bg-brand-soft px-2.5 py-1 text-xs font-medium text-brand-dark"
+                  className="flex items-center gap-1 rounded-lg border border-brand bg-brand-soft px-2.5 py-1 text-xs font-medium text-brand-dark"
                 >
-                  💬 WhatsApp
+                  <MessageCircle size={12} /> WhatsApp
                 </a>
                 {lead.status === "converted" && (
                   <Link
                     href={`/gym/members/new?memberName=${encodeURIComponent(lead.name)}&memberPhone=${encodeURIComponent(lead.phone)}`}
-                    className="rounded-lg border border-brand bg-brand px-2.5 py-1 text-xs font-medium text-white"
+                    className="flex items-center gap-1 rounded-lg border border-brand bg-brand px-2.5 py-1 text-xs font-medium text-white"
                   >
-                    🏋️ Sell membership
+                    <Dumbbell size={12} /> Sell membership
                   </Link>
                 )}
                 <button

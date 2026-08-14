@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { Circle } from "lucide-react";
 import { setTodaysMetalRateAction } from "@/lib/actions/jewellery";
 import { formatMoney } from "@/lib/format";
 import { PageHeader } from "@/app/components/PageHeader";
@@ -55,7 +56,7 @@ export function RatesClient({
 
       <div className="flex flex-col gap-3 rounded-xl border border-dashed border-brand bg-brand-soft p-4">
         <label className="flex flex-col gap-1.5 text-sm">
-          <span className="font-medium text-brand-dark">🥇 Gold rate (₹ per gram)</span>
+          <span className="flex items-center gap-1.5 font-medium text-brand-dark"><Circle size={10} className="fill-amber-400 text-amber-400" /> Gold rate (₹ per gram)</span>
           <div className="flex gap-2">
             <input
               type="number"
@@ -71,7 +72,7 @@ export function RatesClient({
           </div>
         </label>
         <label className="flex flex-col gap-1.5 text-sm">
-          <span className="font-medium text-brand-dark">🥈 Silver rate (₹ per gram)</span>
+          <span className="flex items-center gap-1.5 font-medium text-brand-dark"><Circle size={10} className="fill-slate-400 text-slate-400" /> Silver rate (₹ per gram)</span>
           <div className="flex gap-2">
             <input
               type="number"
@@ -97,8 +98,8 @@ export function RatesClient({
           <ul className="flex flex-col gap-1.5">
             {history.map((h, i) => (
               <li key={i} className="flex items-center justify-between rounded-lg border border-border bg-surface px-3.5 py-2 text-sm">
-                <span className="text-muted">
-                  {h.metalType === "gold" ? "🥇" : "🥈"} {new Date(h.date).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
+                <span className="flex items-center gap-1.5 text-muted">
+                  <Circle size={8} className={h.metalType === "gold" ? "fill-amber-400 text-amber-400" : "fill-slate-400 text-slate-400"} /> {new Date(h.date).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
                 </span>
                 <span className="font-medium text-foreground">{formatMoney(h.rate)}/g</span>
               </li>

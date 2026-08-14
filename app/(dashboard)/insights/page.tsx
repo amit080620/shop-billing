@@ -5,7 +5,7 @@ import { PageHeader } from "@/app/components/PageHeader";
 import { EmptyState } from "@/app/components/EmptyState";
 import { isModuleEnabled } from "@/lib/modules";
 import { ModuleBlocked } from "@/app/components/ModuleBlocked";
-import { TrendingUp } from "lucide-react";
+import { TrendingUp, Flame, TrendingDown } from "lucide-react";
 
 export default async function InsightsPage() {
   const session = await requireSession();
@@ -146,7 +146,7 @@ export default async function InsightsPage() {
       </p>
 
       <section className="flex flex-col gap-2">
-        <h2 className="text-sm font-semibold text-foreground">🔥 Fast movers (last 30 days)</h2>
+        <h2 className="flex items-center gap-1.5 text-sm font-semibold text-foreground"><Flame size={14} /> Fast movers (last 30 days)</h2>
         {fastMovers.length === 0 ? (
           <EmptyState text="Keep billing — once there's enough sales history, trends will show up here." />
         ) : (
@@ -174,13 +174,13 @@ export default async function InsightsPage() {
 
       <section className="flex flex-col gap-2">
         <div className="flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-foreground">🐌 Dead stock (no sale in 60+ days)</h2>
+          <h2 className="flex items-center gap-1.5 text-sm font-semibold text-foreground"><TrendingDown size={14} /> Dead stock (no sale in 60+ days)</h2>
           {totalDeadValue > 0 && (
             <span className="text-xs text-credit">{formatMoney(totalDeadValue)} tied up</span>
           )}
         </div>
         {deadStock.length === 0 ? (
-          <EmptyState text="Nothing gathering dust — your stock is moving well. 👍" />
+          <EmptyState text="Nothing gathering dust — your stock is moving well." />
         ) : (
           <ul className="flex flex-col gap-2">
             {deadStock.map((p) => (

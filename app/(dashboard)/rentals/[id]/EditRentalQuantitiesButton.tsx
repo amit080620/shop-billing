@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { editRentalQuantitiesAction } from "@/lib/actions/rentals";
+import { Pencil } from "lucide-react";
 
 type Item = { id: string; productName: string; quantity: number };
 
@@ -39,7 +40,7 @@ export function EditRentalQuantitiesButton({ rentalId, items }: { rentalId: stri
   return (
     <>
       <button onClick={() => setOpen(true)} className="self-start text-xs font-medium text-brand">
-        ✏️ Edit quantities
+        <span className="flex items-center gap-1"><Pencil size={12} /> Edit quantities</span>
       </button>
 
       {open && (

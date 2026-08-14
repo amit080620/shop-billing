@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { markItemReadyAction, acknowledgeRevisionAction } from "@/lib/actions/restaurant";
 import { useTranslation } from "@/lib/i18n/useTranslation";
 import { TVNavigationProvider, TVRemoteHandler, TVFocusZone, TVFocusable } from "@/lib/tv-nav";
+import { AlertTriangle, X, Check } from "lucide-react";
 import type { Lang } from "@/lib/i18n/dictionary";
 
 type Item = { id: string; name: string; quantity: number; status: "pending" | "ready" | "served" | "cancelled"; createdAt: string };
@@ -219,9 +220,9 @@ export function KdsClient({
                 {isRevised && (
                   <button
                     onClick={() => acknowledge(ticket.id)}
-                    className="mb-0.5 rounded-lg bg-red-600 px-2 py-1 text-center text-xs font-bold text-white"
+                    className="mb-0.5 flex items-center justify-center gap-1 rounded-lg bg-red-600 px-2 py-1 text-center text-xs font-bold text-white"
                   >
-                    ⚠️ ORDER REVISED — tap to clear
+                    <AlertTriangle size={12} /> ORDER REVISED — tap to clear
                   </button>
                 )}
                 <div className="flex items-center justify-between">
@@ -247,8 +248,8 @@ export function KdsClient({
                                 : "bg-black/20"
                           }`}
                         >
-                          <span className="font-medium">
-                            {isCancelled ? "❌ " : isReady ? "✓ " : ""}
+                          <span className="flex items-center gap-1 font-medium">
+                            {isCancelled ? <X size={12} /> : isReady ? <Check size={12} /> : null}
                             {item.name}
                           </span>
                           <span className={`ml-2 shrink-0 ${sizes.qty} font-bold`}>×{item.quantity}</span>

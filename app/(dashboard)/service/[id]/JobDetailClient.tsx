@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { updateJobStatusAction, assignTechnicianAction, deliverJobAction } from "@/lib/actions/service";
+import { MessageCircle, Check } from "lucide-react";
 import { formatMoney } from "@/lib/format";
 import { useTranslation } from "@/lib/i18n/useTranslation";
 import type { Lang } from "@/lib/i18n/dictionary";
@@ -170,14 +171,14 @@ export function JobDetailClient({ job, items, lang }: { job: Job; items: JobItem
               href={whatsappReadyLink(job, t)}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-center text-xs font-medium text-brand-dark underline"
+              className="flex items-center justify-center gap-1 text-center text-xs font-medium text-brand-dark underline"
             >
-              💬 Notify customer on WhatsApp
+              <MessageCircle size={12} /> Notify customer on WhatsApp
             </a>
           )}
           <div className="flex gap-2 border-t border-brand/30 pt-3">
-            <button onClick={() => setShowDeliver(true)} className="btn-primary-sm flex-1 text-center">
-              ✓ Deliver & bill
+            <button onClick={() => setShowDeliver(true)} className="btn-primary-sm flex flex-1 items-center justify-center gap-1 text-center">
+              <Check size={13} /> Deliver & bill
             </button>
             <button
               onClick={() => {

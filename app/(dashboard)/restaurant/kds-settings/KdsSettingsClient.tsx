@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { saveKdsSettingsAction } from "@/lib/actions/restaurant";
 import { PageHeader } from "@/app/components/PageHeader";
-import { Monitor } from "lucide-react";
+import { Monitor, Check } from "lucide-react";
 
 export function KdsSettingsClient({ columns: initialColumns, fontScale: initialFontScale }: { columns: number; fontScale: "normal" | "large" | "extra_large" }) {
   const router = useRouter();
@@ -35,8 +35,8 @@ export function KdsSettingsClient({ columns: initialColumns, fontScale: initialF
         subtitle="How tickets show on the KDS TV/screen — bigger, bolder text helps if it's mounted far from the line."
         icon={<Monitor size={18} strokeWidth={1.8} />}
       />
-      <Link href="/restaurant-kds" target="_blank" className="text-sm text-brand">
-        🖥️ Open KDS screen in a new tab
+      <Link href="/restaurant-kds" target="_blank" className="flex items-center gap-1 text-sm text-brand">
+        <Monitor size={14} /> Open KDS screen in a new tab
       </Link>
 
       <section className="flex flex-col gap-2">
@@ -88,7 +88,7 @@ export function KdsSettingsClient({ columns: initialColumns, fontScale: initialF
         </div>
       </section>
 
-      {saved && <p className="text-sm text-brand-dark">✓ Saved — refresh the KDS screen to see the change.</p>}
+      {saved && <p className="flex items-center gap-1 text-sm text-brand-dark"><Check size={13} /> Saved — refresh the KDS screen to see the change.</p>}
       {error && <p className="text-sm text-danger">{error}</p>}
     </div>
   );

@@ -3,6 +3,7 @@ import { requireSession } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { formatMoney } from "@/lib/format";
 import { PageHeader } from "@/app/components/PageHeader";
+import { Circle } from "lucide-react";
 import { EmptyState } from "@/app/components/EmptyState";
 import { Repeat } from "lucide-react";
 
@@ -38,11 +39,11 @@ export default async function JewelleryExchangesPage() {
         <>
           <div className="grid grid-cols-3 gap-2">
             <div className="rounded-lg border border-border bg-surface shadow-sm p-3 text-center">
-              <p className="text-xs text-muted">🥇 Gold in</p>
+              <p className="flex items-center justify-center gap-1 text-xs text-muted"><Circle size={9} className="fill-amber-400 text-amber-400" /> Gold in</p>
               <p className="mt-1 text-sm font-semibold text-foreground">{totalGoldNetWeight.toFixed(3)}g</p>
             </div>
             <div className="rounded-lg border border-border bg-surface shadow-sm p-3 text-center">
-              <p className="text-xs text-muted">🥈 Silver in</p>
+              <p className="flex items-center justify-center gap-1 text-xs text-muted"><Circle size={9} className="fill-slate-400 text-slate-400" /> Silver in</p>
               <p className="mt-1 text-sm font-semibold text-foreground">{totalSilverNetWeight.toFixed(3)}g</p>
             </div>
             <div className="rounded-lg border border-border bg-surface shadow-sm p-3 text-center">
@@ -55,8 +56,8 @@ export default async function JewelleryExchangesPage() {
             {exchanges.map((e) => (
               <li key={e.id} className="rounded-lg border border-border bg-surface shadow-sm px-3.5 py-2.5">
                 <div className="flex items-center justify-between">
-                  <p className="text-sm font-medium text-foreground">
-                    {e.metal_type === "gold" ? "🥇" : "🥈"} {e.description || (e.metal_type === "gold" ? "Old gold" : "Old silver")}
+                  <p className="flex items-center gap-1.5 text-sm font-medium text-foreground">
+                    <Circle size={9} className={e.metal_type === "gold" ? "fill-amber-400 text-amber-400" : "fill-slate-400 text-slate-400"} /> {e.description || (e.metal_type === "gold" ? "Old gold" : "Old silver")}
                   </p>
                   <p className="text-sm font-semibold text-foreground">{formatMoney(e.exchange_value)}</p>
                 </div>

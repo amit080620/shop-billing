@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { startBulkImportCustomersAction, getBulkImportJobStatusAction, fetchAllCustomersForExportAction, type CustomerImportResult } from "@/lib/actions/bulk-import";
 import { downloadCsv } from "@/app/components/downloadCsv";
+import { Upload } from "lucide-react";
 
 const BASE_HEADERS = ["name", "phone", "gstin", "address", "stateCode", "dateOfBirth", "gender"];
 const CLINIC_HEADERS = ["bloodGroup", "knownAllergies"];
@@ -121,7 +122,7 @@ export function BulkImportExportCustomers({
   if (!open) {
     return (
       <button onClick={() => setOpen(true)} className="self-start text-sm font-medium text-brand">
-        📤 Bulk import / export {noun}
+        <span className="flex items-center gap-1"><Upload size={13} /> Bulk import / export {noun}</span>
       </button>
     );
   }

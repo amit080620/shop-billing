@@ -79,7 +79,7 @@ export function ClinicAppointmentRow({ appointment }: { appointment: Appointment
             </button>
           )}
           <Link href={rxLink} className="rounded-lg border border-brand bg-brand-soft px-2.5 py-1 text-xs font-medium text-brand-dark">
-            📝 Write prescription
+            Write prescription
           </Link>
           <button onClick={() => setStatus("no_show")} disabled={isPending} className="rounded-lg border border-danger px-2.5 py-1 text-xs font-medium text-danger disabled:opacity-60">
             No-show

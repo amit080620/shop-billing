@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useTranslation } from "@/lib/i18n/useTranslation";
 import { tabsFor } from "./BottomNav";
 import type { Lang } from "@/lib/i18n/dictionary";
+import { HelpCircle } from "lucide-react";
 
 export function DesktopSidebar({
   lang,
@@ -71,6 +72,18 @@ export function DesktopSidebar({
           );
         })}
       </ul>
+
+      <div className="border-t border-border p-3">
+        <Link
+          href="/help"
+          className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-muted transition-colors hover:bg-background hover:text-foreground"
+        >
+          <span className="flex h-7 w-7 shrink-0 items-center justify-center">
+            <HelpCircle size={18} strokeWidth={1.8} />
+          </span>
+          Help & support
+        </Link>
+      </div>
     </aside>
   );
 }

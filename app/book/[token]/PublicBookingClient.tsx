@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { createPublicBookingAction } from "@/lib/actions/clinic";
+import { CheckCircle2 } from "lucide-react";
 
 type Day = { date: string; label: string; slots: string[] };
 
@@ -62,7 +63,9 @@ export function PublicBookingClient({
   if (confirmed) {
     return (
       <div className="mx-auto flex min-h-screen max-w-md flex-col items-center justify-center gap-3 px-6 text-center">
-        <p className="text-4xl">✅</p>
+        <span className="flex h-16 w-16 items-center justify-center rounded-full" style={{ background: "linear-gradient(135deg, var(--brand-light), var(--brand-dark))" }}>
+          <CheckCircle2 size={32} className="text-white" />
+        </span>
         <p className="text-lg font-semibold text-foreground">Booking confirmed</p>
         <p className="text-sm text-muted">
           {name}, your slot at {shopName} is booked for{" "}

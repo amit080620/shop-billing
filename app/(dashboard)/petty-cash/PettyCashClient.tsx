@@ -9,7 +9,7 @@ import { useToast } from "@/app/components/Toast";
 import { formatMoney, formatDateTime } from "@/lib/format";
 import { EmptyState } from "@/app/components/EmptyState";
 import { PageHeader } from "@/app/components/PageHeader";
-import { Wallet } from "lucide-react";
+import { Wallet, Camera, X } from "lucide-react";
 import { ScanBillModal } from "./ScanBillModal";
 
 type Entry = { id: string; description: string; amount: number; category: string | null; createdAt: string };
@@ -90,7 +90,7 @@ export function PettyCashClient({ entries }: { entries: Entry[] }) {
             onClick={() => setShowScan(true)}
             className="flex items-center justify-center gap-2 rounded-lg border border-brand bg-surface px-3 py-2 text-sm font-medium text-brand-dark"
           >
-            📷 Scan bill instead
+            <Camera size={15} /> Scan bill instead
           </button>
           <input
             name="description"
@@ -164,7 +164,7 @@ export function PettyCashClient({ entries }: { entries: Entry[] }) {
                   disabled={isPending && deletingId === e.id}
                   className="text-xs font-medium text-danger disabled:opacity-50"
                 >
-                  ✕
+                  <X size={13} />
                 </button>
               </div>
             </li>

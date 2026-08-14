@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import { useRouter } from "next/navigation";
+import { X as XIcon } from "lucide-react";
 import Link from "next/link";
 import { createClassAction, toggleClassActiveAction, deleteClassAction, bookClassAction, cancelClassBookingAction } from "@/lib/actions/gym";
 import { PageHeader } from "@/app/components/PageHeader";
@@ -204,7 +205,7 @@ export function ClassesClient({
                                   }
                                   className="font-bold"
                                 >
-                                  ✕
+                                  <XIcon size={12} />
                                 </button>
                               </li>
                             ))}

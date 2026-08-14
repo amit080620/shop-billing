@@ -3,6 +3,7 @@ import { requireSession, hasPermission } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { formatMoney } from "@/lib/format";
 import { getTranslator } from "@/lib/i18n/server";
+import { Printer } from "lucide-react";
 import { ReturnForm } from "./ReturnForm";
 import { EditRentalQuantitiesButton } from "./EditRentalQuantitiesButton";
 import { EditRentalChargesButton } from "./EditRentalChargesButton";
@@ -48,7 +49,7 @@ export default async function RentalDetailPage({
         target="_blank"
         className="self-start rounded-lg border border-brand bg-brand-soft px-3 py-1.5 text-xs font-medium text-brand-dark"
       >
-        🖨️ Print rental slip
+        <span className="flex items-center gap-1"><Printer size={13} /> Print rental slip</span>
       </Link>
 
       {rental.edited_at && (

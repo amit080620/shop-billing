@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { saveBookingSettingsAction, type WorkingHours } from "@/lib/actions/clinic";
+import { Camera, MessageCircle, X } from "lucide-react";
 import { uploadSettingsImageAction } from "@/lib/actions/settings";
 import { PageHeader } from "@/app/components/PageHeader";
 import { CalendarClock } from "lucide-react";
@@ -157,7 +158,7 @@ export function BookingSettingsClient({
               ) : uploadingPhoto ? (
                 "…"
               ) : (
-                "📷"
+                <Camera size={16} />
               )}
               <input
                 type="file"
@@ -205,9 +206,9 @@ export function BookingSettingsClient({
               href={`https://wa.me/?text=${encodeURIComponent(`Book an appointment: ${publicUrl}`)}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="rounded-lg border border-brand px-3 py-1.5 text-xs font-medium text-brand-dark"
+              className="flex items-center gap-1 rounded-lg border border-brand px-3 py-1.5 text-xs font-medium text-brand-dark"
             >
-              💬 Share on WhatsApp
+              <MessageCircle size={12} /> Share on WhatsApp
             </a>
           </div>
         </div>
@@ -252,7 +253,7 @@ export function BookingSettingsClient({
                     />
                     {dayRanges(day.key).length > 1 && (
                       <button onClick={() => removeRange(day.key, i)} className="text-xs font-medium text-danger">
-                        ✕
+                        <X size={13} />
                       </button>
                     )}
                   </div>
@@ -289,7 +290,7 @@ export function BookingSettingsClient({
               <li key={date} className="flex items-center gap-1.5 rounded-full border border-danger/30 bg-danger/10 px-2.5 py-1 text-xs text-danger">
                 {new Date(date).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
                 <button onClick={() => removeLeaveDate(date)} className="font-bold">
-                  ✕
+                  <X size={11} />
                 </button>
               </li>
             ))}

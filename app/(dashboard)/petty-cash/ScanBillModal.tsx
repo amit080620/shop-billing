@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { CameraCapture } from "@/app/components/CameraCapture";
 import { preprocessImage } from "@/lib/ocr/preprocess";
+import { Camera } from "lucide-react";
 import { runOCR } from "@/lib/ocr/tesseract";
 import { parsePettyCashFields } from "@/lib/ocr/parser";
 import { confidenceLevel } from "@/lib/ocr/types";
@@ -75,7 +76,7 @@ export function ScanBillModal({
   if (step === "error") {
     return (
       <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center gap-4 bg-black/80 p-6 text-center">
-        <p className="text-3xl">📷</p>
+        <Camera size={30} className="text-white/70" />
         <p className="max-w-xs text-sm text-white">{errorMessage}</p>
         <div className="flex gap-2">
           <button onClick={() => setStep("capture")} className="rounded-lg bg-white px-4 py-2 text-sm font-medium text-black">

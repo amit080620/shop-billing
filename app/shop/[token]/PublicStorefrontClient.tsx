@@ -3,6 +3,7 @@
 import { useMemo, useState, useTransition } from "react";
 import { submitCatalogOrderAction } from "@/lib/actions/catalog";
 import { formatMoney } from "@/lib/format";
+import { CheckCircle2, Package, ShoppingCart } from "lucide-react";
 
 type Product = {
   id: string;
@@ -92,7 +93,9 @@ export function PublicStorefrontClient({
   if (confirmed) {
     return (
       <div className="mx-auto flex min-h-screen max-w-md flex-col items-center justify-center gap-3 px-6 text-center">
-        <p className="text-4xl">✅</p>
+        <span className="flex h-16 w-16 items-center justify-center rounded-full" style={{ background: "linear-gradient(135deg, var(--brand-light), var(--brand-dark))" }}>
+          <CheckCircle2 size={32} className="text-white" />
+        </span>
         <p className="text-lg font-semibold text-foreground">Order sent</p>
         <p className="text-sm text-muted">
           {name}, your order has been sent to {shopName}. They will confirm with you shortly.
@@ -156,7 +159,7 @@ export function PublicStorefrontClient({
                     // eslint-disable-next-line @next/next/no-img-element -- storefront thumbnail
                     <img src={p.imageUrl} alt={p.name} className="h-full w-full object-cover" />
                   ) : (
-                    "📦"
+                    <Package size={20} className="text-muted" />
                   )}
                 </div>
                 <div className="flex flex-1 flex-col gap-1 p-2.5">
@@ -203,7 +206,7 @@ export function PublicStorefrontClient({
           className="fixed inset-x-4 bottom-4 z-40 mx-auto flex max-w-md items-center justify-between rounded-xl px-4 py-3.5 font-semibold text-white shadow-lg"
           style={{ background: "linear-gradient(135deg, var(--brand-light), var(--brand-dark))" }}
         >
-          <span>🛒 {cartCount} item(s)</span>
+          <span className="flex items-center gap-1.5"><ShoppingCart size={15} /> {cartCount} item(s)</span>
           <span>{formatMoney(cartTotal)} · Checkout →</span>
         </button>
       )}

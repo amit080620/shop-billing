@@ -68,7 +68,7 @@ export function ModulesForm({ shopId, enabledModules }: { shopId: string; enable
         disabled={isPending}
         className="mt-3 rounded-lg bg-white px-3 py-1.5 text-xs font-medium text-black disabled:opacity-60"
       >
-        {isPending ? "Saving…" : saved ? "Saved ✓" : "Save modules"}
+        {isPending ? "Saving…" : saved ? "Saved" : "Save modules"}
       </button>
     </section>
   );

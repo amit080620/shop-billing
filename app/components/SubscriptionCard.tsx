@@ -106,7 +106,7 @@ export async function SubscriptionCard() {
         rel="noopener noreferrer"
         className="flex items-center justify-center gap-2 border-t border-white/20 px-4 py-3 text-sm font-semibold text-white"
       >
-        💬 {t("subscription.rechargeContact")}
+        {t("subscription.rechargeContact")}
       </a>
     </div>
   );

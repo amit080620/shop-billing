@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { formatMoney } from "@/lib/format";
 import { generateBarcodeAction } from "@/lib/actions/products";
+import { Printer } from "lucide-react";
 
 type Product = { id: string; name: string; price: number; unit: string; barcode: string | null };
 
@@ -89,7 +90,7 @@ export function LabelsClient({ shopName, products: initialProducts }: { shopName
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium text-foreground">{p.name}</p>
                 <p className="text-xs text-muted">
-                  {formatMoney(p.price)} · {p.barcode ? `🏷 ${p.barcode}` : "No barcode yet"}
+                  {formatMoney(p.price)} · {p.barcode ? p.barcode : "No barcode yet"}
                 </p>
               </div>
               {p.barcode ? (
@@ -134,8 +135,8 @@ export function LabelsClient({ shopName, products: initialProducts }: { shopName
         {selectedLabels.length > 0 ? (
           <>
             <p className="text-sm font-medium text-brand-dark">{selectedLabels.length} label(s) ready to print</p>
-            <button onClick={() => window.print()} className="btn-primary-sm mt-2">
-              🖨 Print labels
+            <button onClick={() => window.print()} className="btn-primary-sm mt-2 flex items-center gap-1.5">
+              <Printer size={13} /> Print labels
             </button>
           </>
         ) : (

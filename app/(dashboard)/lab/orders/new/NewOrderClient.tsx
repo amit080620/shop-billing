@@ -8,7 +8,7 @@ import { formatMoney } from "@/lib/format";
 import { PageHeader } from "@/app/components/PageHeader";
 import { SearchableSelect } from "@/app/components/SearchableSelect";
 import type { Lang } from "@/lib/i18n/dictionary";
-import { FlaskConical } from "lucide-react";
+import { FlaskConical, Footprints, Home } from "lucide-react";
 
 type Test = { id: string; name: string; price: number; sampleType: string };
 type Package = { id: string; name: string; price: number };
@@ -122,15 +122,15 @@ export function NewOrderClient({
         <div className="flex gap-2">
           <button
             onClick={() => setCollectionType("walk_in")}
-            className={`flex-1 rounded-lg border px-3 py-2 text-sm font-medium ${collectionType === "walk_in" ? "border-brand bg-brand-soft text-brand-dark" : "border-border text-muted"}`}
+            className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-medium ${collectionType === "walk_in" ? "border-brand bg-brand-soft text-brand-dark" : "border-border text-muted"}`}
           >
-            🚶 Walk-in
+            <Footprints size={14} /> Walk-in
           </button>
           <button
             onClick={() => setCollectionType("home_collection")}
-            className={`flex-1 rounded-lg border px-3 py-2 text-sm font-medium ${collectionType === "home_collection" ? "border-brand bg-brand-soft text-brand-dark" : "border-border text-muted"}`}
+            className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-medium ${collectionType === "home_collection" ? "border-brand bg-brand-soft text-brand-dark" : "border-border text-muted"}`}
           >
-            🏠 Home collection
+            <Home size={14} /> Home collection
           </button>
         </div>
         {collectionType === "home_collection" && (

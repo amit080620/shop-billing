@@ -3,16 +3,17 @@ import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { PageHeader } from "@/app/components/PageHeader";
 import { EmptyState } from "@/app/components/EmptyState";
 import { formatDateTime } from "@/lib/format";
+import { Trash2, Pencil, UserPlus, UserMinus, KeyRound, Activity } from "lucide-react";
 import { isModuleEnabled } from "@/lib/modules";
 import { ModuleBlocked } from "@/app/components/ModuleBlocked";
 import { History } from "lucide-react";
 
-const ACTION_LABELS: Record<string, string> = {
-  bill_voided: "🗑️ Bill voided",
-  bill_quantities_edited: "✏️ Bill quantities edited",
-  staff_added: "➕ Staff added",
-  staff_removed: "➖ Staff removed",
-  staff_permissions_changed: "🔑 Staff permissions changed",
+const ACTION_INFO: Record<string, { icon: typeof Trash2; label: string; tone: string }> = {
+  bill_voided: { icon: Trash2, label: "Bill voided", tone: "text-danger" },
+  bill_quantities_edited: { icon: Pencil, label: "Bill quantities edited", tone: "text-warning" },
+  staff_added: { icon: UserPlus, label: "Staff added", tone: "text-success" },
+  staff_removed: { icon: UserMinus, label: "Staff removed", tone: "text-danger" },
+  staff_permissions_changed: { icon: KeyRound, label: "Staff permissions changed", tone: "text-info" },
 };
 
 function describeDetails(action: string, details: Record<string, unknown> | null): string {
@@ -56,10 +57,14 @@ export default async function AuditLogPage() {
           {logs.map((log) => {
             const staff = Array.isArray(log.staff) ? log.staff[0] : (log.staff as { name: string } | null);
             const details = log.details as Record<string, unknown> | null;
+            const info = ACTION_INFO[log.action];
+            const Icon = info?.icon ?? Activity;
             return (
               <li key={log.id} className="rounded-lg border border-border bg-surface px-3.5 py-2.5 shadow-sm">
                 <div className="flex items-center justify-between">
-                  <p className="text-sm font-medium text-foreground">{ACTION_LABELS[log.action] ?? log.action}</p>
+                  <p className={`flex items-center gap-1.5 text-sm font-medium ${info?.tone ?? "text-foreground"}`}>
+                    <Icon size={14} /> {info?.label ?? log.action}
+                  </p>
                   <p className="text-[11px] text-muted">{formatDateTime(log.created_at)}</p>
                 </div>
                 <p className="text-xs text-muted">

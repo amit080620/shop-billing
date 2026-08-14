@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { updateReservationStatusAction, deleteReservationAction } from "@/lib/actions/reservations";
+import { MessageCircle, CircleDollarSign, Divide, Ban } from "lucide-react";
 import { useTranslation } from "@/lib/i18n/useTranslation";
 import { formatMoney } from "@/lib/format";
 import type { Lang } from "@/lib/i18n/dictionary";
@@ -97,9 +98,9 @@ export function ReservationRow({ reservation, lang }: { reservation: Reservation
               href={whatsappConfirmLink(reservation, t)}
               target="_blank"
               rel="noopener noreferrer"
-              className="rounded-lg border border-brand bg-brand-soft px-2.5 py-1 text-xs font-medium text-brand-dark"
+              className="flex items-center gap-1 rounded-lg border border-brand bg-brand-soft px-2.5 py-1 text-xs font-medium text-brand-dark"
             >
-              💬 Confirm on WhatsApp
+              <MessageCircle size={12} /> Confirm on WhatsApp
             </a>
           )}
           <button onClick={() => setStatus("seated")} disabled={isPending} className="rounded-lg border border-border px-2.5 py-1 text-xs font-medium text-foreground disabled:opacity-60">
@@ -141,23 +142,23 @@ export function ReservationRow({ reservation, lang }: { reservation: Reservation
               <button
                 onClick={() => setStatus(refundFlow, { refundType: "full", refundAmount: reservation.tokenAmount })}
                 disabled={isPending}
-                className="rounded-lg border border-border px-3 py-2.5 text-left text-sm text-foreground disabled:opacity-60"
+                className="flex items-center gap-1.5 rounded-lg border border-border px-3 py-2.5 text-left text-sm text-foreground disabled:opacity-60"
               >
-                💯 Full refund — {formatMoney(reservation.tokenAmount)} back to customer
+                <CircleDollarSign size={14} /> Full refund — {formatMoney(reservation.tokenAmount)} back to customer
               </button>
               <button
                 onClick={() => setStatus(refundFlow, { refundType: "partial", refundAmount: reservation.tokenAmount / 2 })}
                 disabled={isPending}
-                className="rounded-lg border border-border px-3 py-2.5 text-left text-sm text-foreground disabled:opacity-60"
+                className="flex items-center gap-1.5 rounded-lg border border-border px-3 py-2.5 text-left text-sm text-foreground disabled:opacity-60"
               >
-                ➗ 50% refund — {formatMoney(reservation.tokenAmount / 2)} back, {formatMoney(reservation.tokenAmount / 2)} kept
+                <Divide size={14} /> 50% refund — {formatMoney(reservation.tokenAmount / 2)} back, {formatMoney(reservation.tokenAmount / 2)} kept
               </button>
               <button
                 onClick={() => setStatus(refundFlow, { refundType: "none", refundAmount: 0 })}
                 disabled={isPending}
-                className="rounded-lg border border-border px-3 py-2.5 text-left text-sm text-foreground disabled:opacity-60"
+                className="flex items-center gap-1.5 rounded-lg border border-border px-3 py-2.5 text-left text-sm text-foreground disabled:opacity-60"
               >
-                🚫 No refund — full {formatMoney(reservation.tokenAmount)} kept
+                <Ban size={14} /> No refund — full {formatMoney(reservation.tokenAmount)} kept
               </button>
             </div>
             <button onClick={() => setRefundFlow(null)} className="mt-3 w-full rounded-lg border border-border px-4 py-2 text-sm font-medium text-muted">

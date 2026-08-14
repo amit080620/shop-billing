@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { editRentalChargesAction } from "@/lib/actions/rentals";
+import { Pencil } from "lucide-react";
 import { formatMoney } from "@/lib/format";
 
 export function EditRentalChargesButton({
@@ -50,7 +51,7 @@ export function EditRentalChargesButton({
   return (
     <>
       <button onClick={() => setOpen(true)} className="mt-2 self-start text-xs font-medium text-brand">
-        ✏️ Edit damage/late fee & deposit
+        <span className="flex items-center gap-1"><Pencil size={12} /> Edit damage/late fee & deposit</span>
       </button>
 
       {open && (

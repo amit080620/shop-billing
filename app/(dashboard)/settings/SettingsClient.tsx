@@ -70,8 +70,11 @@ export function SettingsClient({ shop }: { shop: ShopSettings }) {
             <span className="font-medium text-foreground">Business type</span>
             {shop.businessTypeLocked ? (
               <>
-                <div className="rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground">
-                  {BUSINESS_TYPES.find((b) => b.value === shop.businessType)?.icon}{" "}
+                <div className="flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground">
+                  {(() => {
+                    const Icon = BUSINESS_TYPES.find((b) => b.value === shop.businessType)?.icon;
+                    return Icon ? <Icon size={16} className="text-muted" /> : null;
+                  })()}
                   {BUSINESS_TYPES.find((b) => b.value === shop.businessType)?.label ?? shop.businessType}
                 </div>
                 <span className="text-xs text-muted">
@@ -89,7 +92,7 @@ export function SettingsClient({ shop }: { shop: ShopSettings }) {
                 >
                   {BUSINESS_TYPES.map((b) => (
                     <option key={b.value} value={b.value}>
-                      {b.icon} {b.label}
+                      {b.label}
                     </option>
                   ))}
                 </select>
@@ -200,7 +203,7 @@ export function SettingsClient({ shop }: { shop: ShopSettings }) {
 
         {state?.success && (
           <p className="rounded-lg bg-brand-soft px-3 py-2 text-sm font-medium text-brand-dark">
-            ✓ Saved.
+            Saved.
           </p>
         )}
         {state?.error && (

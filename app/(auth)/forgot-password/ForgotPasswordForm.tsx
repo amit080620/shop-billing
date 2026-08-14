@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
+import { Mail } from "lucide-react";
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -27,7 +28,9 @@ export function ForgotPasswordForm({
   if (state?.success) {
     return (
       <div className="flex flex-col gap-3 text-center">
-        <p className="text-4xl">📩</p>
+        <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-brand-soft text-brand-dark">
+          <Mail size={26} />
+        </span>
         <p className="text-sm text-foreground">
           If an account exists with that email, a reset link is on its way. Check your inbox (and spam folder).
         </p>

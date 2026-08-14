@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { saveCatalogSettingsAction } from "@/lib/actions/catalog";
 import { PageHeader } from "@/app/components/PageHeader";
-import { Store } from "lucide-react";
+import { Store, MessageCircle, Inbox } from "lucide-react";
 
 export function CatalogSettingsClient({
   isEnabled: initialEnabled,
@@ -70,9 +70,9 @@ export function CatalogSettingsClient({
               href={`https://wa.me/?text=${encodeURIComponent(`Browse & order from us: ${publicUrl}`)}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="rounded-lg border border-brand px-3 py-1.5 text-xs font-medium text-brand-dark"
+              className="flex items-center gap-1 rounded-lg border border-brand px-3 py-1.5 text-xs font-medium text-brand-dark"
             >
-              💬 Share on WhatsApp
+              <MessageCircle size={12} /> Share on WhatsApp
             </a>
           </div>
         </div>
@@ -98,8 +98,8 @@ export function CatalogSettingsClient({
         {isPending ? "Saving…" : "Save"}
       </button>
 
-      <Link href="/catalog-orders" className="rounded-xl border border-border bg-surface px-4 py-3.5 text-center text-sm font-medium text-brand shadow-sm">
-        📥 View incoming orders
+      <Link href="/catalog-orders" className="flex items-center justify-center gap-1.5 rounded-xl border border-border bg-surface px-4 py-3.5 text-center text-sm font-medium text-brand shadow-sm">
+        <Inbox size={14} /> View incoming orders
       </Link>
     </div>
   );

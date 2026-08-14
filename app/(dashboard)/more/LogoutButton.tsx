@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { logoutThisDeviceAction, logoutAllDevicesAction } from "@/lib/actions/auth";
+import { Smartphone, Globe } from "lucide-react";
 
 export function LogoutButton({ logoutLabel, thisDeviceLabel, allDevicesLabel }: { logoutLabel: string; thisDeviceLabel: string; allDevicesLabel: string }) {
   const [open, setOpen] = useState(false);
@@ -24,17 +25,17 @@ export function LogoutButton({ logoutLabel, thisDeviceLabel, allDevicesLabel }: 
               <button
                 disabled={isPending}
                 onClick={() => startTransition(() => logoutThisDeviceAction())}
-                className="rounded-lg border border-border px-4 py-2.5 text-left text-sm text-foreground disabled:opacity-60"
+                className="flex items-center gap-1.5 rounded-lg border border-border px-4 py-2.5 text-left text-sm text-foreground disabled:opacity-60"
               >
-                📱 {thisDeviceLabel}
+                <Smartphone size={14} /> {thisDeviceLabel}
                 <span className="mt-0.5 block text-xs text-muted">Other devices stay logged in.</span>
               </button>
               <button
                 disabled={isPending}
                 onClick={() => startTransition(() => logoutAllDevicesAction())}
-                className="rounded-lg border border-danger px-4 py-2.5 text-left text-sm text-danger disabled:opacity-60"
+                className="flex items-center gap-1.5 rounded-lg border border-danger px-4 py-2.5 text-left text-sm text-danger disabled:opacity-60"
               >
-                🌐 {allDevicesLabel}
+                <Globe size={14} /> {allDevicesLabel}
                 <span className="mt-0.5 block text-xs text-danger/80">Signs out everywhere this account is logged in.</span>
               </button>
             </div>

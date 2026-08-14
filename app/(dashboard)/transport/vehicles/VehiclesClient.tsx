@@ -130,7 +130,7 @@ export function VehiclesClient({ vehicles, lang }: { vehicles: Vehicle[]; lang: 
                         key={d.field}
                         className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${days < 0 ? "bg-danger/15 text-danger" : "bg-credit-soft text-credit"}`}
                       >
-                        ⚠️ {DOC_LABELS[d.field]} {days < 0 ? "expired" : `expires in ${days}d`}
+                        {DOC_LABELS[d.field]} {days < 0 ? "expired" : `expires in ${days}d`}
                       </span>
                     );
                   })}

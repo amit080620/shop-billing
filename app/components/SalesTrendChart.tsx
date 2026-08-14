@@ -3,6 +3,17 @@
 import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis } from "recharts";
 
 export function SalesTrendChart({ data }: { data: { day: string; total: number }[] }) {
+  const hasAnySales = data.some((d) => d.total > 0);
+
+  if (!hasAnySales) {
+    return (
+      <div className="flex h-28 w-full flex-col items-center justify-center gap-1 text-center">
+        <p className="text-xs text-muted">No sales in this period yet</p>
+        <p className="text-[11px] text-muted/70">Your first bill will show up here</p>
+      </div>
+    );
+  }
+
   return (
     <div className="h-28 w-full">
       <ResponsiveContainer width="100%" height="100%">

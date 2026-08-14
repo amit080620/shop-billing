@@ -16,7 +16,7 @@ interface ContactsManager {
 
 export function ContactPickerButton({
   onPick,
-  label = "📱 Pick from contacts",
+  label = "Pick from contacts",
 }: {
   onPick: (name: string, phone: string) => void;
   label?: string;

@@ -8,6 +8,7 @@ import { getTranslator } from "@/lib/i18n/server";
 import { FESTIVALS } from "@/lib/festivals";
 import {
   Plus,
+  AlertTriangle,
   Wallet,
   Calendar,
   Clock,
@@ -25,6 +26,13 @@ import {
   UtensilsCrossed,
   ChefHat,
   CheckCircle2,
+  ClipboardList,
+  Dumbbell,
+  PenLine,
+  Rocket,
+  PartyPopper,
+  Home,
+  Check,
 } from "lucide-react";
 
 export default async function DashboardPage() {
@@ -65,7 +73,7 @@ export default async function DashboardPage() {
 
       {!setupComplete && (
         <section className="rounded-xl border border-dashed border-brand bg-brand-soft p-4">
-          <p className="text-sm font-semibold text-brand-dark">🚀 Getting started</p>
+          <p className="flex items-center gap-1.5 text-sm font-semibold text-brand-dark"><Rocket size={15} /> Getting started</p>
           <p className="mt-0.5 text-xs text-brand-dark/80">A few quick steps to set up {session.shopName}.</p>
           <ul className="mt-3 flex flex-col gap-2">
             {setupSteps.map((step) => (
@@ -76,7 +84,7 @@ export default async function DashboardPage() {
                       step.done ? "bg-brand text-white" : "border border-brand text-transparent"
                     }`}
                   >
-                    ✓
+                    {step.done && <Check size={12} strokeWidth={3} />}
                   </span>
                   <span className={step.done ? "text-muted line-through" : "font-medium text-foreground"}>
                     {step.label}
@@ -92,8 +100,8 @@ export default async function DashboardPage() {
         <Link href="/festivals" className="rounded-xl border border-dashed border-brand bg-brand-soft p-4">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <p className="text-sm font-semibold text-brand-dark">
-                🪔 {nextFestival.name} in {nextFestival.daysUntil} day{nextFestival.daysUntil === 1 ? "" : "s"}
+              <p className="flex items-center gap-1.5 text-sm font-semibold text-brand-dark">
+                <PartyPopper size={15} /> {nextFestival.name} in {nextFestival.daysUntil} day{nextFestival.daysUntil === 1 ? "" : "s"}
               </p>
               <p className="mt-0.5 text-xs text-brand-dark/80">
                 Good time to check stock — tap for restock ideas & a calendar reminder.
@@ -279,7 +287,7 @@ async function LabHome({
 
       {homeCollections && homeCollections.length > 0 && (
         <Link href="/lab/orders" className="flex flex-col gap-1 rounded-xl border border-amber-500 bg-amber-50 px-4 py-3">
-          <p className="text-xs font-semibold text-amber-700">🏠 {homeCollections.length} home collection(s) today</p>
+          <p className="flex items-center gap-1.5 text-xs font-semibold text-amber-700"><Home size={12} /> {homeCollections.length} home collection(s) today</p>
           {homeCollections.slice(0, 3).map((o) => (
             <p key={o.id} className="text-xs text-amber-700">
               {o.patient_name} — {o.collection_slot ?? "no slot set"}
@@ -299,14 +307,14 @@ async function LabHome({
           className="flex flex-col items-center justify-center gap-1 rounded-xl px-4 py-4 text-center font-semibold text-white shadow-md"
           style={{ background: "linear-gradient(135deg, var(--brand-light), var(--brand-dark))" }}
         >
-          <span>🧪</span>
+          <FlaskConical size={20} />
           New order
         </Link>
         <Link
           href="/lab/orders"
           className="flex flex-col items-center justify-center gap-1 rounded-xl border border-brand bg-brand-soft px-4 py-4 text-center font-semibold text-brand-dark"
         >
-          <span>📋</span>
+          <ClipboardList size={20} />
           View orders
         </Link>
       </div>
@@ -392,7 +400,7 @@ async function GymHome({
 
       {expiringMemberships && expiringMemberships.length > 0 && (
         <Link href="/gym/members" className="flex flex-col gap-1 rounded-xl border border-credit bg-credit-soft px-4 py-3">
-          <p className="text-xs font-semibold text-credit">⚠️ {expiringMemberships.length} membership(s) expiring within 7 days</p>
+          <p className="flex items-center gap-1 text-xs font-semibold text-credit"><AlertTriangle size={12} /> {expiringMemberships.length} membership(s) expiring within 7 days</p>
           {expiringMemberships.slice(0, 3).map((m) => {
             const customer = Array.isArray(m.customers) ? m.customers[0] : (m.customers as { name: string; phone: string } | null);
             const days = Math.ceil((new Date(m.end_date).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
@@ -407,7 +415,7 @@ async function GymHome({
 
       {lowPtSessions.length > 0 && (
         <Link href="/gym/members" className="flex flex-col gap-1 rounded-xl border border-amber-500 bg-amber-50 px-4 py-3">
-          <p className="text-xs font-semibold text-amber-700">🏋️ {lowPtSessions.length} member(s) running low on PT sessions</p>
+          <p className="flex items-center gap-1.5 text-xs font-semibold text-amber-700"><Dumbbell size={12} /> {lowPtSessions.length} member(s) running low on PT sessions</p>
           {lowPtSessions.slice(0, 3).map((m) => (
             <p key={m.id} className="text-xs text-amber-700">
               {m.memberName} — {m.remaining} session{m.remaining === 1 ? "" : "s"} left
@@ -427,14 +435,14 @@ async function GymHome({
           className="flex flex-col items-center justify-center gap-1 rounded-xl px-4 py-4 text-center font-semibold text-white shadow-md"
           style={{ background: "linear-gradient(135deg, var(--brand-light), var(--brand-dark))" }}
         >
-          <span>🏋️</span>
+          <Dumbbell size={20} />
           Sell membership
         </Link>
         <Link
           href="/gym/attendance"
           className="flex flex-col items-center justify-center gap-1 rounded-xl border border-brand bg-brand-soft px-4 py-4 text-center font-semibold text-brand-dark"
         >
-          <span>✅</span>
+          <CheckCircle2 size={20} />
           Check in a member
         </Link>
       </div>
@@ -500,7 +508,7 @@ async function ClinicHome({
 
       {overdueFollowUps && overdueFollowUps.length > 0 && (
         <div className="flex flex-col gap-1 rounded-xl border border-credit bg-credit-soft px-4 py-3">
-          <p className="text-xs font-semibold text-credit">⚠️ {overdueFollowUps.length} patient(s) missed their follow-up date</p>
+          <p className="flex items-center gap-1 text-xs font-semibold text-credit"><AlertTriangle size={12} /> {overdueFollowUps.length} patient(s) missed their follow-up date</p>
           {overdueFollowUps.slice(0, 3).map((f) => (
             <p key={f.id} className="text-xs text-credit">
               {f.patient_name} — was due {new Date(f.follow_up_date!).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
@@ -521,14 +529,14 @@ async function ClinicHome({
           className="flex flex-col items-center justify-center gap-1 rounded-xl px-4 py-4 text-center font-semibold text-white shadow-md"
           style={{ background: "linear-gradient(135deg, var(--brand-light), var(--brand-dark))" }}
         >
-          <span>📝</span>
+          <PenLine size={20} />
           New prescription
         </Link>
         <Link
           href="/clinic/appointments/new"
           className="flex flex-col items-center justify-center gap-1 rounded-xl border border-brand bg-brand-soft px-4 py-4 text-center font-semibold text-brand-dark"
         >
-          <span>📅</span>
+          <Calendar size={20} />
           Book appointment
         </Link>
       </div>
@@ -632,11 +640,14 @@ async function JewelleryHome({
         className={`flex items-center justify-between rounded-xl border px-4 py-3.5 shadow-sm ${rateSetToday ? "border-border bg-surface" : "border-credit bg-credit-soft"}`}
       >
         <div>
-          <p className="text-xs text-muted">{rateSetToday ? "Today's rate" : "⚠️ Today's rate not set yet"}</p>
+          <p className="flex items-center gap-1 text-xs text-muted">
+            {!rateSetToday && <AlertTriangle size={11} className="text-credit" />}
+            {rateSetToday ? "Today's rate" : "Today's rate not set yet"}
+          </p>
           <p className="text-sm font-medium text-foreground">
-            {goldRate ? `🥇 ${formatMoney(Number(goldRate.rate_per_gram))}/g` : ""}
+            {goldRate ? `Gold ${formatMoney(Number(goldRate.rate_per_gram))}/g` : ""}
             {goldRate && silverRate ? " · " : ""}
-            {silverRate ? `🥈 ${formatMoney(Number(silverRate.rate_per_gram))}/g` : ""}
+            {silverRate ? `Silver ${formatMoney(Number(silverRate.rate_per_gram))}/g` : ""}
             {!rateSetToday && "Tap to set it"}
           </p>
         </div>
@@ -865,7 +876,7 @@ async function ServiceHome({
 
       {overdueJobs && overdueJobs.length > 0 && (
         <Link href="/service?status=all" className="flex flex-col gap-1 rounded-xl border border-credit bg-credit-soft px-4 py-3">
-          <p className="text-xs font-semibold text-credit">⚠️ {overdueJobs.length} job(s) past their expected date</p>
+          <p className="flex items-center gap-1 text-xs font-semibold text-credit"><AlertTriangle size={12} /> {overdueJobs.length} job(s) past their expected date</p>
           {overdueJobs.slice(0, 3).map((j) => (
             <p key={j.id} className="text-xs text-credit">
               {j.customer_name} — {j.item_description} (Job #{j.job_number})
@@ -978,7 +989,7 @@ async function TransportHome({
 
       {expiringVehicleDocs.length > 0 && (
         <Link href="/transport/vehicles" className="flex flex-col gap-1 rounded-xl border border-credit bg-credit-soft px-4 py-3">
-          <p className="text-xs font-semibold text-credit">⚠️ Vehicle documents need attention</p>
+          <p className="flex items-center gap-1 text-xs font-semibold text-credit"><AlertTriangle size={12} /> Vehicle documents need attention</p>
           {expiringVehicleDocs.slice(0, 3).map((d, i) => {
             const days = Math.ceil((new Date(d.date!).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
             return (
@@ -1266,7 +1277,7 @@ async function RentalHome({ shopId }: { shopId: string }) {
 
       {overdueRentals.length > 0 && (
         <Link href="/rentals" className="flex flex-col gap-1 rounded-xl border border-credit bg-credit-soft px-4 py-3">
-          <p className="text-xs font-semibold text-credit">⚠️ {overdueRentals.length} rental(s) not returned yet</p>
+          <p className="flex items-center gap-1 text-xs font-semibold text-credit"><AlertTriangle size={12} /> {overdueRentals.length} rental(s) not returned yet</p>
           {overdueRentals.slice(0, 3).map((r) => {
             const customerName = Array.isArray(r.customers) ? r.customers[0]?.name : (r.customers as { name: string } | null)?.name;
             return (
@@ -1345,9 +1356,10 @@ function StatCard({
   href?: string;
   icon?: React.ComponentType<{ size?: number; strokeWidth?: number }>;
 }) {
-  const cardClassName = `hover-lift group relative overflow-hidden rounded-xl border border-border p-4 shadow-sm transition-transform active:scale-[0.98] ${
+  const cardClassName = `hover-lift group relative overflow-hidden rounded-xl border border-border p-4 transition-transform active:scale-[0.98] ${
     tone === "credit" ? "bg-credit-soft" : "bg-surface"
   } ${className}`;
+  const cardStyle = { boxShadow: "var(--shadow-sm), inset 0 1px 0 var(--edge-highlight)" };
   const content = (
     <>
       <div className="flex items-center justify-between">
@@ -1370,13 +1382,17 @@ function StatCard({
 
   if (href) {
     return (
-      <Link href={href} className={cardClassName}>
+      <Link href={href} className={cardClassName} style={cardStyle}>
         {content}
       </Link>
     );
   }
 
-  return <div className={cardClassName}>{content}</div>;
+  return (
+    <div className={cardClassName} style={cardStyle}>
+      {content}
+    </div>
+  );
 }
 
 function sum(values: number[] | undefined) {

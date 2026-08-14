@@ -132,24 +132,24 @@ export default async function MorePage() {
 
       <MenuGroup title="Sell online">
         {isModuleEnabled(session.enabledModules, "public_catalog") && (
-          <MenuLink href="/catalog-settings" label="Catalog link" sub="Share a link customers can browse & order from" icon={CatalogIcon} />
+          <MenuLink href="/catalog-settings" label="Catalog link" sub="Share a link customers can browse & order from" icon={CatalogIcon} tone="secondary" />
         )}
-        <MenuLink href="/catalog-orders" label="Catalog orders" sub="Review orders that came in" icon={CatalogIcon} />
+        <MenuLink href="/catalog-orders" label="Catalog orders" sub="Review orders that came in" icon={CatalogIcon} tone="secondary" />
       </MenuGroup>
 
       <MenuGroup title="Branding">
-        <MenuLink href="/invoice-settings" label="Invoice design" sub="Tagline, footer, terms, accent colour" icon={InvoiceDesignIcon} />
+        <MenuLink href="/invoice-settings" label="Invoice design" sub="Tagline, footer, terms, accent colour" icon={InvoiceDesignIcon} tone="secondary" />
       </MenuGroup>
 
       <MenuGroup title="Money">
         {isModuleEnabled(session.enabledModules, "petty_cash") && (
-          <MenuLink href="/petty-cash" label="Petty cash" sub="Small day-to-day cash expenses" icon={PettyCashIcon} />
+          <MenuLink href="/petty-cash" label="Petty cash" sub="Small day-to-day cash expenses" icon={PettyCashIcon} tone="warning" />
         )}
       </MenuGroup>
 
       {session.role === "owner" && isModuleEnabled(session.enabledModules, "multi_branch") && (
         <MenuGroup title="Locations">
-          <MenuLink href="/branches" label="Branches" sub="Multiple locations, one account" icon={BranchIcon} />
+          <MenuLink href="/branches" label="Branches" sub="Multiple locations, one account" icon={BranchIcon} tone="success" />
         </MenuGroup>
       )}
 
@@ -163,11 +163,11 @@ export default async function MorePage() {
         <MenuLink href="/vendors" label={t("more.vendors")} sub={t("more.vendors.sub")} icon={TruckIcon} tone="secondary" />
         {session.role === "owner" && (
           <>
-            <MenuLink href="/staff" label={t("more.staff")} sub={t("more.staff.sub")} icon={UsersIcon} />
+            <MenuLink href="/staff" label={t("more.staff")} sub={t("more.staff.sub")} icon={UsersIcon} tone="success" />
             {isModuleEnabled(session.enabledModules, "audit_log") && (
               <>
-                <MenuLink href="/audit-log" label="Audit log" sub="Who did what, and when" icon={UsersIcon} />
-                <MenuLink href="/error-log" label="Error log" sub="Unexpected failures caught automatically" icon={UsersIcon} />
+                <MenuLink href="/audit-log" label="Audit log" sub="Who did what, and when" icon={UsersIcon} tone="info" />
+                <MenuLink href="/error-log" label="Error log" sub="Unexpected failures caught automatically" icon={UsersIcon} tone="danger" />
               </>
             )}
           </>
@@ -177,30 +177,30 @@ export default async function MorePage() {
       <MenuGroup title="Catalog">
         <MenuLink href="/products" label={terminology.productPlural} sub={terminology.productSub} icon={BoxIcon} />
         {isModuleEnabled(session.enabledModules, "stock_audit") && (
-          <MenuLink href="/stock-audit" label="Stock audit" sub="Count physical stock, reconcile mismatches" icon={AuditIcon} />
+          <MenuLink href="/stock-audit" label="Stock audit" sub="Count physical stock, reconcile mismatches" icon={AuditIcon} tone="warning" />
         )}
       </MenuGroup>
 
       <MenuGroup title="No internet?">
-        <MenuLink href="/offline-bill" label="Offline billing" sub="Keep billing with no connection — syncs automatically once you're back online" icon={OfflineIcon} />
+        <MenuLink href="/offline-bill" label="Offline billing" sub="Keep billing with no connection — syncs automatically once you're back online" icon={OfflineIcon} tone="info" />
       </MenuGroup>
 
       <MenuGroup title="Grow your business">
-        <MenuLink href="/requests" label={t("more.requests")} sub={t("more.requests.sub")} icon={BellIcon} />
+        <MenuLink href="/requests" label={t("more.requests")} sub={t("more.requests.sub")} icon={BellIcon} tone="warning" />
         {isModuleEnabled(session.enabledModules, "whatsapp_reminders") && (
-          <MenuLink href="/reminders" label={t("more.reminders")} sub={t("more.reminders.sub")} icon={ClockIcon} />
+          <MenuLink href="/reminders" label={t("more.reminders")} sub={t("more.reminders.sub")} icon={ClockIcon} tone="warning" />
         )}
         {isModuleEnabled(session.enabledModules, "offers") && (
-          <MenuLink href="/offers" label={t("more.offers")} sub={t("more.offers.sub")} icon={MegaphoneIcon} />
+          <MenuLink href="/offers" label={t("more.offers")} sub={t("more.offers.sub")} icon={MegaphoneIcon} tone="secondary" />
         )}
-        <MenuLink href="/festivals" label="Festival planner" sub="Upcoming festivals & stock-up reminders" icon={FestivalIcon} />
+        <MenuLink href="/festivals" label="Festival planner" sub="Upcoming festivals & stock-up reminders" icon={FestivalIcon} tone="secondary" />
       </MenuGroup>
 
       <MenuGroup title="Shop setup">
         {session.role === "owner" && (
           <MenuLink href="/settings" label={t("more.settings")} sub={t("more.settings.sub")} icon={GearIcon} />
         )}
-        <MenuLink href="/help" label="Help & guide" sub="How every screen and button works" icon={HelpIcon} />
+        <MenuLink href="/help" label="Help & guide" sub="How every screen and button works" icon={HelpIcon} tone="info" />
       </MenuGroup>
 
       <div className="rounded-xl border border-border bg-surface px-4 py-3.5 text-sm text-muted shadow-sm">

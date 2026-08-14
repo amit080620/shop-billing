@@ -6,7 +6,7 @@ import Link from "next/link";
 import { updateLabOrderStatusAction, saveTestResultAction, billLabOrderAction } from "@/lib/actions/lab";
 import { formatMoney } from "@/lib/format";
 import { PageHeader } from "@/app/components/PageHeader";
-import { FlaskConical } from "lucide-react";
+import { FlaskConical, Printer } from "lucide-react";
 
 type Order = {
   id: string;
@@ -96,9 +96,9 @@ export function OrderDetailClient({ order, items }: { order: Order; items: Item[
       <Link
         href={`/print/lab-report/${order.id}`}
         target="_blank"
-        className="self-start rounded-lg border border-brand bg-brand-soft px-3 py-1.5 text-xs font-medium text-brand-dark"
+        className="flex items-center gap-1.5 self-start rounded-lg border border-brand bg-brand-soft px-3 py-1.5 text-xs font-medium text-brand-dark"
       >
-        🖨️ View / print report
+        <Printer size={13} /> View / print report
       </Link>
 
       <div className="rounded-xl border border-border bg-surface p-3.5 shadow-sm text-sm">
@@ -108,7 +108,7 @@ export function OrderDetailClient({ order, items }: { order: Order; items: Item[
           {order.referringDoctorName ? ` · Ref by Dr. ${order.referringDoctorName}` : ""}
         </p>
         <p className="text-muted">
-          {order.collectionType === "home_collection" ? `🏠 Home collection${order.homeAddress ? ` — ${order.homeAddress}` : ""}` : "🚶 Walk-in"}
+          {order.collectionType === "home_collection" ? `Home collection${order.homeAddress ? ` — ${order.homeAddress}` : ""}` : "Walk-in"}
           {order.collectionSlot ? ` · ${order.collectionSlot}` : ""}
         </p>
         {order.phlebotomistName && <p className="text-muted">Assigned: {order.phlebotomistName}</p>}
@@ -154,7 +154,7 @@ export function OrderDetailClient({ order, items }: { order: Order; items: Item[
               </div>
               {item.resultFlag && (
                 <p className={`mt-1 text-xs ${FLAG_STYLE[item.resultFlag] ?? "text-muted"}`}>
-                  {item.resultFlag === "high" ? "⬆ High" : item.resultFlag === "low" ? "⬇ Low" : "✓ Normal"} (compared to stated reference range only)
+                  {item.resultFlag === "high" ? "High" : item.resultFlag === "low" ? "Low" : "Normal"} (compared to stated reference range only)
                 </p>
               )}
             </li>
@@ -168,8 +168,8 @@ export function OrderDetailClient({ order, items }: { order: Order; items: Item[
       </div>
 
       {order.billId ? (
-        <Link href={`/print/bill/${order.billId}`} className="btn-primary w-full text-center">
-          🖨️ View invoice
+        <Link href={`/print/bill/${order.billId}`} className="btn-primary flex w-full items-center justify-center gap-1.5 text-center">
+          <Printer size={15} /> View invoice
         </Link>
       ) : order.status === "report_ready" || order.status === "delivered" ? (
         <>

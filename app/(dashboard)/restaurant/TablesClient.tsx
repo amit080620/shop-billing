@@ -10,7 +10,7 @@ import {
   rejectTableOrderRequestAction,
   getTableQrImageAction,
 } from "@/lib/actions/table-orders";
-import { LayoutGrid } from "lucide-react";
+import { LayoutGrid, Layers, CalendarClock, Smartphone, Check, X, Bell, QrCode } from "lucide-react";
 import { formatMoney } from "@/lib/format";
 import { PageHeader } from "@/app/components/PageHeader";
 import { EmptyState } from "@/app/components/EmptyState";
@@ -125,17 +125,17 @@ export function TablesClient({ tables, lang }: { tables: Table[]; lang: Lang }) 
         <Link href="/restaurant/reports" className="shrink-0 rounded-full border border-border px-3 py-1.5 text-xs font-medium text-muted">
           {t("tables.salesReports")}
         </Link>
-        <Link href="/restaurant/combos" className="shrink-0 rounded-full border border-border px-3 py-1.5 text-xs font-medium text-muted">
-          🍱 Combos
+        <Link href="/restaurant/combos" className="flex shrink-0 items-center gap-1 rounded-full border border-border px-3 py-1.5 text-xs font-medium text-muted">
+          <Layers size={12} /> Combos
         </Link>
-        <Link href="/restaurant/reservations" className="shrink-0 rounded-full border border-border px-3 py-1.5 text-xs font-medium text-muted">
-          📅 Reservations
+        <Link href="/restaurant/reservations" className="flex shrink-0 items-center gap-1 rounded-full border border-border px-3 py-1.5 text-xs font-medium text-muted">
+          <CalendarClock size={12} /> Reservations
         </Link>
       </div>
 
       {requests.length > 0 && (
         <section className="flex flex-col gap-2 rounded-xl border border-brand bg-brand-soft p-3">
-          <p className="text-sm font-semibold text-brand-dark">📱 {requests.length} customer order request(s)</p>
+          <p className="flex items-center gap-1.5 text-sm font-semibold text-brand-dark"><Smartphone size={14} /> {requests.length} customer order request(s)</p>
           {requests.map((r) => (
             <div key={r.id} className="rounded-lg bg-surface p-3">
               <p className="text-sm font-medium text-foreground">
@@ -143,11 +143,11 @@ export function TablesClient({ tables, lang }: { tables: Table[]; lang: Lang }) 
               </p>
               <p className="text-xs text-muted">{r.items.map((i) => `${i.quantity}× ${i.name}`).join(", ")}</p>
               <div className="mt-2 flex gap-2">
-                <button onClick={() => accept(r.id)} disabled={isPending} className="btn-primary-sm disabled:opacity-60">
-                  ✓ Accept
+                <button onClick={() => accept(r.id)} disabled={isPending} className="btn-primary-sm flex items-center gap-1 disabled:opacity-60">
+                  <Check size={13} /> Accept
                 </button>
-                <button onClick={() => reject(r.id)} disabled={isPending} className="rounded-lg border border-danger px-3 py-1.5 text-xs font-medium text-danger disabled:opacity-60">
-                  ✕ Reject
+                <button onClick={() => reject(r.id)} disabled={isPending} className="flex items-center gap-1 rounded-lg border border-danger px-3 py-1.5 text-xs font-medium text-danger disabled:opacity-60">
+                  <X size={13} /> Reject
                 </button>
               </div>
             </div>
@@ -192,12 +192,12 @@ export function TablesClient({ tables, lang }: { tables: Table[]; lang: Lang }) 
             >
               {table.readyCount > 0 && (
                 <span className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-brand text-[10px] font-bold text-white">
-                  🔔
+                  <Bell size={11} />
                 </span>
               )}
               {!table.readyCount && table.status !== "occupied" && table.reservation && (
                 <span className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-amber-500 text-[10px] font-bold text-white">
-                  📅
+                  <CalendarClock size={11} />
                 </span>
               )}
               <button
@@ -208,7 +208,7 @@ export function TablesClient({ tables, lang }: { tables: Table[]; lang: Lang }) 
                 className="absolute -left-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-gray-700 text-[10px] text-white"
                 aria-label="Show QR code"
               >
-                ▦
+                <QrCode size={11} />
               </button>
               <span className={`text-sm font-semibold md:text-lg ${table.status === "occupied" ? "text-danger" : table.reservation ? "text-amber-700" : "text-brand-dark"}`}>
                 {table.name}
@@ -217,7 +217,7 @@ export function TablesClient({ tables, lang }: { tables: Table[]; lang: Lang }) 
                 {table.status === "occupied"
                   ? formatMoney(table.openOrderTotal)
                   : table.reservation
-                    ? `📅 ${table.reservation.time} — ${table.reservation.customerName}`
+                    ? `${table.reservation.time} — ${table.reservation.customerName}`
                     : t("tables.free")}
               </span>
             </div>

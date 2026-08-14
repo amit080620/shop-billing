@@ -3,6 +3,7 @@ import { requireSession } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { formatMoney } from "@/lib/format";
 import { PeriodPicker, MONTHS } from "../PeriodPicker";
+import { Check } from "lucide-react";
 import { ExportCsvButton } from "@/app/components/ExportCsvButton";
 import { EmptyState } from "@/app/components/EmptyState";
 
@@ -121,7 +122,7 @@ export default async function PurchaseRegisterPage({
                       {formatMoney(Number(r.cgst_amount) + Number(r.sgst_amount) + Number(r.igst_amount))}
                     </td>
                     <td className="py-1.5 pr-3 text-right text-foreground">{formatMoney(Number(r.total))}</td>
-                    <td className="py-1.5 text-center">{r.itc_eligible ? "✓" : "—"}</td>
+                    <td className="py-1.5 text-center">{r.itc_eligible ? <Check size={13} className="inline text-success" /> : "—"}</td>
                   </tr>
                 ))}
               </tbody>

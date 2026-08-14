@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { editBillQuantitiesAction } from "@/lib/actions/bills";
+import { Pencil } from "lucide-react";
 
 type Item = { id: string; productName: string; quantity: number };
 
@@ -42,7 +43,7 @@ export function EditBillButton({ billId, invoiceNumber, items }: { billId: strin
         onClick={() => setOpen(true)}
         className="no-print block w-full rounded-lg border border-brand px-4 py-2.5 text-center text-sm font-medium text-brand-dark"
       >
-        ✏️ Edit bill
+        <span className="flex items-center gap-1"><Pencil size={12} /> Edit bill</span>
       </button>
 
       {open && (

@@ -14,6 +14,7 @@ import { formatMoney } from "@/lib/format";
 import { SearchableSelect } from "@/app/components/SearchableSelect";
 import { InlineQuickAdd } from "@/app/components/InlineQuickAdd";
 import { Spinner } from "@/app/components/Spinner";
+import { Zap, Package, AlertTriangle, Pill, Truck, Gem, Recycle } from "lucide-react";
 import { BarcodeScanInput } from "@/app/components/BarcodeScanInput";
 import { CameraBarcodeScanner } from "@/app/components/CameraBarcodeScanner";
 import { useTranslation } from "@/lib/i18n/useTranslation";
@@ -272,7 +273,7 @@ export function NewBillClient({
       ...prev.filter((c) => c.productId !== "__transport_charge__"),
       {
         productId: "__transport_charge__",
-        name: `🚚 Transport: ${vehicleName} (${km} km${loadLabel})`,
+        name: `Transport: ${vehicleName} (${km} km${loadLabel})`,
         price: amount,
         packPrice: amount,
         gstPercent: 0,
@@ -300,7 +301,7 @@ export function NewBillClient({
       ...prev,
       {
         productId: uniqueId,
-        name: `💍 ${name}`,
+        name: name,
         price: amount,
         packPrice: amount,
         gstPercent,
@@ -444,9 +445,9 @@ export function NewBillClient({
                 <button
                   key={p.id}
                   onClick={() => addProduct(p)}
-                  className="shrink-0 rounded-full border border-brand bg-brand-soft px-3 py-1.5 text-xs font-medium text-brand-dark"
+                  className="flex shrink-0 items-center gap-1 rounded-full border border-brand bg-brand-soft px-3 py-1.5 text-xs font-medium text-brand-dark"
                 >
-                  ⚡ {p.name}
+                  <Zap size={11} /> {p.name}
                 </button>
               ))}
             </div>
@@ -524,10 +525,11 @@ export function NewBillClient({
                         {formatMoney(line.price)}/{line.saleMode === "loose" ? line.looseUnitName : line.unit} · GST {line.gstPercent}%
                       </p>
                       {line.bulkMinQty && line.bulkPrice && (
-                        <p className="text-[11px] text-brand">
+                        <p className="flex items-center gap-1 text-[11px] text-brand">
+                          <Package size={10} />
                           {line.price === line.bulkPrice
-                            ? `📦 Bulk price applied (${line.bulkMinQty}+)`
-                            : `📦 ${line.bulkMinQty}+ gets ${formatMoney(line.bulkPrice)}/unit`}
+                            ? `Bulk price applied (${line.bulkMinQty}+)`
+                            : `${line.bulkMinQty}+ gets ${formatMoney(line.bulkPrice)}/unit`}
                         </p>
                       )}
                       {line.unitsPerPack && line.looseUnitName && (
@@ -858,8 +860,9 @@ export function NewBillClient({
         )}
 
         {tripInfo && totals.total > 50000 && (
-          <p className="rounded-lg border border-dashed border-credit bg-credit-soft px-3.5 py-2.5 text-xs text-credit">
-            ⚠️ This delivery is over ₹50,000 — an E-way Bill is legally required for goods
+          <p className="flex items-start gap-1.5 rounded-lg border border-dashed border-credit bg-credit-soft px-3.5 py-2.5 text-xs text-credit">
+            <AlertTriangle size={13} className="mt-0.5 shrink-0" />
+            This delivery is over ₹50,000 — an E-way Bill is legally required for goods
             movement above this value. Generate one on the GST e-way bill portal before the
             vehicle leaves.
           </p>
@@ -879,8 +882,9 @@ export function NewBillClient({
 
         {cart.some((c) => c.requiresPrescription) && (
           <div className="flex flex-col gap-2 rounded-lg border border-dashed border-brand bg-brand-soft p-3">
-            <p className="text-xs font-medium text-brand-dark">
-              💊 One or more items need a prescription (Rx) — enter both before generating the invoice.
+            <p className="flex items-start gap-1.5 text-xs font-medium text-brand-dark">
+              <Pill size={13} className="mt-0.5 shrink-0" />
+              One or more items need a prescription (Rx) — enter both before generating the invoice.
             </p>
             <input
               value={doctorName}
@@ -947,7 +951,7 @@ function StockIndicator({
   const isNearLow = !isLow && remaining <= threshold + 3;
 
   if (remaining <= 0) {
-    return <p className="text-xs font-semibold text-danger">⚠ Out of stock after this sale</p>;
+    return <p className="flex items-center gap-1 text-xs font-semibold text-danger"><AlertTriangle size={11} /> Out of stock after this sale</p>;
   }
   if (isLow) {
     return (
@@ -1093,8 +1097,8 @@ function TransportChargePicker({
 
   if (!open) {
     return (
-      <button type="button" onClick={() => setOpen(true)} className="self-start text-sm font-medium text-brand">
-        🚚 Add transport charge
+      <button type="button" onClick={() => setOpen(true)} className="flex items-center gap-1.5 self-start text-sm font-medium text-brand">
+        <Truck size={15} /> Add transport charge
       </button>
     );
   }
@@ -1224,8 +1228,8 @@ function JewelleryCalculator({
 
   if (!open) {
     return (
-      <button type="button" onClick={() => setOpen(true)} className="self-start text-sm font-medium text-brand">
-        💍 Add jewellery item by weight
+      <button type="button" onClick={() => setOpen(true)} className="flex items-center gap-1.5 self-start text-sm font-medium text-brand">
+        <Gem size={15} /> Add jewellery item by weight
       </button>
     );
   }
@@ -1391,8 +1395,8 @@ function ExchangeCalculator({
     return (
       <div className="flex items-center justify-between rounded-xl border border-brand bg-brand-soft px-3.5 py-3">
         <div>
-          <p className="text-sm font-medium text-brand-dark">
-            ♻️ Old {exchangeInfo.metal} exchange {exchangeInfo.description ? `— ${exchangeInfo.description}` : ""}
+          <p className="flex items-center gap-1.5 text-sm font-medium text-brand-dark">
+            <Recycle size={14} /> Old {exchangeInfo.metal} exchange {exchangeInfo.description ? `— ${exchangeInfo.description}` : ""}
           </p>
           <p className="text-xs text-brand-dark/80">
             {exchangeInfo.grossWeight}g gross · {exchangeInfo.purityPercent}% purity · {formatMoney(exchangeInfo.value)}
@@ -1407,8 +1411,8 @@ function ExchangeCalculator({
 
   if (!open) {
     return (
-      <button type="button" onClick={() => setOpen(true)} className="self-start text-sm font-medium text-brand">
-        ♻️ Customer exchanging old gold/silver?
+      <button type="button" onClick={() => setOpen(true)} className="flex items-center gap-1.5 self-start text-sm font-medium text-brand">
+        <Recycle size={15} /> Customer exchanging old gold/silver?
       </button>
     );
   }

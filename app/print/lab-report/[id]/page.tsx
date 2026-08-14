@@ -75,7 +75,7 @@ export default async function LabReportPrintPage({
 
       {!allReported && (
         <p className="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-xs font-medium text-amber-700">
-          ⚠️ Some results are still pending — this is a partial/provisional report.
+          Note: Some results are still pending — this is a partial/provisional report.
         </p>
       )}
 

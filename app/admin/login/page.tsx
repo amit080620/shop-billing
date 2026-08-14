@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import { adminLoginAction } from "@/lib/actions/admin-auth";
+import { Settings } from "lucide-react";
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -24,8 +25,8 @@ export default function AdminLoginPage() {
     <div className="flex min-h-screen items-center justify-center bg-gray-950 px-6">
       <div className="w-full max-w-sm">
         <div className="mb-6 text-center">
-          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-white text-lg font-bold text-gray-900">
-            ⚙
+          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-white text-gray-900">
+            <Settings size={22} />
           </div>
           <h1 className="text-xl font-bold text-white">Platform Admin</h1>
           <p className="mt-1 text-sm text-gray-400">Not a shop login — this manages the whole platform.</p>

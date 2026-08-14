@@ -51,7 +51,7 @@ export function BusinessTypeForm({
       >
         {BUSINESS_TYPES.map((b) => (
           <option key={b.value} value={b.value}>
-            {b.icon} {b.label}
+            {b.label}
           </option>
         ))}
       </select>

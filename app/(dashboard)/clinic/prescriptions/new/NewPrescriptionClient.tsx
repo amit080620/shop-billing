@@ -8,7 +8,7 @@ import { PageHeader } from "@/app/components/PageHeader";
 import { SearchableSelect } from "@/app/components/SearchableSelect";
 import { COMMON_MEDICINE_NAMES } from "@/lib/constants/commonMedicines";
 import type { Lang } from "@/lib/i18n/dictionary";
-import { FileText } from "lucide-react";
+import { FileText, Smile, ClipboardList } from "lucide-react";
 
 type Patient = { id: string; name: string; phone: string; dateOfBirth: string | null; gender: string | null };
 type MedicineRow = PrescriptionItemInput & { key: string };
@@ -353,7 +353,7 @@ function ToothChart({ chart, onChange }: { chart: Record<string, string>; onChan
 
   return (
     <section className="flex flex-col gap-2 rounded-xl border border-border bg-surface p-3.5">
-      <p className="text-sm font-semibold text-foreground">🦷 Tooth chart</p>
+      <p className="flex items-center gap-1.5 text-sm font-semibold text-foreground"><Smile size={14} /> Tooth chart</p>
       <p className="text-xs text-muted">Tap a tooth to cycle its condition — a record of what you observed.</p>
       <div className="flex flex-col items-center gap-1">
         <div className="flex gap-1">
@@ -439,7 +439,7 @@ function VitalsPanel({ specialty, vitals, onChange }: { specialty: string; vital
   const fields = VITALS_FIELDS[specialty] ?? [];
   return (
     <section className="flex flex-col gap-2 rounded-xl border border-border bg-surface p-3.5">
-      <p className="text-sm font-semibold text-foreground">📋 Vitals & notes</p>
+      <p className="flex items-center gap-1.5 text-sm font-semibold text-foreground"><ClipboardList size={14} /> Vitals & notes</p>
       <p className="text-xs text-muted">Plain record of what you measured/observed — nothing here is auto-scored.</p>
       <div className="grid grid-cols-2 gap-2">
         {fields.map((f) => (

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import Link from "next/link";
+import { TrendingUp, Camera, X } from "lucide-react";
 import { recordPaymentAction } from "@/lib/actions/customers";
 import { useToast } from "@/app/components/Toast";
 import { addGrowthLogAction, uploadPatientPhotoAction, deletePatientPhotoAction } from "@/lib/actions/clinic";
@@ -358,7 +359,7 @@ function GrowthChart({
   return (
     <section className="flex flex-col gap-2 rounded-xl border border-border bg-surface p-4 shadow-sm">
       <div className="flex items-center justify-between">
-        <p className="text-sm font-semibold text-foreground">📈 Growth chart</p>
+        <p className="flex items-center gap-1.5 text-sm font-semibold text-foreground"><TrendingUp size={14} /> Growth chart</p>
         <button onClick={() => setShowForm((v) => !v)} className="text-xs font-medium text-brand">
           + Add entry
         </button>
@@ -448,7 +449,7 @@ function PatientPhotos({
 
   return (
     <section className="flex flex-col gap-2 rounded-xl border border-border bg-surface p-4 shadow-sm">
-      <p className="text-sm font-semibold text-foreground">📷 Before / after photos</p>
+      <p className="flex items-center gap-1.5 text-sm font-semibold text-foreground"><Camera size={14} /> Before / after photos</p>
 
       <div className="flex flex-wrap items-center gap-2">
         {(["before", "after", "other"] as const).map((l) => (
@@ -496,7 +497,7 @@ function PatientPhotos({
                 }
                 className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-black/60 text-[10px] text-white"
               >
-                ✕
+                <X size={11} />
               </button>
             </div>
           ))}

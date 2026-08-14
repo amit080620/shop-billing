@@ -3,6 +3,7 @@
 import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { saveFestivalNoteAction } from "@/lib/actions/festival-notes";
+import { PenLine, Check } from "lucide-react";
 
 function SaveButton() {
   const { pending } = useFormStatus();
@@ -24,8 +25,8 @@ export function FestivalNoteBox({ slug, initialNote }: { slug: string; initialNo
   return (
     <form action={formAction} className="mt-3 flex flex-col gap-1.5 border-t border-border pt-3">
       <input type="hidden" name="slug" value={slug} />
-      <label className="text-xs font-medium text-foreground">
-        📝 Your notes for this festival — what worked, what to remember for next time
+      <label className="flex items-center gap-1 text-xs font-medium text-foreground">
+        <PenLine size={11} /> Your notes for this festival — what worked, what to remember for next time
       </label>
       <textarea
         name="note"
@@ -37,7 +38,7 @@ export function FestivalNoteBox({ slug, initialNote }: { slug: string; initialNo
       />
       <div className="flex items-center gap-2">
         <SaveButton />
-        {state?.saved && <span className="text-xs text-brand">Saved ✓</span>}
+        {state?.saved && <span className="flex items-center gap-0.5 text-xs text-brand"><Check size={11} /> Saved</span>}
         {state?.error && <span className="text-xs text-credit">{state.error}</span>}
       </div>
     </form>

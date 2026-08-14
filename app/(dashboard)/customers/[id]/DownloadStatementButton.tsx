@@ -141,7 +141,7 @@ export function DownloadStatementButton({
         disabled={isGenerating || bills.length === 0}
         className="w-full rounded-lg border border-border px-4 py-2.5 text-sm font-medium text-foreground disabled:opacity-50"
       >
-        {isGenerating ? "Preparing…" : "📄 Download statement"}
+        {isGenerating ? "Preparing…" : "Download statement"}
       </button>
       {error && <p className="text-xs text-credit">{error}</p>}
     </div>

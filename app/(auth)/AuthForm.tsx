@@ -2,7 +2,28 @@
 
 import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, ShoppingCart, Store, Wrench, Pill, UtensilsCrossed, Repeat, Truck, Hammer, Scissors, Gem, Stethoscope, Dumbbell, FlaskConical, Building2, type LucideIcon } from "lucide-react";
+
+// Mirrors businessType.ts's icon choices — kept as a lookup map here
+// (rather than passing the component itself through props) because a
+// Server Component can only pass plain, serializable data to a Client
+// Component; a React component reference can't cross that boundary.
+const BUSINESS_ICON_MAP: Record<string, LucideIcon> = {
+  grocery: ShoppingCart,
+  mart: Store,
+  hardware: Wrench,
+  pharmacy: Pill,
+  restaurant: UtensilsCrossed,
+  rental: Repeat,
+  transport: Truck,
+  service: Hammer,
+  salon: Scissors,
+  jewellery: Gem,
+  clinic: Stethoscope,
+  gym: Dumbbell,
+  lab: FlaskConical,
+  general: Building2,
+};
 
 function SubmitButton({ label, pleaseWaitLabel }: { label: string; pleaseWaitLabel: string }) {
   const { pending } = useFormStatus();
@@ -66,7 +87,10 @@ export function AuthForm({
                     }`}
                     style={{ background: `linear-gradient(135deg, ${opt.colors[0]}, ${opt.colors[1]})` }}
                   >
-                    <span className="text-2xl drop-shadow-sm">{opt.icon}</span>
+                    {(() => {
+                      const Icon = BUSINESS_ICON_MAP[opt.icon];
+                      return Icon ? <Icon size={22} className="text-white drop-shadow-sm" strokeWidth={1.8} /> : null;
+                    })()}
                     <span className="text-[11px] font-semibold leading-tight text-white drop-shadow-sm">{opt.label}</span>
                   </button>
                 );

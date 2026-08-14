@@ -6,7 +6,7 @@ import { getTranslator } from "@/lib/i18n/server";
 import { PageHeader } from "@/app/components/PageHeader";
 import { EmptyState } from "@/app/components/EmptyState";
 import { MarkActiveButton } from "./MarkActiveButton";
-import { Repeat } from "lucide-react";
+import { Repeat, Calendar } from "lucide-react";
 
 export default async function RentalsPage() {
   const session = await requireSession();
@@ -43,7 +43,7 @@ export default async function RentalsPage() {
           {t("rentalsPage.pastLink")}
         </Link>
         <Link href="/rentals/availability" className="shrink-0 rounded-full border border-border px-3 py-1.5 text-xs font-medium text-muted">
-          📅 Availability calendar
+          <span className="flex items-center gap-1"><Calendar size={13} /> Availability calendar</span>
         </Link>
       </div>
 

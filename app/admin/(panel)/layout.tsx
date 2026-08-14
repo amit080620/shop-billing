@@ -1,4 +1,5 @@
 import { requireSuperAdmin } from "@/lib/admin-auth";
+import { Settings } from "lucide-react";
 import { adminLogoutAction } from "@/lib/actions/admin-auth";
 
 export default async function AdminPanelLayout({ children }: { children: React.ReactNode }) {
@@ -8,8 +9,8 @@ export default async function AdminPanelLayout({ children }: { children: React.R
     <div className="min-h-screen bg-gray-950 text-gray-100">
       <header className="flex items-center justify-between border-b border-gray-800 px-4 py-3">
         <div className="flex items-center gap-2">
-          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-white text-sm font-bold text-gray-900">
-            ⚙
+          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-white text-gray-900">
+            <Settings size={16} />
           </span>
           <span className="text-sm font-semibold">Platform Admin</span>
         </div>

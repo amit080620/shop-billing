@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { checkInMemberAction } from "@/lib/actions/gym";
+import { CheckCircle2 } from "lucide-react";
 import { SearchableSelect } from "@/app/components/SearchableSelect";
 import type { Lang } from "@/lib/i18n/dictionary";
 
@@ -16,7 +17,7 @@ export function CheckInForm({ lang, members }: { lang: Lang; members: Member[] }
 
   return (
     <div className="flex flex-col gap-2 rounded-xl border border-dashed border-brand bg-brand-soft p-4">
-      <p className="text-sm font-medium text-brand-dark">✅ Check in a member</p>
+      <p className="flex items-center gap-1.5 text-sm font-medium text-brand-dark"><CheckCircle2 size={14} /> Check in a member</p>
       <SearchableSelect
         lang={lang}
         items={members}

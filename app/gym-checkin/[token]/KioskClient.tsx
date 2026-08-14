@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useTransition } from "react";
 import { publicKioskCheckInAction } from "@/lib/actions/gym";
+import { Hand, CheckCircle2 } from "lucide-react";
 
 export function KioskClient({ token, shopName, shopLogoUrl }: { token: string; shopName: string; shopLogoUrl: string | null }) {
   const [phone, setPhone] = useState("");
@@ -38,9 +39,11 @@ export function KioskClient({ token, shopName, shopLogoUrl }: { token: string; s
   if (result && !result.error) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-gradient-to-br from-brand-soft to-background px-6 text-center">
-        <p className="text-7xl">{result.alreadyIn ? "👋" : "✅"}</p>
+        <span className="flex h-24 w-24 items-center justify-center rounded-full text-white" style={{ background: "linear-gradient(135deg, var(--brand-light), var(--brand-dark))" }}>
+          {result.alreadyIn ? <Hand size={48} /> : <CheckCircle2 size={48} />}
+        </span>
         <p className="text-3xl font-bold text-foreground">{result.alreadyIn ? `Welcome back, ${result.memberName}!` : `Checked in, ${result.memberName}!`}</p>
-        <p className="text-lg text-muted">{result.alreadyIn ? "You're already checked in today." : "Have a great workout! 💪"}</p>
+        <p className="text-lg text-muted">{result.alreadyIn ? "You're already checked in today." : "Have a great workout!"}</p>
       </div>
     );
   }
@@ -98,7 +101,7 @@ export function KioskClient({ token, shopName, shopLogoUrl }: { token: string; s
         className="w-full max-w-xs rounded-2xl py-4 text-lg font-bold text-white shadow-md disabled:opacity-40"
         style={{ background: "linear-gradient(135deg, var(--brand-light), var(--brand-dark))" }}
       >
-        {isPending ? "Checking in…" : "✅ Check In"}
+        {isPending ? "Checking in…" : "Check In"}
       </button>
     </div>
   );

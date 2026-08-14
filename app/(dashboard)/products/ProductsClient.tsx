@@ -16,7 +16,7 @@ import {
   generateBarcodeAction,
   uploadProductImageAction,
 } from "@/lib/actions/products";
-import { Package } from "lucide-react";
+import { Package, Camera, Tag, ShieldCheck } from "lucide-react";
 import { formatMoney } from "@/lib/format";
 import { EmptyState } from "@/app/components/EmptyState";
 import { useToast } from "@/app/components/Toast";
@@ -677,7 +677,7 @@ export function ProductsClient({
 
       {deleteError && <p className="rounded-lg bg-credit-soft px-3.5 py-2.5 text-sm text-credit">{deleteError}</p>}
       {imageError && <p className="rounded-lg bg-credit-soft px-3.5 py-2.5 text-sm text-credit">{imageError}</p>}
-      <p className="text-xs text-muted">Tap the 📷 on any item to add a photo — best size: a square image, about 500×500px, under 2MB.</p>
+      <p className="flex items-center gap-1 text-xs text-muted"><Camera size={12} /> Tap the photo icon on any item to add one — best size: a square image, about 500×500px, under 2MB.</p>
 
       {filtered.length === 0 ? (
         <EmptyState text={t("products.emptyShelf")} />
@@ -698,7 +698,7 @@ export function ProductsClient({
                   ) : uploadingImageFor === p.id ? (
                     "…"
                   ) : (
-                    "📷"
+                    <Camera size={16} />
                   )}
                   <input
                     type="file"
@@ -716,11 +716,11 @@ export function ProductsClient({
                   <p className="text-xs text-muted">
                     {p.categoryName ?? t("products.noCategory")} · GST {p.gstPercent}% · {p.unit}
                     {p.hsnCode ? ` · HSN ${p.hsnCode}` : ""}
-                    {p.barcode ? ` · 🏷 ${p.barcode}` : ""}
+                    {p.barcode ? ` · ${p.barcode}` : ""}
                   </p>
                   {p.offerPrice != null && (
                     <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-danger/15 px-2 py-0.5 text-[11px] font-medium text-danger">
-                      🏷️ {p.offerLabel || "Offer"}: {formatMoney(p.offerPrice)}
+                      <Tag size={10} /> {p.offerLabel || "Offer"}: {formatMoney(p.offerPrice)}
                     </span>
                   )}
                   {p.isRentable && (
@@ -730,12 +730,12 @@ export function ProductsClient({
                   )}
                   {p.hasWarranty && p.warrantyMonths && (
                     <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-brand-soft px-2 py-0.5 text-[11px] font-medium text-brand-dark">
-                      🛡️ {p.warrantyMonths}mo warranty
+                      <ShieldCheck size={10} /> {p.warrantyMonths}mo warranty
                     </span>
                   )}
                   {p.bulkMinQty && p.bulkPrice && (
                     <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-brand-soft px-2 py-0.5 text-[11px] font-medium text-brand-dark">
-                      📦 {p.bulkMinQty}+ @ {formatMoney(p.bulkPrice)}
+                      <Package size={10} /> {p.bulkMinQty}+ @ {formatMoney(p.bulkPrice)}
                     </span>
                   )}
                   {p.isPharma && (

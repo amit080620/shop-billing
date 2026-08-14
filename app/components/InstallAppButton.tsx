@@ -69,7 +69,7 @@ export function InstallAppButton() {
         onClick={handleClick}
         className="flex w-full items-center justify-center gap-2 rounded-xl border border-brand bg-brand-soft px-4 py-3 text-sm font-semibold text-brand-dark"
       >
-        📲 Install app on this device
+        Install app on this device
       </button>
 
       {showManualSteps && !deferredPrompt && (

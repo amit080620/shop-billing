@@ -3,8 +3,8 @@ import { requireSession } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { formatMoney } from "@/lib/format";
 import { PageHeader } from "@/app/components/PageHeader";
+import { Users, Wallet, Receipt, Calculator } from "lucide-react";
 import { DatePicker } from "./DatePicker";
-import { Calculator } from "lucide-react";
 
 const METHODS = ["cash", "card", "upi", "online", "other"] as const;
 type Method = (typeof METHODS)[number];
@@ -174,8 +174,8 @@ export default async function DailySummaryPage({
       </p>
 
       {session.role === "owner" && (
-        <Link href={`/daily-summary/by-staff?date=${date}`} className="rounded-lg border border-dashed border-brand bg-brand-soft px-3.5 py-3 text-sm font-medium text-brand-dark">
-          👥 Staff-wise breakdown →
+        <Link href={`/daily-summary/by-staff?date=${date}`} className="flex items-center gap-1.5 rounded-lg border border-dashed border-brand bg-brand-soft px-3.5 py-3 text-sm font-medium text-brand-dark">
+          <Users size={14} /> Staff-wise breakdown →
         </Link>
       )}
 
@@ -190,7 +190,7 @@ export default async function DailySummaryPage({
       </section>
 
       <section className="flex flex-col gap-2 rounded-xl border border-border bg-surface shadow-sm p-4">
-        <h2 className="text-sm font-semibold text-foreground">💰 Money in — {formatMoney(grandTotalIn)}</h2>
+        <h2 className="flex items-center gap-1.5 text-sm font-semibold text-foreground"><Wallet size={14} /> Money in — {formatMoney(grandTotalIn)}</h2>
         <BreakdownTable title="Sales collected today" byMethod={salesByMethod} />
         <BreakdownTable title="Old udhaar collected today" byMethod={oldCreditCollected} />
         {newCreditGiven > 0 && (
@@ -201,7 +201,7 @@ export default async function DailySummaryPage({
       </section>
 
       <section className="flex flex-col gap-2 rounded-xl border border-border bg-surface shadow-sm p-4">
-        <h2 className="text-sm font-semibold text-foreground">🧾 Money out — {formatMoney(grandTotalOut)}</h2>
+        <h2 className="flex items-center gap-1.5 text-sm font-semibold text-foreground"><Receipt size={14} /> Money out — {formatMoney(grandTotalOut)}</h2>
         <BreakdownTable title="Purchases paid today" byMethod={purchasesPaidByMethod} />
         <BreakdownTable title="Vendor payments made today" byMethod={vendorPaymentsByMethod} />
         {newPayableCreated > 0 && (

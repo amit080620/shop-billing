@@ -85,7 +85,7 @@ export function AppointmentRow({ appointment, lang }: { appointment: Appointment
               rel="noopener noreferrer"
               className="rounded-lg border border-brand bg-brand-soft px-2.5 py-1 text-xs font-medium text-brand-dark"
             >
-              💬 Confirm on WhatsApp
+              Confirm on WhatsApp
             </a>
           )}
           {appointment.status !== "arrived" && (

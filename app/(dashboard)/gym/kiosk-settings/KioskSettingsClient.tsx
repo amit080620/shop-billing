@@ -6,7 +6,7 @@ import Link from "next/link";
 import { saveKioskSettingsAction } from "@/lib/actions/gym";
 import { useToast } from "@/app/components/Toast";
 import { PageHeader } from "@/app/components/PageHeader";
-import { Tablet } from "lucide-react";
+import { Tablet, MessageCircle } from "lucide-react";
 
 export function KioskSettingsClient({ isEnabled: initialEnabled, publicToken }: { isEnabled: boolean; publicToken: string | null }) {
   const router = useRouter();
@@ -70,7 +70,7 @@ export function KioskSettingsClient({ isEnabled: initialEnabled, publicToken }: 
               rel="noopener noreferrer"
               className="flex-1 rounded-lg border border-brand px-3 py-1.5 text-center text-xs font-medium text-brand-dark"
             >
-              💬 Send to staff
+              <span className="flex items-center gap-1"><MessageCircle size={13} /> Send to staff</span>
             </a>
           </div>
           <p className="text-xs text-brand-dark">

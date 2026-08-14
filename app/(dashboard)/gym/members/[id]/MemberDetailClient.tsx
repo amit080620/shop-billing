@@ -13,7 +13,7 @@ import {
   type ExerciseInput,
   type MealInput,
 } from "@/lib/actions/gym";
-import { User } from "lucide-react";
+import { User, X } from "lucide-react";
 import { PageHeader } from "@/app/components/PageHeader";
 import { EmptyState } from "@/app/components/EmptyState";
 import type { Lang } from "@/lib/i18n/dictionary";
@@ -73,7 +73,7 @@ export function MemberDetailClient({
               tab === tb ? "border-brand bg-brand-soft text-brand-dark" : "border-border text-muted"
             }`}
           >
-            {tb === "workout" ? "🏋️ Workout" : tb === "diet" ? "🥗 Diet" : tb === "progress" ? "📈 Progress" : "Overview"}
+            {tb === "workout" ? "Workout" : tb === "diet" ? "Diet" : tb === "progress" ? "Progress" : "Overview"}
           </button>
         ))}
       </div>
@@ -204,7 +204,7 @@ function WorkoutTab({ memberId, plans, onChange }: { memberId: string; plans: Wo
                 />
                 {exercises.length > 1 && (
                   <button onClick={() => setExercises((prev) => prev.filter((_, j) => j !== i))} className="ml-auto text-xs text-danger">
-                    ✕
+                    <X size={13} />
                   </button>
                 )}
               </div>
@@ -329,7 +329,7 @@ function DietTab({ memberId, plans, onChange }: { memberId: string; plans: DietP
                 />
                 {meals.length > 1 && (
                   <button onClick={() => setMeals((prev) => prev.filter((_, j) => j !== i))} className="ml-auto text-xs text-danger">
-                    ✕
+                    <X size={13} />
                   </button>
                 )}
               </div>

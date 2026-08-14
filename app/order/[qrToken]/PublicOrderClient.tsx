@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { getTableMenuAction, submitTableOrderRequestAction, type PublicMenuItem, type RequestItemInput } from "@/lib/actions/table-orders";
+import { CheckCircle2 } from "lucide-react";
 
 type CartLine = { productId: string; name: string; price: number; quantity: number };
 
@@ -72,7 +73,9 @@ export function PublicOrderClient({ qrToken }: { qrToken: string }) {
   if (sent) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-3 px-6 text-center">
-        <div className="text-4xl">✅</div>
+        <span className="flex h-16 w-16 items-center justify-center rounded-full" style={{ background: "linear-gradient(135deg, var(--brand-light), var(--brand-dark))" }}>
+          <CheckCircle2 size={32} className="text-white" />
+        </span>
         <p className="text-lg font-semibold text-gray-900">Sent to the counter!</p>
         <p className="text-sm text-gray-500">Staff will confirm your order shortly.</p>
       </div>

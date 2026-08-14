@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { CheckCircle2, MessageCircle, Snowflake } from "lucide-react";
 import { freezeMembershipAction, cancelMembershipAction, recordPtSessionAction, checkInMemberAction } from "@/lib/actions/gym";
 import { useTranslation } from "@/lib/i18n/useTranslation";
 import type { Lang } from "@/lib/i18n/dictionary";
@@ -66,14 +67,14 @@ export function MemberRow({ member, lang }: { member: Member; lang: Lang }) {
           {!m
             ? "No membership"
             : m.status === "frozen"
-              ? "🧊 Frozen"
+              ? "Frozen"
               : m.status === "cancelled"
                 ? "Cancelled"
                 : days !== null && days < 0
-                  ? `🔴 Expired ${Math.abs(days)}d ago`
+                  ? `Expired ${Math.abs(days)}d ago`
                   : days !== null && days <= 7
-                    ? `🟡 Expires in ${days}d`
-                    : "🟢 Active"}
+                    ? `Expires in ${days}d`
+                    : "Active"}
         </span>
       </div>
 
@@ -91,7 +92,7 @@ export function MemberRow({ member, lang }: { member: Member; lang: Lang }) {
           disabled={isPending}
           className="rounded-lg border border-brand bg-brand-soft px-2.5 py-1 text-xs font-medium text-brand-dark disabled:opacity-60"
         >
-          ✅ Check in
+          <CheckCircle2 size={13} className="mr-1 inline" /> Check in
         </button>
         {m && m.status === "active" && (tone === "soon" || tone === "expired") && (
           <a
@@ -106,7 +107,7 @@ export function MemberRow({ member, lang }: { member: Member; lang: Lang }) {
             rel="noopener noreferrer"
             className="rounded-lg border border-credit bg-credit-soft px-2.5 py-1 text-xs font-medium text-credit"
           >
-            💬 Remind
+            <MessageCircle size={13} className="mr-1 inline" /> Remind
           </a>
         )}
         {m && m.status === "active" && m.ptSessionsTotal > m.ptSessionsUsed && (
@@ -126,7 +127,7 @@ export function MemberRow({ member, lang }: { member: Member; lang: Lang }) {
         )}
         {m && m.status === "active" && (
           <button onClick={() => setShowFreeze((v) => !v)} className="rounded-lg border border-border px-2.5 py-1 text-xs font-medium text-foreground">
-            🧊 Freeze
+            <Snowflake size={13} className="mr-1 inline" /> Freeze
           </button>
         )}
         <Link href={`/gym/members/new?memberId=${member.id}&memberName=${encodeURIComponent(member.name)}&memberPhone=${encodeURIComponent(member.phone)}`} className="rounded-lg border border-border px-2.5 py-1 text-xs font-medium text-brand">
