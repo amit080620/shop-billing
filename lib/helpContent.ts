@@ -6,14 +6,14 @@ export type HelpSection = { title: string; items: HelpItem[] };
 export const HELP_CONTENT: Record<Lang, HelpSection[]> = {
   en: [
     {
-      title: "🏠 Home",
+      title: "Home",
       items: [
         {
           q: "What do the top cards show?",
           a: "Today's sales, last 7 days, outstanding credit (customers who owe you), and payable to vendors (what you owe them). Tap \"Outstanding credit\" to jump straight to the reminders list.",
         },
         {
-          q: "What's the 🪔 banner that sometimes appears?",
+          q: "What's the banner that sometimes appears?",
           a: "A heads-up when a major festival is within 25 days — tap it for restock ideas and a calendar reminder (More → Festival planner). It only shows up when one's actually coming soon.",
         },
         {
@@ -23,7 +23,7 @@ export const HELP_CONTENT: Record<Lang, HelpSection[]> = {
       ],
     },
     {
-      title: "🛒 Sell (new bill)",
+      title: "Sell (new bill)",
       items: [
         {
           q: "Walk-in vs Existing customer?",
@@ -31,7 +31,7 @@ export const HELP_CONTENT: Record<Lang, HelpSection[]> = {
         },
         {
           q: "How do I add products fast?",
-          a: "Search by name, scan a barcode with a USB/Bluetooth scanner (tap the scan box), or use 📷 Scan with camera. Don't have the product yet? Use \"+ Add new product\" right there — no need to leave the bill.",
+          a: "Search by name, scan a barcode with a USB/Bluetooth scanner (tap the scan box), or use Scan with camera. Don't have the product yet? Use \"+ Add new product\" right there — no need to leave the bill.",
         },
         {
           q: "How do I bill 500 grams or half a litre?",
@@ -48,7 +48,7 @@ export const HELP_CONTENT: Record<Lang, HelpSection[]> = {
       ],
     },
     {
-      title: "📦 Buy & Inventory",
+      title: "Buy & Inventory",
       items: [
         {
           q: "What's the difference between Buy and Inventory?",
@@ -60,16 +60,16 @@ export const HELP_CONTENT: Record<Lang, HelpSection[]> = {
         },
         {
           q: "What do the colored stock badges mean?",
-          a: "🟢 Green = comfortably stocked. 🟠 Orange = within a few units of your low-stock threshold. 🔴 Red = at or below it. The same colors show up in the cart while billing, so you'll notice before you oversell something.",
+          a: "Green = comfortably stocked. Orange = within a few units of your low-stock threshold. Red = at or below it. The same colors show up in the cart while billing, so you'll notice before you oversell something.",
         },
         {
           q: "Can I add my whole catalog at once?",
-          a: "Yes — Inventory → \"📥 Bulk import/export\". Download the template, fill it in Excel/Google Sheets, then upload it back. Also useful for periodically exporting your catalog as a backup.",
+          a: "Yes — Inventory → \"Bulk import/export\". Download the template, fill it in Excel/Google Sheets, then upload it back. Also useful for periodically exporting your catalog as a backup.",
         },
       ],
     },
     {
-      title: "👥 Customers & Vendors",
+      title: "Customers & Vendors",
       items: [
         {
           q: "What's the difference?",
@@ -77,7 +77,7 @@ export const HELP_CONTENT: Record<Lang, HelpSection[]> = {
         },
         {
           q: "How do I add someone quickly?",
-          a: "On Android Chrome, tap \"📱 Pick from contacts\" to fill in name and phone straight from your phone's contact list — no typing.",
+          a: "On Android Chrome, tap \"Pick from contacts\" to fill in name and phone straight from your phone's contact list — no typing.",
         },
         {
           q: "What's the downloadable statement for?",
@@ -86,7 +86,7 @@ export const HELP_CONTENT: Record<Lang, HelpSection[]> = {
       ],
     },
     {
-      title: "💬 Reminders & Offers",
+      title: "Reminders & Offers",
       items: [
         {
           q: "Why do I still have to tap Send myself?",
@@ -99,7 +99,7 @@ export const HELP_CONTENT: Record<Lang, HelpSection[]> = {
       ],
     },
     {
-      title: "🔔 Item requests",
+      title: "Item requests",
       items: [
         {
           q: "What's this for?",
@@ -108,7 +108,7 @@ export const HELP_CONTENT: Record<Lang, HelpSection[]> = {
       ],
     },
     {
-      title: "📊 Reports & Daily Summary",
+      title: "Reports & Daily Summary",
       items: [
         {
           q: "What are GSTR-1, GSTR-3B, and the Purchase Register?",
@@ -125,7 +125,7 @@ export const HELP_CONTENT: Record<Lang, HelpSection[]> = {
       ],
     },
     {
-      title: "⚙️ Settings & Staff",
+      title: "️ Settings & Staff",
       items: [
         {
           q: "Why is my shop's state required?",
@@ -142,7 +142,7 @@ export const HELP_CONTENT: Record<Lang, HelpSection[]> = {
       ],
     },
     {
-      title: "📴 Offline billing",
+      title: "Offline billing",
       items: [
         {
           q: "What is this, in plain terms?",
@@ -179,7 +179,7 @@ export const HELP_CONTENT: Record<Lang, HelpSection[]> = {
       ],
     },
     {
-      title: "🍽 Restaurant — Tables & orders",
+      title: "Restaurant — Tables & orders",
       items: [
         {
           q: "How do I start an order?",
@@ -195,7 +195,7 @@ export const HELP_CONTENT: Record<Lang, HelpSection[]> = {
         },
         {
           q: "How do I remove a wrongly-added item?",
-          a: "Tap the ✕ next to it in the order screen — no PIN needed, since correcting a mistake is a normal part of taking orders. A PIN is only required to cancel the entire table's order.",
+          a: "Tap the next to it in the order screen — no PIN needed, since correcting a mistake is a normal part of taking orders. A PIN is only required to cancel the entire table's order.",
         },
         {
           q: "What's the Manager PIN for?",
@@ -212,7 +212,7 @@ export const HELP_CONTENT: Record<Lang, HelpSection[]> = {
       ],
     },
     {
-      title: "🔁 Rental — Bookings & returns",
+      title: "Rental — Bookings & returns",
       items: [
         {
           q: "How do I make an item rentable?",
@@ -237,7 +237,7 @@ export const HELP_CONTENT: Record<Lang, HelpSection[]> = {
       ],
     },
     {
-      title: "🔴 🟡 🟢 Voiding a bill",
+      title: "Voiding a bill",
       items: [
         {
           q: "Why can't I just edit a bill?",
@@ -248,14 +248,14 @@ export const HELP_CONTENT: Record<Lang, HelpSection[]> = {
   ],
   hi: [
     {
-      title: "🏠 होम",
+      title: "होम",
       items: [
         {
           q: "ऊपर वाले cards क्या दिखाते हैं?",
           a: "आज की बिक्री, पिछले 7 दिन, बकाया उधार (जो customers आपको देने हैं), और सप्लायर को देनदारी। \"बकाया उधार\" पर टैप करके सीधे reminders list पर पहुँच सकते हैं।",
         },
         {
-          q: "🪔 वाला banner कभी-कभी क्यों दिखता है?",
+          q: "वाला banner कभी-कभी क्यों दिखता है?",
           a: "जब कोई बड़ा त्योहार 25 दिन के अंदर आने वाला हो — टैप करके restock सुझाव और calendar reminder पा सकते हैं (More → Festival planner)। सिर्फ़ तभी दिखता है जब कोई त्योहार नज़दीक हो।",
         },
         {
@@ -265,7 +265,7 @@ export const HELP_CONTENT: Record<Lang, HelpSection[]> = {
       ],
     },
     {
-      title: "🛒 बेचें (नया बिल)",
+      title: "बेचें (नया बिल)",
       items: [
         {
           q: "Walk-in बनाम Existing customer?",
@@ -273,7 +273,7 @@ export const HELP_CONTENT: Record<Lang, HelpSection[]> = {
         },
         {
           q: "Products जल्दी कैसे जोड़ें?",
-          a: "नाम से खोजें, USB/Bluetooth scanner से barcode scan करें (scan box पर टैप करें), या 📷 camera से scan करें। Product अभी catalog में नहीं है? वहीं \"+ नया product जोड़ें\" इस्तेमाल करें — बिल छोड़ने की ज़रूरत नहीं।",
+          a: "नाम से खोजें, USB/Bluetooth scanner से barcode scan करें (scan box पर टैप करें), या camera से scan करें। Product अभी catalog में नहीं है? वहीं \"+ नया product जोड़ें\" इस्तेमाल करें — बिल छोड़ने की ज़रूरत नहीं।",
         },
         {
           q: "500 ग्राम या आधा लीटर कैसे बिल करें?",
@@ -290,7 +290,7 @@ export const HELP_CONTENT: Record<Lang, HelpSection[]> = {
       ],
     },
     {
-      title: "📦 खरीदें और Inventory",
+      title: "खरीदें और Inventory",
       items: [
         {
           q: "Buy और Inventory में क्या फ़र्क़ है?",
@@ -302,16 +302,16 @@ export const HELP_CONTENT: Record<Lang, HelpSection[]> = {
         },
         {
           q: "रंगीन stock badges का क्या मतलब है?",
-          a: "🟢 हरा = आराम से stock है। 🟠 केसरी = आपके low-stock threshold के कुछ ही units करीब। 🔴 लाल = threshold पर या उससे नीचे। बिल बनाते वक़्त cart में भी यही रंग दिखते हैं, तो ज़्यादा बेचने से पहले पता चल जाएगा।",
+          a: "हरा = आराम से stock है। केसरी = आपके low-stock threshold के कुछ ही units करीब। लाल = threshold पर या उससे नीचे। बिल बनाते वक़्त cart में भी यही रंग दिखते हैं, तो ज़्यादा बेचने से पहले पता चल जाएगा।",
         },
         {
           q: "क्या पूरा catalog एक साथ जोड़ सकते हैं?",
-          a: "हाँ — Inventory → \"📥 Bulk import/export\"। Template download करें, Excel/Google Sheets में भरें, फिर वापस upload करें। समय-समय पर backup के तौर पर catalog export करने के लिए भी काम आता है।",
+          a: "हाँ — Inventory → \"Bulk import/export\"। Template download करें, Excel/Google Sheets में भरें, फिर वापस upload करें। समय-समय पर backup के तौर पर catalog export करने के लिए भी काम आता है।",
         },
       ],
     },
     {
-      title: "👥 Customers और Vendors",
+      title: "Customers और Vendors",
       items: [
         {
           q: "इनमें क्या फ़र्क़ है?",
@@ -319,7 +319,7 @@ export const HELP_CONTENT: Record<Lang, HelpSection[]> = {
         },
         {
           q: "किसी को जल्दी कैसे जोड़ें?",
-          a: "Android Chrome पर, \"📱 Pick from contacts\" टैप करके सीधे फ़ोन के contacts से नाम और फ़ोन नंबर भर सकते हैं — टाइप करने की ज़रूरत नहीं।",
+          a: "Android Chrome पर, \"Pick from contacts\" टैप करके सीधे फ़ोन के contacts से नाम और फ़ोन नंबर भर सकते हैं — टाइप करने की ज़रूरत नहीं।",
         },
         {
           q: "Download करने लायक statement किसलिए है?",
@@ -328,7 +328,7 @@ export const HELP_CONTENT: Record<Lang, HelpSection[]> = {
       ],
     },
     {
-      title: "💬 Reminders और Offers",
+      title: "Reminders और Offers",
       items: [
         {
           q: "मुझे खुद Send क्यों दबाना पड़ता है?",
@@ -341,7 +341,7 @@ export const HELP_CONTENT: Record<Lang, HelpSection[]> = {
       ],
     },
     {
-      title: "🔔 सामान की माँग",
+      title: "सामान की माँग",
       items: [
         {
           q: "यह किसलिए है?",
@@ -350,7 +350,7 @@ export const HELP_CONTENT: Record<Lang, HelpSection[]> = {
       ],
     },
     {
-      title: "📊 Reports और Daily Summary",
+      title: "Reports और Daily Summary",
       items: [
         {
           q: "GSTR-1, GSTR-3B, और Purchase Register क्या हैं?",
@@ -367,7 +367,7 @@ export const HELP_CONTENT: Record<Lang, HelpSection[]> = {
       ],
     },
     {
-      title: "⚙️ Settings और Staff",
+      title: "️ Settings और Staff",
       items: [
         {
           q: "मेरी दुकान का राज्य ज़रूरी क्यों है?",
@@ -384,7 +384,7 @@ export const HELP_CONTENT: Record<Lang, HelpSection[]> = {
       ],
     },
     {
-      title: "📴 Offline बिलिंग",
+      title: "Offline बिलिंग",
       items: [
         {
           q: "यह असल में है क्या?",
@@ -421,7 +421,7 @@ export const HELP_CONTENT: Record<Lang, HelpSection[]> = {
       ],
     },
     {
-      title: "🍽 Restaurant — Tables और Orders",
+      title: "Restaurant — Tables और Orders",
       items: [
         {
           q: "Order कैसे शुरू करें?",
@@ -437,7 +437,7 @@ export const HELP_CONTENT: Record<Lang, HelpSection[]> = {
         },
         {
           q: "गलती से जुड़े item को कैसे हटाएँ?",
-          a: "Order screen में उसके बगल में ✕ दबाएँ — कोई PIN नहीं चाहिए, क्योंकि गलती ठीक करना सामान्य काम है। PIN सिर्फ़ पूरी table का order cancel करने के लिए चाहिए।",
+          a: "Order screen में उसके बगल में दबाएँ — कोई PIN नहीं चाहिए, क्योंकि गलती ठीक करना सामान्य काम है। PIN सिर्फ़ पूरी table का order cancel करने के लिए चाहिए।",
         },
         {
           q: "Manager PIN किसलिए है?",
@@ -454,7 +454,7 @@ export const HELP_CONTENT: Record<Lang, HelpSection[]> = {
       ],
     },
     {
-      title: "🔁 Rental — Booking और Return",
+      title: "Rental — Booking और Return",
       items: [
         {
           q: "किसी item को rentable कैसे बनाएँ?",
@@ -479,7 +479,7 @@ export const HELP_CONTENT: Record<Lang, HelpSection[]> = {
       ],
     },
     {
-      title: "🔴 🟡 🟢 बिल void करना",
+      title: "बिल void करना",
       items: [
         {
           q: "मैं सीधे बिल edit क्यों नहीं कर सकता?",
@@ -490,14 +490,14 @@ export const HELP_CONTENT: Record<Lang, HelpSection[]> = {
   ],
   mr: [
     {
-      title: "🏠 होम",
+      title: "होम",
       items: [
         {
           q: "वरचे cards काय दाखवतात?",
           a: "आजची विक्री, गेले 7 दिवस, थकीत उधारी (जे ग्राहक तुम्हाला देणे लागतात), आणि पुरवठादारांना द्यायचे. \"थकीत उधारी\" वर टॅप करून थेट reminders list वर जाता येते.",
         },
         {
-          q: "🪔 बॅनर कधी कधी का दिसतो?",
+          q: "बॅनर कधी कधी का दिसतो?",
           a: "मोठा सण 25 दिवसांच्या आत असेल तेव्हा — टॅप करून साठा-सुचना आणि कॅलेंडर स्मरणपत्र मिळते (More → Festival planner). सण जवळ असेल तेव्हाच दिसतो.",
         },
         {
@@ -507,7 +507,7 @@ export const HELP_CONTENT: Record<Lang, HelpSection[]> = {
       ],
     },
     {
-      title: "🛒 विक्री करा (नवीन बिल)",
+      title: "विक्री करा (नवीन बिल)",
       items: [
         {
           q: "वॉक-इन विरुद्ध सध्याचा ग्राहक?",
@@ -515,7 +515,7 @@ export const HELP_CONTENT: Record<Lang, HelpSection[]> = {
         },
         {
           q: "उत्पादने पटकन कशी जोडायची?",
-          a: "नावाने शोधा, USB/Bluetooth स्कॅनरने बारकोड स्कॅन करा (स्कॅन बॉक्सवर टॅप करा), किंवा 📷 कॅमेराने स्कॅन करा. उत्पादन अजून कॅटलॉगमध्ये नाही? तिथेच \"+ नवीन उत्पादन जोडा\" वापरा — बिल सोडायची गरज नाही.",
+          a: "नावाने शोधा, USB/Bluetooth स्कॅनरने बारकोड स्कॅन करा (स्कॅन बॉक्सवर टॅप करा), किंवा कॅमेराने स्कॅन करा. उत्पादन अजून कॅटलॉगमध्ये नाही? तिथेच \"+ नवीन उत्पादन जोडा\" वापरा — बिल सोडायची गरज नाही.",
         },
         {
           q: "500 ग्रॅम किंवा अर्धा लिटर कसे बिल करायचे?",
@@ -532,7 +532,7 @@ export const HELP_CONTENT: Record<Lang, HelpSection[]> = {
       ],
     },
     {
-      title: "📦 खरेदी व इन्व्हेंटरी",
+      title: "खरेदी व इन्व्हेंटरी",
       items: [
         {
           q: "Buy आणि Inventory मध्ये फरक काय?",
@@ -544,16 +544,16 @@ export const HELP_CONTENT: Record<Lang, HelpSection[]> = {
         },
         {
           q: "रंगीत साठा बॅजेसचा अर्थ काय?",
-          a: "🟢 हिरवा = आरामात साठा आहे. 🟠 केशरी = low-stock मर्यादेच्या काही युनिट्स जवळ. 🔴 लाल = मर्यादेवर किंवा त्याखाली. बिल बनवताना कार्टमध्येही हेच रंग दिसतात, त्यामुळे जास्त विकण्याआधी लक्षात येईल.",
+          a: "हिरवा = आरामात साठा आहे. केशरी = low-stock मर्यादेच्या काही युनिट्स जवळ. लाल = मर्यादेवर किंवा त्याखाली. बिल बनवताना कार्टमध्येही हेच रंग दिसतात, त्यामुळे जास्त विकण्याआधी लक्षात येईल.",
         },
         {
           q: "संपूर्ण कॅटलॉग एकाच वेळी जोडता येतो का?",
-          a: "होय — Inventory → \"📥 Bulk import/export\". टेम्पलेट डाउनलोड करा, Excel/Google Sheets मध्ये भरा, नंतर परत अपलोड करा. वेळोवेळी कॅटलॉग बॅकअप म्हणून एक्सपोर्ट करण्यासाठीही उपयोगी.",
+          a: "होय — Inventory → \"Bulk import/export\". टेम्पलेट डाउनलोड करा, Excel/Google Sheets मध्ये भरा, नंतर परत अपलोड करा. वेळोवेळी कॅटलॉग बॅकअप म्हणून एक्सपोर्ट करण्यासाठीही उपयोगी.",
         },
       ],
     },
     {
-      title: "👥 ग्राहक व पुरवठादार",
+      title: "ग्राहक व पुरवठादार",
       items: [
         {
           q: "यांच्यात फरक काय?",
@@ -561,7 +561,7 @@ export const HELP_CONTENT: Record<Lang, HelpSection[]> = {
         },
         {
           q: "कोणाला पटकन कसे जोडायचे?",
-          a: "Android Chrome वर, \"📱 Pick from contacts\" टॅप करून थेट फोनच्या contacts मधून नाव आणि फोन नंबर भरता येतो — टाइप करायची गरज नाही.",
+          a: "Android Chrome वर, \"Pick from contacts\" टॅप करून थेट फोनच्या contacts मधून नाव आणि फोन नंबर भरता येतो — टाइप करायची गरज नाही.",
         },
         {
           q: "डाउनलोड करण्यायोग्य स्टेटमेंट कशासाठी?",
@@ -570,7 +570,7 @@ export const HELP_CONTENT: Record<Lang, HelpSection[]> = {
       ],
     },
     {
-      title: "💬 स्मरणपत्रे व ऑफर",
+      title: "स्मरणपत्रे व ऑफर",
       items: [
         {
           q: "मला स्वतः Send का दाबावे लागते?",
@@ -583,7 +583,7 @@ export const HELP_CONTENT: Record<Lang, HelpSection[]> = {
       ],
     },
     {
-      title: "🔔 वस्तूंची मागणी",
+      title: "वस्तूंची मागणी",
       items: [
         {
           q: "हे कशासाठी आहे?",
@@ -592,7 +592,7 @@ export const HELP_CONTENT: Record<Lang, HelpSection[]> = {
       ],
     },
     {
-      title: "📊 अहवाल व Daily Summary",
+      title: "अहवाल व Daily Summary",
       items: [
         {
           q: "GSTR-1, GSTR-3B, आणि Purchase Register म्हणजे काय?",
@@ -609,7 +609,7 @@ export const HELP_CONTENT: Record<Lang, HelpSection[]> = {
       ],
     },
     {
-      title: "⚙️ Settings व कर्मचारी",
+      title: "️ Settings व कर्मचारी",
       items: [
         {
           q: "माझ्या दुकानाचे राज्य का आवश्यक आहे?",
@@ -626,7 +626,7 @@ export const HELP_CONTENT: Record<Lang, HelpSection[]> = {
       ],
     },
     {
-      title: "📴 ऑफलाइन बिलिंग",
+      title: "ऑफलाइन बिलिंग",
       items: [
         {
           q: "हे नक्की काय आहे?",
@@ -663,7 +663,7 @@ export const HELP_CONTENT: Record<Lang, HelpSection[]> = {
       ],
     },
     {
-      title: "🍽 रेस्टॉरंट — टेबल्स व ऑर्डर्स",
+      title: "रेस्टॉरंट — टेबल्स व ऑर्डर्स",
       items: [
         {
           q: "ऑर्डर कशी सुरू करायची?",
@@ -679,7 +679,7 @@ export const HELP_CONTENT: Record<Lang, HelpSection[]> = {
         },
         {
           q: "चुकून जोडलेला आयटम कसा काढायचा?",
-          a: "ऑर्डर स्क्रीनमध्ये त्याच्या बाजूला ✕ दाबा — PIN लागत नाही, कारण चूक दुरुस्त करणे हे सामान्य काम आहे. संपूर्ण टेबलची ऑर्डर रद्द करण्यासाठीच PIN लागतो.",
+          a: "ऑर्डर स्क्रीनमध्ये त्याच्या बाजूला दाबा — PIN लागत नाही, कारण चूक दुरुस्त करणे हे सामान्य काम आहे. संपूर्ण टेबलची ऑर्डर रद्द करण्यासाठीच PIN लागतो.",
         },
         {
           q: "Manager PIN कशासाठी आहे?",
@@ -696,7 +696,7 @@ export const HELP_CONTENT: Record<Lang, HelpSection[]> = {
       ],
     },
     {
-      title: "🔁 भाड्याने देणे — बुकिंग व परतावा",
+      title: "भाड्याने देणे — बुकिंग व परतावा",
       items: [
         {
           q: "एखादी वस्तू rentable कशी बनवायची?",
@@ -721,7 +721,7 @@ export const HELP_CONTENT: Record<Lang, HelpSection[]> = {
       ],
     },
     {
-      title: "🔴 🟡 🟢 बिल void करणे",
+      title: "बिल void करणे",
       items: [
         {
           q: "मी थेट बिल edit का करू शकत नाही?",
