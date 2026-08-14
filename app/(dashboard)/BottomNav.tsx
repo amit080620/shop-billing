@@ -142,7 +142,7 @@ export function BottomNav({ lang, businessType }: { lang: Lang; businessType: st
               <Link
                 href={tab.href}
                 className={`mx-auto flex flex-col items-center gap-0.5 rounded-xl px-2 py-1.5 text-[11px] font-medium transition-colors ${
-                  active ? "bg-brand-soft text-brand-dark" : "text-muted"
+                  active ? "bg-brand-soft text-brand-text" : "text-muted"
                 }`}
               >
                 <Icon active={active} />

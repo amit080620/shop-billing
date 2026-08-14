@@ -17,8 +17,8 @@ const STATUS_LABELS: Record<string, string> = {
 };
 const STATUS_TONE: Record<string, string> = {
   booked: "bg-background text-muted",
-  sample_collected: "bg-brand-soft text-brand-dark",
-  received_at_lab: "bg-brand-soft text-brand-dark",
+  sample_collected: "bg-brand-soft text-brand-text",
+  received_at_lab: "bg-brand-soft text-brand-text",
   processing: "bg-credit-soft text-credit",
   report_ready: "bg-green-100 text-green-700",
   delivered: "bg-green-100 text-green-700",
@@ -59,11 +59,11 @@ export default async function LabOrdersPage({
       </Link>
 
       <div className="flex gap-2 overflow-x-auto pb-1">
-        <Link href="/lab/orders" className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium ${!status || status === "all" ? "border-brand bg-brand-soft text-brand-dark" : "border-border text-muted"}`}>
+        <Link href="/lab/orders" className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium ${!status || status === "all" ? "border-brand bg-brand-soft text-brand-text" : "border-border text-muted"}`}>
           All
         </Link>
         {Object.entries(STATUS_LABELS).map(([key, label]) => (
-          <Link key={key} href={`/lab/orders?status=${key}`} className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium ${status === key ? "border-brand bg-brand-soft text-brand-dark" : "border-border text-muted"}`}>
+          <Link key={key} href={`/lab/orders?status=${key}`} className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium ${status === key ? "border-brand bg-brand-soft text-brand-text" : "border-border text-muted"}`}>
             {label}
           </Link>
         ))}

@@ -25,7 +25,9 @@ export default async function StockAuditListPage() {
       <PageHeader
         title="Stock audit"
         subtitle="Count what's actually on the shelf, reconcile against the system."
-        icon={<ClipboardCheck size={18} strokeWidth={1.8} />}
+        // eslint-disable-next-line @next/next/no-img-element -- small branded SVG icon
+        icon={<img src="/assets/ray-icons/inventory.svg" alt="" className="h-9 w-9 md:h-11 md:w-11" />}
+        bareIcon
       />
 
       <StartAuditButton />
@@ -45,7 +47,7 @@ export default async function StockAuditListPage() {
                     {new Date(a.created_at).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}
                   </p>
                 </div>
-                <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${a.status === "completed" ? "bg-brand-soft text-brand-dark" : "bg-credit-soft text-credit"}`}>
+                <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${a.status === "completed" ? "bg-brand-soft text-brand-text" : "bg-credit-soft text-credit"}`}>
                   {a.status === "completed" ? "Completed" : "In progress"}
                 </span>
               </Link>

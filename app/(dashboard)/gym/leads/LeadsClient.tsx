@@ -26,7 +26,7 @@ const STATUSES: Lead["status"][] = ["new", "contacted", "trial", "converted", "l
 const STATUS_LABELS: Record<string, string> = { new: "New", contacted: "Contacted", trial: "Trial", converted: "Converted", lost: "Lost" };
 const STATUS_TONE: Record<string, string> = {
   new: "bg-background text-muted",
-  contacted: "bg-brand-soft text-brand-dark",
+  contacted: "bg-brand-soft text-brand-text",
   trial: "bg-credit-soft text-credit",
   converted: "bg-green-100 text-green-700",
   lost: "bg-danger/15 text-danger",
@@ -92,7 +92,7 @@ export function LeadsClient({ leads }: { leads: Lead[] }) {
                 key={s}
                 type="button"
                 onClick={() => setSource(s)}
-                className={`rounded-full border px-2.5 py-1 text-xs font-medium ${source === s ? "border-brand bg-surface text-brand-dark" : "border-transparent bg-surface/60 text-muted"}`}
+                className={`rounded-full border px-2.5 py-1 text-xs font-medium ${source === s ? "border-brand bg-surface text-brand-text" : "border-transparent bg-surface/60 text-muted"}`}
               >
                 {s}
               </button>
@@ -111,7 +111,7 @@ export function LeadsClient({ leads }: { leads: Lead[] }) {
       <div className="flex gap-2 overflow-x-auto pb-1">
         <button
           onClick={() => setFilter("all")}
-          className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium ${filter === "all" ? "border-brand bg-brand-soft text-brand-dark" : "border-border text-muted"}`}
+          className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium ${filter === "all" ? "border-brand bg-brand-soft text-brand-text" : "border-border text-muted"}`}
         >
           All
         </button>
@@ -119,7 +119,7 @@ export function LeadsClient({ leads }: { leads: Lead[] }) {
           <button
             key={s}
             onClick={() => setFilter(s)}
-            className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium ${filter === s ? "border-brand bg-brand-soft text-brand-dark" : "border-border text-muted"}`}
+            className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium ${filter === s ? "border-brand bg-brand-soft text-brand-text" : "border-border text-muted"}`}
           >
             {STATUS_LABELS[s]}
           </button>
@@ -165,7 +165,7 @@ export function LeadsClient({ leads }: { leads: Lead[] }) {
                   href={`https://wa.me/${lead.phone.replace(/\D/g, "").length === 10 ? `91${lead.phone.replace(/\D/g, "")}` : lead.phone.replace(/\D/g, "")}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-1 rounded-lg border border-brand bg-brand-soft px-2.5 py-1 text-xs font-medium text-brand-dark"
+                  className="flex items-center gap-1 rounded-lg border border-brand bg-brand-soft px-2.5 py-1 text-xs font-medium text-brand-text"
                 >
                   <MessageCircle size={12} /> WhatsApp
                 </a>

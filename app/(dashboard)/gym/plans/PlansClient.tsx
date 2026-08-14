@@ -74,7 +74,7 @@ export function PlansClient({ plans }: { plans: Plan[] }) {
                 key={d.days}
                 type="button"
                 onClick={() => setDurationDays(d.days)}
-                className={`rounded-full border px-2.5 py-1 text-xs font-medium ${durationDays === d.days ? "border-brand bg-surface text-brand-dark" : "border-transparent bg-surface/60 text-muted"}`}
+                className={`rounded-full border px-2.5 py-1 text-xs font-medium ${durationDays === d.days ? "border-brand bg-surface text-brand-text" : "border-transparent bg-surface/60 text-muted"}`}
               >
                 {d.label}
               </button>

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { saveCatalogSettingsAction } from "@/lib/actions/catalog";
 import { PageHeader } from "@/app/components/PageHeader";
-import { Store, MessageCircle, Inbox } from "lucide-react";
+import { Store, Inbox } from "lucide-react";
 
 export function CatalogSettingsClient({
   isEnabled: initialEnabled,
@@ -57,12 +57,12 @@ export function CatalogSettingsClient({
 
       {publicUrl && enabled && (
         <div className="flex flex-col gap-2 rounded-xl border border-dashed border-brand bg-brand-soft p-4">
-          <p className="text-xs font-medium text-brand-dark">Your catalog link — share this anywhere</p>
+          <p className="text-xs font-medium text-brand-text">Your catalog link — share this anywhere</p>
           <p className="break-all rounded-lg bg-surface px-3 py-2 text-xs text-foreground">{publicUrl}</p>
           <div className="flex gap-2">
             <button
               onClick={() => navigator.clipboard.writeText(publicUrl)}
-              className="rounded-lg border border-brand px-3 py-1.5 text-xs font-medium text-brand-dark"
+              className="rounded-lg border border-brand px-3 py-1.5 text-xs font-medium text-brand-text"
             >
               Copy link
             </button>
@@ -70,9 +70,10 @@ export function CatalogSettingsClient({
               href={`https://wa.me/?text=${encodeURIComponent(`Browse & order from us: ${publicUrl}`)}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-1 rounded-lg border border-brand px-3 py-1.5 text-xs font-medium text-brand-dark"
+              className="flex items-center gap-1 rounded-lg border border-brand px-3 py-1.5 text-xs font-medium text-brand-text"
             >
-              <MessageCircle size={12} /> Share on WhatsApp
+              {/* eslint-disable-next-line @next/next/no-img-element -- small branded SVG icon */}
+              <img src="/assets/ray-icons/share.svg" alt="" className="h-3.5 w-3.5" /> Share on WhatsApp
             </a>
           </div>
         </div>

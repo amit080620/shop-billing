@@ -70,7 +70,7 @@ export function MemberDetailClient({
             key={tb}
             onClick={() => setTab(tb)}
             className={`shrink-0 rounded-full border px-3.5 py-1.5 text-xs font-medium capitalize ${
-              tab === tb ? "border-brand bg-brand-soft text-brand-dark" : "border-border text-muted"
+              tab === tb ? "border-brand bg-brand-soft text-brand-text" : "border-border text-muted"
             }`}
           >
             {tb === "workout" ? "Workout" : tb === "diet" ? "Diet" : tb === "progress" ? "Progress" : "Overview"}
@@ -429,7 +429,7 @@ function ProgressTab({ memberId, logs, onChange }: { memberId: string; logs: Pro
   return (
     <div className="flex flex-col gap-3">
       <div className="flex flex-col gap-2 rounded-xl border border-dashed border-brand bg-brand-soft p-4">
-        <p className="text-sm font-medium text-brand-dark">Log today&apos;s progress</p>
+        <p className="text-sm font-medium text-brand-text">Log today&apos;s progress</p>
         <div className="flex gap-2">
           <input type="number" step="0.1" value={weight} onChange={(e) => setWeight(e.target.value)} placeholder="Weight (kg)" className="flex-1 rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand" />
           <input type="number" step="0.1" value={bodyFat} onChange={(e) => setBodyFat(e.target.value)} placeholder="Body fat %" className="flex-1 rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand" />

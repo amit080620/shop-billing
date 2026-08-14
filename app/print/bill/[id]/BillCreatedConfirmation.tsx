@@ -25,10 +25,10 @@ export function BillCreatedConfirmation({ amount }: { amount?: string }) {
 
   return (
     <div className="no-print fixed inset-0 z-[200] flex items-center justify-center bg-black/40" onClick={() => setVisible(false)}>
-      <div className="surface-raised toast-enter flex flex-col items-center gap-3 px-9 py-8">
+      <div className="surface-raised ray-pop flex flex-col items-center gap-3 px-9 py-8">
         <div
-          className="flex h-16 w-16 items-center justify-center rounded-full"
-          style={{ background: "linear-gradient(135deg, var(--brand-light), var(--brand-dark))" }}
+          className="ray-success flex h-16 w-16 items-center justify-center rounded-full"
+          style={{ background: "var(--ray-gradient)" }}
         >
           <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
             <path

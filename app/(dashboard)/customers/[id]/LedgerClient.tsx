@@ -249,7 +249,7 @@ export function LedgerClient({
                   className="flex items-center justify-between gap-3 rounded-lg border border-border bg-brand-soft px-3.5 py-3"
                 >
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium text-brand-dark">
+                    <p className="truncate text-sm font-medium text-brand-text">
                       Payment received
                     </p>
                     <p className="truncate text-xs text-muted">
@@ -257,7 +257,7 @@ export function LedgerClient({
                       {entry.data.note ? ` · ${entry.data.note}` : ""}
                     </p>
                   </div>
-                  <p className="shrink-0 text-sm font-semibold text-brand-dark">
+                  <p className="shrink-0 text-sm font-semibold text-brand-text">
                     − {formatMoney(entry.data.amount)}
                   </p>
                 </li>
@@ -456,14 +456,14 @@ function PatientPhotos({
           <button
             key={l}
             onClick={() => setLabel(l)}
-            className={`rounded-full border px-2.5 py-1 text-xs font-medium capitalize ${label === l ? "border-brand bg-brand-soft text-brand-dark" : "border-border text-muted"}`}
+            className={`rounded-full border px-2.5 py-1 text-xs font-medium capitalize ${label === l ? "border-brand bg-brand-soft text-brand-text" : "border-border text-muted"}`}
           >
             {l}
           </button>
         ))}
         <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Note (optional)" className="flex-1 rounded-lg border border-border bg-background px-2 py-1.5 text-xs outline-none focus:border-brand" />
       </div>
-      <label className="self-start rounded-lg border border-dashed border-brand bg-brand-soft px-3 py-1.5 text-xs font-medium text-brand-dark">
+      <label className="self-start rounded-lg border border-dashed border-brand bg-brand-soft px-3 py-1.5 text-xs font-medium text-brand-text">
         {isPending ? "Uploading…" : "+ Upload photo"}
         <input
           type="file"

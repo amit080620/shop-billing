@@ -73,10 +73,10 @@ export function TestsClient({ tests, packages }: { tests: Test[]; packages: Pack
       </Link>
 
       <div className="flex gap-2">
-        <button onClick={() => setTab("tests")} className={`rounded-full border px-3.5 py-1.5 text-xs font-medium ${tab === "tests" ? "border-brand bg-brand-soft text-brand-dark" : "border-border text-muted"}`}>
+        <button onClick={() => setTab("tests")} className={`rounded-full border px-3.5 py-1.5 text-xs font-medium ${tab === "tests" ? "border-brand bg-brand-soft text-brand-text" : "border-border text-muted"}`}>
           Individual tests
         </button>
-        <button onClick={() => setTab("packages")} className={`rounded-full border px-3.5 py-1.5 text-xs font-medium ${tab === "packages" ? "border-brand bg-brand-soft text-brand-dark" : "border-border text-muted"}`}>
+        <button onClick={() => setTab("packages")} className={`rounded-full border px-3.5 py-1.5 text-xs font-medium ${tab === "packages" ? "border-brand bg-brand-soft text-brand-text" : "border-border text-muted"}`}>
           Packages/Profiles
         </button>
       </div>

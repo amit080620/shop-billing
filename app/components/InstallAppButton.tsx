@@ -67,7 +67,7 @@ export function InstallAppButton() {
     <div className="flex flex-col gap-2">
       <button
         onClick={handleClick}
-        className="flex w-full items-center justify-center gap-2 rounded-xl border border-brand bg-brand-soft px-4 py-3 text-sm font-semibold text-brand-dark"
+        className="flex w-full items-center justify-center gap-2 rounded-xl border border-brand bg-brand-soft px-4 py-3 text-sm font-semibold text-brand-text"
       >
         Install app on this device
       </button>

@@ -166,13 +166,13 @@ export function VendorLedgerClient({
                   className="flex items-center justify-between gap-3 rounded-lg border border-border bg-brand-soft px-3.5 py-3"
                 >
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium text-brand-dark">Payment made</p>
+                    <p className="truncate text-sm font-medium text-brand-text">Payment made</p>
                     <p className="truncate text-xs text-muted">
                       {formatDateTime(entry.data.createdAt)}
                       {entry.data.note ? ` · ${entry.data.note}` : ""}
                     </p>
                   </div>
-                  <p className="shrink-0 text-sm font-semibold text-brand-dark">
+                  <p className="shrink-0 text-sm font-semibold text-brand-text">
                     − {formatMoney(entry.data.amount)}
                   </p>
                 </li>

@@ -90,7 +90,7 @@ export function MemberRow({ member, lang }: { member: Member; lang: Lang }) {
             })
           }
           disabled={isPending}
-          className="rounded-lg border border-brand bg-brand-soft px-2.5 py-1 text-xs font-medium text-brand-dark disabled:opacity-60"
+          className="rounded-lg border border-brand bg-brand-soft px-2.5 py-1 text-xs font-medium text-brand-text disabled:opacity-60"
         >
           <CheckCircle2 size={13} className="mr-1 inline" /> Check in
         </button>
@@ -160,7 +160,7 @@ export function MemberRow({ member, lang }: { member: Member; lang: Lang }) {
             onChange={(e) => setFreezeDays(Number(e.target.value) || 7)}
             className="w-16 rounded-lg border border-border bg-surface px-2 py-1 text-xs outline-none focus:border-brand"
           />
-          <span className="text-xs text-brand-dark">days</span>
+          <span className="text-xs text-brand-text">days</span>
           <button
             onClick={() =>
               startTransition(async () => {

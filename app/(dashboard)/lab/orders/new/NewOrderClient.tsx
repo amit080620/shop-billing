@@ -122,13 +122,13 @@ export function NewOrderClient({
         <div className="flex gap-2">
           <button
             onClick={() => setCollectionType("walk_in")}
-            className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-medium ${collectionType === "walk_in" ? "border-brand bg-brand-soft text-brand-dark" : "border-border text-muted"}`}
+            className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-medium ${collectionType === "walk_in" ? "border-brand bg-brand-soft text-brand-text" : "border-border text-muted"}`}
           >
             <Footprints size={14} /> Walk-in
           </button>
           <button
             onClick={() => setCollectionType("home_collection")}
-            className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-medium ${collectionType === "home_collection" ? "border-brand bg-brand-soft text-brand-dark" : "border-border text-muted"}`}
+            className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-medium ${collectionType === "home_collection" ? "border-brand bg-brand-soft text-brand-text" : "border-border text-muted"}`}
           >
             <Home size={14} /> Home collection
           </button>
@@ -181,8 +181,8 @@ export function NewOrderClient({
 
       {total > 0 && (
         <div className="flex justify-between rounded-lg bg-brand-soft px-3.5 py-2.5 text-sm">
-          <span className="text-brand-dark">Total</span>
-          <span className="font-semibold text-brand-dark">{formatMoney(total)}</span>
+          <span className="text-brand-text">Total</span>
+          <span className="font-semibold text-brand-text">{formatMoney(total)}</span>
         </div>
       )}
 

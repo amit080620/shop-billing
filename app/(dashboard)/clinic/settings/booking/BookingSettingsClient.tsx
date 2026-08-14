@@ -193,12 +193,12 @@ export function BookingSettingsClient({
 
       {publicUrl && enabled && (
         <div className="flex flex-col gap-2 rounded-xl border border-dashed border-brand bg-brand-soft p-4">
-          <p className="text-xs font-medium text-brand-dark">Your booking link — share this anywhere</p>
+          <p className="text-xs font-medium text-brand-text">Your booking link — share this anywhere</p>
           <p className="break-all rounded-lg bg-surface px-3 py-2 text-xs text-foreground">{publicUrl}</p>
           <div className="flex gap-2">
             <button
               onClick={() => navigator.clipboard.writeText(publicUrl)}
-              className="rounded-lg border border-brand px-3 py-1.5 text-xs font-medium text-brand-dark"
+              className="rounded-lg border border-brand px-3 py-1.5 text-xs font-medium text-brand-text"
             >
               Copy link
             </button>
@@ -206,7 +206,7 @@ export function BookingSettingsClient({
               href={`https://wa.me/?text=${encodeURIComponent(`Book an appointment: ${publicUrl}`)}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-1 rounded-lg border border-brand px-3 py-1.5 text-xs font-medium text-brand-dark"
+              className="flex items-center gap-1 rounded-lg border border-brand px-3 py-1.5 text-xs font-medium text-brand-text"
             >
               <MessageCircle size={12} /> Share on WhatsApp
             </a>
@@ -280,7 +280,7 @@ export function BookingSettingsClient({
             onChange={(e) => setNewLeaveDate(e.target.value)}
             className="flex-1 rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand"
           />
-          <button onClick={addLeaveDate} disabled={!newLeaveDate} className="rounded-lg border border-brand px-3 py-2 text-xs font-medium text-brand-dark disabled:opacity-50">
+          <button onClick={addLeaveDate} disabled={!newLeaveDate} className="rounded-lg border border-brand px-3 py-2 text-xs font-medium text-brand-text disabled:opacity-50">
             + Add
           </button>
         </div>

@@ -46,7 +46,9 @@ export default async function CatalogOrdersPage({
     <div className="flex flex-col gap-4">
       <PageHeader
         title="Catalog orders"
-        icon={<ShoppingBag size={18} strokeWidth={1.8} />}
+        // eslint-disable-next-line @next/next/no-img-element -- small branded SVG icon
+        icon={<img src="/assets/ray-icons/order.svg" alt="" className="h-9 w-9 md:h-11 md:w-11" />}
+        bareIcon
       />
       <Link href="/catalog-settings" className="text-sm text-muted">
         ← Catalog link settings
@@ -58,7 +60,7 @@ export default async function CatalogOrdersPage({
             key={s}
             href={`/catalog-orders?status=${s}`}
             className={`shrink-0 rounded-full border px-3.5 py-1.5 text-xs font-medium capitalize ${
-              activeFilter === s ? "border-brand bg-brand-soft text-brand-dark" : "border-border text-muted"
+              activeFilter === s ? "border-brand bg-brand-soft text-brand-text" : "border-border text-muted"
             }`}
           >
             {s}

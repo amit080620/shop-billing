@@ -128,13 +128,13 @@ export default async function Gstr3bPage({
       </section>
 
       <section className="rounded-xl border border-border bg-brand-soft p-4">
-        <p className="mb-3 text-sm font-semibold text-brand-dark">Net tax payable (estimate)</p>
+        <p className="mb-3 text-sm font-semibold text-brand-text">Net tax payable (estimate)</p>
         <div className="grid grid-cols-3 gap-3 text-center">
           <NetCell label="CGST" value={netCgst} />
           <NetCell label="SGST" value={netSgst} />
           <NetCell label="IGST" value={netIgst} />
         </div>
-        <p className="mt-3 text-center text-lg font-semibold text-brand-dark">
+        <p className="mt-3 text-center text-lg font-semibold text-brand-text">
           {formatMoney(netPayable)} estimated cash payable
         </p>
       </section>
@@ -181,8 +181,8 @@ function Cell({ label, value }: { label: string; value: string }) {
 function NetCell({ label, value }: { label: string; value: number }) {
   return (
     <div>
-      <p className="text-xs text-brand-dark/70">{label}</p>
-      <p className="text-sm font-semibold text-brand-dark">{formatMoney(Math.max(0, value))}</p>
+      <p className="text-xs text-brand-text/70">{label}</p>
+      <p className="text-sm font-semibold text-brand-text">{formatMoney(Math.max(0, value))}</p>
     </div>
   );
 }

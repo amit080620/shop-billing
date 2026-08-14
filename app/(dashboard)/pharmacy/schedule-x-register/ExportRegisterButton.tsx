@@ -34,7 +34,7 @@ export function ExportRegisterButton({ rows, label }: { rows: Row[]; label: stri
   }
 
   return (
-    <button onClick={exportCsv} className="self-start rounded-lg border border-brand bg-brand-soft px-3.5 py-2 text-sm font-medium text-brand-dark">
+    <button onClick={exportCsv} className="self-start rounded-lg border border-brand bg-brand-soft px-3.5 py-2 text-sm font-medium text-brand-text">
       {label}
     </button>
   );

@@ -77,7 +77,7 @@ export default async function RentalsPage() {
                         r.isOverdue
                           ? "bg-danger/15 text-danger"
                           : r.status === "active"
-                            ? "bg-brand-soft text-brand-dark"
+                            ? "bg-brand-soft text-brand-text"
                             : "bg-background text-muted"
                       }`}
                     >

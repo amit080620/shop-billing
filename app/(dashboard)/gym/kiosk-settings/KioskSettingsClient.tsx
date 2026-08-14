@@ -51,7 +51,7 @@ export function KioskSettingsClient({ isEnabled: initialEnabled, publicToken }: 
 
       {isEnabled && publicUrl && (
         <div className="flex flex-col gap-2 rounded-xl border border-brand bg-brand-soft p-4">
-          <p className="text-sm font-medium text-brand-dark">Kiosk link</p>
+          <p className="text-sm font-medium text-brand-text">Kiosk link</p>
           <p className="break-all rounded-lg bg-surface px-3 py-2 text-xs text-foreground">{publicUrl}</p>
           <div className="flex gap-2">
             <button
@@ -68,12 +68,12 @@ export function KioskSettingsClient({ isEnabled: initialEnabled, publicToken }: 
               href={`https://wa.me/?text=${encodeURIComponent(`Open this on the check-in tablet: ${publicUrl}`)}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex-1 rounded-lg border border-brand px-3 py-1.5 text-center text-xs font-medium text-brand-dark"
+              className="flex-1 rounded-lg border border-brand px-3 py-1.5 text-center text-xs font-medium text-brand-text"
             >
               <span className="flex items-center gap-1"><MessageCircle size={13} /> Send to staff</span>
             </a>
           </div>
-          <p className="text-xs text-brand-dark">
+          <p className="text-xs text-brand-text">
             Open this link on any spare tablet/phone at your entrance and leave it there — that&apos;s the whole setup.
           </p>
         </div>

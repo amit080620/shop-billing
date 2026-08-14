@@ -139,7 +139,7 @@ export function VehiclesClient({ vehicles, lang }: { vehicles: Vehicle[]; lang: 
               <div className="mt-2 flex gap-2">
                 <button
                   onClick={() => setEditingId(v.id)}
-                  className="rounded-lg border border-brand px-3 py-1.5 text-xs font-medium text-brand-dark"
+                  className="rounded-lg border border-brand px-3 py-1.5 text-xs font-medium text-brand-text"
                 >
                   Edit
                 </button>
@@ -224,21 +224,21 @@ function VehicleEditRow({
         className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand"
       />
 
-      <p className="mt-1 text-xs font-medium text-brand-dark">Document expiry dates (optional)</p>
+      <p className="mt-1 text-xs font-medium text-brand-text">Document expiry dates (optional)</p>
       <div className="grid grid-cols-2 gap-2">
-        <label className="flex flex-col gap-1 text-[11px] text-brand-dark">
+        <label className="flex flex-col gap-1 text-[11px] text-brand-text">
           RC
           <input type="date" value={rcExpiry} onChange={(e) => setRcExpiry(e.target.value)} className="rounded-lg border border-border bg-surface px-2 py-1.5 text-xs outline-none focus:border-brand" />
         </label>
-        <label className="flex flex-col gap-1 text-[11px] text-brand-dark">
+        <label className="flex flex-col gap-1 text-[11px] text-brand-text">
           Insurance
           <input type="date" value={insuranceExpiry} onChange={(e) => setInsuranceExpiry(e.target.value)} className="rounded-lg border border-border bg-surface px-2 py-1.5 text-xs outline-none focus:border-brand" />
         </label>
-        <label className="flex flex-col gap-1 text-[11px] text-brand-dark">
+        <label className="flex flex-col gap-1 text-[11px] text-brand-text">
           PUC
           <input type="date" value={pucExpiry} onChange={(e) => setPucExpiry(e.target.value)} className="rounded-lg border border-border bg-surface px-2 py-1.5 text-xs outline-none focus:border-brand" />
         </label>
-        <label className="flex flex-col gap-1 text-[11px] text-brand-dark">
+        <label className="flex flex-col gap-1 text-[11px] text-brand-text">
           Fitness
           <input type="date" value={fitnessExpiry} onChange={(e) => setFitnessExpiry(e.target.value)} className="rounded-lg border border-border bg-surface px-2 py-1.5 text-xs outline-none focus:border-brand" />
         </label>

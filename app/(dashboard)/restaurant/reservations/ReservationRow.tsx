@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { updateReservationStatusAction, deleteReservationAction } from "@/lib/actions/reservations";
-import { MessageCircle, CircleDollarSign, Divide, Ban } from "lucide-react";
+import { MessageCircle, Divide, Ban } from "lucide-react";
 import { useTranslation } from "@/lib/i18n/useTranslation";
 import { formatMoney } from "@/lib/format";
 import type { Lang } from "@/lib/i18n/dictionary";
@@ -29,7 +29,7 @@ const STATUS_LABELS: Record<string, string> = {
 };
 const STATUS_TONE: Record<string, string> = {
   booked: "bg-background text-muted",
-  confirmed: "bg-brand-soft text-brand-dark",
+  confirmed: "bg-brand-soft text-brand-text",
   seated: "bg-credit-soft text-credit",
   cancelled: "bg-danger/15 text-danger",
   no_show: "bg-danger/15 text-danger",
@@ -98,7 +98,7 @@ export function ReservationRow({ reservation, lang }: { reservation: Reservation
               href={whatsappConfirmLink(reservation, t)}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-1 rounded-lg border border-brand bg-brand-soft px-2.5 py-1 text-xs font-medium text-brand-dark"
+              className="flex items-center gap-1 rounded-lg border border-brand bg-brand-soft px-2.5 py-1 text-xs font-medium text-brand-text"
             >
               <MessageCircle size={12} /> Confirm on WhatsApp
             </a>
@@ -144,7 +144,8 @@ export function ReservationRow({ reservation, lang }: { reservation: Reservation
                 disabled={isPending}
                 className="flex items-center gap-1.5 rounded-lg border border-border px-3 py-2.5 text-left text-sm text-foreground disabled:opacity-60"
               >
-                <CircleDollarSign size={14} /> Full refund — {formatMoney(reservation.tokenAmount)} back to customer
+                {/* eslint-disable-next-line @next/next/no-img-element -- small branded SVG icon */}
+                <img src="/assets/ray-icons/refund.svg" alt="" className="h-4 w-4" /> Full refund — {formatMoney(reservation.tokenAmount)} back to customer
               </button>
               <button
                 onClick={() => setStatus(refundFlow, { refundType: "partial", refundAmount: reservation.tokenAmount / 2 })}

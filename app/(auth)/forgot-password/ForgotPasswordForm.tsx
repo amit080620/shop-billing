@@ -28,7 +28,7 @@ export function ForgotPasswordForm({
   if (state?.success) {
     return (
       <div className="flex flex-col gap-3 text-center">
-        <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-brand-soft text-brand-dark">
+        <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-brand-soft text-brand-text">
           <Mail size={26} />
         </span>
         <p className="text-sm text-foreground">

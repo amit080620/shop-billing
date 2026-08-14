@@ -223,7 +223,9 @@ export function ProductsClient({
     <div className="flex flex-col gap-4">
       <PageHeader
         title={terminology.productPlural}
-        icon={<Package size={18} strokeWidth={1.8} />}
+        // eslint-disable-next-line @next/next/no-img-element -- small branded SVG icon
+        icon={<img src="/assets/ray-icons/product.svg" alt="" className="h-9 w-9 md:h-11 md:w-11" />}
+        bareIcon
         action={
           <div className="flex gap-2">
             <button
@@ -284,7 +286,10 @@ export function ProductsClient({
             </p>
           </div>
           <div className="rounded-xl border border-border bg-credit-soft shadow-sm p-3 text-center">
-            <p className="text-xs text-credit">{t("products.lowStock")}</p>
+            <p className="flex items-center justify-center gap-1 text-xs text-credit">
+              {/* eslint-disable-next-line @next/next/no-img-element -- small branded SVG icon */}
+              <img src="/assets/ray-icons/low-stock.svg" alt="" className="h-3 w-3" /> {t("products.lowStock")}
+            </p>
             <p className="mt-1 text-lg font-semibold text-credit">
               {initialProducts.filter((p) => p.trackInventory && p.stockQuantity <= p.lowStockThreshold).length}
             </p>
@@ -423,7 +428,7 @@ export function ProductsClient({
             />
           </div>
           <div className="flex flex-col gap-3 rounded-lg border border-dashed border-brand bg-brand-soft p-3">
-            <p className="text-xs text-brand-dark">Public catalog — shown on your shareable order link (More → Catalog link)</p>
+            <p className="text-xs text-brand-text">Public catalog — shown on your shareable order link (More → Catalog link)</p>
             <label className="flex items-center gap-2 text-sm text-foreground">
               <input
                 type="checkbox"
@@ -510,7 +515,7 @@ export function ProductsClient({
               </label>
               {isRentable && (
                 <div className="flex flex-col gap-3 rounded-lg border border-dashed border-brand bg-brand-soft p-3">
-                  <p className="text-xs text-brand-dark">{t("products.rentalRateExplain")}</p>
+                  <p className="text-xs text-brand-text">{t("products.rentalRateExplain")}</p>
                   <div className="grid grid-cols-2 gap-3">
                     <Field name="rentalRateHourly" label={t("products.perHour")} type="number" step="0.01" min="0" defaultValue={editingProduct?.rentalRateHourly != null ? String(editingProduct.rentalRateHourly) : undefined} />
                     <Field name="rentalRateDaily" label={t("products.perDay")} type="number" step="0.01" min="0" defaultValue={editingProduct?.rentalRateDaily != null ? String(editingProduct.rentalRateDaily) : undefined} />
@@ -549,11 +554,11 @@ export function ProductsClient({
           )}
           {showJewellerySection && (
             <div className="flex flex-col gap-3 rounded-lg border border-dashed border-brand bg-brand-soft p-3">
-              <p className="text-xs text-brand-dark">
+              <p className="text-xs text-brand-text">
                 Fill these in to price this item by weight in New Bill — set today&apos;s rate first under More → Jewellery → Today&apos;s rate.
               </p>
               <div className="grid grid-cols-2 gap-3">
-                <label className="flex flex-col gap-1.5 text-xs text-brand-dark">
+                <label className="flex flex-col gap-1.5 text-xs text-brand-text">
                   Metal
                   <select name="metalType" defaultValue={editingProduct?.metalType ?? ""} className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand">
                     <option value="">Not weight-priced</option>
@@ -564,7 +569,7 @@ export function ProductsClient({
                 <Field name="purity" label="Purity" placeholder="e.g. 22K, 916" defaultValue={editingProduct?.purity ?? undefined} />
               </div>
               <div className="grid grid-cols-2 gap-3">
-                <label className="flex flex-col gap-1.5 text-xs text-brand-dark">
+                <label className="flex flex-col gap-1.5 text-xs text-brand-text">
                   Making charge type
                   <select name="makingChargeType" defaultValue={editingProduct?.makingChargeType ?? "per_gram"} className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand">
                     <option value="per_gram">₹ per gram</option>
@@ -595,7 +600,7 @@ export function ProductsClient({
               {["pharmacy", "clinic"].includes(businessType) && (
                 <>
                   <Field name="saltComposition" label={t("products.saltComposition")} placeholder={t("products.saltPlaceholder")} defaultValue={editingProduct?.saltComposition ?? undefined} />
-                  <label className="flex items-center gap-2 text-sm text-brand-dark">
+                  <label className="flex items-center gap-2 text-sm text-brand-text">
                     <input
                       type="checkbox"
                       name="requiresPrescription"
@@ -606,7 +611,7 @@ export function ProductsClient({
                     {t("products.requiresRx")}
                   </label>
                   <div className="grid grid-cols-2 gap-3">
-                    <label className="flex flex-col gap-1.5 text-xs text-brand-dark">
+                    <label className="flex flex-col gap-1.5 text-xs text-brand-text">
                       {t("products.drugSchedule")}
                       <select
                         name="drugSchedule"
@@ -629,7 +634,7 @@ export function ProductsClient({
                 <Field name="unitsPerPack" label={t("products.unitsPerPack")} type="number" min="1" step="1" placeholder={t("products.unitsPerPackPlaceholder")} defaultValue={editingProduct?.unitsPerPack != null ? String(editingProduct.unitsPerPack) : undefined} />
                 <Field name="looseUnitName" label={t("products.looseUnitName")} placeholder={t("products.looseUnitPlaceholder")} defaultValue={editingProduct?.looseUnitName ?? undefined} />
               </div>
-              <p className="text-xs text-brand-dark">
+              <p className="text-xs text-brand-text">
                 {["pharmacy", "clinic"].includes(businessType)
                   ? t("products.pharmaExplain")
                   : "Fill in units-per-pack + loose unit name to sell individual pieces from a pack (e.g. loose biscuits from a box), not just the whole pack. After saving, add stock with expiry dates via the batch manager on this item — billing automatically sells the earliest-expiring batch first."}
@@ -724,24 +729,24 @@ export function ProductsClient({
                     </span>
                   )}
                   {p.isRentable && (
-                    <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-brand-soft px-2 py-0.5 text-[11px] font-medium text-brand-dark">
+                    <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-brand-soft px-2 py-0.5 text-[11px] font-medium text-brand-text">
                       {t("products.forRent")}
                     </span>
                   )}
                   {p.hasWarranty && p.warrantyMonths && (
-                    <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-brand-soft px-2 py-0.5 text-[11px] font-medium text-brand-dark">
+                    <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-brand-soft px-2 py-0.5 text-[11px] font-medium text-brand-text">
                       <ShieldCheck size={10} /> {p.warrantyMonths}mo warranty
                     </span>
                   )}
                   {p.bulkMinQty && p.bulkPrice && (
-                    <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-brand-soft px-2 py-0.5 text-[11px] font-medium text-brand-dark">
+                    <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-brand-soft px-2 py-0.5 text-[11px] font-medium text-brand-text">
                       <Package size={10} /> {p.bulkMinQty}+ @ {formatMoney(p.bulkPrice)}
                     </span>
                   )}
                   {p.isPharma && (
                     <a
                       href={`/pharmacy/batches/${p.id}`}
-                      className="mt-1 inline-flex items-center gap-1 rounded-full bg-brand-soft px-2 py-0.5 text-[11px] font-medium text-brand-dark"
+                      className="mt-1 inline-flex items-center gap-1 rounded-full bg-brand-soft px-2 py-0.5 text-[11px] font-medium text-brand-text"
                     >
                       {t("products.manageBatches")}{p.requiresPrescription ? " · Rx" : ""}
                     </a>
@@ -879,7 +884,7 @@ function Chip({
       onClick={onClick}
       className={`shrink-0 rounded-full border px-3.5 py-1.5 text-xs font-medium ${
         active
-          ? "border-brand bg-brand-soft text-brand-dark"
+          ? "border-brand bg-brand-soft text-brand-text"
           : "border-border text-muted"
       }`}
     >

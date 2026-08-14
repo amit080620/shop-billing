@@ -69,7 +69,9 @@ export function PettyCashClient({ entries }: { entries: Entry[] }) {
             + Expense
           </button>
         }
-        icon={<Wallet size={18} strokeWidth={1.8} />}
+        // eslint-disable-next-line @next/next/no-img-element -- small branded SVG icon
+        icon={<img src="/assets/ray-icons/cash.svg" alt="" className="h-9 w-9 md:h-11 md:w-11" />}
+        bareIcon
       />
 
       <div className="grid grid-cols-2 gap-3">
@@ -88,7 +90,7 @@ export function PettyCashClient({ entries }: { entries: Entry[] }) {
           <button
             type="button"
             onClick={() => setShowScan(true)}
-            className="flex items-center justify-center gap-2 rounded-lg border border-brand bg-surface px-3 py-2 text-sm font-medium text-brand-dark"
+            className="flex items-center justify-center gap-2 rounded-lg border border-brand bg-surface px-3 py-2 text-sm font-medium text-brand-text"
           >
             <Camera size={15} /> Scan bill instead
           </button>
@@ -119,7 +121,7 @@ export function PettyCashClient({ entries }: { entries: Entry[] }) {
                 type="button"
                 onClick={() => setCategory(c)}
                 className={`rounded-full border px-2.5 py-1 text-xs font-medium ${
-                  category === c ? "border-brand bg-surface text-brand-dark" : "border-transparent bg-surface/60 text-muted"
+                  category === c ? "border-brand bg-surface text-brand-text" : "border-transparent bg-surface/60 text-muted"
                 }`}
               >
                 {c}

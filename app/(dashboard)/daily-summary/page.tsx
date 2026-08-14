@@ -3,7 +3,7 @@ import { requireSession } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { formatMoney } from "@/lib/format";
 import { PageHeader } from "@/app/components/PageHeader";
-import { Users, Wallet, Receipt, Calculator } from "lucide-react";
+import { Users, Receipt, Calculator } from "lucide-react";
 import { DatePicker } from "./DatePicker";
 
 const METHODS = ["cash", "card", "upi", "online", "other"] as const;
@@ -151,7 +151,7 @@ export default async function DailySummaryPage({
             type="submit"
             name="branch"
             value=""
-            className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium ${!branchFilter ? "border-brand bg-brand-soft text-brand-dark" : "border-border text-muted"}`}
+            className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium ${!branchFilter ? "border-brand bg-brand-soft text-brand-text" : "border-border text-muted"}`}
           >
             All branches
           </button>
@@ -161,7 +161,7 @@ export default async function DailySummaryPage({
               type="submit"
               name="branch"
               value={b.id}
-              className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium ${branchFilter === b.id ? "border-brand bg-brand-soft text-brand-dark" : "border-border text-muted"}`}
+              className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium ${branchFilter === b.id ? "border-brand bg-brand-soft text-brand-text" : "border-border text-muted"}`}
             >
               {b.name}
             </button>
@@ -174,7 +174,7 @@ export default async function DailySummaryPage({
       </p>
 
       {session.role === "owner" && (
-        <Link href={`/daily-summary/by-staff?date=${date}`} className="flex items-center gap-1.5 rounded-lg border border-dashed border-brand bg-brand-soft px-3.5 py-3 text-sm font-medium text-brand-dark">
+        <Link href={`/daily-summary/by-staff?date=${date}`} className="flex items-center gap-1.5 rounded-lg border border-dashed border-brand bg-brand-soft px-3.5 py-3 text-sm font-medium text-brand-text">
           <Users size={14} /> Staff-wise breakdown →
         </Link>
       )}
@@ -190,7 +190,10 @@ export default async function DailySummaryPage({
       </section>
 
       <section className="flex flex-col gap-2 rounded-xl border border-border bg-surface shadow-sm p-4">
-        <h2 className="flex items-center gap-1.5 text-sm font-semibold text-foreground"><Wallet size={14} /> Money in — {formatMoney(grandTotalIn)}</h2>
+        <h2 className="flex items-center gap-1.5 text-sm font-semibold text-foreground">
+          {/* eslint-disable-next-line @next/next/no-img-element -- small branded SVG icon */}
+          <img src="/assets/ray-icons/payment.svg" alt="" className="h-3.5 w-3.5" /> Money in — {formatMoney(grandTotalIn)}
+        </h2>
         <BreakdownTable title="Sales collected today" byMethod={salesByMethod} />
         <BreakdownTable title="Old udhaar collected today" byMethod={oldCreditCollected} />
         {newCreditGiven > 0 && (

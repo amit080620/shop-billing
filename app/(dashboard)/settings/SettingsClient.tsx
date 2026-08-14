@@ -202,7 +202,7 @@ export function SettingsClient({ shop }: { shop: ShopSettings }) {
         </Section>
 
         {state?.success && (
-          <p className="rounded-lg bg-brand-soft px-3 py-2 text-sm font-medium text-brand-dark">
+          <p className="rounded-lg bg-brand-soft px-3 py-2 text-sm font-medium text-brand-text">
             Saved.
           </p>
         )}

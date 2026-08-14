@@ -51,7 +51,7 @@ export function KdsSettingsClient({ columns: initialColumns, fontScale: initialF
               }}
               disabled={isPending}
               className={`flex-1 rounded-lg border py-3 text-center text-sm font-semibold disabled:opacity-60 ${
-                columns === n ? "border-brand bg-brand-soft text-brand-dark" : "border-border text-muted"
+                columns === n ? "border-brand bg-brand-soft text-brand-text" : "border-border text-muted"
               }`}
             >
               {n}
@@ -79,7 +79,7 @@ export function KdsSettingsClient({ columns: initialColumns, fontScale: initialF
               }}
               disabled={isPending}
               className={`flex-1 rounded-lg border py-3 text-center text-sm font-semibold disabled:opacity-60 ${
-                fontScale === opt.value ? "border-brand bg-brand-soft text-brand-dark" : "border-border text-muted"
+                fontScale === opt.value ? "border-brand bg-brand-soft text-brand-text" : "border-border text-muted"
               }`}
             >
               {opt.label}
@@ -88,7 +88,7 @@ export function KdsSettingsClient({ columns: initialColumns, fontScale: initialF
         </div>
       </section>
 
-      {saved && <p className="flex items-center gap-1 text-sm text-brand-dark"><Check size={13} /> Saved — refresh the KDS screen to see the change.</p>}
+      {saved && <p className="flex items-center gap-1 text-sm text-brand-text"><Check size={13} /> Saved — refresh the KDS screen to see the change.</p>}
       {error && <p className="text-sm text-danger">{error}</p>}
     </div>
   );

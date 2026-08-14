@@ -58,7 +58,7 @@ export default async function RestaurantReportsPage({
 
       <DateRangeControls from={fromDate} to={toDate} lang={lang} />
 
-      <Link href="/restaurant/reports/items" className="rounded-lg border border-dashed border-brand bg-brand-soft px-3.5 py-3 text-sm font-medium text-brand-dark">
+      <Link href="/restaurant/reports/items" className="rounded-lg border border-dashed border-brand bg-brand-soft px-3.5 py-3 text-sm font-medium text-brand-text">
         {t("rreports.itemWiseLink")}
       </Link>
 

@@ -3,7 +3,6 @@
 import { useRef, useState } from "react";
 import { startBulkImportCustomersAction, getBulkImportJobStatusAction, fetchAllCustomersForExportAction, type CustomerImportResult } from "@/lib/actions/bulk-import";
 import { downloadCsv } from "@/app/components/downloadCsv";
-import { Upload } from "lucide-react";
 
 const BASE_HEADERS = ["name", "phone", "gstin", "address", "stateCode", "dateOfBirth", "gender"];
 const CLINIC_HEADERS = ["bloodGroup", "knownAllergies"];
@@ -122,7 +121,10 @@ export function BulkImportExportCustomers({
   if (!open) {
     return (
       <button onClick={() => setOpen(true)} className="self-start text-sm font-medium text-brand">
-        <span className="flex items-center gap-1"><Upload size={13} /> Bulk import / export {noun}</span>
+        <span className="flex items-center gap-1">
+          {/* eslint-disable-next-line @next/next/no-img-element -- small branded SVG icon */}
+          <img src="/assets/ray-icons/upload.svg" alt="" className="h-3.5 w-3.5" /> Bulk import / export {noun}
+        </span>
       </button>
     );
   }
@@ -130,7 +132,7 @@ export function BulkImportExportCustomers({
   return (
     <div className="flex flex-col gap-3 rounded-xl border border-dashed border-brand bg-brand-soft p-4">
       <div className="flex items-center justify-between">
-        <p className="text-sm font-semibold text-brand-dark">Bulk import / export</p>
+        <p className="text-sm font-semibold text-brand-text">Bulk import / export</p>
         <button onClick={() => setOpen(false)} className="text-xs font-medium text-muted">
           Close
         </button>
@@ -152,7 +154,7 @@ export function BulkImportExportCustomers({
         </button>
       </div>
       <label className="flex flex-col gap-1.5 text-sm">
-        <span className="font-medium text-brand-dark">Import CSV file</span>
+        <span className="font-medium text-brand-text">Import CSV file</span>
         <input
           ref={fileInputRef}
           type="file"
@@ -168,7 +170,7 @@ export function BulkImportExportCustomers({
       {isImporting && <p className="text-xs text-muted">Importing in the background — this page will update automatically…</p>}
       {result && (
         <div className="rounded-lg bg-surface p-3 text-xs">
-          <p className="font-medium text-brand-dark">{result.inserted} {noun} imported.</p>
+          <p className="font-medium text-brand-text">{result.inserted} {noun} imported.</p>
           {result.errors.length > 0 && (
             <div className="mt-1.5 flex flex-col gap-0.5 text-credit">
               {result.errors.slice(0, 10).map((e, i) => (

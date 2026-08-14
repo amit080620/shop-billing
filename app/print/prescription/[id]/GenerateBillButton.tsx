@@ -21,7 +21,7 @@ export function GenerateBillButton({
 
   if (alreadyBilled && existingBillId) {
     return (
-      <Link href={`/print/bill/${existingBillId}`} className="rounded-lg border border-brand bg-brand-soft px-4 py-2.5 text-center text-sm font-medium text-brand-dark">
+      <Link href={`/print/bill/${existingBillId}`} className="rounded-lg border border-brand bg-brand-soft px-4 py-2.5 text-center text-sm font-medium text-brand-text">
         View bill for this prescription →
       </Link>
     );
@@ -29,7 +29,7 @@ export function GenerateBillButton({
 
   return (
     <div className="flex flex-col gap-2 rounded-lg border border-dashed border-brand bg-brand-soft p-3">
-      <p className="text-xs text-brand-dark">
+      <p className="text-xs text-brand-text">
         Generate an invoice for these medicines — prices come from your product catalog where the names match, others bill as manual lines.
       </p>
       <div className="flex gap-2">

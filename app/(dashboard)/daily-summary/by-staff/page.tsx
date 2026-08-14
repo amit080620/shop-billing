@@ -122,8 +122,8 @@ export default async function StaffCashSummaryPage({
                 <p className="text-xs text-muted">{r.billCount} bill(s) created</p>
                 <div className="mt-2 grid grid-cols-2 gap-2 text-xs">
                   <div className="rounded-lg bg-brand-soft px-2.5 py-1.5">
-                    <p className="text-brand-dark/70">Handled in</p>
-                    <p className="font-semibold text-brand-dark">{formatMoney(r.cashIn)}</p>
+                    <p className="text-brand-text/70">Handled in</p>
+                    <p className="font-semibold text-brand-text">{formatMoney(r.cashIn)}</p>
                   </div>
                   <div className="rounded-lg bg-credit-soft px-2.5 py-1.5">
                     <p className="text-credit/70">Handled out</p>

@@ -128,7 +128,8 @@ export function CameraBarcodeScanner({
           }}
           className="flex items-center gap-1.5 self-start text-sm font-medium text-brand"
         >
-          <Camera size={14} /> {label}
+          {/* eslint-disable-next-line @next/next/no-img-element -- small branded SVG icon */}
+          <img src="/assets/ray-icons/scan.svg" alt="" className="h-3.5 w-3.5" /> {label}
         </button>
         {error && <p className="text-xs text-credit">{error}</p>}
       </div>

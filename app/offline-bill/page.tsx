@@ -214,7 +214,7 @@ export default function OfflineBillPage() {
         </div>
         <span
           className={`rounded-full px-2.5 py-1 text-xs font-medium ${
-            isOnline ? "bg-brand-soft text-brand-dark" : "bg-credit-soft text-credit"
+            isOnline ? "bg-brand-soft text-brand-text" : "bg-credit-soft text-credit"
           }`}
         >
           {isOnline ? "● Online" : "○ Offline"}
@@ -259,7 +259,7 @@ export default function OfflineBillPage() {
       )}
 
       {savedNotice && (
-        <div className="rounded-lg border border-brand bg-brand-soft px-3.5 py-3 text-sm text-brand-dark">
+        <div className="rounded-lg border border-brand bg-brand-soft px-3.5 py-3 text-sm text-brand-text">
           {savedNotice}
           <button onClick={() => setSavedNotice(null)} className="ml-2 underline">
             OK
@@ -344,8 +344,8 @@ export default function OfflineBillPage() {
             ))}
           </ul>
           <div className="flex justify-between rounded-lg bg-brand-soft px-3.5 py-2.5 text-sm">
-            <span className="text-brand-dark">Total</span>
-            <span className="font-semibold text-brand-dark">{formatMoney(totals.total)}</span>
+            <span className="text-brand-text">Total</span>
+            <span className="font-semibold text-brand-text">{formatMoney(totals.total)}</span>
           </div>
 
           <label className="flex flex-col gap-1.5 text-sm">
@@ -365,7 +365,7 @@ export default function OfflineBillPage() {
                 key={m}
                 onClick={() => setPaymentMethod(m)}
                 className={`rounded-full border px-3 py-1.5 text-xs font-medium capitalize ${
-                  paymentMethod === m ? "border-brand bg-brand-soft text-brand-dark" : "border-border text-muted"
+                  paymentMethod === m ? "border-brand bg-brand-soft text-brand-text" : "border-border text-muted"
                 }`}
               >
                 {m}

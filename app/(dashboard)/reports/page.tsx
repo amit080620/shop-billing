@@ -2,7 +2,6 @@ import Link from "next/link";
 import { requireSession } from "@/lib/auth";
 import { PageHeader } from "@/app/components/PageHeader";
 import { isModuleEnabled } from "@/lib/modules";
-import { BarChart3 } from "lucide-react";
 
 export default async function ReportsPage() {
   const session = await requireSession();
@@ -11,7 +10,9 @@ export default async function ReportsPage() {
     <div className="flex flex-col gap-4">
       <PageHeader
         title="Reports"
-        icon={<BarChart3 size={18} strokeWidth={1.8} />}
+        // eslint-disable-next-line @next/next/no-img-element -- small branded SVG icon
+        icon={<img src="/assets/ray-icons/report.svg" alt="" className="h-9 w-9 md:h-11 md:w-11" />}
+        bareIcon
       />
 
       <section className="flex flex-col gap-2">
@@ -33,7 +34,10 @@ export default async function ReportsPage() {
       </section>
 
       <section className="flex flex-col gap-2">
-        <h2 className="px-1 text-xs font-semibold uppercase tracking-wide text-muted">GST filing</h2>
+        <h2 className="flex items-center gap-1 px-1 text-xs font-semibold uppercase tracking-wide text-muted">
+          {/* eslint-disable-next-line @next/next/no-img-element -- small branded SVG icon */}
+          <img src="/assets/ray-icons/gst.svg" alt="" className="h-3.5 w-3.5" /> GST filing
+        </h2>
         <p className="text-xs text-muted">Always available regardless of plan — required for tax compliance.</p>
 
         {session.gstScheme === "composition" && (

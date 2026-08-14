@@ -17,7 +17,7 @@ export function CheckInForm({ lang, members }: { lang: Lang; members: Member[] }
 
   return (
     <div className="flex flex-col gap-2 rounded-xl border border-dashed border-brand bg-brand-soft p-4">
-      <p className="flex items-center gap-1.5 text-sm font-medium text-brand-dark"><CheckCircle2 size={14} /> Check in a member</p>
+      <p className="flex items-center gap-1.5 text-sm font-medium text-brand-text"><CheckCircle2 size={14} /> Check in a member</p>
       <SearchableSelect
         lang={lang}
         items={members}
@@ -39,9 +39,9 @@ export function CheckInForm({ lang, members }: { lang: Lang; members: Member[] }
         }}
         placeholder="Search member name or phone…"
       />
-      {isPending && <p className="text-xs text-brand-dark">Checking in…</p>}
+      {isPending && <p className="text-xs text-brand-text">Checking in…</p>}
       {error && <p className="text-xs text-danger">{error}</p>}
-      {success && <p className="text-xs text-brand-dark">{success}</p>}
+      {success && <p className="text-xs text-brand-text">{success}</p>}
     </div>
   );
 }

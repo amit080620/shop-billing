@@ -19,7 +19,7 @@ export function PaymentMethodPicker({ name = "paymentMethod", defaultValue = "ca
             onClick={() => setSelected(m)}
             className={`rounded-full border px-3 py-1.5 text-xs font-medium capitalize ${
               selected === m
-                ? "border-brand bg-brand-soft text-brand-dark"
+                ? "border-brand bg-brand-soft text-brand-text"
                 : "border-border text-muted"
             }`}
           >

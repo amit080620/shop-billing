@@ -162,7 +162,7 @@ export function OrderClient({
                 })
               }
               className={`rounded-full border px-3 py-1.5 text-xs font-medium ${
-                order.orderType === type ? "border-brand bg-brand-soft text-brand-dark" : "border-border text-muted"
+                order.orderType === type ? "border-brand bg-brand-soft text-brand-text" : "border-border text-muted"
               }`}
             >
               {type === "dine_in" ? t("order.dineIn") : type === "takeaway" ? t("order.takeaway") : t("order.delivery")}
@@ -208,8 +208,8 @@ export function OrderClient({
                 disabled={isPending}
                 className="shrink-0 rounded-lg border border-brand bg-brand-soft px-3 py-2 text-left disabled:opacity-60"
               >
-                <p className="text-xs font-medium text-brand-dark">{c.name}</p>
-                <p className="text-[11px] text-brand-dark/70">{formatMoney(c.price)}</p>
+                <p className="text-xs font-medium text-brand-text">{c.name}</p>
+                <p className="text-[11px] text-brand-text/70">{formatMoney(c.price)}</p>
               </button>
             ))}
           </div>
@@ -226,7 +226,7 @@ export function OrderClient({
                 type="button"
                 onClick={() => setActiveCategory(null)}
                 className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium ${
-                  activeCategory === null ? "border-brand bg-brand-soft text-brand-dark" : "border-border text-muted"
+                  activeCategory === null ? "border-brand bg-brand-soft text-brand-text" : "border-border text-muted"
                 }`}
               >
                 All
@@ -237,7 +237,7 @@ export function OrderClient({
                   type="button"
                   onClick={() => setActiveCategory(cat)}
                   className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium ${
-                    activeCategory === cat ? "border-brand bg-brand-soft text-brand-dark" : "border-border text-muted"
+                    activeCategory === cat ? "border-brand bg-brand-soft text-brand-text" : "border-border text-muted"
                   }`}
                 >
                   {cat}
@@ -306,7 +306,7 @@ export function OrderClient({
                     <div className="min-w-0 flex-1">
                       <span className="truncate text-sm text-foreground">{item.productName}</span>
                       {item.status === "ready" && (
-                        <span className="ml-2 flex w-fit items-center gap-0.5 rounded-full bg-brand-soft px-2 py-0.5 text-[11px] font-medium text-brand-dark"><Bell size={9} /> Ready</span>
+                        <span className="ml-2 flex w-fit items-center gap-0.5 rounded-full bg-brand-soft px-2 py-0.5 text-[11px] font-medium text-brand-text"><Bell size={9} /> Ready</span>
                       )}
                       {item.status === "served" && (
                         <span className="ml-2 flex w-fit items-center gap-0.5 rounded-full bg-background px-2 py-0.5 text-[11px] font-medium text-muted"><Check size={9} /> Served</span>
@@ -334,7 +334,7 @@ export function OrderClient({
                             router.refresh();
                           })
                         }
-                        className="shrink-0 rounded-lg border border-brand bg-brand-soft px-2 py-1 text-xs font-medium text-brand-dark"
+                        className="shrink-0 rounded-lg border border-brand bg-brand-soft px-2 py-1 text-xs font-medium text-brand-text"
                       >
                         Served
                       </button>
@@ -350,8 +350,8 @@ export function OrderClient({
             )}
             {initialItems.length > 0 && (
               <div className="flex justify-between rounded-lg bg-brand-soft px-3.5 py-2.5 text-sm">
-                <span className="text-brand-dark">{t("order.total")}</span>
-                <span className="font-semibold text-brand-dark">{formatMoney(order.total)}</span>
+                <span className="text-brand-text">{t("order.total")}</span>
+                <span className="font-semibold text-brand-text">{formatMoney(order.total)}</span>
               </div>
             )}
           </section>
@@ -510,7 +510,7 @@ function QuantityPickerModal({
               key={n}
               onClick={() => setQuantity(n)}
               className={`h-9 w-9 rounded-full border text-sm font-semibold ${
-                quantity === n ? "border-brand bg-brand-soft text-brand-dark" : "border-border text-muted"
+                quantity === n ? "border-brand bg-brand-soft text-brand-text" : "border-border text-muted"
               }`}
             >
               {n}
@@ -683,7 +683,7 @@ function SettleModal({
               {discountValue > 0 && (
                 <div className="mt-1 flex justify-between text-sm">
                   <span className="text-muted">After discount</span>
-                  <span className="font-semibold text-brand-dark">{formatMoney(netTotal)}</span>
+                  <span className="font-semibold text-brand-text">{formatMoney(netTotal)}</span>
                 </div>
               )}
             </div>
@@ -723,7 +723,7 @@ function SettleModal({
               <p className="text-sm font-semibold text-foreground">Collect payment</p>
             </div>
             {discountValue > 0 && (
-              <div className="mt-2 rounded-lg bg-brand-soft px-3.5 py-2.5 text-xs text-brand-dark">
+              <div className="mt-2 rounded-lg bg-brand-soft px-3.5 py-2.5 text-xs text-brand-text">
                 Final bill after {formatMoney(discountValue)} discount: <span className="font-semibold">{formatMoney(netTotal)}</span> — show this to the customer before collecting payment.
               </div>
             )}
@@ -732,14 +732,14 @@ function SettleModal({
           <div className="flex items-center gap-2">
             <button type="button" onClick={() => setSplitCount((n) => Math.max(1, n - 1))} className="h-8 w-8 rounded-full border border-border text-sm">−</button>
             <span className="w-8 text-center text-sm font-medium text-foreground">{splitCount}</span>
-            <button type="button" onClick={() => setSplitCount((n) => n + 1)} className="h-8 w-8 rounded-full border border-brand bg-brand-soft text-sm text-brand-dark">+</button>
+            <button type="button" onClick={() => setSplitCount((n) => n + 1)} className="h-8 w-8 rounded-full border border-brand bg-brand-soft text-sm text-brand-text">+</button>
             <span className="text-xs text-muted">{splitCount === 1 ? t("order.person") : t("order.people")}</span>
           </div>
         </label>
         {perPerson !== null && (
           <div className="rounded-lg bg-brand-soft px-3.5 py-2.5 text-sm">
-            <span className="text-brand-dark">{t("order.eachPersonPays")} </span>
-            <span className="font-semibold text-brand-dark">{formatMoney(perPerson)}</span>
+            <span className="text-brand-text">{t("order.eachPersonPays")} </span>
+            <span className="font-semibold text-brand-text">{formatMoney(perPerson)}</span>
           </div>
         )}
 

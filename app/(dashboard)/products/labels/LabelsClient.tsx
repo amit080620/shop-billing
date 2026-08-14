@@ -73,7 +73,7 @@ export function LabelsClient({ shopName, products: initialProducts }: { shopName
               key={size}
               onClick={() => setLabelSize(size)}
               className={`rounded-full border px-3 py-1.5 text-xs font-medium ${
-                labelSize === size ? "border-brand bg-brand-soft text-brand-dark" : "border-border text-muted"
+                labelSize === size ? "border-brand bg-brand-soft text-brand-text" : "border-border text-muted"
               }`}
             >
               {size === "thermal" ? "Thermal roll (40mm)" : "A4 sheet (grid)"}
@@ -101,12 +101,12 @@ export function LabelsClient({ shopName, products: initialProducts }: { shopName
                   >
                     −
                   </button>
-                  <span className={`w-6 text-center text-sm font-semibold ${qty > 0 ? "text-brand-dark" : "text-muted"}`}>
+                  <span className={`w-6 text-center text-sm font-semibold ${qty > 0 ? "text-brand-text" : "text-muted"}`}>
                     {qty}
                   </span>
                   <button
                     onClick={() => setQty(p.id, qty + 1)}
-                    className="h-7 w-7 rounded-full border border-brand bg-brand-soft text-sm font-medium text-brand-dark"
+                    className="h-7 w-7 rounded-full border border-brand bg-brand-soft text-sm font-medium text-brand-text"
                   >
                     +
                   </button>
@@ -134,14 +134,14 @@ export function LabelsClient({ shopName, products: initialProducts }: { shopName
       >
         {selectedLabels.length > 0 ? (
           <>
-            <p className="text-sm font-medium text-brand-dark">{selectedLabels.length} label(s) ready to print</p>
+            <p className="text-sm font-medium text-brand-text">{selectedLabels.length} label(s) ready to print</p>
             <button onClick={() => window.print()} className="btn-primary-sm mt-2 flex items-center gap-1.5">
               <Printer size={13} /> Print labels
             </button>
           </>
         ) : (
           <p className="text-xs text-muted">
-            Tap the <span className="font-semibold text-brand-dark">+</span> button next to an
+            Tap the <span className="font-semibold text-brand-text">+</span> button next to an
             item above to add it here — the print button appears once you&apos;ve picked at least one.
           </p>
         )}

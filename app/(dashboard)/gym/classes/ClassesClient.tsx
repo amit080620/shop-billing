@@ -116,7 +116,7 @@ export function ClassesClient({
                 key={d}
                 type="button"
                 onClick={() => setDayOfWeek(i)}
-                className={`rounded-full border px-2.5 py-1 text-xs font-medium ${dayOfWeek === i ? "border-brand bg-surface text-brand-dark" : "border-transparent bg-surface/60 text-muted"}`}
+                className={`rounded-full border px-2.5 py-1 text-xs font-medium ${dayOfWeek === i ? "border-brand bg-surface text-brand-text" : "border-transparent bg-surface/60 text-muted"}`}
               >
                 {DAY_SHORT[i]}
               </button>
@@ -145,7 +145,7 @@ export function ClassesClient({
           if (dayClasses.length === 0) return null;
           return (
             <div key={dow} className="flex flex-col gap-2">
-              <p className={`text-xs font-semibold ${dow === todayDow ? "text-brand-dark" : "text-muted"}`}>
+              <p className={`text-xs font-semibold ${dow === todayDow ? "text-brand-text" : "text-muted"}`}>
                 {dayName} {dow === todayDow ? "· Today" : ""}
               </p>
               <ul className="flex flex-col gap-2">
@@ -194,7 +194,7 @@ export function ClassesClient({
                         {c.todayBookings.length > 0 && (
                           <ul className="flex flex-wrap gap-1">
                             {c.todayBookings.map((b) => (
-                              <li key={b.id} className="flex items-center gap-1 rounded-full bg-brand-soft px-2 py-0.5 text-[11px] text-brand-dark">
+                              <li key={b.id} className="flex items-center gap-1 rounded-full bg-brand-soft px-2 py-0.5 text-[11px] text-brand-text">
                                 {b.memberName}
                                 <button
                                   onClick={() =>

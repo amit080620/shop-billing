@@ -50,7 +50,9 @@ export function RemindersClient({
       <PageHeader
         title="Udhaar reminders"
         subtitle="Select customers (or Select all), then work through the list — you still hit Send in WhatsApp yourself for each one."
-        icon={<Bell size={18} strokeWidth={1.8} />}
+        // eslint-disable-next-line @next/next/no-img-element -- small branded SVG icon
+        icon={<img src="/assets/ray-icons/bell.svg" alt="" className="h-9 w-9 md:h-11 md:w-11" />}
+        bareIcon
       />
 
       <div className="rounded-xl border border-border bg-credit-soft p-4">
@@ -74,7 +76,7 @@ export function RemindersClient({
 
           {selectedCustomers.length > 0 && (
             <section className="flex flex-col gap-2 rounded-xl border border-dashed border-brand bg-brand-soft p-3">
-              <p className="text-xs font-semibold text-brand-dark">
+              <p className="text-xs font-semibold text-brand-text">
                 Ready to send ({selectedCustomers.length})
               </p>
               <ul className="flex flex-col gap-1.5">

@@ -375,7 +375,7 @@ export function NewBillClient({
               }}
               className={`flex-1 rounded-lg border px-3 py-2 text-sm font-medium ${
                 customerMode === "walkin"
-                  ? "border-brand bg-brand-soft text-brand-dark"
+                  ? "border-brand bg-brand-soft text-brand-text"
                   : "border-border text-muted"
               }`}
             >
@@ -385,7 +385,7 @@ export function NewBillClient({
               onClick={() => setCustomerMode("existing")}
               className={`flex-1 rounded-lg border px-3 py-2 text-sm font-medium ${
                 customerMode === "existing"
-                  ? "border-brand bg-brand-soft text-brand-dark"
+                  ? "border-brand bg-brand-soft text-brand-text"
                   : "border-border text-muted"
               }`}
             >
@@ -445,7 +445,7 @@ export function NewBillClient({
                 <button
                   key={p.id}
                   onClick={() => addProduct(p)}
-                  className="flex shrink-0 items-center gap-1 rounded-full border border-brand bg-brand-soft px-3 py-1.5 text-xs font-medium text-brand-dark"
+                  className="flex shrink-0 items-center gap-1 rounded-full border border-brand bg-brand-soft px-3 py-1.5 text-xs font-medium text-brand-text"
                 >
                   <Zap size={11} /> {p.name}
                 </button>
@@ -537,7 +537,7 @@ export function NewBillClient({
                           <button
                             onClick={() => toggleSaleMode(line.productId, "pack")}
                             className={`rounded-full border px-2 py-0.5 text-[11px] font-medium ${
-                              line.saleMode === "pack" ? "border-brand bg-brand-soft text-brand-dark" : "border-border text-muted"
+                              line.saleMode === "pack" ? "border-brand bg-brand-soft text-brand-text" : "border-border text-muted"
                             }`}
                           >
                             Full {line.unit}
@@ -545,7 +545,7 @@ export function NewBillClient({
                           <button
                             onClick={() => toggleSaleMode(line.productId, "loose")}
                             className={`rounded-full border px-2 py-0.5 text-[11px] font-medium capitalize ${
-                              line.saleMode === "loose" ? "border-brand bg-brand-soft text-brand-dark" : "border-border text-muted"
+                              line.saleMode === "loose" ? "border-brand bg-brand-soft text-brand-text" : "border-border text-muted"
                             }`}
                           >
                             Loose {line.looseUnitName}
@@ -594,7 +594,7 @@ export function NewBillClient({
                           onClick={() => updateQuantity(line.productId, preset)}
                           className={`rounded-full border px-2.5 py-1 text-xs font-medium ${
                             line.quantity === preset
-                              ? "border-brand bg-brand-soft text-brand-dark"
+                              ? "border-brand bg-brand-soft text-brand-text"
                               : "border-border text-muted"
                           }`}
                         >
@@ -613,8 +613,8 @@ export function NewBillClient({
               ))}
             </ul>
             <div className="flex items-center justify-between rounded-lg bg-brand-soft px-3.5 py-2.5 text-sm">
-              <span className="text-brand-dark">{t("bill.subtotal")}</span>
-              <span className="font-semibold text-brand-dark">
+              <span className="text-brand-text">{t("bill.subtotal")}</span>
+              <span className="font-semibold text-brand-text">
                 {formatMoney(totals.subtotal)}
               </span>
             </div>
@@ -715,7 +715,7 @@ export function NewBillClient({
             onClick={() => setDiscountType("flat")}
             className={`flex-1 rounded-lg border px-3 py-2 text-sm font-medium ${
               discountType === "flat"
-                ? "border-brand bg-brand-soft text-brand-dark"
+                ? "border-brand bg-brand-soft text-brand-text"
                 : "border-border text-muted"
             }`}
           >
@@ -726,7 +726,7 @@ export function NewBillClient({
             onClick={() => setDiscountType("percent")}
             className={`flex-1 rounded-lg border px-3 py-2 text-sm font-medium ${
               discountType === "percent"
-                ? "border-brand bg-brand-soft text-brand-dark"
+                ? "border-brand bg-brand-soft text-brand-text"
                 : "border-border text-muted"
             }`}
           >
@@ -796,7 +796,7 @@ export function NewBillClient({
             onClick={() => setPaidAmount(totals.total)}
             className={`flex-1 rounded-lg border px-3 py-2 text-sm font-medium ${
               paidAmount === totals.total
-                ? "border-brand bg-brand-soft text-brand-dark"
+                ? "border-brand bg-brand-soft text-brand-text"
                 : "border-border text-muted"
             }`}
           >
@@ -842,7 +842,7 @@ export function NewBillClient({
                   onClick={() => setPaymentMethod(m)}
                   className={`rounded-full border px-3.5 py-1.5 text-xs font-medium ${
                     paymentMethod === m
-                      ? "border-brand bg-brand-soft text-brand-dark"
+                      ? "border-brand bg-brand-soft text-brand-text"
                       : "border-border text-muted"
                   }`}
                 >
@@ -882,7 +882,7 @@ export function NewBillClient({
 
         {cart.some((c) => c.requiresPrescription) && (
           <div className="flex flex-col gap-2 rounded-lg border border-dashed border-brand bg-brand-soft p-3">
-            <p className="flex items-start gap-1.5 text-xs font-medium text-brand-dark">
+            <p className="flex items-start gap-1.5 text-xs font-medium text-brand-text">
               <Pill size={13} className="mt-0.5 shrink-0" />
               One or more items need a prescription (Rx) — enter both before generating the invoice.
             </p>
@@ -951,7 +951,12 @@ function StockIndicator({
   const isNearLow = !isLow && remaining <= threshold + 3;
 
   if (remaining <= 0) {
-    return <p className="flex items-center gap-1 text-xs font-semibold text-danger"><AlertTriangle size={11} /> Out of stock after this sale</p>;
+    return (
+      <p className="flex items-center gap-1 text-xs font-semibold text-danger">
+        {/* eslint-disable-next-line @next/next/no-img-element -- small branded SVG icon */}
+        <img src="/assets/ray-icons/stock-out.svg" alt="" className="h-3.5 w-3.5" /> Out of stock after this sale
+      </p>
+    );
   }
   if (isLow) {
     return (
@@ -1152,7 +1157,7 @@ function TransportChargePicker({
           <option value="CFT">Cu. ft</option>
         </select>
       </div>
-      {charge !== null && <p className="text-xs text-brand-dark">Transport charge: {formatMoney(charge)}</p>}
+      {charge !== null && <p className="text-xs text-brand-text">Transport charge: {formatMoney(charge)}</p>}
       <div className="flex gap-2">
         <button
           type="button"
@@ -1236,7 +1241,7 @@ function JewelleryCalculator({
 
   return (
     <div className="flex flex-col gap-2 rounded-lg border border-dashed border-brand bg-brand-soft p-3">
-      <p className="text-xs text-brand-dark">
+      <p className="text-xs text-brand-text">
         Today&apos;s rate — {goldRate ? `Gold ₹${goldRate}/g` : "Gold not set"}
         {silverRate ? ` · Silver ₹${silverRate}/g` : ""}
       </p>
@@ -1315,7 +1320,7 @@ function JewelleryCalculator({
         />
       </div>
 
-      <label className="flex items-center gap-2 text-xs text-brand-dark">
+      <label className="flex items-center gap-2 text-xs text-brand-text">
         GST %
         <input
           type="number"
@@ -1395,10 +1400,10 @@ function ExchangeCalculator({
     return (
       <div className="flex items-center justify-between rounded-xl border border-brand bg-brand-soft px-3.5 py-3">
         <div>
-          <p className="flex items-center gap-1.5 text-sm font-medium text-brand-dark">
+          <p className="flex items-center gap-1.5 text-sm font-medium text-brand-text">
             <Recycle size={14} /> Old {exchangeInfo.metal} exchange {exchangeInfo.description ? `— ${exchangeInfo.description}` : ""}
           </p>
-          <p className="text-xs text-brand-dark/80">
+          <p className="text-xs text-brand-text/80">
             {exchangeInfo.grossWeight}g gross · {exchangeInfo.purityPercent}% purity · {formatMoney(exchangeInfo.value)}
           </p>
         </div>
@@ -1419,8 +1424,8 @@ function ExchangeCalculator({
 
   return (
     <div className="flex flex-col gap-2 rounded-xl border border-dashed border-brand bg-brand-soft p-4">
-      <p className="text-sm font-semibold text-brand-dark">Old gold/silver exchange</p>
-      <p className="text-xs text-brand-dark/80">
+      <p className="text-sm font-semibold text-brand-text">Old gold/silver exchange</p>
+      <p className="text-xs text-brand-text/80">
         This value is treated as part of the payment — it reduces what the customer needs to pay in cash, and is kept as a separate record for your own melting/refining books.
       </p>
 
@@ -1473,7 +1478,7 @@ function ExchangeCalculator({
       </div>
 
       {netWeight > 0 && (
-        <p className="text-xs text-brand-dark">
+        <p className="text-xs text-brand-text">
           Net weight (after purity): {netWeight}g × ₹{rate}/g = <strong>{formatMoney(value)}</strong>
         </p>
       )}

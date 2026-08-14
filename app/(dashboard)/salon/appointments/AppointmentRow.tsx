@@ -27,7 +27,7 @@ const STATUS_LABELS: Record<string, string> = {
 };
 const STATUS_TONE: Record<string, string> = {
   booked: "bg-background text-muted",
-  confirmed: "bg-brand-soft text-brand-dark",
+  confirmed: "bg-brand-soft text-brand-text",
   arrived: "bg-credit-soft text-credit",
   completed: "bg-background text-muted",
   cancelled: "bg-danger/15 text-danger",
@@ -83,7 +83,7 @@ export function AppointmentRow({ appointment, lang }: { appointment: Appointment
               href={whatsappConfirmLink(appointment, t)}
               target="_blank"
               rel="noopener noreferrer"
-              className="rounded-lg border border-brand bg-brand-soft px-2.5 py-1 text-xs font-medium text-brand-dark"
+              className="rounded-lg border border-brand bg-brand-soft px-2.5 py-1 text-xs font-medium text-brand-text"
             >
               Confirm on WhatsApp
             </a>

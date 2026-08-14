@@ -128,7 +128,7 @@ export default async function WarrantyLookupPage({
               <li key={i} className={`rounded-lg border shadow-sm px-3.5 py-3 ${isExpired ? "border-border bg-background opacity-70" : "border-brand bg-brand-soft"}`}>
                 <div className="flex items-center justify-between">
                   <p className="text-sm font-medium text-foreground">{r.productName} × {r.quantity}</p>
-                  <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${isExpired ? "bg-background text-muted" : "bg-white text-brand-dark"}`}>
+                  <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${isExpired ? "bg-background text-muted" : "bg-white text-brand-text"}`}>
                     {isExpired ? "Expired" : "Active"}
                   </span>
                 </div>

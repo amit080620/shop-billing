@@ -56,7 +56,9 @@ export function InvoiceSettingsClient({
       <div className="flex flex-col gap-3">
         <PageHeader
           title="Invoice design"
-          icon={<Palette size={18} strokeWidth={1.8} />}
+          // eslint-disable-next-line @next/next/no-img-element -- small branded SVG icon
+          icon={<img src="/assets/ray-icons/invoice.svg" alt="" className="h-9 w-9 md:h-11 md:w-11" />}
+          bareIcon
         />
         <p className="text-sm text-muted">Only the shop owner can change invoice branding.</p>
       </div>
@@ -82,7 +84,9 @@ export function InvoiceSettingsClient({
       <PageHeader
         title="Invoice design"
         subtitle="Your shop's branding on invoices and prescriptions — the line items, tax breakup, and totals stay fixed for GST accuracy; these are the parts you control."
-        icon={<TrendingUp size={18} strokeWidth={1.8} />}
+        // eslint-disable-next-line @next/next/no-img-element -- small branded SVG icon
+        icon={<img src="/assets/ray-icons/invoice.svg" alt="" className="h-9 w-9 md:h-11 md:w-11" />}
+        bareIcon
       />
       <Link href="/more" className="text-sm text-muted">
         ← More

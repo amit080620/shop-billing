@@ -118,7 +118,7 @@ export function PublicStorefrontClient({
       </div>
 
       {bannerText && (
-        <div className="rounded-xl bg-brand-soft px-4 py-2.5 text-center text-sm font-medium text-brand-dark">{bannerText}</div>
+        <div className="rounded-xl bg-brand-soft px-4 py-2.5 text-center text-sm font-medium text-brand-text">{bannerText}</div>
       )}
 
       {categories.length > 0 && (
@@ -126,7 +126,7 @@ export function PublicStorefrontClient({
           <button
             onClick={() => setActiveCategory("all")}
             className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium ${
-              activeCategory === "all" ? "border-brand bg-brand-soft text-brand-dark" : "border-border text-muted"
+              activeCategory === "all" ? "border-brand bg-brand-soft text-brand-text" : "border-border text-muted"
             }`}
           >
             All
@@ -136,7 +136,7 @@ export function PublicStorefrontClient({
               key={c}
               onClick={() => setActiveCategory(c)}
               className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium ${
-                activeCategory === c ? "border-brand bg-brand-soft text-brand-dark" : "border-border text-muted"
+                activeCategory === c ? "border-brand bg-brand-soft text-brand-text" : "border-border text-muted"
               }`}
             >
               {c}
@@ -178,17 +178,17 @@ export function PublicStorefrontClient({
                   {qty === 0 ? (
                     <button
                       onClick={() => updateQty(p.id, 1)}
-                      className="mt-1 rounded-lg bg-brand-soft px-2 py-1.5 text-xs font-semibold text-brand-dark"
+                      className="mt-1 rounded-lg bg-brand-soft px-2 py-1.5 text-xs font-semibold text-brand-text"
                     >
                       + Add
                     </button>
                   ) : (
                     <div className="mt-1 flex items-center justify-between rounded-lg bg-brand-soft px-2 py-1">
-                      <button onClick={() => updateQty(p.id, -1)} className="px-1.5 text-sm font-bold text-brand-dark">
+                      <button onClick={() => updateQty(p.id, -1)} className="px-1.5 text-sm font-bold text-brand-text">
                         −
                       </button>
-                      <span className="text-xs font-semibold text-brand-dark">{qty}</span>
-                      <button onClick={() => updateQty(p.id, 1)} className="px-1.5 text-sm font-bold text-brand-dark">
+                      <span className="text-xs font-semibold text-brand-text">{qty}</span>
+                      <button onClick={() => updateQty(p.id, 1)} className="px-1.5 text-sm font-bold text-brand-text">
                         +
                       </button>
                     </div>

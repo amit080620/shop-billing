@@ -17,7 +17,7 @@ export function ThemeToggle({ theme, compact = false }: { theme: "light" | "dark
       <button
         onClick={() => switchTo("light")}
         className={`rounded-md px-2.5 py-1 text-xs font-medium ${
-          theme === "light" ? "bg-brand-soft text-brand-dark" : "text-muted"
+          theme === "light" ? "bg-brand-soft text-brand-text" : "text-muted"
         }`}
       >
         <Sun size={12} className="inline" /> Light
@@ -25,7 +25,7 @@ export function ThemeToggle({ theme, compact = false }: { theme: "light" | "dark
       <button
         onClick={() => switchTo("dark")}
         className={`rounded-md px-2.5 py-1 text-xs font-medium ${
-          theme === "dark" ? "bg-brand-soft text-brand-dark" : "text-muted"
+          theme === "dark" ? "bg-brand-soft text-brand-text" : "text-muted"
         }`}
       >
         <Moon size={12} className="inline" /> Dark

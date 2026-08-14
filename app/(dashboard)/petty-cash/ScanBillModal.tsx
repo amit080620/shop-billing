@@ -155,6 +155,6 @@ function ConfidenceBadge({ score }: { score: number | undefined }) {
   if (score === undefined) return <span className="text-[10px] text-muted">not found</span>;
   const level = confidenceLevel(score);
   const label = level === "high" ? "high confidence" : level === "medium" ? "double-check" : "low confidence";
-  const color = level === "high" ? "text-brand-dark" : level === "medium" ? "text-amber-600" : "text-danger";
+  const color = level === "high" ? "text-brand-text" : level === "medium" ? "text-amber-600" : "text-danger";
   return <span className={`text-[10px] ${color}`}>{label}</span>;
 }

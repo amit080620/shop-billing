@@ -38,7 +38,7 @@ export function ReturnForm({ rentalId, items, lang }: { rentalId: string; items:
 
   return (
     <form action={formAction} className="flex flex-col gap-3 rounded-xl border border-dashed border-brand bg-brand-soft p-4">
-      <p className="text-sm font-semibold text-brand-dark">{t("rentalsPage.processReturn")}</p>
+      <p className="text-sm font-semibold text-brand-text">{t("rentalsPage.processReturn")}</p>
       <input type="hidden" name="rentalId" value={rentalId} />
       <input type="hidden" name="items" value={itemsPayload} />
 
@@ -52,7 +52,7 @@ export function ReturnForm({ rentalId, items, lang }: { rentalId: string; items:
                 type="button"
                 onClick={() => setConditions((prev) => ({ ...prev, [item.id]: c }))}
                 className={`rounded-full border px-2.5 py-1 text-xs font-medium capitalize ${
-                  conditions[item.id] === c ? "border-brand bg-brand-soft text-brand-dark" : "border-border text-muted"
+                  conditions[item.id] === c ? "border-brand bg-brand-soft text-brand-text" : "border-border text-muted"
                 }`}
               >
                 {conditionLabel(c)}
@@ -70,7 +70,7 @@ export function ReturnForm({ rentalId, items, lang }: { rentalId: string; items:
         </div>
       ))}
 
-      <label className="flex flex-col gap-1 text-xs text-brand-dark">
+      <label className="flex flex-col gap-1 text-xs text-brand-text">
         {t("rentalsPage.damageChargeLabel")}
         <input
           name="damageCharge"
@@ -82,7 +82,7 @@ export function ReturnForm({ rentalId, items, lang }: { rentalId: string; items:
           className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand"
         />
       </label>
-      <label className="flex flex-col gap-1 text-xs text-brand-dark">
+      <label className="flex flex-col gap-1 text-xs text-brand-text">
         {t("rentalsPage.lateFeeLabel")}
         <input
           name="lateFee"

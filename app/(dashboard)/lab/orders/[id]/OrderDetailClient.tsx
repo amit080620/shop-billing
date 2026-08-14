@@ -96,7 +96,7 @@ export function OrderDetailClient({ order, items }: { order: Order; items: Item[
       <Link
         href={`/print/lab-report/${order.id}`}
         target="_blank"
-        className="flex items-center gap-1.5 self-start rounded-lg border border-brand bg-brand-soft px-3 py-1.5 text-xs font-medium text-brand-dark"
+        className="flex items-center gap-1.5 self-start rounded-lg border border-brand bg-brand-soft px-3 py-1.5 text-xs font-medium text-brand-text"
       >
         <Printer size={13} /> View / print report
       </Link>
@@ -148,7 +148,7 @@ export function OrderDetailClient({ order, items }: { order: Order; items: Item[
                   placeholder="Result"
                   className="flex-1 rounded-lg border border-border bg-background px-2.5 py-1.5 text-sm outline-none focus:border-brand"
                 />
-                <button onClick={() => saveResult(item.id)} disabled={isPending} className="rounded-lg border border-brand px-2.5 py-1.5 text-xs font-medium text-brand-dark disabled:opacity-60">
+                <button onClick={() => saveResult(item.id)} disabled={isPending} className="rounded-lg border border-brand px-2.5 py-1.5 text-xs font-medium text-brand-text disabled:opacity-60">
                   Save
                 </button>
               </div>
@@ -163,8 +163,8 @@ export function OrderDetailClient({ order, items }: { order: Order; items: Item[
       </section>
 
       <div className="flex justify-between rounded-lg bg-brand-soft px-3.5 py-2.5 text-sm">
-        <span className="text-brand-dark">Total</span>
-        <span className="font-semibold text-brand-dark">{formatMoney(total)}</span>
+        <span className="text-brand-text">Total</span>
+        <span className="font-semibold text-brand-text">{formatMoney(total)}</span>
       </div>
 
       {order.billId ? (

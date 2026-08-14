@@ -15,7 +15,7 @@ const STATUS_LABELS: Record<string, string> = {
 const STATUS_TONE: Record<string, string> = {
   received: "bg-background text-muted",
   in_progress: "bg-credit-soft text-credit",
-  ready: "bg-brand-soft text-brand-dark",
+  ready: "bg-brand-soft text-brand-text",
   delivered: "bg-background text-muted",
   cancelled: "bg-danger/15 text-danger",
 };
@@ -59,14 +59,14 @@ export default async function ServiceJobsPage({
       />
 
       <div className="flex gap-2 overflow-x-auto pb-1">
-        <Link href="/service" className={`shrink-0 rounded-full border px-3.5 py-1.5 text-xs font-medium ${!activeFilter ? "border-brand bg-brand-soft text-brand-dark" : "border-border text-muted"}`}>
+        <Link href="/service" className={`shrink-0 rounded-full border px-3.5 py-1.5 text-xs font-medium ${!activeFilter ? "border-brand bg-brand-soft text-brand-text" : "border-border text-muted"}`}>
           Open jobs
         </Link>
         {(["received", "in_progress", "ready", "delivered", "cancelled"] as const).map((s) => (
           <Link
             key={s}
             href={`/service?status=${s}`}
-            className={`shrink-0 rounded-full border px-3.5 py-1.5 text-xs font-medium ${activeFilter === s ? "border-brand bg-brand-soft text-brand-dark" : "border-border text-muted"}`}
+            className={`shrink-0 rounded-full border px-3.5 py-1.5 text-xs font-medium ${activeFilter === s ? "border-brand bg-brand-soft text-brand-text" : "border-border text-muted"}`}
           >
             {STATUS_LABELS[s]}
           </Link>

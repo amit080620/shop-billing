@@ -107,7 +107,7 @@ export function ReturnClient({
               <div className="flex shrink-0 items-center gap-1.5">
                 <button type="button" onClick={() => setQty(item.id, qty - 1, remaining)} className="h-7 w-7 rounded-full border border-border text-sm">−</button>
                 <span className="w-8 text-center text-sm font-medium">{qty}</span>
-                <button type="button" onClick={() => setQty(item.id, qty + 1, remaining)} className="h-7 w-7 rounded-full border border-brand bg-brand-soft text-sm text-brand-dark">+</button>
+                <button type="button" onClick={() => setQty(item.id, qty + 1, remaining)} className="h-7 w-7 rounded-full border border-brand bg-brand-soft text-sm text-brand-text">+</button>
               </div>
             </li>
           );
@@ -116,8 +116,8 @@ export function ReturnClient({
 
       {selectedLines.length > 0 && (
         <div className="flex justify-between rounded-lg bg-brand-soft px-3.5 py-2.5 text-sm">
-          <span className="text-brand-dark">Refund total (incl. GST)</span>
-          <span className="font-semibold text-brand-dark">{formatMoney(totals.total)}</span>
+          <span className="text-brand-text">Refund total (incl. GST)</span>
+          <span className="font-semibold text-brand-text">{formatMoney(totals.total)}</span>
         </div>
       )}
 
@@ -141,7 +141,7 @@ export function ReturnClient({
               type="button"
               onClick={() => setRefundMethod(m)}
               className={`rounded-full border px-3 py-1.5 text-xs font-medium capitalize ${
-                refundMethod === m ? "border-brand bg-brand-soft text-brand-dark" : "border-border text-muted"
+                refundMethod === m ? "border-brand bg-brand-soft text-brand-text" : "border-border text-muted"
               }`}
             >
               {m === "credit_adjustment" ? "Adjust against credit" : m}

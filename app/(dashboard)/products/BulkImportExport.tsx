@@ -3,7 +3,6 @@
 import { useRef, useState } from "react";
 import { bulkImportProductsAction, type ImportResult } from "@/lib/actions/bulk-import";
 import { downloadCsv } from "@/app/components/downloadCsv";
-import { Download } from "lucide-react";
 
 type Product = {
   name: string;
@@ -142,7 +141,10 @@ export function BulkImportExport({ products, onImported, businessType }: { produ
         onClick={() => setOpen(true)}
         className="self-start text-sm font-medium text-brand"
       >
-        <span className="flex items-center gap-1"><Download size={13} /> Bulk import / export</span>
+        <span className="flex items-center gap-1">
+          {/* eslint-disable-next-line @next/next/no-img-element -- small branded SVG icon */}
+          <img src="/assets/ray-icons/download.svg" alt="" className="h-3.5 w-3.5" /> Bulk import / export
+        </span>
       </button>
     );
   }
@@ -150,9 +152,10 @@ export function BulkImportExport({ products, onImported, businessType }: { produ
   return (
     <div className="flex flex-col gap-3 rounded-xl border border-dashed border-brand bg-brand-soft p-4">
       <div className="flex items-center justify-between">
-        <p className="text-sm font-semibold text-brand-dark">Bulk import / export</p>
-        <button onClick={() => setOpen(false)} className="text-xs font-medium text-muted">
-          Close
+        <p className="text-sm font-semibold text-brand-text">Bulk import / export</p>
+        <button onClick={() => setOpen(false)} className="flex items-center gap-1 text-xs font-medium text-muted">
+          {/* eslint-disable-next-line @next/next/no-img-element -- small branded SVG icon */}
+          <img src="/assets/ray-icons/close.svg" alt="" className="h-3 w-3" /> Close
         </button>
       </div>
       <p className="text-xs text-muted">
@@ -164,9 +167,10 @@ export function BulkImportExport({ products, onImported, businessType }: { produ
         <button
           type="button"
           onClick={downloadTemplate}
-          className="rounded-lg border border-border bg-surface px-3 py-1.5 text-xs font-medium text-foreground"
+          className="flex items-center gap-1 rounded-lg border border-border bg-surface px-3 py-1.5 text-xs font-medium text-foreground"
         >
-          Download template
+          {/* eslint-disable-next-line @next/next/no-img-element -- small branded SVG icon */}
+          <img src="/assets/ray-icons/download.svg" alt="" className="h-3.5 w-3.5" /> Download template
         </button>
         <button
           type="button"
@@ -178,7 +182,7 @@ export function BulkImportExport({ products, onImported, businessType }: { produ
         </button>
       </div>
       <label className="flex flex-col gap-1.5 text-sm">
-        <span className="font-medium text-brand-dark">Import CSV or Excel file</span>
+        <span className="font-medium text-brand-text">Import CSV or Excel file</span>
         <input
           ref={fileInputRef}
           type="file"
@@ -194,7 +198,7 @@ export function BulkImportExport({ products, onImported, businessType }: { produ
       {isImporting && <p className="text-xs text-muted">Importing…</p>}
       {result && (
         <div className="rounded-lg bg-surface p-3 text-xs">
-          <p className="font-medium text-brand-dark">{result.inserted} product(s) imported.</p>
+          <p className="font-medium text-brand-text">{result.inserted} product(s) imported.</p>
           {result.errors.length > 0 && (
             <div className="mt-1.5 flex flex-col gap-0.5 text-credit">
               {result.errors.slice(0, 10).map((e, i) => (

@@ -125,7 +125,7 @@ export default async function FestivalsPage() {
                 </div>
                 <span
                   className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold ${
-                    f.daysUntil <= 20 ? "bg-credit-soft text-credit" : "bg-brand-soft text-brand-dark"
+                    f.daysUntil <= 20 ? "bg-credit-soft text-credit" : "bg-brand-soft text-brand-text"
                   }`}
                 >
                   {f.daysUntil <= 0 ? "Today/passed" : `${f.daysUntil}d away`}
@@ -134,7 +134,7 @@ export default async function FestivalsPage() {
 
               {trend && trend.length > 0 && (
                 <div className="mt-3">
-                  <p className="text-xs font-semibold text-brand-dark">Sold well around this time last year</p>
+                  <p className="text-xs font-semibold text-brand-text">Sold well around this time last year</p>
                   <ul className="mt-1.5 flex flex-col gap-1">
                     {trend.map((t) => (
                       <li key={t.name} className="flex justify-between text-xs">

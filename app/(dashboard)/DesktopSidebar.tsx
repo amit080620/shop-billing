@@ -60,7 +60,7 @@ export function DesktopSidebar({
               <Link
                 href={tab.href}
                 className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-150 ${
-                  active ? "bg-brand-soft text-brand-dark" : "text-muted hover:bg-background hover:text-foreground"
+                  active ? "bg-brand-soft text-brand-text" : "text-muted hover:bg-background hover:text-foreground"
                 }`}
               >
                 <span className={`flex h-7 w-7 shrink-0 items-center justify-center ${active ? "text-brand" : ""}`}>

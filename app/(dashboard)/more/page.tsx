@@ -224,7 +224,7 @@ function MenuGroup({ title, children }: { title: string; children: React.ReactNo
 }
 
 const TONE_CLASSES: Record<string, string> = {
-  brand: "bg-brand-soft text-brand-dark",
+  brand: "bg-brand-soft text-brand-text",
   secondary: "bg-secondary-soft text-secondary",
   success: "bg-success-soft text-success",
   warning: "bg-warning-soft text-warning",

@@ -34,7 +34,7 @@ export function ShareExpiryWhatsApp({ expired, critical, shopName, lang }: { exp
   return (
     <button
       onClick={share}
-      className="rounded-lg border border-brand bg-brand-soft px-3.5 py-2.5 text-sm font-medium text-brand-dark"
+      className="rounded-lg border border-brand bg-brand-soft px-3.5 py-2.5 text-sm font-medium text-brand-text"
     >
       {t("expiry.shareButton")}
     </button>

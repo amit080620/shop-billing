@@ -21,7 +21,7 @@ export function MarkActiveButton({ rentalId, lang }: { rentalId: string; lang: L
         });
       }}
       disabled={isPending}
-      className="mt-2 w-full rounded-lg border border-brand px-3 py-1.5 text-xs font-medium text-brand-dark disabled:opacity-60"
+      className="mt-2 w-full rounded-lg border border-brand px-3 py-1.5 text-xs font-medium text-brand-text disabled:opacity-60"
     >
       {isPending ? t("rentalsPage.marking") : t("rentalsPage.markPickedUp")}
     </button>

@@ -134,7 +134,7 @@ export default async function PrintBillPage({
         {bill.status === "active" && hasPermission(session, "process_returns") && (
           <Link
             href={`/returns/new?billId=${bill.id}`}
-            className="no-print block rounded-lg border border-brand px-4 py-2.5 text-center text-sm font-medium text-brand-dark"
+            className="no-print block rounded-lg border border-brand px-4 py-2.5 text-center text-sm font-medium text-brand-text"
           >
             ↩️ Return / Exchange
           </Link>

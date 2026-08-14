@@ -24,6 +24,7 @@
   --brand-dark: #0427f3;
   --brand-light: #6a2bbf;
   --brand-soft: #eef0fe;
+  --brand-text: #0427f3;
   --ray-blue: #0427f3;
   --ray-purple: #6a2bbf;
   --ray-magenta: #cd127b;
@@ -69,13 +70,21 @@
   --border: #35313a;
 
   /* Brand — identical to light mode per the brand spec ("the brand
-     gradient remains the same in both themes"). #0427F3 is already a
-     vivid, saturated blue that reads clearly on a dark surface, so no
-     brightened variant is needed here. */
+     gradient remains the same in both themes"). Used for buttons,
+     gradients, and icon accents. */
   --brand: #0427f3;
   --brand-dark: #0427f3;
   --brand-light: #6a2bbf;
   --brand-soft: #1c1b3d;
+  /* Dedicated text-on-soft-background color — NOT the same as
+     --brand-dark. --brand-dark is reused inside button gradients
+     (paired with white text, needs to stay a deep, saturated blue for
+     THAT contrast); this app's many "text-brand-dark label on
+     bg-brand-soft chip" usages need the opposite — a brighter color
+     for contrast against a dark tinted background. Reusing one token
+     for both measured at ~2:1 contrast for the text case (WCAG AA
+     needs 4.5:1). Kept as a separate token instead. */
+  --brand-text: #7c93ff;
 
   --secondary: #cd127b;
   --secondary-soft: #3a1428;
@@ -103,6 +112,7 @@
   --color-border: var(--border);
   --color-brand: var(--brand);
   --color-brand-dark: var(--brand-dark);
+  --color-brand-text: var(--brand-text);
   --color-brand-light: var(--brand-light);
   --color-brand-soft: var(--brand-soft);
   --color-secondary: var(--secondary);

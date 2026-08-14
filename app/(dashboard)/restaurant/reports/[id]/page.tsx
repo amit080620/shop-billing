@@ -64,8 +64,8 @@ export default async function RestaurantBillDetailPage({
         <ul className="flex flex-col gap-1.5">
           {(payments ?? []).map((p) => (
             <li key={p.id} className="flex justify-between rounded-lg bg-brand-soft px-3 py-2 text-sm">
-              <span className="capitalize text-brand-dark">{p.payment_method}</span>
-              <span className="font-medium text-brand-dark">{formatMoney(p.amount)}</span>
+              <span className="capitalize text-brand-text">{p.payment_method}</span>
+              <span className="font-medium text-brand-text">{formatMoney(p.amount)}</span>
             </li>
           ))}
         </ul>

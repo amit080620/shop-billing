@@ -114,7 +114,7 @@ export function CombosClient({ products, combos, lang }: { products: Product[]; 
 
       {showForm && (
         <div className="flex flex-col gap-3 rounded-xl border border-dashed border-brand bg-brand-soft p-4">
-          {editingCombo && <p className="text-xs font-medium text-brand-dark">Editing: {editingCombo.name}</p>}
+          {editingCombo && <p className="text-xs font-medium text-brand-text">Editing: {editingCombo.name}</p>}
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
@@ -141,7 +141,7 @@ export function CombosClient({ products, combos, lang }: { products: Product[]; 
             />
           </div>
 
-          <p className="text-xs text-brand-dark">{t("combos.included")}</p>
+          <p className="text-xs text-brand-text">{t("combos.included")}</p>
           <SearchableSelect
             lang={lang}
             items={products}
@@ -159,14 +159,14 @@ export function CombosClient({ products, combos, lang }: { products: Product[]; 
                   <div className="flex items-center gap-1.5">
                     <button type="button" onClick={() => updateQty(i.productId, i.quantity - 1)} className="h-6 w-6 rounded-full border border-border text-xs">−</button>
                     <span className="w-5 text-center text-xs">{i.quantity}</span>
-                    <button type="button" onClick={() => updateQty(i.productId, i.quantity + 1)} className="h-6 w-6 rounded-full border border-brand bg-brand-soft text-xs text-brand-dark">+</button>
+                    <button type="button" onClick={() => updateQty(i.productId, i.quantity + 1)} className="h-6 w-6 rounded-full border border-brand bg-brand-soft text-xs text-brand-text">+</button>
                   </div>
                 </li>
               ))}
             </ul>
           )}
           {items.length > 0 && typeof price === "number" && price > 0 && (
-            <p className="text-xs text-brand-dark">
+            <p className="text-xs text-brand-text">
               {t("combos.savings", { sum: formatMoney(sumOfItems), saved: formatMoney(Math.max(0, sumOfItems - price)) })}
             </p>
           )}
@@ -197,7 +197,7 @@ export function CombosClient({ products, combos, lang }: { products: Product[]; 
               <div className="mt-2 flex gap-2">
                 <button
                   onClick={() => openEdit(c)}
-                  className="rounded-lg border border-brand px-3 py-1.5 text-xs font-medium text-brand-dark"
+                  className="rounded-lg border border-brand px-3 py-1.5 text-xs font-medium text-brand-text"
                 >
                   {t("products.edit")}
                 </button>

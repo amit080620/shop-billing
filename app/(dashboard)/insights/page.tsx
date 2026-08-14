@@ -157,7 +157,7 @@ export default async function InsightsPage() {
                 className="flex items-center justify-between gap-3 rounded-lg border border-border bg-surface shadow-sm px-3.5 py-3"
               >
                 <div className="flex min-w-0 flex-1 items-center gap-2">
-                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand-soft text-xs font-semibold text-brand-dark">
+                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand-soft text-xs font-semibold text-brand-text">
                     {i + 1}
                   </span>
                   <div className="min-w-0">

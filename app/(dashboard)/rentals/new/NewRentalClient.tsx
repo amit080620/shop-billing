@@ -269,7 +269,7 @@ export function NewRentalClient({
                       type="button"
                       onClick={() => updateLine(line.productId, { rateType: rt, rate: (product && rateFor(product, rt)) ?? 0 })}
                       className={`rounded-full border px-2.5 py-1 text-xs font-medium capitalize ${
-                        line.rateType === rt ? "border-brand bg-brand-soft text-brand-dark" : "border-border text-muted"
+                        line.rateType === rt ? "border-brand bg-brand-soft text-brand-text" : "border-border text-muted"
                       }`}
                     >
                       {rt} · {formatMoney((product && rateFor(product, rt)) ?? 0)}
@@ -374,7 +374,7 @@ export function NewRentalClient({
               type="button"
               onClick={() => setPaymentMethod(m)}
               className={`rounded-full border px-3 py-1.5 text-xs font-medium capitalize ${
-                paymentMethod === m ? "border-brand bg-brand-soft text-brand-dark" : "border-border text-muted"
+                paymentMethod === m ? "border-brand bg-brand-soft text-brand-text" : "border-border text-muted"
               }`}
             >
               {m}

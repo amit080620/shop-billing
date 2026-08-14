@@ -108,7 +108,7 @@ export function PublicBookingClient({
               setSelectedSlot(null);
             }}
             className={`shrink-0 rounded-xl border px-3 py-2 text-xs font-medium ${
-              selectedDate === day.date ? "border-brand bg-brand-soft text-brand-dark" : "border-border text-muted"
+              selectedDate === day.date ? "border-brand bg-brand-soft text-brand-text" : "border-border text-muted"
             }`}
           >
             {day.label}
@@ -127,7 +127,7 @@ export function PublicBookingClient({
               key={slot}
               onClick={() => setSelectedSlot(slot)}
               className={`rounded-lg border px-3 py-2 text-sm font-medium ${
-                selectedSlot === slot ? "border-brand bg-brand-soft text-brand-dark" : "border-border bg-surface text-foreground"
+                selectedSlot === slot ? "border-brand bg-brand-soft text-brand-text" : "border-border bg-surface text-foreground"
               }`}
             >
               {slot}
@@ -138,7 +138,7 @@ export function PublicBookingClient({
 
       {selectedSlot && (
         <div className="flex flex-col gap-3 rounded-xl border border-dashed border-brand bg-brand-soft p-4">
-          <p className="text-sm font-semibold text-brand-dark">
+          <p className="text-sm font-semibold text-brand-text">
             {selectedDay?.label} at {selectedSlot}
           </p>
           <input

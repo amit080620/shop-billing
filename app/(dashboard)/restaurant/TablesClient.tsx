@@ -135,7 +135,7 @@ export function TablesClient({ tables, lang }: { tables: Table[]; lang: Lang }) 
 
       {requests.length > 0 && (
         <section className="flex flex-col gap-2 rounded-xl border border-brand bg-brand-soft p-3">
-          <p className="flex items-center gap-1.5 text-sm font-semibold text-brand-dark"><Smartphone size={14} /> {requests.length} customer order request(s)</p>
+          <p className="flex items-center gap-1.5 text-sm font-semibold text-brand-text"><Smartphone size={14} /> {requests.length} customer order request(s)</p>
           {requests.map((r) => (
             <div key={r.id} className="rounded-lg bg-surface p-3">
               <p className="text-sm font-medium text-foreground">
@@ -210,10 +210,10 @@ export function TablesClient({ tables, lang }: { tables: Table[]; lang: Lang }) 
               >
                 <QrCode size={11} />
               </button>
-              <span className={`text-sm font-semibold md:text-lg ${table.status === "occupied" ? "text-danger" : table.reservation ? "text-amber-700" : "text-brand-dark"}`}>
+              <span className={`text-sm font-semibold md:text-lg ${table.status === "occupied" ? "text-danger" : table.reservation ? "text-amber-700" : "text-brand-text"}`}>
                 {table.name}
               </span>
-              <span className={`text-[11px] md:text-xs ${table.status === "occupied" ? "text-danger" : table.reservation ? "text-amber-700" : "text-brand-dark"}`}>
+              <span className={`text-[11px] md:text-xs ${table.status === "occupied" ? "text-danger" : table.reservation ? "text-amber-700" : "text-brand-text"}`}>
                 {table.status === "occupied"
                   ? formatMoney(table.openOrderTotal)
                   : table.reservation

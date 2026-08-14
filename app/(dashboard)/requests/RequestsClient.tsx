@@ -277,7 +277,7 @@ function Section({
   return (
     <section className="flex flex-col gap-2">
       <h2
-        className={`text-sm font-semibold ${tone === "brand" ? "text-brand-dark" : "text-foreground"}`}
+        className={`text-sm font-semibold ${tone === "brand" ? "text-brand-text" : "text-foreground"}`}
       >
         {title}
       </h2>
@@ -344,7 +344,7 @@ function RequestCard({
 function StatusBadge({ status }: { status: Request["status"] }) {
   const styles: Record<Request["status"], string> = {
     pending: "bg-credit-soft text-credit",
-    available: "bg-brand-soft text-brand-dark",
+    available: "bg-brand-soft text-brand-text",
     fulfilled: "bg-background text-muted",
     cancelled: "bg-background text-muted line-through",
   };

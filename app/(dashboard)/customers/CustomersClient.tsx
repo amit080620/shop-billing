@@ -106,7 +106,9 @@ export function CustomersClient({
     <div className="flex flex-col gap-4">
       <PageHeader
         title={isClinic ? "Patients" : isGym ? "Members" : "Customers"}
-        icon={<Users size={18} strokeWidth={1.8} />}
+        // eslint-disable-next-line @next/next/no-img-element -- small branded SVG icon
+        icon={<img src="/assets/ray-icons/customer.svg" alt="" className="h-9 w-9 md:h-11 md:w-11" />}
+        bareIcon
         action={
           <button onClick={() => setShowForm((v) => !v)} className="btn-primary-sm">
             + {isClinic ? "Patient" : isGym ? "Member" : "Customer"}

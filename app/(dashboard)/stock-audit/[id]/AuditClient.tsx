@@ -72,7 +72,7 @@ export function AuditClient({
         <h1 className="text-lg font-semibold text-foreground">
           {isDraft ? "Counting in progress" : "Count completed"}
         </h1>
-        <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${isDraft ? "bg-credit-soft text-credit" : "bg-brand-soft text-brand-dark"}`}>
+        <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${isDraft ? "bg-credit-soft text-credit" : "bg-brand-soft text-brand-text"}`}>
           {countedCount} / {items.length} counted
         </span>
       </div>

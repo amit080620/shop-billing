@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { updateJobStatusAction, assignTechnicianAction, deliverJobAction } from "@/lib/actions/service";
-import { MessageCircle, Check } from "lucide-react";
+import { Check } from "lucide-react";
 import { formatMoney } from "@/lib/format";
 import { useTranslation } from "@/lib/i18n/useTranslation";
 import type { Lang } from "@/lib/i18n/dictionary";
@@ -80,7 +80,7 @@ export function JobDetailClient({ job, items, lang }: { job: Job; items: JobItem
       <div>
         <h1 className="text-lg font-semibold text-foreground">{job.itemDescription}</h1>
         <p className="text-sm text-muted">{job.customerName} · {job.customerPhone} · #{job.jobNumber}</p>
-        <span className="mt-1 inline-block rounded-full bg-brand-soft px-2.5 py-0.5 text-xs font-medium text-brand-dark">
+        <span className="mt-1 inline-block rounded-full bg-brand-soft px-2.5 py-0.5 text-xs font-medium text-brand-text">
           {STATUS_LABELS[job.status]}
         </span>
       </div>
@@ -148,7 +148,7 @@ export function JobDetailClient({ job, items, lang }: { job: Job; items: JobItem
 
       {job.status !== "delivered" && job.status !== "cancelled" && (
         <div className="flex flex-col gap-2 rounded-xl border border-dashed border-brand bg-brand-soft p-4">
-          <p className="text-sm font-semibold text-brand-dark">Update status</p>
+          <p className="text-sm font-semibold text-brand-text">Update status</p>
           <div className="flex flex-wrap gap-2">
             {job.status !== "received" && (
               <button onClick={() => moveStatus("received")} disabled={isPending} className="rounded-lg border border-border bg-surface px-3 py-1.5 text-xs font-medium text-foreground disabled:opacity-60">
@@ -171,9 +171,10 @@ export function JobDetailClient({ job, items, lang }: { job: Job; items: JobItem
               href={whatsappReadyLink(job, t)}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center justify-center gap-1 text-center text-xs font-medium text-brand-dark underline"
+              className="flex items-center justify-center gap-1 text-center text-xs font-medium text-brand-text underline"
             >
-              <MessageCircle size={12} /> Notify customer on WhatsApp
+              {/* eslint-disable-next-line @next/next/no-img-element -- small branded SVG icon */}
+              <img src="/assets/ray-icons/message.svg" alt="" className="h-3.5 w-3.5" /> Notify customer on WhatsApp
             </a>
           )}
           <div className="flex gap-2 border-t border-brand/30 pt-3">
@@ -195,7 +196,7 @@ export function JobDetailClient({ job, items, lang }: { job: Job; items: JobItem
       )}
 
       {job.status === "delivered" && job.billId && (
-        <Link href={`/print/bill/${job.billId}`} className="rounded-lg border border-brand bg-brand-soft px-3.5 py-2.5 text-center text-sm font-medium text-brand-dark">
+        <Link href={`/print/bill/${job.billId}`} className="rounded-lg border border-brand bg-brand-soft px-3.5 py-2.5 text-center text-sm font-medium text-brand-text">
           View bill →
         </Link>
       )}

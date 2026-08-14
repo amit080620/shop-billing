@@ -68,13 +68,14 @@ export default async function GymMembersPage({
           <>
             <Link
               href="/gym/members"
-              className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium ${!showMineOnly ? "border-brand bg-brand-soft text-brand-dark" : "border-border text-muted"}`}
+              className={`flex shrink-0 items-center gap-1 rounded-full border px-3 py-1.5 text-xs font-medium ${!showMineOnly ? "border-brand bg-brand-soft text-brand-text" : "border-border text-muted"}`}
             >
-              All members
+              {/* eslint-disable-next-line @next/next/no-img-element -- small branded SVG icon */}
+              <img src="/assets/ray-icons/filter.svg" alt="" className="h-3 w-3" /> All members
             </Link>
             <Link
               href="/gym/members?mine=1"
-              className={`flex shrink-0 items-center gap-1 rounded-full border px-3 py-1.5 text-xs font-medium ${showMineOnly ? "border-brand bg-brand-soft text-brand-dark" : "border-border text-muted"}`}
+              className={`flex shrink-0 items-center gap-1 rounded-full border px-3 py-1.5 text-xs font-medium ${showMineOnly ? "border-brand bg-brand-soft text-brand-text" : "border-border text-muted"}`}
             >
               <User size={12} /> My members
             </Link>

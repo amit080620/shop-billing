@@ -47,7 +47,7 @@ export default async function RentalDetailPage({
       <Link
         href={`/print/rental/${rental.id}`}
         target="_blank"
-        className="self-start rounded-lg border border-brand bg-brand-soft px-3 py-1.5 text-xs font-medium text-brand-dark"
+        className="self-start rounded-lg border border-brand bg-brand-soft px-3 py-1.5 text-xs font-medium text-brand-text"
       >
         <span className="flex items-center gap-1"><Printer size={13} /> Print rental slip</span>
       </Link>
@@ -72,7 +72,7 @@ export default async function RentalDetailPage({
               ? "bg-background text-muted"
               : rental.status === "cancelled"
                 ? "bg-danger/15 text-danger"
-                : "bg-brand-soft text-brand-dark"
+                : "bg-brand-soft text-brand-text"
           }`}
         >
           {rental.status}

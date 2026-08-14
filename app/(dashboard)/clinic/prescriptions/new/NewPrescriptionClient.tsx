@@ -231,7 +231,7 @@ export function NewPrescriptionClient({
                   type="button"
                   onClick={() => updateMedicine(med.key, { frequency: f })}
                   className={`rounded-full border px-2 py-0.5 text-[11px] font-medium ${
-                    med.frequency === f ? "border-brand bg-brand-soft text-brand-dark" : "border-border text-muted"
+                    med.frequency === f ? "border-brand bg-brand-soft text-brand-text" : "border-border text-muted"
                   }`}
                 >
                   {f}
@@ -251,7 +251,7 @@ export function NewPrescriptionClient({
                   type="button"
                   onClick={() => updateMedicine(med.key, { instructions: p })}
                   className={`rounded-full border px-2 py-0.5 text-[11px] font-medium ${
-                    med.instructions === p ? "border-brand bg-brand-soft text-brand-dark" : "border-border text-muted"
+                    med.instructions === p ? "border-brand bg-brand-soft text-brand-text" : "border-border text-muted"
                   }`}
                 >
                   {p}

@@ -27,7 +27,7 @@ const STATUS_LABELS: Record<string, string> = {
 };
 const STATUS_TONE: Record<string, string> = {
   booked: "bg-background text-muted",
-  confirmed: "bg-brand-soft text-brand-dark",
+  confirmed: "bg-brand-soft text-brand-text",
   arrived: "bg-credit-soft text-credit",
   in_consultation: "bg-credit-soft text-credit",
   completed: "bg-background text-muted",
@@ -78,7 +78,7 @@ export function ClinicAppointmentRow({ appointment }: { appointment: Appointment
               Mark arrived
             </button>
           )}
-          <Link href={rxLink} className="rounded-lg border border-brand bg-brand-soft px-2.5 py-1 text-xs font-medium text-brand-dark">
+          <Link href={rxLink} className="rounded-lg border border-brand bg-brand-soft px-2.5 py-1 text-xs font-medium text-brand-text">
             Write prescription
           </Link>
           <button onClick={() => setStatus("no_show")} disabled={isPending} className="rounded-lg border border-danger px-2.5 py-1 text-xs font-medium text-danger disabled:opacity-60">

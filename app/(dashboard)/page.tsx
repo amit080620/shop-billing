@@ -73,8 +73,8 @@ export default async function DashboardPage() {
 
       {!setupComplete && (
         <section className="rounded-xl border border-dashed border-brand bg-brand-soft p-4">
-          <p className="flex items-center gap-1.5 text-sm font-semibold text-brand-dark"><Rocket size={15} /> Getting started</p>
-          <p className="mt-0.5 text-xs text-brand-dark/80">A few quick steps to set up {session.shopName}.</p>
+          <p className="flex items-center gap-1.5 text-sm font-semibold text-brand-text"><Rocket size={15} /> Getting started</p>
+          <p className="mt-0.5 text-xs text-brand-text/80">A few quick steps to set up {session.shopName}.</p>
           <ul className="mt-3 flex flex-col gap-2">
             {setupSteps.map((step) => (
               <li key={step.label}>
@@ -100,14 +100,15 @@ export default async function DashboardPage() {
         <Link href="/festivals" className="rounded-xl border border-dashed border-brand bg-brand-soft p-4">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <p className="flex items-center gap-1.5 text-sm font-semibold text-brand-dark">
+              <p className="flex items-center gap-1.5 text-sm font-semibold text-brand-text">
                 <PartyPopper size={15} /> {nextFestival.name} in {nextFestival.daysUntil} day{nextFestival.daysUntil === 1 ? "" : "s"}
               </p>
-              <p className="mt-0.5 text-xs text-brand-dark/80">
+              <p className="mt-0.5 text-xs text-brand-text/80">
                 Good time to check stock — tap for restock ideas & a calendar reminder.
               </p>
             </div>
-            <span className="shrink-0 text-brand-dark">›</span>
+            {/* eslint-disable-next-line @next/next/no-img-element -- small branded SVG icon */}
+            <img src="/assets/ray-icons/arrow-right.svg" alt="" className="h-4 w-4 shrink-0" />
           </div>
         </Link>
       )}
@@ -312,7 +313,7 @@ async function LabHome({
         </Link>
         <Link
           href="/lab/orders"
-          className="flex flex-col items-center justify-center gap-1 rounded-xl border border-brand bg-brand-soft px-4 py-4 text-center font-semibold text-brand-dark"
+          className="flex flex-col items-center justify-center gap-1 rounded-xl border border-brand bg-brand-soft px-4 py-4 text-center font-semibold text-brand-text"
         >
           <ClipboardList size={20} />
           View orders
@@ -328,7 +329,7 @@ async function LabHome({
                 <p className="truncate text-sm font-medium text-foreground">
                   {o.patient_name} · #{o.order_number}
                 </p>
-                <span className="shrink-0 rounded-full bg-brand-soft px-2 py-0.5 text-[11px] font-medium text-brand-dark">{STATUS_LABELS[o.status]}</span>
+                <span className="shrink-0 rounded-full bg-brand-soft px-2 py-0.5 text-[11px] font-medium text-brand-text">{STATUS_LABELS[o.status]}</span>
               </Link>
             ))}
           </ul>
@@ -440,7 +441,7 @@ async function GymHome({
         </Link>
         <Link
           href="/gym/attendance"
-          className="flex flex-col items-center justify-center gap-1 rounded-xl border border-brand bg-brand-soft px-4 py-4 text-center font-semibold text-brand-dark"
+          className="flex flex-col items-center justify-center gap-1 rounded-xl border border-brand bg-brand-soft px-4 py-4 text-center font-semibold text-brand-text"
         >
           <CheckCircle2 size={20} />
           Check in a member
@@ -534,7 +535,7 @@ async function ClinicHome({
         </Link>
         <Link
           href="/clinic/appointments/new"
-          className="flex flex-col items-center justify-center gap-1 rounded-xl border border-brand bg-brand-soft px-4 py-4 text-center font-semibold text-brand-dark"
+          className="flex flex-col items-center justify-center gap-1 rounded-xl border border-brand bg-brand-soft px-4 py-4 text-center font-semibold text-brand-text"
         >
           <Calendar size={20} />
           Book appointment
@@ -558,7 +559,7 @@ async function ClinicHome({
                   </p>
                   <p className="text-xs text-muted">{a.appointment_time}</p>
                 </div>
-                <span className="shrink-0 rounded-full bg-brand-soft px-2 py-0.5 text-[11px] font-medium text-brand-dark capitalize">
+                <span className="shrink-0 rounded-full bg-brand-soft px-2 py-0.5 text-[11px] font-medium text-brand-text capitalize">
                   {a.status}
                 </span>
               </Link>
@@ -766,7 +767,7 @@ async function SalonHome({
                   <p className="truncate text-sm font-medium text-foreground">{a.customer_name} · {a.service_name}</p>
                   <p className="text-xs text-muted">{a.appointment_time}</p>
                 </div>
-                <span className="shrink-0 rounded-full bg-brand-soft px-2 py-0.5 text-[11px] font-medium text-brand-dark capitalize">
+                <span className="shrink-0 rounded-full bg-brand-soft px-2 py-0.5 text-[11px] font-medium text-brand-text capitalize">
                   {a.status}
                 </span>
               </Link>
@@ -920,7 +921,7 @@ async function ServiceHome({
                     <p className="truncate text-sm font-medium text-foreground">{j.item_description}</p>
                     <p className="text-xs text-muted">{j.customer_name} · #{j.job_number}</p>
                   </div>
-                  <span className="shrink-0 rounded-full bg-brand-soft px-2.5 py-1 text-xs font-medium text-brand-dark">
+                  <span className="shrink-0 rounded-full bg-brand-soft px-2.5 py-1 text-xs font-medium text-brand-text">
                     {STATUS_LABELS[j.status]}
                   </span>
                 </Link>
@@ -1367,7 +1368,7 @@ function StatCard({
         {Icon && (
           <span
             className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${
-              tone === "credit" ? "bg-surface text-credit" : "bg-brand-soft text-brand-dark"
+              tone === "credit" ? "bg-surface text-credit" : "bg-brand-soft text-brand-text"
             }`}
           >
             <Icon size={17} strokeWidth={2} />
