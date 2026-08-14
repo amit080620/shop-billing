@@ -10,6 +10,7 @@ import { formatMoney, formatDateTime } from "@/lib/format";
 import { EmptyState } from "@/app/components/EmptyState";
 import { PageHeader } from "@/app/components/PageHeader";
 import { Wallet } from "lucide-react";
+import { ScanBillModal } from "./ScanBillModal";
 
 type Entry = { id: string; description: string; amount: number; category: string | null; createdAt: string };
 
@@ -27,6 +28,9 @@ function SubmitButton() {
 export function PettyCashClient({ entries }: { entries: Entry[] }) {
   const router = useRouter();
   const [showForm, setShowForm] = useState(false);
+  const [showScan, setShowScan] = useState(false);
+  const [description, setDescription] = useState("");
+  const [amount, setAmount] = useState("");
   const [category, setCategory] = useState("");
   const [isPending, startTransition] = useTransition();
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -38,6 +42,8 @@ export function PettyCashClient({ entries }: { entries: Entry[] }) {
       if (!result?.error) {
         setShowForm(false);
         setCategory("");
+        setDescription("");
+        setAmount("");
         showToast("Expense recorded");
         router.refresh();
       }
@@ -79,14 +85,25 @@ export function PettyCashClient({ entries }: { entries: Entry[] }) {
 
       {showForm && (
         <form action={formAction} className="flex flex-col gap-3 rounded-xl border border-dashed border-brand bg-brand-soft p-4">
+          <button
+            type="button"
+            onClick={() => setShowScan(true)}
+            className="flex items-center justify-center gap-2 rounded-lg border border-brand bg-surface px-3 py-2 text-sm font-medium text-brand-dark"
+          >
+            📷 Scan bill instead
+          </button>
           <input
             name="description"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
             placeholder="What was it for? (e.g. Tea for staff)"
             required
             className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand"
           />
           <input
             name="amount"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
             type="number"
             min="0.01"
             step="0.01"
@@ -153,6 +170,17 @@ export function PettyCashClient({ entries }: { entries: Entry[] }) {
             </li>
           ))}
         </ul>
+      )}
+
+      {showScan && (
+        <ScanBillModal
+          onConfirm={(fields) => {
+            setDescription(fields.description);
+            setAmount(fields.amount);
+            setShowScan(false);
+          }}
+          onCancel={() => setShowScan(false)}
+        />
       )}
     </div>
   );
