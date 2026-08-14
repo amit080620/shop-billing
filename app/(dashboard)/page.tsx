@@ -1366,11 +1366,11 @@ function StatCard({
         <p className={`text-xs font-medium ${tone === "credit" ? "text-credit" : "text-muted"}`}>{label}</p>
         {Icon && (
           <span
-            className={`flex h-7 w-7 items-center justify-center rounded-lg ${
-              tone === "credit" ? "bg-white/60 text-credit" : "bg-brand-soft text-brand-dark"
+            className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${
+              tone === "credit" ? "bg-surface text-credit" : "bg-brand-soft text-brand-dark"
             }`}
           >
-            <Icon size={15} strokeWidth={2} />
+            <Icon size={17} strokeWidth={2} />
           </span>
         )}
       </div>

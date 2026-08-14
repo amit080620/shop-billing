@@ -23,8 +23,8 @@ export function AuthIllustration() {
 
       {/* Back layer: a floating stat/chart card, tilted for depth */}
       <g filter="url(#softShadowSm)" transform="translate(230 60) rotate(8)" className="illus-float-1">
-        <rect width="130" height="90" rx="14" fill="var(--surface)" />
-        <rect x="14" y="16" width="60" height="8" rx="4" fill="var(--border)" />
+        <rect width="130" height="90" rx="14" fill="#ffffff" />
+        <rect x="14" y="16" width="60" height="8" rx="4" fill="#e5e7eb" />
         <polyline points="14,68 34,52 52,60 72,38 100,46 116,28" stroke="var(--brand)" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" fill="none" />
       </g>
 
@@ -36,7 +36,7 @@ export function AuthIllustration() {
 
       {/* Main layer: the invoice/bill card, front and center */}
       <g filter="url(#softShadow)" transform="translate(90 110)">
-        <rect width="220" height="260" rx="20" fill="var(--surface)" />
+        <rect width="220" height="260" rx="20" fill="#ffffff" />
         <rect x="0" y="0" width="220" height="64" rx="20" fill="url(#cardGrad)" />
         <rect x="0" y="44" width="220" height="20" fill="url(#cardGrad)" />
         <circle cx="32" cy="32" r="14" fill="white" fillOpacity="0.25" />
@@ -44,18 +44,18 @@ export function AuthIllustration() {
         <rect x="56" y="38" width="60" height="6" rx="3" fill="white" fillOpacity="0.55" />
 
         {/* line items */}
-        <rect x="24" y="88" width="120" height="7" rx="3.5" fill="var(--foreground)" opacity="0.8" />
-        <rect x="24" y="104" width="80" height="6" rx="3" fill="var(--muted)" opacity="0.6" />
-        <rect x="176" y="88" width="20" height="7" rx="3.5" fill="var(--foreground)" opacity="0.8" />
+        <rect x="24" y="88" width="120" height="7" rx="3.5" fill="#111827" opacity="0.8" />
+        <rect x="24" y="104" width="80" height="6" rx="3" fill="#6b7280" opacity="0.6" />
+        <rect x="176" y="88" width="20" height="7" rx="3.5" fill="#111827" opacity="0.8" />
 
-        <rect x="24" y="128" width="100" height="7" rx="3.5" fill="var(--foreground)" opacity="0.8" />
-        <rect x="24" y="144" width="70" height="6" rx="3" fill="var(--muted)" opacity="0.6" />
-        <rect x="176" y="128" width="20" height="7" rx="3.5" fill="var(--foreground)" opacity="0.8" />
+        <rect x="24" y="128" width="100" height="7" rx="3.5" fill="#111827" opacity="0.8" />
+        <rect x="24" y="144" width="70" height="6" rx="3" fill="#6b7280" opacity="0.6" />
+        <rect x="176" y="128" width="20" height="7" rx="3.5" fill="#111827" opacity="0.8" />
 
-        <line x1="24" y1="176" x2="196" y2="176" stroke="var(--border)" strokeWidth="2" />
+        <line x1="24" y1="176" x2="196" y2="176" stroke="#e5e7eb" strokeWidth="2" />
 
         {/* total, emphasized */}
-        <rect x="24" y="196" width="60" height="10" rx="5" fill="var(--muted)" opacity="0.7" />
+        <rect x="24" y="196" width="60" height="10" rx="5" fill="#6b7280" opacity="0.7" />
         <rect x="130" y="192" width="66" height="18" rx="6" fill="var(--brand-soft)" />
         <rect x="138" y="197" width="50" height="8" rx="4" fill="var(--brand-dark)" />
 
