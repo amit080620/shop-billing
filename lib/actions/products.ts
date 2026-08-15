@@ -6,7 +6,7 @@ import { createSupabaseAdminClient } from "../supabase/admin";
 import { productSchema, categorySchema } from "../validation/schemas";
 import { logAuditEvent } from "../audit";
 
-export type ActionState = { error?: string } | null;
+export type ActionState = { error?: string; productId?: string } | null;
 
 export async function createProductAction(
   _prev: ActionState,
@@ -70,7 +70,7 @@ export async function createProductAction(
     if (!category) return { error: "Invalid category" };
   }
 
-  const { error } = await admin.from("products").insert({
+  const { data: inserted, error } = await admin.from("products").insert({
     shop_id: session.shopId,
     name: parsed.data.name,
     price: parsed.data.price,
@@ -109,7 +109,7 @@ export async function createProductAction(
     offer_price: parsed.data.offerPrice ?? null,
     offer_label: parsed.data.offerLabel ?? null,
     show_in_catalog: parsed.data.showInCatalog,
-  });
+  }).select("id").single();
   if (error) {
     if (error.code === "23505") {
       return { error: "That barcode is already used by another item — scan or check which product it belongs to." };
@@ -119,7 +119,7 @@ export async function createProductAction(
   }
 
   revalidatePath("/products");
-  return null;
+  return { productId: inserted?.id };
 }
 
 export async function updateProductAction(

@@ -139,6 +139,13 @@ export function ProductsClient({
         setShowForm(false);
         setEditingProduct(null);
         showToast(wasEditing ? "Item updated" : "Item added");
+        // Continue straight into configuring options for a brand-new
+        // restaurant item — e.g. Thali needs its Beverage choices set up
+        // right away, not as a separate disconnected step later.
+        if (!wasEditing && businessType === "restaurant" && result?.productId) {
+          const name = String(formData.get("name") ?? "");
+          setOptionsForProduct({ id: result.productId, name });
+        }
       }
       return result;
     },
@@ -148,7 +155,10 @@ export function ProductsClient({
   const [categoryState, categoryAction] = useActionState(
     async (prev: { error?: string } | null, formData: FormData) => {
       const result = await createCategoryAction(prev, formData);
-      if (!result?.error) setShowCategoryForm(false);
+      if (!result?.error) {
+        setShowCategoryForm(false);
+        showToast("Category added");
+      }
       return result;
     },
     null,
@@ -309,13 +319,17 @@ export function ProductsClient({
       </Link>
 
       {showCategoryForm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setShowCategoryForm(false)}>
+        <div className="ray-pop w-full max-w-sm rounded-2xl bg-surface p-4 shadow-lg" onClick={(e) => e.stopPropagation()}>
         <form
           action={categoryAction}
-          className="flex flex-col gap-3 rounded-xl border border-border bg-surface shadow-sm p-4"
+          className="flex flex-col gap-3"
         >
+          <p className="text-sm font-semibold text-foreground">{t("products.addCategory")}</p>
           <input
             name="name"
             required
+            autoFocus
             placeholder={t("products.categoryNamePlaceholder")}
             className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-brand"
           />
@@ -324,6 +338,8 @@ export function ProductsClient({
           )}
           <SubmitButton label={t("products.saveCategory")} pendingLabel={t("products.saving")} />
         </form>
+        </div>
+        </div>
       )}
 
       {showCategoryForm && categories.length > 0 && (
@@ -335,10 +351,12 @@ export function ProductsClient({
       )}
 
       {showForm && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 sm:items-center sm:p-4" onClick={() => setShowForm(false)}>
+        <div className="ray-pop max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-t-2xl bg-surface p-4 shadow-lg sm:rounded-2xl" onClick={(e) => e.stopPropagation()}>
         <form
           key={editingProduct?.id ?? "new"}
           action={productAction}
-          className="flex flex-col gap-3 rounded-xl border border-border bg-surface shadow-sm p-4"
+          className="flex flex-col gap-3"
         >
           {editingProduct && (
             <p className="text-xs font-medium text-brand">{t("products.editing", { name: editingProduct.name })}</p>
@@ -666,6 +684,8 @@ export function ProductsClient({
             )}
           </div>
         </form>
+        </div>
+        </div>
       )}
 
       {categories.length > 0 && (

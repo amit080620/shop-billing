@@ -10,8 +10,19 @@ export default async function RestaurantPage() {
 
   const todayIso = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, "0")}-${String(new Date().getDate()).padStart(2, "0")}`;
 
-  const [{ data: tables }, { data: openOrders }, { data: reservations }] = await Promise.all([
-    admin.from("restaurant_tables").select("id, name, status, section, qr_token").eq("shop_id", session.shopId).order("name"),
+  const tablesQuery = await admin.from("restaurant_tables").select("id, name, status, section, qr_token").eq("shop_id", session.shopId).order("name");
+  let tables = tablesQuery.data;
+  if (tablesQuery.error) {
+    // Most likely cause: the `section` column migration
+    // (0002_restaurant_table_section.sql) hasn't been run against this
+    // database yet. Retry without it so the Tables screen still works;
+    // the I/O/T badges just won't show until the migration runs.
+    console.error("restaurant_tables query failed, retrying without `section`:", tablesQuery.error);
+    const fallback = await admin.from("restaurant_tables").select("id, name, status, qr_token").eq("shop_id", session.shopId).order("name");
+    tables = (fallback.data ?? []).map((t) => ({ ...t, section: null as "inside" | "outside" | "takeaway" | null }));
+  }
+
+  const [{ data: openOrders }, { data: reservations }] = await Promise.all([
     admin.from("restaurant_orders").select("id, table_id, total, created_at").eq("shop_id", session.shopId).eq("status", "open"),
     admin
       .from("restaurant_reservations")

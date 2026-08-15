@@ -231,13 +231,6 @@ export async function startOrderAction(tableId: string): Promise<{ orderId?: str
     return { error: "Could not start order" };
   }
 
-  // This was the actual cause of "0 tables occupied" showing on the
-  // dashboard even with open kitchen orders — the order row was created,
-  // but the table's own status never flipped to "occupied", so anything
-  // reading table status (dashboard counts, the tables grid) had no way
-  // to know this table was in use.
-  await admin.from("restaurant_tables").update({ status: "occupied" }).eq("id", tableId);
-
   if (matchingReservation) {
     await admin.from("restaurant_reservations").update({ status: "seated" }).eq("id", matchingReservation.id);
   }
