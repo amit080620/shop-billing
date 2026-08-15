@@ -240,6 +240,21 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
+/* Native <select> dropdown options — without this, the OPEN dropdown
+ * list falls back to browser/OS default colors (often plain white
+ * background), completely independent of the page's own light/dark
+ * theme. In dark mode this made option text nearly invisible (light
+ * text color on a white system-default background) — a real,
+ * app-wide bug affecting every dropdown, not just one screen. */
+select {
+  background-color: var(--surface);
+  color: var(--foreground);
+}
+select option {
+  background-color: var(--surface);
+  color: var(--foreground);
+}
+
 /* Global tactile feedback — every button/link gets a smooth, snappy
  * press-down feel for free, without touching every component's classes. */
 button,

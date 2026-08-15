@@ -6,6 +6,7 @@ import { useFormStatus } from "react-dom";
 import Link from "next/link";
 import { addStaffAction, removeStaffAction } from "@/lib/actions/staff";
 import { useToast } from "@/app/components/Toast";
+import { Popup } from "@/app/components/Popup";
 import { EditStaffButton } from "./EditStaffButton";
 import { PermissionsButton } from "./PermissionsButton";
 
@@ -65,9 +66,10 @@ export function StaffClient({
       </div>
 
       {showForm && (
+        <Popup open={showForm} onClose={() => setShowForm(false)} title="Add staff">
         <form
           action={formAction}
-          className="flex flex-col gap-3 rounded-xl border border-border bg-surface shadow-sm p-4"
+          className="flex flex-col gap-3"
         >
           <label className="flex flex-col gap-1.5 text-sm">
             <span className="font-medium text-foreground">Name</span>
@@ -112,6 +114,7 @@ export function StaffClient({
           {state?.error && <p className="text-sm text-credit">{state.error}</p>}
           <SubmitButton />
         </form>
+        </Popup>
       )}
 
       {removeError && <p className="rounded-lg bg-credit-soft px-3.5 py-2.5 text-sm text-credit">{removeError}</p>}

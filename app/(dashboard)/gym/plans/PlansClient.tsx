@@ -10,6 +10,7 @@ import { useToast } from "@/app/components/Toast";
 import { formatMoney } from "@/lib/format";
 import { PageHeader } from "@/app/components/PageHeader";
 import { EmptyState } from "@/app/components/EmptyState";
+import { Popup } from "@/app/components/Popup";
 import { ListChecks } from "lucide-react";
 
 type Plan = { id: string; name: string; durationDays: number; price: number; ptSessionsIncluded: number; isActive: boolean };
@@ -66,6 +67,7 @@ export function PlansClient({ plans }: { plans: Plan[] }) {
       </Link>
 
       {showForm && (
+        <Popup open={showForm} onClose={() => setShowForm(false)} title="Add plan">
         <form action={formAction} className="flex flex-col gap-3 rounded-xl border border-dashed border-brand bg-brand-soft p-4">
           <input name="name" placeholder="Plan name (e.g. Gold — 3 Months)" required className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand" />
           <div className="flex flex-wrap gap-1.5">
@@ -99,6 +101,7 @@ export function PlansClient({ plans }: { plans: Plan[] }) {
             </button>
           </div>
         </form>
+        </Popup>
       )}
 
       {plans.length === 0 ? (

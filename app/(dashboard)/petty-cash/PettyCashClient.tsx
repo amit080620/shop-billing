@@ -8,6 +8,7 @@ import { createPettyCashEntryAction, deletePettyCashEntryAction } from "@/lib/ac
 import { useToast } from "@/app/components/Toast";
 import { formatMoney, formatDateTime } from "@/lib/format";
 import { EmptyState } from "@/app/components/EmptyState";
+import { Popup } from "@/app/components/Popup";
 import { PageHeader } from "@/app/components/PageHeader";
 import { Camera, X } from "lucide-react";
 import { ScanBillModal } from "./ScanBillModal";
@@ -86,6 +87,7 @@ export function PettyCashClient({ entries }: { entries: Entry[] }) {
       </div>
 
       {showForm && (
+        <Popup open={showForm} onClose={() => setShowForm(false)} title="Add expense">
         <form action={formAction} className="flex flex-col gap-3 rounded-xl border border-dashed border-brand bg-brand-soft p-4">
           <button
             type="button"
@@ -136,6 +138,7 @@ export function PettyCashClient({ entries }: { entries: Entry[] }) {
             </button>
           </div>
         </form>
+        </Popup>
       )}
 
       {entries.length === 0 ? (

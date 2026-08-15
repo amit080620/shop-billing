@@ -12,6 +12,7 @@ import {
 import { ClipboardList } from "lucide-react";
 import { formatMoney, formatDateTime } from "@/lib/format";
 import { EmptyState } from "@/app/components/EmptyState";
+import { Popup } from "@/app/components/Popup";
 import { PageHeader } from "@/app/components/PageHeader";
 import { SearchableSelect } from "@/app/components/SearchableSelect";
 import type { Lang } from "@/lib/i18n/dictionary";
@@ -94,9 +95,10 @@ export function RequestsClient({
       </p>
 
       {showForm && (
+        <Popup open={showForm} onClose={() => setShowForm(false)} title="Item request">
         <form
           action={formAction}
-          className="flex flex-col gap-3 rounded-xl border border-border bg-surface shadow-sm p-4"
+          className="flex flex-col gap-3"
         >
           <div>
             <p className="mb-1.5 text-sm font-medium text-foreground">Customer</p>
@@ -209,6 +211,7 @@ export function RequestsClient({
           {state?.error && <p className="text-sm text-credit">{state.error}</p>}
           <SubmitButton />
         </form>
+        </Popup>
       )}
 
       {available.length > 0 && (

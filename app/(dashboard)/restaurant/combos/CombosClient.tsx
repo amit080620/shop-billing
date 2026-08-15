@@ -8,6 +8,7 @@ import { useToast } from "@/app/components/Toast";
 import { formatMoney } from "@/lib/format";
 import { PageHeader } from "@/app/components/PageHeader";
 import { EmptyState } from "@/app/components/EmptyState";
+import { Popup } from "@/app/components/Popup";
 import { SearchableSelect } from "@/app/components/SearchableSelect";
 import { useTranslation } from "@/lib/i18n/useTranslation";
 import type { Lang } from "@/lib/i18n/dictionary";
@@ -113,7 +114,8 @@ export function CombosClient({ products, combos, lang }: { products: Product[]; 
       </Link>
 
       {showForm && (
-        <div className="flex flex-col gap-3 rounded-xl border border-dashed border-brand bg-brand-soft p-4">
+        <Popup open={showForm} onClose={() => { setShowForm(false); setEditingCombo(null); }} title={editingCombo ? "Edit combo" : "Add combo"}>
+        <div className="flex flex-col gap-3">
           {editingCombo && <p className="text-xs font-medium text-brand-text">Editing: {editingCombo.name}</p>}
           <input
             value={name}
@@ -181,6 +183,7 @@ export function CombosClient({ products, combos, lang }: { products: Product[]; 
             </button>
           </div>
         </div>
+        </Popup>
       )}
 
       {combos.length === 0 ? (

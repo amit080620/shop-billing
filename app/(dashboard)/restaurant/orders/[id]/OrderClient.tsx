@@ -340,7 +340,7 @@ export function OrderClient({
                     ) : (
                       <span className="shrink-0 text-sm text-muted">× {item.quantity}</span>
                     )}
-                    <span className="shrink-0 text-sm font-medium text-foreground">{formatMoney(item.lineTotal)}</span>
+                    <span className="shrink-0 text-sm font-medium text-foreground">{formatMoney(item.unitPrice * item.quantity)}</span>
                     {!isReadOnly && item.status === "ready" && (
                       <button
                         onClick={() =>
@@ -697,7 +697,7 @@ function BillPrintView({
                   )}
                 </td>
                 <td className="py-0.5 text-right">{item.quantity}</td>
-                <td className="py-0.5 text-right">{formatMoney(item.lineTotal)}</td>
+                <td className="py-0.5 text-right">{formatMoney(item.unitPrice * item.quantity)}</td>
               </tr>
             ))}
           </tbody>

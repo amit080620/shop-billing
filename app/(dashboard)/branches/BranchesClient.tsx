@@ -15,6 +15,7 @@ import {
 import { Building2 } from "lucide-react";
 import { PageHeader } from "@/app/components/PageHeader";
 import { EmptyState } from "@/app/components/EmptyState";
+import { Popup } from "@/app/components/Popup";
 
 type Branch = { id: string; name: string; address: string | null; isActive: boolean };
 type Staff = { id: string; name: string; role: "owner" | "manager" | "staff"; branchId: string | null };
@@ -63,6 +64,7 @@ export function BranchesClient({ branches, staff }: { branches: Branch[]; staff:
       </Link>
 
       {showForm && (
+        <Popup open={showForm} onClose={() => setShowForm(false)} title="Add branch">
         <form action={formAction} className="flex flex-col gap-3 rounded-xl border border-dashed border-brand bg-brand-soft p-4">
           <input name="name" placeholder="Branch name (e.g. MG Road)" required className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand" />
           <input name="address" placeholder="Address (optional)" className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand" />
@@ -74,6 +76,7 @@ export function BranchesClient({ branches, staff }: { branches: Branch[]; staff:
             </button>
           </div>
         </form>
+        </Popup>
       )}
 
       {branches.length === 0 ? (

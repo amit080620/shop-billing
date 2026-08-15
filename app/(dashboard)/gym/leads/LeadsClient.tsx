@@ -9,6 +9,7 @@ import Link from "next/link";
 import { createLeadAction, updateLeadStatusAction, deleteLeadAction } from "@/lib/actions/gym";
 import { PageHeader } from "@/app/components/PageHeader";
 import { EmptyState } from "@/app/components/EmptyState";
+import { Popup } from "@/app/components/Popup";
 import { UserPlus } from "lucide-react";
 
 type Lead = {
@@ -81,6 +82,7 @@ export function LeadsClient({ leads }: { leads: Lead[] }) {
       </Link>
 
       {showForm && (
+        <Popup open={showForm} onClose={() => setShowForm(false)} title="Add lead">
         <form action={formAction} className="flex flex-col gap-3 rounded-xl border border-dashed border-brand bg-brand-soft p-4">
           <input name="name" placeholder="Name" required className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand" />
           <input name="phone" placeholder="Phone number" required className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand" />
@@ -106,6 +108,7 @@ export function LeadsClient({ leads }: { leads: Lead[] }) {
             </button>
           </div>
         </form>
+        </Popup>
       )}
 
       <div className="flex gap-2 overflow-x-auto pb-1">
