@@ -22,6 +22,7 @@ export interface Database {
           state_code: string | null;
           pincode: string | null;
           gst_scheme: "regular" | "composition";
+          price_includes_gst: boolean;
           invoice_prefix: string;
           logo_url: string | null;
           upi_id: string | null;
@@ -45,6 +46,7 @@ export interface Database {
           state_code?: string | null;
           pincode?: string | null;
           gst_scheme?: "regular" | "composition";
+          price_includes_gst?: boolean;
           invoice_prefix?: string;
           logo_url?: string | null;
           upi_id?: string | null;
@@ -68,6 +70,7 @@ export interface Database {
           state_code?: string | null;
           pincode?: string | null;
           gst_scheme?: "regular" | "composition";
+          price_includes_gst?: boolean;
           invoice_prefix?: string;
           logo_url?: string | null;
           upi_id?: string | null;
@@ -338,6 +341,7 @@ export interface Database {
           discount_value: number;
           discount_amount: number;
           taxable_amount: number;
+          price_includes_gst: boolean;
           supply_type: "intra" | "inter";
           cgst_amount: number;
           sgst_amount: number;
@@ -373,6 +377,7 @@ export interface Database {
           discount_value?: number;
           discount_amount?: number;
           taxable_amount?: number;
+          price_includes_gst?: boolean;
           supply_type?: "intra" | "inter";
           cgst_amount?: number;
           sgst_amount?: number;
@@ -408,6 +413,7 @@ export interface Database {
           discount_value?: number;
           discount_amount?: number;
           taxable_amount?: number;
+          price_includes_gst?: boolean;
           supply_type?: "intra" | "inter";
           cgst_amount?: number;
           sgst_amount?: number;
@@ -1653,6 +1659,7 @@ export interface Database {
           discount_value: number;
           discount_amount: number;
           taxable_amount: number;
+          price_includes_gst: boolean;
           cgst_amount: number;
           sgst_amount: number;
           igst_amount: number;
@@ -1687,6 +1694,7 @@ export interface Database {
           discount_value?: number;
           discount_amount?: number;
           taxable_amount?: number;
+          price_includes_gst?: boolean;
           cgst_amount?: number;
           sgst_amount?: number;
           igst_amount?: number;
@@ -1721,6 +1729,7 @@ export interface Database {
           discount_value?: number;
           discount_amount?: number;
           taxable_amount?: number;
+          price_includes_gst?: boolean;
           cgst_amount?: number;
           sgst_amount?: number;
           igst_amount?: number;
@@ -2027,6 +2036,7 @@ export interface Database {
           end_date: string;
           actual_return_date: string | null;
           supply_type: "intra" | "inter";
+          price_includes_gst: boolean;
           subtotal: number;
           cgst_amount: number;
           sgst_amount: number;
@@ -2060,6 +2070,7 @@ export interface Database {
           end_date: string;
           actual_return_date?: string | null;
           supply_type?: "intra" | "inter";
+          price_includes_gst?: boolean;
           subtotal?: number;
           cgst_amount?: number;
           sgst_amount?: number;
@@ -2093,6 +2104,7 @@ export interface Database {
           end_date?: string;
           actual_return_date?: string | null;
           supply_type?: "intra" | "inter";
+          price_includes_gst?: boolean;
           subtotal?: number;
           cgst_amount?: number;
           sgst_amount?: number;

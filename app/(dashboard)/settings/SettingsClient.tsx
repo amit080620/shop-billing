@@ -13,6 +13,7 @@ type ShopSettings = {
   legalName: string;
   gstin: string;
   gstScheme: "regular" | "composition";
+  priceIncludesGst: boolean;
   addressLine1: string;
   addressLine2: string;
   city: string;
@@ -124,6 +125,20 @@ export function SettingsClient({ shop }: { shop: ShopSettings }) {
                 apply to you — Composition dealers file CMP-08 instead.
               </span>
             )}
+          </label>
+          <label className="flex flex-col gap-1.5 text-sm">
+            <span className="font-medium text-foreground">How do you price items?</span>
+            <select
+              name="priceIncludesGst"
+              defaultValue={shop.priceIncludesGst ? "inclusive" : "exclusive"}
+              className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-brand"
+            >
+              <option value="inclusive">Price is the final amount — e.g. Thali ₹100 bills at exactly ₹100, GST is included</option>
+              <option value="exclusive">Price is before GST — e.g. Thali ₹100 + 5% GST bills at ₹105</option>
+            </select>
+            <span className="text-xs text-muted">
+              Applies to new bills/orders going forward — past ones keep whichever way they were made.
+            </span>
           </label>
           <Field
             name="gstin"

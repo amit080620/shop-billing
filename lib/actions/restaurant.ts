@@ -86,7 +86,7 @@ async function recalcOrderTotals(orderId: string) {
   const admin = createSupabaseAdminClient();
   const { data: order } = await admin
     .from("restaurant_orders")
-    .select("id, discount_type, discount_value, supply_type")
+    .select("id, discount_type, discount_value, supply_type, price_includes_gst")
     .eq("id", orderId)
     .single();
   if (!order) return;
@@ -96,34 +96,43 @@ async function recalcOrderTotals(orderId: string) {
     .select("id, quantity, unit_price, gst_percent")
     .eq("order_id", orderId);
 
-  // unit_price is the FINAL menu price the customer sees (GST-inclusive)
-  // — subtotal here is the gross total, not a pre-tax base. This is what
-  // fixes "menu says ₹100, bill shows ₹105": GST is backed out of this
-  // amount below, never added on top of it.
+  // unit_price's meaning depends on this order's own price_includes_gst
+  // (captured once at creation, from the shop's setting at that time —
+  // so changing the shop setting later never reinterprets an existing
+  // order's already-charged prices).
+  const inclusive = order.price_includes_gst;
   const subtotal = round2((items ?? []).reduce((s, i) => s + Number(i.quantity) * Number(i.unit_price), 0));
   const discountAmount =
     order.discount_type === "percent"
       ? round2(Math.min((subtotal * Number(order.discount_value)) / 100, subtotal))
       : round2(Math.min(Number(order.discount_value), subtotal));
-  const grossAfterDiscount = round2(subtotal - discountAmount);
-  const discountRatio = subtotal > 0 ? grossAfterDiscount / subtotal : 1;
+  const amountAfterDiscount = round2(subtotal - discountAmount);
+  const discountRatio = subtotal > 0 ? amountAfterDiscount / subtotal : 1;
 
   let cgst = 0;
   let sgst = 0;
   let igst = 0;
   let taxableAmount = 0;
   for (const item of items ?? []) {
-    const lineGross = round2(Number(item.quantity) * Number(item.unit_price) * discountRatio);
-    const split = splitTaxInclusive(lineGross, Number(item.gst_percent), order.supply_type as "intra" | "inter");
-    taxableAmount = round2(taxableAmount + split.taxableAmount);
-    cgst = round2(cgst + split.cgst);
-    sgst = round2(sgst + split.sgst);
-    igst = round2(igst + split.igst);
+    const lineAmount = round2(Number(item.quantity) * Number(item.unit_price) * discountRatio);
+    if (inclusive) {
+      const split = splitTaxInclusive(lineAmount, Number(item.gst_percent), order.supply_type as "intra" | "inter");
+      taxableAmount = round2(taxableAmount + split.taxableAmount);
+      cgst = round2(cgst + split.cgst);
+      sgst = round2(sgst + split.sgst);
+      igst = round2(igst + split.igst);
+    } else {
+      const split = splitTax(lineAmount, Number(item.gst_percent), order.supply_type as "intra" | "inter");
+      taxableAmount = round2(taxableAmount + lineAmount);
+      cgst = round2(cgst + split.cgst);
+      sgst = round2(sgst + split.sgst);
+      igst = round2(igst + split.igst);
+    }
   }
-  // The total IS the gross amount after discount — GST is a backed-out
-  // component of it, not an addition, so this never exceeds what the
-  // menu promised.
-  const exactTotal = grossAfterDiscount;
+  // Inclusive: total IS the gross amount after discount (GST is a
+  // backed-out component, not an addition). Exclusive: total is the
+  // traditional taxable-base-plus-tax sum (GST genuinely adds on top).
+  const exactTotal = inclusive ? amountAfterDiscount : round2(taxableAmount + cgst + sgst + igst);
   const total = Math.round(exactTotal);
   const roundOffAmount = round2(total - exactTotal);
 
@@ -143,18 +152,32 @@ async function recalcOrderTotals(orderId: string) {
 
   // Item-level tax split, recorded so KOT/bill line display is accurate too.
   for (const item of items ?? []) {
-    const lineGross = round2(Number(item.quantity) * Number(item.unit_price) * discountRatio);
-    const split = splitTaxInclusive(lineGross, Number(item.gst_percent), order.supply_type as "intra" | "inter");
-    await admin
-      .from("restaurant_order_items")
-      .update({
-        line_subtotal: round2(Number(item.quantity) * Number(item.unit_price)),
-        cgst_amount: split.cgst,
-        sgst_amount: split.sgst,
-        igst_amount: split.igst,
-        line_total: lineGross,
-      })
-      .eq("id", item.id);
+    const lineAmount = round2(Number(item.quantity) * Number(item.unit_price) * discountRatio);
+    if (inclusive) {
+      const split = splitTaxInclusive(lineAmount, Number(item.gst_percent), order.supply_type as "intra" | "inter");
+      await admin
+        .from("restaurant_order_items")
+        .update({
+          line_subtotal: round2(Number(item.quantity) * Number(item.unit_price)),
+          cgst_amount: split.cgst,
+          sgst_amount: split.sgst,
+          igst_amount: split.igst,
+          line_total: lineAmount,
+        })
+        .eq("id", item.id);
+    } else {
+      const split = splitTax(lineAmount, Number(item.gst_percent), order.supply_type as "intra" | "inter");
+      await admin
+        .from("restaurant_order_items")
+        .update({
+          line_subtotal: round2(Number(item.quantity) * Number(item.unit_price)),
+          cgst_amount: split.cgst,
+          sgst_amount: split.sgst,
+          igst_amount: split.igst,
+          line_total: round2(lineAmount + split.cgst + split.sgst + split.igst),
+        })
+        .eq("id", item.id);
+    }
   }
 }
 
@@ -208,6 +231,8 @@ export async function startOrderAction(tableId: string): Promise<{ orderId?: str
     .limit(1)
     .maybeSingle();
 
+  const { data: shopSettings } = await admin.from("shops").select("price_includes_gst").eq("id", session.shopId).single();
+
   const { data: order, error } = await admin
     .from("restaurant_orders")
     .insert({
@@ -220,6 +245,7 @@ export async function startOrderAction(tableId: string): Promise<{ orderId?: str
       reservation_id: matchingReservation?.id ?? null,
       waiter_name: session.staffName,
       sent_to_kitchen_at: new Date().toISOString(),
+      price_includes_gst: shopSettings?.price_includes_gst ?? true,
     })
     .select("id")
     .single();

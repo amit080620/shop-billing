@@ -129,6 +129,7 @@ export async function createRentalAction(
     deliveryCharge,
     paidAmount,
     supplyType,
+    priceMode: session.priceIncludesGst ? "inclusive" : "exclusive",
   });
 
   const financialYear = financialYearFor(new Date());
@@ -153,6 +154,7 @@ export async function createRentalAction(
       start_date: start.toISOString(),
       end_date: end.toISOString(),
       supply_type: supplyType,
+      price_includes_gst: session.priceIncludesGst,
       subtotal: totals.subtotal,
       cgst_amount: totals.cgstAmount,
       sgst_amount: totals.sgstAmount,
@@ -321,7 +323,7 @@ export async function editRentalQuantitiesAction(
 
   const { data: rental } = await admin
     .from("rentals")
-    .select("id, status, supply_type, delivery_charge, paid_amount")
+    .select("id, status, supply_type, delivery_charge, paid_amount, price_includes_gst")
     .eq("id", rentalId)
     .eq("shop_id", session.shopId)
     .single();
@@ -355,6 +357,7 @@ export async function editRentalQuantitiesAction(
     deliveryCharge: Number(rental.delivery_charge),
     paidAmount: Number(rental.paid_amount),
     supplyType: rental.supply_type,
+    priceMode: rental.price_includes_gst ? "inclusive" : "exclusive",
   });
 
   await Promise.all(

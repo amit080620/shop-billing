@@ -45,3 +45,11 @@ create index if not exists idx_product_option_choices_group on product_option_ch
 -- ============================================================
 -- यहाँ तक — Done. सभी 3 migrations (0001, 0002, 0003) cover हो गईं।
 -- ============================================================
+
+-- ============================================================
+-- 4) Price-includes-GST setting (added later — run this too)
+-- ============================================================
+alter table shops add column if not exists price_includes_gst boolean not null default true;
+alter table bills add column if not exists price_includes_gst boolean not null default true;
+alter table restaurant_orders add column if not exists price_includes_gst boolean not null default true;
+alter table rentals add column if not exists price_includes_gst boolean not null default true;

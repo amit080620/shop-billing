@@ -9,7 +9,7 @@ export default async function SettingsPage() {
   const { data: shop } = await admin
     .from("shops")
     .select(
-      "name, legal_name, gstin, gst_scheme, address_line1, address_line2, city, state_code, pincode, invoice_prefix, logo_url, upi_id, business_type, business_type_locked, manager_pin",
+      "name, legal_name, gstin, gst_scheme, price_includes_gst, address_line1, address_line2, city, state_code, pincode, invoice_prefix, logo_url, upi_id, business_type, business_type_locked, manager_pin",
     )
     .eq("id", session.shopId)
     .single();
@@ -21,6 +21,7 @@ export default async function SettingsPage() {
         legalName: shop?.legal_name ?? "",
         gstin: shop?.gstin ?? "",
         gstScheme: shop?.gst_scheme ?? "regular",
+        priceIncludesGst: shop?.price_includes_gst ?? true,
         addressLine1: shop?.address_line1 ?? "",
         addressLine2: shop?.address_line2 ?? "",
         city: shop?.city ?? "",

@@ -24,6 +24,13 @@ create table if not exists shops (
   state_code text, -- 2-digit GST state code; drives CGST+SGST vs IGST
   pincode text,
   gst_scheme text not null default 'regular' check (gst_scheme in ('regular', 'composition')),
+  -- true: product/menu prices are the FINAL amount the customer pays —
+  -- GST is backed out of it, never added on top (e.g. a ₹100 Thali
+  -- always bills at ₹100). false: prices are the pre-tax base and GST
+  -- is added on top (e.g. ₹100 + 5% GST bills at ₹105). Shop owner's
+  -- choice in Settings; there's no universally "correct" answer, both
+  -- are legitimate ways different businesses price their menu/catalog.
+  price_includes_gst boolean not null default true,
   invoice_prefix text not null default 'INV',
   logo_url text,
   upi_id text,
@@ -38,6 +45,7 @@ alter table shops add column if not exists state text;
 alter table shops add column if not exists state_code text;
 alter table shops add column if not exists pincode text;
 alter table shops add column if not exists gst_scheme text not null default 'regular';
+alter table shops add column if not exists price_includes_gst boolean not null default true;
 alter table shops add column if not exists invoice_prefix text not null default 'INV';
 alter table shops add column if not exists logo_url text;
 alter table shops add column if not exists upi_id text;
@@ -136,6 +144,11 @@ create table if not exists bills (
   discount_value numeric(12, 2) not null default 0,
   discount_amount numeric(12, 2) not null default 0,
   taxable_amount numeric(12, 2) not null default 0,
+  -- Captured from shops.price_includes_gst at creation time — records
+  -- how THIS bill's prices were interpreted, independent of whatever
+  -- the shop's setting is later, so returns/reports always reverse the
+  -- calculation correctly for old bills too.
+  price_includes_gst boolean not null default true,
   supply_type text not null default 'intra' check (supply_type in ('intra', 'inter')),
   cgst_amount numeric(12, 2) not null default 0,
   sgst_amount numeric(12, 2) not null default 0,
@@ -429,6 +442,7 @@ create table if not exists rentals (
   end_date timestamptz not null,
   actual_return_date timestamptz,
   supply_type text not null default 'intra' check (supply_type in ('intra', 'inter')),
+  price_includes_gst boolean not null default true,
   subtotal numeric(12, 2) not null default 0,
   cgst_amount numeric(12, 2) not null default 0,
   sgst_amount numeric(12, 2) not null default 0,
@@ -548,6 +562,7 @@ create table if not exists restaurant_orders (
   discount_value numeric(12, 2) not null default 0,
   discount_amount numeric(12, 2) not null default 0,
   taxable_amount numeric(12, 2) not null default 0,
+  price_includes_gst boolean not null default true,
   cgst_amount numeric(12, 2) not null default 0,
   sgst_amount numeric(12, 2) not null default 0,
   igst_amount numeric(12, 2) not null default 0,

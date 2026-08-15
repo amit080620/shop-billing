@@ -8,6 +8,7 @@ import { createVendorAction } from "@/lib/actions/vendors";
 import { useToast } from "@/app/components/Toast";
 import { formatMoney } from "@/lib/format";
 import { EmptyState } from "@/app/components/EmptyState";
+import { Popup } from "@/app/components/Popup";
 import { PageHeader } from "@/app/components/PageHeader";
 import { ContactPickerButton } from "@/app/components/ContactPickerButton";
 import { INDIAN_STATES } from "@/lib/constants/states";
@@ -75,9 +76,10 @@ export function VendorsClient({ initialVendors }: { initialVendors: Vendor[] }) 
       )}
 
       {showForm && (
+        <Popup open={showForm} onClose={() => setShowForm(false)} title="New vendor">
         <form
           action={formAction}
-          className="flex flex-col gap-3 rounded-xl border border-border bg-surface shadow-sm p-4"
+          className="flex flex-col gap-3"
         >
           <ContactPickerButton
             onPick={(name, phone) => {
@@ -136,6 +138,7 @@ export function VendorsClient({ initialVendors }: { initialVendors: Vendor[] }) 
           {state?.error && <p className="text-sm text-credit">{state.error}</p>}
           <SubmitButton />
         </form>
+        </Popup>
       )}
 
       {initialVendors.length > 0 && (

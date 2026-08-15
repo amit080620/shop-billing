@@ -90,6 +90,7 @@ export async function createBillCore(
     discountValue,
     paidAmount: effectivePaidAmount,
     supplyType,
+    priceMode: session.priceIncludesGst ? "inclusive" : "exclusive",
   });
 
   const financialYear = financialYearFor(new Date());
@@ -122,6 +123,7 @@ export async function createBillCore(
       payment_method: paymentMethod,
       discount_amount: totals.discountAmount,
       taxable_amount: totals.taxableAmount,
+      price_includes_gst: session.priceIncludesGst,
       supply_type: supplyType,
       cgst_amount: totals.cgstAmount,
       sgst_amount: totals.sgstAmount,
@@ -421,7 +423,7 @@ export async function editBillQuantitiesAction(
 
   const { data: bill } = await admin
     .from("bills")
-    .select("id, shop_id, status, discount_type, discount_value, supply_type, paid_amount")
+    .select("id, shop_id, status, discount_type, discount_value, supply_type, paid_amount, price_includes_gst")
     .eq("id", billId)
     .eq("shop_id", session.shopId)
     .single();
@@ -465,6 +467,7 @@ export async function editBillQuantitiesAction(
     discountValue: Number(bill.discount_value),
     paidAmount: Number(bill.paid_amount),
     supplyType: bill.supply_type,
+    priceMode: bill.price_includes_gst ? "inclusive" : "exclusive",
   });
 
   await Promise.all(

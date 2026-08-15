@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { requireSession, hasPermission } from "../auth";
 import { createSupabaseAdminClient } from "../supabase/admin";
-import { splitTax, financialYearFor, round2 } from "../gst";
+import { splitTax, splitTaxInclusive, financialYearFor, round2 } from "../gst";
 
 export type ActionState = { error?: string } | null;
 
@@ -50,7 +50,7 @@ export async function createReturnAction(
 
   const { data: bill } = await admin
     .from("bills")
-    .select("id, customer_id, status, supply_type")
+    .select("id, customer_id, status, supply_type, price_includes_gst")
     .eq("id", billId)
     .eq("shop_id", session.shopId)
     .single();
@@ -91,15 +91,21 @@ export async function createReturnAction(
 
   const supplyType = bill.supply_type as "intra" | "inter";
 
+  // Reverse the refund exactly the way the ORIGINAL bill was charged —
+  // using the bill's own stored mode, not the shop's current setting,
+  // so a refund never comes out to more (or less) than was actually paid.
+  const inclusive = bill.price_includes_gst;
   let subtotal = 0;
   let cgstAmount = 0;
   let sgstAmount = 0;
   let igstAmount = 0;
   const itemRows = lines.map((line) => {
     const original = billItemMap.get(line.billItemId)!;
-    const lineSubtotal = round2(line.quantity * Number(original.unit_price));
-    const split = splitTax(lineSubtotal, Number(original.gst_percent), supplyType);
-    subtotal = round2(subtotal + lineSubtotal);
+    const lineAmount = round2(line.quantity * Number(original.unit_price));
+    const split = inclusive
+      ? splitTaxInclusive(lineAmount, Number(original.gst_percent), supplyType)
+      : splitTax(lineAmount, Number(original.gst_percent), supplyType);
+    subtotal = round2(subtotal + lineAmount);
     cgstAmount = round2(cgstAmount + split.cgst);
     sgstAmount = round2(sgstAmount + split.sgst);
     igstAmount = round2(igstAmount + split.igst);
@@ -110,14 +116,16 @@ export async function createReturnAction(
       quantity: line.quantity,
       unit_price: original.unit_price,
       gst_percent: original.gst_percent,
-      line_subtotal: lineSubtotal,
+      line_subtotal: lineAmount,
       cgst_amount: split.cgst,
       sgst_amount: split.sgst,
       igst_amount: split.igst,
-      line_total: round2(lineSubtotal + split.cgst + split.sgst + split.igst),
+      line_total: inclusive ? lineAmount : round2(lineAmount + split.cgst + split.sgst + split.igst),
     };
   });
-  const total = round2(subtotal + cgstAmount + sgstAmount + igstAmount);
+  // Inclusive: subtotal is already the gross refund (tax is a
+  // backed-out component). Exclusive: tax genuinely adds on top.
+  const total = inclusive ? subtotal : round2(subtotal + cgstAmount + sgstAmount + igstAmount);
 
   const financialYear = financialYearFor(new Date());
   const { data: issuedNumber, error: numberError } = await admin.rpc("next_return_number", {
