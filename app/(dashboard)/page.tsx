@@ -1173,7 +1173,7 @@ async function RestaurantHome({ shopId }: { shopId: string }) {
 
   const [{ data: tables }, { data: openOrders }, { data: weekSettled }, { data: recentSettled }] = await Promise.all([
     admin.from("restaurant_tables").select("id, status").eq("shop_id", shopId),
-    admin.from("restaurant_orders").select("id").eq("shop_id", shopId).eq("status", "open"),
+    admin.from("restaurant_orders").select("id, restaurant_order_items ( status )").eq("shop_id", shopId).eq("status", "open"),
     admin.from("restaurant_orders").select("total, settled_at").eq("shop_id", shopId).eq("status", "settled").gte("settled_at", startOfWeek.toISOString()),
     admin
       .from("restaurant_orders")
@@ -1185,6 +1185,14 @@ async function RestaurantHome({ shopId }: { shopId: string }) {
   ]);
 
   const occupied = (tables ?? []).filter((t) => t.status === "occupied").length;
+  // "In kitchen" = orders with at least one item still pending, matching
+  // KdsClient's visibleTickets rule. An order stays open until its bill is
+  // settled, so counting raw open orders wrongly kept fully-served-but-
+  // unpaid orders showing as "in kitchen".
+  const ordersInKitchen = (openOrders ?? []).filter((o) => {
+    const items = Array.isArray(o.restaurant_order_items) ? o.restaurant_order_items : [];
+    return items.some((i) => i.status === "pending");
+  }).length;
   const todayRevenue = sum(
     (weekSettled ?? []).filter((o) => o.settled_at && new Date(o.settled_at) >= startOfToday).map((o) => o.total),
   );
@@ -1202,7 +1210,7 @@ async function RestaurantHome({ shopId }: { shopId: string }) {
 
       <section className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <StatCard label="Tables occupied" value={`${occupied} / ${tables?.length ?? 0}`} href="/restaurant" icon={UtensilsCrossed} />
-        <StatCard label="Orders in kitchen" value={String(openOrders?.length ?? 0)} tone={openOrders && openOrders.length > 0 ? "credit" : "default"} href="/restaurant-kds" icon={ChefHat} />
+        <StatCard label="Orders in kitchen" value={String(ordersInKitchen)} tone={ordersInKitchen > 0 ? "credit" : "default"} href="/restaurant-kds" icon={ChefHat} />
         <StatCard label="Today's revenue" value={formatMoney(todayRevenue)} href="/restaurant/reports" className="col-span-2" icon={Wallet} />
       </section>
 

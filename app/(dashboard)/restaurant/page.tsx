@@ -11,7 +11,7 @@ export default async function RestaurantPage() {
   const todayIso = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, "0")}-${String(new Date().getDate()).padStart(2, "0")}`;
 
   const [{ data: tables }, { data: openOrders }, { data: reservations }] = await Promise.all([
-    admin.from("restaurant_tables").select("id, name, status, qr_token").eq("shop_id", session.shopId).order("name"),
+    admin.from("restaurant_tables").select("id, name, status, section, qr_token").eq("shop_id", session.shopId).order("name"),
     admin.from("restaurant_orders").select("id, table_id, total, created_at").eq("shop_id", session.shopId).eq("status", "open"),
     admin
       .from("restaurant_reservations")
@@ -44,6 +44,7 @@ export default async function RestaurantPage() {
           id: t.id,
           name: t.name,
           status: t.status,
+          section: t.section,
           openOrderId: order?.id ?? null,
           openOrderTotal: order?.total ? Number(order.total) : 0,
           qrToken: t.qr_token,

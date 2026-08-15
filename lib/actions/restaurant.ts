@@ -7,18 +7,34 @@ import { determineSupplyType, financialYearFor, round2, splitTax } from "../gst"
 
 export type ActionState = { error?: string } | null;
 
-export async function createTableAction(name: string): Promise<{ error?: string; tableId?: string }> {
+export async function createTableAction(
+  name: string,
+  section: "inside" | "outside" | "takeaway" = "inside",
+): Promise<{ error?: string; tableId?: string }> {
   const session = await requireSession();
   if (!name.trim()) return { error: "Enter a table name/number" };
   const admin = createSupabaseAdminClient();
   const { data, error } = await admin
     .from("restaurant_tables")
-    .insert({ shop_id: session.shopId, name: name.trim() })
+    .insert({ shop_id: session.shopId, name: name.trim(), section })
     .select("id")
     .single();
   if (error || !data) return { error: "Could not add table" };
   revalidatePath("/restaurant");
   return { tableId: data.id };
+}
+
+export async function setTableSectionAction(tableId: string, section: "inside" | "outside" | "takeaway"): Promise<{ error?: string }> {
+  const session = await requireSession();
+  const admin = createSupabaseAdminClient();
+  const { error } = await admin
+    .from("restaurant_tables")
+    .update({ section })
+    .eq("id", tableId)
+    .eq("shop_id", session.shopId);
+  if (error) return { error: "Could not update table" };
+  revalidatePath("/restaurant");
+  return {};
 }
 
 export async function renameTableAction(tableId: string, newName: string): Promise<{ error?: string }> {
@@ -194,6 +210,7 @@ export async function startOrderAction(tableId: string): Promise<{ orderId?: str
       supply_type: determineSupplyType(session.shopStateCode, null),
       reservation_id: matchingReservation?.id ?? null,
       waiter_name: session.staffName,
+      sent_to_kitchen_at: new Date().toISOString(),
     })
     .select("id")
     .single();

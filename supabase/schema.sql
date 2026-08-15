@@ -495,6 +495,10 @@ create table if not exists restaurant_tables (
   shop_id uuid not null references shops(id) on delete cascade,
   name text not null,
   status text not null default 'free' check (status in ('free', 'occupied')),
+  -- I = Inside (dine-in, indoor), O = Outside (dine-in, outdoor), T = Take
+  -- Away (no physical seating). Nullable so existing tables don't need a
+  -- forced category; the UI treats unset as "Inside" by default.
+  section text check (section in ('inside', 'outside', 'takeaway')),
   created_at timestamptz not null default now()
 );
 alter table restaurant_tables enable row level security;
@@ -553,7 +557,16 @@ create table if not exists restaurant_orders (
   settled_at timestamptz,
   cancelled_at timestamptz,
   cancel_reason text,
-  created_at timestamptz not null default now()
+  created_at timestamptz not null default now(),
+  -- Order-lifecycle timestamps — previously only created_at/settled_at/
+  -- cancelled_at existed, so screens showing "when was this ready?" or
+  -- "when was this served?" had no real data to show. sent_to_kitchen_at
+  -- is set at order creation (items appear on KDS immediately in this
+  -- app's flow); first_ready_at/served_at are set the first time any
+  -- item in the order reaches that status.
+  sent_to_kitchen_at timestamptz,
+  first_ready_at timestamptz,
+  served_at timestamptz
 );
 alter table restaurant_orders enable row level security;
 create index if not exists idx_restaurant_orders_shop on restaurant_orders(shop_id);

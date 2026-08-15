@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createTableAction, startOrderAction, renameTableAction, deleteTableAction } from "@/lib/actions/restaurant";
@@ -21,6 +21,7 @@ type Table = {
   id: string;
   name: string;
   status: "free" | "occupied";
+  section: "inside" | "outside" | "takeaway" | null;
   openOrderId: string | null;
   openOrderTotal: number;
   readyCount: number;
@@ -29,18 +30,75 @@ type Table = {
 };
 type PendingRequest = { id: string; tableId: string; tableName: string; customerName: string | null; createdAt: string; items: { name: string; quantity: number }[] };
 
+const SECTION_LABEL: Record<"inside" | "outside" | "takeaway", string> = {
+  inside: "Inside",
+  outside: "Outside",
+  takeaway: "Takeaway",
+};
+const SECTION_BADGE: Record<"inside" | "outside" | "takeaway", { letter: string; className: string }> = {
+  // Muted, professional tones — distinguishable at a glance without
+  // being bright/childish (brief explicitly asked to avoid that).
+  inside: { letter: "I", className: "bg-info-soft text-info" },
+  outside: { letter: "O", className: "bg-success-soft text-success" },
+  takeaway: { letter: "T", className: "bg-warning-soft text-warning" },
+};
+
 export function TablesClient({ tables, lang }: { tables: Table[]; lang: Lang }) {
   const { t } = useTranslation(lang);
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [showAddTable, setShowAddTable] = useState(false);
   const [newTableName, setNewTableName] = useState("");
+  const [newTableSection, setNewTableSection] = useState<"inside" | "outside" | "takeaway">("inside");
+  const [sectionFilter, setSectionFilter] = useState<"all" | "inside" | "outside" | "takeaway">("all");
   const [error, setError] = useState<string | null>(null);
   const [qrTable, setQrTable] = useState<Table | null>(null);
   const [renameValue, setRenameValue] = useState("");
   const [tableActionError, setTableActionError] = useState<string | null>(null);
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const [requests, setRequests] = useState<PendingRequest[]>([]);
+  const seenReadyTableIds = useRef<Set<string> | null>(null);
+
+  // Waiter-side "order ready" alert — deliberately a different sound
+  // shape from the kitchen's own new-order beep (KdsClient.tsx), so
+  // staff can tell "kitchen has a new ticket" apart from "an order is
+  // ready to serve" purely by ear, without looking at a screen.
+  useEffect(() => {
+    const currentReady = new Set(tables.filter((t) => t.readyCount > 0).map((t) => t.id));
+    if (seenReadyTableIds.current === null) {
+      seenReadyTableIds.current = currentReady;
+      return;
+    }
+    const hasNewlyReady = [...currentReady].some((id) => !seenReadyTableIds.current!.has(id));
+    if (hasNewlyReady) playOrderReadyChime();
+    seenReadyTableIds.current = currentReady;
+  }, [tables]);
+
+  function playOrderReadyChime() {
+    try {
+      const ctx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+      const ring = (freq: number, startAt: number, duration: number) => {
+        const oscillator = ctx.createOscillator();
+        const gain = ctx.createGain();
+        oscillator.connect(gain);
+        gain.connect(ctx.destination);
+        oscillator.type = "sine";
+        oscillator.frequency.value = freq;
+        gain.gain.setValueAtTime(0.15, ctx.currentTime + startAt);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + startAt + duration);
+        oscillator.start(ctx.currentTime + startAt);
+        oscillator.stop(ctx.currentTime + startAt + duration);
+      };
+      // A short, rising three-note chime ("tig-tig-titig" cadence) —
+      // ascending pitch reads as "ready/positive", clearly unlike the
+      // kitchen's flat beep or urgent double-beep.
+      ring(523, 0, 0.14);
+      ring(659, 0.13, 0.14);
+      ring(784, 0.26, 0.28);
+    } catch {
+      // Audio isn't critical — fail silently if the browser blocks it.
+    }
+  }
 
   useEffect(() => {
     function poll() {
@@ -72,7 +130,7 @@ export function TablesClient({ tables, lang }: { tables: Table[]; lang: Lang }) 
   function handleAddTable() {
     if (!newTableName.trim()) return;
     startTransition(async () => {
-      const result = await createTableAction(newTableName);
+      const result = await createTableAction(newTableName, newTableSection);
       if (result.error) {
         setError(result.error);
         return;
@@ -156,25 +214,60 @@ export function TablesClient({ tables, lang }: { tables: Table[]; lang: Lang }) 
       )}
 
       {showAddTable && (
-        <div className="flex gap-2">
-          <input
-            value={newTableName}
-            onChange={(e) => setNewTableName(e.target.value)}
-            placeholder={t("tables.namePlaceholder")}
-            className="flex-1 rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand"
-          />
-          <button onClick={handleAddTable} disabled={isPending} className="btn-primary-sm">
-            {t("tables.add")}
-          </button>
+        <div className="flex flex-col gap-2">
+          <div className="flex gap-2">
+            <input
+              value={newTableName}
+              onChange={(e) => setNewTableName(e.target.value)}
+              placeholder={t("tables.namePlaceholder")}
+              className="flex-1 rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand"
+            />
+            <button onClick={handleAddTable} disabled={isPending} className="btn-primary-sm">
+              {t("tables.add")}
+            </button>
+          </div>
+          <div className="flex gap-1.5">
+            {(["inside", "outside", "takeaway"] as const).map((s) => (
+              <button
+                key={s}
+                type="button"
+                onClick={() => setNewTableSection(s)}
+                className={`rounded-full border px-3 py-1 text-xs font-medium ${
+                  newTableSection === s ? "border-brand bg-brand-soft text-brand-text" : "border-border text-muted"
+                }`}
+              >
+                {SECTION_LABEL[s]}
+              </button>
+            ))}
+          </div>
         </div>
       )}
       {error && <p className="text-sm text-danger">{error}</p>}
+
+      {tables.length > 0 && (
+        <div className="flex gap-1.5 overflow-x-auto pb-0.5">
+          {(["all", "inside", "outside", "takeaway"] as const).map((s) => (
+            <button
+              key={s}
+              type="button"
+              onClick={() => setSectionFilter(s)}
+              className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium ${
+                sectionFilter === s ? "border-brand bg-brand-soft text-brand-text" : "border-border text-muted"
+              }`}
+            >
+              {s === "all" ? "All tables" : SECTION_LABEL[s]}
+            </button>
+          ))}
+        </div>
+      )}
 
       {tables.length === 0 ? (
         <EmptyState text={t("tables.empty")} />
       ) : (
         <div className="grid grid-cols-3 gap-3 md:grid-cols-5 md:gap-4">
-          {tables.map((table) => (
+          {tables
+            .filter((table) => sectionFilter === "all" || (table.section ?? "inside") === sectionFilter)
+            .map((table) => (
             <div
               key={table.id}
               role="button"
@@ -210,6 +303,12 @@ export function TablesClient({ tables, lang }: { tables: Table[]; lang: Lang }) 
               >
                 <QrCode size={11} />
               </button>
+              <span
+                className={`absolute -bottom-1.5 -left-1.5 flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold ${SECTION_BADGE[table.section ?? "inside"].className}`}
+                title={SECTION_LABEL[table.section ?? "inside"]}
+              >
+                {SECTION_BADGE[table.section ?? "inside"].letter}
+              </span>
               <span className={`text-sm font-semibold md:text-lg ${table.status === "occupied" ? "text-danger" : table.reservation ? "text-amber-700" : "text-brand-text"}`}>
                 {table.name}
               </span>
