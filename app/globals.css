@@ -34,14 +34,15 @@
   --secondary: #cd127b;
   --secondary-soft: #fce8f2;
 
-  /* Semantic status colors — exact brand spec values */
-  --success: #24875d;
+  /* Semantic status colors — corrected to the exact Design OS v2.0
+     spec values (were close approximations before, now exact). */
+  --success: #16845b;
   --success-soft: #f0faf5;
-  --warning: #b87519;
+  --warning: #b56d12;
   --warning-soft: #fef8ef;
-  --info: #2563eb;
+  --info: #3568d4;
   --info-soft: #eff6ff;
-  --danger: #c21e62;
+  --danger: #c53a4d;
   --danger-soft: #fdeef4;
 
   /* Credit / amount-owed — kept distinct from --warning since it means
@@ -49,25 +50,51 @@
   --credit: #b87519;
   --credit-soft: #fef8ef;
 
+  --radius-xs: 6px;
   --radius-sm: 10px;
   --radius: 14px;
   --radius-lg: 18px;
   --radius-xl: 24px;
+  --radius-2xl: 32px;
+
+  /* Elevation — exact Design OS scale. Most cards use Level 1;
+     interactive/elevated surfaces use Level 2. Reserve 3-4 for things
+     that genuinely float above everything else (modals, popovers). */
+  --elevation-0: none;
+  --elevation-1: 0 2px 8px rgba(55, 52, 53, 0.06);
+  --elevation-2: 0 8px 24px rgba(55, 52, 53, 0.09);
+  --elevation-3: 0 16px 40px rgba(55, 52, 53, 0.12);
+  --elevation-4: 0 24px 64px rgba(55, 52, 53, 0.16);
+
+  /* Z-index — exact Design OS hierarchy. Existing code mostly uses
+     Tailwind's arbitrary z-10/20/50 classes; these tokens give new and
+     migrated components a real, collision-free stacking order instead
+     of ad-hoc numbers. */
+  --z-base: 0;
+  --z-sticky: 20;
+  --z-sidebar: 40;
+  --z-dropdown: 100;
+  --z-popover: 200;
+  --z-drawer: 300;
+  --z-modal: 400;
+  --z-toast: 500;
+  --z-tooltip: 600;
+  --z-command: 700;
 }
 
 .dark {
-  /* Base surfaces — soft charcoal, not pure black (easier on the eyes,
-     avoids OLED smearing, and keeps shadows/borders visible) */
-  --background: #121116;
-  --surface: #1a181d;
-  /* Elevation step 2 — lighter than --surface, per "depth in dark mode
-     comes from surfaces getting lighter, not from harder shadows" */
-  --surface-2: #242127;
-  --overlay: #242127;
+  /* Base surfaces — corrected to the exact Design OS v2.0 spec values
+     (were close approximations before; now exact, including the
+     translucent-white border which reads better than a solid tone on
+     genuinely varying dark backgrounds). */
+  --background: #101014;
+  --surface: #18171c;
+  --surface-2: #211f26;
+  --overlay: #211f26;
   --edge-highlight: rgba(255, 255, 255, 0.06);
   --foreground: #f7f5f7;
-  --muted: #a8a1aa;
-  --border: #35313a;
+  --muted: #7f7883;
+  --border: rgba(255, 255, 255, 0.09);
 
   /* Brand — identical to light mode per the brand spec ("the brand
      gradient remains the same in both themes"). Used for buttons,
@@ -89,17 +116,22 @@
   --secondary: #cd127b;
   --secondary-soft: #3a1428;
 
-  --success: #2ea373;
+  --success: #35b985;
   --success-soft: #102420;
-  --warning: #d68f2e;
+  --warning: #e2a84a;
   --warning-soft: #2c2010;
-  --info: #60a5fa;
+  --info: #7e9eff;
   --info-soft: #0f2038;
-  --danger: #dd3d7e;
+  --danger: #f06b7a;
   --danger-soft: #331520;
 
   --credit: #d68f2e;
   --credit-soft: #2c2010;
+
+  --elevation-1: 0 2px 10px rgba(0, 0, 0, 0.24);
+  --elevation-2: 0 8px 26px rgba(0, 0, 0, 0.32);
+  --elevation-3: 0 18px 44px rgba(0, 0, 0, 0.4);
+  --elevation-4: 0 28px 72px rgba(0, 0, 0, 0.5);
 }
 
 @theme inline {
@@ -132,6 +164,27 @@
   --shadow-sm: 0 1px 2px hsl(220 20% 15% / 0.06), 0 1px 1px hsl(220 20% 15% / 0.04);
   --shadow-md: 0 4px 10px hsl(220 20% 15% / 0.08), 0 2px 4px hsl(220 20% 15% / 0.05);
   --shadow-lg: 0 12px 24px hsl(220 20% 15% / 0.12), 0 4px 8px hsl(220 20% 15% / 0.06);
+
+  /* Design OS tokens exposed as Tailwind utilities — e.g. rounded-ray-xs,
+     shadow-elevation-2, z-modal. Additive: existing shadow-sm/md/lg and
+     radius-* classes keep working unchanged. */
+  --radius-ray-xs: var(--radius-xs);
+  --radius-ray-2xl: var(--radius-2xl);
+  --shadow-elevation-0: var(--elevation-0);
+  --shadow-elevation-1: var(--elevation-1);
+  --shadow-elevation-2: var(--elevation-2);
+  --shadow-elevation-3: var(--elevation-3);
+  --shadow-elevation-4: var(--elevation-4);
+  --z-base: var(--z-base);
+  --z-sticky: var(--z-sticky);
+  --z-sidebar: var(--z-sidebar);
+  --z-dropdown: var(--z-dropdown);
+  --z-popover: var(--z-popover);
+  --z-drawer: var(--z-drawer);
+  --z-modal: var(--z-modal);
+  --z-toast: var(--z-toast);
+  --z-tooltip: var(--z-tooltip);
+  --z-command: var(--z-command);
 
   /* Motion tokens — one signature curve (fast start, soft landing) used
      for every entrance in the app instead of picking a new easing per
@@ -535,4 +588,51 @@ textarea:focus {
   .ray-skeleton {
     animation: none !important;
   }
+}
+
+/* ============================================================
+   Typography scale — exact Design OS spec (03-TYPOGRAPHY).
+   Font-size/line-height/weight bundled per role so hierarchy stays
+   consistent instead of being re-decided screen by screen.
+   ============================================================ */
+.ray-display {
+  font-size: 32px;
+  line-height: 40px;
+  font-weight: 700;
+}
+.ray-h1 {
+  font-size: 28px;
+  line-height: 36px;
+  font-weight: 700;
+}
+.ray-h2 {
+  font-size: 22px;
+  line-height: 30px;
+  font-weight: 650;
+}
+.ray-h3 {
+  font-size: 18px;
+  line-height: 26px;
+  font-weight: 650;
+}
+.ray-body {
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 450;
+}
+.ray-small {
+  font-size: 12px;
+  line-height: 18px;
+  font-weight: 450;
+}
+.ray-label {
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 600;
+}
+.ray-kpi {
+  font-size: 28px;
+  line-height: 34px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
 }

@@ -1,4 +1,4 @@
-export function EmptyState({ text }: { text: string }) {
+export function EmptyState({ text, action }: { text: string; action?: React.ReactNode }) {
   return (
     <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-border bg-surface/50 px-6 py-12 text-center">
       <span
@@ -11,6 +11,7 @@ export function EmptyState({ text }: { text: string }) {
         </svg>
       </span>
       <p className="max-w-[220px] text-sm text-muted">{text}</p>
+      {action}
     </div>
   );
 }

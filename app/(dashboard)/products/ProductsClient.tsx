@@ -257,42 +257,44 @@ export function ProductsClient({
           placeholder={t("products.scanPlaceholder")}
           onScan={handleInventoryScan}
         />
-        <CameraBarcodeScanner onScan={handleInventoryScan} />
         {scanNotice && <p className="text-xs text-credit">{scanNotice}</p>}
-        {bulkImportExportEnabled && (
-          <BulkImportExport
-            businessType={businessType}
-            products={initialProducts.map((p) => ({
-              name: p.name,
-              price: p.price,
-              gstPercent: p.gstPercent,
-              hsnCode: p.hsnCode,
-              barcode: p.barcode,
-              unit: p.unit,
-              categoryName: p.categoryName,
-              trackInventory: p.trackInventory,
-              stockQuantity: p.stockQuantity,
-              lowStockThreshold: p.lowStockThreshold,
-            }))}
-            onImported={() => router.refresh()}
-          />
-        )}
+        <div className="flex flex-wrap gap-2">
+          <CameraBarcodeScanner onScan={handleInventoryScan} compact />
+          {bulkImportExportEnabled && (
+            <BulkImportExport
+              businessType={businessType}
+              products={initialProducts.map((p) => ({
+                name: p.name,
+                price: p.price,
+                gstPercent: p.gstPercent,
+                hsnCode: p.hsnCode,
+                barcode: p.barcode,
+                unit: p.unit,
+                categoryName: p.categoryName,
+                trackInventory: p.trackInventory,
+                stockQuantity: p.stockQuantity,
+                lowStockThreshold: p.lowStockThreshold,
+              }))}
+              onImported={() => router.refresh()}
+            />
+          )}
+        </div>
       </div>
 
       {initialProducts.some((p) => p.trackInventory) && (
-        <div className="grid grid-cols-2 gap-3">
-          <div className="rounded-xl border border-border bg-surface shadow-sm p-3 text-center">
+        <div className="grid grid-cols-2 gap-2">
+          <div className="rounded-xl border border-border bg-surface shadow-sm p-2.5 text-center">
             <p className="text-xs text-muted">{t("products.trackedItems")}</p>
-            <p className="mt-1 text-lg font-semibold text-foreground">
+            <p className="mt-0.5 text-base font-semibold text-foreground">
               {initialProducts.filter((p) => p.trackInventory).length}
             </p>
           </div>
-          <div className="rounded-xl border border-border bg-credit-soft shadow-sm p-3 text-center">
+          <div className="rounded-xl border border-border bg-credit-soft shadow-sm p-2.5 text-center">
             <p className="flex items-center justify-center gap-1 text-xs text-credit">
               {/* eslint-disable-next-line @next/next/no-img-element -- small branded SVG icon */}
               <img src="/assets/ray-icons/low-stock.svg" alt="" className="h-3 w-3" /> {t("products.lowStock")}
             </p>
-            <p className="mt-1 text-lg font-semibold text-credit">
+            <p className="mt-0.5 text-base font-semibold text-credit">
               {initialProducts.filter((p) => p.trackInventory && p.stockQuantity <= p.lowStockThreshold).length}
             </p>
           </div>
@@ -301,12 +303,9 @@ export function ProductsClient({
 
       <Link
         href="/products/labels"
-        className="hover-lift flex items-center justify-between rounded-xl border border-border bg-surface shadow-sm px-4 py-3.5"
+        className="flex w-fit items-center gap-1 rounded-full border border-border px-3 py-1.5 text-xs font-medium text-muted"
       >
-        <span className="flex items-center gap-2 text-sm font-medium text-foreground">
-          {t("products.printLabels")}
-        </span>
-        <span className="text-muted">›</span>
+        {t("products.printLabels")} <span>›</span>
       </Link>
 
       {showCategoryForm && (
@@ -687,7 +686,14 @@ export function ProductsClient({
       <p className="flex items-center gap-1 text-xs text-muted"><Camera size={12} /> Tap the photo icon on any item to add one — best size: a square image, about 500×500px, under 2MB.</p>
 
       {filtered.length === 0 ? (
-        <EmptyState text={t("products.emptyShelf")} />
+        <EmptyState
+          text={t("products.emptyShelf")}
+          action={
+            <button onClick={openNewProductForm} className="btn-primary-sm">
+              {terminology.addProductLabel}
+            </button>
+          }
+        />
       ) : (
         <ul className="flex flex-col gap-2 md:grid md:grid-cols-2 md:gap-3">
           {filtered.map((p) => {

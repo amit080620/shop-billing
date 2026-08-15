@@ -21,9 +21,11 @@ function wait(ms: number) {
 export function CameraBarcodeScanner({
   onScan,
   label = "Scan with camera",
+  compact = false,
 }: {
   onScan: (code: string) => void;
   label?: string;
+  compact?: boolean;
 }) {
   const [active, setActive] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -126,7 +128,11 @@ export function CameraBarcodeScanner({
             setError(null);
             setActive(true);
           }}
-          className="flex items-center gap-1.5 self-start text-sm font-medium text-brand"
+          className={
+            compact
+              ? "flex shrink-0 items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-xs font-medium text-brand-text"
+              : "flex items-center gap-1.5 self-start text-sm font-medium text-brand"
+          }
         >
           {/* eslint-disable-next-line @next/next/no-img-element -- small branded SVG icon */}
           <img src="/assets/ray-icons/scan.svg" alt="" className="h-3.5 w-3.5" /> {label}

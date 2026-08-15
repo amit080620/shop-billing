@@ -14,7 +14,7 @@ export function PageHeader({
   bareIcon?: boolean;
 }) {
   return (
-    <div className="flex items-center justify-between gap-3 md:gap-4">
+    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between md:gap-4">
       <div className="flex items-center gap-3 md:gap-4">
         <PageIcon bare={bareIcon}>{icon}</PageIcon>
         <div>
