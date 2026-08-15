@@ -5,6 +5,7 @@ import { translate } from "@/lib/i18n/dictionary";
 import { BottomNav } from "./BottomNav";
 import { DesktopSidebar } from "./DesktopSidebar";
 import { WelcomeTour } from "./WelcomeTour";
+import { UniversalSearch } from "@/app/components/UniversalSearch";
 
 export default async function DashboardLayout({
   children,
@@ -58,6 +59,16 @@ export default async function DashboardLayout({
           </div>
         </div>
       </header>
+
+      {/* Single UniversalSearch instance — deliberately outside both the
+          mobile-only header (md:hidden) and the desktop sidebar, so there's
+          exactly one mounted instance, one Ctrl+K listener, and the modal
+          is never rendered inside a CSS-hidden parent at either breakpoint. */}
+      <div className="no-print sticky top-0 z-10 border-b border-border bg-surface/90 px-4 py-2.5 backdrop-blur-md md:left-60 md:px-8">
+        <div className="mx-auto max-w-lg md:max-w-none">
+          <UniversalSearch />
+        </div>
+      </div>
 
       <main className="page-enter mx-auto max-w-lg px-4 py-4 md:max-w-5xl md:px-8 md:py-8 xl:max-w-6xl">{children}</main>
 

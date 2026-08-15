@@ -302,8 +302,11 @@ export const translations: Record<Lang, Record<string, string>> = {
 
     // Restaurant — Reports, Kitchen Display
     "rreports.today": "Today",
+    "rreports.yesterday": "Yesterday",
     "rreports.thisWeek": "This week",
+    "rreports.lastWeek": "Last week",
     "rreports.thisMonth": "This month",
+    "rreports.lastMonth": "Last month",
     "rreports.to": "to",
     "rreports.title": "Restaurant sales",
     "rreports.itemWiseLink": "Item-wise & category-wise sales →",
@@ -800,8 +803,11 @@ export const translations: Record<Lang, Record<string, string>> = {
 
     // Restaurant — Reports, Kitchen Display
     "rreports.today": "आज",
+    "rreports.yesterday": "कल",
     "rreports.thisWeek": "इस हफ़्ते",
+    "rreports.lastWeek": "पिछले हफ़्ते",
     "rreports.thisMonth": "इस महीने",
+    "rreports.lastMonth": "पिछले महीने",
     "rreports.to": "से",
     "rreports.title": "Restaurant की बिक्री",
     "rreports.itemWiseLink": "Item-wise व category-wise बिक्री →",
@@ -1298,8 +1304,11 @@ export const translations: Record<Lang, Record<string, string>> = {
 
     // Restaurant — Reports, Kitchen Display
     "rreports.today": "आज",
+    "rreports.yesterday": "काल",
     "rreports.thisWeek": "या आठवड्यात",
+    "rreports.lastWeek": "मागील आठवड्यात",
     "rreports.thisMonth": "या महिन्यात",
+    "rreports.lastMonth": "मागील महिन्यात",
     "rreports.to": "ते",
     "rreports.title": "Restaurant ची विक्री",
     "rreports.itemWiseLink": "Item-wise व category-wise विक्री →",

@@ -8,7 +8,7 @@ import { TVNavigationProvider, TVRemoteHandler, TVFocusZone, TVFocusable } from 
 import { AlertTriangle, X, Check } from "lucide-react";
 import type { Lang } from "@/lib/i18n/dictionary";
 
-type Item = { id: string; name: string; quantity: number; status: "pending" | "ready" | "served" | "cancelled"; createdAt: string };
+type Item = { id: string; name: string; quantity: number; status: "pending" | "ready" | "served" | "cancelled"; createdAt: string; modifiers: { group: string; choice: string; price: number }[] };
 type Ticket = {
   id: string;
   orderNumber: string;
@@ -248,9 +248,16 @@ export function KdsClient({
                                 : "bg-black/20"
                           }`}
                         >
-                          <span className="flex items-center gap-1 font-medium">
-                            {isCancelled ? <X size={12} /> : isReady ? <Check size={12} /> : null}
-                            {item.name}
+                          <span className="flex flex-col">
+                            <span className="flex items-center gap-1 font-medium">
+                              {isCancelled ? <X size={12} /> : isReady ? <Check size={12} /> : null}
+                              {item.name}
+                            </span>
+                            {item.modifiers.length > 0 && (
+                              <span className="text-[11px] font-normal text-gray-400">
+                                {item.modifiers.map((m) => m.choice).join(", ")}
+                              </span>
+                            )}
                           </span>
                           <span className={`ml-2 shrink-0 ${sizes.qty} font-bold`}>×{item.quantity}</span>
                         </button>

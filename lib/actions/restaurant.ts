@@ -255,6 +255,8 @@ export async function addOrderItemAction(
   orderId: string,
   productId: string,
   quantity: number,
+  selectedModifiers: { group: string; choice: string; price: number }[] = [],
+  itemNote?: string,
 ): Promise<{ error?: string }> {
   const session = await requireSession();
   const admin = createSupabaseAdminClient();
@@ -276,15 +278,25 @@ export async function addOrderItemAction(
     .single();
   if (!product) return { error: "Item not found" };
 
+  // Modifier surcharges become part of the effective unit price so that
+  // every total downstream — line_subtotal, line_total, the GST split in
+  // recalcOrderTotals, the printed bill, and reports — is derived from
+  // one figure. Treating the surcharge as a display-only extra is how a
+  // printed bill ends up disagreeing with what's actually charged.
+  const modifierExtra = selectedModifiers.reduce((sum, m) => sum + Number(m.price || 0), 0);
+  const effectiveUnitPrice = round2(Number(product.price) + modifierExtra);
+
   const { error } = await admin.from("restaurant_order_items").insert({
     order_id: orderId,
     product_id: product.id,
     product_name: product.name,
     quantity,
-    unit_price: Number(product.price),
+    unit_price: effectiveUnitPrice,
     gst_percent: Number(product.gst_percent),
-    line_subtotal: round2(quantity * Number(product.price)),
-    line_total: round2(quantity * Number(product.price)),
+    line_subtotal: round2(quantity * effectiveUnitPrice),
+    line_total: round2(quantity * effectiveUnitPrice),
+    selected_modifiers: selectedModifiers,
+    item_note: itemNote?.trim() || null,
   });
   if (error) return { error: "Could not add item" };
 
@@ -401,7 +413,7 @@ export async function acknowledgeRevisionAction(orderId: string): Promise<{ erro
  * kitchen dishes it's already cooking. */
 export async function getNewKotItemsAction(
   orderId: string,
-): Promise<{ items?: { name: string; quantity: number }[]; error?: string }> {
+): Promise<{ items?: { name: string; quantity: number; modifiers: { group: string; choice: string; price: number }[] }[]; error?: string }> {
   const session = await requireSession();
   const admin = createSupabaseAdminClient();
 
@@ -415,7 +427,7 @@ export async function getNewKotItemsAction(
 
   const { data: items } = await admin
     .from("restaurant_order_items")
-    .select("id, product_name, quantity")
+    .select("id, product_name, quantity, selected_modifiers")
     .eq("order_id", orderId)
     .eq("kot_printed", false);
 
@@ -426,7 +438,7 @@ export async function getNewKotItemsAction(
     .update({ kot_printed: true })
     .in("id", items.map((i) => i.id));
 
-  return { items: items.map((i) => ({ name: i.product_name, quantity: Number(i.quantity) })) };
+  return { items: items.map((i) => ({ name: i.product_name, quantity: Number(i.quantity), modifiers: i.selected_modifiers })) };
 }
 
 export type SettlePayment = { method: "cash" | "card" | "upi" | "online" | "other"; amount: number };

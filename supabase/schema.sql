@@ -588,10 +588,44 @@ create table if not exists restaurant_order_items (
   igst_amount numeric(12, 2) not null default 0,
   line_total numeric(12, 2) not null,
   kot_printed boolean not null default false,
+  -- Chosen options travel with the order itself, not just the UI —
+  -- shape: [{ group: "Beverage", choice: "Lassi", price: 0 }]. Stored
+  -- denormalised (names + price captured at order time) so a later
+  -- rename or price change to the menu never rewrites past orders.
+  selected_modifiers jsonb not null default '[]'::jsonb,
+  item_note text,
   created_at timestamptz not null default now()
 );
 alter table restaurant_order_items enable row level security;
 create index if not exists idx_restaurant_order_items_order on restaurant_order_items(order_id);
+
+-- Item options/modifiers — the owner defines these per product, e.g.
+-- a Thali has a "Beverage" group with Lassi / Chaas choices.
+create table if not exists product_option_groups (
+  id uuid primary key default uuid_generate_v4(),
+  shop_id uuid not null references shops(id) on delete cascade,
+  product_id uuid not null references products(id) on delete cascade,
+  name text not null,
+  is_required boolean not null default true,
+  is_multi_select boolean not null default false,
+  sort_order integer not null default 0,
+  created_at timestamptz not null default now()
+);
+alter table product_option_groups enable row level security;
+create index if not exists idx_product_option_groups_product on product_option_groups(product_id);
+
+create table if not exists product_option_choices (
+  id uuid primary key default uuid_generate_v4(),
+  group_id uuid not null references product_option_groups(id) on delete cascade,
+  name text not null,
+  -- 0 = included in the base price; > 0 = surcharge added to the line.
+  extra_price numeric(12, 2) not null default 0,
+  is_default boolean not null default false,
+  sort_order integer not null default 0,
+  created_at timestamptz not null default now()
+);
+alter table product_option_choices enable row level security;
+create index if not exists idx_product_option_choices_group on product_option_choices(group_id);
 
 -- Split settlement — a table can be paid part-cash, part-card/UPI, etc.
 create table if not exists restaurant_order_payments (

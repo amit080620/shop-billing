@@ -1743,6 +1743,18 @@ export interface Database {
           { foreignKeyName: "restaurant_orders_customer_id_fkey"; columns: ["customer_id"]; isOneToOne: false; referencedRelation: "customers"; referencedColumns: ["id"] },
         ];
       };
+      product_option_groups: {
+        Row: { id: string; shop_id: string; product_id: string; name: string; is_required: boolean; is_multi_select: boolean; sort_order: number; created_at: string };
+        Insert: { id?: string; shop_id: string; product_id: string; name: string; is_required?: boolean; is_multi_select?: boolean; sort_order?: number; created_at?: string };
+        Update: { id?: string; shop_id?: string; product_id?: string; name?: string; is_required?: boolean; is_multi_select?: boolean; sort_order?: number; created_at?: string };
+        Relationships: [];
+      };
+      product_option_choices: {
+        Row: { id: string; group_id: string; name: string; extra_price: number; is_default: boolean; sort_order: number; created_at: string };
+        Insert: { id?: string; group_id: string; name: string; extra_price?: number; is_default?: boolean; sort_order?: number; created_at?: string };
+        Update: { id?: string; group_id?: string; name?: string; extra_price?: number; is_default?: boolean; sort_order?: number; created_at?: string };
+        Relationships: [];
+      };
       restaurant_order_items: {
         Row: {
           id: string;
@@ -1758,6 +1770,8 @@ export interface Database {
           igst_amount: number;
           line_total: number;
           kot_printed: boolean;
+          selected_modifiers: { group: string; choice: string; price: number }[];
+          item_note: string | null;
           status: "pending" | "ready" | "served" | "cancelled";
           ready_at: string | null;
           served_at: string | null;
@@ -1777,6 +1791,8 @@ export interface Database {
           igst_amount?: number;
           line_total: number;
           kot_printed?: boolean;
+          selected_modifiers?: { group: string; choice: string; price: number }[];
+          item_note?: string | null;
           status?: "pending" | "ready" | "served" | "cancelled";
           ready_at?: string | null;
           served_at?: string | null;
@@ -1796,6 +1812,8 @@ export interface Database {
           igst_amount?: number;
           line_total?: number;
           kot_printed?: boolean;
+          selected_modifiers?: { group: string; choice: string; price: number }[];
+          item_note?: string | null;
           status?: "pending" | "ready" | "served" | "cancelled";
           ready_at?: string | null;
           served_at?: string | null;

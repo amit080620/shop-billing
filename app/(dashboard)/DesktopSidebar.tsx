@@ -47,7 +47,6 @@ export function DesktopSidebar({
           </p>
         </div>
       </div>
-
       <ul className="flex flex-1 flex-col gap-0.5 overflow-y-auto p-3">
         {tabs.map((tab) => {
           const active = tab.href === "/" ? pathname === "/" : pathname.startsWith(tab.href);

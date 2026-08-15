@@ -27,7 +27,7 @@ export default async function OrderPage({
   }
 
   const [{ data: items }, { data: products }, { data: combos }, { data: linkedReservation }] = await Promise.all([
-    admin.from("restaurant_order_items").select("id, product_name, quantity, unit_price, line_total, status").eq("order_id", id).order("created_at"),
+    admin.from("restaurant_order_items").select("id, product_name, quantity, unit_price, line_total, status, selected_modifiers").eq("order_id", id).order("created_at"),
     admin.from("products").select("id, name, price, gst_percent, category_id, categories ( name )").eq("shop_id", session.shopId).order("name"),
     admin.from("combos").select("id, name, price").eq("shop_id", session.shopId).eq("is_active", true).order("name"),
     order.reservation_id
@@ -76,6 +76,7 @@ export default async function OrderPage({
         unitPrice: Number(i.unit_price),
         lineTotal: Number(i.line_total),
         status: i.status,
+        selectedModifiers: i.selected_modifiers,
       }))}
       products={(products ?? []).map((p) => ({
         id: p.id,

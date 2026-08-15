@@ -16,7 +16,7 @@ import {
   generateBarcodeAction,
   uploadProductImageAction,
 } from "@/lib/actions/products";
-import { Package, Camera, Tag, ShieldCheck } from "lucide-react";
+import { Package, Camera, Tag, ShieldCheck, Layers } from "lucide-react";
 import { formatMoney } from "@/lib/format";
 import { EmptyState } from "@/app/components/EmptyState";
 import { useToast } from "@/app/components/Toast";
@@ -27,6 +27,7 @@ import { BulkImportExport } from "./BulkImportExport";
 import { COMMON_GST_RATES, UNITS } from "@/lib/constants/states";
 import { COMMON_MEDICINE_NAMES } from "@/lib/constants/commonMedicines";
 import { getUnitsForBusinessType } from "@/lib/businessType";
+import { ProductOptionsManager } from "./ProductOptionsManager";
 import { SearchableSelect } from "@/app/components/SearchableSelect";
 import { useTranslation } from "@/lib/i18n/useTranslation";
 import type { Lang } from "@/lib/i18n/dictionary";
@@ -116,6 +117,7 @@ export function ProductsClient({
   const showJewellerySection = businessType === "jewellery";
   const [showForm, setShowForm] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [optionsForProduct, setOptionsForProduct] = useState<{ id: string; name: string } | null>(null);
   const [trackInventory, setTrackInventory] = useState(false);
   const [isRentable, setIsRentable] = useState(false);
   const [isPharma, setIsPharma] = useState(false);
@@ -738,6 +740,18 @@ export function ProductsClient({
                       <ShieldCheck size={10} /> {p.warrantyMonths}mo warranty
                     </span>
                   )}
+                  {businessType === "restaurant" && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setOptionsForProduct({ id: p.id, name: p.name });
+                      }}
+                      className="mt-1 flex items-center gap-1 rounded-full border border-border px-2 py-0.5 text-[11px] font-medium text-muted"
+                    >
+                      <Layers size={10} /> Options
+                    </button>
+                  )}
                   {p.bulkMinQty && p.bulkPrice && (
                     <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-brand-soft px-2 py-0.5 text-[11px] font-medium text-brand-text">
                       <Package size={10} /> {p.bulkMinQty}+ @ {formatMoney(p.bulkPrice)}
@@ -824,6 +838,14 @@ export function ProductsClient({
             );
           })}
         </ul>
+      )}
+
+      {optionsForProduct && (
+        <ProductOptionsManager
+          productId={optionsForProduct.id}
+          productName={optionsForProduct.name}
+          onClose={() => setOptionsForProduct(null)}
+        />
       )}
     </div>
   );

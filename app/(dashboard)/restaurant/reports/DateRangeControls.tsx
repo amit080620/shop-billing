@@ -30,29 +30,57 @@ export function DateRangeControls({
     const t = iso(new Date());
     go(t, t);
   }
+  function setYesterday() {
+    const y = new Date();
+    y.setDate(y.getDate() - 1);
+    go(iso(y), iso(y));
+  }
   function setThisWeek() {
     const now = new Date();
     const start = new Date(now);
     start.setDate(now.getDate() - 6);
     go(iso(start), iso(now));
   }
+  function setLastWeek() {
+    const now = new Date();
+    const end = new Date(now);
+    end.setDate(now.getDate() - 7);
+    const start = new Date(now);
+    start.setDate(now.getDate() - 13);
+    go(iso(start), iso(end));
+  }
   function setThisMonth() {
     const now = new Date();
     const start = new Date(now.getFullYear(), now.getMonth(), 1);
     go(iso(start), iso(now));
   }
+  function setLastMonth() {
+    const now = new Date();
+    const start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const end = new Date(now.getFullYear(), now.getMonth(), 0);
+    go(iso(start), iso(end));
+  }
 
   return (
     <div className="flex flex-col gap-2">
-      <div className="flex gap-2">
-        <button onClick={setToday} className="rounded-full border border-border px-3 py-1.5 text-xs font-medium text-muted">
+      <div className="flex gap-2 overflow-x-auto pb-0.5">
+        <button onClick={setToday} className="shrink-0 rounded-full border border-border px-3 py-1.5 text-xs font-medium text-muted">
           {t("rreports.today")}
         </button>
-        <button onClick={setThisWeek} className="rounded-full border border-border px-3 py-1.5 text-xs font-medium text-muted">
+        <button onClick={setYesterday} className="shrink-0 rounded-full border border-border px-3 py-1.5 text-xs font-medium text-muted">
+          {t("rreports.yesterday")}
+        </button>
+        <button onClick={setThisWeek} className="shrink-0 rounded-full border border-border px-3 py-1.5 text-xs font-medium text-muted">
           {t("rreports.thisWeek")}
         </button>
-        <button onClick={setThisMonth} className="rounded-full border border-border px-3 py-1.5 text-xs font-medium text-muted">
+        <button onClick={setLastWeek} className="shrink-0 rounded-full border border-border px-3 py-1.5 text-xs font-medium text-muted">
+          {t("rreports.lastWeek")}
+        </button>
+        <button onClick={setThisMonth} className="shrink-0 rounded-full border border-border px-3 py-1.5 text-xs font-medium text-muted">
           {t("rreports.thisMonth")}
+        </button>
+        <button onClick={setLastMonth} className="shrink-0 rounded-full border border-border px-3 py-1.5 text-xs font-medium text-muted">
+          {t("rreports.lastMonth")}
         </button>
       </div>
       <div className="flex items-center gap-2">

@@ -10,7 +10,7 @@ export default async function KdsPage() {
 
   const { data: orders } = await admin
     .from("restaurant_orders")
-    .select("id, order_number, created_at, revised_at, restaurant_tables ( name ), restaurant_order_items ( id, product_name, quantity, status, created_at )")
+    .select("id, order_number, created_at, revised_at, restaurant_tables ( name ), restaurant_order_items ( id, product_name, quantity, status, created_at, selected_modifiers )")
     .eq("shop_id", session.shopId)
     .eq("status", "open")
     .order("created_at", { ascending: true });
@@ -25,7 +25,7 @@ export default async function KdsPage() {
       createdAt: o.created_at,
       revisedAt: o.revised_at,
       items: items
-        .map((i) => ({ id: i.id, name: i.product_name, quantity: Number(i.quantity), status: i.status, createdAt: i.created_at }))
+        .map((i) => ({ id: i.id, name: i.product_name, quantity: Number(i.quantity), status: i.status, createdAt: i.created_at, modifiers: i.selected_modifiers }))
         .sort((a, b) => a.createdAt.localeCompare(b.createdAt)),
     };
   });

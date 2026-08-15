@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { X, Bell, Check, ShoppingCart, Ticket, ArrowLeft } from "lucide-react";
+import { listProductOptionsAction, type OptionGroup } from "@/lib/actions/product-options";
 import {
   addOrderItemAction,
   removeOrderItemAction,
@@ -25,7 +26,15 @@ import type { Lang } from "@/lib/i18n/dictionary";
 
 type Product = { id: string; name: string; price: number; category: string };
 type Combo = { id: string; name: string; price: number };
-type Item = { id: string; productName: string; quantity: number; unitPrice: number; lineTotal: number; status: "pending" | "ready" | "served" | "cancelled" };
+type Item = {
+  id: string;
+  productName: string;
+  quantity: number;
+  unitPrice: number;
+  lineTotal: number;
+  status: "pending" | "ready" | "served" | "cancelled";
+  selectedModifiers: { group: string; choice: string; price: number }[];
+};
 type Order = {
   id: string;
   orderNumber: string;
@@ -70,7 +79,7 @@ export function OrderClient({
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
-  const [kotItems, setKotItems] = useState<{ name: string; quantity: number }[] | null>(null);
+  const [kotItems, setKotItems] = useState<{ name: string; quantity: number; modifiers: { group: string; choice: string; price: number }[] }[] | null>(null);
   const [showBillPrint, setShowBillPrint] = useState(false);
   const [showSettle, setShowSettle] = useState(false);
   const [showCancel, setShowCancel] = useState(false);
@@ -81,9 +90,9 @@ export function OrderClient({
 
   const [pickingProduct, setPickingProduct] = useState<Product | null>(null);
 
-  function addItem(p: Product, quantity: number) {
+  function addItem(p: Product, quantity: number, selectedModifiers: { group: string; choice: string; price: number }[] = []) {
     startTransition(async () => {
-      const result = await addOrderItemAction(order.id, p.id, quantity);
+      const result = await addOrderItemAction(order.id, p.id, quantity, selectedModifiers);
       if (result.error) setError(result.error);
       router.refresh();
     });
@@ -305,6 +314,11 @@ export function OrderClient({
                   <li key={item.id} className="flex items-center justify-between gap-2 rounded-lg border border-border bg-surface px-3.5 py-2.5">
                     <div className="min-w-0 flex-1">
                       <span className="truncate text-sm text-foreground">{item.productName}</span>
+                      {item.selectedModifiers.length > 0 && (
+                        <p className="truncate text-xs text-muted">
+                          {item.selectedModifiers.map((m) => `└ ${m.choice}${m.price > 0 ? ` (+${formatMoney(m.price)})` : ""}`).join("  ")}
+                        </p>
+                      )}
                       {item.status === "ready" && (
                         <span className="ml-2 flex w-fit items-center gap-0.5 rounded-full bg-brand-soft px-2 py-0.5 text-[11px] font-medium text-brand-text"><Bell size={9} /> Ready</span>
                       )}
@@ -397,7 +411,14 @@ export function OrderClient({
           <p className="kot-sub">{order.tableName} · {new Date().toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" })}</p>
           <hr />
           {kotItems.map((item, i) => (
-            <p key={i} className="kot-item">{item.quantity} × {item.name}</p>
+            <div key={i}>
+              <p className="kot-item">{item.quantity} × {item.name}</p>
+              {item.modifiers.length > 0 && (
+                <p className="kot-modifier">
+                  {item.modifiers.map((m) => `— ${m.choice}`).join(", ")}
+                </p>
+              )}
+            </div>
           ))}
         </div>
       )}
@@ -454,13 +475,18 @@ export function OrderClient({
             font-size: 13px;
             margin: 4px 0;
           }
+          .kot-modifier {
+            font-size: 11px;
+            margin: 0 0 4px 14px;
+            font-style: italic;
+          }
         }
       `}</style>
       {pickingProduct && (
         <QuantityPickerModal
           product={pickingProduct}
-          onConfirm={(qty) => {
-            addItem(pickingProduct, qty);
+          onConfirm={(qty, selectedModifiers) => {
+            addItem(pickingProduct, qty, selectedModifiers);
             setPickingProduct(null);
           }}
           onClose={() => setPickingProduct(null)}
@@ -476,15 +502,68 @@ function QuantityPickerModal({
   onClose,
 }: {
   product: Product;
-  onConfirm: (quantity: number) => void;
+  onConfirm: (quantity: number, selectedModifiers: { group: string; choice: string; price: number }[]) => void;
   onClose: () => void;
 }) {
   const [quantity, setQuantity] = useState(1);
   const quickPicks = [1, 2, 3, 4, 5, 6];
+  const [groups, setGroups] = useState<OptionGroup[] | null>(null);
+  // groupId -> selected choiceId(s)
+  const [selected, setSelected] = useState<Record<string, string[]>>({});
+
+  useEffect(() => {
+    let cancelled = false;
+    listProductOptionsAction(product.id).then((g) => {
+      if (cancelled) return;
+      setGroups(g);
+      // Pre-select each group's default choice (if any) so a required
+      // group isn't left empty by default.
+      const initial: Record<string, string[]> = {};
+      for (const group of g) {
+        const def = group.choices.find((c) => c.isDefault);
+        if (def) initial[group.id] = [def.id];
+      }
+      setSelected(initial);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [product.id]);
+
+  function toggleChoice(group: OptionGroup, choiceId: string) {
+    setSelected((prev) => {
+      const current = prev[group.id] ?? [];
+      if (group.isMultiSelect) {
+        const next = current.includes(choiceId) ? current.filter((id) => id !== choiceId) : [...current, choiceId];
+        return { ...prev, [group.id]: next };
+      }
+      return { ...prev, [group.id]: [choiceId] };
+    });
+  }
+
+  const modifierExtra = (groups ?? []).reduce((sum, g) => {
+    const chosenIds = selected[g.id] ?? [];
+    const groupSum = g.choices.filter((c) => chosenIds.includes(c.id)).reduce((s, c) => s + c.extraPrice, 0);
+    return sum + groupSum;
+  }, 0);
+
+  const missingRequired = (groups ?? []).some((g) => g.isRequired && (selected[g.id] ?? []).length === 0);
+  const unitPrice = product.price + modifierExtra;
+
+  function handleConfirm() {
+    const chosen: { group: string; choice: string; price: number }[] = [];
+    for (const g of groups ?? []) {
+      const ids = selected[g.id] ?? [];
+      for (const c of g.choices.filter((c) => ids.includes(c.id))) {
+        chosen.push({ group: g.name, choice: c.name, price: c.extraPrice });
+      }
+    }
+    onConfirm(quantity, chosen);
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 sm:items-center" onClick={onClose}>
-      <div className="w-full max-w-sm rounded-t-2xl bg-surface p-5 sm:rounded-2xl" onClick={(e) => e.stopPropagation()}>
+      <div className="max-h-[85vh] w-full max-w-sm overflow-y-auto rounded-t-2xl bg-surface p-5 sm:rounded-2xl" onClick={(e) => e.stopPropagation()}>
         <p className="text-sm font-semibold text-foreground">{product.name}</p>
         <p className="text-xs text-muted">{formatMoney(product.price)} each</p>
 
@@ -518,10 +597,41 @@ function QuantityPickerModal({
           ))}
         </div>
 
-        <p className="mt-4 text-center text-sm text-muted">Total: {formatMoney(product.price * quantity)}</p>
+        {groups && groups.length > 0 && (
+          <div className="mt-4 flex flex-col gap-3 border-t border-border pt-3">
+            {groups.map((g) => (
+              <div key={g.id}>
+                <p className="text-xs font-semibold text-foreground">
+                  {g.name} {g.isRequired && <span className="text-danger">*</span>}
+                  {g.isMultiSelect && <span className="ml-1 text-[10px] font-normal text-muted">(choose any)</span>}
+                </p>
+                <div className="mt-1.5 flex flex-col gap-1">
+                  {g.choices.map((c) => {
+                    const isChecked = (selected[g.id] ?? []).includes(c.id);
+                    return (
+                      <button
+                        key={c.id}
+                        type="button"
+                        onClick={() => toggleChoice(g, c.id)}
+                        className={`flex items-center justify-between rounded-lg border px-3 py-2 text-left text-sm ${
+                          isChecked ? "border-brand bg-brand-soft text-brand-text" : "border-border text-foreground"
+                        }`}
+                      >
+                        <span>{c.name}</span>
+                        <span className="text-xs text-muted">{c.extraPrice > 0 ? `+${formatMoney(c.extraPrice)}` : "Included"}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <p className="mt-4 text-center text-sm text-muted">Total: {formatMoney(unitPrice * quantity)}</p>
 
         <div className="mt-4 flex gap-2">
-          <button onClick={() => onConfirm(quantity)} className="btn-primary flex-1 text-center">
+          <button onClick={handleConfirm} disabled={missingRequired} className="btn-primary flex-1 text-center disabled:opacity-60">
             Add {quantity} to order
           </button>
           <button onClick={onClose} className="rounded-lg border border-border px-4 py-2 text-sm font-medium text-muted">
@@ -577,7 +687,14 @@ function BillPrintView({
           <tbody>
             {items.map((item) => (
               <tr key={item.id}>
-                <td className="py-0.5">{item.productName}</td>
+                <td className="py-0.5">
+                  {item.productName}
+                  {item.selectedModifiers.length > 0 && (
+                    <div className="text-[10px] text-gray-600">
+                      {item.selectedModifiers.map((m) => m.choice).join(", ")}
+                    </div>
+                  )}
+                </td>
                 <td className="py-0.5 text-right">{item.quantity}</td>
                 <td className="py-0.5 text-right">{formatMoney(item.lineTotal)}</td>
               </tr>
