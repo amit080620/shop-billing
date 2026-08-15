@@ -1365,10 +1365,10 @@ function StatCard({
   href?: string;
   icon?: React.ComponentType<{ size?: number; strokeWidth?: number }>;
 }) {
-  const cardClassName = `hover-lift group relative overflow-hidden rounded-xl border border-border p-4 transition-transform active:scale-[0.98] ${
-    tone === "credit" ? "bg-credit-soft" : "bg-surface"
+  const cardClassName = `hover-lift group relative overflow-hidden rounded-xl p-4 transition-transform active:scale-[0.98] ${
+    tone === "credit" ? "border border-border bg-credit-soft" : "neu-card"
   } ${className}`;
-  const cardStyle = { boxShadow: "var(--shadow-sm), inset 0 1px 0 var(--edge-highlight)" };
+  const cardStyle = tone === "credit" ? { boxShadow: "var(--shadow-sm), inset 0 1px 0 var(--edge-highlight)" } : undefined;
   const content = (
     <>
       <div className="flex items-center justify-between">
@@ -1383,7 +1383,7 @@ function StatCard({
           </span>
         )}
       </div>
-      <p className={`mt-2 text-3xl font-bold tracking-tight ${tone === "credit" ? "text-credit" : "text-foreground"}`}>
+      <p className={`mt-2 text-3xl font-bold tracking-tight ${tone === "credit" ? "text-credit" : "text-foreground neu-text"}`}>
         {value}
       </p>
     </>

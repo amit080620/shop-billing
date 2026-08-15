@@ -2016,3 +2016,25 @@ alter table restaurant_order_items add column if not exists served_at timestampt
 -- aggregating item timestamps on every read.
 alter table restaurant_orders add column if not exists first_ready_at timestamptz;
 alter table restaurant_orders add column if not exists served_at timestamptz;
+
+-- ─── Order sent-to-kitchen timestamp ──────────────────────────────────────
+alter table restaurant_orders add column if not exists sent_to_kitchen_at timestamptz;
+
+-- ─── Table I/O/T categorization (Inside / Outside / Takeaway) ────────────
+alter table restaurant_tables add column if not exists section text
+  check (section in ('inside', 'outside', 'takeaway'));
+
+-- ─── Item modifiers/options (e.g. Thali -> Beverage -> Lassi/Chaas) ──────
+alter table restaurant_order_items add column if not exists selected_modifiers jsonb not null default '[]'::jsonb;
+alter table restaurant_order_items add column if not exists item_note text;
+
+-- ─── Price-includes-GST setting ───────────────────────────────────────────
+-- Shop-level choice: are product/menu prices the final (GST-inclusive)
+-- amount, or the pre-tax base with GST added on top? Captured per-
+-- transaction at creation time on bills/restaurant_orders/rentals too, so
+-- historical records always reverse-calculate correctly even if the
+-- shop's setting changes later.
+alter table shops add column if not exists price_includes_gst boolean not null default true;
+alter table bills add column if not exists price_includes_gst boolean not null default true;
+alter table restaurant_orders add column if not exists price_includes_gst boolean not null default true;
+alter table rentals add column if not exists price_includes_gst boolean not null default true;

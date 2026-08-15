@@ -2,7 +2,7 @@
 
 :root {
   /* Base surfaces — exact values from The Ray Bill brand spec */
-  --background: #f7f8fc;
+  --background: #e4e8ef;
   --surface: #ffffff;
   --surface-2: #f2f4f9;
   /* Overlay — the true top layer: modals, dropdowns, popovers. */
@@ -132,6 +132,29 @@
   --elevation-2: 0 8px 26px rgba(0, 0, 0, 0.32);
   --elevation-3: 0 18px 44px rgba(0, 0, 0, 0.4);
   --elevation-4: 0 28px 72px rgba(0, 0, 0, 0.5);
+}
+
+/* ============================================================
+   Accent color choice — Blue (default, matches the logo) or
+   Saffron. Only the brand tokens change; secondary/semantic
+   colors (success/warning/danger etc.) stay the same in both, so
+   status meaning never gets confused with the accent choice.
+   ============================================================ */
+[data-accent="saffron"] {
+  --brand: #e8720e;
+  --brand-dark: #b85400;
+  --brand-light: #ff9d40;
+  --brand-soft: #fff3e5;
+  --brand-text: #b85400;
+  --ray-gradient: linear-gradient(135deg, #e8720e 0%, #ff9d40 50%, #ffc178 100%);
+}
+.dark[data-accent="saffron"] {
+  --brand: #ffa94d;
+  --brand-dark: #e8871a;
+  --brand-light: #ffc178;
+  --brand-soft: #3d2410;
+  --brand-text: #ffb366;
+  --ray-gradient: linear-gradient(135deg, #e8871a 0%, #ffa94d 50%, #ffc178 100%);
 }
 
 @theme inline {
@@ -635,4 +658,88 @@ textarea:focus {
   line-height: 34px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
+}
+
+/* ============================================================
+   Neumorphic system — soft-UI depth built from the app's own
+   background color, tinted with the brand hue instead of generic
+   gray, so it reads as "this app's" style rather than a stock
+   effect. Text inside these elements ALWAYS uses --foreground/
+   --muted (not the shadow) for legibility — neumorphism's own
+   known weakness is low contrast, so depth stays decorative here,
+   never load-bearing for readability.
+   ============================================================ */
+:root {
+  --neu-light: rgba(255, 255, 255, 1);
+  --neu-dark: rgba(60, 72, 136, 0.4);
+  --neu-dark-strong: rgba(50, 62, 126, 0.52);
+}
+.dark {
+  --neu-light: rgba(255, 255, 255, 0.07);
+  --neu-dark: rgba(0, 0, 0, 0.65);
+  --neu-dark-strong: rgba(0, 0, 0, 0.8);
+}
+
+/* Raised surface — the default neumorphic card, "pushed out" of
+   the background. Use for containers that sit directly on
+   --background (not on --surface — a card-on-card double-shadow
+   looks muddy). */
+.neu-card {
+  background: var(--background);
+  border-radius: var(--radius-lg);
+  box-shadow:
+    -10px -10px 22px var(--neu-light),
+    10px 10px 22px var(--neu-dark);
+}
+
+/* Pressed/inset surface — for a "carved in" look, e.g. an avatar
+   frame or an active/selected state. */
+.neu-inset {
+  background: var(--background);
+  border-radius: var(--radius-lg);
+  box-shadow:
+    inset 6px 6px 12px var(--neu-dark),
+    inset -6px -6px 12px var(--neu-light);
+}
+
+/* Circular icon badge, raised — for icon-in-a-soft-bump patterns. */
+.neu-icon {
+  background: var(--background);
+  border-radius: 9999px;
+  box-shadow:
+    -6px -6px 12px var(--neu-light),
+    6px 6px 12px var(--neu-dark);
+}
+
+/* Interactive button — raised at rest, presses inward on tap so
+   the depth cue matches the actual physical metaphor. */
+.neu-button {
+  background: var(--background);
+  border: none;
+  border-radius: var(--radius);
+  box-shadow:
+    -8px -8px 16px var(--neu-light),
+    8px 8px 16px var(--neu-dark);
+  transition: box-shadow 0.15s ease;
+}
+.neu-button:active {
+  box-shadow:
+    inset 3px 3px 6px var(--neu-dark-strong),
+    inset -3px -3px 6px var(--neu-light);
+}
+
+/* Embossed/raised text — for headings and KPI numbers inside
+   neumorphic cards. Kept subtle relative to font size (large
+   offsets on text-shadow just look blurry, not "3D"), but visibly
+   carved/raised at typical heading and number sizes. */
+.neu-text {
+  text-shadow:
+    1px 1.5px 1px var(--neu-light),
+    -1px -1.5px 1.5px var(--neu-dark);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .neu-button {
+    transition: none;
+  }
 }

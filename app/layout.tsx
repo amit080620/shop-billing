@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { getTheme } from "@/lib/theme";
+import { getTheme, getAccent } from "@/lib/theme";
 import { getLang } from "@/lib/i18n/server";
 import { ServiceWorkerRegistration } from "./components/ServiceWorkerRegistration";
 import { ToastProvider } from "./components/Toast";
@@ -42,10 +42,11 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const theme = await getTheme();
+  const accent = await getAccent();
   const lang = await getLang();
 
   return (
-    <html lang={lang} className={theme === "dark" ? "dark" : undefined}>
+    <html lang={lang} className={theme === "dark" ? "dark" : undefined} data-accent={accent}>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
