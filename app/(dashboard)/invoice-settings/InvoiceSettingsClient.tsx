@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { saveInvoiceSettingsAction, uploadSettingsImageAction } from "@/lib/actions/settings";
 import { PageHeader } from "@/app/components/PageHeader";
-import { Palette, TrendingUp } from "lucide-react";
 
 const PRESET_COLORS = ["#0f6b5c", "#B45309", "#1D4ED8", "#B91C1C", "#7C3AED", "#0E7490"];
 

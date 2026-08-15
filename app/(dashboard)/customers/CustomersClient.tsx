@@ -14,7 +14,6 @@ import { Popup } from "@/app/components/Popup";
 import { ContactPickerButton } from "@/app/components/ContactPickerButton";
 import { INDIAN_STATES } from "@/lib/constants/states";
 import { BulkImportExportCustomers } from "./BulkImportExportCustomers";
-import { Users } from "lucide-react";
 
 type Customer = {
   id: string;

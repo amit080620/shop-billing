@@ -2,7 +2,6 @@
 
 import { useEffect, useId, useRef, useState } from "react";
 import type { Html5Qrcode as Html5QrcodeType } from "html5-qrcode";
-import { Camera } from "lucide-react";
 
 // A browser page can never programmatically open Chrome's permission
 // dialog or site-settings screen — that's a deliberate security boundary,

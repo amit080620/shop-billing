@@ -7,7 +7,6 @@ import { EmptyState } from "@/app/components/EmptyState";
 import { PageHeader } from "@/app/components/PageHeader";
 import { useTranslation } from "@/lib/i18n/useTranslation";
 import type { Lang } from "@/lib/i18n/dictionary";
-import { Bell } from "lucide-react";
 
 type Customer = { id: string; name: string; phone: string; balance: number; daysPending: number };
 

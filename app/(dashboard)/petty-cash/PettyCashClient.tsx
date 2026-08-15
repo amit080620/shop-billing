@@ -9,7 +9,7 @@ import { useToast } from "@/app/components/Toast";
 import { formatMoney, formatDateTime } from "@/lib/format";
 import { EmptyState } from "@/app/components/EmptyState";
 import { PageHeader } from "@/app/components/PageHeader";
-import { Wallet, Camera, X } from "lucide-react";
+import { Camera, X } from "lucide-react";
 import { ScanBillModal } from "./ScanBillModal";
 
 type Entry = { id: string; description: string; amount: number; category: string | null; createdAt: string };

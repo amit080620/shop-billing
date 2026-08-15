@@ -6,7 +6,6 @@ import { EmptyState } from "@/app/components/EmptyState";
 import { CatalogOrderRow } from "./CatalogOrderRow";
 import { isModuleEnabled } from "@/lib/modules";
 import { ModuleBlocked } from "@/app/components/ModuleBlocked";
-import { ShoppingBag } from "lucide-react";
 
 export default async function CatalogOrdersPage({
   searchParams,

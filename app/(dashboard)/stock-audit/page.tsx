@@ -6,7 +6,6 @@ import { EmptyState } from "@/app/components/EmptyState";
 import { StartAuditButton } from "./StartAuditButton";
 import { isModuleEnabled } from "@/lib/modules";
 import { ModuleBlocked } from "@/app/components/ModuleBlocked";
-import { ClipboardCheck } from "lucide-react";
 
 export default async function StockAuditListPage() {
   const session = await requireSession();
