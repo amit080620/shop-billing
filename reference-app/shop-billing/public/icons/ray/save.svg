@@ -1,5 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" fill="none"><defs>
-      <linearGradient id="ray" x1="8" y1="8" x2="56" y2="56"><stop stop-color="#0427F3"/><stop offset=".52" stop-color="#6A2BBF"/><stop offset="1" stop-color="#CD127B"/></linearGradient>
-      <linearGradient id="soft" x1="8" y1="8" x2="56" y2="56"><stop stop-color="#A8D8FF"/><stop offset=".5" stop-color="#9B76E1"/><stop offset="1" stop-color="#FF7AB8"/></linearGradient>
-      <filter id="shadow" x="-50%" y="-50%" width="200%" height="220%"><feDropShadow dx="0" dy="4" stdDeviation="3" flood-opacity=".18"/></filter>
-    </defs><title>Save</title><g filter="url(#shadow)"><path d="M12 9h35l7 7v38H12z" fill="#F5F6FA"/><path d="M19 9v19h23V9" fill="url(#ray)"/><rect x="19" y="34" width="23" height="12" rx="2" fill="#C2C6D1"/><animateTransform attributeName="transform" type="scale" values="1;.96;1" dur=".8s" repeatCount="indefinite"/></g></svg>

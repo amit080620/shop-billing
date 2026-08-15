@@ -20,6 +20,22 @@ export function splitTax(taxableAmount: number, gstPercent: number, supplyType: 
   return { cgst: half, sgst: round2(totalTax - half), igst: 0 };
 }
 
+/** For prices that are the FINAL, tax-inclusive amount the customer
+ * actually pays (e.g. a restaurant menu price) — backs GST out of that
+ * amount instead of adding it on top, so the printed bill total always
+ * matches the menu price × quantity (minus any discount), never more.
+ * taxableAmount + cgst + sgst + igst always equals inclusiveAmount
+ * (rounding aside), by construction. */
+export function splitTaxInclusive(inclusiveAmount: number, gstPercent: number, supplyType: SupplyType) {
+  const taxableAmount = round2(inclusiveAmount / (1 + gstPercent / 100));
+  const totalTax = round2(inclusiveAmount - taxableAmount);
+  if (supplyType === "inter") {
+    return { taxableAmount, cgst: 0, sgst: 0, igst: totalTax };
+  }
+  const half = round2(totalTax / 2);
+  return { taxableAmount, cgst: half, sgst: round2(totalTax - half), igst: 0 };
+}
+
 export function round2(n: number) {
   return Math.round((n + Number.EPSILON) * 100) / 100;
 }

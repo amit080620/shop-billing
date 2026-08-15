@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { createTableAction, startOrderAction, renameTableAction, deleteTableAction } from "@/lib/actions/restaurant";
+import { createTableAction, startOrderAction, renameTableAction, deleteTableAction, clearEmptyOrderAction } from "@/lib/actions/restaurant";
 import {
   listPendingTableRequestsAction,
   acceptTableOrderRequestAction,
@@ -127,6 +127,19 @@ export function TablesClient({ tables, lang }: { tables: Table[]; lang: Lang }) 
     });
   }
 
+  function handleClearEmpty(table: Table, e: React.MouseEvent) {
+    e.stopPropagation();
+    if (!table.openOrderId) return;
+    startTransition(async () => {
+      const result = await clearEmptyOrderAction(table.openOrderId!);
+      if (result.error) {
+        setError(result.error);
+        return;
+      }
+      router.refresh();
+    });
+  }
+
   function handleAddTable() {
     if (!newTableName.trim()) return;
     startTransition(async () => {
@@ -214,18 +227,17 @@ export function TablesClient({ tables, lang }: { tables: Table[]; lang: Lang }) 
       )}
 
       {showAddTable && (
-        <div className="flex flex-col gap-2">
-          <div className="flex gap-2">
-            <input
-              value={newTableName}
-              onChange={(e) => setNewTableName(e.target.value)}
-              placeholder={t("tables.namePlaceholder")}
-              className="flex-1 rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand"
-            />
-            <button onClick={handleAddTable} disabled={isPending} className="btn-primary-sm">
-              {t("tables.add")}
-            </button>
-          </div>
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 sm:items-center sm:p-4" onClick={() => setShowAddTable(false)}>
+        <div className="ray-pop w-full max-w-sm rounded-t-2xl bg-surface p-4 shadow-lg sm:rounded-2xl" onClick={(e) => e.stopPropagation()}>
+        <div className="flex flex-col gap-3">
+          <p className="text-sm font-semibold text-foreground">{t("tables.add")}</p>
+          <input
+            value={newTableName}
+            onChange={(e) => setNewTableName(e.target.value)}
+            placeholder={t("tables.namePlaceholder")}
+            autoFocus
+            className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand"
+          />
           <div className="flex gap-1.5">
             {(["inside", "outside", "takeaway"] as const).map((s) => (
               <button
@@ -240,6 +252,11 @@ export function TablesClient({ tables, lang }: { tables: Table[]; lang: Lang }) 
               </button>
             ))}
           </div>
+          <button onClick={handleAddTable} disabled={isPending} className="btn-primary-sm">
+            {t("tables.add")}
+          </button>
+        </div>
+        </div>
         </div>
       )}
       {error && <p className="text-sm text-danger">{error}</p>}
@@ -314,7 +331,13 @@ export function TablesClient({ tables, lang }: { tables: Table[]; lang: Lang }) 
               </span>
               <span className={`text-[11px] md:text-xs ${table.status === "occupied" ? "text-danger" : table.reservation ? "text-amber-700" : "text-brand-text"}`}>
                 {table.status === "occupied"
-                  ? formatMoney(table.openOrderTotal)
+                  ? table.openOrderTotal === 0
+                    ? (
+                      <button onClick={(e) => handleClearEmpty(table, e)} className="underline decoration-dotted">
+                        Free table
+                      </button>
+                    )
+                    : formatMoney(table.openOrderTotal)
                   : table.reservation
                     ? `${table.reservation.time} — ${table.reservation.customerName}`
                     : t("tables.free")}

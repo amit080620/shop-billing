@@ -1,4 +1,0 @@
-{
-  "regions": ["bom1"],
-  "buildCommand": "next build"
-}

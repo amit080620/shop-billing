@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { requireSession, requireOwner } from "../auth";
 import { createSupabaseAdminClient } from "../supabase/admin";
-import { determineSupplyType, financialYearFor, round2, splitTax } from "../gst";
+import { determineSupplyType, financialYearFor, round2, splitTax, splitTaxInclusive } from "../gst";
 
 export type ActionState = { error?: string } | null;
 
@@ -96,25 +96,34 @@ async function recalcOrderTotals(orderId: string) {
     .select("id, quantity, unit_price, gst_percent")
     .eq("order_id", orderId);
 
+  // unit_price is the FINAL menu price the customer sees (GST-inclusive)
+  // — subtotal here is the gross total, not a pre-tax base. This is what
+  // fixes "menu says ₹100, bill shows ₹105": GST is backed out of this
+  // amount below, never added on top of it.
   const subtotal = round2((items ?? []).reduce((s, i) => s + Number(i.quantity) * Number(i.unit_price), 0));
   const discountAmount =
     order.discount_type === "percent"
       ? round2(Math.min((subtotal * Number(order.discount_value)) / 100, subtotal))
       : round2(Math.min(Number(order.discount_value), subtotal));
-  const taxableAmount = round2(subtotal - discountAmount);
-  const discountRatio = subtotal > 0 ? taxableAmount / subtotal : 1;
+  const grossAfterDiscount = round2(subtotal - discountAmount);
+  const discountRatio = subtotal > 0 ? grossAfterDiscount / subtotal : 1;
 
   let cgst = 0;
   let sgst = 0;
   let igst = 0;
+  let taxableAmount = 0;
   for (const item of items ?? []) {
-    const lineTaxable = round2(Number(item.quantity) * Number(item.unit_price) * discountRatio);
-    const split = splitTax(lineTaxable, Number(item.gst_percent), order.supply_type as "intra" | "inter");
+    const lineGross = round2(Number(item.quantity) * Number(item.unit_price) * discountRatio);
+    const split = splitTaxInclusive(lineGross, Number(item.gst_percent), order.supply_type as "intra" | "inter");
+    taxableAmount = round2(taxableAmount + split.taxableAmount);
     cgst = round2(cgst + split.cgst);
     sgst = round2(sgst + split.sgst);
     igst = round2(igst + split.igst);
   }
-  const exactTotal = round2(taxableAmount + cgst + sgst + igst);
+  // The total IS the gross amount after discount — GST is a backed-out
+  // component of it, not an addition, so this never exceeds what the
+  // menu promised.
+  const exactTotal = grossAfterDiscount;
   const total = Math.round(exactTotal);
   const roundOffAmount = round2(total - exactTotal);
 
@@ -134,8 +143,8 @@ async function recalcOrderTotals(orderId: string) {
 
   // Item-level tax split, recorded so KOT/bill line display is accurate too.
   for (const item of items ?? []) {
-    const lineTaxable = round2(Number(item.quantity) * Number(item.unit_price) * discountRatio);
-    const split = splitTax(lineTaxable, Number(item.gst_percent), order.supply_type as "intra" | "inter");
+    const lineGross = round2(Number(item.quantity) * Number(item.unit_price) * discountRatio);
+    const split = splitTaxInclusive(lineGross, Number(item.gst_percent), order.supply_type as "intra" | "inter");
     await admin
       .from("restaurant_order_items")
       .update({
@@ -143,7 +152,7 @@ async function recalcOrderTotals(orderId: string) {
         cgst_amount: split.cgst,
         sgst_amount: split.sgst,
         igst_amount: split.igst,
-        line_total: round2(lineTaxable + split.cgst + split.sgst + split.igst),
+        line_total: lineGross,
       })
       .eq("id", item.id);
   }
@@ -524,6 +533,43 @@ export async function settleOrderAction(
  * so staff never need to know the real account credentials. Removing a
  * single mistaken item does NOT need this — only discarding the whole
  * table's order does. */
+/** Clears an order with zero items — no PIN needed since nothing of
+ * value exists yet (no food made, no money involved). This is what
+ * actually fixes a table stuck "occupied" from an accidental tap that
+ * never had anything added to it. Refuses if the order genuinely has
+ * items, so this can't be used to dodge cancelOrderAction's PIN check. */
+export async function clearEmptyOrderAction(orderId: string): Promise<{ error?: string }> {
+  const session = await requireSession();
+  const admin = createSupabaseAdminClient();
+
+  const { data: order } = await admin
+    .from("restaurant_orders")
+    .select("id, status, table_id")
+    .eq("id", orderId)
+    .eq("shop_id", session.shopId)
+    .single();
+  if (!order) return { error: "Order not found" };
+  if (order.status !== "open") return { error: "This order is no longer open" };
+
+  const { count } = await admin
+    .from("restaurant_order_items")
+    .select("id", { count: "exact", head: true })
+    .eq("order_id", orderId)
+    .neq("status", "cancelled");
+  if (count && count > 0) {
+    return { error: "This order has items — cancel it from the order screen instead." };
+  }
+
+  await admin
+    .from("restaurant_orders")
+    .update({ status: "cancelled", cancelled_at: new Date().toISOString(), cancel_reason: "Empty order cleared from Tables" })
+    .eq("id", orderId);
+  await admin.from("restaurant_tables").update({ status: "free" }).eq("id", order.table_id);
+
+  revalidatePath("/restaurant");
+  return {};
+}
+
 export async function cancelOrderAction(
   orderId: string,
   pin: string,

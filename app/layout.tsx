@@ -28,7 +28,12 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
-  themeColor: "#0f6b5c",
+  // Makes the browser actually shrink the visible viewport when the
+  // on-screen keyboard opens, instead of just overlaying content —
+  // this is the root fix for popups where the keyboard covers inputs
+  // and scrolling/dismissal feels broken on mobile.
+  interactiveWidget: "resizes-content",
+  themeColor: "#0427f3",
 };
 
 export default async function RootLayout({
