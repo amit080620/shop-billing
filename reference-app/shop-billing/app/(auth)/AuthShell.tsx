@@ -1,0 +1,51 @@
+import { LanguageToggle } from "@/lib/i18n/LanguageToggle";
+import { ThemeToggle } from "@/app/components/ThemeToggle";
+import type { Lang } from "@/lib/i18n/dictionary";
+
+export function AuthShell({
+  lang,
+  theme,
+  title,
+  subtitle,
+  children,
+  footer,
+}: {
+  lang: Lang;
+  theme: "light" | "dark";
+  title: string;
+  subtitle: string;
+  children: React.ReactNode;
+  footer: React.ReactNode;
+}) {
+  return (
+    <div
+      className="flex min-h-screen flex-col items-center justify-center px-6 py-12"
+      style={{
+        background:
+          "radial-gradient(1200px 600px at 50% -10%, var(--brand-soft), var(--background) 60%)",
+      }}
+    >
+      <div className="page-enter mx-auto w-full max-w-sm">
+        <div className="mb-4 flex justify-center gap-1.5 rounded-lg border border-border p-1">
+          <LanguageToggle lang={lang} compact />
+          <div className="w-px bg-border" />
+          <ThemeToggle theme={theme} compact />
+        </div>
+        <div className="mb-6 flex flex-col items-center gap-3 text-center">
+          {/* eslint-disable-next-line @next/next/no-img-element -- small static brand asset, next/image adds no value here */}
+          <img src="/brand-logo.png" alt="The Ray" className="h-24 w-auto" />
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">{title}</h1>
+            <p className="mt-1 text-sm text-muted">{subtitle}</p>
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-border bg-surface p-6 shadow-lg">
+          {children}
+        </div>
+
+        <div className="mt-6 text-center text-sm text-muted">{footer}</div>
+      </div>
+    </div>
+  );
+}

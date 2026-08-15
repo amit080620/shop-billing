@@ -1,0 +1,213 @@
+"use client";
+
+import { useEffect, useMemo, useRef, useState } from "react";
+import type { Lang } from "@/lib/i18n/dictionary";
+import { Mic } from "lucide-react";
+
+// Web Speech API isn't in TypeScript's default DOM lib — minimal shape for
+// what's actually used here.
+interface SpeechRecognitionResultLike {
+  transcript: string;
+}
+interface SpeechRecognitionEventLike extends Event {
+  results: { [index: number]: { [index: number]: SpeechRecognitionResultLike } };
+}
+interface SpeechRecognitionErrorLike extends Event {
+  error: string;
+}
+interface SpeechRecognitionLike extends EventTarget {
+  lang: string;
+  interimResults: boolean;
+  maxAlternatives: number;
+  start: () => void;
+  stop: () => void;
+  onresult: ((event: SpeechRecognitionEventLike) => void) | null;
+  onerror: ((event: SpeechRecognitionErrorLike) => void) | null;
+  onend: (() => void) | null;
+}
+
+function getSpeechRecognition(): (new () => SpeechRecognitionLike) | null {
+  if (typeof window === "undefined") return null;
+  const w = window as unknown as {
+    SpeechRecognition?: new () => SpeechRecognitionLike;
+    webkitSpeechRecognition?: new () => SpeechRecognitionLike;
+  };
+  return w.SpeechRecognition ?? w.webkitSpeechRecognition ?? null;
+}
+
+// Locking recognition to en-IN regardless of what the person is actually
+// speaking is why voice search "doesn't work" for Hindi/Marathi users —
+// match it to the app's selected language instead.
+function speechLocaleFor(lang?: Lang) {
+  if (lang === "hi") return "hi-IN";
+  if (lang === "mr") return "mr-IN";
+  return "en-IN";
+}
+
+function voiceErrorMessages(lang?: Lang) {
+  if (lang === "hi") {
+    return {
+      permission: "माइक की अनुमति नहीं मिली — फ़ोन की Settings में इस साइट को Microphone की अनुमति दें।",
+      noSpeech: "कुछ सुनाई नहीं दिया — दोबारा कोशिश करें।",
+      network: "Internet नहीं मिला — voice search के लिए connection चाहिए।",
+      generic: "Voice search नहीं चल पाया — दोबारा कोशिश करें।",
+    };
+  }
+  if (lang === "mr") {
+    return {
+      permission: "माइकला परवानगी मिळाली नाही — फोनच्या Settings मध्ये या साइटला Microphone परवानगी द्या.",
+      noSpeech: "काही ऐकू आले नाही — पुन्हा प्रयत्न करा.",
+      network: "Internet मिळाले नाही — voice search साठी connection आवश्यक आहे.",
+      generic: "Voice search चालले नाही — पुन्हा प्रयत्न करा.",
+    };
+  }
+  return {
+    permission: "Microphone permission was denied — allow it for this site in your phone's Settings.",
+    noSpeech: "Didn't catch that — try again.",
+    network: "No internet connection — voice search needs one.",
+    generic: "Voice search couldn't start — please try again.",
+  };
+}
+
+export function SearchableSelect<T>({
+  items,
+  getLabel,
+  getSubLabel,
+  getKey,
+  onSelect,
+  placeholder,
+  lang,
+}: {
+  items: T[];
+  getLabel: (item: T) => string;
+  getSubLabel?: (item: T) => string;
+  getKey: (item: T) => string;
+  onSelect: (item: T) => void;
+  placeholder: string;
+  lang?: Lang;
+}) {
+  const [query, setQuery] = useState("");
+  const [open, setOpen] = useState(false);
+  const [listening, setListening] = useState(false);
+  const [voiceSupported, setVoiceSupported] = useState(false);
+  const [voiceError, setVoiceError] = useState<string | null>(null);
+  const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    setVoiceSupported(getSpeechRecognition() !== null);
+  }, []);
+
+  function startVoiceSearch() {
+    const SpeechRecognitionCtor = getSpeechRecognition();
+    if (!SpeechRecognitionCtor) return;
+    setVoiceError(null);
+    const recognition = new SpeechRecognitionCtor();
+    recognition.lang = speechLocaleFor(lang);
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+    recognition.onresult = (event) => {
+      const transcript = event.results[0]?.[0]?.transcript ?? "";
+      if (transcript) {
+        setQuery(transcript);
+        setOpen(true);
+        setVoiceError(null);
+      }
+    };
+    recognition.onerror = (event) => {
+      setListening(false);
+      if (event.error === "not-allowed" || event.error === "service-not-allowed") {
+        setVoiceError(voiceErrorMessages(lang).permission);
+      } else if (event.error === "no-speech") {
+        setVoiceError(voiceErrorMessages(lang).noSpeech);
+      } else if (event.error === "network") {
+        setVoiceError(voiceErrorMessages(lang).network);
+      } else {
+        setVoiceError(voiceErrorMessages(lang).generic);
+      }
+    };
+    recognition.onend = () => setListening(false);
+    recognitionRef.current = recognition;
+    setListening(true);
+    recognition.start();
+  }
+
+  function stopVoiceSearch() {
+    recognitionRef.current?.stop();
+    setListening(false);
+  }
+
+  const filtered = useMemo(() => {
+    if (!query.trim()) return items.slice(0, 8);
+    const q = query.toLowerCase();
+    return items
+      .filter(
+        (i) =>
+          getLabel(i).toLowerCase().includes(q) ||
+          getSubLabel?.(i)?.toLowerCase().includes(q),
+      )
+      .slice(0, 8);
+  }, [items, query, getLabel, getSubLabel]);
+
+  return (
+    <div className="relative">
+      <input
+        ref={inputRef}
+        value={query}
+        onChange={(e) => {
+          setQuery(e.target.value);
+          setOpen(true);
+          setVoiceError(null);
+        }}
+        onFocus={() => setOpen(true)}
+        onBlur={() => setTimeout(() => setOpen(false), 150)}
+        placeholder={placeholder}
+        className={`w-full rounded-lg border border-border bg-surface shadow-sm px-3.5 py-2.5 text-sm outline-none focus:border-brand ${voiceSupported ? "pr-10" : ""}`}
+      />
+      {voiceSupported && (
+        <button
+          type="button"
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={() => (listening ? stopVoiceSearch() : startVoiceSearch())}
+          className={`absolute right-2 top-1/2 -translate-y-1/2 flex h-6 w-6 items-center justify-center rounded-full text-sm ${
+            listening ? "animate-pulse bg-danger text-white" : "text-muted"
+          }`}
+          aria-label="Search by voice"
+        >
+          <Mic size={14} />
+        </button>
+      )}
+      {voiceError && (
+        <p className="mt-1 text-xs text-danger">{voiceError}</p>
+      )}
+      {open && filtered.length > 0 && (
+        <ul className="absolute z-30 mt-1 max-h-64 w-full overflow-y-auto rounded-lg border border-border bg-surface shadow-lg">
+          {filtered.map((item) => (
+            <li key={getKey(item)}>
+              <button
+                type="button"
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => {
+                  inputRef.current?.blur();
+                  onSelect(item);
+                  setQuery("");
+                  setOpen(false);
+                }}
+                className="flex w-full items-center justify-between gap-3 px-3.5 py-2.5 text-left text-sm hover:bg-brand-soft"
+              >
+                <span className="min-w-0 flex-1 truncate text-foreground">
+                  {getLabel(item)}
+                </span>
+                {getSubLabel && (
+                  <span className="shrink-0 text-xs text-muted">
+                    {getSubLabel(item)}
+                  </span>
+                )}
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}

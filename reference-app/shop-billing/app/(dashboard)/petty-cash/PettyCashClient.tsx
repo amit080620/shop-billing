@@ -1,0 +1,189 @@
+"use client";
+
+import { useMemo, useState, useTransition } from "react";
+import { useActionState } from "react";
+import { useFormStatus } from "react-dom";
+import { useRouter } from "next/navigation";
+import { createPettyCashEntryAction, deletePettyCashEntryAction } from "@/lib/actions/petty-cash";
+import { useToast } from "@/app/components/Toast";
+import { formatMoney, formatDateTime } from "@/lib/format";
+import { EmptyState } from "@/app/components/EmptyState";
+import { PageHeader } from "@/app/components/PageHeader";
+import { Wallet, Camera, X } from "lucide-react";
+import { ScanBillModal } from "./ScanBillModal";
+
+type Entry = { id: string; description: string; amount: number; category: string | null; createdAt: string };
+
+const QUICK_CATEGORIES = ["Tea/Snacks", "Stationery", "Transport", "Cleaning", "Repairs", "Other"];
+
+function SubmitButton() {
+  const { pending } = useFormStatus();
+  return (
+    <button type="submit" disabled={pending} className="btn-primary-sm disabled:opacity-60">
+      {pending ? "Saving…" : "+ Add"}
+    </button>
+  );
+}
+
+export function PettyCashClient({ entries }: { entries: Entry[] }) {
+  const router = useRouter();
+  const [showForm, setShowForm] = useState(false);
+  const [showScan, setShowScan] = useState(false);
+  const [description, setDescription] = useState("");
+  const [amount, setAmount] = useState("");
+  const [category, setCategory] = useState("");
+  const [isPending, startTransition] = useTransition();
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const { showToast } = useToast();
+
+  const [state, formAction] = useActionState(
+    async (prev: { error?: string } | null, formData: FormData) => {
+      const result = await createPettyCashEntryAction(prev, formData);
+      if (!result?.error) {
+        setShowForm(false);
+        setCategory("");
+        setDescription("");
+        setAmount("");
+        showToast("Expense recorded");
+        router.refresh();
+      }
+      return result;
+    },
+    null,
+  );
+
+  const todayTotal = useMemo(() => {
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    return entries.filter((e) => new Date(e.createdAt) >= todayStart).reduce((s, e) => s + e.amount, 0);
+  }, [entries]);
+  const monthTotal = useMemo(() => entries.reduce((s, e) => s + e.amount, 0), [entries]);
+
+  return (
+    <div className="flex flex-col gap-4">
+      <PageHeader
+        title="Petty cash"
+        subtitle="Small day-to-day cash expenses — tea, stationery, auto fare — so cash in hand actually adds up."
+        action={
+          <button onClick={() => setShowForm((v) => !v)} className="btn-primary-sm">
+            + Expense
+          </button>
+        }
+        // eslint-disable-next-line @next/next/no-img-element -- small branded SVG icon
+        icon={<img src="/assets/ray-icons/cash.svg" alt="" className="h-9 w-9 md:h-11 md:w-11" />}
+        bareIcon
+      />
+
+      <div className="grid grid-cols-2 gap-3">
+        <div className="rounded-xl border border-border bg-surface p-3.5 text-center shadow-sm">
+          <p className="text-xs text-muted">Today</p>
+          <p className="mt-1 text-lg font-semibold text-foreground">{formatMoney(todayTotal)}</p>
+        </div>
+        <div className="rounded-xl border border-border bg-surface p-3.5 text-center shadow-sm">
+          <p className="text-xs text-muted">This month</p>
+          <p className="mt-1 text-lg font-semibold text-foreground">{formatMoney(monthTotal)}</p>
+        </div>
+      </div>
+
+      {showForm && (
+        <form action={formAction} className="flex flex-col gap-3 rounded-xl border border-dashed border-brand bg-brand-soft p-4">
+          <button
+            type="button"
+            onClick={() => setShowScan(true)}
+            className="flex items-center justify-center gap-2 rounded-lg border border-brand bg-surface px-3 py-2 text-sm font-medium text-brand-text"
+          >
+            <Camera size={15} /> Scan bill instead
+          </button>
+          <input
+            name="description"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="What was it for? (e.g. Tea for staff)"
+            required
+            className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand"
+          />
+          <input
+            name="amount"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            type="number"
+            min="0.01"
+            step="0.01"
+            placeholder="Amount (₹)"
+            required
+            className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand"
+          />
+          <input type="hidden" name="category" value={category} />
+          <div className="flex flex-wrap gap-1.5">
+            {QUICK_CATEGORIES.map((c) => (
+              <button
+                key={c}
+                type="button"
+                onClick={() => setCategory(c)}
+                className={`rounded-full border px-2.5 py-1 text-xs font-medium ${
+                  category === c ? "border-brand bg-surface text-brand-text" : "border-transparent bg-surface/60 text-muted"
+                }`}
+              >
+                {c}
+              </button>
+            ))}
+          </div>
+          {state?.error && <p className="text-sm text-danger">{state.error}</p>}
+          <div className="flex gap-2">
+            <SubmitButton />
+            <button type="button" onClick={() => setShowForm(false)} className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-muted">
+              Cancel
+            </button>
+          </div>
+        </form>
+      )}
+
+      {entries.length === 0 ? (
+        <EmptyState text="No petty cash expenses logged yet." />
+      ) : (
+        <ul className="flex flex-col gap-2 md:grid md:grid-cols-2 md:gap-3">
+          {entries.map((e) => (
+            <li key={e.id} className="flex items-center justify-between rounded-lg border border-border bg-surface px-3.5 py-2.5 shadow-sm">
+              <div className="min-w-0">
+                <p className="truncate text-sm font-medium text-foreground">{e.description}</p>
+                <p className="text-xs text-muted">
+                  {e.category ? `${e.category} · ` : ""}
+                  {formatDateTime(e.createdAt)}
+                </p>
+              </div>
+              <div className="flex shrink-0 items-center gap-2">
+                <p className="text-sm font-semibold text-foreground">{formatMoney(e.amount)}</p>
+                <button
+                  onClick={() => {
+                    if (!confirm("Delete this entry?")) return;
+                    setDeletingId(e.id);
+                    startTransition(async () => {
+                      await deletePettyCashEntryAction(e.id);
+                      setDeletingId(null);
+                      router.refresh();
+                    });
+                  }}
+                  disabled={isPending && deletingId === e.id}
+                  className="text-xs font-medium text-danger disabled:opacity-50"
+                >
+                  <X size={13} />
+                </button>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {showScan && (
+        <ScanBillModal
+          onConfirm={(fields) => {
+            setDescription(fields.description);
+            setAmount(fields.amount);
+            setShowScan(false);
+          }}
+          onCancel={() => setShowScan(false)}
+        />
+      )}
+    </div>
+  );
+}

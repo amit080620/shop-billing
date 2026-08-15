@@ -1,0 +1,25 @@
+{
+  "status": "FINAL_DESIGN_OS",
+  "design_os_files": 423,
+  "extended_token_files": 10,
+  "brand": "#0427F3 \u2192 #6A2BBF \u2192 #CD127B",
+  "base_spacing": 4,
+  "breakpoints": [
+    640,
+    768,
+    1024,
+    1280,
+    1440,
+    1920
+  ],
+  "themes": [
+    "light",
+    "dark"
+  ],
+  "print": [
+    "thermal-58mm",
+    "thermal-80mm",
+    "A4"
+  ],
+  "includes_reference_app": true
+}

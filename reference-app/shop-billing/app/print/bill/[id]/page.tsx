@@ -1,0 +1,377 @@
+import { notFound } from "next/navigation";
+import { Suspense } from "react";
+import Link from "next/link";
+import { requireSession, hasPermission } from "@/lib/auth";
+import { getTranslator } from "@/lib/i18n/server";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { formatMoney, formatDateTime } from "@/lib/format";
+import { buildUpiLink, generateQrDataUrl } from "@/lib/qr";
+import { customerNounFor } from "@/lib/businessType";
+import { PrintButton } from "./PrintButton";
+import { WhatsAppSendButton } from "./WhatsAppSendButton";
+import { BillCreatedConfirmation } from "./BillCreatedConfirmation";
+import { VoidBillButton } from "./VoidBillButton";
+import { EditBillButton } from "./EditBillButton";
+import { DownloadImageButton } from "./DownloadImageButton";
+
+export default async function PrintBillPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ format?: string }>;
+}) {
+  const { id } = await params;
+  const { format } = await searchParams;
+  const isThermal = format === "thermal";
+
+  const session = await requireSession();
+  const { lang } = await getTranslator();
+  const admin = createSupabaseAdminClient();
+
+  const { data: invoiceSettings } = await admin
+    .from("invoice_settings")
+    .select("tagline, footer_text, terms_and_conditions, bank_details, accent_color, header_image_url, footer_image_url")
+    .eq("shop_id", session.shopId)
+    .maybeSingle();
+
+  const { data: bill } = await admin
+    .from("bills")
+    .select(
+      "id, invoice_number, subtotal, discount_type, discount_value, discount_amount, taxable_amount, supply_type, cgst_amount, sgst_amount, igst_amount, gst_amount, round_off_amount, payment_method, status, void_reason, voided_at, total, paid_amount, credit_amount, created_at, service_provider_name, edited_at, edit_reason, customers ( name, phone, gstin, address )",
+    )
+    .eq("id", id)
+    .eq("shop_id", session.shopId) // ownership check
+    .single();
+
+  if (!bill) notFound();
+
+  const { data: items } = await admin
+    .from("bill_items")
+    .select("id, product_name, hsn_code, quantity, unit_price, gst_percent, cgst_amount, sgst_amount, igst_amount, line_total, warranty_months, warranty_expires_on, mrp")
+    .eq("bill_id", id)
+    .order("product_name");
+
+  const customer = Array.isArray(bill.customers)
+    ? bill.customers[0]
+    : (bill.customers as { name: string; phone: string; gstin: string | null; address: string | null } | null);
+
+  const isIntra = bill.supply_type === "intra";
+  const paymentLabel = paymentMethodLabel(bill.payment_method);
+
+  let upiLink: string | null = null;
+  let upiQrDataUrl: string | null = null;
+  if (session.shopUpiId && Number(bill.credit_amount) > 0 && bill.status === "active") {
+    upiLink = buildUpiLink(
+      session.shopUpiId,
+      session.shopName,
+      Number(bill.credit_amount),
+      `Invoice ${bill.invoice_number}`,
+    );
+    upiQrDataUrl = await generateQrDataUrl(upiLink);
+  }
+
+  return (
+    <>
+      <Suspense fallback={null}>
+        <BillCreatedConfirmation amount={formatMoney(bill.total)} />
+      </Suspense>
+    <div
+      className={`relative mx-auto bg-white text-black ${
+        isThermal ? "w-[280px] p-2 font-mono text-xs" : "max-w-2xl p-8"
+      }`}
+    >
+      {bill.status === "voided" && (
+        <div
+          className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center overflow-hidden"
+          aria-hidden="true"
+        >
+          <span
+            className="select-none whitespace-nowrap font-black text-red-600/25"
+            style={{
+              fontSize: isThermal ? "28px" : "72px",
+              transform: "rotate(-25deg)",
+            }}
+          >
+            VOIDED
+          </span>
+        </div>
+      )}
+      <div className="no-print mb-4 flex flex-col gap-2">
+        <WhatsAppSendButton
+          lang={lang}
+          customerName={customer?.name ?? null}
+          customerPhone={customer?.phone ?? null}
+          shopName={session.shopName}
+          invoiceNumber={bill.invoice_number}
+          total={Number(bill.total)}
+          paidAmount={Number(bill.paid_amount)}
+          creditAmount={Number(bill.credit_amount)}
+          upiLink={upiLink}
+        />
+        <div className="flex justify-end gap-2">
+          <a
+            href={`/print/bill/${id}?format=full`}
+            className="rounded border border-gray-300 px-3 py-1.5 text-sm"
+          >
+            Full page
+          </a>
+          <a
+            href={`/print/bill/${id}?format=thermal`}
+            className="rounded border border-gray-300 px-3 py-1.5 text-sm"
+          >
+            Thermal (72mm)
+          </a>
+          <DownloadImageButton invoiceNumber={bill.invoice_number} upiLink={upiLink} isThermal={isThermal} />
+          <PrintButton />
+        </div>
+        <p className="text-right text-xs text-gray-500">
+          WhatsApp text messages can&apos;t carry a file — download the PDF above, then attach it
+          yourself in the WhatsApp chat for a clean copy. If there&apos;s a balance due, the QR
+          area in that PDF is also tappable in most PDF viewers, opening the customer&apos;s UPI
+          app directly.
+        </p>
+        {bill.status === "active" && hasPermission(session, "process_returns") && (
+          <Link
+            href={`/returns/new?billId=${bill.id}`}
+            className="no-print block rounded-lg border border-brand px-4 py-2.5 text-center text-sm font-medium text-brand-text"
+          >
+            ↩️ Return / Exchange
+          </Link>
+        )}
+        {hasPermission(session, "edit_bills") && bill.status === "active" && (
+          <EditBillButton
+            billId={bill.id}
+            invoiceNumber={bill.invoice_number}
+            items={(items ?? []).map((i) => ({ id: i.id, productName: i.product_name, quantity: Number(i.quantity) }))}
+          />
+        )}
+        {hasPermission(session, "void_bills") && bill.status === "active" && (
+          <VoidBillButton billId={bill.id} invoiceNumber={bill.invoice_number} />
+        )}
+      </div>
+
+      {bill.status === "voided" && (
+        <div className="no-print mb-4 rounded-lg border border-danger bg-red-50 px-4 py-3 text-sm text-danger">
+          <p className="font-semibold">This invoice has been voided.</p>
+          <p className="mt-0.5">
+            Reason: {bill.void_reason} · {bill.voided_at ? formatDateTime(bill.voided_at) : ""}
+          </p>
+          <p className="mt-1 text-xs">
+            It&apos;s excluded from all totals, balances, and GST reports. Kept here only for
+            record-keeping — nothing prints on it below except as a reference copy.
+          </p>
+        </div>
+      )}
+
+      {bill.edited_at && (
+        <div className="no-print mb-4 rounded-lg border border-credit bg-credit-soft px-4 py-3 text-sm text-credit">
+          <p className="font-semibold">This invoice was corrected after it was first created.</p>
+          <p className="mt-0.5">
+            Reason: {bill.edit_reason} · {formatDateTime(bill.edited_at)}
+          </p>
+        </div>
+      )}
+
+      <div id="invoice-capture-area" className="bg-white">
+      {invoiceSettings?.header_image_url && (
+        // eslint-disable-next-line @next/next/no-img-element -- print page, needs to render for print dialog
+        <img src={invoiceSettings.header_image_url} alt="" className={`mb-2 w-full object-contain ${isThermal ? "max-h-12" : "max-h-20"}`} />
+      )}
+      <div className="mb-1 flex items-center gap-3">
+        {session.shopLogoUrl && (
+          // Plain <img>, not next/image — this render also feeds the browser
+          // print dialog, where next/image's lazy-loading can leave it blank.
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={session.shopLogoUrl}
+            alt=""
+            className={isThermal ? "h-8 w-8 object-contain" : "h-12 w-12 object-contain"}
+          />
+        )}
+        <div className="flex flex-1 items-center justify-between">
+          <div>
+            <h1 className={isThermal ? "text-sm font-bold" : "text-xl font-bold"}>
+              {session.shopName}
+            </h1>
+            {invoiceSettings?.tagline && (
+              <p className={isThermal ? "text-[8px] text-gray-500" : "text-xs text-gray-500"}>{invoiceSettings.tagline}</p>
+            )}
+          </div>
+          <p
+            className={isThermal ? "text-[9px] font-semibold" : "text-sm font-semibold"}
+            style={{ color: invoiceSettings?.accent_color ?? undefined }}
+          >
+            Tax Invoice
+          </p>
+        </div>
+      </div>
+      {session.shopGstin && (
+        <p className={isThermal ? "text-[9px] text-gray-600" : "text-xs text-gray-500"}>
+          GSTIN: {session.shopGstin}
+        </p>
+      )}
+
+      <div className={`mt-2 flex justify-between ${isThermal ? "text-[10px]" : "text-sm"}`}>
+        <span>Invoice #{bill.invoice_number}</span>
+        <span>{formatDateTime(bill.created_at)}</span>
+      </div>
+
+      <div className={`mt-2 border-t border-dashed border-gray-400 pt-2 ${isThermal ? "" : "text-sm text-gray-700"}`}>
+        <p>Bill to: {customer?.name ?? `Walk-in ${customerNounFor(session.businessType).toLowerCase()}`}</p>
+        {bill.service_provider_name && <p>Stylist: {bill.service_provider_name}</p>}
+        {customer?.phone && <p className={isThermal ? "text-[9px]" : "text-xs text-gray-500"}>{customer.phone}</p>}
+        {customer?.gstin && <p className={isThermal ? "text-[9px]" : "text-xs text-gray-500"}>GSTIN: {customer.gstin}</p>}
+        <p className={isThermal ? "text-[9px] text-gray-600" : "text-xs text-gray-500"}>
+          Place of supply: {isIntra ? "Same state (CGST + SGST)" : "Different state (IGST)"}
+        </p>
+      </div>
+
+      <table className="mt-3 w-full border-collapse">
+        <thead>
+          <tr className={isThermal ? "border-b border-black" : "border-b border-gray-300 text-sm"}>
+            <th className="py-1 text-left">Item</th>
+            {!isThermal && <th className="py-1 text-left">HSN</th>}
+            <th className="py-1 text-right">Qty</th>
+            <th className="py-1 text-right">Rate</th>
+            <th className="py-1 text-right">Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          {(items ?? []).map((item, i) => (
+            <tr key={i} className={isThermal ? "" : "text-sm"}>
+              <td className="py-1">
+                {item.product_name}
+                {item.warranty_expires_on && (
+                  <div className="text-xs text-gray-500">
+                    Warranty till {new Date(item.warranty_expires_on).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+                  </div>
+                )}
+              </td>
+              {!isThermal && <td className="py-1 text-gray-500">{item.hsn_code ?? "—"}</td>}
+              <td className="py-1 text-right">{item.quantity}</td>
+              <td className="py-1 text-right">
+                {item.mrp != null && item.mrp > item.unit_price && (
+                  <div className="text-xs text-gray-400 line-through">{formatMoney(item.mrp)}</div>
+                )}
+                {formatMoney(item.unit_price)}
+              </td>
+              <td className="py-1 text-right">{formatMoney(item.line_total)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      <div className={`mt-3 flex flex-col gap-1 border-t border-dashed border-gray-400 pt-2 ${isThermal ? "" : "text-sm"}`}>
+        {(() => {
+          const totalMrpSavings = (items ?? []).reduce(
+            (s, item) => s + (item.mrp != null && item.mrp > item.unit_price ? (item.mrp - item.unit_price) * item.quantity : 0),
+            0,
+          );
+          return totalMrpSavings > 0 ? (
+            <SummaryRow label="You saved (off MRP)" value={formatMoney(totalMrpSavings)} />
+          ) : null;
+        })()}
+        <SummaryRow label="Subtotal" value={formatMoney(bill.subtotal)} />
+        {bill.discount_amount > 0 && (
+          <SummaryRow
+            label={`Discount (${
+              bill.discount_type === "percent" ? `${bill.discount_value}%` : "flat"
+            })`}
+            value={`− ${formatMoney(bill.discount_amount)}`}
+          />
+        )}
+        <SummaryRow label="Taxable value" value={formatMoney(bill.taxable_amount)} />
+        {isIntra ? (
+          <>
+            <SummaryRow label="CGST" value={`+ ${formatMoney(bill.cgst_amount)}`} />
+            <SummaryRow label="SGST" value={`+ ${formatMoney(bill.sgst_amount)}`} />
+          </>
+        ) : (
+          <SummaryRow label="IGST" value={`+ ${formatMoney(bill.igst_amount)}`} />
+        )}
+        {Number(bill.round_off_amount) !== 0 && (
+          <SummaryRow
+            label="Round off"
+            value={`${Number(bill.round_off_amount) > 0 ? "+ " : "− "}${formatMoney(Math.abs(Number(bill.round_off_amount)))}`}
+          />
+        )}
+        <SummaryRow label="Total" value={formatMoney(bill.total)} bold />
+        <SummaryRow label={`Paid (${paymentLabel})`} value={formatMoney(bill.paid_amount)} />
+        {bill.credit_amount > 0 && (
+          <SummaryRow label="Credit (udhaar)" value={formatMoney(bill.credit_amount)} bold />
+        )}
+      </div>
+
+      {upiQrDataUrl && (
+        <div id="upi-qr-block" className="mt-3 flex flex-col items-center gap-1 border-t border-dashed border-gray-400 pt-3">
+          <p className={isThermal ? "text-[9px] font-semibold" : "text-xs font-semibold text-gray-700"}>
+            Scan to pay {formatMoney(bill.credit_amount)}
+          </p>
+          {/* eslint-disable-next-line @next/next/no-img-element -- static data URL, not a Next-optimizable remote image */}
+          <img
+            src={upiQrDataUrl}
+            alt="UPI payment QR code"
+            className={isThermal ? "h-28 w-28" : "h-36 w-36"}
+          />
+          <p className={isThermal ? "text-[8px] text-gray-500" : "text-[10px] text-gray-500"}>
+            {session.shopUpiId}
+          </p>
+        </div>
+      )}
+
+      {invoiceSettings?.bank_details && (
+        <div className={`mt-3 border-t border-dashed border-gray-300 pt-2 ${isThermal ? "text-[9px]" : "text-xs text-gray-600"}`}>
+          <p className="font-semibold text-gray-700">Bank details</p>
+          {invoiceSettings.bank_details.split("\n").map((line, i) => (
+            <p key={i}>{line}</p>
+          ))}
+        </div>
+      )}
+
+      {invoiceSettings?.terms_and_conditions && (
+        <div className={`mt-2 ${isThermal ? "text-[8px] text-gray-500" : "text-[10px] text-gray-500"}`}>
+          <p className="font-semibold">Terms & conditions</p>
+          {invoiceSettings.terms_and_conditions.split("\n").map((line, i) => (
+            <p key={i}>{line}</p>
+          ))}
+        </div>
+      )}
+
+      {invoiceSettings?.footer_image_url && (
+        // eslint-disable-next-line @next/next/no-img-element -- print page, needs to render for print dialog
+        <img src={invoiceSettings.footer_image_url} alt="" className={`mt-4 w-full object-contain ${isThermal ? "max-h-10" : "max-h-16"}`} />
+      )}
+
+      <p className={`mt-6 text-center ${isThermal ? "text-[10px]" : "text-xs text-gray-500"}`}>
+        {invoiceSettings?.footer_text || "Thank you for your business!"}
+      </p>
+      </div>
+    </div>
+    </>
+  );
+}
+
+function paymentMethodLabel(method: string) {
+  switch (method) {
+    case "cash":
+      return "Cash";
+    case "card":
+      return "Card";
+    case "upi":
+      return "UPI";
+    case "online":
+      return "Online";
+    default:
+      return "Other";
+  }
+}
+
+function SummaryRow({ label, value, bold }: { label: string; value: string; bold?: boolean }) {
+  return (
+    <div className={`flex justify-between ${bold ? "font-bold" : ""}`}>
+      <span>{label}</span>
+      <span>{value}</span>
+    </div>
+  );
+}

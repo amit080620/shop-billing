@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" fill="none"><defs>
+      <linearGradient id="ray" x1="8" y1="8" x2="56" y2="56"><stop stop-color="#0427F3"/><stop offset=".52" stop-color="#6A2BBF"/><stop offset="1" stop-color="#CD127B"/></linearGradient>
+      <linearGradient id="soft" x1="8" y1="8" x2="56" y2="56"><stop stop-color="#A8D8FF"/><stop offset=".5" stop-color="#9B76E1"/><stop offset="1" stop-color="#FF7AB8"/></linearGradient>
+      <filter id="shadow" x="-50%" y="-50%" width="200%" height="220%"><feDropShadow dx="0" dy="4" stdDeviation="3" flood-opacity=".18"/></filter>
+    </defs><title>Invoice</title><g filter="url(#shadow)"><rect x="13" y="8" width="38" height="48" rx="5" fill="#F6F7FA"/><path d="M20 19h24M20 26h18M20 33h24M20 40h14" stroke="url(#ray)" stroke-width="3" stroke-linecap="round"/><path d="M39 8v12h12" fill="url(#soft)"/></g></svg>
