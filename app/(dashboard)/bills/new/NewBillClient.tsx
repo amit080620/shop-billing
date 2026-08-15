@@ -745,7 +745,7 @@ export function NewBillClient({
         />
       </section>
 
-      <section className="flex flex-col gap-2 rounded-xl border border-border bg-surface shadow-sm p-4 text-sm">
+      <section className="neu-card flex flex-col gap-2 p-4 text-sm">
         <div className="mb-1 flex items-center justify-between">
           <span className="text-xs font-medium uppercase tracking-wide text-muted">
             {supplyType === "intra" ? t("bill.localSale") : t("bill.interStateSale")}
@@ -1068,7 +1068,7 @@ function Row({ label, value, bold }: { label: string; value: string; bold?: bool
   return (
     <div className="flex justify-between">
       <span className={bold ? "font-semibold text-foreground" : "text-muted"}>{label}</span>
-      <span className={bold ? "font-semibold text-foreground" : "text-foreground"}>
+      <span className={bold ? "font-semibold text-foreground neu-text" : "text-foreground"}>
         {value}
       </span>
     </div>

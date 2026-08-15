@@ -204,7 +204,7 @@ export function CustomersClient({
             <li key={c.id}>
               <Link
                 href={`/customers/${c.id}`}
-                className="hover-lift flex items-center justify-between gap-3 rounded-lg border border-border bg-surface shadow-sm px-3.5 py-3"
+                className="hover-lift neu-card flex items-center justify-between gap-3 px-3.5 py-3"
               >
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium text-foreground">{c.name}</p>

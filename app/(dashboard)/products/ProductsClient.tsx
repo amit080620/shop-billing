@@ -293,9 +293,9 @@ export function ProductsClient({
 
       {initialProducts.some((p) => p.trackInventory) && (
         <div className="grid grid-cols-2 gap-2">
-          <div className="rounded-xl border border-border bg-surface shadow-sm p-2.5 text-center">
+          <div className="neu-card p-2.5 text-center">
             <p className="text-xs text-muted">{t("products.trackedItems")}</p>
-            <p className="mt-0.5 text-base font-semibold text-foreground">
+            <p className="mt-0.5 text-base font-semibold text-foreground neu-text">
               {initialProducts.filter((p) => p.trackInventory).length}
             </p>
           </div>
@@ -721,7 +721,7 @@ export function ProductsClient({
             return (
               <li
                 key={p.id}
-                className="flex items-center justify-between gap-3 rounded-lg border border-border bg-surface shadow-sm px-3.5 py-3"
+                className="neu-card flex items-center justify-between gap-3 px-3.5 py-3"
                 style={tone ? { borderLeft: `3px solid ${TONE_COLORS[tone]}` } : undefined}
               >
                 <label className="relative flex h-12 w-12 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-lg border border-dashed border-border bg-background text-[10px] text-muted">
