@@ -10,6 +10,7 @@ import { useToast } from "@/app/components/Toast";
 import { addGrowthLogAction, uploadPatientPhotoAction, deletePatientPhotoAction } from "@/lib/actions/clinic";
 import { formatMoney, formatDateTime } from "@/lib/format";
 import { EmptyState } from "@/app/components/EmptyState";
+import { Popup } from "@/app/components/Popup";
 import { DownloadStatementButton } from "./DownloadStatementButton";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
@@ -141,9 +142,10 @@ export function LedgerClient({
       </p>
 
       {showPaymentForm && (
+        <Popup open={showPaymentForm} onClose={() => setShowPaymentForm(false)} title="Record a payment">
         <form
           action={formAction}
-          className="flex flex-col gap-3 rounded-xl border border-border bg-surface shadow-sm p-4"
+          className="flex flex-col gap-3"
         >
           <input type="hidden" name="customerId" value={customer.id} />
           <label className="flex flex-col gap-1.5 text-sm">
@@ -169,6 +171,7 @@ export function LedgerClient({
           {state?.error && <p className="text-sm text-credit">{state.error}</p>}
           <SubmitButton />
         </form>
+        </Popup>
       )}
 
       <section>
@@ -367,6 +370,7 @@ function GrowthChart({
       <p className="text-xs text-muted">A plain trend of measurements over time — no percentile comparison, you interpret it.</p>
 
       {showForm && (
+        <Popup open={showForm} onClose={() => setShowForm(false)} title="Add growth entry">
         <div className="flex flex-col gap-2 rounded-lg border border-dashed border-brand bg-brand-soft p-3">
           <div className="grid grid-cols-3 gap-2">
             <input type="number" step="0.1" value={height} onChange={(e) => setHeight(e.target.value)} placeholder="Height (cm)" className="rounded-lg border border-border bg-surface px-2 py-1.5 text-xs outline-none focus:border-brand" />
@@ -379,6 +383,7 @@ function GrowthChart({
             {isPending ? "Saving…" : "Save entry"}
           </button>
         </div>
+        </Popup>
       )}
 
       {logs.length === 0 ? (

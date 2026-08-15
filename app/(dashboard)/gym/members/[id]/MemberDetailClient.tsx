@@ -16,6 +16,7 @@ import {
 import { User, X } from "lucide-react";
 import { PageHeader } from "@/app/components/PageHeader";
 import { EmptyState } from "@/app/components/EmptyState";
+import { Popup } from "@/app/components/Popup";
 import type { Lang } from "@/lib/i18n/dictionary";
 
 type Member = { id: string; name: string; phone: string; fitnessGoal: string | null; heightCm: number | null; weightKg: number | null; assignedTrainerId: string | null };
@@ -157,6 +158,7 @@ function WorkoutTab({ memberId, plans, onChange }: { memberId: string; plans: Wo
       </button>
 
       {showForm && (
+        <Popup open={showForm} onClose={() => setShowForm(false)} title="New workout plan">
         <div className="flex flex-col gap-3 rounded-xl border border-dashed border-brand bg-brand-soft p-4">
           <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Plan title (e.g. Week 1 — Push Day)" className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand" />
           {exercises.map((ex, i) => (
@@ -227,6 +229,7 @@ function WorkoutTab({ memberId, plans, onChange }: { memberId: string; plans: Wo
             </button>
           </div>
         </div>
+        </Popup>
       )}
 
       {plans.length === 0 ? (
@@ -297,6 +300,7 @@ function DietTab({ memberId, plans, onChange }: { memberId: string; plans: DietP
       </button>
 
       {showForm && (
+        <Popup open={showForm} onClose={() => setShowForm(false)} title="New diet plan">
         <div className="flex flex-col gap-3 rounded-xl border border-dashed border-brand bg-brand-soft p-4">
           <select value={goal} onChange={(e) => setGoal(e.target.value)} className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand">
             <option value="">Goal (optional)</option>
@@ -358,6 +362,7 @@ function DietTab({ memberId, plans, onChange }: { memberId: string; plans: DietP
             </button>
           </div>
         </div>
+        </Popup>
       )}
 
       {plans.length === 0 ? (

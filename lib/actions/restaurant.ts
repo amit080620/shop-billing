@@ -471,6 +471,37 @@ export async function getNewKotItemsAction(
 
 export type SettlePayment = { method: "cash" | "card" | "upi" | "online" | "other"; amount: number };
 
+/** Applies (or updates) a discount on an open order and recalculates
+ * its totals immediately — a real, persisted step, separate from
+ * payment. This is what makes "discount → show/print updated bill →
+ * then pay" actually work: by the time the bill is reprinted, the
+ * order's real total already reflects the discount, instead of the
+ * discount only existing as unsaved local UI state until payment. */
+export async function applyOrderDiscountAction(
+  orderId: string,
+  discountType: "flat" | "percent",
+  discountValue: number,
+): Promise<{ error?: string }> {
+  const session = await requireSession();
+  const admin = createSupabaseAdminClient();
+
+  const { data: order } = await admin
+    .from("restaurant_orders")
+    .select("id, status")
+    .eq("id", orderId)
+    .eq("shop_id", session.shopId)
+    .single();
+  if (!order) return { error: "Order not found" };
+  if (order.status !== "open") return { error: "This order is already closed" };
+  if (discountValue < 0) return { error: "Discount can't be negative" };
+
+  await admin.from("restaurant_orders").update({ discount_type: discountType, discount_value: discountValue }).eq("id", orderId);
+  await recalcOrderTotals(orderId);
+
+  revalidatePath(`/restaurant/orders/${orderId}`);
+  return {};
+}
+
 export async function settleOrderAction(
   orderId: string,
   payments: SettlePayment[],

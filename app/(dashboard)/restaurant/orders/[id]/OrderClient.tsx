@@ -11,6 +11,7 @@ import {
   updateOrderItemQuantityAction,
   getNewKotItemsAction,
   settleOrderAction,
+  applyOrderDiscountAction,
   cancelOrderAction,
   setOrderTypeAction,
   setWaiterAction,
@@ -375,7 +376,7 @@ export function OrderClient({
 
       {error && <p className="no-print text-sm text-danger">{error}</p>}
 
-      {initialItems.length > 0 && (
+      {initialItems.length > 0 && !cartOpen && (
         <div className="no-print fixed inset-x-0 bottom-16 z-30 flex flex-col border-t border-border bg-surface shadow-lg">
           <button
             onClick={() => setCartOpen(true)}
@@ -434,6 +435,7 @@ export function OrderClient({
           reservationTokenAmount={order.reservationTokenAmount}
           onClose={() => setShowSettle(false)}
           onDone={() => router.push("/restaurant")}
+          onShowBill={() => setShowBillPrint(true)}
           t={t}
         />
       )}
@@ -662,8 +664,8 @@ function BillPrintView({
   t: Translator;
 }) {
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-black/50">
-      <div className="no-print flex justify-end gap-2 bg-surface p-3">
+    <div className="fixed inset-0 z-50 flex flex-col bg-black/50" onClick={onClose}>
+      <div className="no-print flex justify-end gap-2 bg-surface p-3" onClick={(e) => e.stopPropagation()}>
         <button onClick={() => window.print()} className="btn-primary-sm">
           {t("order.printBill")}
         </button>
@@ -671,7 +673,7 @@ function BillPrintView({
           {t("order.close")}
         </button>
       </div>
-      <div id="bill-print" className="mx-auto w-full max-w-sm overflow-y-auto bg-white p-6 text-black">
+      <div id="bill-print" className="mx-auto w-full max-w-sm overflow-y-auto bg-white p-6 text-black" onClick={(e) => e.stopPropagation()}>
         <p className="text-center text-lg font-bold">{shopName}</p>
         {shopGstin && <p className="text-center text-xs">GSTIN: {shopGstin}</p>}
         <p className="text-center text-xs">Invoice #{order.orderNumber} · {order.tableName}</p>
@@ -743,6 +745,7 @@ function SettleModal({
   reservationTokenAmount,
   onClose,
   onDone,
+  onShowBill,
   t,
 }: {
   orderId: string;
@@ -750,10 +753,12 @@ function SettleModal({
   reservationTokenAmount: number;
   onClose: () => void;
   onDone: () => void;
+  onShowBill: () => void;
   t: Translator;
 }) {
   const [discountValue, setDiscountValue] = useState(0);
   const [step, setStep] = useState<"review" | "payment">("review");
+  const router = useRouter();
   const [splitCount, setSplitCount] = useState(1);
   const netTotal = Math.max(0, Math.round(total - discountValue));
   const stillDue = Math.max(0, netTotal - reservationTokenAmount);
@@ -821,12 +826,24 @@ function SettleModal({
             <div className="mt-4 flex gap-2">
               <button
                 onClick={() => {
-                  setPayments([{ method: "cash", amount: stillDue }]);
-                  setStep("payment");
+                  startTransition(async () => {
+                    const result = await applyOrderDiscountAction(orderId, "flat", discountValue);
+                    if (result.error) {
+                      setError(result.error);
+                      return;
+                    }
+                    router.refresh();
+                    setPayments([{ method: "cash", amount: stillDue }]);
+                    if (discountValue > 0) {
+                      onShowBill();
+                    }
+                    setStep("payment");
+                  });
                 }}
-                className="btn-primary flex-1 text-center"
+                disabled={isPending}
+                className="btn-primary flex-1 text-center disabled:opacity-60"
               >
-                {discountValue > 0 ? "Show updated bill →" : "Proceed to payment →"}
+                {isPending ? "Saving…" : discountValue > 0 ? "Show updated bill →" : "Proceed to payment →"}
               </button>
               <button onClick={onClose} className="rounded-lg border border-border px-4 py-2 text-sm font-medium text-muted">
                 {t("common.cancel")}
