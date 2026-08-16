@@ -64,10 +64,17 @@ export function DesktopSidebar({
                   active ? "bg-brand-soft text-brand-text" : "text-muted hover:bg-background hover:text-foreground"
                 }`}
               >
-                <span className={`flex h-7 w-7 shrink-0 items-center justify-center ${active ? "text-brand" : ""}`}>
+                <span
+                  className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${active ? "text-brand" : ""}`}
+                  style={{
+                    boxShadow: active
+                      ? "-2px -2px 5px var(--neu-light), 2px 2px 5px var(--neu-dark)"
+                      : "-1px -1px 3px var(--neu-light), 1px 1px 3px var(--neu-dark)",
+                  }}
+                >
                   <Icon active={active} />
                 </span>
-                {tab.label}
+                <span className={active ? "neu-text" : ""}>{tab.label}</span>
               </Link>
             </li>
           );

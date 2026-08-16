@@ -89,13 +89,18 @@ export async function SubscriptionCard() {
       </div>
 
       <div className="px-4 pt-3">
-        <p className="text-3xl font-bold text-white">{isExpired ? 0 : daysRemaining}</p>
+        <p className="text-3xl font-bold text-white" style={{ textShadow: "1px 2px 1px rgba(255,255,255,0.3), -1px -1px 2px rgba(0,0,0,0.45)" }}>
+          {isExpired ? 0 : daysRemaining}
+        </p>
         <p className="text-xs text-white/90">
           {isExpired ? t("subscription.daysOverdue", { days: Math.abs(daysRemaining) }) : t("subscription.daysRemaining")}
         </p>
       </div>
 
-      <div className="mt-3 flex items-center justify-between border-t border-white/20 px-4 py-3 text-xs text-white/90">
+      <div
+        className="mt-3 flex items-center justify-between px-4 py-3 text-xs text-white/90"
+        style={{ boxShadow: "inset 0 1px 3px rgba(0,0,0,0.2)" }}
+      >
         <span>{t("subscription.validUntil")}</span>
         <span className="font-medium text-white">{dateFormat(validUntil)}</span>
       </div>
@@ -104,7 +109,8 @@ export async function SubscriptionCard() {
         href={`https://wa.me/${SUPPORT_WHATSAPP_NUMBER}?text=${whatsappMessage}`}
         target="_blank"
         rel="noopener noreferrer"
-        className="flex items-center justify-center gap-2 border-t border-white/20 px-4 py-3 text-sm font-semibold text-white"
+        className="flex items-center justify-center gap-2 px-4 py-3 text-sm font-semibold text-white"
+        style={{ boxShadow: "inset 0 2px 4px rgba(0,0,0,0.15)" }}
       >
         {t("subscription.rechargeContact")}
       </a>

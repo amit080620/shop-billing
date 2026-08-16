@@ -83,15 +83,27 @@ export function AuthForm({
                     type="button"
                     onClick={() => setGridSelections((prev) => ({ ...prev, [f.name]: opt.value }))}
                     className={`flex flex-col items-center gap-1.5 rounded-2xl border-2 p-3 text-center transition-transform ${
-                      selected ? "border-foreground shadow-md scale-[1.03]" : "border-transparent"
+                      selected ? "border-foreground scale-[1.05]" : "border-transparent"
                     }`}
-                    style={{ background: `linear-gradient(135deg, ${opt.colors[0]}, ${opt.colors[1]})` }}
+                    style={{
+                      background: `linear-gradient(135deg, ${opt.colors[0]}, ${opt.colors[1]})`,
+                      boxShadow: selected
+                        ? "-5px -5px 12px var(--neu-light), 5px 5px 12px var(--neu-dark-strong)"
+                        : "-4px -4px 10px var(--neu-light), 4px 4px 10px var(--neu-dark)",
+                    }}
                   >
                     {(() => {
                       const Icon = BUSINESS_ICON_MAP[opt.icon];
-                      return Icon ? <Icon size={22} className="text-white drop-shadow-sm" strokeWidth={1.8} /> : null;
+                      return Icon ? (
+                        <Icon size={22} className="text-white" style={{ filter: "drop-shadow(1px 1px 1px rgba(0,0,0,0.35))" }} strokeWidth={1.8} />
+                      ) : null;
                     })()}
-                    <span className="text-[11px] font-semibold leading-tight text-white drop-shadow-sm">{opt.label}</span>
+                    <span
+                      className="text-[11px] font-semibold leading-tight text-white"
+                      style={{ textShadow: "1px 1.5px 1px rgba(255,255,255,0.35), -1px -1px 1.5px rgba(0,0,0,0.4)" }}
+                    >
+                      {opt.label}
+                    </span>
                   </button>
                 );
               })}
