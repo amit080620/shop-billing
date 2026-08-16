@@ -53,7 +53,7 @@ export default async function ReturnDetailPage({
         ))}
       </ul>
 
-      <div className="rounded-xl border border-border bg-surface shadow-sm p-4">
+      <div className="neu-card p-4">
         <Row label="Subtotal" value={formatMoney(ret.subtotal)} />
         <Row label="GST" value={formatMoney(Number(ret.cgst_amount) + Number(ret.sgst_amount) + Number(ret.igst_amount))} />
         <Row label="Total refund" value={formatMoney(ret.total)} bold />

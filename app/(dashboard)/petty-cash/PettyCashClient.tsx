@@ -76,13 +76,13 @@ export function PettyCashClient({ entries }: { entries: Entry[] }) {
       />
 
       <div className="grid grid-cols-2 gap-3">
-        <div className="rounded-xl border border-border bg-surface p-3.5 text-center shadow-sm">
+        <div className="neu-card p-3.5 text-center">
           <p className="text-xs text-muted">Today</p>
-          <p className="mt-1 text-lg font-semibold text-foreground">{formatMoney(todayTotal)}</p>
+          <p className="mt-1 text-lg font-semibold text-foreground neu-text">{formatMoney(todayTotal)}</p>
         </div>
-        <div className="rounded-xl border border-border bg-surface p-3.5 text-center shadow-sm">
+        <div className="neu-card p-3.5 text-center">
           <p className="text-xs text-muted">This month</p>
-          <p className="mt-1 text-lg font-semibold text-foreground">{formatMoney(monthTotal)}</p>
+          <p className="mt-1 text-lg font-semibold text-foreground neu-text">{formatMoney(monthTotal)}</p>
         </div>
       </div>
 
@@ -146,7 +146,7 @@ export function PettyCashClient({ entries }: { entries: Entry[] }) {
       ) : (
         <ul className="flex flex-col gap-2 md:grid md:grid-cols-2 md:gap-3">
           {entries.map((e) => (
-            <li key={e.id} className="flex items-center justify-between rounded-lg border border-border bg-surface px-3.5 py-2.5 shadow-sm">
+            <li key={e.id} className="neu-card flex items-center justify-between px-3.5 py-2.5">
               <div className="min-w-0">
                 <p className="truncate text-sm font-medium text-foreground">{e.description}</p>
                 <p className="text-xs text-muted">

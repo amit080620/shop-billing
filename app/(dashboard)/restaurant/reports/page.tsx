@@ -62,16 +62,16 @@ export default async function RestaurantReportsPage({
         {t("rreports.itemWiseLink")}
       </Link>
 
-      <div className="rounded-xl border border-border bg-surface shadow-sm p-4 text-center">
+      <div className="neu-card p-4 text-center">
         <p className="text-xs text-muted">
           {fromDate === toDate ? t("rreports.thatDay") : `${fromDate} → ${toDate}`}
         </p>
-        <p className="mt-1 text-xl font-semibold text-foreground">{formatMoney(totalSales)}</p>
+        <p className="mt-1 text-xl font-semibold text-foreground neu-text">{formatMoney(totalSales)}</p>
         <p className="text-xs text-muted">{t("rreports.billCount", { count: (orders ?? []).length })}</p>
       </div>
 
       {methodRows.length > 0 && (
-        <div className="rounded-xl border border-border bg-surface shadow-sm p-4">
+        <div className="neu-card p-4">
           <p className="mb-2 text-xs font-medium text-muted">{t("rreports.paymentMix")}</p>
           <div className="flex flex-col gap-1.5">
             {methodRows.map(([method, amount]) => (
@@ -94,7 +94,7 @@ export default async function RestaurantReportsPage({
               <li key={o.id}>
                 <Link
                   href={`/restaurant/reports/${o.id}`}
-                  className="flex items-center justify-between gap-3 rounded-lg border border-border bg-surface shadow-sm px-3.5 py-3"
+                  className="neu-card flex items-center justify-between gap-3 px-3.5 py-3"
                 >
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium text-foreground">

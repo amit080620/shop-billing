@@ -305,8 +305,8 @@ function RequestCard({
   const { t } = useTranslation(lang);
   return (
     <li
-      className={`flex flex-col gap-2 rounded-lg border border-border p-3.5 ${
-        muted ? "bg-background opacity-70" : "bg-surface"
+      className={`flex flex-col gap-2 rounded-lg p-3.5 ${
+        muted ? "border border-border bg-background opacity-70" : "neu-card"
       }`}
     >
       <div className="flex items-start justify-between gap-3">

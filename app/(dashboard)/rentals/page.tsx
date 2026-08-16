@@ -56,9 +56,9 @@ export default async function RentalsPage() {
             return (
               <li
                 key={r.id}
-                className={`rounded-xl border shadow-sm p-3.5 ${
-                  r.isOverdue ? "border-danger bg-red-50" : "border-border bg-surface"
-                }`}
+                className={
+                  r.isOverdue ? "rounded-xl border border-danger bg-red-50 shadow-sm p-3.5" : "neu-card p-3.5"
+                }
               >
                 <Link href={`/rentals/${r.id}`} className="flex items-center justify-between gap-3">
                   <div className="min-w-0">

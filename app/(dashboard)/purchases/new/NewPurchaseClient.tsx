@@ -325,7 +325,7 @@ export function NewPurchaseClient({
       </section>
 
       {lines.length > 0 && (
-        <section className="flex flex-col gap-2 rounded-xl border border-border bg-surface shadow-sm p-4 text-sm">
+        <section className="neu-card flex flex-col gap-2 p-4 text-sm">
           <Row label="Taxable value" value={formatMoney(totals.taxableAmount)} />
           <Row
             label="GST (exact CGST/SGST/IGST split saved after vendor state is checked)"

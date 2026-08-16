@@ -189,7 +189,7 @@ export default async function DailySummaryPage({
         </p>
       </section>
 
-      <section className="flex flex-col gap-2 rounded-xl border border-border bg-surface shadow-sm p-4">
+      <section className="neu-card flex flex-col gap-2 p-4">
         <h2 className="flex items-center gap-1.5 text-sm font-semibold text-foreground">
           {/* eslint-disable-next-line @next/next/no-img-element -- small branded SVG icon */}
           <img src="/assets/ray-icons/payment.svg" alt="" className="h-3.5 w-3.5" /> Money in — {formatMoney(grandTotalIn)}
@@ -203,7 +203,7 @@ export default async function DailySummaryPage({
         )}
       </section>
 
-      <section className="flex flex-col gap-2 rounded-xl border border-border bg-surface shadow-sm p-4">
+      <section className="neu-card flex flex-col gap-2 p-4">
         <h2 className="flex items-center gap-1.5 text-sm font-semibold text-foreground"><Receipt size={14} /> Money out — {formatMoney(grandTotalOut)}</h2>
         <BreakdownTable title="Purchases paid today" byMethod={purchasesPaidByMethod} />
         <BreakdownTable title="Vendor payments made today" byMethod={vendorPaymentsByMethod} />
@@ -214,7 +214,7 @@ export default async function DailySummaryPage({
         )}
       </section>
 
-      <section className="rounded-xl border border-border bg-surface shadow-sm p-4">
+      <section className="neu-card p-4">
         <h2 className="mb-2 text-sm font-semibold text-foreground">Net by payment method</h2>
         <div className="flex flex-col gap-1.5 text-sm">
           {METHODS.map((m) => (

@@ -87,7 +87,7 @@ export function BranchesClient({ branches, staff }: { branches: Branch[]; staff:
             editingId === b.id ? (
               <BranchEditRow key={b.id} branch={b} onDone={() => setEditingId(null)} />
             ) : (
-              <li key={b.id} className="rounded-lg border border-border bg-surface shadow-sm px-3.5 py-3">
+              <li key={b.id} className="neu-card px-3.5 py-3">
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
                     <p className="text-sm font-medium text-foreground">{b.name}</p>
@@ -138,7 +138,7 @@ export function BranchesClient({ branches, staff }: { branches: Branch[]; staff:
           {staff
             .filter((s) => s.role !== "owner")
             .map((s) => (
-              <li key={s.id} className="flex items-center justify-between rounded-lg border border-border bg-surface px-3.5 py-2.5 shadow-sm">
+              <li key={s.id} className="neu-card flex items-center justify-between px-3.5 py-2.5">
                 <p className="text-sm text-foreground">{s.name}</p>
                 <select
                   defaultValue={s.branchId ?? ""}
