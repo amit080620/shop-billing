@@ -388,22 +388,26 @@ export function OrderClient({
             </span>
             <span>{formatMoney(order.total)} · ▲ View order</span>
           </button>
-          {!isReadOnly && (
-            <div className="flex gap-2 p-3">
+          <div className="flex gap-2 p-3">
+            {!isReadOnly && (
               <button onClick={printKot} disabled={isPending} className="flex-1 rounded-lg border border-border px-2 py-2.5 text-xs font-medium text-foreground disabled:opacity-60">
                 {t("order.printKot")}
               </button>
-              <button onClick={() => setShowBillPrint(true)} className="flex-1 rounded-lg border border-border px-2 py-2.5 text-xs font-medium text-foreground">
-                {t("order.printBill")}
-              </button>
-              <button onClick={() => setShowSettle(true)} className="flex-1 rounded-lg bg-brand px-2 py-2.5 text-xs font-medium text-white">
-                {t("order.settle")}
-              </button>
-              <button onClick={() => setShowCancel(true)} className="rounded-lg border border-danger px-2 py-2.5 text-xs font-medium text-danger">
-                <X size={14} />
-              </button>
-            </div>
-          )}
+            )}
+            <button onClick={() => setShowBillPrint(true)} className="flex-1 rounded-lg border border-border px-2 py-2.5 text-xs font-medium text-foreground">
+              {t("order.printBill")}
+            </button>
+            {!isReadOnly && (
+              <>
+                <button onClick={() => setShowSettle(true)} className="flex-1 rounded-lg bg-brand px-2 py-2.5 text-xs font-medium text-white">
+                  {t("order.settle")}
+                </button>
+                <button onClick={() => setShowCancel(true)} className="rounded-lg border border-danger px-2 py-2.5 text-xs font-medium text-danger">
+                  <X size={14} />
+                </button>
+              </>
+            )}
+          </div>
         </div>
       )}
 
@@ -436,6 +440,7 @@ export function OrderClient({
           onClose={() => setShowSettle(false)}
           onDone={() => router.push("/restaurant")}
           onShowBill={() => setShowBillPrint(true)}
+          hidden={showBillPrint}
           t={t}
         />
       )}
@@ -746,6 +751,7 @@ function SettleModal({
   onClose,
   onDone,
   onShowBill,
+  hidden,
   t,
 }: {
   orderId: string;
@@ -754,6 +760,7 @@ function SettleModal({
   onClose: () => void;
   onDone: () => void;
   onShowBill: () => void;
+  hidden?: boolean;
   t: Translator;
 }) {
   const [discountValue, setDiscountValue] = useState(0);
@@ -790,6 +797,8 @@ function SettleModal({
       onDone();
     });
   }
+
+  if (hidden) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 sm:items-center">

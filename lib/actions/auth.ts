@@ -1,7 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { headers } from "next/headers";
+import { headers, cookies } from "next/headers";
 import { createSupabaseServerClient } from "../supabase/server";
 import { createSupabaseAdminClient } from "../supabase/admin";
 import { signupSchema, loginSchema } from "../validation/schemas";
@@ -133,10 +133,26 @@ export async function loginAction(
   // still land on Home, since they care about the overview first.
   const { data: staffRow } = await admin
     .from("staff")
-    .select("role, shop_id, shops ( business_type )")
+    .select("role, permissions, shop_id, shops ( business_type )")
     .eq("id", authData.user.id)
     .single();
   const shop = staffRow ? (Array.isArray(staffRow.shops) ? staffRow.shops[0] : staffRow.shops) : null;
+  const permissions = (staffRow?.permissions as string[] | null) ?? [];
+  const cookieStore = await cookies();
+  if (staffRow?.role !== "owner" && permissions.includes("kitchen_only")) {
+    cookieStore.set("kitchen_only", "1", { path: "/", maxAge: 60 * 60 * 24 * 30 });
+  } else {
+    cookieStore.delete("kitchen_only");
+  }
+  if (staffRow?.role === "staff" && shop?.business_type === "restaurant" && !permissions.includes("view_home")) {
+    cookieStore.set("hide_home", "1", { path: "/", maxAge: 60 * 60 * 24 * 30 });
+  } else {
+    cookieStore.delete("hide_home");
+  }
+
+  if (permissions.includes("kitchen_only")) {
+    redirect("/restaurant-kds");
+  }
   if (staffRow && staffRow.role !== "owner" && shop?.business_type === "restaurant") {
     redirect("/restaurant");
   }
@@ -151,6 +167,9 @@ export async function loginAction(
 export async function logoutThisDeviceAction() {
   const supabase = await createSupabaseServerClient();
   await supabase.auth.signOut({ scope: "local" });
+  const cookieStore = await cookies();
+  cookieStore.delete("kitchen_only");
+  cookieStore.delete("hide_home");
   redirect("/login");
 }
 
@@ -160,6 +179,9 @@ export async function logoutThisDeviceAction() {
 export async function logoutAllDevicesAction() {
   const supabase = await createSupabaseServerClient();
   await supabase.auth.signOut({ scope: "global" });
+  const cookieStore = await cookies();
+  cookieStore.delete("kitchen_only");
+  cookieStore.delete("hide_home");
   redirect("/login");
 }
 

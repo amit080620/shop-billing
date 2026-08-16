@@ -21,7 +21,10 @@ import {
 import { useTranslation } from "@/lib/i18n/useTranslation";
 import type { Lang } from "@/lib/i18n/dictionary";
 
-export function tabsFor(businessType: string, t: (key: string) => string) {
+export function tabsFor(businessType: string, t: (key: string) => string, permissions: string[] = []) {
+  if (permissions.includes("kitchen_only")) {
+    return [{ href: "/restaurant-kds", label: t("nav.kitchen"), icon: KitchenIcon }];
+  }
   const RETAIL_TABS = [
     { href: "/", label: t("nav.home"), icon: HomeIcon },
     { href: "/bills/new", label: t("nav.sell"), icon: SellIcon },
@@ -122,10 +125,10 @@ export function tabsFor(businessType: string, t: (key: string) => string) {
   return RETAIL_TABS;
 }
 
-export function BottomNav({ lang, businessType }: { lang: Lang; businessType: string }) {
+export function BottomNav({ lang, businessType, permissions = [] }: { lang: Lang; businessType: string; permissions?: string[] }) {
   const pathname = usePathname();
   const { t } = useTranslation(lang);
-  const tabs = tabsFor(businessType, t);
+  const tabs = tabsFor(businessType, t, permissions);
 
   return (
     <nav

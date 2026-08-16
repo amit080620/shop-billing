@@ -9,6 +9,11 @@ export const PERMISSIONS = [
   { key: "manage_settings", label: "Shop settings", description: "GST profile, invoice design, subscription" },
   { key: "manage_expenses", label: "Petty cash", description: "Log day-to-day cash expenses" },
   { key: "give_discounts", label: "Give discounts", description: "Apply a discount when billing" },
+  {
+    key: "kitchen_only",
+    label: "Kitchen-only login",
+    description: "This staff account only sees the Kitchen screen — everything else is blocked.",
+  },
 ] as const;
 
 export type PermissionKey = (typeof PERMISSIONS)[number]["key"];

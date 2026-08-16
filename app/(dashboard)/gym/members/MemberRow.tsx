@@ -36,7 +36,7 @@ export function MemberRow({ member, lang }: { member: Member; lang: Lang }) {
     !m || m.status !== "active" ? "default" : days !== null && days < 0 ? "expired" : days !== null && days <= 7 ? "soon" : "active";
 
   return (
-    <li className="rounded-xl border border-border bg-surface shadow-sm p-3.5">
+    <li className="neu-card p-3.5">
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           <Link href={`/gym/members/${member.id}`} className="text-sm font-semibold text-foreground underline-offset-2 hover:underline">

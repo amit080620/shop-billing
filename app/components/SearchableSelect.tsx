@@ -181,7 +181,7 @@ export function SearchableSelect<T>({
         <p className="mt-1 text-xs text-danger">{voiceError}</p>
       )}
       {open && filtered.length > 0 && (
-        <ul className="absolute z-30 mt-1 max-h-64 w-full overflow-y-auto rounded-lg border border-border bg-surface shadow-lg">
+        <ul className="absolute z-40 mt-1.5 flex max-h-72 w-full flex-col gap-1.5 overflow-y-auto p-0.5">
           {filtered.map((item) => (
             <li key={getKey(item)}>
               <button
@@ -193,7 +193,7 @@ export function SearchableSelect<T>({
                   setQuery("");
                   setOpen(false);
                 }}
-                className="flex w-full items-center justify-between gap-3 px-3.5 py-2.5 text-left text-sm hover:bg-brand-soft"
+                className="flex w-full items-center justify-between gap-3 rounded-xl border border-border bg-surface px-3.5 py-2.5 text-left text-sm shadow-md hover:border-brand hover:bg-brand-soft"
               >
                 <span className="min-w-0 flex-1 truncate text-foreground">
                   {getLabel(item)}

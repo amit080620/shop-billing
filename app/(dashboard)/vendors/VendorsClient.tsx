@@ -158,7 +158,7 @@ export function VendorsClient({ initialVendors }: { initialVendors: Vendor[] }) 
             <li key={v.id}>
               <Link
                 href={`/vendors/${v.id}`}
-                className="flex items-center justify-between gap-3 rounded-lg border border-border bg-surface shadow-sm px-3.5 py-3"
+                className="hover-lift neu-card flex items-center justify-between gap-3 px-3.5 py-3"
               >
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium text-foreground">{v.name}</p>

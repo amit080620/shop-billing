@@ -14,6 +14,7 @@ export function DesktopSidebar({
   staffName,
   roleLabel,
   shopLogoUrl,
+  permissions = [],
 }: {
   lang: Lang;
   businessType: string;
@@ -21,10 +22,11 @@ export function DesktopSidebar({
   staffName: string;
   roleLabel: string;
   shopLogoUrl: string | null;
+  permissions?: string[];
 }) {
   const pathname = usePathname();
   const { t } = useTranslation(lang);
-  const tabs = tabsFor(businessType, t);
+  const tabs = tabsFor(businessType, t, permissions);
 
   return (
     <aside className="no-print fixed inset-y-0 left-0 z-20 hidden w-60 flex-col border-r border-border bg-surface md:flex">

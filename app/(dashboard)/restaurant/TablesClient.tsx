@@ -322,7 +322,8 @@ export function TablesClient({ tables, lang }: { tables: Table[]; lang: Lang }) 
               role="button"
               tabIndex={0}
               onClick={() => handleTableTap(table)}
-              className={`hover-lift relative flex flex-col items-center justify-center gap-1 rounded-xl border p-4 shadow-sm md:gap-1.5 md:rounded-2xl md:p-6 ${
+              style={{ boxShadow: "-6px -6px 14px var(--neu-light), 6px 6px 14px var(--neu-dark)" }}
+              className={`hover-lift relative flex flex-col items-center justify-center gap-1 rounded-xl border p-4 md:gap-1.5 md:rounded-2xl md:p-6 ${
                 isPending ? "opacity-60" : ""
               } ${
                 table.status === "occupied"
