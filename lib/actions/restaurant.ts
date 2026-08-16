@@ -561,8 +561,18 @@ export async function settleOrderAction(
     })
     .eq("id", orderId);
 
-  await admin.from("restaurant_tables").update({ status: "free" }).eq("id", order.table_id);
-
+  const { data: settledTable } = await admin
+    .from("restaurant_tables")
+    .select("is_virtual")
+    .eq("id", order.table_id)
+    .single();
+  if (settledTable?.is_virtual) {
+    // One-time online-order table — remove it entirely so the Tables
+    // grid does not accumulate a growing list of one-off ghost entries.
+    await admin.from("restaurant_tables").delete().eq("id", order.table_id);
+  } else {
+    await admin.from("restaurant_tables").update({ status: "free" }).eq("id", order.table_id);
+  }
   // Menu items marked "track stock" (e.g. a limited daily special) need
   // their stock actually reduced once the order is confirmed — settling
   // is the equivalent of a bill being created, and is the point where

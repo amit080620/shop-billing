@@ -11,7 +11,7 @@ import { LanguageToggle } from "@/lib/i18n/LanguageToggle";
 import { SubscriptionCard } from "@/app/components/SubscriptionCard";
 import { InstallAppButton } from "@/app/components/InstallAppButton";
 import { isModuleEnabled } from "@/lib/modules";
-import { Users, Bell, Clock, Truck, Package, UserCog, Settings, Megaphone, HelpCircle, PartyPopper, WifiOff, CalendarClock, ChefHat, BookOpen, ClipboardCheck, ShieldCheck, Scissors, Gem, Store, Stethoscope, Palette, Wallet, Building2, Dumbbell, FlaskConical } from "lucide-react";
+import { Users, Bell, Clock, Truck, Package, UserCog, Settings, Megaphone, HelpCircle, PartyPopper, WifiOff, CalendarClock, ChefHat, BookOpen, ClipboardCheck, ShieldCheck, Scissors, Gem, Store, Stethoscope, Palette, Wallet, Building2, Dumbbell, FlaskConical, Receipt as ReceiptIcon } from "lucide-react";
 
 export default async function MorePage() {
   const session = await requireSession();
@@ -160,6 +160,7 @@ export default async function MorePage() {
       </MenuGroup>
 
       <MenuGroup title="Money">
+        <MenuLink href="/bills/all" label="All bills" sub="Browse & reprint any past bill" icon={({ className }) => <ReceiptIcon className={className} />} tone="brand" />
         {isModuleEnabled(session.enabledModules, "petty_cash") && (
           <MenuLink href="/petty-cash" label="Petty cash" sub="Small day-to-day cash expenses" icon={PettyCashIcon} tone="warning" />
         )}

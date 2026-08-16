@@ -178,7 +178,7 @@ export async function acceptCatalogOrderAction(
 
     const { data: newTable, error: tableError } = await admin
       .from("restaurant_tables")
-      .insert({ shop_id: session.shopId, name: `Online — ${request.customer_name}`, section: "takeaway" })
+      .insert({ shop_id: session.shopId, name: `Online — ${request.customer_name}`, section: "takeaway", is_virtual: true })
       .select("id")
       .single();
     if (tableError || !newTable) return { error: "Could not create an order slot for this online order" };

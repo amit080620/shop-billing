@@ -60,27 +60,49 @@ export function DateRangeControls({
     const end = new Date(now.getFullYear(), now.getMonth(), 0);
     go(iso(start), iso(end));
   }
+  function setThisQuarter() {
+    const now = new Date();
+    const qStartMonth = Math.floor(now.getMonth() / 3) * 3;
+    const start = new Date(now.getFullYear(), qStartMonth, 1);
+    go(iso(start), iso(now));
+  }
+  function setLastQuarter() {
+    const now = new Date();
+    const qStartMonth = Math.floor(now.getMonth() / 3) * 3 - 3;
+    const start = new Date(now.getFullYear(), qStartMonth, 1);
+    const end = new Date(now.getFullYear(), qStartMonth + 3, 0);
+    go(iso(start), iso(end));
+  }
+
+  const pillClass = "shrink-0 rounded-full bg-background px-3 py-1.5 text-xs font-medium text-muted";
+  const pillStyle = { boxShadow: "-2px -2px 5px var(--neu-light), 2px 2px 5px var(--neu-dark)" };
 
   return (
     <div className="flex flex-col gap-2">
       <div className="flex gap-2 overflow-x-auto pb-0.5">
-        <button onClick={setToday} className="shrink-0 rounded-full border border-border px-3 py-1.5 text-xs font-medium text-muted">
+        <button onClick={setToday} className={pillClass} style={pillStyle}>
           {t("rreports.today")}
         </button>
-        <button onClick={setYesterday} className="shrink-0 rounded-full border border-border px-3 py-1.5 text-xs font-medium text-muted">
+        <button onClick={setYesterday} className={pillClass} style={pillStyle}>
           {t("rreports.yesterday")}
         </button>
-        <button onClick={setThisWeek} className="shrink-0 rounded-full border border-border px-3 py-1.5 text-xs font-medium text-muted">
+        <button onClick={setThisWeek} className={pillClass} style={pillStyle}>
           {t("rreports.thisWeek")}
         </button>
-        <button onClick={setLastWeek} className="shrink-0 rounded-full border border-border px-3 py-1.5 text-xs font-medium text-muted">
+        <button onClick={setLastWeek} className={pillClass} style={pillStyle}>
           {t("rreports.lastWeek")}
         </button>
-        <button onClick={setThisMonth} className="shrink-0 rounded-full border border-border px-3 py-1.5 text-xs font-medium text-muted">
+        <button onClick={setThisMonth} className={pillClass} style={pillStyle}>
           {t("rreports.thisMonth")}
         </button>
-        <button onClick={setLastMonth} className="shrink-0 rounded-full border border-border px-3 py-1.5 text-xs font-medium text-muted">
+        <button onClick={setLastMonth} className={pillClass} style={pillStyle}>
           {t("rreports.lastMonth")}
+        </button>
+        <button onClick={setThisQuarter} className={pillClass} style={pillStyle}>
+          This quarter
+        </button>
+        <button onClick={setLastQuarter} className={pillClass} style={pillStyle}>
+          Last quarter
         </button>
       </div>
       <div className="flex items-center gap-2">

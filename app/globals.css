@@ -158,6 +158,22 @@
   --brand-text: #ffb366;
   --ray-gradient: linear-gradient(135deg, #e8871a 0%, #ffa94d 50%, #ffc178 100%);
 }
+[data-accent="gray"] {
+  --brand: #475569;
+  --brand-dark: #334155;
+  --brand-light: #64748b;
+  --brand-soft: #eef1f5;
+  --brand-text: #334155;
+  --ray-gradient: linear-gradient(135deg, #475569 0%, #64748b 50%, #94a3b8 100%);
+}
+.dark[data-accent="gray"] {
+  --brand: #94a3b8;
+  --brand-dark: #64748b;
+  --brand-light: #cbd5e1;
+  --brand-soft: #2a3240;
+  --brand-text: #cbd5e1;
+  --ray-gradient: linear-gradient(135deg, #64748b 0%, #94a3b8 50%, #cbd5e1 100%);
+}
 
 /* Text color choice — besides the default near-black. Only applies in
    light mode: dark mode's foreground must stay light for contrast on a

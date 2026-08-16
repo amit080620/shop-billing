@@ -1588,9 +1588,9 @@ export interface Database {
         ];
       };
       restaurant_tables: {
-        Row: { id: string; shop_id: string; name: string; status: "free" | "occupied"; section: "inside" | "outside" | "takeaway" | null; qr_token: string; created_at: string };
-        Insert: { id?: string; shop_id: string; name: string; status?: "free" | "occupied"; section?: "inside" | "outside" | "takeaway" | null; qr_token?: string; created_at?: string };
-        Update: { id?: string; shop_id?: string; name?: string; status?: "free" | "occupied"; section?: "inside" | "outside" | "takeaway" | null; qr_token?: string; created_at?: string };
+        Row: { id: string; shop_id: string; name: string; status: "free" | "occupied"; section: "inside" | "outside" | "takeaway" | null; is_virtual: boolean; qr_token: string; created_at: string };
+        Insert: { id?: string; shop_id: string; name: string; status?: "free" | "occupied"; section?: "inside" | "outside" | "takeaway" | null; is_virtual?: boolean; qr_token?: string; created_at?: string };
+        Update: { id?: string; shop_id?: string; name?: string; status?: "free" | "occupied"; section?: "inside" | "outside" | "takeaway" | null; is_virtual?: boolean; qr_token?: string; created_at?: string };
         Relationships: [
           { foreignKeyName: "restaurant_tables_shop_id_fkey"; columns: ["shop_id"]; isOneToOne: false; referencedRelation: "shops"; referencedColumns: ["id"] },
         ];

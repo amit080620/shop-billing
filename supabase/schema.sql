@@ -513,6 +513,10 @@ create table if not exists restaurant_tables (
   -- Away (no physical seating). Nullable so existing tables don't need a
   -- forced category; the UI treats unset as "Inside" by default.
   section text check (section in ('inside', 'outside', 'takeaway')),
+  -- true only for one-time tables auto-created for an online catalog
+  -- order sent to the kitchen — these get deleted once settled, unlike
+  -- a shop's real, permanently-reused dine-in tables.
+  is_virtual boolean not null default false,
   created_at timestamptz not null default now()
 );
 alter table restaurant_tables enable row level security;
