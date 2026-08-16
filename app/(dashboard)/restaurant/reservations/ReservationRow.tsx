@@ -48,6 +48,7 @@ export function ReservationRow({ reservation, lang }: { reservation: Reservation
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [refundFlow, setRefundFlow] = useState<"cancelled" | "no_show" | null>(null);
+  const [isCancelling, setIsCancelling] = useState(false);
 
   function setStatus(status: Reservation["status"], refund?: { refundType: "none" | "partial" | "full"; refundAmount: number }) {
     startTransition(async () => {
@@ -73,7 +74,7 @@ export function ReservationRow({ reservation, lang }: { reservation: Reservation
   }
 
   return (
-    <li className="neu-card p-3.5">
+    <li className={`neu-card p-3.5 ${isCancelling ? "animate-delete" : ""}`}>
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           <p className="text-sm font-semibold text-foreground">{reservation.time} · {reservation.partySize} pax</p>
@@ -116,6 +117,7 @@ export function ReservationRow({ reservation, lang }: { reservation: Reservation
                 return;
               }
               if (!confirm("Cancel this reservation?")) return;
+              setIsCancelling(true);
               startTransition(async () => {
                 await deleteReservationAction(reservation.id);
                 router.refresh();

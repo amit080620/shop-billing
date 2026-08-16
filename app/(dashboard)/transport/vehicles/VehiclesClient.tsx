@@ -56,6 +56,7 @@ export function VehiclesClient({ vehicles, lang }: { vehicles: Vehicle[]; lang: 
   const [state, formAction] = useActionState(createVehicleAction, null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   return (
     <div className="flex flex-col gap-4">
@@ -113,7 +114,10 @@ export function VehiclesClient({ vehicles, lang }: { vehicles: Vehicle[]; lang: 
                 onCancel={() => setEditingId(null)}
               />
             ) : (
-            <li key={v.id} className={`rounded-xl border shadow-sm p-4 ${v.isActive ? "border-border bg-surface" : "border-border bg-background opacity-60"}`}>
+            <li
+              key={v.id}
+              className={`p-4 ${v.isActive ? "neu-card" : "rounded-xl border border-border bg-background opacity-60"} ${deletingId === v.id ? "animate-delete" : ""}`}
+            >
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-semibold text-foreground">{v.name}</p>
@@ -158,6 +162,7 @@ export function VehiclesClient({ vehicles, lang }: { vehicles: Vehicle[]; lang: 
                 <button
                   onClick={() => {
                     if (!confirm(t("vehicles.deleteConfirm"))) return;
+                    setDeletingId(v.id);
                     startTransition(async () => {
                       const result = await deleteVehicleAction(v.id);
                       if (result.error) {

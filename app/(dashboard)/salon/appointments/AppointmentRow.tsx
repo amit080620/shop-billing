@@ -46,6 +46,7 @@ export function AppointmentRow({ appointment, lang }: { appointment: Appointment
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [isCancelling, setIsCancelling] = useState(false);
 
   function setStatus(status: Appointment["status"]) {
     startTransition(async () => {
@@ -59,7 +60,7 @@ export function AppointmentRow({ appointment, lang }: { appointment: Appointment
   }
 
   return (
-    <li className="neu-card p-3.5">
+    <li className={`neu-card p-3.5 ${isCancelling ? "animate-delete" : ""}`}>
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           <p className="text-sm font-semibold text-foreground">{appointment.time} · {appointment.serviceName}</p>
@@ -102,6 +103,7 @@ export function AppointmentRow({ appointment, lang }: { appointment: Appointment
           <button
             onClick={() => {
               if (!confirm("Cancel this appointment?")) return;
+              setIsCancelling(true);
               startTransition(async () => {
                 await deleteAppointmentAction(appointment.id);
                 router.refresh();
