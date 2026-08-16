@@ -678,7 +678,7 @@ function BillPrintView({
           {t("order.close")}
         </button>
       </div>
-      <div id="bill-print" className="mx-auto w-full max-w-sm overflow-y-auto bg-white p-6 text-black" onClick={(e) => e.stopPropagation()}>
+      <div id="bill-print" className="animate-print-slip mx-auto w-full max-w-sm overflow-y-auto bg-white p-6 text-black" onClick={(e) => e.stopPropagation()}>
         <p className="text-center text-lg font-bold">{shopName}</p>
         {shopGstin && <p className="text-center text-xs">GSTIN: {shopGstin}</p>}
         <p className="text-center text-xs">Invoice #{order.orderNumber} · {order.tableName}</p>

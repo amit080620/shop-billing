@@ -146,7 +146,10 @@ export function PettyCashClient({ entries }: { entries: Entry[] }) {
       ) : (
         <ul className="flex flex-col gap-2 md:grid md:grid-cols-2 md:gap-3">
           {entries.map((e) => (
-            <li key={e.id} className="neu-card flex items-center justify-between px-3.5 py-2.5">
+            <li
+              key={e.id}
+              className={`neu-card flex items-center justify-between px-3.5 py-2.5 ${deletingId === e.id ? "animate-delete" : ""}`}
+            >
               <div className="min-w-0">
                 <p className="truncate text-sm font-medium text-foreground">{e.description}</p>
                 <p className="text-xs text-muted">

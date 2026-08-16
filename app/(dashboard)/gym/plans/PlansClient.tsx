@@ -36,6 +36,7 @@ export function PlansClient({ plans }: { plans: Plan[] }) {
   const [showForm, setShowForm] = useState(false);
   const [durationDays, setDurationDays] = useState(30);
   const [isPending, startTransition] = useTransition();
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const { showToast } = useToast();
 
   const [state, formAction] = useActionState(
@@ -109,7 +110,7 @@ export function PlansClient({ plans }: { plans: Plan[] }) {
       ) : (
         <ul className="flex flex-col gap-2 md:grid md:grid-cols-2 md:gap-3">
           {plans.map((p) => (
-            <li key={p.id} className="neu-card px-3.5 py-3">
+            <li key={p.id} className={`neu-card px-3.5 py-3 ${deletingId === p.id ? "animate-delete" : ""}`}>
               <div className="flex items-start justify-between gap-2">
                 <div>
                   <p className="text-sm font-medium text-foreground">{p.name}</p>
@@ -135,6 +136,7 @@ export function PlansClient({ plans }: { plans: Plan[] }) {
                   <button
                     onClick={() => {
                       if (!confirm(`Delete "${p.name}"?`)) return;
+                      setDeletingId(p.id);
                       startTransition(async () => {
                         await deletePlanAction(p.id);
                         showToast("Plan deleted", "info");

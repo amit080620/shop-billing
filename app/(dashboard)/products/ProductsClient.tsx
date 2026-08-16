@@ -168,6 +168,7 @@ export function ProductsClient({
   const [generatingBarcodeFor, setGeneratingBarcodeFor] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [blockedProductId, setBlockedProductId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   function openNewProductForm() {
     setEditingProduct(null);
@@ -721,7 +722,7 @@ export function ProductsClient({
             return (
               <li
                 key={p.id}
-                className="neu-card flex items-center justify-between gap-3 px-3.5 py-3"
+                className={`neu-card flex items-center justify-between gap-3 px-3.5 py-3 ${deletingId === p.id && blockedProductId !== p.id ? "animate-delete" : ""}`}
                 style={tone ? { borderLeft: `3px solid ${TONE_COLORS[tone]}` } : undefined}
               >
                 <label className="relative flex h-12 w-12 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-lg border border-dashed border-border bg-background text-[10px] text-muted">
@@ -830,14 +831,15 @@ export function ProductsClient({
                     </button>
                     <button
                       disabled={isPending}
-                      onClick={() =>
+                      onClick={() => {
+                        setDeletingId(p.id);
                         startTransition(async () => {
                           const result = await deleteProductAction(p.id);
                           setDeleteError(result?.error ?? null);
                           setBlockedProductId(result?.error ? p.id : null);
                           if (!result?.error) showToast("Item deleted", "info");
-                        })
-                      }
+                        });
+                      }}
                       className="text-xs font-medium text-danger disabled:opacity-50"
                     >
                       {t("products.delete")}

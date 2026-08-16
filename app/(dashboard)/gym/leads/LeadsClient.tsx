@@ -49,6 +49,7 @@ export function LeadsClient({ leads }: { leads: Lead[] }) {
   const [source, setSource] = useState("");
   const [filter, setFilter] = useState<Lead["status"] | "all">("all");
   const [isPending, startTransition] = useTransition();
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const [state, formAction] = useActionState(
     async (prev: { error?: string } | null, formData: FormData) => {
@@ -134,7 +135,7 @@ export function LeadsClient({ leads }: { leads: Lead[] }) {
       ) : (
         <ul className="flex flex-col gap-2 md:grid md:grid-cols-2 md:gap-3">
           {filtered.map((lead) => (
-            <li key={lead.id} className="neu-card p-3.5">
+            <li key={lead.id} className={`neu-card p-3.5 ${deletingId === lead.id ? "animate-delete" : ""}`}>
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
                   <p className="text-sm font-semibold text-foreground">{lead.name}</p>
@@ -183,6 +184,7 @@ export function LeadsClient({ leads }: { leads: Lead[] }) {
                 <button
                   onClick={() => {
                     if (!confirm("Delete this lead?")) return;
+                    setDeletingId(lead.id);
                     startTransition(async () => {
                       await deleteLeadAction(lead.id);
                       router.refresh();

@@ -33,6 +33,7 @@ export function TestsClient({ tests, packages }: { tests: Test[]; packages: Pack
   const [selectedTestIds, setSelectedTestIds] = useState<string[]>([]);
   const [packageError, setPackageError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const { showToast } = useToast();
 
   const [testState, testFormAction] = useActionState(
@@ -124,7 +125,7 @@ export function TestsClient({ tests, packages }: { tests: Test[]; packages: Pack
           ) : (
             <ul className="flex flex-col gap-2 md:grid md:grid-cols-2 md:gap-3">
               {tests.map((t) => (
-                <li key={t.id} className="neu-card px-3.5 py-3">
+                <li key={t.id} className={`neu-card px-3.5 py-3 ${deletingId === t.id ? "animate-delete" : ""}`}>
                   <div className="flex items-start justify-between gap-2">
                     <div>
                       <p className="text-sm font-medium text-foreground">{t.name}</p>
@@ -151,6 +152,7 @@ export function TestsClient({ tests, packages }: { tests: Test[]; packages: Pack
                       <button
                         onClick={() => {
                           if (!confirm(`Delete "${t.name}"?`)) return;
+                          setDeletingId(t.id);
                           startTransition(async () => {
                             await deleteLabTestAction(t.id);
                             showToast("Test deleted", "info");

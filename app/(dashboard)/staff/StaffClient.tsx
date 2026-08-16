@@ -34,6 +34,7 @@ export function StaffClient({
 }) {
   const [showForm, setShowForm] = useState(false);
   const [isPending, startTransition] = useTransition();
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [removeError, setRemoveError] = useState<string | null>(null);
 
   const { showToast } = useToast();
@@ -123,7 +124,7 @@ export function StaffClient({
         {initialStaff.map((s) => (
           <li
             key={s.id}
-            className="neu-card flex items-center justify-between gap-3 px-3.5 py-3"
+            className={`neu-card flex items-center justify-between gap-3 px-3.5 py-3 ${deletingId === s.id ? "animate-delete" : ""}`}
           >
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-medium text-foreground">{s.name}</p>
@@ -134,13 +135,14 @@ export function StaffClient({
             {s.id !== currentUserId && (
               <button
                 disabled={isPending}
-                onClick={() =>
+                onClick={() => {
+                  setDeletingId(s.id);
                   startTransition(async () => {
                     const result = await removeStaffAction(s.id);
                     setRemoveError(result?.error ?? null);
                     if (!result?.error) showToast("Staff member removed", "info");
-                  })
-                }
+                  });
+                }}
                 className="shrink-0 text-xs font-medium text-danger disabled:opacity-50"
               >
                 Remove

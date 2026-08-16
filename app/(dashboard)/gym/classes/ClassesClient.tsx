@@ -67,6 +67,7 @@ export function ClassesClient({
   const [dayOfWeek, setDayOfWeek] = useState(1);
   const [bookingFor, setBookingFor] = useState<GymClass | null>(null);
   const [, startTransition] = useTransition();
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const [state, formAction] = useActionState(
     async (prev: { error?: string } | null, formData: FormData) => {
@@ -150,7 +151,7 @@ export function ClassesClient({
               </p>
               <ul className="flex flex-col gap-2">
                 {dayClasses.map((c) => (
-                  <li key={c.id} className="rounded-xl border border-border bg-surface p-3.5 shadow-sm">
+                  <li key={c.id} className={`neu-card p-3.5 ${deletingId === c.id ? "animate-delete" : ""}`}>
                     <div className="flex items-start justify-between gap-2">
                       <div>
                         <p className="text-sm font-semibold text-foreground">{c.name}</p>
@@ -174,6 +175,7 @@ export function ClassesClient({
                           <button
                             onClick={() => {
                               if (!confirm(`Delete "${c.name}"?`)) return;
+                              setDeletingId(c.id);
                               startTransition(async () => {
                                 await deleteClassAction(c.id);
                                 router.refresh();

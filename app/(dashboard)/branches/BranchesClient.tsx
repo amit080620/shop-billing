@@ -33,6 +33,7 @@ export function BranchesClient({ branches, staff }: { branches: Branch[]; staff:
   const router = useRouter();
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
   const [state, formAction] = useActionState(
@@ -87,7 +88,7 @@ export function BranchesClient({ branches, staff }: { branches: Branch[]; staff:
             editingId === b.id ? (
               <BranchEditRow key={b.id} branch={b} onDone={() => setEditingId(null)} />
             ) : (
-              <li key={b.id} className="neu-card px-3.5 py-3">
+              <li key={b.id} className={`neu-card px-3.5 py-3 ${deletingId === b.id ? "animate-delete" : ""}`}>
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
                     <p className="text-sm font-medium text-foreground">{b.name}</p>
@@ -113,6 +114,7 @@ export function BranchesClient({ branches, staff }: { branches: Branch[]; staff:
                     <button
                       onClick={() => {
                         if (!confirm(`Delete "${b.name}"? Past bills stay, just un-tagged.`)) return;
+                        setDeletingId(b.id);
                         startTransition(async () => {
                           await deleteBranchAction(b.id);
                           router.refresh();
