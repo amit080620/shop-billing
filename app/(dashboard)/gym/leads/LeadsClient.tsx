@@ -134,7 +134,7 @@ export function LeadsClient({ leads }: { leads: Lead[] }) {
       ) : (
         <ul className="flex flex-col gap-2 md:grid md:grid-cols-2 md:gap-3">
           {filtered.map((lead) => (
-            <li key={lead.id} className="rounded-xl border border-border bg-surface p-3.5 shadow-sm">
+            <li key={lead.id} className="neu-card p-3.5">
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
                   <p className="text-sm font-semibold text-foreground">{lead.name}</p>

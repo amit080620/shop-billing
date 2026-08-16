@@ -79,7 +79,7 @@ export default async function ServiceJobsPage({
         <ul className="flex flex-col gap-2 md:grid md:grid-cols-2 md:gap-3">
           {jobs.map((j) => (
             <li key={j.id}>
-              <Link href={`/service/${j.id}`} className="flex items-center justify-between gap-3 rounded-lg border border-border bg-surface shadow-sm px-3.5 py-3">
+              <Link href={`/service/${j.id}`} className="neu-card flex items-center justify-between gap-3 px-3.5 py-3">
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium text-foreground">{j.item_description}</p>
                   <p className="text-xs text-muted">{j.customer_name} · #{j.job_number}</p>
