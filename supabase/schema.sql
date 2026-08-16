@@ -1317,6 +1317,8 @@ create table if not exists catalog_settings (
   is_enabled boolean not null default false,
   public_token uuid not null default uuid_generate_v4(),
   banner_text text,
+  delivery_enabled boolean not null default false,
+  delivery_charge numeric(12, 2) not null default 0,
   updated_at timestamptz not null default now()
 );
 alter table catalog_settings enable row level security;
@@ -1330,6 +1332,8 @@ create table if not exists catalog_order_requests (
   notes text,
   status text not null default 'pending' check (status in ('pending', 'accepted', 'rejected')),
   bill_id uuid references bills(id) on delete set null,
+  wants_delivery boolean not null default false,
+  delivery_charge numeric(12, 2) not null default 0,
   created_at timestamptz not null default now()
 );
 alter table catalog_order_requests enable row level security;

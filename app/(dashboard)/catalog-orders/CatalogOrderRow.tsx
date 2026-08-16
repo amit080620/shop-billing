@@ -17,11 +17,13 @@ type Request = {
   items: { productName: string; quantity: number; price: number }[];
 };
 
-export function CatalogOrderRow({ request }: { request: Request }) {
+export function CatalogOrderRow({ request, businessType }: { request: Request; businessType: string }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<"cash" | "card" | "upi" | "online" | "other">("cash");
+  const [sendToKot, setSendToKot] = useState(true);
+  const [kotItems, setKotItems] = useState<{ productName: string; quantity: number }[] | null>(null);
 
   const total = request.items.reduce((s, i) => s + i.price * i.quantity, 0);
 
@@ -48,7 +50,14 @@ export function CatalogOrderRow({ request }: { request: Request }) {
       {error && <p className="mt-1 text-xs text-danger">{error}</p>}
 
       {request.status === "pending" && (
-        <div className="mt-2 flex items-center gap-2">
+        <div className="mt-2 flex flex-col gap-2">
+          {businessType === "restaurant" && (
+            <label className="flex items-center gap-1.5 text-xs text-foreground">
+              <input type="checkbox" checked={sendToKot} onChange={(e) => setSendToKot(e.target.checked)} className="h-4 w-4 rounded border-border" />
+              Also send to kitchen (KOT)
+            </label>
+          )}
+          <div className="flex items-center gap-2">
           <select
             value={paymentMethod}
             onChange={(e) => setPaymentMethod(e.target.value as typeof paymentMethod)}
@@ -67,6 +76,10 @@ export function CatalogOrderRow({ request }: { request: Request }) {
                 if (result.error) {
                   setError(result.error);
                   return;
+                }
+                if (businessType === "restaurant" && sendToKot) {
+                  setKotItems(request.items.map((i) => ({ productName: i.productName, quantity: i.quantity })));
+                  setTimeout(() => window.print(), 150);
                 }
                 router.refresh();
               })
@@ -89,6 +102,7 @@ export function CatalogOrderRow({ request }: { request: Request }) {
           >
             Reject
           </button>
+          </div>
         </div>
       )}
 
@@ -97,6 +111,56 @@ export function CatalogOrderRow({ request }: { request: Request }) {
           View bill →
         </Link>
       )}
+
+      {kotItems && (
+        <div id="kot-print" className="hidden-on-screen">
+          <p className="kot-title">KITCHEN ORDER — ONLINE</p>
+          <p className="kot-sub">{request.customerName} · {new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata", dateStyle: "medium", timeStyle: "short" })}</p>
+          <hr />
+          {kotItems.map((item, i) => (
+            <p key={i} className="kot-item">{item.quantity} × {item.productName}</p>
+          ))}
+        </div>
+      )}
+      <style jsx>{`
+        @media screen {
+          .hidden-on-screen {
+            display: none;
+          }
+        }
+        @media print {
+          body * {
+            visibility: hidden;
+          }
+          #kot-print,
+          #kot-print * {
+            visibility: visible;
+          }
+          #kot-print {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 8px;
+            color: #000;
+            background: #fff;
+          }
+          .kot-title {
+            font-size: 15px;
+            font-weight: 700;
+            text-align: center;
+          }
+          .kot-sub {
+            font-size: 11px;
+            text-align: center;
+            margin-bottom: 4px;
+          }
+          .kot-item {
+            font-size: 13px;
+            margin: 4px 0;
+          }
+        }
+      `}</style>
     </li>
   );
 }

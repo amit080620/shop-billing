@@ -6,6 +6,8 @@ import { BottomNav } from "./BottomNav";
 import { DesktopSidebar } from "./DesktopSidebar";
 import { WelcomeTour } from "./WelcomeTour";
 import { UniversalSearch } from "@/app/components/UniversalSearch";
+import { CatalogOrderAlert } from "@/app/components/CatalogOrderAlert";
+import { isModuleEnabled } from "@/lib/modules";
 
 export default async function DashboardLayout({
   children,
@@ -75,6 +77,7 @@ export default async function DashboardLayout({
 
       <BottomNav lang={lang} businessType={session.businessType} permissions={session.permissions} />
       <WelcomeTour storageKey={`tour-seen-${session.shopId}`} businessType={session.businessType} />
+      {isModuleEnabled(session.enabledModules, "public_catalog") && <CatalogOrderAlert />}
     </div>
   );
 }

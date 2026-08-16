@@ -12,7 +12,7 @@ export default async function PublicStorefrontPage({
 
   const { data: settings } = await admin
     .from("catalog_settings")
-    .select("shop_id, is_enabled, banner_text")
+    .select("shop_id, is_enabled, banner_text, delivery_enabled, delivery_charge")
     .eq("public_token", token)
     .maybeSingle();
 
@@ -42,6 +42,8 @@ export default async function PublicStorefrontPage({
       shopName={shop.name}
       shopLogoUrl={shop.logo_url}
       bannerText={settings.banner_text}
+      deliveryEnabled={settings.delivery_enabled}
+      deliveryCharge={Number(settings.delivery_charge)}
       categories={categories}
       products={(products ?? []).map((p) => ({
         id: p.id,

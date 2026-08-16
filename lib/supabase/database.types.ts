@@ -756,15 +756,15 @@ export interface Database {
         Relationships: [];
       };
       catalog_settings: {
-        Row: { shop_id: string; is_enabled: boolean; public_token: string; banner_text: string | null; updated_at: string };
-        Insert: { shop_id: string; is_enabled?: boolean; public_token?: string; banner_text?: string | null; updated_at?: string };
-        Update: { shop_id?: string; is_enabled?: boolean; public_token?: string; banner_text?: string | null; updated_at?: string };
+        Row: { shop_id: string; is_enabled: boolean; public_token: string; banner_text: string | null; delivery_enabled: boolean; delivery_charge: number; updated_at: string };
+        Insert: { shop_id: string; is_enabled?: boolean; public_token?: string; banner_text?: string | null; delivery_enabled?: boolean; delivery_charge?: number; updated_at?: string };
+        Update: { shop_id?: string; is_enabled?: boolean; public_token?: string; banner_text?: string | null; delivery_enabled?: boolean; delivery_charge?: number; updated_at?: string };
         Relationships: [];
       };
       catalog_order_requests: {
-        Row: { id: string; shop_id: string; customer_name: string; customer_phone: string; notes: string | null; status: "pending" | "accepted" | "rejected"; bill_id: string | null; created_at: string };
-        Insert: { id?: string; shop_id: string; customer_name: string; customer_phone: string; notes?: string | null; status?: "pending" | "accepted" | "rejected"; bill_id?: string | null; created_at?: string };
-        Update: { id?: string; shop_id?: string; customer_name?: string; customer_phone?: string; notes?: string | null; status?: "pending" | "accepted" | "rejected"; bill_id?: string | null; created_at?: string };
+        Row: { id: string; shop_id: string; customer_name: string; customer_phone: string; notes: string | null; status: "pending" | "accepted" | "rejected"; bill_id: string | null; wants_delivery: boolean; delivery_charge: number; created_at: string };
+        Insert: { id?: string; shop_id: string; customer_name: string; customer_phone: string; notes?: string | null; status?: "pending" | "accepted" | "rejected"; bill_id?: string | null; wants_delivery?: boolean; delivery_charge?: number; created_at?: string };
+        Update: { id?: string; shop_id?: string; customer_name?: string; customer_phone?: string; notes?: string | null; status?: "pending" | "accepted" | "rejected"; bill_id?: string | null; wants_delivery?: boolean; delivery_charge?: number; created_at?: string };
         Relationships: [
           { foreignKeyName: "catalog_order_requests_bill_id_fkey"; columns: ["bill_id"]; isOneToOne: false; referencedRelation: "bills"; referencedColumns: ["id"] },
         ];

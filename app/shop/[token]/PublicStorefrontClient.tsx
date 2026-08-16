@@ -23,6 +23,8 @@ export function PublicStorefrontClient({
   bannerText,
   categories,
   products,
+  deliveryEnabled,
+  deliveryCharge,
 }: {
   token: string;
   shopName: string;
@@ -30,7 +32,10 @@ export function PublicStorefrontClient({
   bannerText: string | null;
   categories: string[];
   products: Product[];
+  deliveryEnabled: boolean;
+  deliveryCharge: number;
 }) {
+  const [wantsDelivery, setWantsDelivery] = useState(false);
   const [activeCategory, setActiveCategory] = useState<string | "all">("all");
   const [cart, setCart] = useState<Record<string, number>>({});
   const [showCheckout, setShowCheckout] = useState(false);
@@ -80,6 +85,7 @@ export function PublicStorefrontClient({
         phone,
         notes,
         items: cartItems.map((i) => ({ productId: i.product.id, quantity: i.qty })),
+        wantsDelivery,
       });
       if (result.error) {
         setError(result.error);
@@ -223,9 +229,22 @@ export function PublicStorefrontClient({
                 </li>
               ))}
             </ul>
+
+            {deliveryEnabled && (
+              <label className="mt-2 flex items-center justify-between rounded-lg border border-border bg-background px-3 py-2">
+                <span className="text-sm text-foreground">Delivery (+{formatMoney(deliveryCharge)})</span>
+                <input
+                  type="checkbox"
+                  checked={wantsDelivery}
+                  onChange={(e) => setWantsDelivery(e.target.checked)}
+                  className="h-5 w-5 rounded border-border"
+                />
+              </label>
+            )}
+
             <div className="mt-2 flex justify-between border-t border-border pt-2 text-sm font-semibold text-foreground">
               <span>Total</span>
-              <span>{formatMoney(cartTotal)}</span>
+              <span>{formatMoney(cartTotal + (wantsDelivery ? deliveryCharge : 0))}</span>
             </div>
 
             <div className="mt-4 flex flex-col gap-2">

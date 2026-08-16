@@ -11,14 +11,20 @@ export function CatalogSettingsClient({
   isEnabled: initialEnabled,
   publicToken,
   bannerText: initialBanner,
+  deliveryEnabled: initialDeliveryEnabled,
+  deliveryCharge: initialDeliveryCharge,
 }: {
   isEnabled: boolean;
   publicToken: string | null;
   bannerText: string;
+  deliveryEnabled: boolean;
+  deliveryCharge: number;
 }) {
   const router = useRouter();
   const [enabled, setEnabled] = useState(initialEnabled);
   const [bannerText, setBannerText] = useState(initialBanner);
+  const [deliveryEnabled, setDeliveryEnabled] = useState(initialDeliveryEnabled);
+  const [deliveryCharge, setDeliveryCharge] = useState(initialDeliveryCharge);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const [isPending, startTransition] = useTransition();
@@ -26,7 +32,7 @@ export function CatalogSettingsClient({
   function save() {
     setSaved(false);
     startTransition(async () => {
-      const result = await saveCatalogSettingsAction({ isEnabled: enabled, bannerText });
+      const result = await saveCatalogSettingsAction({ isEnabled: enabled, bannerText, deliveryEnabled, deliveryCharge });
       if (result.error) {
         setError(result.error);
         return;
@@ -54,6 +60,31 @@ export function CatalogSettingsClient({
         <span className="text-sm font-medium text-foreground">Enable public catalog link</span>
         <input type="checkbox" checked={enabled} onChange={(e) => setEnabled(e.target.checked)} className="h-5 w-5 rounded border-border" />
       </label>
+
+      <div className="flex flex-col gap-2.5 rounded-xl border border-border bg-surface px-4 py-3.5 shadow-sm">
+        <label className="flex items-center justify-between">
+          <span className="text-sm font-medium text-foreground">Offer delivery</span>
+          <input
+            type="checkbox"
+            checked={deliveryEnabled}
+            onChange={(e) => setDeliveryEnabled(e.target.checked)}
+            className="h-5 w-5 rounded border-border"
+          />
+        </label>
+        {deliveryEnabled && (
+          <label className="flex flex-col gap-1">
+            <span className="text-xs text-muted">Delivery charge (₹)</span>
+            <input
+              type="number"
+              min={0}
+              value={deliveryCharge}
+              onChange={(e) => setDeliveryCharge(Number(e.target.value) || 0)}
+              className="rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-brand"
+            />
+            <span className="text-xs text-muted">Shown to the customer at checkout and added to the final bill.</span>
+          </label>
+        )}
+      </div>
 
       {publicUrl && enabled && (
         <div className="flex flex-col gap-2 rounded-xl border border-dashed border-brand bg-brand-soft p-4">

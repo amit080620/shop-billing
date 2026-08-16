@@ -74,6 +74,7 @@ export default async function CatalogOrdersPage({
           {requests.map((r) => (
             <CatalogOrderRow
               key={r.id}
+              businessType={session.businessType}
               request={{
                 id: r.id,
                 customerName: r.customer_name,

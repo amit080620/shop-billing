@@ -11,7 +11,7 @@ export default async function CatalogSettingsPage() {
 
   const { data: settings } = await admin
     .from("catalog_settings")
-    .select("is_enabled, public_token, banner_text")
+    .select("is_enabled, public_token, banner_text, delivery_enabled, delivery_charge")
     .eq("shop_id", session.shopId)
     .maybeSingle();
 
@@ -20,6 +20,8 @@ export default async function CatalogSettingsPage() {
       isEnabled={settings?.is_enabled ?? false}
       publicToken={settings?.public_token ?? null}
       bannerText={settings?.banner_text ?? ""}
+      deliveryEnabled={settings?.delivery_enabled ?? false}
+      deliveryCharge={settings ? Number(settings.delivery_charge) : 0}
     />
   );
 }

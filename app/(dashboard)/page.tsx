@@ -5,6 +5,7 @@ import { formatMoney, formatDateTime } from "@/lib/format";
 import { EmptyState } from "@/app/components/EmptyState";
 import { SalesTrendChart } from "@/app/components/SalesTrendChart";
 import { getTranslator } from "@/lib/i18n/server";
+import { isModuleEnabled } from "@/lib/modules";
 import { FESTIVALS } from "@/lib/festivals";
 import {
   Plus,
@@ -46,6 +47,15 @@ export default async function DashboardPage() {
     admin.from("bills").select("id").eq("shop_id", session.shopId).limit(1),
   ]);
 
+  const catalogEnabled = isModuleEnabled(session.enabledModules, "public_catalog");
+  const { count: pendingCatalogOrders } = catalogEnabled
+    ? await admin
+        .from("catalog_order_requests")
+        .select("id", { count: "exact", head: true })
+        .eq("shop_id", session.shopId)
+        .eq("status", "pending")
+    : { count: 0 };
+
   const setupSteps = [
     { done: !!session.shopStateCode, label: "Set your shop's GST state", href: "/settings" },
     { done: (productCount ?? 0) > 0, label: "Add your first product", href: "/products" },
@@ -70,6 +80,19 @@ export default async function DashboardPage() {
         <p className="text-lg font-semibold text-foreground">{t(greetingKey())}, {session.staffName.split(" ")[0]}</p>
         <p className="text-sm text-muted">{t("home.subtitle", { shop: session.shopName })}</p>
       </div>
+
+      {catalogEnabled && (pendingCatalogOrders ?? 0) > 0 && (
+        <Link
+          href="/catalog-orders"
+          className="flex items-center justify-between rounded-xl border border-dashed border-danger bg-danger-soft px-4 py-3"
+        >
+          <span className="flex items-center gap-2 text-sm font-semibold text-danger">
+            <span className="flex h-2.5 w-2.5 animate-pulse rounded-full bg-danger" />
+            {pendingCatalogOrders} new online {pendingCatalogOrders === 1 ? "order" : "orders"} waiting
+          </span>
+          <span className="text-xs font-medium text-danger">Review →</span>
+        </Link>
+      )}
 
       {!setupComplete && (
         <section className="rounded-xl border border-dashed border-brand bg-brand-soft p-4">

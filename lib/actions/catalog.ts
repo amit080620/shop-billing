@@ -9,6 +9,8 @@ import { logError } from "../audit";
 export async function saveCatalogSettingsAction(settings: {
   isEnabled: boolean;
   bannerText: string;
+  deliveryEnabled: boolean;
+  deliveryCharge: number;
 }): Promise<{ error?: string }> {
   const session = await requireSession();
   const admin = createSupabaseAdminClient();
@@ -16,6 +18,8 @@ export async function saveCatalogSettingsAction(settings: {
     shop_id: session.shopId,
     is_enabled: settings.isEnabled,
     banner_text: settings.bannerText || null,
+    delivery_enabled: settings.deliveryEnabled,
+    delivery_charge: settings.deliveryCharge,
     updated_at: new Date().toISOString(),
   });
   if (error) {
@@ -34,7 +38,7 @@ type CartItemInput = { productId: string; quantity: number };
  * defensive pattern as the QR table-ordering flow. */
 export async function submitCatalogOrderAction(
   publicToken: string,
-  input: { name: string; phone: string; notes: string; items: CartItemInput[] },
+  input: { name: string; phone: string; notes: string; items: CartItemInput[]; wantsDelivery: boolean },
 ): Promise<{ error?: string }> {
   const admin = createSupabaseAdminClient();
 
@@ -44,10 +48,16 @@ export async function submitCatalogOrderAction(
 
   const { data: settings } = await admin
     .from("catalog_settings")
-    .select("shop_id, is_enabled")
+    .select("shop_id, is_enabled, delivery_enabled, delivery_charge")
     .eq("public_token", publicToken)
     .maybeSingle();
   if (!settings || !settings.is_enabled) return { error: "Ordering is not available right now" };
+
+  // Never trust a client-sent charge amount — only honor "delivery" at
+  // all if the shop has genuinely turned it on, and always use the
+  // shop's OWN current charge, not anything the browser might send.
+  const wantsDelivery = input.wantsDelivery && settings.delivery_enabled;
+  const deliveryCharge = wantsDelivery ? Number(settings.delivery_charge) : 0;
 
   const productIds = input.items.map((i) => i.productId);
   const { data: products } = await admin
@@ -64,6 +74,8 @@ export async function submitCatalogOrderAction(
       customer_name: input.name.trim(),
       customer_phone: input.phone.trim(),
       notes: input.notes.trim() || null,
+      wants_delivery: wantsDelivery,
+      delivery_charge: deliveryCharge,
     })
     .select("id")
     .single();
@@ -129,7 +141,7 @@ export async function acceptCatalogOrderAction(
 
   const { data: request } = await admin
     .from("catalog_order_requests")
-    .select("id, status, customer_name, customer_phone")
+    .select("id, status, customer_name, customer_phone, wants_delivery, delivery_charge")
     .eq("id", requestId)
     .eq("shop_id", session.shopId)
     .single();
@@ -153,19 +165,35 @@ export async function acceptCatalogOrderAction(
   const productById = new Map((products ?? []).map((p) => [p.id, p]));
 
   const { createBillCore } = await import("./bills");
+  const deliveryLine =
+    request.wants_delivery && Number(request.delivery_charge) > 0
+      ? [
+          {
+            productId: null,
+            description: "Delivery charge",
+            hsnCode: null,
+            quantity: 1,
+            unitPrice: Number(request.delivery_charge),
+            gstPercent: 0,
+          },
+        ]
+      : [];
   const result = await createBillCore(session, {
     customerId: null,
-    items: items.map((item) => {
-      const product = item.product_id ? productById.get(item.product_id) : undefined;
-      return {
-        productId: item.product_id,
-        description: item.product_name,
-        hsnCode: product?.hsn_code ?? null,
-        quantity: round2(Number(item.quantity)),
-        unitPrice: Number(item.price_at_request),
-        gstPercent: product ? Number(product.gst_percent) : 0,
-      };
-    }),
+    items: [
+      ...items.map((item) => {
+        const product = item.product_id ? productById.get(item.product_id) : undefined;
+        return {
+          productId: item.product_id,
+          description: item.product_name,
+          hsnCode: product?.hsn_code ?? null,
+          quantity: round2(Number(item.quantity)),
+          unitPrice: Number(item.price_at_request),
+          gstPercent: product ? Number(product.gst_percent) : 0,
+        };
+      }),
+      ...deliveryLine,
+    ],
     discountType: "flat",
     discountValue: 0,
     paidAmount: 0,
@@ -190,4 +218,45 @@ export async function acceptCatalogOrderAction(
 
   revalidatePath("/catalog-orders");
   return { billId: result.billId };
+}
+
+/** Lightweight — used by the global polling alert (mounted in the
+ * dashboard layout, so it runs on every page). Returns just enough to
+ * show a popup and play a sound, not full order details; the popup
+ * links to /catalog-orders for the real accept/reject flow. */
+export async function listPendingCatalogOrdersAction(): Promise<
+  { id: string; customerName: string; total: number; createdAt: string }[]
+> {
+  const session = await requireSession();
+  const admin = createSupabaseAdminClient();
+
+  const { data: requests } = await admin
+    .from("catalog_order_requests")
+    .select("id, customer_name, created_at")
+    .eq("shop_id", session.shopId)
+    .eq("status", "pending")
+    .order("created_at", { ascending: false })
+    .limit(20);
+  if (!requests || requests.length === 0) return [];
+
+  const requestIds = requests.map((r) => r.id);
+  const { data: items } = await admin
+    .from("catalog_order_request_items")
+    .select("request_id, quantity, price_at_request")
+    .in("request_id", requestIds);
+
+  const totalByRequest = new Map<string, number>();
+  for (const item of items ?? []) {
+    totalByRequest.set(
+      item.request_id,
+      (totalByRequest.get(item.request_id) ?? 0) + Number(item.quantity) * Number(item.price_at_request),
+    );
+  }
+
+  return requests.map((r) => ({
+    id: r.id,
+    customerName: r.customer_name,
+    total: totalByRequest.get(r.id) ?? 0,
+    createdAt: r.created_at,
+  }));
 }
