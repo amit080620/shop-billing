@@ -37,11 +37,9 @@ const SECTION_LABEL: Record<"inside" | "outside" | "takeaway", string> = {
   takeaway: "Takeaway",
 };
 const SECTION_BADGE: Record<"inside" | "outside" | "takeaway", { letter: string; className: string }> = {
-  // Muted, professional tones — distinguishable at a glance without
-  // being bright/childish (brief explicitly asked to avoid that).
-  inside: { letter: "I", className: "bg-info-soft text-info" },
-  outside: { letter: "O", className: "bg-success-soft text-success" },
-  takeaway: { letter: "T", className: "bg-warning-soft text-warning" },
+  inside: { letter: "I", className: "bg-brand-soft text-brand-text" },
+  outside: { letter: "O", className: "bg-brand-soft text-brand-text" },
+  takeaway: { letter: "T", className: "bg-brand-soft text-brand-text" },
 };
 
 export function TablesClient({ tables, lang }: { tables: Table[]; lang: Lang }) {

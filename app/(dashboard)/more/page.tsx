@@ -243,11 +243,11 @@ function MenuGroup({ title, children }: { title: string; children: React.ReactNo
 
 const TONE_CLASSES: Record<string, string> = {
   brand: "bg-brand-soft text-brand-text",
-  secondary: "bg-secondary-soft text-secondary",
-  success: "bg-success-soft text-success",
-  warning: "bg-warning-soft text-warning",
-  info: "bg-info-soft text-info",
-  danger: "bg-danger-soft text-danger",
+  secondary: "bg-brand-soft text-brand-text",
+  success: "bg-brand-soft text-brand-text",
+  warning: "bg-brand-soft text-brand-text",
+  info: "bg-brand-soft text-brand-text",
+  danger: "bg-brand-soft text-brand-text",
 };
 
 function MenuLink({

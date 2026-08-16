@@ -32,10 +32,15 @@ export function AuthShell({
           <ThemeToggle theme={theme} compact />
         </div>
         <div className="mb-6 flex flex-col items-center gap-3 text-center">
-          {/* eslint-disable-next-line @next/next/no-img-element -- small static brand asset, next/image adds no value here */}
-          <img src="/brand-logo.png" alt="The Ray" className="h-24 w-auto" />
+          <div
+            className="flex h-32 w-32 items-center justify-center rounded-full bg-background p-4"
+            style={{ boxShadow: "-10px -10px 22px var(--neu-light), 10px 10px 22px var(--neu-dark)" }}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element -- small static brand asset, next/image adds no value here */}
+            <img src="/brand-logo.png" alt="The Ray" className="h-full w-auto" />
+          </div>
           <div>
-            <h1 className="text-2xl font-bold text-foreground">{title}</h1>
+            <h1 className="text-2xl font-bold text-foreground neu-text">{title}</h1>
             <p className="mt-1 text-sm text-muted">{subtitle}</p>
           </div>
         </div>
