@@ -10,17 +10,20 @@ export function DeleteBatchButton({ batchId, productId, lang }: { batchId: strin
   const { t } = useTranslation(lang);
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const router = useRouter();
 
   return (
-    <div className="flex flex-col items-end gap-0.5">
+    <div className={`flex flex-col items-end gap-0.5 transition-opacity duration-300 ${isDeleting ? "scale-90 opacity-0" : ""}`}>
       <button
         onClick={() => {
           if (!confirm(t("batches.removeConfirm"))) return;
+          setIsDeleting(true);
           startTransition(async () => {
             const result = await deleteBatchAction(batchId, productId);
             if (result?.error) {
               setError(result.error);
+              setIsDeleting(false);
               return;
             }
             setError(null);

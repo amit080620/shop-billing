@@ -436,6 +436,7 @@ function PatientPhotos({
   const [note, setNote] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const [deletingPhotoId, setDeletingPhotoId] = useState<string | null>(null);
 
   function handleUpload(file: File) {
     setError(null);
@@ -489,17 +490,18 @@ function PatientPhotos({
       ) : (
         <div className="grid grid-cols-3 gap-2">
           {photos.map((p) => (
-            <div key={p.id} className="relative flex flex-col gap-1">
+            <div key={p.id} className={`relative flex flex-col gap-1 ${deletingPhotoId === p.id ? "animate-delete" : ""}`}>
               {/* eslint-disable-next-line @next/next/no-img-element -- patient-uploaded photo */}
               <img src={p.photoUrl} alt={p.label} className="aspect-square w-full rounded-lg object-cover" />
               <span className="rounded-full bg-background px-1.5 py-0.5 text-center text-[9px] font-medium capitalize text-muted">{p.label}</span>
               <button
-                onClick={() =>
+                onClick={() => {
+                  setDeletingPhotoId(p.id);
                   startTransition(async () => {
                     await deletePatientPhotoAction(p.id, patientId);
                     router.refresh();
-                  })
-                }
+                  });
+                }}
                 className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-black/60 text-[10px] text-white"
               >
                 <X size={11} />
