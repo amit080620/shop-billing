@@ -120,10 +120,14 @@ export default async function DashboardPage() {
       )}
 
       {nextFestival && (
-        <Link href="/festivals" className="rounded-xl border border-dashed border-brand bg-brand-soft p-4">
+        <Link
+          href="/festivals"
+          className="rounded-xl border border-dashed border-brand bg-brand-soft p-4"
+          style={{ boxShadow: "-5px -5px 12px var(--neu-light), 5px 5px 12px var(--neu-dark)" }}
+        >
           <div className="flex items-center justify-between gap-3">
             <div>
-              <p className="flex items-center gap-1.5 text-sm font-semibold text-brand-text">
+              <p className="flex items-center gap-1.5 text-sm font-semibold text-brand-text neu-text">
                 <PartyPopper size={15} /> {nextFestival.name} in {nextFestival.daysUntil} day{nextFestival.daysUntil === 1 ? "" : "s"}
               </p>
               <p className="mt-0.5 text-xs text-brand-text/80">
@@ -1239,8 +1243,11 @@ async function RestaurantHome({ shopId }: { shopId: string }) {
 
       <Link
         href="/restaurant"
-        className="flex items-center justify-center gap-2 rounded-xl px-4 py-4 text-center font-semibold text-white shadow-md"
-        style={{ background: "linear-gradient(135deg, var(--brand-light), var(--brand-dark))" }}
+        className="flex items-center justify-center gap-2 rounded-xl px-4 py-4 text-center font-semibold text-white"
+        style={{
+          background: "linear-gradient(135deg, var(--brand-light), var(--brand-dark))",
+          boxShadow: "-6px -6px 14px var(--neu-light), 6px 6px 14px var(--neu-dark)",
+        }}
       >
         <PlusIcon />
         Go to Tables
@@ -1256,7 +1263,7 @@ async function RestaurantHome({ shopId }: { shopId: string }) {
               const table = Array.isArray(o.restaurant_tables) ? o.restaurant_tables[0] : o.restaurant_tables;
               return (
                 <li key={o.id}>
-                  <Link href={`/restaurant/reports/${o.id}`} className="flex items-center justify-between rounded-lg border border-border bg-surface px-3.5 py-3 shadow-sm">
+                  <Link href={`/restaurant/reports/${o.id}`} className="neu-card flex items-center justify-between px-3.5 py-3">
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-medium text-foreground">{table?.name ?? "Table"} · #{o.order_number}</p>
                       <p className="text-xs text-muted">{o.settled_at && formatDateTime(o.settled_at)}</p>
@@ -1401,6 +1408,7 @@ function StatCard({
             className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${
               tone === "credit" ? "bg-surface text-credit" : "bg-brand-soft text-brand-text"
             }`}
+            style={{ boxShadow: "-2px -2px 5px var(--neu-light), 2px 2px 5px var(--neu-dark)" }}
           >
             <Icon size={17} strokeWidth={2} />
           </span>

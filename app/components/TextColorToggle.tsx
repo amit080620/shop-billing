@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 const OPTIONS: { value: "default" | "navy" | "charcoal" | "slate"; label: string; swatch: string }[] = [
@@ -9,10 +10,12 @@ const OPTIONS: { value: "default" | "navy" | "charcoal" | "slate"; label: string
   { value: "slate", label: "Slate", swatch: "#334155" },
 ];
 
-export function TextColorToggle({ textColor }: { textColor: "default" | "navy" | "charcoal" | "slate" }) {
+export function TextColorToggle({ textColor: initial }: { textColor: "default" | "navy" | "charcoal" | "slate" }) {
   const router = useRouter();
+  const [textColor, setTextColor] = useState(initial);
 
   function switchTo(next: "default" | "navy" | "charcoal" | "slate") {
+    setTextColor(next);
     document.cookie = `textColor=${next}; path=/; max-age=31536000`;
     document.documentElement.setAttribute("data-text", next);
     router.refresh();

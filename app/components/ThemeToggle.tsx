@@ -1,12 +1,15 @@
 "use client";
 
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Sun, Moon } from "lucide-react";
 
-export function ThemeToggle({ theme, compact = false }: { theme: "light" | "dark"; compact?: boolean }) {
+export function ThemeToggle({ theme: initial, compact = false }: { theme: "light" | "dark"; compact?: boolean }) {
   const router = useRouter();
+  const [theme, setTheme] = useState(initial);
 
   function switchTo(next: "light" | "dark") {
+    setTheme(next);
     document.cookie = `theme=${next}; path=/; max-age=31536000`;
     document.documentElement.classList.toggle("dark", next === "dark");
     router.refresh();

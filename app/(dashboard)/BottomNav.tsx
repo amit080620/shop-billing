@@ -150,11 +150,11 @@ export function BottomNav({ lang, businessType, permissions = [] }: { lang: Lang
               >
                 <span
                   className="flex h-8 w-8 items-center justify-center rounded-full"
-                  style={
-                    active
-                      ? { boxShadow: "-3px -3px 7px var(--neu-light), 3px 3px 7px var(--neu-dark)" }
-                      : undefined
-                  }
+                  style={{
+                    boxShadow: active
+                      ? "-3px -3px 7px var(--neu-light), 3px 3px 7px var(--neu-dark)"
+                      : "-2px -2px 5px var(--neu-light), 2px 2px 5px var(--neu-dark)",
+                  }}
                 >
                   <Icon active={active} />
                 </span>

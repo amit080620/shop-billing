@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { Lang } from "./dictionary";
 
@@ -9,10 +10,12 @@ const LANGS: { code: Lang; label: string }[] = [
   { code: "mr", label: "मराठी" },
 ];
 
-export function LanguageToggle({ lang, compact = false }: { lang: Lang; compact?: boolean }) {
+export function LanguageToggle({ lang: initial, compact = false }: { lang: Lang; compact?: boolean }) {
   const router = useRouter();
+  const [lang, setLang] = useState(initial);
 
   function switchTo(next: Lang) {
+    setLang(next);
     document.cookie = `lang=${next}; path=/; max-age=31536000`;
     router.refresh();
   }

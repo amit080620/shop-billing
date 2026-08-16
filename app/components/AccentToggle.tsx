@@ -1,11 +1,14 @@
 "use client";
 
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-export function AccentToggle({ accent }: { accent: "blue" | "saffron" }) {
+export function AccentToggle({ accent: initial }: { accent: "blue" | "saffron" }) {
   const router = useRouter();
+  const [accent, setAccent] = useState(initial);
 
   function switchTo(next: "blue" | "saffron") {
+    setAccent(next);
     document.cookie = `accent=${next}; path=/; max-age=31536000`;
     document.documentElement.setAttribute("data-accent", next);
     router.refresh();
