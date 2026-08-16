@@ -147,6 +147,8 @@
   --brand-soft: #fff3e5;
   --brand-text: #b85400;
   --ray-gradient: linear-gradient(135deg, #e8720e 0%, #ff9d40 50%, #ffc178 100%);
+  --neu-dark: rgba(150, 90, 30, 0.32);
+  --neu-dark-strong: rgba(130, 76, 22, 0.44);
 }
 .dark[data-accent="saffron"] {
   --brand: #ffa94d;
@@ -267,6 +269,30 @@ select {
 select option {
   background-color: var(--surface);
   color: var(--foreground);
+}
+
+/* Global "pressed in" look for form fields — matches the reference
+ * neumorphic design (inputs read as a genuine carved-in dent, not a
+ * flat bordered box). Applies everywhere at once rather than needing
+ * every input across the app touched individually. */
+input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"]),
+textarea,
+select {
+  background: var(--background) !important;
+  border: none !important;
+  border-radius: var(--radius) !important;
+  box-shadow:
+    inset 3px 3px 7px var(--neu-dark),
+    inset -3px -3px 7px var(--neu-light) !important;
+}
+input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"]):focus,
+textarea:focus,
+select:focus {
+  outline: none !important;
+  box-shadow:
+    inset 3px 3px 7px var(--neu-dark-strong),
+    inset -3px -3px 7px var(--neu-light),
+    0 0 0 2px var(--brand-soft) !important;
 }
 
 /* Global tactile feedback — every button/link gets a smooth, snappy
