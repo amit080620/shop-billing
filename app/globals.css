@@ -157,6 +157,20 @@
   --ray-gradient: linear-gradient(135deg, #e8871a 0%, #ffa94d 50%, #ffc178 100%);
 }
 
+/* Text color choice — besides the default near-black. Only applies in
+   light mode: dark mode's foreground must stay light for contrast on a
+   dark background, so a dark navy/charcoal/slate there would be
+   unreadable — this is deliberately scoped out of .dark. */
+html:not(.dark)[data-text="navy"] {
+  --foreground: #1e293b;
+}
+html:not(.dark)[data-text="charcoal"] {
+  --foreground: #292524;
+}
+html:not(.dark)[data-text="slate"] {
+  --foreground: #334155;
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-surface: var(--surface);

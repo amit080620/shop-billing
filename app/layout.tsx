@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { getTheme, getAccent } from "@/lib/theme";
+import { getTheme, getAccent, getTextColor } from "@/lib/theme";
 import { getLang } from "@/lib/i18n/server";
 import { ServiceWorkerRegistration } from "./components/ServiceWorkerRegistration";
 import { ToastProvider } from "./components/Toast";
@@ -43,10 +43,11 @@ export default async function RootLayout({
 }>) {
   const theme = await getTheme();
   const accent = await getAccent();
+  const textColor = await getTextColor();
   const lang = await getLang();
 
   return (
-    <html lang={lang} className={theme === "dark" ? "dark" : undefined} data-accent={accent}>
+    <html lang={lang} className={theme === "dark" ? "dark" : undefined} data-accent={accent} data-text={textColor}>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />

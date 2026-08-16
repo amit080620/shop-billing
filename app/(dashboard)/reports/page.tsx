@@ -17,7 +17,7 @@ export default async function ReportsPage() {
 
       <section className="flex flex-col gap-2">
         <h2 className="px-1 text-xs font-semibold uppercase tracking-wide text-muted">Daily tools</h2>
-        <div className="flex flex-col divide-y divide-border overflow-hidden rounded-xl border border-border bg-surface shadow-sm">
+        <div className="neu-card flex flex-col divide-y divide-border overflow-hidden">
           <ReportLink
             href="/daily-summary"
             label="Daily summary"
@@ -53,7 +53,7 @@ export default async function ReportsPage() {
           your CA review them) before entering them on the portal.
         </p>
 
-        <div className="flex flex-col divide-y divide-border overflow-hidden rounded-xl border border-border bg-surface shadow-sm">
+        <div className="neu-card flex flex-col divide-y divide-border overflow-hidden">
           <ReportLink
             href="/reports/gstr1"
             label="GSTR-1"

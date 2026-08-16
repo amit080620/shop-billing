@@ -2,9 +2,10 @@ import Link from "next/link";
 import { requireSession } from "@/lib/auth";
 import { LogoutButton } from "./LogoutButton";
 import { getTranslator } from "@/lib/i18n/server";
-import { getTheme, getAccent } from "@/lib/theme";
+import { getTheme, getAccent, getTextColor } from "@/lib/theme";
 import { ThemeToggle } from "@/app/components/ThemeToggle";
 import { AccentToggle } from "@/app/components/AccentToggle";
+import { TextColorToggle } from "@/app/components/TextColorToggle";
 import { getTerminology } from "@/lib/businessType";
 import { LanguageToggle } from "@/lib/i18n/LanguageToggle";
 import { SubscriptionCard } from "@/app/components/SubscriptionCard";
@@ -17,6 +18,7 @@ export default async function MorePage() {
   const { lang, t } = await getTranslator();
   const theme = await getTheme();
   const accent = await getAccent();
+  const textColor = await getTextColor();
   const terminology = getTerminology(session.businessType);
 
   return (
@@ -47,6 +49,13 @@ export default async function MorePage() {
             <p className="text-xs text-muted">Applies to this device only</p>
           </div>
           <AccentToggle accent={accent} />
+        </div>
+        <div className="flex flex-col gap-2 px-4 py-3.5">
+          <div>
+            <p className="text-sm font-medium text-foreground">Text color</p>
+            <p className="text-xs text-muted">Applies to this device only</p>
+          </div>
+          <TextColorToggle textColor={textColor} />
         </div>
       </MenuGroup>
 
