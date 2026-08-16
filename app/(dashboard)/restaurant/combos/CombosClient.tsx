@@ -191,7 +191,7 @@ export function CombosClient({ products, combos, lang }: { products: Product[]; 
       ) : (
         <ul className="flex flex-col gap-2 md:grid md:grid-cols-2 md:gap-3">
           {combos.map((c) => (
-            <li key={c.id} className={`rounded-xl border shadow-sm p-4 ${c.isActive ? "border-border bg-surface" : "border-border bg-background opacity-60"}`}>
+            <li key={c.id} className={c.isActive ? "neu-card p-4" : "rounded-xl border border-border bg-background p-4 opacity-60"}>
               <div className="flex items-center justify-between">
                 <p className="text-sm font-semibold text-foreground">{c.name}</p>
                 <p className="text-sm font-semibold text-foreground">{formatMoney(c.price)}</p>

@@ -264,7 +264,7 @@ export function OrderClient({
                   key={p.id}
                   type="button"
                   onClick={() => setPickingProduct(p)}
-                  className="flex flex-col items-start gap-0.5 rounded-lg border border-border bg-surface px-3 py-2.5 text-left"
+                  className="neu-card flex flex-col items-start gap-0.5 px-3 py-2.5 text-left"
                 >
                   <span className="truncate text-sm font-medium text-foreground">{p.name}</span>
                   <span className="text-xs text-muted">{formatMoney(p.price)}</span>
@@ -313,7 +313,7 @@ export function OrderClient({
             ) : (
               <ul className="flex flex-col gap-2">
                 {initialItems.map((item) => (
-                  <li key={item.id} className="flex items-center justify-between gap-2 rounded-lg border border-border bg-surface px-3.5 py-2.5">
+                  <li key={item.id} className="neu-card flex items-center justify-between gap-2 px-3.5 py-2.5">
                     <div className="min-w-0 flex-1">
                       <span className="truncate text-sm text-foreground">{item.productName}</span>
                       {item.selectedModifiers.length > 0 && (
