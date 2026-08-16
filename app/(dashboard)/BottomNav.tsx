@@ -144,12 +144,21 @@ export function BottomNav({ lang, businessType, permissions = [] }: { lang: Lang
             <li key={tab.href} className="flex-1 py-1.5">
               <Link
                 href={tab.href}
-                className={`mx-auto flex flex-col items-center gap-0.5 rounded-xl px-2 py-1.5 text-[11px] font-medium transition-colors ${
+                className={`mx-auto flex flex-col items-center gap-1 rounded-xl px-2 py-1.5 text-[11px] font-medium transition-colors ${
                   active ? "bg-brand-soft text-brand-text" : "text-muted"
                 }`}
               >
-                <Icon active={active} />
-                {tab.label}
+                <span
+                  className="flex h-8 w-8 items-center justify-center rounded-full"
+                  style={
+                    active
+                      ? { boxShadow: "-3px -3px 7px var(--neu-light), 3px 3px 7px var(--neu-dark)" }
+                      : undefined
+                  }
+                >
+                  <Icon active={active} />
+                </span>
+                <span className={active ? "neu-text" : ""}>{tab.label}</span>
               </Link>
             </li>
           );

@@ -77,7 +77,7 @@ export async function SubscriptionCard() {
   );
 
   return (
-    <div className="overflow-hidden rounded-2xl shadow-sm" style={{ background: tone.gradient }}>
+    <div className="overflow-hidden rounded-2xl" style={{ background: tone.gradient, boxShadow: "-6px -6px 14px var(--neu-light), 6px 6px 14px var(--neu-dark)" }}>
       <div className="flex items-center justify-between px-4 pt-4">
         <p className="text-sm font-semibold text-white/95">{t("subscription.title")}</p>
         <span

@@ -221,7 +221,7 @@ export default async function MorePage() {
         <MenuLink href="/help" label="Help & guide" sub="How every screen and button works" icon={HelpIcon} tone="info" />
       </MenuGroup>
 
-      <div className="rounded-xl border border-border bg-surface px-4 py-3.5 text-sm text-muted shadow-sm">
+      <div className="neu-card px-4 py-3.5 text-sm text-muted">
         {t("more.loggedInAs")} {session.staffName} ({session.email})
       </div>
 
@@ -275,7 +275,7 @@ function MenuLink({
         <Icon className="h-[18px] w-[18px]" />
       </span>
       <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-medium text-foreground">{label}</p>
+        <p className="truncate text-sm font-medium text-foreground neu-text">{label}</p>
         <p className="truncate text-xs text-muted">{sub}</p>
       </div>
       <span className="shrink-0 text-muted">›</span>

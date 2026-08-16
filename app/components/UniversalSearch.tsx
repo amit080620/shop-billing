@@ -74,7 +74,8 @@ export function UniversalSearch({ ownsGlobalShortcut = true }: { ownsGlobalShort
           in its header; tapping it does the same thing as Ctrl+K. */}
       <button
         onClick={() => setOpen(true)}
-        className="flex w-full items-center gap-2 rounded-full border border-border bg-surface px-3.5 py-2 text-sm text-muted shadow-sm md:w-64"
+        className="flex w-full items-center gap-2 rounded-full bg-background px-3.5 py-2 text-sm text-muted md:w-64"
+        style={{ boxShadow: "inset 3px 3px 8px var(--neu-dark), inset -3px -3px 8px var(--neu-light)" }}
       >
         <Search size={14} />
         <span className="flex-1 text-left">Search…</span>

@@ -26,6 +26,11 @@ export function LanguageToggle({ lang, compact = false }: { lang: Lang; compact?
           className={`rounded-md px-2.5 py-1 text-xs font-medium ${
             lang === l.code ? "bg-brand-soft text-brand-dark" : "text-muted"
           }`}
+          style={
+            lang === l.code
+              ? { boxShadow: "-2px -2px 5px var(--neu-light), 2px 2px 5px var(--neu-dark)" }
+              : undefined
+          }
         >
           {l.label}
         </button>

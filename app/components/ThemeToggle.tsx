@@ -19,6 +19,7 @@ export function ThemeToggle({ theme, compact = false }: { theme: "light" | "dark
         className={`rounded-md px-2.5 py-1 text-xs font-medium ${
           theme === "light" ? "bg-brand-soft text-brand-text" : "text-muted"
         }`}
+        style={theme === "light" ? { boxShadow: "-2px -2px 5px var(--neu-light), 2px 2px 5px var(--neu-dark)" } : undefined}
       >
         <Sun size={12} className="inline" /> Light
       </button>
@@ -27,6 +28,7 @@ export function ThemeToggle({ theme, compact = false }: { theme: "light" | "dark
         className={`rounded-md px-2.5 py-1 text-xs font-medium ${
           theme === "dark" ? "bg-brand-soft text-brand-text" : "text-muted"
         }`}
+        style={theme === "dark" ? { boxShadow: "-2px -2px 5px var(--neu-light), 2px 2px 5px var(--neu-dark)" } : undefined}
       >
         <Moon size={12} className="inline" /> Dark
       </button>

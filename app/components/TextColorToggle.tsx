@@ -27,6 +27,7 @@ export function TextColorToggle({ textColor }: { textColor: "default" | "navy" |
           className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium ${
             textColor === opt.value ? "bg-brand-soft text-brand-text" : "text-muted"
           }`}
+          style={textColor === opt.value ? { boxShadow: "-2px -2px 5px var(--neu-light), 2px 2px 5px var(--neu-dark)" } : undefined}
         >
           <span className="h-3 w-3 rounded-full" style={{ background: opt.swatch }} />
           {opt.label}

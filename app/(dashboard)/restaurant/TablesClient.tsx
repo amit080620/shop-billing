@@ -225,13 +225,25 @@ export function TablesClient({ tables, lang }: { tables: Table[]; lang: Lang }) 
       />
 
       <div className="flex gap-2 overflow-x-auto">
-        <Link href="/restaurant/reports" className="shrink-0 rounded-full border border-border px-3 py-1.5 text-xs font-medium text-muted">
+        <Link
+          href="/restaurant/reports"
+          className="shrink-0 rounded-full bg-background px-3 py-1.5 text-xs font-medium text-muted"
+          style={{ boxShadow: "-2px -2px 5px var(--neu-light), 2px 2px 5px var(--neu-dark)" }}
+        >
           {t("tables.salesReports")}
         </Link>
-        <Link href="/restaurant/combos" className="flex shrink-0 items-center gap-1 rounded-full border border-border px-3 py-1.5 text-xs font-medium text-muted">
+        <Link
+          href="/restaurant/combos"
+          className="flex shrink-0 items-center gap-1 rounded-full bg-background px-3 py-1.5 text-xs font-medium text-muted"
+          style={{ boxShadow: "-2px -2px 5px var(--neu-light), 2px 2px 5px var(--neu-dark)" }}
+        >
           <Layers size={12} /> Combos
         </Link>
-        <Link href="/restaurant/reservations" className="flex shrink-0 items-center gap-1 rounded-full border border-border px-3 py-1.5 text-xs font-medium text-muted">
+        <Link
+          href="/restaurant/reservations"
+          className="flex shrink-0 items-center gap-1 rounded-full bg-background px-3 py-1.5 text-xs font-medium text-muted"
+          style={{ boxShadow: "-2px -2px 5px var(--neu-light), 2px 2px 5px var(--neu-dark)" }}
+        >
           <CalendarClock size={12} /> Reservations
         </Link>
       </div>
@@ -303,6 +315,11 @@ export function TablesClient({ tables, lang }: { tables: Table[]; lang: Lang }) 
               className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium ${
                 sectionFilter === s ? "border-brand bg-brand-soft text-brand-text" : "border-border text-muted"
               }`}
+              style={
+                sectionFilter === s
+                  ? { boxShadow: "-2px -2px 5px var(--neu-light), 2px 2px 5px var(--neu-dark)" }
+                  : undefined
+              }
             >
               {s === "all" ? "All tables" : SECTION_LABEL[s]}
             </button>
