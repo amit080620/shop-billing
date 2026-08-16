@@ -123,7 +123,7 @@ export default async function DashboardPage() {
         <Link
           href="/festivals"
           className="rounded-xl border border-dashed border-brand bg-brand-soft p-4"
-          style={{ boxShadow: "-5px -5px 12px var(--neu-light), 5px 5px 12px var(--neu-dark)" }}
+          style={{ boxShadow: "-6px -6px 16px var(--neu-light), 6px 6px 16px var(--neu-dark-strong)" }}
         >
           <div className="flex items-center justify-between gap-3">
             <div>
@@ -1445,8 +1445,8 @@ function sum(values: number[] | undefined) {
 function buildSevenDayTrend<T extends Record<string, unknown>>(
   records: T[],
   dateField: keyof T,
-): { day: string; total: number }[] {
-  const trend: { day: string; total: number }[] = [];
+): { day: string; date: string; total: number }[] {
+  const trend: { day: string; date: string; total: number }[] = [];
   for (let i = 6; i >= 0; i--) {
     const dayStart = new Date();
     dayStart.setDate(dayStart.getDate() - i);
@@ -1463,7 +1463,8 @@ function buildSevenDayTrend<T extends Record<string, unknown>>(
         })
         .map((r) => Number((r as Record<string, unknown>).total ?? 0)),
     );
-    trend.push({ day: dayStart.toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata", weekday: "short" }), total: dayTotal });
+    const isoDate = dayStart.toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
+    trend.push({ day: dayStart.toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata", weekday: "short" }), date: isoDate, total: dayTotal });
   }
   return trend;
 }
