@@ -93,7 +93,7 @@ function Group({ title, batches, t }: { title: string; batches: BatchRow[]; t: T
             <li key={b.id}>
               <Link
                 href={`/pharmacy/batches/${b.product_id}`}
-                className="flex items-center justify-between gap-3 rounded-lg border border-border bg-surface shadow-sm px-3.5 py-2.5"
+                className="neu-card flex items-center justify-between gap-3 px-3.5 py-2.5"
               >
                 <div className="min-w-0">
                   <p className="truncate text-sm font-medium text-foreground">{product?.name ?? "Medicine"}</p>

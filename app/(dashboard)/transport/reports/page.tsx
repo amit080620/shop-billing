@@ -97,7 +97,7 @@ export default async function TransportReportsPage({
         </button>
       </form>
 
-      <div className="rounded-xl border border-border bg-surface shadow-sm p-4 text-center">
+      <div className="neu-card p-4 text-center">
         <p className="text-xs text-muted">{fromDate} → {toDate}</p>
         <p className="mt-1 text-xl font-semibold text-foreground">{formatMoney(grandTotalEarnings)}</p>
         <p className="text-xs text-muted">{t("treports.roundsAcrossAll", { count: grandTotalRounds })}</p>
@@ -111,7 +111,7 @@ export default async function TransportReportsPage({
             {vehicleRows.map((v) => {
               const loadEntries = Object.entries(v.loadByUnit);
               return (
-                <li key={v.name} className="rounded-xl border border-border bg-surface shadow-sm p-4">
+                <li key={v.name} className="neu-card p-4">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm font-semibold text-foreground">{v.name}</p>
@@ -135,7 +135,7 @@ export default async function TransportReportsPage({
               <p className="text-sm font-medium text-foreground">{t("treports.byDriver")}</p>
               <ul className="flex flex-col gap-2">
                 {driverRows.map((d) => (
-                  <li key={d.name} className="flex items-center justify-between rounded-lg border border-border bg-surface shadow-sm px-3.5 py-2.5">
+                  <li key={d.name} className="neu-card flex items-center justify-between px-3.5 py-2.5">
                     <div>
                       <p className="text-sm font-medium text-foreground">{d.name}</p>
                       <p className="text-xs text-muted">{t("treports.driverRoundsKm", { rounds: d.rounds, km: d.totalKm.toLocaleString("en-IN") })}</p>

@@ -42,7 +42,7 @@ export default async function WriteOffsPage() {
         <>
           <div className="flex gap-2">
             {[...byReason.entries()].map(([reason, qty]) => (
-              <div key={reason} className="flex-1 rounded-lg border border-border bg-surface shadow-sm p-3 text-center">
+              <div key={reason} className="neu-card flex-1 p-3 text-center">
                 <p className="text-xs capitalize text-muted">{reasonLabel(reason)}</p>
                 <p className="mt-1 text-lg font-semibold text-credit">{qty}</p>
               </div>
@@ -51,7 +51,7 @@ export default async function WriteOffsPage() {
 
           <ul className="flex flex-col gap-2 md:grid md:grid-cols-2 md:gap-3">
             {writeoffs.map((w) => (
-              <li key={w.id} className="rounded-lg border border-border bg-surface shadow-sm px-3.5 py-3">
+              <li key={w.id} className="neu-card px-3.5 py-3">
                 <div className="flex items-center justify-between">
                   <p className="text-sm font-medium text-foreground">{w.product_name}</p>
                   <span className="rounded-full bg-credit-soft px-2 py-0.5 text-[11px] font-medium capitalize text-credit">

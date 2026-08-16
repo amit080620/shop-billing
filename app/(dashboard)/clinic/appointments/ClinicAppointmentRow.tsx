@@ -54,7 +54,7 @@ export function ClinicAppointmentRow({ appointment }: { appointment: Appointment
   const rxLink = `/clinic/prescriptions/new?appointmentId=${appointment.id}&patientName=${encodeURIComponent(appointment.patientName)}&patientPhone=${encodeURIComponent(appointment.patientPhone)}`;
 
   return (
-    <li className="rounded-xl border border-border bg-surface shadow-sm p-3.5">
+    <li className="neu-card p-3.5">
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           <p className="text-sm font-semibold text-foreground">{appointment.time} · {appointment.patientName}</p>

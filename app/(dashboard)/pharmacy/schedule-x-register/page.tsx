@@ -101,7 +101,7 @@ export default async function ScheduleXRegisterPage({
           <ExportRegisterButton rows={rows} label={t("scheduleX.exportButton")} />
           <ul className="flex flex-col gap-2 md:grid md:grid-cols-2 md:gap-3">
             {rows.map((r) => (
-              <li key={r.id} className="rounded-lg border border-border bg-surface shadow-sm px-3.5 py-3">
+              <li key={r.id} className="neu-card px-3.5 py-3">
                 <div className="flex items-center justify-between text-sm">
                   <span className="font-medium text-foreground">{r.medicine}</span>
                   <span className="text-xs text-muted">{new Date(r.date).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata", day: "numeric", month: "short", year: "numeric" })}</span>

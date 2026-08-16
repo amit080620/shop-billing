@@ -44,7 +44,7 @@ export default async function DoctorsReportPage() {
       ) : (
         <ul className="flex flex-col gap-2 md:grid md:grid-cols-2 md:gap-3">
           {doctors.map(([name, stats]) => (
-            <li key={name} className="rounded-xl border border-border bg-surface shadow-sm px-4 py-3">
+            <li key={name} className="neu-card px-4 py-3">
               <div className="flex items-center justify-between">
                 <p className="text-sm font-medium text-foreground">{t("doctors.drPrefix", { name })}</p>
                 <p className="text-sm font-semibold text-foreground">{formatMoney(stats.total)}</p>

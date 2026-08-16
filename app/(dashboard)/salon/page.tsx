@@ -73,7 +73,7 @@ export default async function SalonStaffReportPage({
         </button>
       </form>
 
-      <div className="rounded-xl border border-border bg-surface shadow-sm p-4 text-center">
+      <div className="neu-card p-4 text-center">
         <p className="text-xs text-muted">{fromDate} → {toDate}</p>
         <p className="mt-1 text-xl font-semibold text-foreground">{formatMoney(totalRevenue)}</p>
       </div>
@@ -83,7 +83,7 @@ export default async function SalonStaffReportPage({
       ) : (
         <ul className="flex flex-col gap-2">
           {rows.map((r) => (
-            <li key={r.name} className="flex items-center justify-between rounded-lg border border-border bg-surface shadow-sm px-3.5 py-2.5">
+            <li key={r.name} className="neu-card flex items-center justify-between px-3.5 py-2.5">
               <div>
                 <p className="text-sm font-medium text-foreground">{r.name}</p>
                 <p className="text-xs text-muted">{r.bills} bill(s)</p>
