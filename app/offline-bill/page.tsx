@@ -285,7 +285,7 @@ export default function OfflineBillPage() {
               className="rounded-lg border border-border bg-surface px-3.5 py-2.5 text-sm outline-none focus:border-brand"
             />
             {filteredCustomers.length > 0 && (
-              <div className="rounded-lg border border-border bg-surface shadow-sm">
+              <div className="neu-card">
                 {filteredCustomers.map((c) => (
                   <button
                     key={c.id}
@@ -313,7 +313,7 @@ export default function OfflineBillPage() {
           className="rounded-lg border border-border bg-surface px-3.5 py-2.5 text-sm outline-none focus:border-brand"
         />
         {filteredProducts.length > 0 && (
-          <div className="rounded-lg border border-border bg-surface shadow-sm">
+          <div className="neu-card">
             {filteredProducts.map((p) => (
               <button
                 key={p.id}

@@ -26,7 +26,7 @@ export function CatalogOrderRow({ request }: { request: Request }) {
   const total = request.items.reduce((s, i) => s + i.price * i.quantity, 0);
 
   return (
-    <li className="rounded-xl border border-border bg-surface shadow-sm p-3.5">
+    <li className="neu-card p-3.5">
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           <p className="text-sm font-semibold text-foreground">{request.customerName}</p>

@@ -292,7 +292,7 @@ export default async function Gstr1Page({
 
 function SummaryCard({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-xl border border-border bg-surface shadow-sm p-4">
+    <div className="neu-card p-4">
       <p className="text-xs text-muted">{label}</p>
       <p className="mt-1 text-xl font-semibold text-foreground">{value}</p>
     </div>

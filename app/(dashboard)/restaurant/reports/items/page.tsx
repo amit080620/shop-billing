@@ -122,7 +122,7 @@ export default async function ItemWiseReportPage({
               <p className="text-sm font-medium text-foreground">{t("rreports.byWaiter")}</p>
               <ul className="flex flex-col gap-1.5">
                 {waiterRows.map((w) => (
-                  <li key={w.name} className="flex items-center justify-between rounded-lg border border-border bg-surface shadow-sm px-3.5 py-2.5">
+                  <li key={w.name} className="flex items-center justify-between neu-card px-3.5 py-2.5">
                     <div>
                       <p className="text-sm font-medium text-foreground">{w.name}</p>
                       <p className="text-xs text-muted">{t("rreports.billCount", { count: w.orders })}</p>
@@ -138,7 +138,7 @@ export default async function ItemWiseReportPage({
             <p className="text-sm font-medium text-foreground">{t("rreports.byCategory")}</p>
             <ul className="flex flex-col gap-1.5">
               {categoryRows.map((c) => (
-                <li key={c.name} className="rounded-lg border border-border bg-surface shadow-sm px-3.5 py-2.5">
+                <li key={c.name} className="neu-card px-3.5 py-2.5">
                   <div className="flex items-center justify-between text-sm">
                     <span className="font-medium text-foreground">{c.name}</span>
                     <span className="font-semibold text-foreground">{formatMoney(c.revenue)}</span>
@@ -158,7 +158,7 @@ export default async function ItemWiseReportPage({
             <p className="text-sm font-medium text-foreground">{t("rreports.byItem")}</p>
             <ul className="flex flex-col gap-1.5">
               {itemRows.map((r, i) => (
-                <li key={r.name} className="flex items-center justify-between gap-3 rounded-lg border border-border bg-surface shadow-sm px-3.5 py-2.5">
+                <li key={r.name} className="flex items-center justify-between gap-3 neu-card px-3.5 py-2.5">
                   <div className="flex min-w-0 items-center gap-2.5">
                     <span className="w-5 shrink-0 text-xs font-semibold text-muted">#{i + 1}</span>
                     <div className="min-w-0">

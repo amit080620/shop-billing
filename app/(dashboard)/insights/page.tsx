@@ -139,7 +139,7 @@ export default async function InsightsPage() {
         icon={<TrendingUp size={18} strokeWidth={1.8} />}
       />
 
-      <p className="rounded-lg border border-border bg-surface shadow-sm px-3.5 py-3 text-xs text-muted">
+      <p className="neu-card px-3.5 py-3 text-xs text-muted">
         These are statistics from your actual bills — fast/slow movers and stock sitting idle.
         Deeper forecasting (festival demand, seasonal trends) would need an external AI service
         with its own API key and running cost, which isn&apos;t wired up here.

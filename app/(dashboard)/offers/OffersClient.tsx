@@ -89,7 +89,7 @@ export function OffersClient({
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search by name or phone"
-            className="flex-1 rounded-lg border border-border bg-surface shadow-sm px-3.5 py-2.5 text-sm outline-none focus:border-brand"
+            className="flex-1 neu-card px-3.5 py-2.5 text-sm outline-none focus:border-brand"
           />
           {sentCount > 0 && (
             <span className="ml-3 shrink-0 text-xs text-muted">

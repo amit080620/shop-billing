@@ -87,7 +87,7 @@ export function AuditClient({
         {items.map((item) => {
           const diff = item.countedQuantity !== null ? item.countedQuantity - item.systemQuantity : null;
           return (
-            <li key={item.id} className="flex items-center justify-between gap-3 rounded-lg border border-border bg-surface shadow-sm px-3.5 py-2.5">
+            <li key={item.id} className="flex items-center justify-between gap-3 neu-card px-3.5 py-2.5">
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium text-foreground">{item.productName}</p>
                 <p className="text-xs text-muted">

@@ -77,7 +77,7 @@ export function InlineQuickAdd<T>({
             key={f.name}
             value={values[f.name] ?? f.defaultValue ?? f.options[0]}
             onChange={(e) => setValues((v) => ({ ...v, [f.name]: e.target.value }))}
-            className="rounded-lg border border-border bg-surface shadow-sm px-3 py-2 text-sm outline-none focus:border-brand"
+            className="neu-card px-3 py-2 text-sm outline-none focus:border-brand"
           >
             {f.options.map((opt) => (
               <option key={opt} value={opt}>
@@ -93,7 +93,7 @@ export function InlineQuickAdd<T>({
             placeholder={f.placeholder ?? f.label}
             value={values[f.name] ?? ""}
             onChange={(e) => setValues((v) => ({ ...v, [f.name]: e.target.value }))}
-            className="rounded-lg border border-border bg-surface shadow-sm px-3 py-2 text-sm outline-none focus:border-brand"
+            className="neu-card px-3 py-2 text-sm outline-none focus:border-brand"
           />
         ),
       )}

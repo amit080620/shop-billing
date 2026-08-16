@@ -114,7 +114,7 @@ export default async function StaffCashSummaryPage({
           {rows.map((r) => {
             const net = round2(r.cashIn - r.cashOut);
             return (
-              <li key={r.name} className="rounded-xl border border-border bg-surface shadow-sm p-4">
+              <li key={r.name} className="neu-card p-4">
                 <div className="flex items-center justify-between">
                   <p className="text-sm font-semibold text-foreground">{r.name}</p>
                   <p className={`text-lg font-bold ${net < 0 ? "text-danger" : "text-foreground"}`}>{formatMoney(net)}</p>

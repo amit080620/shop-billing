@@ -246,7 +246,7 @@ export function KdsClient({
                   autoFocus={index === 0}
                   onSelect={() => (isRevised ? acknowledge(ticket.id) : bumpTicket(ticket))}
                   clickable={false}
-                  className={`flex flex-col gap-1.5 rounded-xl border-2 p-2.5 text-sm outline-none ${tone}`}
+                  className={`flex flex-col gap-1.5 rounded-xl border-2 p-2.5 text-sm outline-none shadow-[-6px_-6px_14px_rgba(255,255,255,0.04),6px_6px_14px_rgba(0,0,0,0.55)] ${tone}`}
                   focusClassName="ring-4 ring-white ring-offset-2 ring-offset-gray-950"
                 >
                 {isRevised && (

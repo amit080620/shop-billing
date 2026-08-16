@@ -234,7 +234,7 @@ function MenuGroup({ title, children }: { title: string; children: React.ReactNo
   return (
     <section className="flex flex-col gap-2">
       <h2 className="px-1 text-xs font-semibold uppercase tracking-wide text-muted">{title}</h2>
-      <div className="flex flex-col divide-y divide-border overflow-hidden rounded-xl border border-border bg-surface shadow-sm">
+      <div className="flex flex-col divide-y divide-border overflow-hidden neu-card">
         {children}
       </div>
     </section>

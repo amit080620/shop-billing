@@ -96,7 +96,7 @@ export default async function FestivalsPage() {
         icon={<PartyPopper size={18} strokeWidth={1.8} />}
       />
 
-      <p className="rounded-lg border border-border bg-surface shadow-sm px-3.5 py-3 text-xs text-muted">
+      <p className="neu-card px-3.5 py-3 text-xs text-muted">
         &quot;Sold well last year&quot; only appears once you have a year of sales history for that
         window — until then, you&apos;ll see catalog matches based on the festival&apos;s usual
         categories. Lunar-calendar festivals (marked ~) can shift by a day or two closer to the date.
@@ -112,7 +112,7 @@ export default async function FestivalsPage() {
           const trend = trendByFestival.get(f.name + f.date);
 
           return (
-            <li key={f.name + f.date} className="rounded-xl border border-border bg-surface shadow-sm p-4">
+            <li key={f.name + f.date} className="neu-card p-4">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="text-sm font-semibold text-foreground">

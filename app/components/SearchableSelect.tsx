@@ -162,7 +162,7 @@ export function SearchableSelect<T>({
         onFocus={() => setOpen(true)}
         onBlur={() => setTimeout(() => setOpen(false), 150)}
         placeholder={placeholder}
-        className={`w-full rounded-lg border border-border bg-surface shadow-sm px-3.5 py-2.5 text-sm outline-none focus:border-brand ${voiceSupported ? "pr-10" : ""}`}
+        className={`w-full neu-card px-3.5 py-2.5 text-sm outline-none focus:border-brand ${voiceSupported ? "pr-10" : ""}`}
       />
       {voiceSupported && (
         <button

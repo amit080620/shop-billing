@@ -261,7 +261,7 @@ export function ProductsClient({
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder={t("products.searchPlaceholder")}
-          className="rounded-lg border border-border bg-surface shadow-sm px-3.5 py-2.5 text-sm outline-none focus:border-brand"
+          className="neu-card px-3.5 py-2.5 text-sm outline-none focus:border-brand"
         />
         <BarcodeScanInput
           placeholder={t("products.scanPlaceholder")}

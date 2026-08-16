@@ -47,7 +47,7 @@ export function ForgotPasswordForm({
           type="email"
           placeholder="you@example.com"
           required
-          className="rounded-xl border border-border bg-surface shadow-sm px-4 py-3 text-base outline-none focus:border-brand focus:ring-4 focus:ring-brand-soft"
+          className="neu-card px-4 py-3 text-base outline-none focus:border-brand focus:ring-4 focus:ring-brand-soft"
         />
       </label>
       {state?.error && <p className="rounded-lg bg-credit-soft px-3 py-2 text-sm text-credit">{state.error}</p>}

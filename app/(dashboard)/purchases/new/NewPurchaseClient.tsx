@@ -163,7 +163,7 @@ export function NewPurchaseClient({
       <section className="flex flex-col gap-2">
         <p className="text-sm font-medium text-foreground">Vendor</p>
         {vendor ? (
-          <div className="flex items-center justify-between rounded-lg border border-border bg-surface shadow-sm px-3.5 py-2.5">
+          <div className="flex items-center justify-between neu-card px-3.5 py-2.5">
             <div className="min-w-0">
               <p className="truncate text-sm font-medium text-foreground">{vendor.name}</p>
               <p className="text-xs text-muted">{vendor.gstin ?? vendor.phone ?? "No GSTIN on file"}</p>
@@ -248,7 +248,7 @@ export function NewPurchaseClient({
         </button>
 
         {lines.map((line) => (
-          <div key={line.key} className="flex flex-col gap-2 rounded-lg border border-border bg-surface shadow-sm p-3">
+          <div key={line.key} className="flex flex-col gap-2 neu-card p-3">
             <div className="flex items-center gap-2">
               <input
                 value={line.description}
@@ -336,7 +336,7 @@ export function NewPurchaseClient({
         </section>
       )}
 
-      <section className="flex flex-col gap-3 rounded-xl border border-border bg-surface shadow-sm p-4">
+      <section className="flex flex-col gap-3 neu-card p-4">
         <label className="flex flex-col gap-1.5 text-sm">
           <span className="font-medium text-foreground">Amount paid now (₹)</span>
           <input

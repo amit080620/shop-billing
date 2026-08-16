@@ -95,7 +95,7 @@ export function LedgerClient({
         ← Customers
       </Link>
 
-      <div className="rounded-xl border border-border bg-surface shadow-sm p-4">
+      <div className="neu-card p-4">
         <div className="flex items-start justify-between gap-2">
           <div>
             <h1 className="text-lg font-semibold text-foreground">{customer.name}</h1>
@@ -278,7 +278,7 @@ export function LedgerClient({
               <li key={r.id}>
                 <Link
                   href={`/returns/${r.id}`}
-                  className="flex items-center justify-between rounded-lg border border-border bg-surface shadow-sm px-3.5 py-2.5"
+                  className="flex items-center justify-between neu-card px-3.5 py-2.5"
                 >
                   <div>
                     <p className="text-sm font-medium text-foreground">↩️ #{r.returnNumber}</p>

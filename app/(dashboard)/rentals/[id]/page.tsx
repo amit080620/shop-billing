@@ -79,7 +79,7 @@ export default async function RentalDetailPage({
         </span>
       </div>
 
-      <div className="rounded-xl border border-border bg-surface shadow-sm p-4">
+      <div className="neu-card p-4">
         <p className="text-xs text-muted">{t("rentalsPage.period")}</p>
         <p className="text-sm font-medium text-foreground">
           {new Date(rental.start_date).toLocaleString("en-IN", { timeZone: "Asia/Kolkata", dateStyle: "medium", timeStyle: "short" })}
@@ -123,7 +123,7 @@ export default async function RentalDetailPage({
         )}
       </section>
 
-      <section className="rounded-xl border border-border bg-surface shadow-sm p-4">
+      <section className="neu-card p-4">
         <Row label={t("rentalsPage.subtotal")} value={formatMoney(rental.subtotal)} />
         <Row label={t("rentalsPage.gst")} value={formatMoney(Number(rental.cgst_amount) + Number(rental.sgst_amount) + Number(rental.igst_amount))} />
         {rental.delivery_charge > 0 && <Row label={t("rentalsPage.delivery")} value={formatMoney(rental.delivery_charge)} />}

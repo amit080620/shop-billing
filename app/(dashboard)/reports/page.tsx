@@ -47,7 +47,7 @@ export default async function ReportsPage() {
           </p>
         )}
 
-        <p className="rounded-lg border border-border bg-surface shadow-sm px-3.5 py-3 text-xs text-muted">
+        <p className="neu-card px-3.5 py-3 text-xs text-muted">
           Laid out the same way the GST portal organizes them, built from your own sales and
           purchase entries — they don&apos;t file anything for you. Review the numbers (or have
           your CA review them) before entering them on the portal.

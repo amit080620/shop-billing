@@ -101,7 +101,7 @@ export function AuthForm({
               name={f.name}
               required
               defaultValue=""
-              className="rounded-xl border border-border bg-surface shadow-sm px-4 py-3 text-base outline-none focus:border-brand focus:ring-4 focus:ring-brand-soft"
+              className="neu-card px-4 py-3 text-base outline-none focus:border-brand focus:ring-4 focus:ring-brand-soft"
             >
               <option value="" disabled>
                 {f.placeholder ?? "Choose one"}
@@ -119,7 +119,7 @@ export function AuthForm({
                 type={visibleFields[f.name] ? "text" : "password"}
                 placeholder={f.placeholder}
                 required
-                className="w-full rounded-xl border border-border bg-surface shadow-sm px-4 py-3 pr-11 text-base outline-none focus:border-brand focus:ring-4 focus:ring-brand-soft"
+                className="w-full neu-card px-4 py-3 pr-11 text-base outline-none focus:border-brand focus:ring-4 focus:ring-brand-soft"
               />
               <button
                 type="button"
@@ -136,7 +136,7 @@ export function AuthForm({
               type={f.type}
               placeholder={f.placeholder}
               required
-              className="rounded-xl border border-border bg-surface shadow-sm px-4 py-3 text-base outline-none focus:border-brand focus:ring-4 focus:ring-brand-soft"
+              className="neu-card px-4 py-3 text-base outline-none focus:border-brand focus:ring-4 focus:ring-brand-soft"
             />
           )}
         </label>

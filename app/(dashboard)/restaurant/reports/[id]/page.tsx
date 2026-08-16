@@ -52,7 +52,7 @@ export default async function RestaurantBillDetailPage({
         ))}
       </ul>
 
-      <div className="rounded-xl border border-border bg-surface shadow-sm p-4">
+      <div className="neu-card p-4">
         <Row label={t("rreports.subtotal")} value={formatMoney(order.subtotal)} />
         {order.discount_amount > 0 && <Row label={t("rreports.discount")} value={`− ${formatMoney(order.discount_amount)}`} />}
         <Row label={t("rreports.gst")} value={formatMoney(Number(order.cgst_amount) + Number(order.sgst_amount) + Number(order.igst_amount))} />

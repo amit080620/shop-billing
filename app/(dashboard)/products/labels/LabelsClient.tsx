@@ -63,7 +63,7 @@ export function LabelsClient({ shopName, products: initialProducts }: { shopName
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search products"
-          className="rounded-lg border border-border bg-surface shadow-sm px-3.5 py-2.5 text-sm outline-none focus:border-brand"
+          className="neu-card px-3.5 py-2.5 text-sm outline-none focus:border-brand"
         />
 
         <div className="flex items-center gap-2">
@@ -86,7 +86,7 @@ export function LabelsClient({ shopName, products: initialProducts }: { shopName
         {filtered.map((p) => {
           const qty = quantities[p.id] ?? 0;
           return (
-            <li key={p.id} className="flex items-center justify-between gap-3 rounded-lg border border-border bg-surface shadow-sm px-3.5 py-2.5">
+            <li key={p.id} className="flex items-center justify-between gap-3 neu-card px-3.5 py-2.5">
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium text-foreground">{p.name}</p>
                 <p className="text-xs text-muted">

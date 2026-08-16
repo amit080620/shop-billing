@@ -153,7 +153,7 @@ export function PublicStorefrontClient({
             const qty = cart[p.id] ?? 0;
             const effectivePrice = p.offerPrice ?? p.price;
             return (
-              <div key={p.id} className="flex flex-col overflow-hidden rounded-xl border border-border bg-surface shadow-sm">
+              <div key={p.id} className="flex flex-col overflow-hidden neu-card">
                 <div className="flex h-28 items-center justify-center bg-background text-2xl text-muted">
                   {p.imageUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element -- storefront thumbnail

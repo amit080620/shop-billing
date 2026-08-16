@@ -6,7 +6,7 @@ export function HelpAccordion({ items }: { items: { q: string; a: string }[] }) 
   const [open, setOpen] = useState<number | null>(null);
 
   return (
-    <div className="flex flex-col divide-y divide-border overflow-hidden rounded-xl border border-border bg-surface shadow-sm">
+    <div className="flex flex-col divide-y divide-border overflow-hidden neu-card">
       {items.map((item, i) => (
         <div key={i}>
           <button

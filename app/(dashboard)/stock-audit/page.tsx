@@ -37,7 +37,7 @@ export default async function StockAuditListPage() {
         <ul className="flex flex-col gap-2">
           {audits.map((a) => (
             <li key={a.id}>
-              <Link href={`/stock-audit/${a.id}`} className="flex items-center justify-between rounded-lg border border-border bg-surface shadow-sm px-3.5 py-3">
+              <Link href={`/stock-audit/${a.id}`} className="flex items-center justify-between neu-card px-3.5 py-3">
                 <div>
                   <p className="text-sm font-medium text-foreground">
                     {new Date(a.created_at).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata", day: "numeric", month: "short", year: "numeric" })}
