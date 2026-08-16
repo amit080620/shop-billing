@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { listPendingCatalogOrdersAction, acceptCatalogOrderAction, rejectCatalogOrderAction } from "@/lib/actions/catalog";
+import { listPendingCatalogOrdersAction, rejectCatalogOrderAction } from "@/lib/actions/catalog";
 import { formatMoney } from "@/lib/format";
 
 type PendingOrder = { id: string; customerName: string; total: number; createdAt: string };
@@ -117,15 +117,6 @@ export function CatalogOrderAlert() {
     };
   }, []);
 
-  function quickAccept(id: string) {
-    setBusyId(id);
-    acceptCatalogOrderAction(id, "cash").finally(() => {
-      setBusyId(null);
-      setAlerting((prev) => prev.filter((o) => o.id !== id));
-      router.refresh();
-    });
-  }
-
   function quickReject(id: string) {
     setBusyId(id);
     rejectCatalogOrderAction(id).finally(() => {
@@ -150,27 +141,23 @@ export function CatalogOrderAlert() {
         {alerting.length > 1 && (
           <p className="mt-1 text-xs text-muted">+{alerting.length - 1} more waiting</p>
         )}
+        <p className="mt-2 text-xs text-muted">
+          Keeps ringing until this is accepted or rejected — tap below to review it.
+        </p>
 
         <div className="mt-4 flex flex-col gap-2">
           <button
-            onClick={() => quickAccept(current.id)}
-            disabled={busyId === current.id}
-            className="btn-primary w-full text-center disabled:opacity-60"
-          >
-            {busyId === current.id ? "Working…" : "Accept (Cash)"}
-          </button>
-          <button
             onClick={() => router.push("/catalog-orders")}
-            className="w-full rounded-lg border border-border px-4 py-2 text-sm font-medium text-foreground"
+            className="btn-primary w-full text-center"
           >
-            View details
+            Review &amp; accept
           </button>
           <button
             onClick={() => quickReject(current.id)}
             disabled={busyId === current.id}
             className="w-full rounded-lg border border-danger px-4 py-2 text-sm font-medium text-danger disabled:opacity-60"
           >
-            Reject
+            {busyId === current.id ? "Working…" : "Reject"}
           </button>
         </div>
       </div>

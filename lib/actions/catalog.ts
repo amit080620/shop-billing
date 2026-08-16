@@ -135,7 +135,8 @@ export async function rejectCatalogOrderAction(requestId: string): Promise<{ err
 export async function acceptCatalogOrderAction(
   requestId: string,
   paymentMethod: "cash" | "card" | "upi" | "online" | "other",
-): Promise<{ error?: string; billId?: string }> {
+  sendToKot = false,
+): Promise<{ error?: string; billId?: string; orderId?: string }> {
   const session = await requireSession();
   const admin = createSupabaseAdminClient();
 
@@ -163,6 +164,82 @@ export async function acceptCatalogOrderAction(
       items.map((i) => i.product_id).filter((id): id is string => !!id),
     );
   const productById = new Map((products ?? []).map((p) => [p.id, p]));
+
+  if (sendToKot && session.businessType === "restaurant") {
+    // Genuinely enters the kitchen queue — a real table + restaurant_order
+    // + restaurant_order_items (status "pending"), so this shows up on
+    // the actual KDS screen exactly like a dine-in order. Because it's a
+    // real restaurant order, the existing "order ready" waiter chime and
+    // Tables-screen notification pick it up automatically — no separate
+    // notification system needed for online orders.
+    if (!session.shopStateCode) return { error: "Add your shop's state in Settings before accepting orders." };
+
+    const { data: newTable, error: tableError } = await admin
+      .from("restaurant_tables")
+      .insert({ shop_id: session.shopId, name: `Online — ${request.customer_name}`, section: "takeaway" })
+      .select("id")
+      .single();
+    if (tableError || !newTable) return { error: "Could not create an order slot for this online order" };
+
+    const { financialYearFor: fy } = await import("../gst");
+    const financialYear = fy(new Date());
+    const { data: issuedNumber, error: numberError } = await admin.rpc("next_restaurant_order_number", {
+      p_shop_id: session.shopId,
+      p_financial_year: financialYear,
+    });
+    if (numberError || issuedNumber == null) return { error: "Could not start the kitchen order — try again." };
+    const orderNumber = `${financialYear}/T${String(issuedNumber).padStart(5, "0")}`;
+
+    const { data: shopSettings } = await admin.from("shops").select("price_includes_gst").eq("id", session.shopId).single();
+
+    const { data: newOrder, error: orderError } = await admin
+      .from("restaurant_orders")
+      .insert({
+        shop_id: session.shopId,
+        table_id: newTable.id,
+        staff_id: session.userId,
+        order_number: orderNumber,
+        financial_year: financialYear,
+        supply_type: "intra",
+        waiter_name: session.staffName,
+        order_type: request.wants_delivery ? "delivery" : "takeaway",
+        sent_to_kitchen_at: new Date().toISOString(),
+        price_includes_gst: shopSettings?.price_includes_gst ?? true,
+      })
+      .select("id")
+      .single();
+    if (orderError || !newOrder) return { error: "Could not create the kitchen order" };
+
+    const { error: itemsError } = await admin.from("restaurant_order_items").insert(
+      items.map((item) => ({
+        order_id: newOrder.id,
+        product_id: item.product_id,
+        product_name: item.product_name,
+        quantity: item.quantity,
+        unit_price: item.price_at_request,
+        gst_percent: item.product_id ? Number(productById.get(item.product_id)?.gst_percent ?? 0) : 0,
+        line_subtotal: round2(Number(item.quantity) * Number(item.price_at_request)),
+        line_total: round2(Number(item.quantity) * Number(item.price_at_request)),
+      })),
+    );
+    if (itemsError) return { error: "Could not add items to the kitchen order" };
+
+    await admin.from("restaurant_tables").update({ status: "occupied" }).eq("id", newTable.id);
+
+    const { recalcOrderTotals } = await import("./restaurant");
+    await recalcOrderTotals(newOrder.id);
+
+    await admin
+      .from("catalog_order_requests")
+      .update({ status: "accepted" })
+      .eq("id", requestId)
+      .eq("shop_id", session.shopId);
+
+    revalidatePath("/catalog-orders");
+    revalidatePath("/restaurant");
+    revalidatePath("/restaurant-kds");
+    return { orderId: newOrder.id };
+  }
 
   const { createBillCore } = await import("./bills");
   const deliveryLine =

@@ -22,8 +22,27 @@ export function CatalogOrderRow({ request, businessType }: { request: Request; b
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<"cash" | "card" | "upi" | "online" | "other">("cash");
-  const [sendToKot, setSendToKot] = useState(true);
+  const [showKotAsk, setShowKotAsk] = useState(false);
   const [kotItems, setKotItems] = useState<{ productName: string; quantity: number }[] | null>(null);
+
+  function doAccept(sendToKot: boolean) {
+    setShowKotAsk(false);
+    startTransition(async () => {
+      const result = await acceptCatalogOrderAction(request.id, paymentMethod, sendToKot);
+      if (result.error) {
+        setError(result.error);
+        return;
+      }
+      if (sendToKot) {
+        // A real kitchen ticket now exists — also show a printable KOT
+        // right away so the kitchen has a paper copy, same as any
+        // dine-in order.
+        setKotItems(request.items.map((i) => ({ productName: i.productName, quantity: i.quantity })));
+        setTimeout(() => window.print(), 150);
+      }
+      router.refresh();
+    });
+  }
 
   const total = request.items.reduce((s, i) => s + i.price * i.quantity, 0);
 
@@ -50,14 +69,7 @@ export function CatalogOrderRow({ request, businessType }: { request: Request; b
       {error && <p className="mt-1 text-xs text-danger">{error}</p>}
 
       {request.status === "pending" && (
-        <div className="mt-2 flex flex-col gap-2">
-          {businessType === "restaurant" && (
-            <label className="flex items-center gap-1.5 text-xs text-foreground">
-              <input type="checkbox" checked={sendToKot} onChange={(e) => setSendToKot(e.target.checked)} className="h-4 w-4 rounded border-border" />
-              Also send to kitchen (KOT)
-            </label>
-          )}
-          <div className="flex items-center gap-2">
+        <div className="mt-2 flex items-center gap-2">
           <select
             value={paymentMethod}
             onChange={(e) => setPaymentMethod(e.target.value as typeof paymentMethod)}
@@ -70,20 +82,13 @@ export function CatalogOrderRow({ request, businessType }: { request: Request; b
             <option value="other">Other</option>
           </select>
           <button
-            onClick={() =>
-              startTransition(async () => {
-                const result = await acceptCatalogOrderAction(request.id, paymentMethod);
-                if (result.error) {
-                  setError(result.error);
-                  return;
-                }
-                if (businessType === "restaurant" && sendToKot) {
-                  setKotItems(request.items.map((i) => ({ productName: i.productName, quantity: i.quantity })));
-                  setTimeout(() => window.print(), 150);
-                }
-                router.refresh();
-              })
-            }
+            onClick={() => {
+              if (businessType === "restaurant") {
+                setShowKotAsk(true);
+                return;
+              }
+              doAccept(false);
+            }}
             disabled={isPending}
             className="btn-primary-sm disabled:opacity-60"
           >
@@ -102,7 +107,6 @@ export function CatalogOrderRow({ request, businessType }: { request: Request; b
           >
             Reject
           </button>
-          </div>
         </div>
       )}
 
@@ -161,6 +165,33 @@ export function CatalogOrderRow({ request, businessType }: { request: Request; b
           }
         }
       `}</style>
+
+      {showKotAsk && (
+        <div className="fixed inset-0 z-[600] flex items-center justify-center bg-black/60 p-4" onClick={() => setShowKotAsk(false)}>
+          <div className="ray-pop w-full max-w-xs rounded-2xl bg-surface p-5" style={{ boxShadow: "var(--elevation-4)" }} onClick={(e) => e.stopPropagation()}>
+            <p className="text-sm font-semibold text-foreground">Send to kitchen?</p>
+            <p className="mt-1 text-xs text-muted">
+              This creates a real kitchen ticket on the KDS screen for {request.customerName}&apos;s order — the cook
+              marks it ready like any table order.
+            </p>
+            <div className="mt-4 flex flex-col gap-2">
+              <button onClick={() => doAccept(true)} disabled={isPending} className="btn-primary w-full text-center disabled:opacity-60">
+                {isPending ? "Working…" : "Yes — send to kitchen"}
+              </button>
+              <button
+                onClick={() => doAccept(false)}
+                disabled={isPending}
+                className="w-full rounded-lg border border-border px-4 py-2 text-sm font-medium text-foreground disabled:opacity-60"
+              >
+                No — just bill it
+              </button>
+              <button onClick={() => setShowKotAsk(false)} className="w-full text-center text-xs text-muted">
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </li>
   );
 }

@@ -82,7 +82,7 @@ export async function deleteTableAction(tableId: string): Promise<{ error?: stri
 /** Recomputes an order's totals from scratch off its current line items —
  * always called after any item add/remove, so the stored total can never
  * silently drift from what's actually in the order. */
-async function recalcOrderTotals(orderId: string) {
+export async function recalcOrderTotals(orderId: string) {
   const admin = createSupabaseAdminClient();
   const { data: order } = await admin
     .from("restaurant_orders")
