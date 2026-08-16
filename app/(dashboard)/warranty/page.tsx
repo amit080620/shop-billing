@@ -137,7 +137,7 @@ export default async function WarrantyLookupPage({
                 </p>
                 <p className="text-xs text-muted">
                   {r.warrantyMonths} months · Warranty {isExpired ? "expired" : "valid"} till{" "}
-                  {new Date(r.warrantyExpiresOn).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+                  {new Date(r.warrantyExpiresOn).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata", day: "numeric", month: "short", year: "numeric" })}
                 </p>
                 <Link href={`/print/bill/${r.billId}`} className="mt-1 inline-block text-xs font-medium text-brand">
                   View bill →

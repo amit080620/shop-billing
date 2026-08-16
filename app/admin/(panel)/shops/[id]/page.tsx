@@ -63,7 +63,7 @@ export default async function AdminShopDetailPage({
           <p className="text-xs text-gray-500">Valid until</p>
           <p className="mt-1 text-lg font-semibold">
             {shop.subscription_valid_until
-              ? new Date(shop.subscription_valid_until).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })
+              ? new Date(shop.subscription_valid_until).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata", day: "numeric", month: "short", year: "numeric" })
               : "Unlimited"}
           </p>
         </div>
@@ -103,7 +103,7 @@ export default async function AdminShopDetailPage({
               <li key={t.id} className="rounded-lg border border-gray-800 bg-gray-900 px-3 py-2 text-xs">
                 <div className="flex justify-between">
                   <span className="text-gray-300">
-                    {new Date(t.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+                    {new Date(t.created_at).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata", day: "numeric", month: "short", year: "numeric" })}
                   </span>
                   <span className={t.amount >= 0 ? "text-emerald-400" : "text-red-400"}>
                     {t.amount >= 0 ? "+" : ""}₹{Number(t.amount).toLocaleString("en-IN")}
@@ -111,7 +111,7 @@ export default async function AdminShopDetailPage({
                 </div>
                 {t.new_valid_until && (
                   <p className="text-gray-500">
-                    Validity set to {new Date(t.new_valid_until).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+                    Validity set to {new Date(t.new_valid_until).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata", day: "numeric", month: "short", year: "numeric" })}
                   </p>
                 )}
                 {t.note && <p className="text-gray-500">{t.note}</p>}

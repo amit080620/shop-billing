@@ -122,8 +122,8 @@ export function AvailabilityCalendar({
                   <li key={i} className="rounded-lg border border-border px-3 py-2 text-sm">
                     <p className="font-medium text-foreground">{b.customerName} · {b.quantity} unit(s)</p>
                     <p className="text-xs text-muted">
-                      {new Date(b.startDate).toLocaleDateString("en-IN", { day: "numeric", month: "short" })} →{" "}
-                      {new Date(b.endDate).toLocaleDateString("en-IN", { day: "numeric", month: "short" })} · {b.status}
+                      {new Date(b.startDate).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata", day: "numeric", month: "short" })} →{" "}
+                      {new Date(b.endDate).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata", day: "numeric", month: "short" })} · {b.status}
                     </p>
                   </li>
                 ))}

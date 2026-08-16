@@ -477,7 +477,7 @@ function ProgressTab({ memberId, logs, onChange }: { memberId: string; logs: Pro
                     {l.bodyFatPercent ? ` · ${l.bodyFatPercent}% body fat` : ""}
                   </p>
                   {l.note && <p className="text-xs text-muted">{l.note}</p>}
-                  <p className="text-[11px] text-muted">{new Date(l.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</p>
+                  <p className="text-[11px] text-muted">{new Date(l.createdAt).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata", day: "numeric", month: "short", year: "numeric" })}</p>
                 </li>
               ))}
           </ul>

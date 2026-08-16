@@ -10,7 +10,7 @@ export function AttendanceRow({ attendance }: { attendance: Attendance }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
-  const inTime = new Date(attendance.checkedInAt).toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit" });
+  const inTime = new Date(attendance.checkedInAt).toLocaleTimeString("en-IN", { timeZone: "Asia/Kolkata", hour: "numeric", minute: "2-digit" });
 
   return (
     <li className="flex items-center justify-between rounded-lg border border-border bg-surface shadow-sm px-3.5 py-2.5">
@@ -18,7 +18,7 @@ export function AttendanceRow({ attendance }: { attendance: Attendance }) {
         <p className="text-sm font-medium text-foreground">{attendance.memberName}</p>
         <p className="text-xs text-muted">
           In: {inTime}
-          {attendance.checkedOutAt ? ` · Out: ${new Date(attendance.checkedOutAt).toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit" })}` : ""}
+          {attendance.checkedOutAt ? ` · Out: ${new Date(attendance.checkedOutAt).toLocaleTimeString("en-IN", { timeZone: "Asia/Kolkata", hour: "numeric", minute: "2-digit" })}` : ""}
         </p>
       </div>
       {!attendance.checkedOutAt && (

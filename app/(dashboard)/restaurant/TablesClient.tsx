@@ -13,6 +13,7 @@ import {
 import { LayoutGrid, Layers, CalendarClock, Smartphone, Check, X, Bell, QrCode } from "lucide-react";
 import { formatMoney } from "@/lib/format";
 import { PageHeader } from "@/app/components/PageHeader";
+import { useToast } from "@/app/components/Toast";
 import { EmptyState } from "@/app/components/EmptyState";
 import { useTranslation } from "@/lib/i18n/useTranslation";
 import type { Lang } from "@/lib/i18n/dictionary";
@@ -58,6 +59,28 @@ export function TablesClient({ tables, lang }: { tables: Table[]; lang: Lang }) 
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const [requests, setRequests] = useState<PendingRequest[]>([]);
   const seenReadyTableIds = useRef<Set<string> | null>(null);
+  const readyAudioCtxRef = useRef<AudioContext | null>(null);
+  const { showToast } = useToast();
+
+  // Unlock audio on first touch — same fix as the kitchen display;
+  // without this, a waiter's phone/tablet left sitting on the tables
+  // screen would silently never play the ready chime at all.
+  useEffect(() => {
+    function unlock() {
+      if (!readyAudioCtxRef.current) {
+        const Ctx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+        readyAudioCtxRef.current = new Ctx();
+      }
+      if (readyAudioCtxRef.current.state === "suspended") readyAudioCtxRef.current.resume();
+    }
+    window.addEventListener("pointerdown", unlock);
+    window.addEventListener("touchstart", unlock);
+    unlock();
+    return () => {
+      window.removeEventListener("pointerdown", unlock);
+      window.removeEventListener("touchstart", unlock);
+    };
+  }, []);
 
   // Waiter-side "order ready" alert — deliberately a different sound
   // shape from the kitchen's own new-order beep (KdsClient.tsx), so
@@ -69,14 +92,23 @@ export function TablesClient({ tables, lang }: { tables: Table[]; lang: Lang }) 
       seenReadyTableIds.current = currentReady;
       return;
     }
-    const hasNewlyReady = [...currentReady].some((id) => !seenReadyTableIds.current!.has(id));
-    if (hasNewlyReady) playOrderReadyChime();
+    const newlyReadyIds = [...currentReady].filter((id) => !seenReadyTableIds.current!.has(id));
+    if (newlyReadyIds.length > 0) {
+      playOrderReadyChime();
+      const names = newlyReadyIds.map((id) => tables.find((t) => t.id === id)?.name ?? "Table").join(", ");
+      showToast(`${names} — order ready to serve`);
+    }
     seenReadyTableIds.current = currentReady;
-  }, [tables]);
+  }, [tables, showToast]);
 
   function playOrderReadyChime() {
     try {
-      const ctx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+      if (!readyAudioCtxRef.current) {
+        const Ctx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+        readyAudioCtxRef.current = new Ctx();
+      }
+      const ctx = readyAudioCtxRef.current;
+      if (ctx.state === "suspended") ctx.resume();
       const ring = (freq: number, startAt: number, duration: number) => {
         const oscillator = ctx.createOscillator();
         const gain = ctx.createGain();
@@ -84,7 +116,7 @@ export function TablesClient({ tables, lang }: { tables: Table[]; lang: Lang }) 
         gain.connect(ctx.destination);
         oscillator.type = "sine";
         oscillator.frequency.value = freq;
-        gain.gain.setValueAtTime(0.15, ctx.currentTime + startAt);
+        gain.gain.setValueAtTime(0.45, ctx.currentTime + startAt);
         gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + startAt + duration);
         oscillator.start(ctx.currentTime + startAt);
         oscillator.stop(ctx.currentTime + startAt + duration);

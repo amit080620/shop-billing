@@ -40,10 +40,10 @@ export default async function StockAuditListPage() {
               <Link href={`/stock-audit/${a.id}`} className="flex items-center justify-between rounded-lg border border-border bg-surface shadow-sm px-3.5 py-3">
                 <div>
                   <p className="text-sm font-medium text-foreground">
-                    {new Date(a.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+                    {new Date(a.created_at).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata", day: "numeric", month: "short", year: "numeric" })}
                   </p>
                   <p className="text-xs text-muted">
-                    {new Date(a.created_at).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}
+                    {new Date(a.created_at).toLocaleTimeString("en-IN", { timeZone: "Asia/Kolkata", hour: "2-digit", minute: "2-digit" })}
                   </p>
                 </div>
                 <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${a.status === "completed" ? "bg-brand-soft text-brand-text" : "bg-credit-soft text-credit"}`}>

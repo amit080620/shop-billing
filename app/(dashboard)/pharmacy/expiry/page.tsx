@@ -102,7 +102,7 @@ function Group({ title, batches, t }: { title: string; batches: BatchRow[]; t: T
                       number: b.batch_number,
                       qty: Number(b.quantity),
                       unit: product?.unit ?? "",
-                      date: new Date(b.expiry_date).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }),
+                      date: new Date(b.expiry_date).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata", day: "numeric", month: "short", year: "numeric" }),
                     })}
                   </p>
                 </div>

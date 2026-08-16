@@ -123,7 +123,7 @@ export function JobDetailClient({ job, items, lang }: { job: Job; items: JobItem
           <div className="rounded-lg border border-border bg-surface px-3.5 py-2.5">
             <p className="text-xs text-muted">Expected by</p>
             <p className="text-sm font-medium text-foreground">
-              {new Date(job.expectedDate).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
+              {new Date(job.expectedDate).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata", day: "numeric", month: "short" })}
             </p>
           </div>
         )}

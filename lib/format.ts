@@ -7,6 +7,7 @@ export function formatMoney(n: number) {
 
 export function formatDateTime(iso: string) {
   return new Date(iso).toLocaleString("en-IN", {
+    timeZone: "Asia/Kolkata",
     day: "numeric",
     month: "short",
     hour: "numeric",

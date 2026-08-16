@@ -69,7 +69,7 @@ export function PublicBookingClient({
         <p className="text-lg font-semibold text-foreground">Booking confirmed</p>
         <p className="text-sm text-muted">
           {name}, your slot at {shopName} is booked for{" "}
-          {new Date(selectedDate).toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "short" })} at {selectedSlot}.
+          {new Date(selectedDate).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata", weekday: "long", day: "numeric", month: "short" })} at {selectedSlot}.
         </p>
         <p className="text-xs text-muted">Please arrive a few minutes early. Contact {shopName} directly if you need to reschedule.</p>
       </div>

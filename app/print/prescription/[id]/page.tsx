@@ -41,9 +41,9 @@ export default async function PrintPrescriptionPage({
     : (prescription.customers as { name: string; phone: string; address: string | null } | null);
 
   const customSections = (prescription.custom_sections as { label: string; value: string }[]) ?? [];
-  const dateFormatted = new Date(prescription.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+  const dateFormatted = new Date(prescription.created_at).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata", day: "numeric", month: "short", year: "numeric" });
   const followUpFormatted = prescription.follow_up_date
-    ? new Date(prescription.follow_up_date).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })
+    ? new Date(prescription.follow_up_date).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata", day: "numeric", month: "short", year: "numeric" })
     : null;
 
   return (

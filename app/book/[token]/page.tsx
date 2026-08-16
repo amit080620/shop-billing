@@ -57,7 +57,7 @@ export default async function PublicBookingPage({
     const slots = computeAvailableSlots(ranges, settings.slot_duration_minutes, bookedByDate.get(dateIso) ?? []);
     return {
       date: dateIso,
-      label: date.toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short" }),
+      label: date.toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata", weekday: "short", day: "numeric", month: "short" }),
       slots,
     };
   });

@@ -409,7 +409,7 @@ function GrowthChart({
               .slice(0, 5)
               .map((l) => (
                 <li key={l.id} className="text-xs text-muted">
-                  {new Date(l.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short" })} —
+                  {new Date(l.createdAt).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata", day: "numeric", month: "short" })} —
                   {l.heightCm ? ` ${l.heightCm}cm` : ""}
                   {l.weightKg ? ` ${l.weightKg}kg` : ""}
                   {l.headCircumferenceCm ? ` HC:${l.headCircumferenceCm}cm` : ""}

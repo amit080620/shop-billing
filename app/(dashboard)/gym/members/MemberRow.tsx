@@ -100,7 +100,7 @@ export function MemberRow({ member, lang }: { member: Member; lang: Lang }) {
               t("wa.gymExpiryReminder", {
                 name: member.name,
                 plan: m.planName,
-                date: new Date(m.endDate).toLocaleDateString("en-IN", { day: "numeric", month: "short" }),
+                date: new Date(m.endDate).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata", day: "numeric", month: "short" }),
               }),
             )}`}
             target="_blank"

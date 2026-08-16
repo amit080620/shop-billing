@@ -101,7 +101,7 @@ export default async function RestaurantReportsPage({
                       {table?.name ?? "Table"} · #{o.order_number}
                     </p>
                     <p className="text-xs text-muted">
-                      {o.settled_at && new Date(o.settled_at).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}
+                      {o.settled_at && new Date(o.settled_at).toLocaleTimeString("en-IN", { timeZone: "Asia/Kolkata", hour: "2-digit", minute: "2-digit" })}
                     </p>
                   </div>
                   <p className="shrink-0 text-sm font-semibold text-foreground">{formatMoney(o.total)}</p>

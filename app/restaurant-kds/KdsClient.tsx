@@ -40,6 +40,33 @@ export function KdsClient({
   const seenItemIds = useRef<Set<string> | null>(null);
   const seenRevisedIds = useRef<Set<string>>(new Set());
 
+  const audioCtxRef = useRef<AudioContext | null>(null);
+
+  // Mobile/tablet browsers block audio from actually playing until the
+  // page has been touched at least once — a KDS tablet often just sits
+  // there with orders arriving via polling, with nobody tapping it, so
+  // every fresh AudioContext silently fails to produce sound. Unlocking
+  // once on the first touch/click anywhere, and reusing that same
+  // context afterward, is what actually fixes "sound nahi aa raha".
+  useEffect(() => {
+    function unlock() {
+      if (!audioCtxRef.current) {
+        const Ctx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+        audioCtxRef.current = new Ctx();
+      }
+      if (audioCtxRef.current.state === "suspended") {
+        audioCtxRef.current.resume();
+      }
+    }
+    window.addEventListener("pointerdown", unlock);
+    window.addEventListener("touchstart", unlock);
+    unlock();
+    return () => {
+      window.removeEventListener("pointerdown", unlock);
+      window.removeEventListener("touchstart", unlock);
+    };
+  }, []);
+
   // Beep whenever a poll brings in an item this screen hasn't seen before
   // (a genuinely new order/item, not just a status change) — so kitchen
   // staff notice a new ticket without having to stare at the screen.
@@ -65,7 +92,12 @@ export function KdsClient({
 
   function playBeep(urgent: boolean) {
     try {
-      const ctx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+      if (!audioCtxRef.current) {
+        const Ctx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+        audioCtxRef.current = new Ctx();
+      }
+      const ctx = audioCtxRef.current;
+      if (ctx.state === "suspended") ctx.resume();
       const ring = (freq: number, startAt: number) => {
         const oscillator = ctx.createOscillator();
         const gain = ctx.createGain();
@@ -73,7 +105,7 @@ export function KdsClient({
         gain.connect(ctx.destination);
         oscillator.type = "sine";
         oscillator.frequency.value = freq;
-        gain.gain.setValueAtTime(0.15, ctx.currentTime + startAt);
+        gain.gain.setValueAtTime(0.45, ctx.currentTime + startAt);
         gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + startAt + 0.4);
         oscillator.start(ctx.currentTime + startAt);
         oscillator.stop(ctx.currentTime + startAt + 0.4);

@@ -288,7 +288,7 @@ export function BookingSettingsClient({
           <ul className="flex flex-wrap gap-1.5">
             {unavailableDates.map((date) => (
               <li key={date} className="flex items-center gap-1.5 rounded-full border border-danger/30 bg-danger/10 px-2.5 py-1 text-xs text-danger">
-                {new Date(date).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+                {new Date(date).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata", day: "numeric", month: "short", year: "numeric" })}
                 <button onClick={() => removeLeaveDate(date)} className="font-bold">
                   <X size={11} />
                 </button>

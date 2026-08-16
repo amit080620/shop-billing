@@ -79,7 +79,7 @@ export default async function BatchesPage({
                       {t("batches.batchLabel", { number: b.batch_number, qty: Number(b.quantity), unit: product.unit })}
                     </p>
                     <p className={`text-xs ${tone === "expired" || tone === "critical" ? "text-danger" : "text-muted"}`}>
-                      {t("batches.expires", { date: new Date(b.expiry_date).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) })}
+                      {t("batches.expires", { date: new Date(b.expiry_date).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata", day: "numeric", month: "short", year: "numeric" }) })}
                       {" · "}
                       {days < 0 ? t("batches.expired") : t("batches.daysLeft", { days })}
                       {b.manufacturer ? ` · ${b.manufacturer}` : ""}

@@ -104,7 +104,7 @@ export default async function ScheduleXRegisterPage({
               <li key={r.id} className="rounded-lg border border-border bg-surface shadow-sm px-3.5 py-3">
                 <div className="flex items-center justify-between text-sm">
                   <span className="font-medium text-foreground">{r.medicine}</span>
-                  <span className="text-xs text-muted">{new Date(r.date).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</span>
+                  <span className="text-xs text-muted">{new Date(r.date).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata", day: "numeric", month: "short", year: "numeric" })}</span>
                 </div>
                 <p className="text-xs text-muted">
                   {t("scheduleX.lineDetail", { batch: r.batchNumber, qty: r.quantity, invoice: r.invoiceNumber })}

@@ -410,7 +410,7 @@ export function OrderClient({
       {kotItems && (
         <div id="kot-print" className="hidden-on-screen">
           <p className="kot-title">KITCHEN ORDER — #{order.orderNumber}</p>
-          <p className="kot-sub">{order.tableName} · {new Date().toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" })}</p>
+          <p className="kot-sub">{order.tableName} · {new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata", dateStyle: "medium", timeStyle: "short" })}</p>
           <hr />
           {kotItems.map((item, i) => (
             <div key={i}>
@@ -677,7 +677,7 @@ function BillPrintView({
         <p className="text-center text-lg font-bold">{shopName}</p>
         {shopGstin && <p className="text-center text-xs">GSTIN: {shopGstin}</p>}
         <p className="text-center text-xs">Invoice #{order.orderNumber} · {order.tableName}</p>
-        <p className="text-center text-xs">{new Date().toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" })}</p>
+        <p className="text-center text-xs">{new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata", dateStyle: "medium", timeStyle: "short" })}</p>
         <hr className="my-2 border-dashed" />
         <table className="w-full text-xs">
           <thead>
@@ -1065,7 +1065,7 @@ function OrderTimeline({ order }: { order: Order }) {
     { label: "Paid", time: order.settledAt },
   ];
   const fmt = (iso: string) =>
-    new Date(iso).toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit", hour12: true });
+    new Date(iso).toLocaleTimeString("en-IN", { timeZone: "Asia/Kolkata", hour: "numeric", minute: "2-digit", hour12: true });
 
   return (
     <div className="no-print flex items-center gap-1 overflow-x-auto rounded-lg border border-border bg-surface px-3 py-2 text-xs">

@@ -99,7 +99,7 @@ export function RatesClient({
             {history.map((h, i) => (
               <li key={i} className="flex items-center justify-between rounded-lg border border-border bg-surface px-3.5 py-2 text-sm">
                 <span className="flex items-center gap-1.5 text-muted">
-                  <Circle size={8} className={h.metalType === "gold" ? "fill-amber-400 text-amber-400" : "fill-slate-400 text-slate-400"} /> {new Date(h.date).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
+                  <Circle size={8} className={h.metalType === "gold" ? "fill-amber-400 text-amber-400" : "fill-slate-400 text-slate-400"} /> {new Date(h.date).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata", day: "numeric", month: "short" })}
                 </span>
                 <span className="font-medium text-foreground">{formatMoney(h.rate)}/g</span>
               </li>

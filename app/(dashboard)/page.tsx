@@ -512,7 +512,7 @@ async function ClinicHome({
           <p className="flex items-center gap-1 text-xs font-semibold text-credit"><AlertTriangle size={12} /> {overdueFollowUps.length} patient(s) missed their follow-up date</p>
           {overdueFollowUps.slice(0, 3).map((f) => (
             <p key={f.id} className="text-xs text-credit">
-              {f.patient_name} — was due {new Date(f.follow_up_date!).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
+              {f.patient_name} — was due {new Date(f.follow_up_date!).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata", day: "numeric", month: "short" })}
               {f.patient_phone ? ` · ${f.patient_phone}` : ""}
             </p>
           ))}
@@ -1291,7 +1291,7 @@ async function RentalHome({ shopId }: { shopId: string }) {
             const customerName = Array.isArray(r.customers) ? r.customers[0]?.name : (r.customers as { name: string } | null)?.name;
             return (
               <p key={r.id} className="text-xs text-credit">
-                {customerName ?? "Customer"} — #{r.rental_number}, was due {new Date(r.end_date).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
+                {customerName ?? "Customer"} — #{r.rental_number}, was due {new Date(r.end_date).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata", day: "numeric", month: "short" })}
               </p>
             );
           })}
@@ -1432,7 +1432,7 @@ function buildSevenDayTrend<T extends Record<string, unknown>>(
         })
         .map((r) => Number((r as Record<string, unknown>).total ?? 0)),
     );
-    trend.push({ day: dayStart.toLocaleDateString("en-IN", { weekday: "short" }), total: dayTotal });
+    trend.push({ day: dayStart.toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata", weekday: "short" }), total: dayTotal });
   }
   return trend;
 }

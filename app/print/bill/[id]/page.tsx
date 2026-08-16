@@ -244,7 +244,7 @@ export default async function PrintBillPage({
                 {item.product_name}
                 {item.warranty_expires_on && (
                   <div className="text-xs text-gray-500">
-                    Warranty till {new Date(item.warranty_expires_on).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+                    Warranty till {new Date(item.warranty_expires_on).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata", day: "numeric", month: "short", year: "numeric" })}
                   </div>
                 )}
               </td>

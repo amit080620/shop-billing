@@ -56,7 +56,7 @@ export default async function RentalDetailPage({
         <div className="rounded-lg border border-credit bg-credit-soft px-4 py-2.5 text-sm text-credit">
           <p className="font-semibold">This rental was corrected after it was first created.</p>
           <p className="mt-0.5 text-xs">
-            Reason: {rental.edit_reason} · {new Date(rental.edited_at).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" })}
+            Reason: {rental.edit_reason} · {new Date(rental.edited_at).toLocaleString("en-IN", { timeZone: "Asia/Kolkata", dateStyle: "medium", timeStyle: "short" })}
           </p>
         </div>
       )}
@@ -82,13 +82,13 @@ export default async function RentalDetailPage({
       <div className="rounded-xl border border-border bg-surface shadow-sm p-4">
         <p className="text-xs text-muted">{t("rentalsPage.period")}</p>
         <p className="text-sm font-medium text-foreground">
-          {new Date(rental.start_date).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" })}
+          {new Date(rental.start_date).toLocaleString("en-IN", { timeZone: "Asia/Kolkata", dateStyle: "medium", timeStyle: "short" })}
           {" → "}
-          {new Date(rental.end_date).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" })}
+          {new Date(rental.end_date).toLocaleString("en-IN", { timeZone: "Asia/Kolkata", dateStyle: "medium", timeStyle: "short" })}
         </p>
         {rental.actual_return_date && (
           <p className="mt-1 text-xs text-muted">
-            {t("rentalsPage.actuallyReturned", { date: new Date(rental.actual_return_date).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" }) })}
+            {t("rentalsPage.actuallyReturned", { date: new Date(rental.actual_return_date).toLocaleString("en-IN", { timeZone: "Asia/Kolkata", dateStyle: "medium", timeStyle: "short" }) })}
           </p>
         )}
       </div>

@@ -11,7 +11,7 @@ export function downloadFestivalReminder(festivalName: string, festivalDate: Dat
   const endDate = new Date(reminderDate);
   endDate.setDate(endDate.getDate() + 1);
 
-  const description = `Start stocking up for ${festivalName} (${festivalDate.toLocaleDateString("en-IN", { day: "numeric", month: "long" })}). Consider: ${prepHints.join(", ")}.`;
+  const description = `Start stocking up for ${festivalName} (${festivalDate.toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata", day: "numeric", month: "long" })}). Consider: ${prepHints.join(", ")}.`;
 
   const ics = [
     "BEGIN:VCALENDAR",

@@ -120,7 +120,7 @@ export default async function FestivalsPage() {
                     {f.name}
                   </p>
                   <p className="text-xs text-muted">
-                    {f.dateObj.toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "long", year: "numeric" })}
+                    {f.dateObj.toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata", weekday: "short", day: "numeric", month: "long", year: "numeric" })}
                   </p>
                 </div>
                 <span

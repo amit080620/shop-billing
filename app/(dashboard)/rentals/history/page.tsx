@@ -49,8 +49,8 @@ export default async function RentalHistoryPage() {
                       {customerName ?? t("rentalsPage.walkIn")} · #{r.rental_number}
                     </p>
                     <p className="text-xs text-muted">
-                      {new Date(r.start_date).toLocaleDateString("en-IN", { day: "numeric", month: "short" })} →{" "}
-                      {new Date(r.end_date).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
+                      {new Date(r.start_date).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata", day: "numeric", month: "short" })} →{" "}
+                      {new Date(r.end_date).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata", day: "numeric", month: "short" })}
                     </p>
                   </div>
                   <div className="shrink-0 text-right">

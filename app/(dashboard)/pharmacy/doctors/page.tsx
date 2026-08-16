@@ -52,7 +52,7 @@ export default async function DoctorsReportPage() {
               <p className="text-xs text-muted">
                 {t("doctors.billCount", {
                   count: stats.count,
-                  date: new Date(stats.lastDate).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }),
+                  date: new Date(stats.lastDate).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata", day: "numeric", month: "short", year: "numeric" }),
                 })}
               </p>
             </li>

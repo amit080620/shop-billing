@@ -62,11 +62,11 @@ export default async function PrintRentalSlipPage({
       <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
         <div className="rounded-lg border border-gray-200 px-3 py-2">
           <p className="text-[11px] text-gray-500">Handover date</p>
-          <p className="font-medium text-gray-900">{new Date(rental.start_date).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</p>
+          <p className="font-medium text-gray-900">{new Date(rental.start_date).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata", day: "numeric", month: "short", year: "numeric" })}</p>
         </div>
         <div className="rounded-lg border border-gray-200 px-3 py-2">
           <p className="text-[11px] text-gray-500">Return due</p>
-          <p className="font-medium text-gray-900">{new Date(rental.end_date).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</p>
+          <p className="font-medium text-gray-900">{new Date(rental.end_date).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata", day: "numeric", month: "short", year: "numeric" })}</p>
         </div>
       </div>
 

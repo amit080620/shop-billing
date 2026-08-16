@@ -62,7 +62,7 @@ export default async function JewelleryExchangesPage() {
                   <p className="text-sm font-semibold text-foreground">{formatMoney(e.exchange_value)}</p>
                 </div>
                 <p className="text-xs text-muted">
-                  {e.gross_weight}g gross · {e.purity_percent}% purity · {e.net_weight}g net · {new Date(e.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+                  {e.gross_weight}g gross · {e.purity_percent}% purity · {e.net_weight}g net · {new Date(e.created_at).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata", day: "numeric", month: "short", year: "numeric" })}
                 </p>
                 {e.bill_id && (
                   <Link href={`/print/bill/${e.bill_id}`} className="text-xs font-medium text-brand">

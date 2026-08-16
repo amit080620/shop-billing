@@ -62,7 +62,7 @@ export default async function WriteOffsPage() {
                   {t("writeoffs.unitsLine", {
                     batch: w.batch_number,
                     qty: Number(w.quantity),
-                    date: new Date(w.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }),
+                    date: new Date(w.created_at).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata", day: "numeric", month: "short", year: "numeric" }),
                   })}
                 </p>
                 {w.notes && <p className="text-xs text-muted">{w.notes}</p>}
