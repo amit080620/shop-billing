@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { listPendingCatalogOrdersAction, rejectCatalogOrderAction } from "@/lib/actions/catalog";
 import { formatMoney } from "@/lib/format";
 
@@ -9,6 +9,7 @@ type PendingOrder = { id: string; customerName: string; total: number; createdAt
 
 export function CatalogOrderAlert() {
   const router = useRouter();
+  const pathname = usePathname();
   const [alerting, setAlerting] = useState<PendingOrder[]>([]);
   const [busyId, setBusyId] = useState<string | null>(null);
   const seenIds = useRef<Set<string> | null>(null);
@@ -127,6 +128,7 @@ export function CatalogOrderAlert() {
   }
 
   if (alerting.length === 0) return null;
+  if (pathname === "/catalog-orders") return null;
   const current = alerting[0];
 
   return (

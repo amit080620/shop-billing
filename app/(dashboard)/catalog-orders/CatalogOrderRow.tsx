@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { acceptCatalogOrderAction, rejectCatalogOrderAction } from "@/lib/actions/catalog";
 import { formatMoney } from "@/lib/format";
+import { MessageCircle } from "lucide-react";
 
 type Request = {
   id: string;
@@ -17,7 +18,17 @@ type Request = {
   items: { productName: string; quantity: number; price: number }[];
 };
 
-export function CatalogOrderRow({ request, businessType }: { request: Request; businessType: string }) {
+export function CatalogOrderRow({
+  request,
+  businessType,
+  shopUpiId,
+  shopName,
+}: {
+  request: Request;
+  businessType: string;
+  shopUpiId: string | null;
+  shopName: string;
+}) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -46,6 +57,22 @@ export function CatalogOrderRow({ request, businessType }: { request: Request; b
 
   const total = request.items.reduce((s, i) => s + i.price * i.quantity, 0);
 
+  function sendPaymentLink() {
+    if (!shopUpiId) {
+      setError("Add your shop's UPI ID in Settings first, so payment links can be sent.");
+      return;
+    }
+    const upiLink = `upi://pay?pa=${encodeURIComponent(shopUpiId)}&pn=${encodeURIComponent(shopName)}&am=${total.toFixed(2)}&cu=INR&tn=${encodeURIComponent(`Order for ${request.customerName}`)}`;
+    const message = [
+      `Hi ${request.customerName}, thank you for your order at ${shopName}!`,
+      `Kindly pay ₹${total.toFixed(2)} to confirm this order:`,
+      upiLink,
+      `Once we receive the payment, we'll start preparing your order right away.`,
+    ].join("\n\n");
+    const digitsOnly = request.customerPhone.replace(/\D/g, "");
+    window.open(`https://wa.me/${digitsOnly}?text=${encodeURIComponent(message)}`, "_blank");
+  }
+
   return (
     <li className="neu-card p-3.5">
       <div className="flex items-start justify-between gap-2">
@@ -67,6 +94,15 @@ export function CatalogOrderRow({ request, businessType }: { request: Request; b
       </ul>
 
       {error && <p className="mt-1 text-xs text-danger">{error}</p>}
+
+      {request.status === "pending" && (
+        <button
+          onClick={sendPaymentLink}
+          className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-lg border border-success px-3 py-1.5 text-xs font-medium text-success"
+        >
+          <MessageCircle size={13} /> Send payment link (WhatsApp)
+        </button>
+      )}
 
       {request.status === "pending" && (
         <div className="mt-2 flex items-center gap-2">

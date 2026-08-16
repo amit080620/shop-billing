@@ -75,14 +75,14 @@ export function PublicStorefrontClient({
       setError("Enter your name");
       return;
     }
-    if (!phone.trim()) {
-      setError("Enter your phone number");
+    if (phone.length !== 10) {
+      setError("Enter a valid 10-digit mobile number");
       return;
     }
     startTransition(async () => {
       const result = await submitCatalogOrderAction(token, {
         name,
-        phone,
+        phone: `+91${phone}`,
         notes,
         items: cartItems.map((i) => ({ productId: i.product.id, quantity: i.qty })),
         wantsDelivery,
@@ -254,13 +254,20 @@ export function PublicStorefrontClient({
                 placeholder="Your name"
                 className="rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-brand"
               />
-              <input
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                type="tel"
-                placeholder="Your phone number"
-                className="rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-brand"
-              />
+              <div className="flex gap-1.5">
+                <span className="flex shrink-0 items-center rounded-lg border border-border bg-background px-3 py-2 text-sm text-muted">
+                  +91
+                </span>
+                <input
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(0, 10))}
+                  type="tel"
+                  inputMode="numeric"
+                  placeholder="10-digit mobile number"
+                  maxLength={10}
+                  className="flex-1 rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-brand"
+                />
+              </div>
               <input
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}

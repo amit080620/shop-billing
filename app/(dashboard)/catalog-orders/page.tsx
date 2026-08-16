@@ -75,6 +75,8 @@ export default async function CatalogOrdersPage({
             <CatalogOrderRow
               key={r.id}
               businessType={session.businessType}
+              shopUpiId={session.shopUpiId}
+              shopName={session.shopName}
               request={{
                 id: r.id,
                 customerName: r.customer_name,

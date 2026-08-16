@@ -44,6 +44,8 @@ export async function submitCatalogOrderAction(
 
   if (!input.name.trim()) return { error: "Enter your name" };
   if (!input.phone.trim()) return { error: "Enter your phone number" };
+  const digitsOnly = input.phone.replace(/\D/g, "");
+  if (digitsOnly.length < 10 || digitsOnly.length > 12) return { error: "Enter a valid mobile number" };
   if (input.items.length === 0) return { error: "Your cart is empty" };
 
   const { data: settings } = await admin
