@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" fill="none"><defs>
+      <linearGradient id="ray" x1="8" y1="8" x2="56" y2="56"><stop stop-color="#0427F3"/><stop offset=".52" stop-color="#6A2BBF"/><stop offset="1" stop-color="#CD127B"/></linearGradient>
+      <linearGradient id="soft" x1="8" y1="8" x2="56" y2="56"><stop stop-color="#A8D8FF"/><stop offset=".5" stop-color="#9B76E1"/><stop offset="1" stop-color="#FF7AB8"/></linearGradient>
+      <filter id="shadow" x="-50%" y="-50%" width="200%" height="220%"><feDropShadow dx="0" dy="4" stdDeviation="3" flood-opacity=".18"/></filter>
+    </defs><title>Wallet</title><g filter="url(#shadow)"><path d="M10 20q0-6 6-6h34q4 0 4 5v26q0 6-6 6H16q-6 0-6-6z" fill="url(#ray)"/><path d="M40 30h14v12H40q-7 0-7-6t7-6z" fill="url(#soft)"/><circle cx="43" cy="36" r="2.5" fill="#fff"/></g></svg>

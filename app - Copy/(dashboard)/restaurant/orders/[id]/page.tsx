@@ -1,0 +1,95 @@
+import { requireSession } from "@/lib/auth";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { getTranslator } from "@/lib/i18n/server";
+import { OrderClient } from "./OrderClient";
+
+export default async function OrderPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const session = await requireSession();
+  const { lang } = await getTranslator();
+  const { id } = await params;
+  const admin = createSupabaseAdminClient();
+
+  const { data: order } = await admin
+    .from("restaurant_orders")
+    .select(
+      "id, order_number, status, subtotal, taxable_amount, discount_amount, cgst_amount, sgst_amount, igst_amount, round_off_amount, total, order_type, waiter_name, reservation_id, created_at, first_ready_at, served_at, settled_at, restaurant_tables ( name )",
+    )
+    .eq("id", id)
+    .eq("shop_id", session.shopId)
+    .single();
+
+  if (!order) {
+    return <p className="text-sm text-muted">Order not found.</p>;
+  }
+
+  const [{ data: items }, { data: products }, { data: combos }, { data: linkedReservation }] = await Promise.all([
+    admin.from("restaurant_order_items").select("id, product_name, quantity, unit_price, line_total, status, selected_modifiers").eq("order_id", id).order("created_at"),
+    admin.from("products").select("id, name, price, gst_percent, category_id, categories ( name )").eq("shop_id", session.shopId).order("name"),
+    admin.from("combos").select("id, name, price").eq("shop_id", session.shopId).eq("is_active", true).order("name"),
+    order.reservation_id
+      ? admin.from("restaurant_reservations").select("token_amount").eq("id", order.reservation_id).maybeSingle()
+      : Promise.resolve({ data: null }),
+  ]);
+
+  const { data: otherOpenOrders } = await admin
+    .from("restaurant_orders")
+    .select("id, table_id, restaurant_tables ( name )")
+    .eq("shop_id", session.shopId)
+    .eq("status", "open")
+    .neq("id", id);
+
+  const table = Array.isArray(order.restaurant_tables) ? order.restaurant_tables[0] : order.restaurant_tables;
+
+  return (
+    <OrderClient
+      shopName={session.shopName}
+      shopGstin={session.shopGstin}
+      lang={lang}
+      order={{
+        id: order.id,
+        orderNumber: order.order_number,
+        status: order.status,
+        subtotal: Number(order.subtotal),
+        taxableAmount: Number(order.taxable_amount),
+        discountAmount: Number(order.discount_amount),
+        cgstAmount: Number(order.cgst_amount),
+        sgstAmount: Number(order.sgst_amount),
+        igstAmount: Number(order.igst_amount),
+        total: Number(order.total),
+        roundOffAmount: Number(order.round_off_amount),
+        tableName: table?.name ?? "Table",
+        orderType: order.order_type,
+        waiterName: order.waiter_name,
+        reservationTokenAmount: linkedReservation ? Number(linkedReservation.token_amount) : 0,
+        createdAt: order.created_at,
+        firstReadyAt: order.first_ready_at,
+        servedAt: order.served_at,
+        settledAt: order.settled_at,
+      }}
+      items={(items ?? []).map((i) => ({
+        id: i.id,
+        productName: i.product_name,
+        quantity: Number(i.quantity),
+        unitPrice: Number(i.unit_price),
+        lineTotal: Number(i.line_total),
+        status: i.status,
+        selectedModifiers: i.selected_modifiers,
+      }))}
+      products={(products ?? []).map((p) => ({
+        id: p.id,
+        name: p.name,
+        price: Number(p.price),
+        category: Array.isArray(p.categories) ? p.categories[0]?.name ?? "Other" : (p.categories as { name: string } | null)?.name ?? "Other",
+      }))}
+      combos={(combos ?? []).map((c) => ({ id: c.id, name: c.name, price: Number(c.price) }))}
+      otherTables={(otherOpenOrders ?? []).map((o) => ({
+        orderId: o.id,
+        tableName: (Array.isArray(o.restaurant_tables) ? o.restaurant_tables[0]?.name : (o.restaurant_tables as { name: string } | null)?.name) ?? "Table",
+      }))}
+    />
+  );
+}

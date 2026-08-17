@@ -1,0 +1,65 @@
+"use client";
+
+import { useState, useTransition } from "react";
+import { logoutThisDeviceAction, logoutAllDevicesAction } from "@/lib/actions/auth";
+import { Smartphone, Globe } from "lucide-react";
+
+export function LogoutButton({ logoutLabel, thisDeviceLabel, allDevicesLabel }: { logoutLabel: string; thisDeviceLabel: string; allDevicesLabel: string }) {
+  const [open, setOpen] = useState(false);
+  const [isPending, startTransition] = useTransition();
+
+  return (
+    <>
+      <button
+        onClick={() => setOpen(true)}
+        className="w-full rounded-lg px-4 py-3 text-sm font-medium text-danger transition active:scale-[0.98]"
+        style={{ boxShadow: "-3px -3px 8px var(--neu-light), 3px 3px 8px var(--neu-dark)" }}
+      >
+        {logoutLabel}
+      </button>
+
+      {open && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 sm:items-center" onClick={() => setOpen(false)}>
+          <div
+            className="w-full max-w-sm rounded-t-2xl bg-surface p-5 sm:rounded-2xl"
+            style={{ boxShadow: "var(--elevation-4)" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <p className="text-sm font-semibold text-foreground neu-text">{logoutLabel}</p>
+            <div className="mt-3 flex flex-col gap-2">
+              <button
+                disabled={isPending}
+                onClick={() => startTransition(() => logoutThisDeviceAction())}
+                className="flex flex-col items-start gap-0.5 rounded-lg bg-background px-4 py-2.5 text-left text-sm text-foreground disabled:opacity-60"
+                style={{ boxShadow: "-2px -2px 6px var(--neu-light), 2px 2px 6px var(--neu-dark)" }}
+              >
+                <span className="flex items-center gap-1.5">
+                  <Smartphone size={14} /> {thisDeviceLabel}
+                </span>
+                <span className="text-xs text-muted">Other devices stay logged in.</span>
+              </button>
+              <button
+                disabled={isPending}
+                onClick={() => startTransition(() => logoutAllDevicesAction())}
+                className="flex flex-col items-start gap-0.5 rounded-lg bg-background px-4 py-2.5 text-left text-sm text-danger disabled:opacity-60"
+                style={{ boxShadow: "-2px -2px 6px var(--neu-light), 2px 2px 6px var(--neu-dark)" }}
+              >
+                <span className="flex items-center gap-1.5">
+                  <Globe size={14} /> {allDevicesLabel}
+                </span>
+                <span className="text-xs text-danger/80">Signs out everywhere this account is logged in.</span>
+              </button>
+            </div>
+            <button
+              onClick={() => setOpen(false)}
+              className="mt-3 w-full rounded-lg px-4 py-2 text-sm font-medium text-muted"
+              style={{ boxShadow: "-2px -2px 6px var(--neu-light), 2px 2px 6px var(--neu-dark)" }}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}

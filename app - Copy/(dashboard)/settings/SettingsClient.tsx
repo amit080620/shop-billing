@@ -1,0 +1,347 @@
+"use client";
+
+import { useActionState, useEffect, useRef, useState, useTransition } from "react";
+import { useFormStatus } from "react-dom";
+import Link from "next/link";
+import Image from "next/image";
+import { updateShopSettingsAction, uploadLogoAction, removeLogoAction } from "@/lib/actions/settings";
+import { INDIAN_STATES } from "@/lib/constants/states";
+import { BUSINESS_TYPES } from "@/lib/businessType";
+
+type ShopSettings = {
+  name: string;
+  legalName: string;
+  gstin: string;
+  gstScheme: "regular" | "composition";
+  priceIncludesGst: boolean;
+  addressLine1: string;
+  addressLine2: string;
+  city: string;
+  stateCode: string;
+  pincode: string;
+  invoicePrefix: string;
+  logoUrl: string | null;
+  upiId: string;
+  businessType: string;
+  businessTypeLocked: boolean;
+  managerPin: string;
+};
+
+function SubmitButton({ hasError }: { hasError: boolean }) {
+  const { pending } = useFormStatus();
+  const wasPending = useRef(false);
+  const [justSaved, setJustSaved] = useState(false);
+
+  useEffect(() => {
+    if (wasPending.current && !pending && !hasError) {
+      setJustSaved(true);
+      const timer = setTimeout(() => setJustSaved(false), 700);
+      return () => clearTimeout(timer);
+    }
+    wasPending.current = pending;
+  }, [pending, hasError]);
+
+  return (
+    <button
+      type="submit"
+      disabled={pending}
+      className={`w-full rounded-lg bg-brand px-4 py-3 font-medium text-white disabled:opacity-60 ${justSaved ? "animate-save-success" : ""}`}
+    >
+      {pending ? "Saving…" : justSaved ? "Saved ✓" : "Save GST profile"}
+    </button>
+  );
+}
+
+export function SettingsClient({ shop }: { shop: ShopSettings }) {
+  const [state, formAction] = useActionState(updateShopSettingsAction, null);
+
+  return (
+    <div className="flex flex-col gap-4">
+      <Link href="/more" className="text-sm text-muted">
+        ← More
+      </Link>
+      <div>
+        <h1 className="text-lg font-semibold text-foreground">GST & shop profile</h1>
+        <p className="text-sm text-muted">
+          Drives invoice numbering, CGST/SGST vs IGST, and every GST report.
+        </p>
+      </div>
+
+      {!shop.stateCode && (
+        <p className="rounded-lg bg-credit-soft px-3 py-2 text-sm text-credit">
+          Set your shop&apos;s state below — billing is blocked until this is filled in,
+          since it decides whether a sale is CGST+SGST or IGST.
+        </p>
+      )}
+
+      <LogoUploadSection currentLogoUrl={shop.logoUrl} />
+
+      <form action={formAction} className="flex flex-col gap-4">
+        <Section title="Business">
+          <Field name="name" label="Display name" defaultValue={shop.name} required />
+          <label className="flex flex-col gap-1.5 text-sm">
+            <span className="font-medium text-foreground">Business type</span>
+            {shop.businessTypeLocked ? (
+              <>
+                <div className="flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground">
+                  {(() => {
+                    const Icon = BUSINESS_TYPES.find((b) => b.value === shop.businessType)?.icon;
+                    return Icon ? <Icon size={16} className="text-muted" /> : null;
+                  })()}
+                  {BUSINESS_TYPES.find((b) => b.value === shop.businessType)?.label ?? shop.businessType}
+                </div>
+                <span className="text-xs text-muted">
+                  Locked after signup — switching verticals on a live shop tends to mix up data
+                  between them. If this genuinely needs to change, contact whoever manages your
+                  subscription.
+                </span>
+              </>
+            ) : (
+              <>
+                <select
+                  name="businessType"
+                  defaultValue={shop.businessType}
+                  className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-brand"
+                >
+                  {BUSINESS_TYPES.map((b) => (
+                    <option key={b.value} value={b.value}>
+                      {b.label}
+                    </option>
+                  ))}
+                </select>
+                <span className="text-xs text-muted">
+                  Changes wording around the app (e.g. &quot;Products&quot; vs &quot;Menu items&quot;)
+                  and which vertical tools show up. This locks after you save it once.
+                </span>
+              </>
+            )}
+          </label>
+          <Field
+            name="legalName"
+            label="Legal / registered name (optional)"
+            defaultValue={shop.legalName}
+          />
+          <label className="flex flex-col gap-1.5 text-sm">
+            <span className="font-medium text-foreground">GST scheme</span>
+            <select
+              name="gstScheme"
+              defaultValue={shop.gstScheme}
+              className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-brand"
+            >
+              <option value="regular">Regular — files GSTR-1 & GSTR-3B, can claim ITC</option>
+              <option value="composition">Composition — fixed low rate, no ITC, no GSTR-1/3B</option>
+            </select>
+            {shop.gstScheme === "composition" && (
+              <span className="text-xs text-credit">
+                GST reports in this app (GSTR-1/3B) are built for Regular scheme and won&apos;t
+                apply to you — Composition dealers file CMP-08 instead.
+              </span>
+            )}
+          </label>
+          <label className="flex flex-col gap-1.5 text-sm">
+            <span className="font-medium text-foreground">How do you price items?</span>
+            <select
+              name="priceIncludesGst"
+              defaultValue={shop.priceIncludesGst ? "inclusive" : "exclusive"}
+              className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-brand"
+            >
+              <option value="inclusive">Price is the final amount — e.g. Thali ₹100 bills at exactly ₹100, GST is included</option>
+              <option value="exclusive">Price is before GST — e.g. Thali ₹100 + 5% GST bills at ₹105</option>
+            </select>
+            <span className="text-xs text-muted">
+              Applies to new bills/orders going forward — past ones keep whichever way they were made.
+            </span>
+          </label>
+          <Field
+            name="gstin"
+            label="GSTIN (optional if not yet registered)"
+            defaultValue={shop.gstin}
+            placeholder="22AAAAA0000A1Z5"
+            className="uppercase"
+          />
+        </Section>
+
+        <Section title="Address (appears on invoices)">
+          <Field name="addressLine1" label="Address line 1" defaultValue={shop.addressLine1} />
+          <Field name="addressLine2" label="Address line 2" defaultValue={shop.addressLine2} />
+          <div className="grid grid-cols-2 gap-3">
+            <Field name="city" label="City" defaultValue={shop.city} />
+            <Field name="pincode" label="Pincode" defaultValue={shop.pincode} />
+          </div>
+          <label className="flex flex-col gap-1.5 text-sm">
+            <span className="font-medium text-foreground">State *</span>
+            <select
+              name="stateCode"
+              defaultValue={shop.stateCode}
+              required
+              className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-brand"
+            >
+              <option value="" disabled>
+                Select state
+              </option>
+              {INDIAN_STATES.map((s) => (
+                <option key={s.code} value={s.code}>
+                  {s.name}
+                </option>
+              ))}
+            </select>
+          </label>
+        </Section>
+
+        <Section title="Invoicing">
+          <Field
+            name="invoicePrefix"
+            label="Invoice number prefix"
+            defaultValue={shop.invoicePrefix}
+          />
+          <p className="text-xs text-muted">
+            Invoices are numbered {shop.invoicePrefix || "INV"}-2026-27/00001 style — sequential
+            per financial year, as required for GST filing.
+          </p>
+        </Section>
+
+        <Section title="Payments">
+          <Field
+            name="upiId"
+            label="UPI ID (optional)"
+            defaultValue={shop.upiId}
+            placeholder="yourshop@okhdfcbank"
+          />
+          <p className="text-xs text-muted">
+            When set, a scannable UPI QR code appears on invoices with an outstanding balance —
+            customers can pay the amount due straight from the printed bill.
+          </p>
+        </Section>
+
+        <Section title="Manager PIN">
+          <Field
+            name="managerPin"
+            label="Manager PIN"
+            type="password"
+            defaultValue={shop.managerPin}
+            placeholder="e.g. 1947"
+          />
+          <p className="text-xs text-muted">
+            Used to protect sensitive actions like cancelling a restaurant order or processing a
+            return — deliberately separate from your login password, so staff never need your
+            real account credentials. Leave blank to disable this protection entirely.
+          </p>
+        </Section>
+
+        {state?.success && (
+          <p className="rounded-lg bg-brand-soft px-3 py-2 text-sm font-medium text-brand-text">
+            Saved.
+          </p>
+        )}
+        {state?.error && (
+          <p className="rounded-lg bg-credit-soft px-3 py-2 text-sm text-credit">{state.error}</p>
+        )}
+        <SubmitButton hasError={!!state?.error} />
+      </form>
+    </div>
+  );
+}
+
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <section className="flex flex-col gap-3 neu-card p-4">
+      <p className="text-sm font-semibold text-foreground">{title}</p>
+      {children}
+    </section>
+  );
+}
+
+function Field({
+  name,
+  label,
+  type = "text",
+  defaultValue,
+  placeholder,
+  required,
+  className = "",
+}: {
+  name: string;
+  label: string;
+  type?: string;
+  defaultValue?: string;
+  placeholder?: string;
+  required?: boolean;
+  className?: string;
+}) {
+  return (
+    <label className="flex flex-col gap-1.5 text-sm">
+      <span className="font-medium text-foreground">{label}</span>
+      <input
+        name={name}
+        type={type}
+        defaultValue={defaultValue}
+        placeholder={placeholder}
+        required={required}
+        className={`rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-brand ${className}`}
+      />
+    </label>
+  );
+}
+
+function LogoUploadSection({ currentLogoUrl }: { currentLogoUrl: string | null }) {
+  const [preview, setPreview] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
+  const [isRemovingLogo, setIsRemovingLogo] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [state, formAction] = useActionState(uploadLogoAction, null);
+
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setPreview(URL.createObjectURL(file));
+    // Auto-submit the moment a file is picked — one less tap on mobile.
+    const form = fileInputRef.current?.closest("form");
+    form?.requestSubmit();
+  }
+
+  const displayUrl = preview ?? currentLogoUrl;
+
+  return (
+    <section className="flex flex-col gap-3 neu-card p-4">
+      <p className="text-sm font-semibold text-foreground">Shop logo</p>
+      <div className="flex items-center gap-4">
+        <div
+          className={`flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-background transition-opacity duration-300 ${isRemovingLogo ? "scale-90 opacity-0" : ""}`}
+        >
+          {displayUrl ? (
+            <Image src={displayUrl} alt="Shop logo" width={64} height={64} className="h-full w-full object-contain" unoptimized />
+          ) : (
+            <span className="text-xs text-muted">No logo</span>
+          )}
+        </div>
+        <div className="flex flex-col gap-2">
+          <form action={formAction}>
+            <input
+              ref={fileInputRef}
+              type="file"
+              name="logo"
+              accept="image/png,image/jpeg,image/webp,image/svg+xml"
+              onChange={handleFileChange}
+              className="text-xs text-muted file:mr-3 file:rounded-lg file:border file:border-border file:bg-background file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-foreground"
+            />
+          </form>
+          {currentLogoUrl && (
+            <button
+              type="button"
+              disabled={isPending}
+              onClick={() => {
+                setIsRemovingLogo(true);
+                startTransition(() => removeLogoAction());
+              }}
+              className="self-start text-xs font-medium text-danger disabled:opacity-50"
+            >
+              Remove logo
+            </button>
+          )}
+        </div>
+      </div>
+      <p className="text-xs text-muted">Best size: a square image, about 400×400px — PNG, JPG, WEBP or SVG, under 2MB. Appears on invoices and the dashboard.</p>
+      {state?.error && <p className="text-sm text-credit">{state.error}</p>}
+    </section>
+  );
+}
