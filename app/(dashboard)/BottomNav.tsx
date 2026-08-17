@@ -13,6 +13,7 @@ import {
   Truck,
   Wrench,
   Scissors,
+  CalendarClock,
   Gem,
   Stethoscope,
   Dumbbell,
@@ -92,7 +93,7 @@ export function tabsFor(businessType: string, t: (key: string) => string, permis
   const CLINIC_TABS = [
     { href: "/", label: t("nav.home"), icon: HomeIcon },
     { href: "/clinic/prescriptions/new", label: "New Rx", icon: ClinicNavIcon },
-    { href: "/clinic/appointments", label: "Appointments", icon: SalonNavIcon },
+    { href: "/clinic/appointments", label: "Appointments", icon: ClinicAppointmentIcon },
     { href: "/reports", label: t("nav.reports"), icon: ReportIcon },
     { href: "/more", label: t("nav.more"), icon: MoreIcon },
   ];
@@ -197,6 +198,9 @@ function ServiceIcon({ active }: { active: boolean }) {
 }
 function SalonNavIcon({ active }: { active: boolean }) {
   return <Scissors size={22} strokeWidth={active ? 2.3 : 1.8} />;
+}
+function ClinicAppointmentIcon({ active }: { active: boolean }) {
+  return <CalendarClock size={22} strokeWidth={active ? 2.3 : 1.8} />;
 }
 function JewelleryNavIcon({ active }: { active: boolean }) {
   return <Gem size={22} strokeWidth={active ? 2.3 : 1.8} />;

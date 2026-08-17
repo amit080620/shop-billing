@@ -11,7 +11,7 @@ import { LanguageToggle } from "@/lib/i18n/LanguageToggle";
 import { SubscriptionCard } from "@/app/components/SubscriptionCard";
 import { InstallAppButton } from "@/app/components/InstallAppButton";
 import { isModuleEnabled } from "@/lib/modules";
-import { Users, Bell, Clock, Truck, Package, UserCog, Settings, Megaphone, HelpCircle, PartyPopper, WifiOff, CalendarClock, ChefHat, BookOpen, ClipboardCheck, ShieldCheck, Scissors, Gem, Store, Stethoscope, Palette, Wallet, Building2, Dumbbell, FlaskConical, Receipt as ReceiptIcon } from "lucide-react";
+import { Users, Bell, Clock, Truck, Package, UserCog, Settings, Megaphone, HelpCircle, PartyPopper, WifiOff, CalendarClock, ChefHat, BookOpen, ClipboardCheck, ShieldCheck, Scissors, Gem, Store, Stethoscope, Palette, Wallet, Building2, Dumbbell, FlaskConical, Receipt as ReceiptIcon, AlertTriangle } from "lucide-react";
 
 export default async function MorePage() {
   const session = await requireSession();
@@ -62,7 +62,7 @@ export default async function MorePage() {
       {(session.businessType === "pharmacy" || session.businessType === "clinic") && (
         <MenuGroup title="Medicine stock">
           <MenuLink href="/pharmacy/expiry" label="Expiry alerts" sub="Medicines nearing or past expiry" icon={ExpiryIcon} tone="warning" />
-          <MenuLink href="/pharmacy/write-offs" label="Write-off history" sub="Stock lost to expiry or damage" icon={BellIcon} />
+          <MenuLink href="/pharmacy/write-offs" label="Write-off history" sub="Stock lost to expiry or damage" icon={ClockIcon} />
           {session.businessType === "pharmacy" && (
             <>
               <MenuLink href="/pharmacy/doctors" label="Doctor-wise sales" sub="Prescriptions by doctor" icon={ClockIcon} />
@@ -186,7 +186,7 @@ export default async function MorePage() {
             {isModuleEnabled(session.enabledModules, "audit_log") && (
               <>
                 <MenuLink href="/audit-log" label="Audit log" sub="Who did what, and when" icon={UsersIcon} tone="info" />
-                <MenuLink href="/error-log" label="Error log" sub="Unexpected failures caught automatically" icon={UsersIcon} tone="danger" />
+                <MenuLink href="/error-log" label="Error log" sub="Unexpected failures caught automatically" icon={ErrorLogIcon} tone="danger" />
               </>
             )}
           </>
@@ -301,6 +301,9 @@ function BoxIcon({ className }: { className?: string }) {
 }
 function UsersIcon({ className }: { className?: string }) {
   return <UserCog className={className} size={18} strokeWidth={1.8} />;
+}
+function ErrorLogIcon({ className }: { className?: string }) {
+  return <AlertTriangle className={className} size={18} strokeWidth={1.8} />;
 }
 function GearIcon({ className }: { className?: string }) {
   return <Settings className={className} size={18} strokeWidth={1.8} />;
