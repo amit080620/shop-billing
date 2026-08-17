@@ -173,7 +173,7 @@ export default async function PrintBillPage({
         </div>
       )}
 
-      <div id="invoice-capture-area" className="bg-white">
+      <div id="invoice-capture-area" className="animate-print-slip bg-white">
       {invoiceSettings?.header_image_url && (
         // eslint-disable-next-line @next/next/no-img-element -- print page, needs to render for print dialog
         <img src={invoiceSettings.header_image_url} alt="" className={`mb-2 w-full object-contain ${isThermal ? "max-h-12" : "max-h-20"}`} />

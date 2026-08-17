@@ -22,6 +22,7 @@ export function CombosClient({ products, combos, lang }: { products: Product[]; 
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const { showToast } = useToast();
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [editingCombo, setEditingCombo] = useState<Combo | null>(null);
   const [name, setName] = useState("");
@@ -191,7 +192,10 @@ export function CombosClient({ products, combos, lang }: { products: Product[]; 
       ) : (
         <ul className="flex flex-col gap-2 md:grid md:grid-cols-2 md:gap-3">
           {combos.map((c) => (
-            <li key={c.id} className={c.isActive ? "neu-card p-4" : "rounded-xl border border-border bg-background p-4 opacity-60"}>
+            <li
+              key={c.id}
+              className={`${c.isActive ? "neu-card p-4" : "rounded-xl border border-border bg-background p-4 opacity-60"} ${deletingId === c.id ? "animate-delete" : ""}`}
+            >
               <div className="flex items-center justify-between">
                 <p className="text-sm font-semibold text-foreground">{c.name}</p>
                 <p className="text-sm font-semibold text-foreground">{formatMoney(c.price)}</p>
@@ -218,6 +222,7 @@ export function CombosClient({ products, combos, lang }: { products: Product[]; 
                 <button
                   onClick={() => {
                     if (!confirm(t("combos.deleteConfirm"))) return;
+                    setDeletingId(c.id);
                     startTransition(async () => {
                       await deleteComboAction(c.id);
                       showToast("Combo deleted", "info");

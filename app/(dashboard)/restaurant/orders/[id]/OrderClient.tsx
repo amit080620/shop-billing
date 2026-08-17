@@ -81,6 +81,7 @@ export function OrderClient({
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [deletingItemId, setDeletingItemId] = useState<string | null>(null);
   const [kotItems, setKotItems] = useState<{ name: string; quantity: number; modifiers: { group: string; choice: string; price: number }[] }[] | null>(null);
   const [showBillPrint, setShowBillPrint] = useState(false);
   const [showSettle, setShowSettle] = useState(false);
@@ -109,6 +110,7 @@ export function OrderClient({
   }
 
   function removeItem(itemId: string) {
+    setDeletingItemId(itemId);
     startTransition(async () => {
       const result = await removeOrderItemAction(itemId, order.id);
       if (result.error) setError(result.error);
@@ -313,7 +315,10 @@ export function OrderClient({
             ) : (
               <ul className="flex flex-col gap-2">
                 {initialItems.map((item) => (
-                  <li key={item.id} className="neu-card flex items-center justify-between gap-2 px-3.5 py-2.5">
+                  <li
+                    key={item.id}
+                    className={`neu-card flex items-center justify-between gap-2 px-3.5 py-2.5 ${deletingItemId === item.id ? "animate-delete" : ""}`}
+                  >
                     <div className="min-w-0 flex-1">
                       <span className="truncate text-sm text-foreground">{item.productName}</span>
                       {item.selectedModifiers.length > 0 && (

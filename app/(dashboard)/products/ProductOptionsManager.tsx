@@ -24,6 +24,8 @@ export function ProductOptionsManager({
   const [loading, setLoading] = useState(true);
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [deletingGroupId, setDeletingGroupId] = useState<string | null>(null);
+  const [deletingChoiceId, setDeletingChoiceId] = useState<string | null>(null);
 
   const [newGroupName, setNewGroupName] = useState("");
   const [newGroupRequired, setNewGroupRequired] = useState(true);
@@ -61,6 +63,7 @@ export function ProductOptionsManager({
   }
 
   function handleDeleteGroup(groupId: string) {
+    setDeletingGroupId(groupId);
     startTransition(async () => {
       await deleteOptionGroupAction(groupId);
       reload();
@@ -84,6 +87,7 @@ export function ProductOptionsManager({
   }
 
   function handleDeleteChoice(choiceId: string, groupId: string) {
+    setDeletingChoiceId(choiceId);
     startTransition(async () => {
       await deleteOptionChoiceAction(choiceId, groupId);
       reload();
@@ -119,7 +123,7 @@ export function ProductOptionsManager({
 
               <div className="flex flex-col gap-3">
                 {groups.map((g) => (
-                  <div key={g.id} className="rounded-lg border border-border p-3">
+                  <div key={g.id} className={`rounded-lg border border-border p-3 ${deletingGroupId === g.id ? "animate-delete" : ""}`}>
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-sm font-medium text-foreground">{g.name}</p>
@@ -134,7 +138,7 @@ export function ProductOptionsManager({
 
                     <div className="mt-2 flex flex-col gap-1">
                       {g.choices.map((c) => (
-                        <div key={c.id} className="flex items-center justify-between rounded-lg bg-background px-2.5 py-1.5">
+                        <div key={c.id} className={`flex items-center justify-between rounded-lg bg-background px-2.5 py-1.5 ${deletingChoiceId === c.id ? "animate-delete" : ""}`}>
                           <span className="text-sm text-foreground">
                             {c.name} {c.isDefault && <span className="text-[10px] text-muted">(default)</span>}
                           </span>

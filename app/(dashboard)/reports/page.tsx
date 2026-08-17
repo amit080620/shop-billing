@@ -30,6 +30,11 @@ export default async function ReportsPage() {
               sub="Fast movers & dead stock, from your own sales"
             />
           )}
+          <ReportLink
+            href="/reports/export"
+            label="Export data"
+            sub="Bills, petty cash, orders, customers & vendors — as Excel"
+          />
         </div>
       </section>
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useRef, useState, useTransition } from "react";
+import { useActionState, useEffect, useRef, useState, useTransition } from "react";
 import { useFormStatus } from "react-dom";
 import Link from "next/link";
 import Image from "next/image";
@@ -27,15 +27,27 @@ type ShopSettings = {
   managerPin: string;
 };
 
-function SubmitButton() {
+function SubmitButton({ hasError }: { hasError: boolean }) {
   const { pending } = useFormStatus();
+  const wasPending = useRef(false);
+  const [justSaved, setJustSaved] = useState(false);
+
+  useEffect(() => {
+    if (wasPending.current && !pending && !hasError) {
+      setJustSaved(true);
+      const timer = setTimeout(() => setJustSaved(false), 700);
+      return () => clearTimeout(timer);
+    }
+    wasPending.current = pending;
+  }, [pending, hasError]);
+
   return (
     <button
       type="submit"
       disabled={pending}
-      className="w-full rounded-lg bg-brand px-4 py-3 font-medium text-white disabled:opacity-60"
+      className={`w-full rounded-lg bg-brand px-4 py-3 font-medium text-white disabled:opacity-60 ${justSaved ? "animate-save-success" : ""}`}
     >
-      {pending ? "Saving…" : "Save GST profile"}
+      {pending ? "Saving…" : justSaved ? "Saved ✓" : "Save GST profile"}
     </button>
   );
 }
@@ -224,7 +236,7 @@ export function SettingsClient({ shop }: { shop: ShopSettings }) {
         {state?.error && (
           <p className="rounded-lg bg-credit-soft px-3 py-2 text-sm text-credit">{state.error}</p>
         )}
-        <SubmitButton />
+        <SubmitButton hasError={!!state?.error} />
       </form>
     </div>
   );
@@ -274,6 +286,7 @@ function Field({
 function LogoUploadSection({ currentLogoUrl }: { currentLogoUrl: string | null }) {
   const [preview, setPreview] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const [isRemovingLogo, setIsRemovingLogo] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [state, formAction] = useActionState(uploadLogoAction, null);
 
@@ -292,7 +305,9 @@ function LogoUploadSection({ currentLogoUrl }: { currentLogoUrl: string | null }
     <section className="flex flex-col gap-3 neu-card p-4">
       <p className="text-sm font-semibold text-foreground">Shop logo</p>
       <div className="flex items-center gap-4">
-        <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-background">
+        <div
+          className={`flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-background transition-opacity duration-300 ${isRemovingLogo ? "scale-90 opacity-0" : ""}`}
+        >
           {displayUrl ? (
             <Image src={displayUrl} alt="Shop logo" width={64} height={64} className="h-full w-full object-contain" unoptimized />
           ) : (
@@ -314,7 +329,10 @@ function LogoUploadSection({ currentLogoUrl }: { currentLogoUrl: string | null }
             <button
               type="button"
               disabled={isPending}
-              onClick={() => startTransition(() => removeLogoAction())}
+              onClick={() => {
+                setIsRemovingLogo(true);
+                startTransition(() => removeLogoAction());
+              }}
               className="self-start text-xs font-medium text-danger disabled:opacity-50"
             >
               Remove logo

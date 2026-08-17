@@ -135,6 +135,7 @@ function WorkoutTab({ memberId, plans, onChange }: { memberId: string; plans: Wo
   const [exercises, setExercises] = useState<ExerciseInput[]>([{ muscleGroup: "", exerciseName: "", sets: 3, reps: "12", restSeconds: 60 }]);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const [deletingPlanId, setDeletingPlanId] = useState<string | null>(null);
 
   function save() {
     startTransition(async () => {
@@ -237,16 +238,17 @@ function WorkoutTab({ memberId, plans, onChange }: { memberId: string; plans: Wo
       ) : (
         <ul className="flex flex-col gap-2">
           {plans.map((p) => (
-            <li key={p.id} className="rounded-xl border border-border bg-surface p-3.5 shadow-sm">
+            <li key={p.id} className={`neu-card p-3.5 ${deletingPlanId === p.id ? "animate-delete" : ""}`}>
               <div className="flex items-start justify-between">
                 <p className="text-sm font-semibold text-foreground">{p.title}</p>
                 <button
-                  onClick={() =>
+                  onClick={() => {
+                    setDeletingPlanId(p.id);
                     startTransition(async () => {
                       await deleteWorkoutPlanAction(p.id);
                       onChange();
-                    })
-                  }
+                    });
+                  }}
                   className="text-xs text-danger"
                 >
                   Delete
@@ -277,6 +279,7 @@ function DietTab({ memberId, plans, onChange }: { memberId: string; plans: DietP
   const [meals, setMeals] = useState<MealInput[]>([{ mealSlot: "breakfast", foodItems: "", calories: null }]);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const [deletingPlanId, setDeletingPlanId] = useState<string | null>(null);
 
   function save() {
     startTransition(async () => {
@@ -370,16 +373,17 @@ function DietTab({ memberId, plans, onChange }: { memberId: string; plans: DietP
       ) : (
         <ul className="flex flex-col gap-2">
           {plans.map((p) => (
-            <li key={p.id} className="rounded-xl border border-border bg-surface p-3.5 shadow-sm">
+            <li key={p.id} className={`neu-card p-3.5 ${deletingPlanId === p.id ? "animate-delete" : ""}`}>
               <div className="flex items-start justify-between">
                 <p className="text-sm font-semibold text-foreground">{p.goal || "Diet plan"}</p>
                 <button
-                  onClick={() =>
+                  onClick={() => {
+                    setDeletingPlanId(p.id);
                     startTransition(async () => {
                       await deleteDietPlanAction(p.id);
                       onChange();
-                    })
-                  }
+                    });
+                  }}
                   className="text-xs text-danger"
                 >
                   Delete

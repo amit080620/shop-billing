@@ -554,6 +554,28 @@ textarea {
   animation: print-slip 450ms var(--ease-signature);
 }
 
+/* Save success — a brief pulse + success-color glow confirming an
+ * action genuinely completed, for buttons where the user stays on
+ * the same screen afterward (so button text alone isn't enough of a
+ * signal). Apply .animate-save-success for ~700ms after a save
+ * succeeds, then remove the class (or let a timeout clear it). */
+@keyframes save-success-pulse {
+  0% {
+    box-shadow: 0 0 0 0 var(--success);
+  }
+  30% {
+    transform: scale(1.04);
+    box-shadow: 0 0 0 6px rgba(22, 132, 91, 0.25);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(22, 132, 91, 0);
+  }
+}
+.animate-save-success {
+  animation: save-success-pulse 650ms var(--ease-signature);
+}
+
 /* A subtle, consistent "the app noticed your tap" press-feedback on
    every button — small, but this is a large part of what makes an
    interface feel alive instead of static. */
