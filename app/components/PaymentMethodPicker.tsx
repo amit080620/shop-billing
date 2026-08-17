@@ -22,6 +22,11 @@ export function PaymentMethodPicker({ name = "paymentMethod", defaultValue = "ca
                 ? "border-brand bg-brand-soft text-brand-text"
                 : "border-border text-muted"
             }`}
+            style={
+              selected === m
+                ? { boxShadow: "-2px -2px 5px var(--neu-light), 2px 2px 5px var(--neu-dark)" }
+                : undefined
+            }
           >
             {m}
           </button>

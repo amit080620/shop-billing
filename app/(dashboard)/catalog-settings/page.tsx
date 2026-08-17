@@ -11,7 +11,7 @@ export default async function CatalogSettingsPage() {
 
   const { data: settings } = await admin
     .from("catalog_settings")
-    .select("is_enabled, public_token, banner_text, delivery_enabled, delivery_charge")
+    .select("is_enabled, public_token, banner_text, delivery_enabled, delivery_charge, is_closed, closed_from, closed_until")
     .eq("shop_id", session.shopId)
     .maybeSingle();
 
@@ -22,6 +22,9 @@ export default async function CatalogSettingsPage() {
       bannerText={settings?.banner_text ?? ""}
       deliveryEnabled={settings?.delivery_enabled ?? false}
       deliveryCharge={settings ? Number(settings.delivery_charge) : 0}
+      isClosed={settings?.is_closed ?? false}
+      closedFrom={settings?.closed_from ?? null}
+      closedUntil={settings?.closed_until ?? null}
     />
   );
 }

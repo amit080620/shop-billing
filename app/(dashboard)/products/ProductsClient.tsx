@@ -253,6 +253,12 @@ export function ProductsClient({
         bareIcon
         action={
           <div className="flex gap-2">
+            <Link
+              href="/products/scan-menu"
+              className="rounded-lg border border-border px-3 py-1.5 text-sm font-medium text-foreground"
+            >
+              Scan menu
+            </Link>
             <button
               onClick={() => setShowCategoryForm((v) => !v)}
               className="rounded-lg border border-border px-3 py-1.5 text-sm font-medium text-foreground"

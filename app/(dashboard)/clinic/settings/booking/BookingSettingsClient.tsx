@@ -125,6 +125,7 @@ export function BookingSettingsClient({
       }
       setError(null);
       setSaved(true);
+      setTimeout(() => setSaved(false), 1500);
       router.refresh();
     });
   }
@@ -299,9 +300,12 @@ export function BookingSettingsClient({
       </div>
 
       {error && <p className="text-sm text-danger">{error}</p>}
-      {saved && <p className="text-sm text-brand">Saved.</p>}
-      <button onClick={save} disabled={isPending} className="btn-primary w-full text-center disabled:opacity-60">
-        {isPending ? "Saving…" : "Save"}
+      <button
+        onClick={save}
+        disabled={isPending}
+        className={`btn-primary w-full text-center disabled:opacity-60 ${saved ? "animate-save-success" : ""}`}
+      >
+        {isPending ? "Saving…" : saved ? "Saved ✓" : "Save"}
       </button>
     </div>
   );

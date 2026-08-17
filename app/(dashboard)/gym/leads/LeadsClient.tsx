@@ -116,6 +116,7 @@ export function LeadsClient({ leads }: { leads: Lead[] }) {
         <button
           onClick={() => setFilter("all")}
           className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium ${filter === "all" ? "border-brand bg-brand-soft text-brand-text" : "border-border text-muted"}`}
+          style={filter === "all" ? { boxShadow: "-2px -2px 5px var(--neu-light), 2px 2px 5px var(--neu-dark)" } : undefined}
         >
           All
         </button>
@@ -124,6 +125,7 @@ export function LeadsClient({ leads }: { leads: Lead[] }) {
             key={s}
             onClick={() => setFilter(s)}
             className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium ${filter === s ? "border-brand bg-brand-soft text-brand-text" : "border-border text-muted"}`}
+            style={filter === s ? { boxShadow: "-2px -2px 5px var(--neu-light), 2px 2px 5px var(--neu-dark)" } : undefined}
           >
             {STATUS_LABELS[s]}
           </button>

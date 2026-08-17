@@ -1323,6 +1323,11 @@ create table if not exists catalog_settings (
   banner_text text,
   delivery_enabled boolean not null default false,
   delivery_charge numeric(12, 2) not null default 0,
+  -- Temporary closure — customer sees a "we're closed, back on X" page
+  -- and can't submit new orders while today falls in this range.
+  is_closed boolean not null default false,
+  closed_from date,
+  closed_until date,
   updated_at timestamptz not null default now()
 );
 alter table catalog_settings enable row level security;

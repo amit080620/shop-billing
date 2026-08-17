@@ -39,10 +39,18 @@ export default async function RentalsPage() {
       />
 
       <div className="flex gap-2 overflow-x-auto">
-        <Link href="/rentals/history" className="shrink-0 rounded-full border border-border px-3 py-1.5 text-xs font-medium text-muted">
+        <Link
+          href="/rentals/history"
+          className="shrink-0 rounded-full border border-border px-3 py-1.5 text-xs font-medium text-muted"
+          style={{ boxShadow: "-2px -2px 5px var(--neu-light), 2px 2px 5px var(--neu-dark)" }}
+        >
           {t("rentalsPage.pastLink")}
         </Link>
-        <Link href="/rentals/availability" className="shrink-0 rounded-full border border-border px-3 py-1.5 text-xs font-medium text-muted">
+        <Link
+          href="/rentals/availability"
+          className="shrink-0 rounded-full border border-border px-3 py-1.5 text-xs font-medium text-muted"
+          style={{ boxShadow: "-2px -2px 5px var(--neu-light), 2px 2px 5px var(--neu-dark)" }}
+        >
           <span className="flex items-center gap-1"><Calendar size={13} /> Availability calendar</span>
         </Link>
       </div>

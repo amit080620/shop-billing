@@ -446,6 +446,7 @@ export function NewBillClient({
                   key={p.id}
                   onClick={() => addProduct(p)}
                   className="flex shrink-0 items-center gap-1 rounded-full border border-brand bg-brand-soft px-3 py-1.5 text-xs font-medium text-brand-text"
+                  style={{ boxShadow: "-2px -2px 5px var(--neu-light), 2px 2px 5px var(--neu-dark)" }}
                 >
                   <Zap size={11} /> {p.name}
                 </button>

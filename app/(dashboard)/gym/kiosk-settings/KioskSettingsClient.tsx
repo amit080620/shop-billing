@@ -42,7 +42,7 @@ export function KioskSettingsClient({ isEnabled: initialEnabled, publicToken }: 
         ← Attendance
       </Link>
 
-      <label className="flex items-center justify-between rounded-xl border border-border bg-surface px-4 py-3.5 shadow-sm">
+      <label className="neu-card flex items-center justify-between px-4 py-3.5">
         <span className="text-sm font-medium text-foreground">Enable self check-in kiosk</span>
         <input type="checkbox" checked={isEnabled} onChange={(e) => toggle(e.target.checked)} disabled={isPending} className="h-5 w-5 rounded border-border" />
       </label>
@@ -60,7 +60,7 @@ export function KioskSettingsClient({ isEnabled: initialEnabled, publicToken }: 
                 setCopied(true);
                 setTimeout(() => setCopied(false), 2000);
               }}
-              className="btn-primary-sm flex-1 text-center"
+              className={`btn-primary-sm flex-1 text-center ${copied ? "animate-save-success" : ""}`}
             >
               {copied ? "Copied!" : "Copy link"}
             </button>

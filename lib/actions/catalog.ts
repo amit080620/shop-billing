@@ -11,6 +11,9 @@ export async function saveCatalogSettingsAction(settings: {
   bannerText: string;
   deliveryEnabled: boolean;
   deliveryCharge: number;
+  isClosed: boolean;
+  closedFrom: string | null;
+  closedUntil: string | null;
 }): Promise<{ error?: string }> {
   const session = await requireSession();
   const admin = createSupabaseAdminClient();
@@ -20,6 +23,9 @@ export async function saveCatalogSettingsAction(settings: {
     banner_text: settings.bannerText || null,
     delivery_enabled: settings.deliveryEnabled,
     delivery_charge: settings.deliveryCharge,
+    is_closed: settings.isClosed,
+    closed_from: settings.closedFrom,
+    closed_until: settings.closedUntil,
     updated_at: new Date().toISOString(),
   });
   if (error) {
@@ -50,10 +56,17 @@ export async function submitCatalogOrderAction(
 
   const { data: settings } = await admin
     .from("catalog_settings")
-    .select("shop_id, is_enabled, delivery_enabled, delivery_charge")
+    .select("shop_id, is_enabled, delivery_enabled, delivery_charge, is_closed, closed_from, closed_until")
     .eq("public_token", publicToken)
     .maybeSingle();
   if (!settings || !settings.is_enabled) return { error: "Ordering is not available right now" };
+
+  const todayIso = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
+  const isClosedToday =
+    settings.is_closed &&
+    (!settings.closed_from || todayIso >= settings.closed_from) &&
+    (!settings.closed_until || todayIso <= settings.closed_until);
+  if (isClosedToday) return { error: "We're currently closed — please try again once we reopen." };
 
   // Never trust a client-sent charge amount — only honor "delivery" at
   // all if the shop has genuinely turned it on, and always use the

@@ -53,6 +53,11 @@ export function KdsSettingsClient({ columns: initialColumns, fontScale: initialF
               className={`flex-1 rounded-lg border py-3 text-center text-sm font-semibold disabled:opacity-60 ${
                 columns === n ? "border-brand bg-brand-soft text-brand-text" : "border-border text-muted"
               }`}
+              style={
+                columns === n
+                  ? { boxShadow: "-2px -2px 5px var(--neu-light), 2px 2px 5px var(--neu-dark)" }
+                  : undefined
+              }
             >
               {n}
             </button>
@@ -81,6 +86,11 @@ export function KdsSettingsClient({ columns: initialColumns, fontScale: initialF
               className={`flex-1 rounded-lg border py-3 text-center text-sm font-semibold disabled:opacity-60 ${
                 fontScale === opt.value ? "border-brand bg-brand-soft text-brand-text" : "border-border text-muted"
               }`}
+              style={
+                fontScale === opt.value
+                  ? { boxShadow: "-2px -2px 5px var(--neu-light), 2px 2px 5px var(--neu-dark)" }
+                  : undefined
+              }
             >
               {opt.label}
             </button>

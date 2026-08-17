@@ -1,5 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" fill="none"><defs>
-      <linearGradient id="ray" x1="8" y1="8" x2="56" y2="56"><stop stop-color="#0427F3"/><stop offset=".52" stop-color="#6A2BBF"/><stop offset="1" stop-color="#CD127B"/></linearGradient>
-      <linearGradient id="soft" x1="8" y1="8" x2="56" y2="56"><stop stop-color="#A8D8FF"/><stop offset=".5" stop-color="#9B76E1"/><stop offset="1" stop-color="#FF7AB8"/></linearGradient>
-      <filter id="shadow" x="-50%" y="-50%" width="200%" height="220%"><feDropShadow dx="0" dy="4" stdDeviation="3" flood-opacity=".18"/></filter>
-    </defs><title>Scan</title><g filter="url(#shadow)"><path d="M10 23V12h11M42 12h10v11M10 41v11h11M52 41v11H41" fill="none" stroke="url(#ray)" stroke-width="5" stroke-linecap="round"/><path d="M16 32h32" stroke="#6A2BBF" stroke-width="4" stroke-linecap="round"><animate attributeName="y1" values="20;44;20" dur="1.2s" repeatCount="indefinite"/><animate attributeName="y2" values="20;44;20" dur="1.2s" repeatCount="indefinite"/></path></g></svg>

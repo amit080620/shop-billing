@@ -756,9 +756,9 @@ export interface Database {
         Relationships: [];
       };
       catalog_settings: {
-        Row: { shop_id: string; is_enabled: boolean; public_token: string; banner_text: string | null; delivery_enabled: boolean; delivery_charge: number; updated_at: string };
-        Insert: { shop_id: string; is_enabled?: boolean; public_token?: string; banner_text?: string | null; delivery_enabled?: boolean; delivery_charge?: number; updated_at?: string };
-        Update: { shop_id?: string; is_enabled?: boolean; public_token?: string; banner_text?: string | null; delivery_enabled?: boolean; delivery_charge?: number; updated_at?: string };
+        Row: { shop_id: string; is_enabled: boolean; public_token: string; banner_text: string | null; delivery_enabled: boolean; delivery_charge: number; is_closed: boolean; closed_from: string | null; closed_until: string | null; updated_at: string };
+        Insert: { shop_id: string; is_enabled?: boolean; public_token?: string; banner_text?: string | null; delivery_enabled?: boolean; delivery_charge?: number; is_closed?: boolean; closed_from?: string | null; closed_until?: string | null; updated_at?: string };
+        Update: { shop_id?: string; is_enabled?: boolean; public_token?: string; banner_text?: string | null; delivery_enabled?: boolean; delivery_charge?: number; is_closed?: boolean; closed_from?: string | null; closed_until?: string | null; updated_at?: string };
         Relationships: [];
       };
       catalog_order_requests: {

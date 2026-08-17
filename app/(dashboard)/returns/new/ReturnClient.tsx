@@ -143,6 +143,11 @@ export function ReturnClient({
               className={`rounded-full border px-3 py-1.5 text-xs font-medium capitalize ${
                 refundMethod === m ? "border-brand bg-brand-soft text-brand-text" : "border-border text-muted"
               }`}
+              style={
+                refundMethod === m
+                  ? { boxShadow: "-2px -2px 5px var(--neu-light), 2px 2px 5px var(--neu-dark)" }
+                  : undefined
+              }
             >
               {m === "credit_adjustment" ? "Adjust against credit" : m}
             </button>

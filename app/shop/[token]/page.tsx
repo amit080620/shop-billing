@@ -12,7 +12,7 @@ export default async function PublicStorefrontPage({
 
   const { data: settings } = await admin
     .from("catalog_settings")
-    .select("shop_id, is_enabled, banner_text, delivery_enabled, delivery_charge")
+    .select("shop_id, is_enabled, banner_text, delivery_enabled, delivery_charge, is_closed, closed_from, closed_until")
     .eq("public_token", token)
     .maybeSingle();
 
@@ -20,6 +20,38 @@ export default async function PublicStorefrontPage({
 
   const { data: shop } = await admin.from("shops").select("name, logo_url").eq("id", settings.shop_id).single();
   if (!shop) notFound();
+
+  const todayIso = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
+  const isGenuinelyClosedToday =
+    settings.is_closed &&
+    (!settings.closed_from || todayIso >= settings.closed_from) &&
+    (!settings.closed_until || todayIso <= settings.closed_until);
+
+  if (isGenuinelyClosedToday) {
+    return (
+      <div className="mx-auto flex min-h-screen max-w-md flex-col items-center justify-center gap-3 px-6 text-center">
+        {shop.logo_url && (
+          // eslint-disable-next-line @next/next/no-img-element -- shop logo, small
+          <img src={shop.logo_url} alt="" className="mb-2 h-16 w-16 rounded-full object-contain" />
+        )}
+        <h1 className="text-xl font-bold text-foreground">{shop.name}</h1>
+        <div className="rounded-2xl border border-dashed border-danger bg-danger-soft px-5 py-4">
+          <p className="text-sm font-semibold text-danger">We&apos;re currently closed</p>
+          {settings.closed_until && (
+            <p className="mt-1 text-sm text-danger">
+              We&apos;ll be back on{" "}
+              {new Date(`${settings.closed_until}T00:00:00`).toLocaleDateString("en-IN", {
+                timeZone: "Asia/Kolkata",
+                day: "numeric",
+                month: "long",
+              })}
+            </p>
+          )}
+        </div>
+        <p className="text-xs text-muted">Please check back then — thank you for your patience!</p>
+      </div>
+    );
+  }
 
   const { data: products } = await admin
     .from("products")

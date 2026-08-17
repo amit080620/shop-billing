@@ -13,18 +13,27 @@ export function CatalogSettingsClient({
   bannerText: initialBanner,
   deliveryEnabled: initialDeliveryEnabled,
   deliveryCharge: initialDeliveryCharge,
+  isClosed: initialIsClosed,
+  closedFrom: initialClosedFrom,
+  closedUntil: initialClosedUntil,
 }: {
   isEnabled: boolean;
   publicToken: string | null;
   bannerText: string;
   deliveryEnabled: boolean;
   deliveryCharge: number;
+  isClosed: boolean;
+  closedFrom: string | null;
+  closedUntil: string | null;
 }) {
   const router = useRouter();
   const [enabled, setEnabled] = useState(initialEnabled);
   const [bannerText, setBannerText] = useState(initialBanner);
   const [deliveryEnabled, setDeliveryEnabled] = useState(initialDeliveryEnabled);
   const [deliveryCharge, setDeliveryCharge] = useState(initialDeliveryCharge);
+  const [isClosed, setIsClosed] = useState(initialIsClosed);
+  const [closedFrom, setClosedFrom] = useState(initialClosedFrom ?? "");
+  const [closedUntil, setClosedUntil] = useState(initialClosedUntil ?? "");
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const [isPending, startTransition] = useTransition();
@@ -32,13 +41,22 @@ export function CatalogSettingsClient({
   function save() {
     setSaved(false);
     startTransition(async () => {
-      const result = await saveCatalogSettingsAction({ isEnabled: enabled, bannerText, deliveryEnabled, deliveryCharge });
+      const result = await saveCatalogSettingsAction({
+        isEnabled: enabled,
+        bannerText,
+        deliveryEnabled,
+        deliveryCharge,
+        isClosed,
+        closedFrom: closedFrom || null,
+        closedUntil: closedUntil || null,
+      });
       if (result.error) {
         setError(result.error);
         return;
       }
       setError(null);
       setSaved(true);
+      setTimeout(() => setSaved(false), 1500);
       router.refresh();
     });
   }
@@ -86,6 +104,51 @@ export function CatalogSettingsClient({
         )}
       </div>
 
+      <div className="flex flex-col gap-2.5 rounded-xl border border-danger/40 bg-danger-soft px-4 py-3.5">
+        <label className="flex items-center justify-between">
+          <div>
+            <span className="text-sm font-medium text-foreground">Temporarily closed</span>
+            <p className="text-xs text-muted">Customers see a closed message instead of the menu — no new orders come in.</p>
+          </div>
+          <input
+            type="checkbox"
+            checked={isClosed}
+            onChange={(e) => setIsClosed(e.target.checked)}
+            className="h-5 w-5 shrink-0 rounded border-border"
+          />
+        </label>
+        {isClosed && (
+          <div className="grid grid-cols-2 gap-2">
+            <label className="flex flex-col gap-1">
+              <span className="text-xs text-muted">Closed from</span>
+              <input
+                type="date"
+                value={closedFrom}
+                onChange={(e) => setClosedFrom(e.target.value)}
+                className="rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-brand"
+              />
+            </label>
+            <label className="flex flex-col gap-1">
+              <span className="text-xs text-muted">Reopens on</span>
+              <input
+                type="date"
+                value={closedUntil}
+                onChange={(e) => setClosedUntil(e.target.value)}
+                className="rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-brand"
+              />
+            </label>
+          </div>
+        )}
+      </div>
+
+      <Link href="/catalog-settings/menu-pdf" className="neu-card flex items-center justify-between px-4 py-3.5">
+        <div>
+          <p className="text-sm font-medium text-foreground">Menu PDF</p>
+          <p className="text-xs text-muted">Downloadable menu with clickable items that link to ordering</p>
+        </div>
+        <span className="text-muted">›</span>
+      </Link>
+
       {publicUrl && enabled && (
         <div className="flex flex-col gap-2 rounded-xl border border-dashed border-brand bg-brand-soft p-4">
           <p className="text-xs font-medium text-brand-text">Your catalog link — share this anywhere</p>
@@ -125,9 +188,12 @@ export function CatalogSettingsClient({
       </p>
 
       {error && <p className="text-sm text-danger">{error}</p>}
-      {saved && <p className="text-sm text-brand">Saved.</p>}
-      <button onClick={save} disabled={isPending} className="btn-primary w-full text-center disabled:opacity-60">
-        {isPending ? "Saving…" : "Save"}
+      <button
+        onClick={save}
+        disabled={isPending}
+        className={`btn-primary w-full text-center disabled:opacity-60 ${saved ? "animate-save-success" : ""}`}
+      >
+        {isPending ? "Saving…" : saved ? "Saved ✓" : "Save"}
       </button>
 
       <Link href="/catalog-orders" className="flex items-center justify-center gap-1.5 rounded-xl border border-border bg-surface px-4 py-3.5 text-center text-sm font-medium text-brand shadow-sm">

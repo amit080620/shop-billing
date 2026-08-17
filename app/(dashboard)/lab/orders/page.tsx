@@ -59,11 +59,20 @@ export default async function LabOrdersPage({
       </Link>
 
       <div className="flex gap-2 overflow-x-auto pb-1">
-        <Link href="/lab/orders" className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium ${!status || status === "all" ? "border-brand bg-brand-soft text-brand-text" : "border-border text-muted"}`}>
+        <Link
+          href="/lab/orders"
+          className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium ${!status || status === "all" ? "border-brand bg-brand-soft text-brand-text" : "border-border text-muted"}`}
+          style={!status || status === "all" ? { boxShadow: "-2px -2px 5px var(--neu-light), 2px 2px 5px var(--neu-dark)" } : undefined}
+        >
           All
         </Link>
         {Object.entries(STATUS_LABELS).map(([key, label]) => (
-          <Link key={key} href={`/lab/orders?status=${key}`} className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium ${status === key ? "border-brand bg-brand-soft text-brand-text" : "border-border text-muted"}`}>
+          <Link
+            key={key}
+            href={`/lab/orders?status=${key}`}
+            className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium ${status === key ? "border-brand bg-brand-soft text-brand-text" : "border-border text-muted"}`}
+            style={status === key ? { boxShadow: "-2px -2px 5px var(--neu-light), 2px 2px 5px var(--neu-dark)" } : undefined}
+          >
             {label}
           </Link>
         ))}

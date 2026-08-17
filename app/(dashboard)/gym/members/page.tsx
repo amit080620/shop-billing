@@ -69,6 +69,7 @@ export default async function GymMembersPage({
             <Link
               href="/gym/members"
               className={`flex shrink-0 items-center gap-1 rounded-full border px-3 py-1.5 text-xs font-medium ${!showMineOnly ? "border-brand bg-brand-soft text-brand-text" : "border-border text-muted"}`}
+              style={!showMineOnly ? { boxShadow: "-2px -2px 5px var(--neu-light), 2px 2px 5px var(--neu-dark)" } : undefined}
             >
               {/* eslint-disable-next-line @next/next/no-img-element -- small branded SVG icon */}
               <img src="/assets/ray-icons/filter.svg" alt="" className="h-3 w-3" /> All members
@@ -76,15 +77,24 @@ export default async function GymMembersPage({
             <Link
               href="/gym/members?mine=1"
               className={`flex shrink-0 items-center gap-1 rounded-full border px-3 py-1.5 text-xs font-medium ${showMineOnly ? "border-brand bg-brand-soft text-brand-text" : "border-border text-muted"}`}
+              style={showMineOnly ? { boxShadow: "-2px -2px 5px var(--neu-light), 2px 2px 5px var(--neu-dark)" } : undefined}
             >
               <User size={12} /> My members
             </Link>
           </>
         )}
-        <Link href="/gym/plans" className="flex shrink-0 items-center gap-1 rounded-full border border-border px-3 py-1.5 text-xs font-medium text-muted">
+        <Link
+          href="/gym/plans"
+          className="flex shrink-0 items-center gap-1 rounded-full border border-border px-3 py-1.5 text-xs font-medium text-muted"
+          style={{ boxShadow: "-2px -2px 5px var(--neu-light), 2px 2px 5px var(--neu-dark)" }}
+        >
           <ClipboardList size={12} /> Plans
         </Link>
-        <Link href="/gym/attendance" className="flex shrink-0 items-center gap-1 rounded-full border border-border px-3 py-1.5 text-xs font-medium text-muted">
+        <Link
+          href="/gym/attendance"
+          className="flex shrink-0 items-center gap-1 rounded-full border border-border px-3 py-1.5 text-xs font-medium text-muted"
+          style={{ boxShadow: "-2px -2px 5px var(--neu-light), 2px 2px 5px var(--neu-dark)" }}
+        >
           <CheckCircle2 size={12} /> Attendance
         </Link>
       </div>
