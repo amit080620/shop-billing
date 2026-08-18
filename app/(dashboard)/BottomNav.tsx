@@ -68,7 +68,7 @@ export function tabsFor(businessType: string, t: (key: string) => string, permis
 
   const SERVICE_TABS = [
     { href: "/", label: t("nav.home"), icon: HomeIcon },
-    { href: "/service/new", label: "New job", icon: BuyIcon },
+    { href: "/bills/new", label: "Sell", icon: SellIcon },
     { href: "/service", label: "Jobs", icon: ServiceIcon },
     { href: "/reports", label: t("nav.reports"), icon: ReportIcon },
     { href: "/more", label: t("nav.more"), icon: MoreIcon },

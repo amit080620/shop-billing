@@ -8,6 +8,7 @@ import { createJobAction } from "@/lib/actions/service";
 import { useToast } from "@/app/components/Toast";
 import { PageHeader } from "@/app/components/PageHeader";
 import { SearchableSelect } from "@/app/components/SearchableSelect";
+import { modelsFor, type DeviceModel } from "@/lib/deviceLibrary";
 import type { Lang } from "@/lib/i18n/dictionary";
 import { Wrench } from "lucide-react";
 
@@ -197,6 +198,21 @@ export function NewJobClient({ customers, lang }: { customers: Customer[]; lang:
             </div>
           )}
         </div>
+
+        {modelsFor(deviceCategory).length > 0 && (
+          <label className="flex flex-col gap-1.5 text-sm">
+            <span className="font-medium text-foreground">Quick pick model (optional — saves typing)</span>
+            <SearchableSelect
+              lang={lang}
+              items={modelsFor(deviceCategory)}
+              getKey={(m: DeviceModel) => `${m.brand}-${m.model}`}
+              getLabel={(m: DeviceModel) => `${m.brand} ${m.model}`}
+              getSubLabel={() => ""}
+              onSelect={(m: DeviceModel) => updateItem(0, { name: `${m.brand} ${m.model}` })}
+              placeholder="Search brand or model…"
+            />
+          </label>
+        )}
 
         <div className="flex flex-col gap-2">
           <span className="text-sm font-medium text-foreground">Items being dropped off</span>

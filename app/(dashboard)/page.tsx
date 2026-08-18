@@ -962,14 +962,24 @@ async function ServiceHome({
         />
       </section>
 
-      <Link
-        href="/service/new"
-        className="hover-lift flex items-center justify-center gap-2 rounded-xl px-4 py-4 text-center font-semibold text-white shadow-md"
-        style={{ background: "linear-gradient(135deg, var(--brand-light), var(--brand-dark))" }}
-      >
-        <PlusIcon />
-        + New job
-      </Link>
+      <div className="grid grid-cols-2 gap-2">
+        <Link
+          href="/bills/new"
+          className="hover-lift flex items-center justify-center gap-2 rounded-xl px-4 py-4 text-center font-semibold text-white shadow-md"
+          style={{ background: "linear-gradient(135deg, var(--brand-light), var(--brand-dark))" }}
+        >
+          <PlusIcon />
+          Sell
+        </Link>
+        <Link
+          href="/service/new"
+          className="hover-lift flex items-center justify-center gap-2 rounded-xl px-4 py-4 text-center font-semibold text-white shadow-md"
+          style={{ background: "linear-gradient(135deg, var(--brand-light), var(--brand-dark))" }}
+        >
+          <PlusIcon />
+          New job
+        </Link>
+      </div>
 
       <section>
         <h2 className="mb-2 text-sm font-semibold text-foreground">Recent jobs</h2>
