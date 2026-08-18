@@ -151,6 +151,7 @@ export async function acceptCatalogOrderAction(
   requestId: string,
   paymentMethod: "cash" | "card" | "upi" | "online" | "other",
   sendToKot = false,
+  alreadyPaid = false,
 ): Promise<{ error?: string; billId?: string; orderId?: string }> {
   const session = await requireSession();
   const admin = createSupabaseAdminClient();
@@ -288,7 +289,11 @@ export async function acceptCatalogOrderAction(
     ],
     discountType: "flat",
     discountValue: 0,
-    paidAmount: 0,
+    // The bill engine clamps this with Math.min(paidAmount, total), so
+    // passing a deliberately-large number marks the bill exactly
+    // fully-paid — safer than recomputing the GST-inclusive total here
+    // and risking a rounding mismatch against the real engine.
+    paidAmount: alreadyPaid ? Number.MAX_SAFE_INTEGER : 0,
     paymentMethod,
   });
   if ("error" in result) return { error: result.error };

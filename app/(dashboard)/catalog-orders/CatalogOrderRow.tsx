@@ -34,12 +34,13 @@ export function CatalogOrderRow({
   const [error, setError] = useState<string | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<"cash" | "card" | "upi" | "online" | "other">("cash");
   const [showKotAsk, setShowKotAsk] = useState(false);
+  const [alreadyPaid, setAlreadyPaid] = useState(false);
   const [kotItems, setKotItems] = useState<{ productName: string; quantity: number }[] | null>(null);
 
   function doAccept(sendToKot: boolean) {
     setShowKotAsk(false);
     startTransition(async () => {
-      const result = await acceptCatalogOrderAction(request.id, paymentMethod, sendToKot);
+      const result = await acceptCatalogOrderAction(request.id, paymentMethod, sendToKot, alreadyPaid);
       if (result.error) {
         setError(result.error);
         return;
@@ -102,6 +103,23 @@ export function CatalogOrderRow({
         >
           <MessageCircle size={13} /> Send payment link (WhatsApp)
         </button>
+      )}
+
+      {request.status === "pending" && (
+        <label className="mt-2 flex items-start gap-2 rounded-lg bg-success-soft px-3 py-2">
+          <input
+            type="checkbox"
+            checked={alreadyPaid}
+            onChange={(e) => setAlreadyPaid(e.target.checked)}
+            className="mt-0.5 h-4 w-4 shrink-0 rounded border-border"
+          />
+          <span className="text-xs">
+            <span className="font-medium text-foreground">Customer has already paid</span>
+            <span className="block text-muted">
+              Tick this if they paid the UPI link you sent. Leave it unticked to collect on delivery.
+            </span>
+          </span>
+        </label>
       )}
 
       {request.status === "pending" && (
