@@ -1,9 +1,9 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { submitCatalogOrderAction } from "@/lib/actions/catalog";
 import { formatMoney } from "@/lib/format";
-import { CheckCircle2, Package, ShoppingCart, Search, X } from "lucide-react";
+import { CheckCircle2, Package, ShoppingCart, Search, X, RotateCcw, MessageCircle } from "lucide-react";
 
 type Product = {
   id: string;
@@ -46,7 +46,47 @@ export function PublicStorefrontClient({
   const [error, setError] = useState<string | null>(null);
   const [confirmed, setConfirmed] = useState(false);
   const [orderId, setOrderId] = useState<string | null>(null);
+  const [lastOrder, setLastOrder] = useState<Record<string, number> | null>(null);
   const [isPending, startTransition] = useTransition();
+
+  // Keys are scoped per shop token — a customer who orders from two
+  // different shops shouldn't see one shop's cart appear in the other.
+  const cartKey = `ray-cart-${token}`;
+  const detailsKey = `ray-details-${token}`;
+  const lastOrderKey = `ray-last-order-${token}`;
+
+  // Restore on first mount only. Wrapped in try/catch because
+  // localStorage genuinely throws in private-mode Safari and when
+  // storage is full — a failure here should never break the menu.
+  useEffect(() => {
+    try {
+      const savedCart = localStorage.getItem(cartKey);
+      if (savedCart) setCart(JSON.parse(savedCart));
+
+      const savedDetails = localStorage.getItem(detailsKey);
+      if (savedDetails) {
+        const d = JSON.parse(savedDetails);
+        if (d.name) setName(d.name);
+        if (d.phone) setPhone(d.phone);
+      }
+
+      const savedLast = localStorage.getItem(lastOrderKey);
+      if (savedLast) setLastOrder(JSON.parse(savedLast));
+    } catch {
+      // Ignore — a customer with storage disabled just gets a fresh cart.
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Persist the cart on every change, so an accidental refresh or a
+  // phone call interrupting the order doesn't lose everything.
+  useEffect(() => {
+    try {
+      localStorage.setItem(cartKey, JSON.stringify(cart));
+    } catch {
+      // Ignore — cart just won't survive a refresh.
+    }
+  }, [cart, cartKey]);
 
   const filtered = useMemo(() => {
     const byCategory = activeCategory === "all" ? products : products.filter((p) => p.categoryName === activeCategory);
@@ -99,6 +139,13 @@ export function PublicStorefrontClient({
       }
       setError(null);
       setOrderId(result.orderId ?? null);
+      try {
+        localStorage.setItem(lastOrderKey, JSON.stringify(cart));
+        localStorage.setItem(detailsKey, JSON.stringify({ name, phone }));
+        localStorage.removeItem(cartKey);
+      } catch {
+        // Ignore — reorder/prefill just won't be available next time.
+      }
       setConfirmed(true);
     });
   }
@@ -118,8 +165,24 @@ export function PublicStorefrontClient({
             <a href={`/order-status/${orderId}`} className="btn-primary mt-2 w-full text-center">
               Track this order
             </a>
+            <a
+              href={`https://wa.me/?text=${encodeURIComponent(
+                [
+                  `My order at ${shopName}`,
+                  ...cartItems.map((i) => `• ${i.product.name} × ${i.qty}`),
+                  `Total: ₹${cartTotal.toFixed(2)}`,
+                  ``,
+                  `Track it here: ${typeof window !== "undefined" ? window.location.origin : ""}/order-status/${orderId}`,
+                ].join("\n"),
+              )}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex w-full items-center justify-center gap-2 rounded-xl border border-success px-4 py-3 text-sm font-medium text-success"
+            >
+              <MessageCircle size={15} /> Send confirmation on WhatsApp
+            </a>
             <p className="text-xs text-muted">
-              Bookmark that page — you can check the status any time without calling the shop.
+              Bookmark the tracking page — you can check the status any time without calling the shop.
             </p>
           </>
         )}
@@ -142,6 +205,28 @@ export function PublicStorefrontClient({
 
       {bannerText && (
         <div className="rounded-xl bg-brand-soft px-4 py-2.5 text-center text-sm font-medium text-brand-text">{bannerText}</div>
+      )}
+
+      {lastOrder && Object.keys(lastOrder).length > 0 && cartItems.length === 0 && (
+        <button
+          onClick={() => {
+            // Only restore items that are genuinely still on the menu —
+            // a since-removed product would otherwise silently fail at
+            // checkout with a confusing "not available" error.
+            const stillAvailable: Record<string, number> = {};
+            for (const [productId, qty] of Object.entries(lastOrder)) {
+              if (qty > 0 && products.some((p) => p.id === productId)) stillAvailable[productId] = qty;
+            }
+            setCart(stillAvailable);
+          }}
+          className="neu-card flex items-center justify-between gap-3 px-4 py-3 text-left"
+        >
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-foreground">Order the same again?</p>
+            <p className="text-xs text-muted">Tap to refill your cart with your last order</p>
+          </div>
+          <RotateCcw size={18} className="shrink-0 text-brand" />
+        </button>
       )}
 
       <div className="relative">
