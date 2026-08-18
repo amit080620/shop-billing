@@ -133,8 +133,8 @@ export function BottomNav({ lang, businessType, permissions = [] }: { lang: Lang
 
   return (
     <nav
-      className="no-print fixed inset-x-0 bottom-0 z-20 border-t border-border bg-surface pb-[env(safe-area-inset-bottom)] md:hidden"
-      style={{ boxShadow: "0 -4px 16px hsl(220 20% 40% / 0.06)" }}
+      className="no-print fixed inset-x-0 bottom-0 z-20 bg-background pb-[env(safe-area-inset-bottom)] md:hidden"
+      style={{ boxShadow: "0 -6px 16px var(--neu-dark), 0 -1px 0 var(--neu-light)" }}
     >
       <ul className="mx-auto flex max-w-lg items-stretch justify-between px-1">
         {tabs.map((tab) => {

@@ -235,9 +235,7 @@ function MenuGroup({ title, children }: { title: string; children: React.ReactNo
   return (
     <section className="flex flex-col gap-2">
       <h2 className="px-1 text-xs font-semibold uppercase tracking-wide text-muted">{title}</h2>
-      <div className="flex flex-col divide-y divide-border overflow-hidden neu-card">
-        {children}
-      </div>
+      <div className="flex flex-col gap-2">{children}</div>
     </section>
   );
 }
@@ -267,7 +265,7 @@ function MenuLink({
   return (
     <Link
       href={href}
-      className="flex items-center gap-3 px-4 py-3.5 transition active:bg-background"
+      className="neu-card flex items-center gap-3 px-4 py-3.5 transition active:scale-[0.98]"
     >
       <span
         className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${TONE_CLASSES[tone]}`}
