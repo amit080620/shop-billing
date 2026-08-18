@@ -13,6 +13,7 @@ import { BillCreatedConfirmation } from "./BillCreatedConfirmation";
 import { VoidBillButton } from "./VoidBillButton";
 import { EditBillButton } from "./EditBillButton";
 import { DownloadImageButton } from "./DownloadImageButton";
+import { BluetoothPrintButton } from "./BluetoothPrintButton";
 
 export default async function PrintBillPage({
   params,
@@ -23,7 +24,8 @@ export default async function PrintBillPage({
 }) {
   const { id } = await params;
   const { format } = await searchParams;
-  const isThermal = format === "thermal";
+  const isThermal = format === "thermal" || format === "thermal58";
+  const is58mm = format === "thermal58";
 
   const session = await requireSession();
   const { lang } = await getTranslator();
@@ -71,6 +73,26 @@ export default async function PrintBillPage({
     upiQrDataUrl = await generateQrDataUrl(upiLink);
   }
 
+  const receiptData = {
+    shopName: session.shopName,
+    gstin: session.shopGstin,
+    invoiceNumber: bill.invoice_number,
+    dateText: formatDateTime(bill.created_at),
+    customerName: customer?.name ?? null,
+    items: (items ?? []).map((it) => ({
+      name: it.product_name,
+      qty: Number(it.quantity),
+      price: Number(it.unit_price),
+      lineTotal: Number(it.line_total),
+    })),
+    subtotal: (items ?? []).reduce((s, it) => s + Number(it.line_total), 0),
+    taxTotal: (items ?? []).reduce((s, it) => s + Number(it.cgst_amount) + Number(it.sgst_amount) + Number(it.igst_amount), 0),
+    total: Number(bill.total),
+    paidAmount: Number(bill.paid_amount),
+    creditAmount: Number(bill.credit_amount),
+    footerText: null,
+  };
+
   return (
     <>
       <Suspense fallback={null}>
@@ -78,7 +100,7 @@ export default async function PrintBillPage({
       </Suspense>
     <div
       className={`relative mx-auto bg-white text-black ${
-        isThermal ? "w-[280px] p-2 font-mono text-xs" : "max-w-2xl p-8"
+        is58mm ? "w-[190px] p-1.5 font-mono text-[11px]" : isThermal ? "w-[280px] p-2 font-mono text-xs" : "max-w-2xl p-8"
       }`}
     >
       {bill.status === "voided" && (
@@ -122,8 +144,15 @@ export default async function PrintBillPage({
           >
             Thermal (72mm)
           </a>
+          <a
+            href={`/print/bill/${id}?format=thermal58`}
+            className="rounded border border-gray-300 px-3 py-1.5 text-sm"
+          >
+            Thermal (58mm)
+          </a>
           <DownloadImageButton invoiceNumber={bill.invoice_number} upiLink={upiLink} isThermal={isThermal} />
           <PrintButton />
+          <BluetoothPrintButton receipt={receiptData} paperWidth={is58mm ? 32 : 48} />
         </div>
         <p className="text-right text-xs text-gray-500">
           WhatsApp text messages can&apos;t carry a file — download the PDF above, then attach it

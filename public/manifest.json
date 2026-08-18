@@ -9,6 +9,12 @@
   "scope": "/",
   "display": "standalone",
   "display_override": ["standalone", "minimal-ui"],
+  "launch_handler": { "client_mode": "focus-existing" },
+  "share_target": {
+    "action": "/",
+    "method": "GET",
+    "params": { "title": "title", "text": "text", "url": "url" }
+  },
   "background_color": "#e4e8ef",
   "theme_color": "#0427f3",
   "orientation": "portrait",
@@ -22,11 +28,25 @@
       "label": "Home dashboard — today's sales, quick actions"
     },
     {
+      "src": "/screenshot-newbill.png",
+      "sizes": "412x915",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "New bill — scan barcodes, add products, bill in seconds"
+    },
+    {
       "src": "/screenshot-products.png",
       "sizes": "1280x800",
       "type": "image/png",
       "form_factor": "wide",
       "label": "Products — add items, scan barcodes or menus"
+    },
+    {
+      "src": "/screenshot-reports.png",
+      "sizes": "1280x800",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Reports — daily summary, GST filing, exports"
     }
   ],
   "shortcuts": [
@@ -35,6 +55,27 @@
       "short_name": "New Bill",
       "description": "Create a new bill right away",
       "url": "/bills/new",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Products",
+      "short_name": "Products",
+      "description": "View and add products",
+      "url": "/products",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Customers",
+      "short_name": "Customers",
+      "description": "Sales ledger and credit",
+      "url": "/customers",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Reports",
+      "short_name": "Reports",
+      "description": "Daily summary and GST filing",
+      "url": "/reports",
       "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
     }
   ],
