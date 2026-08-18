@@ -344,6 +344,77 @@ textarea {
   animation: fade-in-up var(--duration-standard) var(--ease-signature);
 }
 
+/* ── Global motion system ──────────────────────────────────────────
+ * Applies to every dashboard screen at once (the layout already wraps
+ * all of them in .page-enter), rather than needing each of the 14
+ * business types' pages touched individually.
+ *
+ * 1. Staggered entrance — cards and list rows rise in sequence rather
+ *    than the whole page appearing at once. Capped at 10 steps: past
+ *    that the delay would be long enough to feel like lag, and a long
+ *    list's later rows are below the fold anyway.
+ */
+@keyframes card-rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .page-enter .neu-card,
+  .page-enter section > ul > li,
+  .page-enter section > div > ul > li {
+    animation: card-rise 0.4s var(--ease-signature) both;
+  }
+  .page-enter .neu-card:nth-child(1),
+  .page-enter ul > li:nth-child(1) { animation-delay: 0.02s; }
+  .page-enter .neu-card:nth-child(2),
+  .page-enter ul > li:nth-child(2) { animation-delay: 0.06s; }
+  .page-enter .neu-card:nth-child(3),
+  .page-enter ul > li:nth-child(3) { animation-delay: 0.1s; }
+  .page-enter .neu-card:nth-child(4),
+  .page-enter ul > li:nth-child(4) { animation-delay: 0.14s; }
+  .page-enter .neu-card:nth-child(5),
+  .page-enter ul > li:nth-child(5) { animation-delay: 0.18s; }
+  .page-enter .neu-card:nth-child(6),
+  .page-enter ul > li:nth-child(6) { animation-delay: 0.22s; }
+  .page-enter .neu-card:nth-child(7),
+  .page-enter ul > li:nth-child(7) { animation-delay: 0.26s; }
+  .page-enter .neu-card:nth-child(8),
+  .page-enter ul > li:nth-child(8) { animation-delay: 0.3s; }
+  .page-enter .neu-card:nth-child(9),
+  .page-enter ul > li:nth-child(9) { animation-delay: 0.34s; }
+  .page-enter .neu-card:nth-child(n + 10),
+  .page-enter ul > li:nth-child(n + 10) { animation-delay: 0.38s; }
+}
+
+/* 2. Genuine 3D press — a raised card's shadow collapses inward while
+ *    held, the way a real neumorphic surface depresses under a finger.
+ *    This is what makes taps feel physical rather than flat. Applies
+ *    only to actually-interactive cards (links/buttons), never to
+ *    static display cards, so nothing "presses" that can't be pressed.
+ */
+a.neu-card:active,
+button.neu-card:active,
+label.neu-card:active {
+  box-shadow:
+    inset 3px 3px 7px var(--neu-dark),
+    inset -3px -3px 7px var(--neu-light);
+  transform: scale(0.985);
+}
+
+/* 3. Smooth state changes — shadows and transforms never snap between
+ *    states (hover, focus, selection), across every card in the app.
+ */
+.neu-card {
+  transition: box-shadow 180ms var(--ease-signature), transform 180ms var(--ease-signature);
+}
+
 @media print {
   .no-print {
     display: none !important;
