@@ -4,6 +4,7 @@ import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { formatMoney, formatDateTime } from "@/lib/format";
 import { EmptyState } from "@/app/components/EmptyState";
 import { SalesTrendChart } from "@/app/components/SalesTrendChart";
+import { MiniCalendar } from "@/app/components/MiniCalendar";
 import { getTranslator } from "@/lib/i18n/server";
 import { isModuleEnabled } from "@/lib/modules";
 import { FESTIVALS } from "@/lib/festivals";
@@ -212,12 +213,17 @@ async function RetailHome({
 
   return (
     <>
-      <section className="rounded-xl border border-border bg-surface p-4 shadow-sm">
-        <div className="mb-1 flex items-center justify-between">
-          <p className="text-xs font-medium text-muted">Last 7 days</p>
-          <p className="text-sm font-semibold text-foreground">{formatMoney(weekTotal)}</p>
+      <section className="neu-card grid grid-cols-2 gap-3 p-4">
+        <div className="border-r border-border/60 pr-3">
+          <MiniCalendar />
         </div>
-        <SalesTrendChart data={trend} />
+        <div>
+          <div className="mb-1 flex items-center justify-between">
+            <p className="text-xs font-medium text-muted">Last 7 days</p>
+            <p className="text-sm font-semibold text-foreground neu-text">{formatMoney(weekTotal)}</p>
+          </div>
+          <SalesTrendChart data={trend} />
+        </div>
       </section>
 
       <section className="grid grid-cols-2 gap-3 md:grid-cols-4">
@@ -305,12 +311,17 @@ async function LabHome({
 
   return (
     <>
-      <section className="rounded-xl border border-border bg-surface p-4 shadow-sm">
-        <div className="mb-1 flex items-center justify-between">
-          <p className="text-xs font-medium text-muted">Last 7 days</p>
-          <p className="text-sm font-semibold text-foreground">{formatMoney(sum(trend.map((d) => d.total)))}</p>
+      <section className="neu-card grid grid-cols-2 gap-3 p-4">
+        <div className="border-r border-border/60 pr-3">
+          <MiniCalendar />
         </div>
-        <SalesTrendChart data={trend} />
+        <div>
+          <div className="mb-1 flex items-center justify-between">
+            <p className="text-xs font-medium text-muted">Last 7 days</p>
+            <p className="text-sm font-semibold text-foreground neu-text">{formatMoney(sum(trend.map((d) => d.total)))}</p>
+          </div>
+          <SalesTrendChart data={trend} />
+        </div>
       </section>
 
       {homeCollections && homeCollections.length > 0 && (
@@ -418,12 +429,17 @@ async function GymHome({
 
   return (
     <>
-      <section className="rounded-xl border border-border bg-surface p-4 shadow-sm">
-        <div className="mb-1 flex items-center justify-between">
-          <p className="text-xs font-medium text-muted">Last 7 days</p>
-          <p className="text-sm font-semibold text-foreground">{formatMoney(sum(trend.map((d) => d.total)))}</p>
+      <section className="neu-card grid grid-cols-2 gap-3 p-4">
+        <div className="border-r border-border/60 pr-3">
+          <MiniCalendar />
         </div>
-        <SalesTrendChart data={trend} />
+        <div>
+          <div className="mb-1 flex items-center justify-between">
+            <p className="text-xs font-medium text-muted">Last 7 days</p>
+            <p className="text-sm font-semibold text-foreground neu-text">{formatMoney(sum(trend.map((d) => d.total)))}</p>
+          </div>
+          <SalesTrendChart data={trend} />
+        </div>
       </section>
 
       {expiringMemberships && expiringMemberships.length > 0 && (
@@ -526,12 +542,17 @@ async function ClinicHome({
 
   return (
     <>
-      <section className="rounded-xl border border-border bg-surface p-4 shadow-sm">
-        <div className="mb-1 flex items-center justify-between">
-          <p className="text-xs font-medium text-muted">Last 7 days</p>
-          <p className="text-sm font-semibold text-foreground">{formatMoney(sum(trend.map((d) => d.total)))}</p>
+      <section className="neu-card grid grid-cols-2 gap-3 p-4">
+        <div className="border-r border-border/60 pr-3">
+          <MiniCalendar />
         </div>
-        <SalesTrendChart data={trend} />
+        <div>
+          <div className="mb-1 flex items-center justify-between">
+            <p className="text-xs font-medium text-muted">Last 7 days</p>
+            <p className="text-sm font-semibold text-foreground neu-text">{formatMoney(sum(trend.map((d) => d.total)))}</p>
+          </div>
+          <SalesTrendChart data={trend} />
+        </div>
       </section>
 
       {overdueFollowUps && overdueFollowUps.length > 0 && (
@@ -655,12 +676,17 @@ async function JewelleryHome({
 
   return (
     <>
-      <section className="rounded-xl border border-border bg-surface p-4 shadow-sm">
-        <div className="mb-1 flex items-center justify-between">
-          <p className="text-xs font-medium text-muted">Last 7 days</p>
-          <p className="text-sm font-semibold text-foreground">{formatMoney(sum(trend.map((d) => d.total)))}</p>
+      <section className="neu-card grid grid-cols-2 gap-3 p-4">
+        <div className="border-r border-border/60 pr-3">
+          <MiniCalendar />
         </div>
-        <SalesTrendChart data={trend} />
+        <div>
+          <div className="mb-1 flex items-center justify-between">
+            <p className="text-xs font-medium text-muted">Last 7 days</p>
+            <p className="text-sm font-semibold text-foreground neu-text">{formatMoney(sum(trend.map((d) => d.total)))}</p>
+          </div>
+          <SalesTrendChart data={trend} />
+        </div>
       </section>
 
       <Link
@@ -767,12 +793,17 @@ async function SalonHome({
 
   return (
     <>
-      <section className="rounded-xl border border-border bg-surface p-4 shadow-sm">
-        <div className="mb-1 flex items-center justify-between">
-          <p className="text-xs font-medium text-muted">Last 7 days</p>
-          <p className="text-sm font-semibold text-foreground">{formatMoney(sum(trend.map((d) => d.total)))}</p>
+      <section className="neu-card grid grid-cols-2 gap-3 p-4">
+        <div className="border-r border-border/60 pr-3">
+          <MiniCalendar />
         </div>
-        <SalesTrendChart data={trend} />
+        <div>
+          <div className="mb-1 flex items-center justify-between">
+            <p className="text-xs font-medium text-muted">Last 7 days</p>
+            <p className="text-sm font-semibold text-foreground neu-text">{formatMoney(sum(trend.map((d) => d.total)))}</p>
+          </div>
+          <SalesTrendChart data={trend} />
+        </div>
       </section>
 
       <section className="grid grid-cols-2 gap-3 md:grid-cols-4">
@@ -894,12 +925,17 @@ async function ServiceHome({
 
   return (
     <>
-      <section className="rounded-xl border border-border bg-surface p-4 shadow-sm">
-        <div className="mb-1 flex items-center justify-between">
-          <p className="text-xs font-medium text-muted">Last 7 days</p>
-          <p className="text-sm font-semibold text-foreground">{formatMoney(sum(trend.map((d) => d.total)))}</p>
+      <section className="neu-card grid grid-cols-2 gap-3 p-4">
+        <div className="border-r border-border/60 pr-3">
+          <MiniCalendar />
         </div>
-        <SalesTrendChart data={trend} />
+        <div>
+          <div className="mb-1 flex items-center justify-between">
+            <p className="text-xs font-medium text-muted">Last 7 days</p>
+            <p className="text-sm font-semibold text-foreground neu-text">{formatMoney(sum(trend.map((d) => d.total)))}</p>
+          </div>
+          <SalesTrendChart data={trend} />
+        </div>
       </section>
 
       {overdueJobs && overdueJobs.length > 0 && (
@@ -1007,12 +1043,17 @@ async function TransportHome({
 
   return (
     <>
-      <section className="rounded-xl border border-border bg-surface p-4 shadow-sm">
-        <div className="mb-1 flex items-center justify-between">
-          <p className="text-xs font-medium text-muted">Last 7 days</p>
-          <p className="text-sm font-semibold text-foreground">{formatMoney(sum(trend.map((d) => d.total)))}</p>
+      <section className="neu-card grid grid-cols-2 gap-3 p-4">
+        <div className="border-r border-border/60 pr-3">
+          <MiniCalendar />
         </div>
-        <SalesTrendChart data={trend} />
+        <div>
+          <div className="mb-1 flex items-center justify-between">
+            <p className="text-xs font-medium text-muted">Last 7 days</p>
+            <p className="text-sm font-semibold text-foreground neu-text">{formatMoney(sum(trend.map((d) => d.total)))}</p>
+          </div>
+          <SalesTrendChart data={trend} />
+        </div>
       </section>
 
       {expiringVehicleDocs.length > 0 && (
@@ -1123,12 +1164,17 @@ async function PharmacyHome({
 
   return (
     <>
-      <section className="rounded-xl border border-border bg-surface p-4 shadow-sm">
-        <div className="mb-1 flex items-center justify-between">
-          <p className="text-xs font-medium text-muted">Last 7 days</p>
-          <p className="text-sm font-semibold text-foreground">{formatMoney(sum(trend.map((d) => d.total)))}</p>
+      <section className="neu-card grid grid-cols-2 gap-3 p-4">
+        <div className="border-r border-border/60 pr-3">
+          <MiniCalendar />
         </div>
-        <SalesTrendChart data={trend} />
+        <div>
+          <div className="mb-1 flex items-center justify-between">
+            <p className="text-xs font-medium text-muted">Last 7 days</p>
+            <p className="text-sm font-semibold text-foreground neu-text">{formatMoney(sum(trend.map((d) => d.total)))}</p>
+          </div>
+          <SalesTrendChart data={trend} />
+        </div>
       </section>
 
       <section className="grid grid-cols-2 gap-3 md:grid-cols-4">
@@ -1227,12 +1273,17 @@ async function RestaurantHome({ shopId }: { shopId: string }) {
 
   return (
     <>
-      <section className="rounded-xl border border-border bg-surface p-4 shadow-sm">
-        <div className="mb-1 flex items-center justify-between">
-          <p className="text-xs font-medium text-muted">Last 7 days</p>
-          <p className="text-sm font-semibold text-foreground">{formatMoney(sum(trend.map((d) => d.total)))}</p>
+      <section className="neu-card grid grid-cols-2 gap-3 p-4">
+        <div className="border-r border-border/60 pr-3">
+          <MiniCalendar />
         </div>
-        <SalesTrendChart data={trend} />
+        <div>
+          <div className="mb-1 flex items-center justify-between">
+            <p className="text-xs font-medium text-muted">Last 7 days</p>
+            <p className="text-sm font-semibold text-foreground neu-text">{formatMoney(sum(trend.map((d) => d.total)))}</p>
+          </div>
+          <SalesTrendChart data={trend} />
+        </div>
       </section>
 
       <section className="grid grid-cols-2 gap-3 md:grid-cols-4">
@@ -1306,12 +1357,17 @@ async function RentalHome({ shopId }: { shopId: string }) {
 
   return (
     <>
-      <section className="rounded-xl border border-border bg-surface p-4 shadow-sm">
-        <div className="mb-1 flex items-center justify-between">
-          <p className="text-xs font-medium text-muted">Last 7 days</p>
-          <p className="text-sm font-semibold text-foreground">{formatMoney(sum(trend.map((d) => d.total)))}</p>
+      <section className="neu-card grid grid-cols-2 gap-3 p-4">
+        <div className="border-r border-border/60 pr-3">
+          <MiniCalendar />
         </div>
-        <SalesTrendChart data={trend} />
+        <div>
+          <div className="mb-1 flex items-center justify-between">
+            <p className="text-xs font-medium text-muted">Last 7 days</p>
+            <p className="text-sm font-semibold text-foreground neu-text">{formatMoney(sum(trend.map((d) => d.total)))}</p>
+          </div>
+          <SalesTrendChart data={trend} />
+        </div>
       </section>
 
       {overdueRentals.length > 0 && (

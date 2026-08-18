@@ -4,12 +4,48 @@ import { requireSession } from "../auth";
 import { createSupabaseAdminClient } from "../supabase/admin";
 
 export type SearchResult = {
-  group: "Customers" | "Products" | "Bills" | "Tables" | "Orders";
+  group: "Customers" | "Products" | "Bills" | "Tables" | "Orders" | "Pages";
   id: string;
   title: string;
   subtitle: string;
   href: string;
 };
+
+// Genuine app destinations — settings, quick actions, and common pages
+// that aren't database records but people still expect to find by
+// typing their name ("theme", "sell", "language" etc.).
+const STATIC_PAGES: { title: string; subtitle: string; href: string; keywords: string[] }[] = [
+  { title: "Language", subtitle: "English, Hindi, Marathi", href: "/more", keywords: ["language", "hindi", "marathi", "bhasha"] },
+  { title: "Theme", subtitle: "Light or dark mode", href: "/more", keywords: ["theme", "dark", "light", "mode"] },
+  { title: "Accent color", subtitle: "Blue, Saffron, Gray", href: "/more", keywords: ["accent", "color", "colour", "blue", "saffron"] },
+  { title: "Text color", subtitle: "Black, Navy, Charcoal, Slate", href: "/more", keywords: ["text color", "text colour"] },
+  { title: "New Bill", subtitle: "Sell / create a bill", href: "/bills/new", keywords: ["sell", "new bill", "billing", "invoice"] },
+  { title: "All bills", subtitle: "Browse & reprint past bills", href: "/bills/all", keywords: ["bills", "reprint", "invoice history"] },
+  { title: "Purchases", subtitle: "Buy stock from a vendor", href: "/purchases/new", keywords: ["buy", "purchase", "stock in"] },
+  { title: "Products", subtitle: "Add and manage items", href: "/products", keywords: ["product", "item", "inventory", "stock"] },
+  { title: "Scan menu", subtitle: "Add items from a photo", href: "/products/scan-menu", keywords: ["scan menu", "camera", "ocr"] },
+  { title: "Customers", subtitle: "Ledger and credit", href: "/customers", keywords: ["customer", "udhaar", "credit"] },
+  { title: "Vendors", subtitle: "Suppliers and payables", href: "/vendors", keywords: ["vendor", "supplier", "payable"] },
+  { title: "Staff", subtitle: "Manage staff & permissions", href: "/staff", keywords: ["staff", "employee", "permission"] },
+  { title: "Reports", subtitle: "Daily summary, GST filing", href: "/reports", keywords: ["report", "gst", "gstr"] },
+  { title: "Insights", subtitle: "Fast movers & dead stock", href: "/insights", keywords: ["insight", "fast mover", "dead stock", "analytics"] },
+  { title: "Export data", subtitle: "Download as Excel or PDF", href: "/reports/export", keywords: ["export", "excel", "csv", "pdf", "download"] },
+  { title: "Petty cash", subtitle: "Small day-to-day expenses", href: "/petty-cash", keywords: ["petty cash", "expense"] },
+  { title: "Settings", subtitle: "Shop details, GST profile", href: "/settings", keywords: ["settings", "gst profile", "shop details"] },
+  { title: "Catalog link", subtitle: "Online ordering setup", href: "/catalog-settings", keywords: ["catalog", "online order", "online menu"] },
+  { title: "Menu PDF", subtitle: "Downloadable clickable menu", href: "/catalog-settings/menu-pdf", keywords: ["menu pdf", "download menu"] },
+  { title: "Branches", subtitle: "Manage multiple locations", href: "/branches", keywords: ["branch", "location"] },
+  { title: "Help & support", subtitle: "Guides and contact", href: "/help", keywords: ["help", "support", "guide"] },
+];
+
+function searchStaticPages(query: string): SearchResult[] {
+  const q = query.toLowerCase();
+  return STATIC_PAGES.filter(
+    (p) => p.title.toLowerCase().includes(q) || p.keywords.some((k) => k.includes(q)),
+  )
+    .slice(0, 6)
+    .map((p) => ({ group: "Pages" as const, id: p.href + p.title, title: p.title, subtitle: p.subtitle, href: p.href }));
+}
 
 export async function universalSearchAction(query: string): Promise<SearchResult[]> {
   const q = query.trim();
@@ -110,6 +146,6 @@ export async function universalSearchAction(query: string): Promise<SearchResult
   }
 
   const results = await Promise.all(queries);
-  return results.flat();
+  return [...results.flat(), ...searchStaticPages(q)];
 }
 

@@ -10,6 +10,8 @@
   "display": "standalone",
   "display_override": ["standalone", "minimal-ui"],
   "launch_handler": { "client_mode": "focus-existing" },
+  "prefer_related_applications": false,
+  "edge_side_panel": { "preferred_width": 400 },
   "share_target": {
     "action": "/",
     "method": "GET",
