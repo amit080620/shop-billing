@@ -3,7 +3,7 @@
 import { useMemo, useState, useTransition } from "react";
 import { submitCatalogOrderAction } from "@/lib/actions/catalog";
 import { formatMoney } from "@/lib/format";
-import { CheckCircle2, Package, ShoppingCart } from "lucide-react";
+import { CheckCircle2, Package, ShoppingCart, Search, X } from "lucide-react";
 
 type Product = {
   id: string;
@@ -37,6 +37,7 @@ export function PublicStorefrontClient({
 }) {
   const [wantsDelivery, setWantsDelivery] = useState(false);
   const [activeCategory, setActiveCategory] = useState<string | "all">("all");
+  const [searchQuery, setSearchQuery] = useState("");
   const [cart, setCart] = useState<Record<string, number>>({});
   const [showCheckout, setShowCheckout] = useState(false);
   const [name, setName] = useState("");
@@ -44,12 +45,17 @@ export function PublicStorefrontClient({
   const [notes, setNotes] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [confirmed, setConfirmed] = useState(false);
+  const [orderId, setOrderId] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
-  const filtered = useMemo(
-    () => (activeCategory === "all" ? products : products.filter((p) => p.categoryName === activeCategory)),
-    [products, activeCategory],
-  );
+  const filtered = useMemo(() => {
+    const byCategory = activeCategory === "all" ? products : products.filter((p) => p.categoryName === activeCategory);
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return byCategory;
+    return byCategory.filter(
+      (p) => p.name.toLowerCase().includes(q) || (p.categoryName ?? "").toLowerCase().includes(q),
+    );
+  }, [products, activeCategory, searchQuery]);
 
   const cartItems = useMemo(
     () =>
@@ -92,6 +98,7 @@ export function PublicStorefrontClient({
         return;
       }
       setError(null);
+      setOrderId(result.orderId ?? null);
       setConfirmed(true);
     });
   }
@@ -106,6 +113,16 @@ export function PublicStorefrontClient({
         <p className="text-sm text-muted">
           {name}, your order has been sent to {shopName}. They will confirm with you shortly.
         </p>
+        {orderId && (
+          <>
+            <a href={`/order-status/${orderId}`} className="btn-primary mt-2 w-full text-center">
+              Track this order
+            </a>
+            <p className="text-xs text-muted">
+              Bookmark that page — you can check the status any time without calling the shop.
+            </p>
+          </>
+        )}
       </div>
     );
   }
@@ -126,6 +143,27 @@ export function PublicStorefrontClient({
       {bannerText && (
         <div className="rounded-xl bg-brand-soft px-4 py-2.5 text-center text-sm font-medium text-brand-text">{bannerText}</div>
       )}
+
+      <div className="relative">
+        <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted">
+          <Search size={15} />
+        </span>
+        <input
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="Search items…"
+          className="w-full rounded-full py-2.5 pl-9 pr-9 text-sm"
+        />
+        {searchQuery && (
+          <button
+            onClick={() => setSearchQuery("")}
+            aria-label="Clear search"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted"
+          >
+            <X size={15} />
+          </button>
+        )}
+      </div>
 
       {categories.length > 0 && (
         <div className="flex gap-2 overflow-x-auto pb-1">

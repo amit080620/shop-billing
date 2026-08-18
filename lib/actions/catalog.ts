@@ -45,7 +45,7 @@ type CartItemInput = { productId: string; quantity: number };
 export async function submitCatalogOrderAction(
   publicToken: string,
   input: { name: string; phone: string; notes: string; items: CartItemInput[]; wantsDelivery: boolean },
-): Promise<{ error?: string }> {
+): Promise<{ error?: string; orderId?: string }> {
   const admin = createSupabaseAdminClient();
 
   if (!input.name.trim()) return { error: "Enter your name" };
@@ -126,7 +126,7 @@ export async function submitCatalogOrderAction(
     return { error: "Could not send your order — please try again." };
   }
 
-  return {};
+  return { orderId: request.id };
 }
 
 export async function rejectCatalogOrderAction(requestId: string): Promise<{ error?: string }> {
