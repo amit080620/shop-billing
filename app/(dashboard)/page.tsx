@@ -229,7 +229,7 @@ async function RetailHome({
 
       <Link
         href="/bills/new"
-        className="flex items-center justify-center gap-2 rounded-xl px-4 py-4 text-center font-semibold text-white shadow-md"
+        className="hover-lift flex items-center justify-center gap-2 rounded-xl px-4 py-4 text-center font-semibold text-white shadow-md"
         style={{ background: "linear-gradient(135deg, var(--brand-light), var(--brand-dark))" }}
       >
         <PlusIcon />
@@ -246,13 +246,13 @@ async function RetailHome({
               const customerName = Array.isArray(bill.customers) ? bill.customers[0]?.name : (bill.customers as { name: string } | null)?.name;
               return (
                 <li key={bill.id}>
-                  <Link href={`/print/bill/${bill.id}`} className="flex items-center justify-between rounded-lg border border-border bg-surface px-3.5 py-3 shadow-sm">
+                  <Link href={`/print/bill/${bill.id}`} className="neu-card flex items-center justify-between px-3.5 py-3">
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-medium text-foreground">{customerName ?? t("common.walkinCustomer")}</p>
                       <p className="text-xs text-muted">{formatDateTime(bill.created_at)}</p>
                     </div>
                     <div className="shrink-0 text-right">
-                      <p className="text-sm font-semibold text-foreground">{formatMoney(bill.total)}</p>
+                      <p className="text-sm font-semibold text-foreground neu-text">{formatMoney(bill.total)}</p>
                       {bill.credit_amount > 0 && <p className="text-xs text-credit">{formatMoney(bill.credit_amount)} {t("home.credit")}</p>}
                     </div>
                   </Link>
@@ -603,7 +603,7 @@ async function ClinicHome({
           <ul className="flex flex-col gap-2">
             {recentPrescriptions.data.map((rx) => (
               <li key={rx.id}>
-                <Link href={`/print/prescription/${rx.id}`} className="flex items-center justify-between rounded-lg border border-border bg-surface px-3.5 py-3 shadow-sm">
+                <Link href={`/print/prescription/${rx.id}`} className="neu-card flex items-center justify-between px-3.5 py-3">
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium text-foreground">{rx.patient_name}</p>
                     <p className="text-xs text-muted">#{rx.prescription_number} · {formatDateTime(rx.created_at)}</p>
@@ -689,7 +689,7 @@ async function JewelleryHome({
 
       <Link
         href="/bills/new"
-        className="flex items-center justify-center gap-2 rounded-xl px-4 py-4 text-center font-semibold text-white shadow-md"
+        className="hover-lift flex items-center justify-center gap-2 rounded-xl px-4 py-4 text-center font-semibold text-white shadow-md"
         style={{ background: "linear-gradient(135deg, var(--brand-light), var(--brand-dark))" }}
       >
         <PlusIcon />
@@ -706,13 +706,13 @@ async function JewelleryHome({
               const customerName = Array.isArray(bill.customers) ? bill.customers[0]?.name : (bill.customers as { name: string } | null)?.name;
               return (
                 <li key={bill.id}>
-                  <Link href={`/print/bill/${bill.id}`} className="flex items-center justify-between rounded-lg border border-border bg-surface px-3.5 py-3 shadow-sm">
+                  <Link href={`/print/bill/${bill.id}`} className="neu-card flex items-center justify-between px-3.5 py-3">
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-medium text-foreground">{customerName ?? t("common.walkinCustomer")}</p>
                       <p className="text-xs text-muted">{formatDateTime(bill.created_at)}</p>
                     </div>
                     <div className="shrink-0 text-right">
-                      <p className="text-sm font-semibold text-foreground">{formatMoney(bill.total)}</p>
+                      <p className="text-sm font-semibold text-foreground neu-text">{formatMoney(bill.total)}</p>
                       {bill.credit_amount > 0 && <p className="text-xs text-credit">{formatMoney(bill.credit_amount)} {t("home.credit")}</p>}
                     </div>
                   </Link>
@@ -805,7 +805,7 @@ async function SalonHome({
 
       <Link
         href="/bills/new"
-        className="flex items-center justify-center gap-2 rounded-xl px-4 py-4 text-center font-semibold text-white shadow-md"
+        className="hover-lift flex items-center justify-center gap-2 rounded-xl px-4 py-4 text-center font-semibold text-white shadow-md"
         style={{ background: "linear-gradient(135deg, var(--brand-light), var(--brand-dark))" }}
       >
         <PlusIcon />
@@ -822,7 +822,7 @@ async function SalonHome({
               const customerName = Array.isArray(bill.customers) ? bill.customers[0]?.name : (bill.customers as { name: string } | null)?.name;
               return (
                 <li key={bill.id}>
-                  <Link href={`/print/bill/${bill.id}`} className="flex items-center justify-between rounded-lg border border-border bg-surface px-3.5 py-3 shadow-sm">
+                  <Link href={`/print/bill/${bill.id}`} className="neu-card flex items-center justify-between px-3.5 py-3">
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-medium text-foreground">{customerName ?? t("common.walkinCustomer")}</p>
                       <p className="text-xs text-muted">
@@ -831,7 +831,7 @@ async function SalonHome({
                       </p>
                     </div>
                     <div className="shrink-0 text-right">
-                      <p className="text-sm font-semibold text-foreground">{formatMoney(bill.total)}</p>
+                      <p className="text-sm font-semibold text-foreground neu-text">{formatMoney(bill.total)}</p>
                       {bill.credit_amount > 0 && <p className="text-xs text-credit">{formatMoney(bill.credit_amount)} {t("home.credit")}</p>}
                     </div>
                   </Link>
@@ -928,7 +928,7 @@ async function ServiceHome({
 
       <Link
         href="/service/new"
-        className="flex items-center justify-center gap-2 rounded-xl px-4 py-4 text-center font-semibold text-white shadow-md"
+        className="hover-lift flex items-center justify-center gap-2 rounded-xl px-4 py-4 text-center font-semibold text-white shadow-md"
         style={{ background: "linear-gradient(135deg, var(--brand-light), var(--brand-dark))" }}
       >
         <PlusIcon />
@@ -943,7 +943,7 @@ async function ServiceHome({
           <ul className="flex flex-col gap-2">
             {recentJobs.map((j) => (
               <li key={j.id}>
-                <Link href={`/service/${j.id}`} className="flex items-center justify-between rounded-lg border border-border bg-surface px-3.5 py-3 shadow-sm">
+                <Link href={`/service/${j.id}`} className="neu-card flex items-center justify-between px-3.5 py-3">
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium text-foreground">{j.item_description}</p>
                     <p className="text-xs text-muted">{j.customer_name} · #{j.job_number}</p>
@@ -1038,7 +1038,7 @@ async function TransportHome({
 
       <Link
         href="/bills/new"
-        className="flex items-center justify-center gap-2 rounded-xl px-4 py-4 text-center font-semibold text-white shadow-md"
+        className="hover-lift flex items-center justify-center gap-2 rounded-xl px-4 py-4 text-center font-semibold text-white shadow-md"
         style={{ background: "linear-gradient(135deg, var(--brand-light), var(--brand-dark))" }}
       >
         <PlusIcon />
@@ -1055,13 +1055,13 @@ async function TransportHome({
               const customerName = Array.isArray(bill.customers) ? bill.customers[0]?.name : (bill.customers as { name: string } | null)?.name;
               return (
                 <li key={bill.id}>
-                  <Link href={`/print/bill/${bill.id}`} className="flex items-center justify-between rounded-lg border border-border bg-surface px-3.5 py-3 shadow-sm">
+                  <Link href={`/print/bill/${bill.id}`} className="neu-card flex items-center justify-between px-3.5 py-3">
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-medium text-foreground">{customerName ?? t("common.walkinCustomer")}</p>
                       <p className="text-xs text-muted">{formatDateTime(bill.created_at)}</p>
                     </div>
                     <div className="shrink-0 text-right">
-                      <p className="text-sm font-semibold text-foreground">{formatMoney(bill.total)}</p>
+                      <p className="text-sm font-semibold text-foreground neu-text">{formatMoney(bill.total)}</p>
                       {bill.credit_amount > 0 && <p className="text-xs text-credit">{formatMoney(bill.credit_amount)} {t("home.credit")}</p>}
                     </div>
                   </Link>
@@ -1152,7 +1152,7 @@ async function PharmacyHome({
 
       <Link
         href="/bills/new"
-        className="flex items-center justify-center gap-2 rounded-xl px-4 py-4 text-center font-semibold text-white shadow-md"
+        className="hover-lift flex items-center justify-center gap-2 rounded-xl px-4 py-4 text-center font-semibold text-white shadow-md"
         style={{ background: "linear-gradient(135deg, var(--brand-light), var(--brand-dark))" }}
       >
         <PlusIcon />
@@ -1169,13 +1169,13 @@ async function PharmacyHome({
               const customerName = Array.isArray(bill.customers) ? bill.customers[0]?.name : (bill.customers as { name: string } | null)?.name;
               return (
                 <li key={bill.id}>
-                  <Link href={`/print/bill/${bill.id}`} className="flex items-center justify-between rounded-lg border border-border bg-surface px-3.5 py-3 shadow-sm">
+                  <Link href={`/print/bill/${bill.id}`} className="neu-card flex items-center justify-between px-3.5 py-3">
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-medium text-foreground">{customerName ?? t("common.walkinCustomer")}</p>
                       <p className="text-xs text-muted">{formatDateTime(bill.created_at)}</p>
                     </div>
                     <div className="shrink-0 text-right">
-                      <p className="text-sm font-semibold text-foreground">{formatMoney(bill.total)}</p>
+                      <p className="text-sm font-semibold text-foreground neu-text">{formatMoney(bill.total)}</p>
                       {bill.credit_amount > 0 && <p className="text-xs text-credit">{formatMoney(bill.credit_amount)} {t("home.credit")}</p>}
                     </div>
                   </Link>
@@ -1243,7 +1243,7 @@ async function RestaurantHome({ shopId }: { shopId: string }) {
 
       <Link
         href="/restaurant"
-        className="flex items-center justify-center gap-2 rounded-xl px-4 py-4 text-center font-semibold text-white"
+        className="hover-lift flex items-center justify-center gap-2 rounded-xl px-4 py-4 text-center font-semibold text-white"
         style={{
           background: "linear-gradient(135deg, var(--brand-light), var(--brand-dark))",
           boxShadow: "-6px -6px 14px var(--neu-light), 6px 6px 14px var(--neu-dark)",
@@ -1335,7 +1335,7 @@ async function RentalHome({ shopId }: { shopId: string }) {
 
       <Link
         href="/rentals/new"
-        className="flex items-center justify-center gap-2 rounded-xl px-4 py-4 text-center font-semibold text-white shadow-md"
+        className="hover-lift flex items-center justify-center gap-2 rounded-xl px-4 py-4 text-center font-semibold text-white shadow-md"
         style={{ background: "linear-gradient(135deg, var(--brand-light), var(--brand-dark))" }}
       >
         <PlusIcon />
@@ -1352,7 +1352,7 @@ async function RentalHome({ shopId }: { shopId: string }) {
               const customerName = Array.isArray(r.customers) ? r.customers[0]?.name : (r.customers as { name: string } | null)?.name;
               return (
                 <li key={r.id}>
-                  <Link href={`/rentals/${r.id}`} className="flex items-center justify-between rounded-lg border border-border bg-surface px-3.5 py-3 shadow-sm">
+                  <Link href={`/rentals/${r.id}`} className="neu-card flex items-center justify-between px-3.5 py-3">
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-medium text-foreground">{customerName ?? "Walk-in"} · #{r.rental_number}</p>
                       <p className="text-xs text-muted">{formatDateTime(r.created_at)}</p>
