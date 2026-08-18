@@ -50,7 +50,7 @@ export function CatalogOrderAlert() {
         gain.connect(ctx.destination);
         oscillator.type = "sine";
         oscillator.frequency.value = freq;
-        gain.gain.setValueAtTime(0.4, ctx.currentTime + startAt);
+        gain.gain.setValueAtTime(0.8, ctx.currentTime + startAt);
         gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + startAt + 0.25);
         oscillator.start(ctx.currentTime + startAt);
         oscillator.stop(ctx.currentTime + startAt + 0.25);

@@ -99,29 +99,31 @@ export function UniversalSearch({ ownsGlobalShortcut = true }: { ownsGlobalShort
 
   return (
     <div ref={wrapperRef} className="relative w-full md:w-64">
-      <div
-        className="flex w-full items-center gap-2 rounded-full bg-background px-3.5 py-2 text-sm transition-shadow"
-        style={{
-          boxShadow: isFocused
-            ? "inset 4px 4px 10px var(--neu-dark), inset -4px -4px 10px var(--neu-light), 0 0 0 2px var(--brand-soft)"
-            : "inset 3px 3px 8px var(--neu-dark), inset -3px -3px 8px var(--neu-light)",
-        }}
-      >
-        <Search size={14} className={`shrink-0 transition-colors ${isFocused ? "text-brand" : "text-muted"}`} />
+      <div className="relative">
+        <span
+          className="pointer-events-none absolute left-1.5 top-1/2 z-10 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full bg-background"
+          style={{ boxShadow: "-2px -2px 5px var(--neu-light), 2px 2px 5px var(--neu-dark)" }}
+        >
+          <Search size={14} className={isFocused ? "text-brand" : "text-muted"} />
+        </span>
         <input
           ref={inputRef}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onFocus={() => setShowPanel(true)}
           placeholder="Search…"
-          className="min-w-0 flex-1 bg-transparent text-sm text-foreground outline-none placeholder:text-muted"
+          className="w-full rounded-full py-2 pl-10 pr-9 text-sm text-foreground placeholder:text-muted"
         />
         {query ? (
-          <button onClick={clear} aria-label="Clear search" className="shrink-0 rounded-full p-0.5 hover:bg-black/5">
+          <button
+            onClick={clear}
+            aria-label="Clear search"
+            className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full p-1 hover:bg-black/5"
+          >
             <X size={14} className="text-muted" />
           </button>
         ) : (
-          <span className="hidden shrink-0 rounded-md border border-border/70 px-1.5 py-0.5 text-[10px] font-medium text-muted md:inline">
+          <span className="absolute right-2.5 top-1/2 hidden -translate-y-1/2 rounded-md border border-border/70 px-1.5 py-0.5 text-[10px] font-medium text-muted md:inline">
             Ctrl K
           </span>
         )}

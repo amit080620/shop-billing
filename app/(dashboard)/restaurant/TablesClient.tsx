@@ -114,7 +114,7 @@ export function TablesClient({ tables, lang }: { tables: Table[]; lang: Lang }) 
         gain.connect(ctx.destination);
         oscillator.type = "sine";
         oscillator.frequency.value = freq;
-        gain.gain.setValueAtTime(0.45, ctx.currentTime + startAt);
+        gain.gain.setValueAtTime(0.9, ctx.currentTime + startAt);
         gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + startAt + duration);
         oscillator.start(ctx.currentTime + startAt);
         oscillator.stop(ctx.currentTime + startAt + duration);
