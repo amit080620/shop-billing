@@ -27,9 +27,12 @@ export function MiniCalendar() {
 
   return (
     <div className="flex h-full flex-col gap-1.5">
-      <div className="grid grid-cols-7 gap-0.5">
+      <div className="grid grid-cols-7 gap-1">
         {["S", "M", "T", "W", "T", "F", "S"].map((d, i) => (
-          <span key={i} className="text-center text-[9px] font-medium text-muted">
+          <span
+            key={i}
+            className={`text-center text-[9px] font-medium ${i === 0 ? "text-danger" : "text-muted"}`}
+          >
             {d}
           </span>
         ))}
@@ -39,12 +42,13 @@ export function MiniCalendar() {
           if (day === null) return <span key={i} />;
           const iso = isoFor(day);
           const isToday = iso === today;
+          const isSunday = i % 7 === 0;
           return (
             <button
               key={i}
               onClick={() => router.push(`/daily-summary?date=${iso}`)}
-              className={`flex h-6 w-6 items-center justify-center rounded-full text-[10px] ${
-                isToday ? "font-bold text-brand-text" : "text-foreground"
+              className={`flex aspect-square w-full items-center justify-center rounded-full text-[10px] ${
+                isToday ? "font-bold text-brand-text" : isSunday ? "font-medium text-danger" : "text-foreground"
               }`}
               style={
                 isToday
