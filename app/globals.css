@@ -810,6 +810,26 @@ textarea:focus {
   animation: gem-sparkle 1.6s ease-in-out infinite;
   transform-origin: center;
 }
+
+/* Rising steam for the restaurant scene's covered plate. */
+@keyframes illus-steam {
+  0% { opacity: 0; transform: translateY(6px); }
+  40% { opacity: 0.85; }
+  100% { opacity: 0; transform: translateY(-14px); }
+}
+.illus-steam {
+  animation: illus-steam 2.4s ease-in-out infinite;
+}
+
+/* Bubbles drifting up inside the lab scene's flask. */
+@keyframes illus-bubbles {
+  0% { opacity: 0.2; transform: translateY(6px); }
+  50% { opacity: 0.85; }
+  100% { opacity: 0.2; transform: translateY(-10px); }
+}
+.illus-bubbles {
+  animation: illus-bubbles 2.8s ease-in-out infinite;
+}
 @keyframes gem-shine {
   0% { transform: translateX(-40px) skewX(-20deg); opacity: 0; }
   40% { opacity: 0.9; }
@@ -831,7 +851,9 @@ textarea:focus {
   .illus-wrench,
   .illus-stetho,
   .illus-sparkle,
-  .illus-gem-shine {
+  .illus-gem-shine,
+  .illus-steam,
+  .illus-bubbles {
     animation: none !important;
   }
 }
