@@ -122,22 +122,40 @@ export function LedgerClient({
             </a>
           )}
         </div>
-        <button
-          onClick={() => {
-            const link = `${window.location.origin}/khata/${customer.id}`;
-            const message = [
-              `Hi ${customer.name}, here's your khata with ${shopName}.`,
-              balance > 0 ? `Balance due: ${formatMoney(balance)}` : `Your account is fully settled.`,
-              ``,
-              `View it any time: ${link}`,
-            ].join("\n");
-            const digits = customer.phone.replace(/\D/g, "");
-            window.open(`https://wa.me/${digits}?text=${encodeURIComponent(message)}`, "_blank");
-          }}
-          className="mt-3 w-full rounded-lg border border-border px-3.5 py-2 text-xs font-medium text-foreground"
-        >
-          Share khata link on WhatsApp
-        </button>
+        <div className="mt-3 flex gap-2">
+          <button
+            onClick={() => {
+              const link = `${window.location.origin}/khata/${customer.id}`;
+              const message = [
+                `Hi ${customer.name}, here's your khata with ${shopName}.`,
+                balance > 0 ? `Balance due: ${formatMoney(balance)}` : `Your account is fully settled.`,
+                ``,
+                `View it any time: ${link}`,
+              ].join("\n");
+              const digits = customer.phone.replace(/\D/g, "");
+              window.open(`https://wa.me/${digits}?text=${encodeURIComponent(message)}`, "_blank");
+            }}
+            className="flex-1 rounded-lg border border-border px-3 py-2 text-xs font-medium text-foreground"
+          >
+            Share khata
+          </button>
+          <button
+            onClick={() => {
+              const link = `${window.location.origin}/warranty-card/${customer.id}`;
+              const message = [
+                `Hi ${customer.name}, here's your warranty card from ${shopName}.`,
+                `It shows every item still under warranty — works even if you lose the paper bill.`,
+                ``,
+                link,
+              ].join("\n");
+              const digits = customer.phone.replace(/\D/g, "");
+              window.open(`https://wa.me/${digits}?text=${encodeURIComponent(message)}`, "_blank");
+            }}
+            className="flex-1 rounded-lg border border-border px-3 py-2 text-xs font-medium text-foreground"
+          >
+            Share warranty
+          </button>
+        </div>
       </div>
 
       {specialty === "pediatric" && <GrowthChart patientId={customer.id} logs={growthLogs} />}

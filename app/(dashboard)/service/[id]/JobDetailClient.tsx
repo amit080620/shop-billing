@@ -295,6 +295,22 @@ export function JobDetailClient({
               <img src="/assets/ray-icons/message.svg" alt="" className="h-3.5 w-3.5" /> Notify customer on WhatsApp
             </a>
           )}
+          <button
+            onClick={() => {
+              const link = `${window.location.origin}/job-status/${job.id}`;
+              const msg = [
+                `Hi ${job.customerName}, we've received your ${job.itemDescription} (Job #${job.jobNumber}).`,
+                ``,
+                `Check its status any time here — no need to call:`,
+                link,
+              ].join("\n");
+              const digits = job.customerPhone.replace(/\D/g, "");
+              window.open(`https://wa.me/${digits}?text=${encodeURIComponent(msg)}`, "_blank");
+            }}
+            className="w-full rounded-lg border border-border px-3 py-2 text-xs font-medium text-foreground"
+          >
+            Send tracking link to customer
+          </button>
           <div className="flex gap-2 border-t border-brand/30 pt-3">
             <button onClick={() => setShowDeliver(true)} className="btn-primary-sm flex flex-1 items-center justify-center gap-1 text-center">
               <Check size={13} /> Deliver & bill
