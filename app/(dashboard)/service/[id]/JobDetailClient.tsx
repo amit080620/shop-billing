@@ -3,7 +3,8 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { updateJobStatusAction, assignTechnicianAction, deliverJobAction } from "@/lib/actions/service";
+import { updateJobStatusAction, assignTechnicianAction, deliverJobAction, addPartToJobAction, removePartFromJobAction } from "@/lib/actions/service";
+import { SearchableSelect } from "@/app/components/SearchableSelect";
 import { Check } from "lucide-react";
 import { formatMoney } from "@/lib/format";
 import { useTranslation } from "@/lib/i18n/useTranslation";
@@ -46,13 +47,30 @@ function whatsappReadyLink(job: Job, t: (key: string, values?: Record<string, st
 }
 
 type JobItem = { id: string; name: string; quantity: number; notes: string | null };
+type JobPart = { id: string; productId: string; name: string; quantity: number; unitPrice: number; gstPercent: number };
+type Product = { id: string; name: string; price: number; gstPercent: number };
 
-export function JobDetailClient({ job, items, lang }: { job: Job; items: JobItem[]; lang: Lang }) {
+export function JobDetailClient({
+  job,
+  items,
+  parts,
+  products,
+  lang,
+}: {
+  job: Job;
+  items: JobItem[];
+  parts: JobPart[];
+  products: Product[];
+  lang: Lang;
+}) {
   const { t } = useTranslation(lang);
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [technician, setTechnician] = useState(job.technicianName ?? "");
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [partQuantity, setPartQuantity] = useState(1);
+  const [isAddingPart, startAddPart] = useTransition();
   const [showDeliver, setShowDeliver] = useState(false);
 
   function moveStatus(status: "received" | "in_progress" | "ready" | "cancelled") {
@@ -69,6 +87,28 @@ export function JobDetailClient({ job, items, lang }: { job: Job; items: JobItem
   function saveTechnician() {
     startTransition(async () => {
       await assignTechnicianAction(job.id, technician);
+      router.refresh();
+    });
+  }
+
+  function addPart() {
+    if (!selectedProduct) return;
+    startAddPart(async () => {
+      const result = await addPartToJobAction(job.id, selectedProduct.id, partQuantity);
+      if (result.error) {
+        setError(result.error);
+        return;
+      }
+      setError(null);
+      setSelectedProduct(null);
+      setPartQuantity(1);
+      router.refresh();
+    });
+  }
+
+  function removePart(partId: string) {
+    startAddPart(async () => {
+      await removePartFromJobAction(partId, job.id);
       router.refresh();
     });
   }
@@ -109,6 +149,71 @@ export function JobDetailClient({ job, items, lang }: { job: Job; items: JobItem
               </li>
             ))}
           </ul>
+        </div>
+      )}
+
+      {(parts.length > 0 || job.status !== "delivered") && (
+        <div className="neu-card flex flex-col gap-2.5 px-3.5 py-3">
+          <div className="flex items-center justify-between">
+            <p className="text-sm font-semibold text-foreground">Parts used from stock</p>
+            {parts.length > 0 && (
+              <p className="text-xs text-muted">
+                {formatMoney(parts.reduce((s, p) => s + p.quantity * p.unitPrice, 0))}
+              </p>
+            )}
+          </div>
+
+          {parts.length > 0 && (
+            <ul className="flex flex-col gap-1.5">
+              {parts.map((part) => (
+                <li key={part.id} className="flex items-center justify-between gap-2 text-sm">
+                  <span className="min-w-0 flex-1 truncate text-foreground">
+                    {part.name} {part.quantity > 1 ? `× ${part.quantity}` : ""}
+                  </span>
+                  <span className="shrink-0 text-muted">{formatMoney(part.quantity * part.unitPrice)}</span>
+                  {job.status !== "delivered" && (
+                    <button onClick={() => removePart(part.id)} disabled={isAddingPart} className="shrink-0 text-xs text-danger">
+                      ✕
+                    </button>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+
+          {job.status !== "delivered" && (
+            <div className="flex gap-2">
+              <div className="flex-1">
+                <SearchableSelect
+                  lang={lang}
+                  items={products}
+                  getKey={(p: Product) => p.id}
+                  getLabel={(p: Product) => p.name}
+                  getSubLabel={(p: Product) => formatMoney(p.price)}
+                  onSelect={(p: Product) => setSelectedProduct(p)}
+                  placeholder="Search a part from your stock…"
+                />
+              </div>
+              <input
+                type="number"
+                min={1}
+                step="1"
+                value={partQuantity}
+                onChange={(e) => setPartQuantity(Math.max(1, Number(e.target.value) || 1))}
+                className="w-14 rounded-lg border border-border px-2 py-2 text-sm outline-none focus:border-brand"
+              />
+              <button
+                onClick={addPart}
+                disabled={!selectedProduct || isAddingPart}
+                className="btn-primary-sm shrink-0 disabled:opacity-60"
+              >
+                Add
+              </button>
+            </div>
+          )}
+          <p className="text-[11px] text-muted">
+            Stock is deducted when the job is delivered and billed — not the moment a part is added here.
+          </p>
         </div>
       )}
 

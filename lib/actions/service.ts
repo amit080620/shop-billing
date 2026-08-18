@@ -135,6 +135,74 @@ export async function updateJobStatusAction(
   return {};
 }
 
+export async function addPartToJobAction(
+  jobId: string,
+  productId: string,
+  quantity: number,
+): Promise<{ error?: string }> {
+  const session = await requireSession();
+  const admin = createSupabaseAdminClient();
+
+  const { data: job } = await admin
+    .from("service_jobs")
+    .select("id, status")
+    .eq("id", jobId)
+    .eq("shop_id", session.shopId)
+    .single();
+  if (!job) return { error: "Job not found" };
+  if (job.status === "delivered") return { error: "This job is already delivered — can't add parts now" };
+
+  const { data: product } = await admin
+    .from("products")
+    .select("id, name, price, gst_percent")
+    .eq("id", productId)
+    .eq("shop_id", session.shopId)
+    .single();
+  if (!product) return { error: "Product not found" };
+  if (!quantity || quantity <= 0) return { error: "Enter a valid quantity" };
+
+  const { error } = await admin.from("service_job_parts").insert({
+    job_id: jobId,
+    product_id: product.id,
+    product_name: product.name,
+    quantity,
+    unit_price: Number(product.price),
+    gst_percent: Number(product.gst_percent),
+  });
+  if (error) {
+    console.error("Could not add part to job", error);
+    return { error: "Could not add this part" };
+  }
+
+  revalidatePath(`/service/${jobId}`);
+  return {};
+}
+
+export async function removePartFromJobAction(partId: string, jobId: string): Promise<{ error?: string }> {
+  const session = await requireSession();
+  const admin = createSupabaseAdminClient();
+
+  // Ownership check goes through the job, since service_job_parts has
+  // no shop_id column of its own.
+  const { data: job } = await admin
+    .from("service_jobs")
+    .select("id, status")
+    .eq("id", jobId)
+    .eq("shop_id", session.shopId)
+    .single();
+  if (!job) return { error: "Job not found" };
+  if (job.status === "delivered") return { error: "This job is already delivered" };
+
+  const { error } = await admin.from("service_job_parts").delete().eq("id", partId).eq("job_id", jobId);
+  if (error) {
+    console.error("Could not remove part from job", error);
+    return { error: "Could not remove this part" };
+  }
+
+  revalidatePath(`/service/${jobId}`);
+  return {};
+}
+
 export async function assignTechnicianAction(jobId: string, technicianName: string): Promise<{ error?: string }> {
   const session = await requireSession();
   const admin = createSupabaseAdminClient();
@@ -175,6 +243,11 @@ export async function deliverJobAction(
   if (!job) return { error: "Job not found" };
   if (job.status === "delivered") return { error: "This job is already delivered" };
 
+  const { data: parts } = await admin
+    .from("service_job_parts")
+    .select("product_id, product_name, quantity, unit_price, gst_percent")
+    .eq("job_id", jobId);
+
   const { createBillCore } = await import("./bills");
   const totalPaid = round2(Number(job.advance_paid) + Math.max(0, additionalPayment));
   const result = await createBillCore(session, {
@@ -188,6 +261,18 @@ export async function deliverJobAction(
         unitPrice: finalCost,
         gstPercent,
       },
+      // Genuine parts drawn from inventory — each carries its real
+      // productId, so createBillCore's existing stock-deduction logic
+      // (the same path every regular sale uses) applies here too,
+      // without needing any separate/duplicated deduction code.
+      ...(parts ?? []).map((p) => ({
+        productId: p.product_id,
+        description: p.product_name,
+        hsnCode: null,
+        quantity: Number(p.quantity),
+        unitPrice: Number(p.unit_price),
+        gstPercent: Number(p.gst_percent),
+      })),
     ],
     discountType: "flat",
     discountValue: 0,

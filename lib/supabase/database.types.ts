@@ -1337,6 +1337,15 @@ export interface Database {
           { foreignKeyName: "service_job_items_job_id_fkey"; columns: ["job_id"]; isOneToOne: false; referencedRelation: "service_jobs"; referencedColumns: ["id"] },
         ];
       };
+      service_job_parts: {
+        Row: { id: string; job_id: string; product_id: string; product_name: string; quantity: number; unit_price: number; gst_percent: number; created_at: string };
+        Insert: { id?: string; job_id: string; product_id: string; product_name: string; quantity?: number; unit_price: number; gst_percent?: number; created_at?: string };
+        Update: { id?: string; job_id?: string; product_id?: string; product_name?: string; quantity?: number; unit_price?: number; gst_percent?: number; created_at?: string };
+        Relationships: [
+          { foreignKeyName: "service_job_parts_job_id_fkey"; columns: ["job_id"]; isOneToOne: false; referencedRelation: "service_jobs"; referencedColumns: ["id"] },
+          { foreignKeyName: "service_job_parts_product_id_fkey"; columns: ["product_id"]; isOneToOne: false; referencedRelation: "products"; referencedColumns: ["id"] },
+        ];
+      };
       service_jobs: {
         Row: {
           id: string;

@@ -32,6 +32,19 @@ export default async function JobDetailPage({
     .eq("job_id", id)
     .order("created_at", { ascending: true });
 
+  const { data: parts } = await admin
+    .from("service_job_parts")
+    .select("id, product_id, product_name, quantity, unit_price, gst_percent")
+    .eq("job_id", id)
+    .order("created_at", { ascending: true });
+
+  const { data: products } = await admin
+    .from("products")
+    .select("id, name, price, gst_percent")
+    .eq("shop_id", session.shopId)
+    .order("name")
+    .limit(500);
+
   return (
     <JobDetailClient
       lang={lang}
@@ -56,6 +69,15 @@ export default async function JobDetailPage({
         billId: job.bill_id,
       }}
       items={(items ?? []).map((i) => ({ id: i.id, name: i.item_name, quantity: Number(i.quantity), notes: i.notes }))}
+      parts={(parts ?? []).map((p) => ({
+        id: p.id,
+        productId: p.product_id,
+        name: p.product_name,
+        quantity: Number(p.quantity),
+        unitPrice: Number(p.unit_price),
+        gstPercent: Number(p.gst_percent),
+      }))}
+      products={(products ?? []).map((p) => ({ id: p.id, name: p.name, price: Number(p.price), gstPercent: Number(p.gst_percent) }))}
     />
   );
 }

@@ -1164,6 +1164,27 @@ create table if not exists service_job_items (
 alter table service_job_items enable row level security;
 create index if not exists idx_service_job_items_job on service_job_items(job_id);
 
+-- Parts drawn from the shop's own inventory to complete a repair (e.g.
+-- a replacement screen) — distinct from service_job_items above, which
+-- describes the customer's item, not the shop's stock. Snapshots
+-- price/GST at add-time so a later product price change doesn't alter
+-- an already-quoted job. Stock is only genuinely decremented when the
+-- job is delivered and its bill is created (via createBillCore, the
+-- same path every other sale uses) — not the moment a part is added,
+-- so a cancelled job never needs a manual stock reversal.
+create table if not exists service_job_parts (
+  id uuid primary key default uuid_generate_v4(),
+  job_id uuid not null references service_jobs(id) on delete cascade,
+  product_id uuid not null references products(id),
+  product_name text not null,
+  quantity numeric(10, 2) not null default 1,
+  unit_price numeric(12, 2) not null,
+  gst_percent numeric(5, 2) not null default 0,
+  created_at timestamptz not null default now()
+);
+alter table service_job_parts enable row level security;
+create index if not exists idx_service_job_parts_job on service_job_parts(job_id);
+
 -- ─── Restaurant: table reservations ────────────────────────────────────────
 create table if not exists restaurant_reservations (
   id uuid primary key default uuid_generate_v4(),
