@@ -1347,6 +1347,8 @@ export interface Database {
           customer_name: string;
           customer_phone: string;
           item_description: string;
+          device_category: string | null;
+          identifiers: { label: string; value: string }[];
           issue_description: string | null;
           status: "received" | "in_progress" | "ready" | "delivered" | "cancelled";
           technician_name: string | null;
@@ -1370,6 +1372,8 @@ export interface Database {
           customer_name: string;
           customer_phone: string;
           item_description: string;
+          device_category?: string | null;
+          identifiers?: { label: string; value: string }[];
           issue_description?: string | null;
           status?: "received" | "in_progress" | "ready" | "delivered" | "cancelled";
           technician_name?: string | null;
@@ -1393,6 +1397,8 @@ export interface Database {
           customer_name?: string;
           customer_phone?: string;
           item_description?: string;
+          device_category?: string | null;
+          identifiers?: { label: string; value: string }[];
           issue_description?: string | null;
           status?: "received" | "in_progress" | "ready" | "delivered" | "cancelled";
           technician_name?: string | null;

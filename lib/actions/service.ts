@@ -30,6 +30,8 @@ export async function createJobAction(
   const expectedDate = formData.get("expectedDate");
   const advancePaid = formData.get("advancePaid");
   const customerId = formData.get("customerId");
+  const deviceCategory = formData.get("deviceCategory");
+  const identifiersRaw = formData.get("identifiers");
 
   if (typeof customerName !== "string" || !customerName.trim()) return { error: "Enter the customer's name" };
   if (typeof customerPhone !== "string" || !customerPhone.trim()) return { error: "Enter a phone number" };
@@ -42,6 +44,14 @@ export async function createJobAction(
   }
   items = items.filter((i) => i.name?.trim());
   if (items.length === 0) return { error: "Add at least one item (e.g. Samsung phone, cracked screen)" };
+
+  let identifiers: { label: string; value: string }[] = [];
+  try {
+    identifiers = typeof identifiersRaw === "string" ? JSON.parse(identifiersRaw) : [];
+  } catch {
+    identifiers = [];
+  }
+  identifiers = identifiers.filter((i) => i.label?.trim() && i.value?.trim());
 
   // A short, human-readable summary for everywhere else a job is shown
   // as a single line (job list, KDS-style cards, the eventual bill line
@@ -68,6 +78,8 @@ export async function createJobAction(
       customer_name: customerName.trim(),
       customer_phone: customerPhone.trim(),
       item_description: itemDescription,
+      device_category: typeof deviceCategory === "string" && deviceCategory ? deviceCategory : null,
+      identifiers,
       issue_description: typeof issueDescription === "string" && issueDescription.trim() ? issueDescription.trim() : null,
       estimated_cost: estimatedCost ? Number(estimatedCost) : null,
       expected_date: typeof expectedDate === "string" && expectedDate ? expectedDate : null,

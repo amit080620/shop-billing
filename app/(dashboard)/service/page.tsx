@@ -33,7 +33,7 @@ export default async function ServiceJobsPage({
 
   let query = admin
     .from("service_jobs")
-    .select("id, job_number, customer_name, item_description, status, expected_date, created_at")
+    .select("id, job_number, customer_name, item_description, device_category, identifiers, status, expected_date, created_at")
     .eq("shop_id", session.shopId)
     .order("created_at", { ascending: false })
     .limit(100);
@@ -82,7 +82,12 @@ export default async function ServiceJobsPage({
               <Link href={`/service/${j.id}`} className="neu-card flex items-center justify-between gap-3 px-3.5 py-3">
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium text-foreground">{j.item_description}</p>
-                  <p className="text-xs text-muted">{j.customer_name} · #{j.job_number}</p>
+                  <p className="text-xs text-muted">
+                    {j.customer_name} · #{j.job_number}
+                    {Array.isArray(j.identifiers) && j.identifiers.length > 0 && (
+                      <span className="text-brand-text"> · {(j.identifiers as { label: string; value: string }[])[0].label}: {(j.identifiers as { label: string; value: string }[])[0].value}</span>
+                    )}
+                  </p>
                 </div>
                 <span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-medium ${STATUS_TONE[j.status]}`}>
                   {STATUS_LABELS[j.status]}

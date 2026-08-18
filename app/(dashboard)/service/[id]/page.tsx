@@ -16,7 +16,7 @@ export default async function JobDetailPage({
   const { data: job } = await admin
     .from("service_jobs")
     .select(
-      "id, job_number, customer_name, customer_phone, item_description, issue_description, status, technician_name, estimated_cost, final_cost, advance_paid, expected_date, created_at, ready_at, delivered_at, bill_id",
+      "id, job_number, customer_name, customer_phone, item_description, device_category, identifiers, issue_description, status, technician_name, estimated_cost, final_cost, advance_paid, expected_date, created_at, ready_at, delivered_at, bill_id",
     )
     .eq("id", id)
     .eq("shop_id", session.shopId)
@@ -41,6 +41,8 @@ export default async function JobDetailPage({
         customerName: job.customer_name,
         customerPhone: job.customer_phone,
         itemDescription: job.item_description,
+        deviceCategory: job.device_category,
+        identifiers: (job.identifiers as { label: string; value: string }[]) ?? [],
         issueDescription: job.issue_description,
         status: job.status,
         technicianName: job.technician_name,

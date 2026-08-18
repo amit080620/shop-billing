@@ -104,6 +104,25 @@ export async function universalSearchAction(query: string): Promise<SearchResult
     }));
   }
 
+  async function searchServiceJobs(): Promise<SearchResult[]> {
+    const { data } = await admin
+      .from("service_jobs")
+      .select("id, job_number, item_description, customer_name")
+      .eq("shop_id", session.shopId)
+      .or(
+        `job_number.ilike.${like},item_description.ilike.${like},customer_name.ilike.${like},identifiers::text.ilike.${like}`,
+      )
+      .order("created_at", { ascending: false })
+      .limit(6);
+    return (data ?? []).map((j) => ({
+      group: "Orders" as const,
+      id: j.id,
+      title: j.item_description,
+      subtitle: `${j.customer_name} · #${j.job_number}`,
+      href: `/service/${j.id}`,
+    }));
+  }
+
   async function searchTables(): Promise<SearchResult[]> {
     const { data } = await admin
       .from("restaurant_tables")
@@ -143,6 +162,9 @@ export async function universalSearchAction(query: string): Promise<SearchResult
   // and doesn't hit tables that will always come back empty for them.
   if (session.businessType === "restaurant") {
     queries.push(searchTables(), searchOrders());
+  }
+  if (session.businessType === "service") {
+    queries.push(searchServiceJobs());
   }
 
   const results = await Promise.all(queries);

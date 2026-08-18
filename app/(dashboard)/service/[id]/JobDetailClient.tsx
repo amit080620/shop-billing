@@ -15,6 +15,8 @@ type Job = {
   customerName: string;
   customerPhone: string;
   itemDescription: string;
+  deviceCategory: string | null;
+  identifiers: { label: string; value: string }[];
   issueDescription: string | null;
   status: "received" | "in_progress" | "ready" | "delivered" | "cancelled";
   technicianName: string | null;
@@ -84,6 +86,17 @@ export function JobDetailClient({ job, items, lang }: { job: Job; items: JobItem
           {STATUS_LABELS[job.status]}
         </span>
       </div>
+
+      {job.identifiers.length > 0 && (
+        <div className="neu-card flex flex-col gap-1 px-3.5 py-2.5">
+          {job.identifiers.map((id, i) => (
+            <div key={i} className="flex items-center justify-between text-sm">
+              <span className="text-muted">{id.label}</span>
+              <span className="font-mono font-medium text-foreground">{id.value}</span>
+            </div>
+          ))}
+        </div>
+      )}
 
       {items.length > 1 && (
         <div className="rounded-lg border border-border bg-surface px-3.5 py-2.5">

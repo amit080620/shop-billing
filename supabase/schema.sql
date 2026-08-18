@@ -1019,6 +1019,17 @@ create table if not exists service_jobs (
   customer_name text not null,
   customer_phone text not null,
   item_description text not null,
+  -- Broad category (mobile/bike/car/laptop/appliance/other) — drives
+  -- which identifier fields the UI suggests by default, and lets
+  -- reporting/filtering group jobs by device type.
+  device_category text,
+  -- Flexible list of {label, value} pairs — e.g. [{"label":"IMEI","value":"356938035643809"}]
+  -- or for a car: [{"label":"Chassis No.","value":"MBLKA..."},{"label":"Registration No.","value":"MH12AB1234"}].
+  -- Deliberately NOT fixed columns per ID type: a dual-SIM phone needs
+  -- two IMEIs, a vehicle needs several IDs at once, and new device
+  -- categories (bicycles, watches, etc.) shouldn't require a schema
+  -- change to be supported.
+  identifiers jsonb not null default '[]'::jsonb,
   issue_description text,
   status text not null default 'received' check (status in ('received', 'in_progress', 'ready', 'delivered', 'cancelled')),
   technician_name text,
