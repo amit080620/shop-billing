@@ -29,20 +29,21 @@ export function BluetoothPrintButton({ receipt, paperWidth }: { receipt: Receipt
       <button
         onClick={handlePrint}
         disabled={status === "connecting"}
-        className={`flex items-center justify-center gap-1.5 rounded border border-brand px-3 py-1.5 text-sm text-brand disabled:opacity-60 ${
+        className={`flex items-center justify-center gap-1.5 rounded-full border border-brand px-3 py-1.5 text-xs font-medium text-brand disabled:opacity-60 ${
           status === "done" ? "animate-save-success" : ""
         }`}
+        style={{ boxShadow: "-2px -2px 4px rgba(255,255,255,0.9), 2px 2px 4px rgba(0,0,0,0.08)" }}
       >
-        <Bluetooth size={14} />
-        {status === "connecting" ? "Connecting…" : status === "done" ? "Printed ✓" : "Print via Bluetooth"}
+        <Bluetooth size={13} />
+        {status === "connecting" ? "Connecting…" : status === "done" ? "Printed ✓" : "Bluetooth print"}
       </button>
       {!supported && (
-        <p className="max-w-[220px] text-[11px] text-gray-500">
+        <p className="max-w-[220px] whitespace-normal break-words text-[11px] text-gray-500">
           Needs Chrome or Edge (Android/desktop). On iPhone or Firefox, use the regular Print button with a
           print-bridge app like RawBT instead.
         </p>
       )}
-      {error && <p className="max-w-[220px] text-[11px] text-red-600">{error}</p>}
+      {error && <p className="max-w-[220px] whitespace-normal break-words text-[11px] text-red-600">{error}</p>}
     </div>
   );
 }

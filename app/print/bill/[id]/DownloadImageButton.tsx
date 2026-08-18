@@ -87,11 +87,12 @@ export function DownloadImageButton({
   }
 
   return (
-    <div className="flex flex-col items-end gap-1">
+    <div className="flex flex-col items-start gap-1">
       <button
         onClick={handleDownload}
         disabled={isGenerating}
-        className="rounded border border-gray-300 px-3 py-1.5 text-sm disabled:opacity-60"
+        className="rounded-full bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-700 disabled:opacity-60"
+        style={{ boxShadow: "-2px -2px 4px rgba(255,255,255,0.9), 2px 2px 4px rgba(0,0,0,0.1)" }}
       >
         {isGenerating ? "Preparing…" : "Download PDF"}
       </button>

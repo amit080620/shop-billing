@@ -14,6 +14,7 @@ import { VoidBillButton } from "./VoidBillButton";
 import { EditBillButton } from "./EditBillButton";
 import { DownloadImageButton } from "./DownloadImageButton";
 import { BluetoothPrintButton } from "./BluetoothPrintButton";
+import { InfoTooltip } from "./InfoTooltip";
 
 export default async function PrintBillPage({
   params,
@@ -131,35 +132,35 @@ export default async function PrintBillPage({
           creditAmount={Number(bill.credit_amount)}
           upiLink={upiLink}
         />
-        <div className="flex justify-end gap-2">
+        <div className="flex flex-wrap items-center gap-1.5">
           <a
             href={`/print/bill/${id}?format=full`}
-            className="rounded border border-gray-300 px-3 py-1.5 text-sm"
+            className="rounded-full bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-700"
+            style={{ boxShadow: "-2px -2px 4px rgba(255,255,255,0.9), 2px 2px 4px rgba(0,0,0,0.1)" }}
           >
             Full page
           </a>
           <a
             href={`/print/bill/${id}?format=thermal`}
-            className="rounded border border-gray-300 px-3 py-1.5 text-sm"
+            className="rounded-full bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-700"
+            style={{ boxShadow: "-2px -2px 4px rgba(255,255,255,0.9), 2px 2px 4px rgba(0,0,0,0.1)" }}
           >
-            Thermal (72mm)
+            Thermal 72mm
           </a>
           <a
             href={`/print/bill/${id}?format=thermal58`}
-            className="rounded border border-gray-300 px-3 py-1.5 text-sm"
+            className="rounded-full bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-700"
+            style={{ boxShadow: "-2px -2px 4px rgba(255,255,255,0.9), 2px 2px 4px rgba(0,0,0,0.1)" }}
           >
-            Thermal (58mm)
+            Thermal 58mm
           </a>
+        </div>
+        <div className="flex flex-wrap items-center gap-1.5">
           <DownloadImageButton invoiceNumber={bill.invoice_number} upiLink={upiLink} isThermal={isThermal} />
           <PrintButton />
           <BluetoothPrintButton receipt={receiptData} paperWidth={is58mm ? 32 : 48} />
+          <InfoTooltip message="WhatsApp text messages can't carry a file — download the PDF above, then attach it yourself in the WhatsApp chat for a clean copy. If there's a balance due, the QR area in that PDF is also tappable in most PDF viewers, opening the customer's UPI app directly." />
         </div>
-        <p className="text-right text-xs text-gray-500">
-          WhatsApp text messages can&apos;t carry a file — download the PDF above, then attach it
-          yourself in the WhatsApp chat for a clean copy. If there&apos;s a balance due, the QR
-          area in that PDF is also tappable in most PDF viewers, opening the customer&apos;s UPI
-          app directly.
-        </p>
         {bill.status === "active" && hasPermission(session, "process_returns") && (
           <Link
             href={`/returns/new?billId=${bill.id}`}

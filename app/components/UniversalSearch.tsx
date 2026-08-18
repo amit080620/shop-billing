@@ -2,8 +2,17 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Search, X } from "lucide-react";
+import { Search, X, User, Package, Receipt, LayoutGrid, ClipboardList, Compass, Loader2 } from "lucide-react";
 import { universalSearchAction, type SearchResult } from "@/lib/actions/search";
+
+const GROUP_ICON: Record<string, typeof User> = {
+  Customers: User,
+  Products: Package,
+  Bills: Receipt,
+  Tables: LayoutGrid,
+  Orders: ClipboardList,
+  Pages: Compass,
+};
 
 export function UniversalSearch({ ownsGlobalShortcut = true }: { ownsGlobalShortcut?: boolean }) {
   const [query, setQuery] = useState("");
@@ -86,14 +95,19 @@ export function UniversalSearch({ ownsGlobalShortcut = true }: { ownsGlobalShort
   }, {});
 
   const showResultsPanel = showPanel && query.trim().length > 0;
+  const isFocused = showPanel;
 
   return (
     <div ref={wrapperRef} className="relative w-full md:w-64">
       <div
-        className="flex w-full items-center gap-2 rounded-full bg-background px-3.5 py-2 text-sm"
-        style={{ boxShadow: "inset 3px 3px 8px var(--neu-dark), inset -3px -3px 8px var(--neu-light)" }}
+        className="flex w-full items-center gap-2 rounded-full bg-background px-3.5 py-2 text-sm transition-shadow"
+        style={{
+          boxShadow: isFocused
+            ? "inset 4px 4px 10px var(--neu-dark), inset -4px -4px 10px var(--neu-light), 0 0 0 2px var(--brand-soft)"
+            : "inset 3px 3px 8px var(--neu-dark), inset -3px -3px 8px var(--neu-light)",
+        }}
       >
-        <Search size={14} className="shrink-0 text-muted" />
+        <Search size={14} className={`shrink-0 transition-colors ${isFocused ? "text-brand" : "text-muted"}`} />
         <input
           ref={inputRef}
           value={query}
@@ -103,11 +117,11 @@ export function UniversalSearch({ ownsGlobalShortcut = true }: { ownsGlobalShort
           className="min-w-0 flex-1 bg-transparent text-sm text-foreground outline-none placeholder:text-muted"
         />
         {query ? (
-          <button onClick={clear} aria-label="Clear search" className="shrink-0">
+          <button onClick={clear} aria-label="Clear search" className="shrink-0 rounded-full p-0.5 hover:bg-black/5">
             <X size={14} className="text-muted" />
           </button>
         ) : (
-          <span className="hidden shrink-0 rounded border border-border px-1.5 py-0.5 text-[10px] text-muted md:inline">
+          <span className="hidden shrink-0 rounded-md border border-border/70 px-1.5 py-0.5 text-[10px] font-medium text-muted md:inline">
             Ctrl K
           </span>
         )}
@@ -115,34 +129,53 @@ export function UniversalSearch({ ownsGlobalShortcut = true }: { ownsGlobalShort
 
       {showResultsPanel && (
         <div
-          className="ray-pop absolute left-0 right-0 top-full z-50 mt-2 max-h-[60vh] overflow-y-auto rounded-2xl bg-surface"
-          style={{ boxShadow: "var(--elevation-4)" }}
+          className="ray-pop absolute left-0 right-0 top-full z-50 mt-2 max-h-[65vh] overflow-y-auto rounded-2xl bg-surface p-1.5"
+          style={{ boxShadow: "var(--elevation-4)", border: "1px solid var(--border)" }}
         >
-          {isSearching && <p className="px-4 py-6 text-center text-sm text-muted">Searching…</p>}
+          {isSearching && (
+            <div className="flex items-center justify-center gap-2 px-4 py-8 text-sm text-muted">
+              <Loader2 size={15} className="animate-spin" />
+              Searching…
+            </div>
+          )}
 
           {!isSearching && query.trim().length >= 2 && results.length === 0 && (
-            <p className="px-4 py-6 text-center text-sm text-muted">No matches for &quot;{query}&quot;</p>
+            <div className="flex flex-col items-center gap-1.5 px-4 py-8 text-center">
+              <Search size={20} className="text-muted/50" />
+              <p className="text-sm text-muted">No matches for &quot;{query}&quot;</p>
+            </div>
           )}
 
           {!isSearching && query.trim().length < 2 && (
-            <p className="px-4 py-6 text-center text-sm text-muted">Type at least 2 characters to search.</p>
+            <p className="px-4 py-8 text-center text-sm text-muted">Type at least 2 characters to search.</p>
           )}
 
-          {Object.entries(grouped).map(([group, items]) => (
-            <div key={group} className="py-1.5">
-              <p className="px-4 py-1 text-[11px] font-semibold uppercase tracking-wide text-muted">{group}</p>
-              {items.map((r) => (
-                <button
-                  key={`${r.group}-${r.id}`}
-                  onClick={() => goTo(r.href)}
-                  className="flex w-full flex-col items-start gap-0 px-4 py-2 text-left hover:bg-brand-soft"
-                >
-                  <span className="text-sm font-medium text-foreground">{r.title}</span>
-                  {r.subtitle && <span className="text-xs text-muted">{r.subtitle}</span>}
-                </button>
-              ))}
-            </div>
-          ))}
+          {Object.entries(grouped).map(([group, items], groupIndex) => {
+            const GroupIcon = GROUP_ICON[group] ?? Compass;
+            return (
+              <div key={group} className={groupIndex > 0 ? "mt-1 border-t border-border/60 pt-1" : ""}>
+                <p className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-muted/80">{group}</p>
+                {items.map((r) => (
+                  <button
+                    key={`${r.group}-${r.id}`}
+                    onClick={() => goTo(r.href)}
+                    className="flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-left transition-colors hover:bg-brand-soft"
+                  >
+                    <span
+                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-background text-brand-text"
+                      style={{ boxShadow: "-2px -2px 4px var(--neu-light), 2px 2px 4px var(--neu-dark)" }}
+                    >
+                      <GroupIcon size={14} />
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-sm font-medium text-foreground">{r.title}</span>
+                      {r.subtitle && <span className="block truncate text-xs text-muted">{r.subtitle}</span>}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            );
+          })}
         </div>
       )}
     </div>
