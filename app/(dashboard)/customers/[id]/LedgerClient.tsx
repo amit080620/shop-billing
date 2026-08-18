@@ -122,6 +122,22 @@ export function LedgerClient({
             </a>
           )}
         </div>
+        <button
+          onClick={() => {
+            const link = `${window.location.origin}/khata/${customer.id}`;
+            const message = [
+              `Hi ${customer.name}, here's your khata with ${shopName}.`,
+              balance > 0 ? `Balance due: ${formatMoney(balance)}` : `Your account is fully settled.`,
+              ``,
+              `View it any time: ${link}`,
+            ].join("\n");
+            const digits = customer.phone.replace(/\D/g, "");
+            window.open(`https://wa.me/${digits}?text=${encodeURIComponent(message)}`, "_blank");
+          }}
+          className="mt-3 w-full rounded-lg border border-border px-3.5 py-2 text-xs font-medium text-foreground"
+        >
+          Share khata link on WhatsApp
+        </button>
       </div>
 
       {specialty === "pediatric" && <GrowthChart patientId={customer.id} logs={growthLogs} />}
