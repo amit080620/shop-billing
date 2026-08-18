@@ -66,11 +66,15 @@ export function tabsFor(businessType: string, t: (key: string) => string, permis
     { href: "/more", label: t("nav.more"), icon: MoreIcon },
   ];
 
+  // A repair shop genuinely runs the full cycle: buy parts from
+  // vendors, sell items over the counter, and take in repair jobs.
+  // All three need to be primary tabs — Reports stays one tap away
+  // inside More, same trade-off other verticals make for their 5 slots.
   const SERVICE_TABS = [
     { href: "/", label: t("nav.home"), icon: HomeIcon },
     { href: "/bills/new", label: "Sell", icon: SellIcon },
+    { href: "/purchases/new", label: t("nav.buy"), icon: BuyIcon },
     { href: "/service", label: "Jobs", icon: ServiceIcon },
-    { href: "/reports", label: t("nav.reports"), icon: ReportIcon },
     { href: "/more", label: t("nav.more"), icon: MoreIcon },
   ];
 

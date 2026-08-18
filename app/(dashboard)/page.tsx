@@ -891,7 +891,16 @@ async function ServiceHome({
   startOfWeek.setDate(startOfWeek.getDate() - 6);
   startOfWeek.setHours(0, 0, 0, 0);
 
-  const [todayBills, weekBills, { data: openJobs }, { data: readyJobs }, { data: overdueJobs }] = await Promise.all([
+  const [
+    todayBills,
+    weekBills,
+    { data: openJobs },
+    { data: readyJobs },
+    { data: overdueJobs },
+    { data: stockProducts },
+    { data: allPayables },
+    { data: allVendorPayments },
+  ] = await Promise.all([
     admin.from("bills").select("total").eq("shop_id", session.shopId).eq("status", "active").gte("created_at", startOfToday.toISOString()),
     admin.from("bills").select("total, created_at").eq("shop_id", session.shopId).eq("status", "active").gte("created_at", startOfWeek.toISOString()),
     admin.from("service_jobs").select("id").eq("shop_id", session.shopId).in("status", ["received", "in_progress"]),
@@ -903,6 +912,13 @@ async function ServiceHome({
       .in("status", ["received", "in_progress", "ready"])
       .lt("expected_date", `${startOfToday.getFullYear()}-${String(startOfToday.getMonth() + 1).padStart(2, "0")}-${String(startOfToday.getDate()).padStart(2, "0")}`)
       .not("expected_date", "is", null),
+    admin
+      .from("products")
+      .select("id, stock_quantity, low_stock_threshold")
+      .eq("shop_id", session.shopId)
+      .eq("track_inventory", true),
+    admin.from("purchases").select("payable_amount").eq("shop_id", session.shopId),
+    admin.from("purchase_payments").select("amount").eq("shop_id", session.shopId),
   ]);
 
   const { data: recentJobs } = await admin
@@ -913,6 +929,13 @@ async function ServiceHome({
     .limit(5);
 
   const todayTotal = sum(todayBills.data?.map((b) => b.total));
+  const lowStockCount = (stockProducts ?? []).filter(
+    (p) => Number(p.stock_quantity) <= Number(p.low_stock_threshold),
+  ).length;
+  const outstandingPayable = Math.max(
+    0,
+    sum(allPayables?.map((p) => p.payable_amount)) - sum(allVendorPayments?.map((p) => p.amount)),
+  );
   const trend = buildSevenDayTrend(weekBills.data ?? [], "created_at");
 
   const STATUS_LABELS: Record<string, string> = {
@@ -959,6 +982,20 @@ async function ServiceHome({
           href="/service?status=ready"
           icon={Bell}
           className="col-span-2"
+        />
+        <StatCard
+          label="Low stock"
+          value={String(lowStockCount)}
+          tone={lowStockCount > 0 ? "credit" : "default"}
+          href="/products"
+          icon={TrendingDown}
+        />
+        <StatCard
+          label={t("home.payableToVendors")}
+          value={formatMoney(outstandingPayable)}
+          tone={outstandingPayable > 0 ? "credit" : "default"}
+          href="/vendors"
+          icon={Handshake}
         />
       </section>
 
