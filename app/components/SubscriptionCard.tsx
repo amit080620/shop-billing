@@ -77,8 +77,11 @@ export async function SubscriptionCard() {
   );
 
   return (
-    <div className="overflow-hidden rounded-2xl" style={{ background: tone.gradient, boxShadow: "-6px -6px 14px var(--neu-light), 6px 6px 14px var(--neu-dark)" }}>
-      <div className="flex items-center justify-between px-4 pt-4">
+    <div className="flex flex-col gap-2 overflow-hidden rounded-2xl p-2.5" style={{ background: tone.gradient, boxShadow: "-6px -6px 14px var(--neu-light), 6px 6px 14px var(--neu-dark)" }}>
+      <div
+        className="flex items-center justify-between rounded-xl px-3.5 py-2.5"
+        style={{ boxShadow: "-2px -2px 5px rgba(255,255,255,0.25), 2px 2px 6px rgba(0,0,0,0.25)" }}
+      >
         <p className="text-sm font-semibold text-white/95">{t("subscription.title")}</p>
         <span
           className="rounded-full px-2.5 py-0.5 text-[11px] font-semibold"
@@ -88,7 +91,10 @@ export async function SubscriptionCard() {
         </span>
       </div>
 
-      <div className="px-4 pt-3">
+      <div
+        className="rounded-xl px-3.5 py-3"
+        style={{ boxShadow: "-2px -2px 5px rgba(255,255,255,0.25), 2px 2px 6px rgba(0,0,0,0.25)" }}
+      >
         <p className="text-3xl font-bold text-white" style={{ textShadow: "1px 2px 1px rgba(255,255,255,0.3), -1px -1px 2px rgba(0,0,0,0.45)" }}>
           {isExpired ? 0 : daysRemaining}
         </p>
@@ -98,8 +104,8 @@ export async function SubscriptionCard() {
       </div>
 
       <div
-        className="mt-3 flex items-center justify-between px-4 py-3 text-xs text-white/90"
-        style={{ boxShadow: "inset 0 1px 3px rgba(0,0,0,0.2)" }}
+        className="flex items-center justify-between rounded-xl px-3.5 py-2.5 text-xs text-white/90"
+        style={{ boxShadow: "inset 2px 2px 5px rgba(0,0,0,0.2), inset -2px -2px 5px rgba(255,255,255,0.1)" }}
       >
         <span>{t("subscription.validUntil")}</span>
         <span className="font-medium text-white">{dateFormat(validUntil)}</span>
@@ -109,8 +115,8 @@ export async function SubscriptionCard() {
         href={`https://wa.me/${SUPPORT_WHATSAPP_NUMBER}?text=${whatsappMessage}`}
         target="_blank"
         rel="noopener noreferrer"
-        className="flex items-center justify-center gap-2 px-4 py-3 text-sm font-semibold text-white"
-        style={{ boxShadow: "inset 0 2px 4px rgba(0,0,0,0.15)" }}
+        className="flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold text-white transition active:scale-[0.98]"
+        style={{ boxShadow: "-2px -2px 5px rgba(255,255,255,0.25), 2px 2px 6px rgba(0,0,0,0.25)" }}
       >
         {t("subscription.rechargeContact")}
       </a>
