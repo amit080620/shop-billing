@@ -43,49 +43,111 @@ export default async function ReportsPage() {
         </div>
       </section>
 
-      {(session.businessType === "restaurant" ||
-        session.businessType === "transport" ||
-        session.businessType === "service") && (
-        <section className="flex flex-col gap-2">
-          <h2 className="px-1 text-xs font-semibold uppercase tracking-wide text-muted">
-            {session.businessType === "restaurant"
-              ? "Restaurant"
-              : session.businessType === "transport"
-                ? "Transport"
-                : "Service & repairs"}
-          </h2>
-          <div className="neu-card flex flex-col divide-y divide-border overflow-hidden">
-            {session.businessType === "restaurant" && (
-              <>
-                <ReportLink
-                  href="/restaurant/reports"
-                  label="Sales report"
-                  sub="Settled orders by date range, with totals"
-                />
-                <ReportLink
-                  href="/restaurant/reports/items"
-                  label="Item-wise sales"
-                  sub="Which dishes actually sell, by quantity and revenue"
-                />
-              </>
-            )}
-            {session.businessType === "transport" && (
+      <section className="flex flex-col gap-2">
+        <h2 className="px-1 text-xs font-semibold uppercase tracking-wide text-muted">
+          {session.businessType === "restaurant"
+            ? "Restaurant"
+            : session.businessType === "transport"
+              ? "Transport"
+              : session.businessType === "service"
+                ? "Service & repairs"
+                : session.businessType === "pharmacy"
+                  ? "Pharmacy"
+                  : session.businessType === "rental"
+                    ? "Rentals"
+                    : session.businessType === "lab"
+                      ? "Lab"
+                      : session.businessType === "clinic"
+                        ? "Clinic"
+                        : session.businessType === "gym"
+                          ? "Gym"
+                          : session.businessType === "jewellery"
+                            ? "Jewellery"
+                            : session.businessType === "salon"
+                              ? "Salon"
+                              : "Sales"}
+        </h2>
+        <div className="neu-card flex flex-col divide-y divide-border overflow-hidden">
+          {session.businessType === "restaurant" && (
+            <>
               <ReportLink
-                href="/transport/reports"
-                label="Trip report"
-                sub="Trips, distance and earnings by vehicle"
+                href="/restaurant/reports"
+                label="Sales report"
+                sub="Settled orders by date range, with totals"
               />
-            )}
-            {session.businessType === "service" && (
               <ReportLink
-                href="/service/reports"
-                label="Job report"
-                sub="Jobs taken in, delivered, earnings and technician-wise split"
+                href="/restaurant/reports/items"
+                label="Item-wise sales"
+                sub="Which dishes actually sell, by quantity and revenue"
               />
-            )}
-          </div>
-        </section>
-      )}
+            </>
+          )}
+          {session.businessType === "transport" && (
+            <ReportLink
+              href="/transport/reports"
+              label="Trip report"
+              sub="Trips, distance and earnings by vehicle"
+            />
+          )}
+          {session.businessType === "service" && (
+            <ReportLink
+              href="/service/reports"
+              label="Job report"
+              sub="Jobs taken in, delivered, earnings and technician-wise split"
+            />
+          )}
+          {session.businessType === "pharmacy" && (
+            <>
+              <ReportLink href="/reports/sales" label="Sales report" sub="Every bill by date range" />
+              <ReportLink href="/pharmacy/expiry" label="Expiry alerts" sub="Batches expiring soon — act before it's stock loss" />
+              <ReportLink href="/pharmacy/write-offs" label="Write-off history" sub="Stock lost to expiry or damage" />
+              <ReportLink href="/pharmacy/schedule-x-register" label="Schedule X register" sub="Controlled-substance sale log, as required" />
+            </>
+          )}
+          {session.businessType === "rental" && (
+            <>
+              <ReportLink href="/reports/sales" label="Sales report" sub="Every bill by date range" />
+              <ReportLink href="/rentals/history" label="Rental history" sub="Past rentals — returned, overdue, damaged" />
+            </>
+          )}
+          {session.businessType === "lab" && (
+            <>
+              <ReportLink href="/reports/sales" label="Sales report" sub="Every bill by date range" />
+              <ReportLink href="/lab/orders" label="All orders" sub="Test orders, by status" />
+            </>
+          )}
+          {session.businessType === "clinic" && (
+            <>
+              <ReportLink href="/reports/sales" label="Sales report" sub="Every bill by date range" />
+              <ReportLink href="/clinic/appointments" label="Appointments" sub="Booked, completed, no-shows" />
+            </>
+          )}
+          {session.businessType === "gym" && (
+            <>
+              <ReportLink href="/reports/sales" label="Sales report" sub="Membership sales by date range" />
+              <ReportLink href="/gym/attendance" label="Attendance" sub="Check-ins by date" />
+            </>
+          )}
+          {session.businessType === "jewellery" && (
+            <>
+              <ReportLink href="/reports/sales" label="Sales report" sub="Every bill by date range" />
+              <ReportLink href="/jewellery/exchanges" label="Old-gold exchanges" sub="Exchange history" />
+            </>
+          )}
+          {session.businessType === "salon" && (
+            <>
+              <ReportLink href="/reports/sales" label="Sales report" sub="Every bill by date range" />
+              <ReportLink href="/salon/appointments" label="Appointments" sub="Booked, completed, no-shows" />
+            </>
+          )}
+          {(session.businessType === "grocery" ||
+            session.businessType === "mart" ||
+            session.businessType === "hardware" ||
+            session.businessType === "general") && (
+            <ReportLink href="/reports/sales" label="Sales report" sub="Every bill by date range" />
+          )}
+        </div>
+      </section>
 
       <section className="flex flex-col gap-2">
         <h2 className="flex items-center gap-1 px-1 text-xs font-semibold uppercase tracking-wide text-muted">
