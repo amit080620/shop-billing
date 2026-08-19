@@ -15,7 +15,7 @@ export default async function KhataPage({ params }: { params: Promise<{ customer
 
   const { data: customer } = await admin
     .from("customers")
-    .select("id, name, phone, shop_id")
+    .select("id, name, shop_id")
     .eq("id", customerId)
     .maybeSingle();
 

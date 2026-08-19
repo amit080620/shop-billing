@@ -181,6 +181,37 @@ export async function acceptCatalogOrderAction(
     );
   const productById = new Map((products ?? []).map((p) => [p.id, p]));
 
+  // Turn the online buyer into a real customer of this shop, so their
+  // khata, purchase history and warranty card all work the same way a
+  // walk-in customer's do. Matched on phone rather than name, since the
+  // same person may type their name slightly differently each time and
+  // duplicate records would fragment exactly the history we want to build.
+  let linkedCustomerId: string | null = null;
+  const phoneDigits = request.customer_phone.replace(/\D/g, "");
+  if (phoneDigits.length >= 10) {
+    const { data: existingCustomer } = await admin
+      .from("customers")
+      .select("id")
+      .eq("shop_id", session.shopId)
+      .eq("phone", request.customer_phone)
+      .maybeSingle();
+
+    if (existingCustomer) {
+      linkedCustomerId = existingCustomer.id;
+    } else {
+      const { data: newCustomer } = await admin
+        .from("customers")
+        .insert({
+          shop_id: session.shopId,
+          name: request.customer_name,
+          phone: request.customer_phone,
+        })
+        .select("id")
+        .single();
+      linkedCustomerId = newCustomer?.id ?? null;
+    }
+  }
+
   if (sendToKot && session.businessType === "restaurant") {
     // Genuinely enters the kitchen queue — a real table + restaurant_order
     // + restaurant_order_items (status "pending"), so this shows up on
@@ -192,7 +223,18 @@ export async function acceptCatalogOrderAction(
 
     const { data: newTable, error: tableError } = await admin
       .from("restaurant_tables")
-      .insert({ shop_id: session.shopId, name: `Online — ${request.customer_name}`, section: "takeaway", is_virtual: true })
+      .insert({
+        shop_id: session.shopId,
+        // The "PAID" marker rides along in the name deliberately: this
+        // order's bill isn't created until staff settle it later, so
+        // without this the fact that the customer already paid online
+        // would be lost, and staff would ask them to pay a second time.
+        // The name is the one field visible on the Tables grid, the KDS
+        // card and the Settle screen at once.
+        name: `Online — ${request.customer_name}${alreadyPaid ? " (PAID)" : ""}`,
+        section: "takeaway",
+        is_virtual: true,
+      })
       .select("id")
       .single();
     if (tableError || !newTable) return { error: "Could not create an order slot for this online order" };
@@ -213,6 +255,7 @@ export async function acceptCatalogOrderAction(
       .insert({
         shop_id: session.shopId,
         table_id: newTable.id,
+        customer_id: linkedCustomerId,
         staff_id: session.userId,
         order_number: orderNumber,
         financial_year: financialYear,
@@ -272,7 +315,7 @@ export async function acceptCatalogOrderAction(
         ]
       : [];
   const result = await createBillCore(session, {
-    customerId: null,
+    customerId: linkedCustomerId,
     items: [
       ...items.map((item) => {
         const product = item.product_id ? productById.get(item.product_id) : undefined;
@@ -356,4 +399,44 @@ export async function listPendingCatalogOrdersAction(): Promise<
     total: totalByRequest.get(r.id) ?? 0,
     createdAt: r.created_at,
   }));
+}
+
+/** Looks up a returning customer's name from their phone number, so a
+ * repeat buyer doesn't retype their details on a new device or after
+ * clearing browser storage.
+ *
+ * Deliberate limits, since this is an unauthenticated public endpoint:
+ * - Scoped to the one shop that owns the given catalog token — it can
+ *   never read another shop's customer list.
+ * - Requires the catalog to be enabled and not closed, matching what a
+ *   customer could reach anyway.
+ * - Returns ONLY the name. No phone echo, no address, no balance, no
+ *   order history — the minimum needed to prefill, so a wrong guess
+ *   discloses as little as possible.
+ * - Exact 10-digit match only; no partial or prefix search, so the
+ *   phone list can't be enumerated by trying fragments. */
+export async function lookupCatalogCustomerAction(
+  publicToken: string,
+  phone: string,
+): Promise<{ name?: string }> {
+  const digits = phone.replace(/\D/g, "");
+  if (digits.length !== 10) return {};
+
+  const admin = createSupabaseAdminClient();
+  const { data: settings } = await admin
+    .from("catalog_settings")
+    .select("shop_id, is_enabled")
+    .eq("public_token", publicToken)
+    .maybeSingle();
+  if (!settings || !settings.is_enabled) return {};
+
+  const { data: customer } = await admin
+    .from("customers")
+    .select("name")
+    .eq("shop_id", settings.shop_id)
+    .or(`phone.eq.+91${digits},phone.eq.${digits}`)
+    .limit(1)
+    .maybeSingle();
+
+  return customer?.name ? { name: customer.name } : {};
 }

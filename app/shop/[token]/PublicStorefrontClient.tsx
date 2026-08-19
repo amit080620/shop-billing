@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, useTransition } from "react";
-import { submitCatalogOrderAction } from "@/lib/actions/catalog";
+import { submitCatalogOrderAction, lookupCatalogCustomerAction } from "@/lib/actions/catalog";
 import { formatMoney } from "@/lib/format";
 import { CheckCircle2, Package, ShoppingCart, Search, X, RotateCcw, MessageCircle } from "lucide-react";
 
@@ -48,6 +48,8 @@ export function PublicStorefrontClient({
   const [orderId, setOrderId] = useState<string | null>(null);
   const [lastOrder, setLastOrder] = useState<Record<string, number> | null>(null);
   const [isPending, startTransition] = useTransition();
+  const [isReturning, setIsReturning] = useState(false);
+  const [editingDetails, setEditingDetails] = useState(false);
 
   // Keys are scoped per shop token — a customer who orders from two
   // different shops shouldn't see one shop's cart appear in the other.
@@ -68,6 +70,7 @@ export function PublicStorefrontClient({
         const d = JSON.parse(savedDetails);
         if (d.name) setName(d.name);
         if (d.phone) setPhone(d.phone);
+        if (d.name && d.phone) setIsReturning(true);
       }
 
       const savedLast = localStorage.getItem(lastOrderKey);
@@ -87,6 +90,24 @@ export function PublicStorefrontClient({
       // Ignore — cart just won't survive a refresh.
     }
   }, [cart, cartKey]);
+
+  // A returning customer on a new device (or after clearing storage)
+  // has nothing saved locally — but the shop already knows them from
+  // their last order. Once they've typed a full number, fill in their
+  // name so they don't have to. Deliberately only when the name box is
+  // still empty, so this can never overwrite what they typed.
+  useEffect(() => {
+    if (phone.length !== 10 || name.trim()) return;
+    let cancelled = false;
+    const timer = setTimeout(async () => {
+      const result = await lookupCatalogCustomerAction(token, phone);
+      if (!cancelled && result.name) setName(result.name);
+    }, 400);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [phone, name, token]);
 
   const filtered = useMemo(() => {
     const byCategory = activeCategory === "all" ? products : products.filter((p) => p.categoryName === activeCategory);
@@ -371,26 +392,43 @@ export function PublicStorefrontClient({
             </div>
 
             <div className="mt-4 flex flex-col gap-2">
-              <input
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Your name"
-                className="rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-brand"
-              />
-              <div className="flex gap-1.5">
-                <span className="flex shrink-0 items-center rounded-lg border border-border bg-background px-3 py-2 text-sm text-muted">
-                  +91
-                </span>
-                <input
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(0, 10))}
-                  type="tel"
-                  inputMode="numeric"
-                  placeholder="10-digit mobile number"
-                  maxLength={10}
-                  className="flex-1 rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-brand"
-                />
-              </div>
+              {isReturning && !editingDetails ? (
+                <div className="flex items-center justify-between gap-2 rounded-lg bg-brand-soft px-3 py-2.5">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium text-brand-text">Welcome back, {name}</p>
+                    <p className="text-xs text-muted">+91 {phone}</p>
+                  </div>
+                  <button
+                    onClick={() => setEditingDetails(true)}
+                    className="shrink-0 text-xs font-medium text-brand-text underline"
+                  >
+                    Change
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <input
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="Your name"
+                    className="rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-brand"
+                  />
+                  <div className="flex gap-1.5">
+                    <span className="flex shrink-0 items-center rounded-lg border border-border bg-background px-3 py-2 text-sm text-muted">
+                      +91
+                    </span>
+                    <input
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(0, 10))}
+                      type="tel"
+                      inputMode="numeric"
+                      placeholder="10-digit mobile number"
+                      maxLength={10}
+                      className="flex-1 rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-brand"
+                    />
+                  </div>
+                </>
+              )}
               <input
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}

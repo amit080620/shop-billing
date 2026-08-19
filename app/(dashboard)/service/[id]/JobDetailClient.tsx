@@ -338,6 +338,7 @@ export function JobDetailClient({
       {showDeliver && (
         <DeliverModal
           job={job}
+          partsTotal={parts.reduce((s, p) => s + p.quantity * p.unitPrice, 0)}
           onClose={() => setShowDeliver(false)}
           onDone={(billId) => router.push(`/print/bill/${billId}`)}
         />
@@ -348,10 +349,12 @@ export function JobDetailClient({
 
 function DeliverModal({
   job,
+  partsTotal,
   onClose,
   onDone,
 }: {
   job: Job;
+  partsTotal: number;
   onClose: () => void;
   onDone: (billId: string) => void;
 }) {
@@ -390,7 +393,7 @@ function DeliverModal({
         <p className="mt-1 text-xs text-muted">This creates the actual invoice for the customer.</p>
 
         <label className="mt-3 flex flex-col gap-1 text-xs text-muted">
-          Final charge (₹)
+          {partsTotal > 0 ? "Labour / service charge (₹)" : "Final charge (₹)"}
           <input
             type="number"
             min="0"
@@ -399,6 +402,11 @@ function DeliverModal({
             onChange={(e) => setFinalCost(e.target.value === "" ? "" : Number(e.target.value))}
             className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-brand"
           />
+          {partsTotal > 0 && (
+            <span className="text-[11px] text-brand-text">
+              Parts worth {formatMoney(partsTotal)} are billed separately on top of this — don&apos;t include them here.
+            </span>
+          )}
         </label>
         <label className="mt-3 flex flex-col gap-1 text-xs text-muted">
           GST % (0 if not applicable)
