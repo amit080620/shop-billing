@@ -40,15 +40,15 @@ export default async function AdminDashboardPage() {
 
       <div className="grid grid-cols-3 gap-2">
         <div className="rounded-xl border border-gray-800 bg-gray-900 p-3 text-center">
-          <p className="text-xs text-gray-500">Total shops</p>
+          <p className="text-xs text-gray-400">Total shops</p>
           <p className="mt-1 text-lg font-semibold">{total}</p>
         </div>
         <div className="rounded-xl border border-gray-800 bg-gray-900 p-3 text-center">
-          <p className="text-xs text-gray-500">Expiring ≤7d</p>
+          <p className="text-xs text-gray-400">Expiring ≤7d</p>
           <p className="mt-1 text-lg font-semibold text-amber-400">{expiringSoon}</p>
         </div>
         <div className="rounded-xl border border-gray-800 bg-gray-900 p-3 text-center">
-          <p className="text-xs text-gray-500">Expired</p>
+          <p className="text-xs text-gray-400">Expired</p>
           <p className="mt-1 text-lg font-semibold text-red-400">{expired}</p>
         </div>
       </div>
@@ -64,7 +64,7 @@ export default async function AdminDashboardPage() {
               >
                 <div className="min-w-0">
                   <p className="truncate text-sm font-medium">{shop.legal_name || shop.name}</p>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-gray-400">
                     {shop.gstin || "No GSTIN"} · Wallet ₹{Number(shop.wallet_balance).toLocaleString("en-IN")}
                   </p>
                 </div>
@@ -76,7 +76,7 @@ export default async function AdminDashboardPage() {
           );
         })}
         {(!shops || shops.length === 0) && (
-          <p className="rounded-xl border border-dashed border-gray-800 px-4 py-8 text-center text-sm text-gray-500">
+          <p className="rounded-xl border border-dashed border-gray-800 px-4 py-8 text-center text-sm text-gray-400">
             No shops yet.
           </p>
         )}

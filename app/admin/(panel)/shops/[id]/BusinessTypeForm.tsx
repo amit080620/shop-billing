@@ -41,7 +41,7 @@ export function BusinessTypeForm({
       <input type="hidden" name="shopId" value={shopId} />
       <input type="hidden" name="businessType" value={selectedType} />
       <p className="text-sm font-medium">Business type override</p>
-      <p className="text-xs text-gray-500">
+      <p className="text-xs text-gray-400">
         Normal shops lock this at signup — this is the only way to change it once locked.
       </p>
       <select
@@ -55,7 +55,7 @@ export function BusinessTypeForm({
           </option>
         ))}
       </select>
-      <label className="flex items-center gap-2 text-xs text-gray-400">
+      <label className="flex items-center gap-2 text-xs text-gray-300">
         <input
           type="checkbox"
           checked={isLocked}

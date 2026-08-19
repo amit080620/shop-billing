@@ -20,15 +20,19 @@ function isoMonthsAgo(months: number) {
   return d.toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
 }
 
-const DATA_TYPES: { value: ExportDataType; label: string }[] = [
+const DATA_TYPES: { value: ExportDataType; label: string; onlyFor?: string }[] = [
   { value: "bills", label: "Sales / Bills" },
+  { value: "restaurant_orders", label: "Restaurant orders", onlyFor: "restaurant" },
   { value: "petty_cash", label: "Petty cash" },
   { value: "online_orders", label: "Online orders" },
   { value: "customers", label: "New customers" },
   { value: "vendors", label: "New vendors" },
 ];
 
-export function ExportClient() {
+export function ExportClient({ businessType }: { businessType: string }) {
+  // A restaurant's sales live in restaurant_orders, not bills — but that
+  // option is meaningless noise for every other business type.
+  const dataTypes = DATA_TYPES.filter((d) => !d.onlyFor || d.onlyFor === businessType);
   const [dataType, setDataType] = useState<ExportDataType>("bills");
   const [from, setFrom] = useState(isoDaysAgo(7));
   const [to, setTo] = useState(todayIso());
@@ -93,7 +97,7 @@ export function ExportClient() {
     let y = 40;
 
     doc.setFontSize(14);
-    doc.text(DATA_TYPES.find((d) => d.value === dataType)?.label ?? "Report", marginX, y);
+    doc.text(dataTypes.find((d) => d.value === dataType)?.label ?? "Report", marginX, y);
     doc.setFontSize(9);
     doc.text(`${from} to ${to}`, marginX, y + 14);
     y += 34;
@@ -130,7 +134,7 @@ export function ExportClient() {
       <div className="neu-card flex flex-col gap-3 p-4">
         <p className="text-xs font-medium text-muted">What to export</p>
         <div className="flex flex-col gap-1.5">
-          {DATA_TYPES.map((d) => (
+          {dataTypes.map((d) => (
             <button
               key={d.value}
               onClick={() => setDataType(d.value)}

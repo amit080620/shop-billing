@@ -27,7 +27,7 @@ export function RechargeForm({ shopId }: { shopId: string }) {
     >
       <input type="hidden" name="shopId" value={shopId} />
       <p className="text-sm font-medium">Recharge / update validity</p>
-      <label className="flex flex-col gap-1 text-xs text-gray-400">
+      <label className="flex flex-col gap-1 text-xs text-gray-300">
         Amount received (₹) — optional, just for your records
         <input
           name="amount"
@@ -37,7 +37,7 @@ export function RechargeForm({ shopId }: { shopId: string }) {
           className="rounded-lg border border-gray-700 bg-gray-800 px-3 py-2 text-sm text-white outline-none focus:border-gray-500"
         />
       </label>
-      <label className="flex flex-col gap-1 text-xs text-gray-400">
+      <label className="flex flex-col gap-1 text-xs text-gray-300">
         New validity date — optional
         <input
           name="validUntil"
@@ -45,7 +45,7 @@ export function RechargeForm({ shopId }: { shopId: string }) {
           className="rounded-lg border border-gray-700 bg-gray-800 px-3 py-2 text-sm text-white outline-none focus:border-gray-500"
         />
       </label>
-      <label className="flex flex-col gap-1 text-xs text-gray-400">
+      <label className="flex flex-col gap-1 text-xs text-gray-300">
         Note
         <input
           name="note"

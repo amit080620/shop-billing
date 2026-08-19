@@ -6,7 +6,7 @@ export default async function AdminPanelLayout({ children }: { children: React.R
   const admin = await requireSuperAdmin();
 
   return (
-    <div className="min-h-screen bg-gray-950 text-gray-100">
+    <div className="admin-shell min-h-screen bg-gray-950 text-gray-100">
       <header className="flex items-center justify-between border-b border-gray-800 px-4 py-3">
         <div className="flex items-center gap-2">
           <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-white text-gray-900">
@@ -15,9 +15,9 @@ export default async function AdminPanelLayout({ children }: { children: React.R
           <span className="text-sm font-semibold">Platform Admin</span>
         </div>
         <div className="flex items-center gap-3">
-          <span className="text-xs text-gray-400">{admin.name}</span>
+          <span className="text-xs text-gray-300">{admin.name}</span>
           <form action={adminLogoutAction}>
-            <button type="submit" className="text-xs font-medium text-gray-400 underline">
+            <button type="submit" className="text-xs font-medium text-gray-300 underline">
               Log out
             </button>
           </form>

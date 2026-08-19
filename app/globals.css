@@ -295,6 +295,11 @@ input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="h
 textarea,
 select {
   background: var(--background) !important;
+  /* Set explicitly: the rule above forces a light background, but the
+   * text colour was left to inherit — so on any dark surface (the admin
+   * panel, a dark modal) fields rendered near-white text on a light
+   * background and became unreadable. */
+  color: var(--foreground);
   border: none !important;
   border-radius: var(--radius) !important;
   box-shadow:
@@ -327,6 +332,18 @@ input,
 select,
 textarea {
   transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+
+/* Side-by-side form fields — when one label wraps onto a second line
+   and the field next to it doesn't, their inputs would otherwise sit at
+   different heights and look broken. Pushing the control to the bottom
+   of its own grid cell keeps a row of inputs aligned regardless of
+   label length, in every form in the app rather than one at a time. */
+.grid > label > input,
+.grid > label > select,
+.grid > label > textarea,
+.grid > label > .field-control {
+  margin-top: auto;
 }
 
 /* Subtle entrance animation for the main content of every screen. */
@@ -1044,4 +1061,32 @@ textarea:focus {
   .neu-button {
     transition: none;
   }
+}
+
+/* ─── Platform admin panel ────────────────────────────────────────────
+   The admin panel is a permanently-dark internal tool, separate from the
+   shop-facing app and its light neumorphic theme. The global field rules
+   above are calibrated for that light theme, so without this block the
+   admin's inputs render as light boxes on a near-black page — with the
+   inherited light text sitting on them, unreadable. Scoped to
+   .admin-shell so the shop app is untouched. */
+.admin-shell input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"]),
+.admin-shell textarea,
+.admin-shell select {
+  background: #1f2937 !important;
+  color: #f3f4f6 !important;
+  box-shadow: inset 0 0 0 1px #374151 !important;
+}
+.admin-shell input::placeholder,
+.admin-shell textarea::placeholder {
+  color: #9ca3af;
+}
+.admin-shell input:focus,
+.admin-shell textarea:focus,
+.admin-shell select:focus {
+  box-shadow: inset 0 0 0 1px #6366f1, 0 0 0 2px rgba(99, 102, 241, 0.25) !important;
+}
+.admin-shell select option {
+  background: #1f2937;
+  color: #f3f4f6;
 }

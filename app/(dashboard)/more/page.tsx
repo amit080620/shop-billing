@@ -11,7 +11,7 @@ import { LanguageToggle } from "@/lib/i18n/LanguageToggle";
 import { SubscriptionCard } from "@/app/components/SubscriptionCard";
 import { InstallAppButton } from "@/app/components/InstallAppButton";
 import { isModuleEnabled } from "@/lib/modules";
-import { Users, Bell, Clock, Truck, Package, UserCog, Settings, Megaphone, HelpCircle, PartyPopper, WifiOff, CalendarClock, ChefHat, BookOpen, ClipboardCheck, ShieldCheck, Scissors, Gem, Store, Stethoscope, Palette, Wallet, Building2, Dumbbell, FlaskConical, Receipt as ReceiptIcon, AlertTriangle } from "lucide-react";
+import { Users, Bell, Clock, Truck, Package, UserCog, Settings, Megaphone, HelpCircle, PartyPopper, WifiOff, CalendarClock, ChefHat, BookOpen, ClipboardCheck, ShieldCheck, Scissors, Gem, Store, Stethoscope, Palette, Wallet, Building2, Dumbbell, FlaskConical, Receipt as ReceiptIcon, AlertTriangle, Cake, PackagePlus, Wrench } from "lucide-react";
 
 export default async function MorePage() {
   const session = await requireSession();
@@ -78,6 +78,14 @@ export default async function MorePage() {
           <MenuLink href="/restaurant/kds-settings" label="Kitchen display settings" sub="Cards per row, text size" icon={KitchenIcon} tone="secondary" />
           <MenuLink href="/restaurant/combos" label="Combo deals" sub="Bundle menu items at a set price" icon={BoxIcon} />
           <MenuLink href="/restaurant/reports" label="Restaurant sales" sub="Day-wise & month-wise reports" icon={ClockIcon} />
+        </MenuGroup>
+      )}
+
+      {session.businessType === "service" && (
+        <MenuGroup title="Service & repairs">
+          <MenuLink href="/service" label="All jobs" sub="Every repair, by status" icon={WrenchIcon} tone="secondary" />
+          <MenuLink href="/service/new" label="New job" sub="Take in an item for repair" icon={WrenchIcon} tone="secondary" />
+          <MenuLink href="/service/reports" label="Job report" sub="Earnings, technician split, item types" icon={ClockIcon} />
         </MenuGroup>
       )}
 
@@ -205,6 +213,8 @@ export default async function MorePage() {
       </MenuGroup>
 
       <MenuGroup title="Grow your business">
+        <MenuLink href="/birthdays" label="Birthdays" sub="Wish customers, bring them back" icon={CakeIcon} tone="secondary" />
+        <MenuLink href="/reorder" label="Reorder stock" sub="Send low-stock items to a vendor" icon={ReorderIcon} tone="warning" />
         <MenuLink href="/requests" label={t("more.requests")} sub={t("more.requests.sub")} icon={BellIcon} tone="warning" />
         {isModuleEnabled(session.enabledModules, "whatsapp_reminders") && (
           <MenuLink href="/reminders" label={t("more.reminders")} sub={t("more.reminders.sub")} icon={ClockIcon} tone="warning" />
@@ -302,6 +312,15 @@ function UsersIcon({ className }: { className?: string }) {
 }
 function ErrorLogIcon({ className }: { className?: string }) {
   return <AlertTriangle className={className} size={18} strokeWidth={1.8} />;
+}
+function CakeIcon({ className }: { className?: string }) {
+  return <Cake className={className} size={18} strokeWidth={1.8} />;
+}
+function ReorderIcon({ className }: { className?: string }) {
+  return <PackagePlus className={className} size={18} strokeWidth={1.8} />;
+}
+function WrenchIcon({ className }: { className?: string }) {
+  return <Wrench className={className} size={18} strokeWidth={1.8} />;
 }
 function GearIcon({ className }: { className?: string }) {
   return <Settings className={className} size={18} strokeWidth={1.8} />;

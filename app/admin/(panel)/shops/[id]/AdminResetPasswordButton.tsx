@@ -20,7 +20,7 @@ export function AdminResetPasswordButton({ userId, name }: { userId: string; nam
 
   return (
     <div className="mt-1 flex flex-col gap-1.5 rounded-lg border border-gray-800 bg-gray-950 p-2">
-      <p className="text-[11px] text-gray-400">New password for {name}</p>
+      <p className="text-[11px] text-gray-300">New password for {name}</p>
       <input
         type="text"
         value={newPassword}
@@ -50,7 +50,7 @@ export function AdminResetPasswordButton({ userId, name }: { userId: string; nam
         >
           {isPending ? "Saving…" : "Save"}
         </button>
-        <button onClick={() => setOpen(false)} className="rounded border border-gray-700 px-2 py-1 text-[11px] text-gray-400">
+        <button onClick={() => setOpen(false)} className="rounded border border-gray-700 px-2 py-1 text-[11px] text-gray-300">
           Close
         </button>
       </div>

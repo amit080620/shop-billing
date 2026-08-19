@@ -987,7 +987,7 @@ async function ServiceHome({
           label="Low stock"
           value={String(lowStockCount)}
           tone={lowStockCount > 0 ? "credit" : "default"}
-          href="/products"
+          href="/reorder"
           icon={TrendingDown}
         />
         <StatCard
@@ -1237,7 +1237,7 @@ async function PharmacyHome({
           label="Low stock"
           value={String(lowStockCount)}
           tone={lowStockCount > 0 ? "credit" : "default"}
-          href="/products"
+          href="/reorder"
           icon={TrendingDown}
           className="col-span-2"
         />

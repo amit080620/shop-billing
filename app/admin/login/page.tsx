@@ -22,14 +22,14 @@ export default function AdminLoginPage() {
   const [state, formAction] = useActionState(adminLoginAction, null);
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-950 px-6">
+    <div className="admin-shell flex min-h-screen items-center justify-center bg-gray-950 px-6">
       <div className="w-full max-w-sm">
         <div className="mb-6 text-center">
           <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-white text-gray-900">
             <Settings size={22} />
           </div>
           <h1 className="text-xl font-bold text-white">Platform Admin</h1>
-          <p className="mt-1 text-sm text-gray-400">Not a shop login — this manages the whole platform.</p>
+          <p className="mt-1 text-sm text-gray-300">Not a shop login — this manages the whole platform.</p>
         </div>
 
         <form action={formAction} className="flex flex-col gap-4 rounded-2xl border border-gray-800 bg-gray-900 p-6">

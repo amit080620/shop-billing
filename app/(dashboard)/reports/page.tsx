@@ -31,12 +31,61 @@ export default async function ReportsPage() {
             />
           )}
           <ReportLink
+            href="/reports/profit"
+            label="Profit"
+            sub="What you actually earned — sales minus stock cost"
+          />
+          <ReportLink
             href="/reports/export"
             label="Export data"
             sub="Bills, petty cash, orders, customers & vendors — as Excel"
           />
         </div>
       </section>
+
+      {(session.businessType === "restaurant" ||
+        session.businessType === "transport" ||
+        session.businessType === "service") && (
+        <section className="flex flex-col gap-2">
+          <h2 className="px-1 text-xs font-semibold uppercase tracking-wide text-muted">
+            {session.businessType === "restaurant"
+              ? "Restaurant"
+              : session.businessType === "transport"
+                ? "Transport"
+                : "Service & repairs"}
+          </h2>
+          <div className="neu-card flex flex-col divide-y divide-border overflow-hidden">
+            {session.businessType === "restaurant" && (
+              <>
+                <ReportLink
+                  href="/restaurant/reports"
+                  label="Sales report"
+                  sub="Settled orders by date range, with totals"
+                />
+                <ReportLink
+                  href="/restaurant/reports/items"
+                  label="Item-wise sales"
+                  sub="Which dishes actually sell, by quantity and revenue"
+                />
+              </>
+            )}
+            {session.businessType === "transport" && (
+              <ReportLink
+                href="/transport/reports"
+                label="Trip report"
+                sub="Trips, distance and earnings by vehicle"
+              />
+            )}
+            {session.businessType === "service" && (
+              <ReportLink
+                href="/service/reports"
+                label="Job report"
+                sub="Jobs taken in, delivered, earnings and technician-wise split"
+              />
+            )}
+          </div>
+        </section>
+      )}
 
       <section className="flex flex-col gap-2">
         <h2 className="flex items-center gap-1 px-1 text-xs font-semibold uppercase tracking-wide text-muted">

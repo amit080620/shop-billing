@@ -38,29 +38,29 @@ export default async function AdminShopDetailPage({
   );
 
   if (!shop) {
-    return <p className="text-sm text-gray-400">Shop not found.</p>;
+    return <p className="text-sm text-gray-300">Shop not found.</p>;
   }
 
   return (
     <div className="flex flex-col gap-4">
-      <Link href="/admin" className="text-xs text-gray-500">
+      <Link href="/admin" className="text-xs text-gray-400">
         ← All shops
       </Link>
 
       <div>
         <h1 className="text-lg font-semibold">{shop.legal_name || shop.name}</h1>
-        <p className="text-xs text-gray-500">
+        <p className="text-xs text-gray-400">
           {shop.gstin || "No GSTIN"} · {shop.city ? `${shop.city}, ` : ""}{shop.state || "No state set"}
         </p>
       </div>
 
       <div className="grid grid-cols-2 gap-2">
         <div className="rounded-xl border border-gray-800 bg-gray-900 p-3">
-          <p className="text-xs text-gray-500">Wallet balance</p>
+          <p className="text-xs text-gray-400">Wallet balance</p>
           <p className="mt-1 text-lg font-semibold">₹{Number(shop.wallet_balance).toLocaleString("en-IN")}</p>
         </div>
         <div className="rounded-xl border border-gray-800 bg-gray-900 p-3">
-          <p className="text-xs text-gray-500">Valid until</p>
+          <p className="text-xs text-gray-400">Valid until</p>
           <p className="mt-1 text-lg font-semibold">
             {shop.subscription_valid_until
               ? new Date(shop.subscription_valid_until).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata", day: "numeric", month: "short", year: "numeric" })
@@ -76,25 +76,25 @@ export default async function AdminShopDetailPage({
       <ModulesForm shopId={shop.id} enabledModules={shop.enabled_modules} />
 
       <section className="rounded-xl border border-gray-800 bg-gray-900 p-3">
-        <p className="text-xs font-medium text-gray-400">Staff ({staffWithEmail.length})</p>
+        <p className="text-xs font-medium text-gray-300">Staff ({staffWithEmail.length})</p>
         <ul className="mt-1.5 flex flex-col gap-2">
           {staffWithEmail.map((s) => (
             <li key={s.id} className="text-xs text-gray-300">
               <p>
                 {s.name} · {s.role}
               </p>
-              {s.email && <p className="text-gray-500">{s.email}</p>}
+              {s.email && <p className="text-gray-400">{s.email}</p>}
               <AdminResetPasswordButton userId={s.id} name={s.name} />
             </li>
           ))}
         </ul>
-        <p className="mt-2 text-xs text-gray-500">{bills?.length ?? 0} bills created total</p>
+        <p className="mt-2 text-xs text-gray-400">{bills?.length ?? 0} bills created total</p>
       </section>
 
       <section>
-        <p className="mb-2 text-xs font-medium text-gray-400">Transaction history</p>
+        <p className="mb-2 text-xs font-medium text-gray-300">Transaction history</p>
         {(!transactions || transactions.length === 0) ? (
-          <p className="rounded-xl border border-dashed border-gray-800 px-4 py-6 text-center text-xs text-gray-500">
+          <p className="rounded-xl border border-dashed border-gray-800 px-4 py-6 text-center text-xs text-gray-400">
             No recharges yet.
           </p>
         ) : (
@@ -110,11 +110,11 @@ export default async function AdminShopDetailPage({
                   </span>
                 </div>
                 {t.new_valid_until && (
-                  <p className="text-gray-500">
+                  <p className="text-gray-400">
                     Validity set to {new Date(t.new_valid_until).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata", day: "numeric", month: "short", year: "numeric" })}
                   </p>
                 )}
-                {t.note && <p className="text-gray-500">{t.note}</p>}
+                {t.note && <p className="text-gray-400">{t.note}</p>}
               </li>
             ))}
           </ul>

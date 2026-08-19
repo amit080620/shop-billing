@@ -3,7 +3,7 @@
 import { requireSession } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
-export type ExportDataType = "bills" | "petty_cash" | "online_orders" | "customers" | "vendors";
+export type ExportDataType = "bills" | "restaurant_orders" | "petty_cash" | "online_orders" | "customers" | "vendors";
 
 function csvEscape(value: unknown): string {
   const s = value === null || value === undefined ? "" : String(value);
@@ -47,6 +47,33 @@ export async function exportReportAction(
     return {
       csv: toCsv(headers, rows),
       filename: `bills_${from}_to_${to}.csv`,
+      headers,
+      rows,
+    };
+  }
+
+  if (type === "restaurant_orders") {
+    const { data } = await admin
+      .from("restaurant_orders")
+      .select("order_number, settled_at, total, paid_amount, credit_amount, waiter_name, order_type")
+      .eq("shop_id", session.shopId)
+      .eq("status", "settled")
+      .gte("settled_at", fromTs)
+      .lte("settled_at", toTs)
+      .order("settled_at", { ascending: true });
+    const rows = (data ?? []).map((o) => [
+      o.order_number,
+      o.settled_at ?? "",
+      Number(o.total),
+      Number(o.paid_amount),
+      Number(o.credit_amount),
+      o.waiter_name ?? "",
+      o.order_type ?? "",
+    ]);
+    const headers = ["Order #", "Settled at", "Total", "Paid", "Credit", "Waiter", "Type"];
+    return {
+      csv: toCsv(headers, rows),
+      filename: `restaurant_orders_${from}_to_${to}.csv`,
       headers,
       rows,
     };

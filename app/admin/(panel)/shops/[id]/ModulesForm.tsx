@@ -34,8 +34,8 @@ export function ModulesForm({ shopId, enabledModules }: { shopId: string; enable
   return (
     <section className="rounded-xl border border-gray-800 bg-gray-900 p-3">
       <div className="flex items-center justify-between">
-        <p className="text-xs font-medium text-gray-400">Modules</p>
-        <label className="flex items-center gap-1.5 text-xs text-gray-400">
+        <p className="text-xs font-medium text-gray-300">Modules</p>
+        <label className="flex items-center gap-1.5 text-xs text-gray-300">
           <input
             type="checkbox"
             checked={isRestricted}
@@ -47,7 +47,7 @@ export function ModulesForm({ shopId, enabledModules }: { shopId: string; enable
       </div>
 
       {!isRestricted ? (
-        <p className="mt-2 text-xs text-gray-500">All modules enabled — nothing is restricted for this shop.</p>
+        <p className="mt-2 text-xs text-gray-400">All modules enabled — nothing is restricted for this shop.</p>
       ) : (
         <div className="mt-2 flex flex-col gap-1.5">
           {MODULES.map((m) => (
@@ -55,7 +55,7 @@ export function ModulesForm({ shopId, enabledModules }: { shopId: string; enable
               <input type="checkbox" checked={selected.includes(m.key)} onChange={() => toggle(m.key)} className="mt-0.5 h-3.5 w-3.5 rounded border-gray-700" />
               <span>
                 <span className="block text-gray-200">{m.label}</span>
-                <span className="block text-gray-500">{m.description}</span>
+                <span className="block text-gray-400">{m.description}</span>
               </span>
             </label>
           ))}
