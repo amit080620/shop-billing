@@ -16,8 +16,6 @@ import {
   CalendarClock,
   Gem,
   Stethoscope,
-  Dumbbell,
-  FlaskConical,
 } from "lucide-react";
 import { useTranslation } from "@/lib/i18n/useTranslation";
 import type { Lang } from "@/lib/i18n/dictionary";
@@ -50,7 +48,7 @@ export function tabsFor(businessType: string, t: (key: string) => string, permis
     { href: "/", label: t("nav.home"), icon: HomeIcon },
     { href: "/bills/new", label: t("nav.sell"), icon: SellIcon },
     { href: "/rentals/new", label: t("nav.newRental"), icon: BuyIcon },
-    { href: "/rentals", label: t("nav.rentals"), icon: TableIcon },
+    { href: "/reports", label: t("nav.reports"), icon: ReportIcon },
     { href: "/more", label: t("nav.more"), icon: MoreIcon },
   ];
 
@@ -66,15 +64,15 @@ export function tabsFor(businessType: string, t: (key: string) => string, permis
     { href: "/more", label: t("nav.more"), icon: MoreIcon },
   ];
 
-  // A repair shop genuinely runs the full cycle: buy parts from
-  // vendors, sell items over the counter, and take in repair jobs.
-  // All three need to be primary tabs — Reports stays one tap away
-  // inside More, same trade-off other verticals make for their 5 slots.
+  // Reports needs to be as directly reachable here as it is for every
+  // other business type — Buy (purchases) moves into More instead,
+  // since it's genuinely a less frequent action day-to-day than
+  // checking reports.
   const SERVICE_TABS = [
     { href: "/", label: t("nav.home"), icon: HomeIcon },
     { href: "/bills/new", label: "Sell", icon: SellIcon },
-    { href: "/purchases/new", label: t("nav.buy"), icon: BuyIcon },
     { href: "/service", label: "Jobs", icon: ServiceIcon },
+    { href: "/reports", label: t("nav.reports"), icon: ReportIcon },
     { href: "/more", label: t("nav.more"), icon: MoreIcon },
   ];
 
@@ -105,8 +103,8 @@ export function tabsFor(businessType: string, t: (key: string) => string, permis
   const GYM_TABS = [
     { href: "/", label: t("nav.home"), icon: HomeIcon },
     { href: "/gym/members/new", label: "Sell", icon: SellIcon },
-    { href: "/gym/attendance", label: "Attendance", icon: GymNavIcon },
     { href: "/gym/members", label: "Members", icon: TableIcon },
+    { href: "/reports", label: t("nav.reports"), icon: ReportIcon },
     { href: "/more", label: t("nav.more"), icon: MoreIcon },
   ];
 
@@ -114,7 +112,7 @@ export function tabsFor(businessType: string, t: (key: string) => string, permis
     { href: "/", label: t("nav.home"), icon: HomeIcon },
     { href: "/lab/orders/new", label: "New order", icon: SellIcon },
     { href: "/lab/orders", label: "Orders", icon: TableIcon },
-    { href: "/lab/tests", label: "Tests", icon: LabNavIcon },
+    { href: "/reports", label: t("nav.reports"), icon: ReportIcon },
     { href: "/more", label: t("nav.more"), icon: MoreIcon },
   ];
 
@@ -211,10 +209,4 @@ function JewelleryNavIcon({ active }: { active: boolean }) {
 }
 function ClinicNavIcon({ active }: { active: boolean }) {
   return <Stethoscope size={22} strokeWidth={active ? 2.3 : 1.8} />;
-}
-function GymNavIcon({ active }: { active: boolean }) {
-  return <Dumbbell size={22} strokeWidth={active ? 2.3 : 1.8} />;
-}
-function LabNavIcon({ active }: { active: boolean }) {
-  return <FlaskConical size={22} strokeWidth={active ? 2.3 : 1.8} />;
 }
