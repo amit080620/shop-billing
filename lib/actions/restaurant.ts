@@ -827,7 +827,7 @@ export async function saveKdsSettingsAction(columns: number, fontScale: "normal"
  * since restaurant orders settle as their own record, not a `bills` row. */
 export async function getOrderUpiQrAction(
   orderId: string,
-): Promise<{ qrDataUrl?: string; creditAmount?: number }> {
+): Promise<{ qrDataUrl?: string; upiLink?: string; creditAmount?: number }> {
   const session = await requireSession();
   const admin = createSupabaseAdminClient();
 
@@ -843,5 +843,5 @@ export async function getOrderUpiQrAction(
   const { buildUpiLink, generateQrDataUrl } = await import("../qr");
   const link = buildUpiLink(session.shopUpiId, session.shopName, Number(order.credit_amount), `Order ${order.order_number}`);
   const qrDataUrl = await generateQrDataUrl(link);
-  return { qrDataUrl, creditAmount: Number(order.credit_amount) };
+  return { qrDataUrl, upiLink: link, creditAmount: Number(order.credit_amount) };
 }

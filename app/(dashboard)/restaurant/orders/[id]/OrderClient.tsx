@@ -675,11 +675,14 @@ function BillPrintView({
   t: Translator;
 }) {
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
+  const [upiLink, setUpiLink] = useState<string | null>(null);
   const [creditAmount, setCreditAmount] = useState(0);
+  const [customerPhone, setCustomerPhone] = useState("");
 
   useEffect(() => {
     getOrderUpiQrAction(order.id).then((result) => {
       if (result.qrDataUrl) setQrDataUrl(result.qrDataUrl);
+      if (result.upiLink) setUpiLink(result.upiLink);
       if (result.creditAmount) setCreditAmount(result.creditAmount);
     });
   }, [order.id]);
@@ -739,6 +742,33 @@ function BillPrintView({
           </div>
         )}
         <div className="mt-1 flex justify-between border-t border-black pt-1 text-sm font-bold"><span>{t("order.total")}</span><span>{formatMoney(order.total)}</span></div>
+        {qrDataUrl && creditAmount > 0 && upiLink && (
+          <div className="no-print mt-3 flex flex-col gap-1.5 border-t border-dashed border-gray-400 pt-3">
+            <p className="text-xs font-semibold text-gray-700">Or send the payment link on WhatsApp</p>
+            <div className="flex gap-1.5">
+              <input
+                type="tel"
+                inputMode="numeric"
+                value={customerPhone}
+                onChange={(e) => setCustomerPhone(e.target.value.replace(/\D/g, "").slice(0, 10))}
+                placeholder="Customer's 10-digit number"
+                maxLength={10}
+                className="flex-1 rounded border border-gray-300 px-2 py-1.5 text-xs outline-none"
+              />
+              <button
+                type="button"
+                disabled={customerPhone.length !== 10}
+                onClick={() => {
+                  const message = `Please pay ${formatMoney(creditAmount)} for Order ${order.orderNumber} at ${shopName}:\n${upiLink}`;
+                  window.open(`https://wa.me/91${customerPhone}?text=${encodeURIComponent(message)}`, "_blank");
+                }}
+                className="shrink-0 rounded bg-[#25D366] px-3 py-1.5 text-xs font-medium text-white disabled:opacity-40"
+              >
+                Send
+              </button>
+            </div>
+          </div>
+        )}
         {qrDataUrl && creditAmount > 0 && (
           <div className="mt-3 flex flex-col items-center gap-1 border-t border-dashed border-gray-400 pt-3">
             <p className="text-xs font-semibold text-gray-700">Scan to pay {formatMoney(creditAmount)}</p>
