@@ -5,6 +5,7 @@ import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import { useRouter } from "next/navigation";
 import { MessageCircle, Dumbbell } from "lucide-react";
+import { PhoneInput } from "@/app/components/PhoneInput";
 import Link from "next/link";
 import { createLeadAction, updateLeadStatusAction, deleteLeadAction } from "@/lib/actions/gym";
 import { PageHeader } from "@/app/components/PageHeader";
@@ -86,7 +87,7 @@ export function LeadsClient({ leads }: { leads: Lead[] }) {
         <Popup open={showForm} onClose={() => setShowForm(false)} title="Add lead">
         <form action={formAction} className="flex flex-col gap-3 rounded-xl border border-dashed border-brand bg-brand-soft p-4">
           <input name="name" placeholder="Name" required className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand" />
-          <input name="phone" placeholder="Phone number" required className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand" />
+          <PhoneInput mode="form" name="phone" required />
           <input name="interestedPlan" placeholder="Interested plan (optional)" className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand" />
           <input type="hidden" name="source" value={source} />
           <div className="flex flex-wrap gap-1.5">

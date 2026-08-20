@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { createPublicBookingAction } from "@/lib/actions/clinic";
 import { CheckCircle2 } from "lucide-react";
+import { PhoneInput } from "@/app/components/PhoneInput";
 
 type Day = { date: string; label: string; slots: string[] };
 
@@ -147,12 +148,10 @@ export function PublicBookingClient({
             placeholder="Your name"
             className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand"
           />
-          <input
+          <PhoneInput
             value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            type="tel"
+            onChange={setPhone}
             placeholder="Your phone number"
-            className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand"
           />
           <input
             value={reason}

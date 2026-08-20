@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createAppointmentAction } from "@/lib/actions/appointments";
 import { useToast } from "@/app/components/Toast";
+import { PhoneInput } from "@/app/components/PhoneInput";
 import { PageHeader } from "@/app/components/PageHeader";
 import { SearchableSelect } from "@/app/components/SearchableSelect";
 import type { Lang } from "@/lib/i18n/dictionary";
@@ -91,14 +92,8 @@ export function NewAppointmentClient({ customers, services, lang }: { customers:
           </label>
           <label className="flex flex-col gap-1.5 text-sm">
             <span className="font-medium text-foreground">Phone</span>
-            <input
-              name="customerPhone"
-              type="tel"
-              value={customerPhone}
-              onChange={(e) => setCustomerPhone(e.target.value)}
-              required
-              className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-brand"
-            />
+            <PhoneInput value={customerPhone} onChange={setCustomerPhone} required />
+            <input type="hidden" name="customerPhone" value={customerPhone} />
           </label>
         </div>
 

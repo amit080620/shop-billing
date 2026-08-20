@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState, useEffect } from "react";
+import { PhoneInput } from "@/app/components/PhoneInput";
 import { useRouter } from "next/navigation";
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
@@ -64,7 +65,7 @@ export function CustomersClient({
   const router = useRouter();
   const [showForm, setShowForm] = useState(false);
   const nameRef = useRef<HTMLInputElement>(null);
-  const phoneRef = useRef<HTMLInputElement>(null);
+  const [phone, setPhone] = useState("");
   const [search, setSearch] = useState(initialSearch);
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
 
@@ -127,7 +128,7 @@ export function CustomersClient({
           <ContactPickerButton
             onPick={(name, phone) => {
               if (nameRef.current) nameRef.current.value = name;
-              if (phoneRef.current) phoneRef.current.value = phone;
+              setPhone(phone);
             }}
           />
           <label className="flex flex-col gap-1.5 text-sm">
@@ -141,14 +142,8 @@ export function CustomersClient({
           </label>
           <label className="flex flex-col gap-1.5 text-sm">
             <span className="font-medium text-foreground">Phone</span>
-            <input
-              ref={phoneRef}
-              name="phone"
-              type="tel"
-              required
-              placeholder="For WhatsApp reminders"
-              className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-brand"
-            />
+            <PhoneInput value={phone} onChange={setPhone} required placeholder="For WhatsApp reminders" />
+            <input type="hidden" name="phone" value={phone} />
           </label>
           <label className="flex flex-col gap-1.5 text-sm">
             <span className="font-medium text-foreground">GSTIN (leave blank for B2C/retail)</span>

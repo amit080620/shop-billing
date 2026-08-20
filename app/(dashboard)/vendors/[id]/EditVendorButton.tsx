@@ -3,6 +3,7 @@
 import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { useRouter } from "next/navigation";
+import { PhoneInput } from "@/app/components/PhoneInput";
 import { updateVendorAction } from "@/lib/actions/vendors";
 import { INDIAN_STATES } from "@/lib/constants/states";
 
@@ -51,7 +52,7 @@ export function EditVendorButton({ vendor }: { vendor: Vendor }) {
           </label>
           <label className="flex flex-col gap-1.5 text-sm">
             <span className="font-medium text-foreground">Phone (optional)</span>
-            <input name="phone" type="tel" defaultValue={vendor.phone ?? ""} className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-brand" />
+            <PhoneInput mode="form" name="phone" defaultValue={vendor.phone ?? ""} />
           </label>
           <label className="flex flex-col gap-1.5 text-sm">
             <span className="font-medium text-foreground">GSTIN (optional)</span>

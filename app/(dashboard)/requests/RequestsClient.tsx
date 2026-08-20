@@ -18,6 +18,7 @@ import { SearchableSelect } from "@/app/components/SearchableSelect";
 import type { Lang } from "@/lib/i18n/dictionary";
 import { useTranslation } from "@/lib/i18n/useTranslation";
 import { ContactPickerButton } from "@/app/components/ContactPickerButton";
+import { PhoneInput } from "@/app/components/PhoneInput";
 
 type Customer = { id: string; name: string; phone: string };
 type Request = {
@@ -58,7 +59,7 @@ export function RequestsClient({
 }) {
   const [showForm, setShowForm] = useState(false);
   const nameRef = useRef<HTMLInputElement>(null);
-  const phoneRef = useRef<HTMLInputElement>(null);
+  const [phone, setPhone] = useState("");
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [isPending, startTransition] = useTransition();
 
@@ -136,7 +137,7 @@ export function RequestsClient({
               <ContactPickerButton
                 onPick={(name, phone) => {
                   if (nameRef.current) nameRef.current.value = name;
-                  if (phoneRef.current) phoneRef.current.value = phone;
+                  setPhone(phone);
                 }}
               />
               <label className="flex flex-col gap-1.5 text-sm">
@@ -150,13 +151,8 @@ export function RequestsClient({
               </label>
               <label className="flex flex-col gap-1.5 text-sm">
                 <span className="font-medium text-foreground">Phone</span>
-                <input
-                  ref={phoneRef}
-                  name="customerPhone"
-                  type="tel"
-                  required
-                  className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-brand"
-                />
+                <PhoneInput value={phone} onChange={setPhone} required />
+                <input type="hidden" name="customerPhone" value={phone} />
               </label>
             </>
           )}

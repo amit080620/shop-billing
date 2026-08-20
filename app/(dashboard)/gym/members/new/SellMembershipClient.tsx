@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { sellMembershipAction } from "@/lib/actions/gym";
 import { useToast } from "@/app/components/Toast";
+import { PhoneInput } from "@/app/components/PhoneInput";
 import { formatMoney } from "@/lib/format";
 import { PageHeader } from "@/app/components/PageHeader";
 import { SearchableSelect } from "@/app/components/SearchableSelect";
@@ -94,7 +95,7 @@ export function SellMembershipClient({
         />
         <div className="grid grid-cols-2 gap-3">
           <input value={memberName} onChange={(e) => setMemberName(e.target.value)} placeholder="Name" className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-brand" />
-          <input value={memberPhone} onChange={(e) => setMemberPhone(e.target.value)} placeholder="Phone" className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-brand" />
+          <PhoneInput value={memberPhone} onChange={setMemberPhone} />
         </div>
       </section>
 

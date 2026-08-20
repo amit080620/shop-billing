@@ -11,6 +11,7 @@ import { EmptyState } from "@/app/components/EmptyState";
 import { Popup } from "@/app/components/Popup";
 import { PageHeader } from "@/app/components/PageHeader";
 import { ContactPickerButton } from "@/app/components/ContactPickerButton";
+import { PhoneInput } from "@/app/components/PhoneInput";
 import { INDIAN_STATES } from "@/lib/constants/states";
 import { Building2 } from "lucide-react";
 
@@ -32,7 +33,7 @@ function SubmitButton() {
 export function VendorsClient({ initialVendors }: { initialVendors: Vendor[] }) {
   const [showForm, setShowForm] = useState(false);
   const nameRef = useRef<HTMLInputElement>(null);
-  const phoneRef = useRef<HTMLInputElement>(null);
+  const [phone, setPhone] = useState("");
   const [search, setSearch] = useState("");
 
   const { showToast } = useToast();
@@ -84,7 +85,7 @@ export function VendorsClient({ initialVendors }: { initialVendors: Vendor[] }) 
           <ContactPickerButton
             onPick={(name, phone) => {
               if (nameRef.current) nameRef.current.value = name;
-              if (phoneRef.current) phoneRef.current.value = phone;
+              setPhone(phone);
             }}
           />
           <label className="flex flex-col gap-1.5 text-sm">
@@ -98,12 +99,8 @@ export function VendorsClient({ initialVendors }: { initialVendors: Vendor[] }) 
           </label>
           <label className="flex flex-col gap-1.5 text-sm">
             <span className="font-medium text-foreground">Phone</span>
-            <input
-              ref={phoneRef}
-              name="phone"
-              type="tel"
-              className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-brand"
-            />
+            <PhoneInput value={phone} onChange={setPhone} />
+            <input type="hidden" name="phone" value={phone} />
           </label>
           <label className="flex flex-col gap-1.5 text-sm">
             <span className="font-medium text-foreground">GSTIN (optional)</span>

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createLabOrderAction } from "@/lib/actions/lab";
 import { formatMoney } from "@/lib/format";
+import { PhoneInput } from "@/app/components/PhoneInput";
 import { PageHeader } from "@/app/components/PageHeader";
 import { SearchableSelect } from "@/app/components/SearchableSelect";
 import type { Lang } from "@/lib/i18n/dictionary";
@@ -105,7 +106,7 @@ export function NewOrderClient({
         />
         <div className="grid grid-cols-2 gap-2">
           <input value={patientName} onChange={(e) => setPatientName(e.target.value)} placeholder="Name" className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-brand" />
-          <input value={patientPhone} onChange={(e) => setPatientPhone(e.target.value)} placeholder="Phone" className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-brand" />
+          <PhoneInput value={patientPhone} onChange={setPatientPhone} />
           <input value={patientAge} onChange={(e) => setPatientAge(e.target.value)} placeholder="Age" className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-brand" />
           <select value={patientGender} onChange={(e) => setPatientGender(e.target.value)} className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-brand">
             <option value="">Gender</option>

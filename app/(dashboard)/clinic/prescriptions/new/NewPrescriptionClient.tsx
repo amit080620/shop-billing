@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createPrescriptionAction, type PrescriptionItemInput } from "@/lib/actions/clinic";
 import { PageHeader } from "@/app/components/PageHeader";
+import { PhoneInput } from "@/app/components/PhoneInput";
 import { SearchableSelect } from "@/app/components/SearchableSelect";
 import { COMMON_MEDICINE_NAMES } from "@/lib/constants/commonMedicines";
 import type { Lang } from "@/lib/i18n/dictionary";
@@ -139,12 +140,7 @@ export function NewPrescriptionClient({
             placeholder="Patient name"
             className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-brand"
           />
-          <input
-            value={patientPhone}
-            onChange={(e) => setPatientPhone(e.target.value)}
-            placeholder="Phone"
-            className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-brand"
-          />
+          <PhoneInput value={patientPhone} onChange={setPatientPhone} />
         </div>
         <div className="grid grid-cols-2 gap-3">
           <input
