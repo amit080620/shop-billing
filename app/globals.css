@@ -1011,6 +1011,17 @@ textarea:focus {
     10px 10px 22px var(--neu-dark);
 }
 
+/* A "carved in" tray — the exact inverse of .neu-card's shadow
+   direction, so a group of individually-raised .neu-card rows still
+   reads as one visual unit: the tray sinks in, its contents rise out. */
+.neu-tray {
+  background: var(--background);
+  border-radius: var(--radius-lg);
+  box-shadow:
+    inset -6px -6px 14px var(--neu-light),
+    inset 6px 6px 14px var(--neu-dark);
+}
+
 /* Pressed/inset surface — for a "carved in" look, e.g. an avatar
    frame or an active/selected state. */
 .neu-inset {
