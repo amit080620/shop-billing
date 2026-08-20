@@ -8,7 +8,7 @@ const TOTAL_KEYWORDS = ["GRAND TOTAL", "NET TOTAL", "NET AMOUNT", "TOTAL PAYABLE
 // Deterministic, context-aware OCR digit-error correction — only
 // applied to strings that already look numeric, so a store name like
 // "SOMA STORES" is never mangled into "50MA5TORE5".
-function correctNumericOCR(raw: string): string {
+export function correctNumericOCR(raw: string): string {
   if (!/^[\dOIlSBoO.,₹Rs\s]+$/i.test(raw)) return raw;
   return raw
     .replace(/O/g, "0")

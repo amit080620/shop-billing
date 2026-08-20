@@ -3,6 +3,7 @@
 import { useState, useRef } from "react";
 import { PageHeader } from "@/app/components/PageHeader";
 import { createProductsFromScanAction, type ScannedMenuItem } from "@/lib/actions/menu-scan";
+import { correctNumericOCR } from "@/lib/ocr/parser";
 import { Camera, ScanLine, Trash2, Loader2 } from "lucide-react";
 
 type DraftItem = ScannedMenuItem & { id: string; include: boolean };
@@ -17,10 +18,10 @@ type DraftItem = ScannedMenuItem & { id: string; include: boolean };
 function parseMenuText(raw: string): ScannedMenuItem[] {
   const lines = raw
     .split("\n")
-    .map((l) => l.trim())
+    .map((l) => l.trim().replace(/[|;:]+$/, "")) // trim common trailing OCR noise
     .filter((l) => l.length > 1);
 
-  const priceLineRegex = /^(.{2,80}?)[\s.\-–_]{1,}(?:rs\.?|inr|₹)?\s*(\d{1,5}(?:\.\d{1,2})?)\s*$/i;
+  const priceLineRegex = /^(.{2,80}?)[\s.\-–_]{1,}(?:rs\.?|inr|₹)?\s*([\dOIlSB]{1,5}(?:[.,][\dOIlSB]{1,2})?)\s*$/i;
   const items: ScannedMenuItem[] = [];
   let currentCategory: string | null = null;
 
@@ -28,7 +29,10 @@ function parseMenuText(raw: string): ScannedMenuItem[] {
     const match = line.match(priceLineRegex);
     if (match) {
       const name = match[1].replace(/[.\-–_\s]+$/, "").trim();
-      const price = parseFloat(match[2]);
+      // The captured price often has OCR digit-confusion (O/0, l/1,
+      // S/5, B/8) — the same correction already proven on the
+      // petty-cash scan path, applied here for the first time.
+      const price = parseFloat(correctNumericOCR(match[2]).replace(",", "."));
       if (name.length >= 2 && !Number.isNaN(price) && price > 0 && price < 50000) {
         items.push({ name, price, categoryName: currentCategory });
         continue;
@@ -59,18 +63,19 @@ export function MenuScanClient() {
     setOcrProgress(0);
 
     try {
-      const { createWorker } = await import("tesseract.js");
-      const worker = await createWorker("eng", 1, {
-        logger: (m) => {
-          if (m.status === "recognizing text") setOcrProgress(Math.round(m.progress * 100));
-        },
-      });
-      const {
-        data: { text },
-      } = await worker.recognize(file);
-      await worker.terminate();
+      const { preprocessImage } = await import("@/lib/ocr/preprocess");
+      const { runOCR, PSM } = await import("@/lib/ocr/tesseract");
 
-      const parsed = parseMenuText(text);
+      const processed = await preprocessImage(file);
+      const ocr = await runOCR(
+        processed,
+        (status, p) => {
+          if (status === "recognizing text") setOcrProgress(Math.round(p * 100));
+        },
+        PSM.SPARSE_TEXT,
+      );
+
+      const parsed = parseMenuText(ocr.rawText);
       if (parsed.length === 0) {
         setError("Couldn't find any items with prices in this photo — try a clearer, well-lit shot, straight-on (not angled).");
       } else {

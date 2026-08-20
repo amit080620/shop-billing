@@ -4,7 +4,7 @@ import { useState } from "react";
 import { CameraCapture } from "@/app/components/CameraCapture";
 import { preprocessImage } from "@/lib/ocr/preprocess";
 import { Camera } from "lucide-react";
-import { runOCR } from "@/lib/ocr/tesseract";
+import { runOCR, PSM } from "@/lib/ocr/tesseract";
 import { parsePettyCashFields } from "@/lib/ocr/parser";
 import { confidenceLevel } from "@/lib/ocr/types";
 import type { ExtractedPettyCashFields } from "@/lib/ocr/types";
@@ -35,12 +35,16 @@ export function ScanBillModal({
       const processed = await preprocessImage(file);
 
       setStatusText("Reading text…");
-      const ocr = await runOCR(processed, (status, p) => {
-        setStatusText(
-          status === "recognizing text" ? "Reading text…" : status === "loading tesseract core" ? "Starting OCR engine…" : "Processing…",
-        );
-        setProgress(10 + p * 80);
-      });
+      const ocr = await runOCR(
+        processed,
+        (status, p) => {
+          setStatusText(
+            status === "recognizing text" ? "Reading text…" : status === "loading tesseract core" ? "Starting OCR engine…" : "Processing…",
+          );
+          setProgress(10 + p * 80);
+        },
+        PSM.SINGLE_COLUMN,
+      );
 
       setStatusText("Finding amount & vendor…");
       setProgress(95);
