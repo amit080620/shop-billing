@@ -18,7 +18,7 @@ export async function createBillCore(
   session: SessionContext,
   parsedData: BillInput,
 ): Promise<{ billId: string; invoiceNumber: string } | { error: string }> {
-  const { customerId, items, discountType, discountValue, paidAmount, paymentMethod, doctorName, patientName, tripVehicleId, tripKm, tripDriverName, tripLoadWeight, tripLoadUnit, serviceProviderName, exchangeMetal, exchangeDescription, exchangeGrossWeight, exchangePurityPercent, exchangeRatePerGram, exchangeValue } = parsedData;
+  const { customerId, items, discountType, discountValue, paidAmount, paymentMethod, doctorName, patientName, tripVehicleId, tripKm, tripDriverName, tripLoadWeight, tripLoadUnit, serviceProviderName, exchangeMetal, exchangeDescription, exchangeGrossWeight, exchangePurityPercent, exchangeRatePerGram, exchangeValue, redeemedPoints } = parsedData;
 
   // Old-gold/silver exchange is money-equivalent handed over at the
   // counter — it counts toward what's "paid", same as cash, without
@@ -288,6 +288,18 @@ export async function createBillCore(
         if (pointsError) console.error("Could not award loyalty points", customerId, pointsError);
       }
     }
+  }
+
+  // Points redemption — best-effort, mirrors the earning hook above.
+  // The redeem_loyalty_points RPC itself floors at 0, so this can
+  // never push a customer's balance negative even in a rare race
+  // between two bills redeeming around the same time.
+  if (customerId && redeemedPoints && redeemedPoints > 0) {
+    const { error: redeemError } = await admin.rpc("redeem_loyalty_points", {
+      p_customer_id: customerId,
+      p_points: Math.floor(redeemedPoints),
+    });
+    if (redeemError) console.error("Could not redeem loyalty points", customerId, redeemError);
   }
 
   return { billId: bill.id, invoiceNumber };

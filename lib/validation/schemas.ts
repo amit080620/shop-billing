@@ -159,6 +159,7 @@ export const billSchema = z.object({
   exchangePurityPercent: z.coerce.number().min(0).max(100).nullable().optional(),
   exchangeRatePerGram: z.coerce.number().min(0).nullable().optional(),
   exchangeValue: z.coerce.number().min(0).nullable().optional(),
+  redeemedPoints: z.coerce.number().min(0).nullable().optional(),
 });
 export type BillInput = z.infer<typeof billSchema>;
 

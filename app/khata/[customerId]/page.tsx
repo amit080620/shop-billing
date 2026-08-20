@@ -15,14 +15,14 @@ export default async function KhataPage({ params }: { params: Promise<{ customer
 
   const { data: customer } = await admin
     .from("customers")
-    .select("id, name, shop_id")
+    .select("id, name, shop_id, loyalty_points")
     .eq("id", customerId)
     .maybeSingle();
 
   if (!customer) notFound();
 
   const [{ data: shop }, { data: bills }, { data: payments }] = await Promise.all([
-    admin.from("shops").select("name, logo_url, upi_id").eq("id", customer.shop_id).single(),
+    admin.from("shops").select("name, logo_url, upi_id, loyalty_redemption_value").eq("id", customer.shop_id).single(),
     admin
       .from("bills")
       .select("id, invoice_number, total, paid_amount, credit_amount, created_at")
@@ -63,6 +63,20 @@ export default async function KhataPage({ params }: { params: Promise<{ customer
           <CheckCircle2 size={30} className="text-success" />
           <p className="text-base font-semibold text-foreground">All settled</p>
           <p className="text-xs text-muted">You have nothing pending with this shop.</p>
+        </div>
+      )}
+
+      {customer.loyalty_points > 0 && (
+        <div className="neu-card flex items-center justify-between p-4">
+          <div>
+            <p className="text-xs font-medium text-muted">Your loyalty points</p>
+            <p className="text-2xl font-bold text-brand-text neu-text">{customer.loyalty_points}</p>
+          </div>
+          {Number(shop?.loyalty_redemption_value ?? 0) > 0 && (
+            <p className="text-sm text-muted">
+              Worth {formatMoney(customer.loyalty_points * Number(shop!.loyalty_redemption_value))}
+            </p>
+          )}
         </div>
       )}
 

@@ -44,7 +44,7 @@ type Product = {
   bulkPrice: number | null;
   hallmarkNumber: string | null;
 };
-type Customer = { id: string; name: string; phone: string; gstin: string | null; state_code: string | null };
+type Customer = { id: string; name: string; phone: string; gstin: string | null; state_code: string | null; loyalty_points?: number };
 type CartLine = {
   productId: string;
   name: string;
@@ -91,6 +91,7 @@ export function NewBillClient({
   businessType,
   goldRate,
   silverRate,
+  loyaltyRedemptionValue,
 }: {
   shopStateCode: string;
   products: Product[];
@@ -101,6 +102,7 @@ export function NewBillClient({
   businessType: string;
   goldRate: number | null;
   silverRate: number | null;
+  loyaltyRedemptionValue: number;
   shopContext: {
     shopId: string;
     shopName: string;
@@ -164,6 +166,7 @@ export function NewBillClient({
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [discountType, setDiscountType] = useState<"percent" | "flat">("flat");
   const [discountValue, setDiscountValue] = useState(0);
+  const [redeemPoints, setRedeemPoints] = useState(false);
   const [paidAmount, setPaidAmount] = useState<number | "">("");
   const [paymentMethod, setPaymentMethod] = useState<"cash" | "card" | "upi" | "online" | "other">("cash");
   const [doctorName, setDoctorName] = useState("");
@@ -188,6 +191,18 @@ export function NewBillClient({
     [shopStateCode, customerMode, selectedCustomer],
   );
 
+  const cartSubtotal = cart.reduce((s, c) => s + c.quantity * c.price, 0);
+  const redemptionValue =
+    redeemPoints && selectedCustomer
+      ? Math.min(Math.min(selectedCustomer.loyalty_points ?? 0, 1_000_000) * loyaltyRedemptionValue, cartSubtotal)
+      : 0;
+  // The genuine number of points this redemption actually consumes —
+  // proportional to the (possibly capped) rupee value used, not the
+  // customer's full balance, so redeeming against a small bill never
+  // burns more points than the discount they genuinely received.
+  const redeemedPointsCount =
+    redemptionValue > 0 && loyaltyRedemptionValue > 0 ? Math.ceil(redemptionValue / loyaltyRedemptionValue) : 0;
+
   const totals = useMemo(
     () =>
       calculateTransactionTotals({
@@ -197,11 +212,11 @@ export function NewBillClient({
           gstPercent: c.gstPercent,
         })),
         discountType,
-        discountValue,
+        discountValue: discountType === "flat" ? discountValue + redemptionValue : discountValue,
         paidAmount: typeof paidAmount === "number" ? paidAmount : 0,
         supplyType,
       }),
-    [cart, discountType, discountValue, paidAmount, supplyType],
+    [cart, discountType, discountValue, redemptionValue, paidAmount, supplyType],
   );
 
   const [state, formAction] = useActionState(createBillAction, null);
@@ -650,7 +665,8 @@ export function NewBillClient({
       stockQuantity: c.saleMode === "loose" && c.unitsPerPack ? round2(c.quantity / c.unitsPerPack) : c.quantity,
     })),
     discountType,
-    discountValue,
+    discountValue: discountType === "flat" ? discountValue + redemptionValue : discountValue,
+    redeemedPoints: discountType === "flat" && redeemPoints ? redeemedPointsCount : 0,
     paidAmount: typeof paidAmount === "number" ? paidAmount : 0,
     paymentMethod,
     doctorName,
@@ -744,6 +760,23 @@ export function NewBillClient({
           placeholder={discountType === "flat" ? "e.g. 20" : "e.g. 10"}
           className="rounded-lg border border-border px-3.5 py-2.5 text-sm outline-none focus:border-brand"
         />
+
+        {customerMode === "existing" &&
+          selectedCustomer &&
+          (selectedCustomer.loyalty_points ?? 0) > 0 &&
+          loyaltyRedemptionValue > 0 &&
+          (discountType === "flat" ? (
+            <label className="flex items-center gap-2 rounded-lg bg-brand-soft px-3 py-2.5 text-sm">
+              <input type="checkbox" checked={redeemPoints} onChange={(e) => setRedeemPoints(e.target.checked)} className="h-4 w-4" />
+              <span className="text-brand-text">
+                Redeem {redeemedPointsCount || selectedCustomer.loyalty_points} points for {formatMoney(redemptionValue || (selectedCustomer.loyalty_points ?? 0) * loyaltyRedemptionValue)} off
+              </span>
+            </label>
+          ) : (
+            <p className="text-xs text-muted">
+              {selectedCustomer.name} has {selectedCustomer.loyalty_points} points — switch to &quot;Flat amount&quot; above to redeem them.
+            </p>
+          ))}
       </section>
 
       <section className="neu-card flex flex-col gap-2 p-4 text-sm">

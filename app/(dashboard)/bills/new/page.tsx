@@ -35,7 +35,7 @@ export default async function NewBillPage() {
       .order("name"),
     admin
       .from("customers")
-      .select("id, name, phone, gstin, state_code")
+      .select("id, name, phone, gstin, state_code, loyalty_points")
       .eq("shop_id", session.shopId)
       .order("name"),
     admin
@@ -44,7 +44,7 @@ export default async function NewBillPage() {
       .eq("shop_id", session.shopId)
       .eq("status", "active")
       .gte("created_at", last30.toISOString()),
-    admin.from("shops").select("invoice_prefix").eq("id", session.shopId).single(),
+    admin.from("shops").select("invoice_prefix, loyalty_redemption_value").eq("id", session.shopId).single(),
     admin.from("vehicles").select("id, name, rate_per_km").eq("shop_id", session.shopId).eq("is_active", true).order("name"),
     admin.from("metal_rates").select("metal_type, rate_per_gram, effective_date").eq("shop_id", session.shopId).order("effective_date", { ascending: false }).limit(20),
   ]);
@@ -73,6 +73,7 @@ export default async function NewBillPage() {
     <NewBillClient
       shopStateCode={session.shopStateCode}
       lang={lang}
+      loyaltyRedemptionValue={Number(shop?.loyalty_redemption_value ?? 1)}
       shopContext={{
         shopId: session.shopId,
         shopName: session.shopName,
