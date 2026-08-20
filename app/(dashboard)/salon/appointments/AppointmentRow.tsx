@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { updateAppointmentStatusAction, deleteAppointmentAction } from "@/lib/actions/appointments";
 import { useTranslation } from "@/lib/i18n/useTranslation";
 import type { Lang } from "@/lib/i18n/dictionary";
+import { buildWhatsAppLink as buildWaLink } from "@/lib/whatsapp";
 
 type Appointment = {
   id: string;
@@ -35,10 +36,8 @@ const STATUS_TONE: Record<string, string> = {
 };
 
 function whatsappConfirmLink(a: Appointment, t: (key: string, values?: Record<string, string | number>) => string) {
-  const digits = a.customerPhone.replace(/\D/g, "");
-  const withCountryCode = digits.length === 10 ? `91${digits}` : digits;
   const message = t("wa.salonConfirm", { name: a.customerName, service: a.serviceName, time: a.time });
-  return `https://wa.me/${withCountryCode}?text=${encodeURIComponent(message)}`;
+  return buildWaLink(a.customerPhone, message);
 }
 
 export function AppointmentRow({ appointment, lang }: { appointment: Appointment; lang: Lang }) {

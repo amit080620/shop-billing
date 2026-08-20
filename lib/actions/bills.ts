@@ -228,48 +228,53 @@ export async function createBillCore(
   // point, so a failure here doesn't roll back the sale, just logs for
   // review). Pharma items draw from the earliest-expiring batch(es) first
   // (FEFO); everything else just decrements the product's aggregate stock
-  // as before.
-  for (let i = 0; i < verifiedItems.length; i++) {
-    const item = verifiedItems[i];
-    const product = item.productId ? productMap.get(item.productId) : undefined;
-    if (!product?.track_inventory) continue;
+  // as before. Different items are genuinely independent of each other
+  // (different products, no shared state), so they run concurrently
+  // rather than one-at-a-time — the FEFO batch loop for pharma items
+  // stays sequential WITHIN itself since it tracks a running
+  // "remaining" counter across a single product's own batches.
+  await Promise.all(
+    verifiedItems.map(async (item) => {
+      const product = item.productId ? productMap.get(item.productId) : undefined;
+      if (!product?.track_inventory) return;
 
-    if (product.is_pharma) {
-      const { data: batches } = await admin
-        .from("medicine_batches")
-        .select("id, quantity")
-        .eq("product_id", product.id)
-        .gt("quantity", 0)
-        .order("expiry_date", { ascending: true });
-
-      let remaining = item.stockQuantity;
-      let firstBatchId: string | null = null;
-      for (const batch of batches ?? []) {
-        if (remaining <= 0) break;
-        const take = Math.min(remaining, Number(batch.quantity));
-        const { error: batchError } = await admin
+      if (product.is_pharma) {
+        const { data: batches } = await admin
           .from("medicine_batches")
-          .update({ quantity: round2(Number(batch.quantity) - take) })
-          .eq("id", batch.id);
-        if (batchError) {
-          console.error("Could not update batch stock", batch.id, batchError);
-          continue;
-        }
-        if (!firstBatchId) firstBatchId = batch.id;
-        remaining = round2(remaining - take);
-      }
-      if (firstBatchId) {
-        await admin.from("bill_items").update({ batch_id: firstBatchId }).eq("bill_id", bill.id).eq("product_id", product.id);
-      }
-    }
+          .select("id, quantity")
+          .eq("product_id", product.id)
+          .gt("quantity", 0)
+          .order("expiry_date", { ascending: true });
 
-    // Atomic — the decrement happens inside the database as one UPDATE,
-    // not read-then-write from application code, so two concurrent
-    // sales of the same product can never both read the same stale
-    // stock value and silently oversell.
-    const { error: stockError } = await admin.rpc("decrement_stock", { p_product_id: product.id, p_quantity: item.stockQuantity });
-    if (stockError) console.error("Could not update stock for product", product.id, stockError);
-  }
+        let remaining = item.stockQuantity;
+        let firstBatchId: string | null = null;
+        for (const batch of batches ?? []) {
+          if (remaining <= 0) break;
+          const take = Math.min(remaining, Number(batch.quantity));
+          const { error: batchError } = await admin
+            .from("medicine_batches")
+            .update({ quantity: round2(Number(batch.quantity) - take) })
+            .eq("id", batch.id);
+          if (batchError) {
+            console.error("Could not update batch stock", batch.id, batchError);
+            continue;
+          }
+          if (!firstBatchId) firstBatchId = batch.id;
+          remaining = round2(remaining - take);
+        }
+        if (firstBatchId) {
+          await admin.from("bill_items").update({ batch_id: firstBatchId }).eq("bill_id", bill.id).eq("product_id", product.id);
+        }
+      }
+
+      // Atomic — the decrement happens inside the database as one UPDATE,
+      // not read-then-write from application code, so two concurrent
+      // sales of the same product can never both read the same stale
+      // stock value and silently oversell.
+      const { error: stockError } = await admin.rpc("decrement_stock", { p_product_id: product.id, p_quantity: item.stockQuantity });
+      if (stockError) console.error("Could not update stock for product", product.id, stockError);
+    }),
+  );
 
   // Loyalty points — best-effort, same non-blocking pattern as the
   // stock decrement above. Based on paid amount only: crediting points
@@ -394,12 +399,16 @@ export async function voidBillAction(
       .in("id", productIds);
     const productMap = new Map((products ?? []).map((p) => [p.id, p]));
 
-    for (const item of items ?? []) {
-      if (!item.product_id) continue;
-      const product = productMap.get(item.product_id);
-      if (!product?.track_inventory) continue;
-      await admin.rpc("increment_stock", { p_product_id: item.product_id, p_quantity: Number(item.quantity) });
-    }
+    // Genuinely independent per item (different products, atomic RPC),
+    // so restoring them concurrently is safe and faster than one-at-a-time.
+    await Promise.all(
+      (items ?? []).map(async (item) => {
+        if (!item.product_id) return;
+        const product = productMap.get(item.product_id);
+        if (!product?.track_inventory) return;
+        await admin.rpc("increment_stock", { p_product_id: item.product_id, p_quantity: Number(item.quantity) });
+      }),
+    );
   }
 
   const { error } = await admin
@@ -475,17 +484,21 @@ export async function editBillQuantitiesAction(
   // Stock delta: restore each item's OLD quantity, then deduct the NEW
   // one — net effect is correct whether the edit increases or decreases
   // quantity, without needing a separate "was already restored" flag.
-  for (const item of items) {
-    const newQty = updateByItemId.get(item.id);
-    if (newQty === undefined || newQty === Number(item.quantity) || !item.product_id) continue;
+  // Different line items are genuinely independent, so this runs
+  // concurrently rather than one item's DB round-trip at a time.
+  await Promise.all(
+    items.map(async (item) => {
+      const newQty = updateByItemId.get(item.id);
+      if (newQty === undefined || newQty === Number(item.quantity) || !item.product_id) return;
 
-    const { data: product } = await admin.from("products").select("track_inventory").eq("id", item.product_id).single();
-    if (product?.track_inventory) {
-      const delta = Number(item.quantity) - newQty; // positive = give stock back, negative = take more
-      if (delta > 0) await admin.rpc("increment_stock", { p_product_id: item.product_id, p_quantity: delta });
-      else if (delta < 0) await admin.rpc("decrement_stock", { p_product_id: item.product_id, p_quantity: Math.abs(delta) });
-    }
-  }
+      const { data: product } = await admin.from("products").select("track_inventory").eq("id", item.product_id).single();
+      if (product?.track_inventory) {
+        const delta = Number(item.quantity) - newQty; // positive = give stock back, negative = take more
+        if (delta > 0) await admin.rpc("increment_stock", { p_product_id: item.product_id, p_quantity: delta });
+        else if (delta < 0) await admin.rpc("decrement_stock", { p_product_id: item.product_id, p_quantity: Math.abs(delta) });
+      }
+    }),
+  );
 
   const updatedItems = items.map((item) => ({
     ...item,

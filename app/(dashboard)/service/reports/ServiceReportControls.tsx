@@ -2,20 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-
-function todayIso() {
-  return new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
-}
-function isoDaysAgo(days: number) {
-  const d = new Date();
-  d.setDate(d.getDate() - days);
-  return d.toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
-}
-function isoMonthsAgo(months: number) {
-  const d = new Date();
-  d.setMonth(d.getMonth() - months);
-  return d.toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
-}
+import { todayIso, isoDaysAgo, isoMonthsAgo } from "@/lib/dateHelpers";
 
 export function ServiceReportControls({ from, to }: { from: string; to: string }) {
   const router = useRouter();

@@ -5,15 +5,7 @@ import { PageHeader } from "@/app/components/PageHeader";
 import { EmptyState } from "@/app/components/EmptyState";
 import { Wrench } from "lucide-react";
 import { ServiceReportControls } from "./ServiceReportControls";
-
-function todayIso() {
-  return new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
-}
-function isoDaysAgo(days: number) {
-  const d = new Date();
-  d.setDate(d.getDate() - days);
-  return d.toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
-}
+import { todayIso, isoDaysAgo } from "@/lib/dateHelpers";
 
 const STATUS_LABELS: Record<string, string> = {
   received: "Received",

@@ -13,6 +13,7 @@ import { ClipboardList } from "lucide-react";
 import { formatMoney, formatDateTime } from "@/lib/format";
 import { EmptyState } from "@/app/components/EmptyState";
 import { Popup } from "@/app/components/Popup";
+import { buildWhatsAppLink as buildWaLink } from "@/lib/whatsapp";
 import { PageHeader } from "@/app/components/PageHeader";
 import { SearchableSelect } from "@/app/components/SearchableSelect";
 import type { Lang } from "@/lib/i18n/dictionary";
@@ -359,11 +360,9 @@ function buildWhatsAppLink(
   shopName: string,
   t: (key: string, values?: Record<string, string | number>) => string,
 ) {
-  const digits = r.customerPhone.replace(/\D/g, "");
-  const withCountryCode = digits.length === 10 ? `91${digits}` : digits;
   const advanceLine = r.advanceAmount > 0 ? t("wa.requestAdvanceNote", { amount: formatMoney(r.advanceAmount) }) : "";
   const message = t("wa.requestAvailable", { name: r.customerName, shop: shopName, item: r.itemDescription, advance: advanceLine });
-  return `https://wa.me/${withCountryCode}?text=${encodeURIComponent(message)}`;
+  return buildWaLink(r.customerPhone, message);
 }
 
 function WhatsAppIcon() {

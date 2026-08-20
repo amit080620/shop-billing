@@ -5,6 +5,7 @@ import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import { useRouter } from "next/navigation";
 import { MessageCircle, Dumbbell } from "lucide-react";
+import { buildWhatsAppLink } from "@/lib/whatsapp";
 import { PhoneInput } from "@/app/components/PhoneInput";
 import Link from "next/link";
 import { createLeadAction, updateLeadStatusAction, deleteLeadAction } from "@/lib/actions/gym";
@@ -169,7 +170,7 @@ export function LeadsClient({ leads }: { leads: Lead[] }) {
                   ))}
                 </select>
                 <a
-                  href={`https://wa.me/${lead.phone.replace(/\D/g, "").length === 10 ? `91${lead.phone.replace(/\D/g, "")}` : lead.phone.replace(/\D/g, "")}`}
+                  href={buildWhatsAppLink(lead.phone, "")}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-1 rounded-lg border border-brand bg-brand-soft px-2.5 py-1 text-xs font-medium text-brand-text"

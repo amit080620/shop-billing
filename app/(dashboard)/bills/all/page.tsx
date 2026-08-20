@@ -5,10 +5,7 @@ import { EmptyState } from "@/app/components/EmptyState";
 import { formatMoney, formatDateTime } from "@/lib/format";
 import { Receipt } from "lucide-react";
 import Link from "next/link";
-
-function todayIso() {
-  return new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
-}
+import { todayIso } from "@/lib/dateHelpers";
 
 export default async function AllBillsPage({
   searchParams,

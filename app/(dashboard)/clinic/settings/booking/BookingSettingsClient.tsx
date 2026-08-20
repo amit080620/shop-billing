@@ -8,6 +8,7 @@ import { Camera, MessageCircle, X } from "lucide-react";
 import { uploadSettingsImageAction } from "@/lib/actions/settings";
 import { PageHeader } from "@/app/components/PageHeader";
 import { CalendarClock } from "lucide-react";
+import { todayIso } from "@/lib/dateHelpers";
 
 const DAYS: { key: string; label: string }[] = [
   { key: "mon", label: "Monday" },
@@ -18,11 +19,6 @@ const DAYS: { key: string; label: string }[] = [
   { key: "sat", label: "Saturday" },
   { key: "sun", label: "Sunday" },
 ];
-
-function todayIso() {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-}
 
 export function BookingSettingsClient({
   slotDurationMinutes: initialSlotDuration,

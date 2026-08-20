@@ -4,14 +4,17 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { todayIso, isoDaysAgo, isoMonthsAgo } from "@/lib/dateHelpers";
 
-export function InsightsDateControls({ from, to }: { from: string; to: string }) {
+/** Today/This week/This month presets plus a custom range — was
+ * duplicated near-verbatim across Sales, Profit, Staff Performance and
+ * Insights report pages, differing only in which route to push to. */
+export function DateRangeControls({ from, to, basePath }: { from: string; to: string; basePath: string }) {
   const router = useRouter();
   const [customFrom, setCustomFrom] = useState(from);
   const [customTo, setCustomTo] = useState(to);
   const [showCustom, setShowCustom] = useState(false);
 
   function go(newFrom: string, newTo: string) {
-    router.push(`/insights?from=${newFrom}&to=${newTo}`);
+    router.push(`${basePath}?from=${newFrom}&to=${newTo}`);
   }
 
   const pillClass = "shrink-0 rounded-full bg-background px-3 py-1.5 text-xs font-medium";

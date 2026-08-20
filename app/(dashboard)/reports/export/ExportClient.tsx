@@ -5,20 +5,7 @@ import { PageHeader } from "@/app/components/PageHeader";
 import { exportReportAction, type ExportDataType } from "@/lib/actions/export";
 import { Download, FileSpreadsheet, FileText } from "lucide-react";
 import { jsPDF } from "jspdf";
-
-function todayIso() {
-  return new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
-}
-function isoDaysAgo(days: number) {
-  const d = new Date();
-  d.setDate(d.getDate() - days);
-  return d.toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
-}
-function isoMonthsAgo(months: number) {
-  const d = new Date();
-  d.setMonth(d.getMonth() - months);
-  return d.toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
-}
+import { todayIso, isoDaysAgo, isoMonthsAgo } from "@/lib/dateHelpers";
 
 const DATA_TYPES: { value: ExportDataType; label: string; onlyFor?: string }[] = [
   { value: "bills", label: "Sales / Bills" },

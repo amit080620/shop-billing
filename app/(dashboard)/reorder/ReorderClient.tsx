@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { MessageCircle } from "lucide-react";
+import { buildWhatsAppLink } from "@/lib/whatsapp";
 
 type Item = {
   id: string;
@@ -60,8 +61,7 @@ export function ReorderClient({
       `Please confirm availability and price. Thank you.`,
     ].join("\n");
 
-    const digits = vendor.phone.replace(/\D/g, "");
-    window.open(`https://wa.me/${digits}?text=${encodeURIComponent(message)}`, "_blank");
+    window.open(buildWhatsAppLink(vendor.phone, message), "_blank");
   }
 
   return (

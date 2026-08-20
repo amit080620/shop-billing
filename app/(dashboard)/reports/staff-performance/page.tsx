@@ -4,16 +4,8 @@ import { formatMoney } from "@/lib/format";
 import { PageHeader } from "@/app/components/PageHeader";
 import { EmptyState } from "@/app/components/EmptyState";
 import { Users } from "lucide-react";
-import { StaffReportDateControls } from "./StaffReportDateControls";
-
-function todayIso() {
-  return new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
-}
-function isoDaysAgo(days: number) {
-  const d = new Date();
-  d.setDate(d.getDate() - days);
-  return d.toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
-}
+import { DateRangeControls } from "@/app/components/DateRangeControls";
+import { todayIso, isoDaysAgo } from "@/lib/dateHelpers";
 
 export default async function StaffPerformancePage({
   searchParams,
@@ -72,7 +64,7 @@ export default async function StaffPerformancePage({
     <div className="flex flex-col gap-4">
       <PageHeader title="Staff performance" subtitle="Who's selling, who's collecting" icon={<Users size={18} strokeWidth={1.8} />} />
 
-      <StaffReportDateControls from={fromDate} to={toDate} />
+      <DateRangeControls from={fromDate} to={toDate} basePath="/reports/staff-performance" />
 
       {rows.length === 0 ? (
         <EmptyState text="No billing activity from staff in this period yet." />

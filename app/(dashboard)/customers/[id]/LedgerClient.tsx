@@ -5,6 +5,7 @@ import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import Link from "next/link";
 import { TrendingUp, Camera, X } from "lucide-react";
+import { buildWhatsAppLink } from "@/lib/whatsapp";
 import { recordPaymentAction } from "@/lib/actions/customers";
 import { useToast } from "@/app/components/Toast";
 import { addGrowthLogAction, uploadPatientPhotoAction, deletePatientPhotoAction } from "@/lib/actions/clinic";
@@ -135,8 +136,7 @@ export function LedgerClient({
                 ``,
                 `View it any time: ${link}`,
               ].join("\n");
-              const digits = customer.phone.replace(/\D/g, "");
-              window.open(`https://wa.me/${digits}?text=${encodeURIComponent(message)}`, "_blank");
+              window.open(buildWhatsAppLink(customer.phone, message), "_blank");
             }}
             className="flex-1 rounded-lg border border-border px-3 py-2 text-xs font-medium text-foreground"
           >
@@ -151,8 +151,7 @@ export function LedgerClient({
                 ``,
                 link,
               ].join("\n");
-              const digits = customer.phone.replace(/\D/g, "");
-              window.open(`https://wa.me/${digits}?text=${encodeURIComponent(message)}`, "_blank");
+              window.open(buildWhatsAppLink(customer.phone, message), "_blank");
             }}
             className="flex-1 rounded-lg border border-border px-3 py-2 text-xs font-medium text-foreground"
           >
@@ -341,10 +340,8 @@ function buildWhatsAppReminderLink(
 ) {
   // wa.me only supports pre-filled TEXT, never file/image attachments —
   // this is a platform limitation, not a shortcut. See lib note in bills.ts.
-  const digits = customer.phone.replace(/\D/g, "");
-  const withCountryCode = digits.length === 10 ? `91${digits}` : digits;
   const message = t("wa.ledgerReminder", { name: customer.name, amount: formatMoney(balance) });
-  return `https://wa.me/${withCountryCode}?text=${encodeURIComponent(message)}`;
+  return buildWhatsAppLink(customer.phone, message);
 }
 
 function WhatsAppIcon() {

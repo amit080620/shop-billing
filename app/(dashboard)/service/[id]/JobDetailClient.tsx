@@ -8,6 +8,7 @@ import { SearchableSelect } from "@/app/components/SearchableSelect";
 import { Check } from "lucide-react";
 import { formatMoney } from "@/lib/format";
 import { useTranslation } from "@/lib/i18n/useTranslation";
+import { buildWhatsAppLink as buildWaLink } from "@/lib/whatsapp";
 import type { Lang } from "@/lib/i18n/dictionary";
 
 type Job = {
@@ -40,10 +41,8 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 function whatsappReadyLink(job: Job, t: (key: string, values?: Record<string, string | number>) => string) {
-  const digits = job.customerPhone.replace(/\D/g, "");
-  const withCountryCode = digits.length === 10 ? `91${digits}` : digits;
   const message = t("wa.jobReady", { name: job.customerName, item: job.itemDescription, jobNumber: job.jobNumber });
-  return `https://wa.me/${withCountryCode}?text=${encodeURIComponent(message)}`;
+  return buildWaLink(job.customerPhone, message);
 }
 
 type JobItem = { id: string; name: string; quantity: number; notes: string | null };
@@ -304,8 +303,7 @@ export function JobDetailClient({
                 `Check its status any time here — no need to call:`,
                 link,
               ].join("\n");
-              const digits = job.customerPhone.replace(/\D/g, "");
-              window.open(`https://wa.me/${digits}?text=${encodeURIComponent(msg)}`, "_blank");
+              window.open(buildWaLink(job.customerPhone, msg), "_blank");
             }}
             className="w-full rounded-lg border border-border px-3 py-2 text-xs font-medium text-foreground"
           >

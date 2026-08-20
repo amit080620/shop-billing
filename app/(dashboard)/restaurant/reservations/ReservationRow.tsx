@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { updateReservationStatusAction, deleteReservationAction } from "@/lib/actions/reservations";
 import { MessageCircle, Divide, Ban } from "lucide-react";
 import { useTranslation } from "@/lib/i18n/useTranslation";
+import { buildWhatsAppLink as buildWaLink } from "@/lib/whatsapp";
 import { formatMoney } from "@/lib/format";
 import type { Lang } from "@/lib/i18n/dictionary";
 
@@ -36,10 +37,8 @@ const STATUS_TONE: Record<string, string> = {
 };
 
 function whatsappConfirmLink(r: Reservation, t: (key: string, values?: Record<string, string | number>) => string) {
-  const digits = r.customerPhone.replace(/\D/g, "");
-  const withCountryCode = digits.length === 10 ? `91${digits}` : digits;
   const message = t("wa.reservationConfirm", { name: r.customerName, partySize: r.partySize, time: r.time });
-  return `https://wa.me/${withCountryCode}?text=${encodeURIComponent(message)}`;
+  return buildWaLink(r.customerPhone, message);
 }
 
 export function ReservationRow({ reservation, lang }: { reservation: Reservation; lang: Lang }) {

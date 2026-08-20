@@ -6,16 +6,8 @@ import { EmptyState } from "@/app/components/EmptyState";
 import { isModuleEnabled } from "@/lib/modules";
 import { ModuleBlocked } from "@/app/components/ModuleBlocked";
 import { TrendingUp, Flame, TrendingDown } from "lucide-react";
-import { InsightsDateControls } from "./InsightsDateControls";
-
-function todayIso() {
-  return new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
-}
-function isoDaysAgo(days: number) {
-  const d = new Date();
-  d.setDate(d.getDate() - days);
-  return d.toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
-}
+import { DateRangeControls } from "@/app/components/DateRangeControls";
+import { todayIso, isoDaysAgo } from "@/lib/dateHelpers";
 
 export default async function InsightsPage({
   searchParams,
@@ -227,7 +219,7 @@ export default async function InsightsPage({
         with its own API key and running cost, which isn&apos;t wired up here.
       </p>
 
-      <InsightsDateControls from={fromDate} to={toDate} />
+      <DateRangeControls from={fromDate} to={toDate} basePath="/insights" />
 
       <section className="flex flex-col gap-2">
         <div className="flex items-center justify-between">

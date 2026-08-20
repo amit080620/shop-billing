@@ -125,31 +125,37 @@ export async function createPurchaseAction(
   }
 
   // Basic stock increment — only for products with tracking turned on.
-  for (const item of items) {
-    const product = item.productId ? productMap.get(item.productId) : undefined;
-    if (!product?.track_inventory) continue;
-    const { error: stockError } = await admin.rpc("increment_stock", { p_product_id: product.id, p_quantity: item.quantity });
-    if (stockError) console.error("Could not update stock for product", product.id, stockError);
-  }
+  // Genuinely independent per item, so this runs concurrently.
+  await Promise.all(
+    items.map(async (item) => {
+      const product = item.productId ? productMap.get(item.productId) : undefined;
+      if (!product?.track_inventory) return;
+      const { error: stockError } = await admin.rpc("increment_stock", { p_product_id: product.id, p_quantity: item.quantity });
+      if (stockError) console.error("Could not update stock for product", product.id, stockError);
+    }),
+  );
 
   // For pharma products where batch details were filled in on this
   // purchase line, record the batch too — the stock increment above
   // already covers the aggregate number, so this only adds the batch
-  // record, it doesn't touch stock_quantity again.
-  for (const item of items) {
-    const product = item.productId ? productMap.get(item.productId) : undefined;
-    if (!product?.is_pharma || !item.batchNumber || !item.expiryDate) continue;
-    const { error: batchError } = await admin.from("medicine_batches").insert({
-      shop_id: session.shopId,
-      product_id: product.id,
-      batch_number: item.batchNumber,
-      expiry_date: item.expiryDate,
-      mfg_date: item.mfgDate || null,
-      quantity: item.quantity,
-      purchase_price: item.unitPrice,
-    });
-    if (batchError) console.error("Could not record batch for product", product.id, batchError);
-  }
+  // record, it doesn't touch stock_quantity again. Genuinely
+  // independent per item, so this runs concurrently.
+  await Promise.all(
+    items.map(async (item) => {
+      const product = item.productId ? productMap.get(item.productId) : undefined;
+      if (!product?.is_pharma || !item.batchNumber || !item.expiryDate) return;
+      const { error: batchError } = await admin.from("medicine_batches").insert({
+        shop_id: session.shopId,
+        product_id: product.id,
+        batch_number: item.batchNumber,
+        expiry_date: item.expiryDate,
+        mfg_date: item.mfgDate || null,
+        quantity: item.quantity,
+        purchase_price: item.unitPrice,
+      });
+      if (batchError) console.error("Could not record batch for product", product.id, batchError);
+    }),
+  );
 
   redirect(`/vendors/${vendorId}`);
 }

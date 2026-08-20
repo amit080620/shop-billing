@@ -5,6 +5,7 @@ import Link from "next/link";
 import { formatMoney } from "@/lib/format";
 import { EmptyState } from "@/app/components/EmptyState";
 import { PageHeader } from "@/app/components/PageHeader";
+import { buildWhatsAppLink as buildWaLink } from "@/lib/whatsapp";
 import { useTranslation } from "@/lib/i18n/useTranslation";
 import type { Lang } from "@/lib/i18n/dictionary";
 
@@ -165,10 +166,8 @@ function AgingBadge({ days }: { days: number }) {
 }
 
 function buildWhatsAppLink(customer: Customer, shopName: string, t: (key: string, values?: Record<string, string | number>) => string) {
-  const digits = customer.phone.replace(/\D/g, "");
-  const withCountryCode = digits.length === 10 ? `91${digits}` : digits;
   const message = t("wa.reminderMessage", { name: customer.name, shop: shopName, amount: formatMoney(customer.balance) });
-  return `https://wa.me/${withCountryCode}?text=${encodeURIComponent(message)}`;
+  return buildWaLink(customer.phone, message);
 }
 
 function WhatsAppIcon() {

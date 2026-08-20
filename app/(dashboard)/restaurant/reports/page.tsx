@@ -7,11 +7,7 @@ import { PageHeader } from "@/app/components/PageHeader";
 import { EmptyState } from "@/app/components/EmptyState";
 import { DateRangeControls } from "./DateRangeControls";
 import { BarChart3 } from "lucide-react";
-
-function todayIso() {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-}
+import { todayIso } from "@/lib/dateHelpers";
 
 export default async function RestaurantReportsPage({
   searchParams,

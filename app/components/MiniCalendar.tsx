@@ -1,10 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-
-function todayIso() {
-  return new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
-}
+import { todayIso } from "@/lib/dateHelpers";
 
 export function MiniCalendar() {
   const router = useRouter();

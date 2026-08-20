@@ -1,12 +1,11 @@
 "use client";
 
 import Link from "next/link";
+import { buildWhatsAppLink } from "@/lib/whatsapp";
 
 function buildWinBackLink(name: string, phone: string) {
-  const digits = phone.replace(/\D/g, "");
-  const withCountryCode = digits.length === 10 ? `91${digits}` : digits;
   const message = `Hi ${name}, it's been a while since we saw you! We've missed you — come by soon, we'd love to have you back.`;
-  return `https://wa.me/${withCountryCode}?text=${encodeURIComponent(message)}`;
+  return buildWhatsAppLink(phone, message);
 }
 
 export function WinBackRow({

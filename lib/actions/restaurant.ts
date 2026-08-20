@@ -583,11 +583,15 @@ export async function settleOrderAction(
     .select("product_id, quantity")
     .eq("order_id", orderId)
     .not("product_id", "is", null);
-  for (const item of items ?? []) {
-    const { data: product } = await admin.from("products").select("id, track_inventory").eq("id", item.product_id).single();
-    if (!product?.track_inventory) continue;
-    await admin.rpc("decrement_stock", { p_product_id: product.id, p_quantity: Number(item.quantity) });
-  }
+  // Genuinely independent per item, so this runs concurrently rather
+  // than one product's DB round-trip at a time.
+  await Promise.all(
+    (items ?? []).map(async (item) => {
+      const { data: product } = await admin.from("products").select("id, track_inventory").eq("id", item.product_id).single();
+      if (!product?.track_inventory) return;
+      await admin.rpc("decrement_stock", { p_product_id: product.id, p_quantity: Number(item.quantity) });
+    }),
+  );
 
   revalidatePath("/restaurant");
   revalidatePath(`/restaurant/orders/${orderId}`);

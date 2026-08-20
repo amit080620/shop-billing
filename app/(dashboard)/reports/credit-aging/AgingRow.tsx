@@ -2,12 +2,11 @@
 
 import Link from "next/link";
 import { formatMoney } from "@/lib/format";
+import { buildWhatsAppLink } from "@/lib/whatsapp";
 
 function buildReminderLink(name: string, phone: string, amount: number) {
-  const digits = phone.replace(/\D/g, "");
-  const withCountryCode = digits.length === 10 ? `91${digits}` : digits;
   const message = `Hi ${name}, a gentle reminder — ${formatMoney(amount)} is pending on your account. Please clear it when convenient. Thank you!`;
-  return `https://wa.me/${withCountryCode}?text=${encodeURIComponent(message)}`;
+  return buildWhatsAppLink(phone, message);
 }
 
 export function AgingRow({

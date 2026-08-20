@@ -4,17 +4,9 @@ import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { formatMoney, formatDateTime } from "@/lib/format";
 import { PageHeader } from "@/app/components/PageHeader";
 import { EmptyState } from "@/app/components/EmptyState";
-import { SalesReportDateControls } from "./SalesReportDateControls";
+import { DateRangeControls } from "@/app/components/DateRangeControls";
 import { BarChart3 } from "lucide-react";
-
-function todayIso() {
-  return new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
-}
-function isoDaysAgo(days: number) {
-  const d = new Date();
-  d.setDate(d.getDate() - days);
-  return d.toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
-}
+import { todayIso, isoDaysAgo } from "@/lib/dateHelpers";
 
 export default async function SalesReportPage({
   searchParams,
@@ -47,7 +39,7 @@ export default async function SalesReportPage({
     <div className="flex flex-col gap-4">
       <PageHeader title="Sales report" subtitle="Every bill in the period, at a glance" icon={<BarChart3 size={18} strokeWidth={1.8} />} />
 
-      <SalesReportDateControls from={fromDate} to={toDate} />
+      <DateRangeControls from={fromDate} to={toDate} basePath="/reports/sales" />
 
       <section className="grid grid-cols-2 gap-3">
         <div className="neu-card p-4">

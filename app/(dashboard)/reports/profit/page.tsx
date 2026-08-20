@@ -4,16 +4,8 @@ import { formatMoney } from "@/lib/format";
 import { PageHeader } from "@/app/components/PageHeader";
 import { EmptyState } from "@/app/components/EmptyState";
 import { TrendingUp } from "lucide-react";
-import { ProfitDateControls } from "./ProfitDateControls";
-
-function todayIso() {
-  return new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
-}
-function isoDaysAgo(days: number) {
-  const d = new Date();
-  d.setDate(d.getDate() - days);
-  return d.toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
-}
+import { DateRangeControls } from "@/app/components/DateRangeControls";
+import { todayIso, isoDaysAgo } from "@/lib/dateHelpers";
 
 export default async function ProfitPage({
   searchParams,
@@ -143,7 +135,7 @@ export default async function ProfitPage({
         icon={<TrendingUp size={18} strokeWidth={1.8} />}
       />
 
-      <ProfitDateControls from={fromDate} to={toDate} />
+      <DateRangeControls from={fromDate} to={toDate} basePath="/reports/profit" />
 
       <section className="grid grid-cols-2 gap-3">
         <div className="neu-card p-4">

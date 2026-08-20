@@ -173,33 +173,36 @@ export async function createReturnAction(
   // philosophy as the sale-side stock decrement. Pharma items go back to
   // the exact batch they were sold from (via the original bill_item's
   // batch_id), so expiry tracking stays accurate — not just the
-  // product's aggregate count.
-  for (const row of itemRows) {
-    if (!row.product_id) continue;
-    const { data: product } = await admin
-      .from("products")
-      .select("id, track_inventory")
-      .eq("id", row.product_id)
-      .single();
-    if (!product?.track_inventory) continue;
-
-    const originalBatchId = billItemMap.get(row.bill_item_id)?.batch_id;
-    if (originalBatchId) {
-      const { data: batch } = await admin
-        .from("medicine_batches")
-        .select("id, quantity")
-        .eq("id", originalBatchId)
+  // product's aggregate count. Genuinely independent per returned line,
+  // so this runs concurrently.
+  await Promise.all(
+    itemRows.map(async (row) => {
+      if (!row.product_id) return;
+      const { data: product } = await admin
+        .from("products")
+        .select("id, track_inventory")
+        .eq("id", row.product_id)
         .single();
-      if (batch) {
-        await admin
-          .from("medicine_batches")
-          .update({ quantity: round2(Number(batch.quantity) + row.quantity) })
-          .eq("id", batch.id);
-      }
-    }
+      if (!product?.track_inventory) return;
 
-    await admin.rpc("increment_stock", { p_product_id: product.id, p_quantity: row.quantity });
-  }
+      const originalBatchId = billItemMap.get(row.bill_item_id)?.batch_id;
+      if (originalBatchId) {
+        const { data: batch } = await admin
+          .from("medicine_batches")
+          .select("id, quantity")
+          .eq("id", originalBatchId)
+          .single();
+        if (batch) {
+          await admin
+            .from("medicine_batches")
+            .update({ quantity: round2(Number(batch.quantity) + row.quantity) })
+            .eq("id", batch.id);
+        }
+      }
+
+      await admin.rpc("increment_stock", { p_product_id: product.id, p_quantity: row.quantity });
+    }),
+  );
 
   revalidatePath(`/print/bill/${billId}`);
   if (bill.customer_id) revalidatePath(`/customers/${bill.customer_id}`);

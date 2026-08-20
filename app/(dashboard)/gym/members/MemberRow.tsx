@@ -7,6 +7,7 @@ import { CheckCircle2, MessageCircle, Snowflake } from "lucide-react";
 import { freezeMembershipAction, cancelMembershipAction, recordPtSessionAction, checkInMemberAction } from "@/lib/actions/gym";
 import { useTranslation } from "@/lib/i18n/useTranslation";
 import type { Lang } from "@/lib/i18n/dictionary";
+import { buildWhatsAppLink } from "@/lib/whatsapp";
 
 type Membership = {
   id: string;
@@ -96,13 +97,14 @@ export function MemberRow({ member, lang }: { member: Member; lang: Lang }) {
         </button>
         {m && m.status === "active" && (tone === "soon" || tone === "expired") && (
           <a
-            href={`https://wa.me/${member.phone.replace(/\D/g, "").length === 10 ? `91${member.phone.replace(/\D/g, "")}` : member.phone.replace(/\D/g, "")}?text=${encodeURIComponent(
+            href={buildWhatsAppLink(
+              member.phone,
               t("wa.gymExpiryReminder", {
                 name: member.name,
                 plan: m.planName,
                 date: new Date(m.endDate).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata", day: "numeric", month: "short" }),
               }),
-            )}`}
+            )}
             target="_blank"
             rel="noopener noreferrer"
             className="rounded-lg border border-credit bg-credit-soft px-2.5 py-1 text-xs font-medium text-credit"

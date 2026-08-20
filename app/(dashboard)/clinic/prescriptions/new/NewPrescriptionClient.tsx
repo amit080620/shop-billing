@@ -10,17 +10,13 @@ import { SearchableSelect } from "@/app/components/SearchableSelect";
 import { COMMON_MEDICINE_NAMES } from "@/lib/constants/commonMedicines";
 import type { Lang } from "@/lib/i18n/dictionary";
 import { FileText, Smile, ClipboardList } from "lucide-react";
+import { todayIso } from "@/lib/dateHelpers";
 
 type Patient = { id: string; name: string; phone: string; dateOfBirth: string | null; gender: string | null };
 type MedicineRow = PrescriptionItemInput & { key: string };
 
 const FREQUENCY_PRESETS = ["1-0-0", "0-1-0", "0-0-1", "1-0-1", "1-1-1", "1-1-0", "SOS"];
 const INSTRUCTION_PRESETS = ["Before food", "After food", "With food", "Empty stomach", "At bedtime"];
-
-function todayIso() {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-}
 
 function newMedicineRow(): MedicineRow {
   return { key: Math.random().toString(36).slice(2), medicineName: "", dosage: "", frequency: "", duration: "", instructions: "", quantity: undefined };

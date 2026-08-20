@@ -1,6 +1,7 @@
 "use client";
 
 import { Cake, MessageCircle } from "lucide-react";
+import { buildWhatsAppLink } from "@/lib/whatsapp";
 
 type BirthdayCustomer = {
   id: string;
@@ -23,8 +24,7 @@ export function BirthdayRow({
     const message = isToday
       ? `Happy birthday, ${customer.name}! 🎉 Wishing you a wonderful year ahead — from all of us at ${shopName}.`
       : `Hi ${customer.name}, wishing you an early happy birthday from ${shopName}! 🎉`;
-    const digits = customer.phone.replace(/\D/g, "");
-    window.open(`https://wa.me/${digits}?text=${encodeURIComponent(message)}`, "_blank");
+    window.open(buildWhatsAppLink(customer.phone, message), "_blank");
   }
 
   return (

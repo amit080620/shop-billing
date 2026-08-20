@@ -11,6 +11,7 @@ import { PageHeader } from "@/app/components/PageHeader";
 import { SearchableSelect } from "@/app/components/SearchableSelect";
 import type { Lang } from "@/lib/i18n/dictionary";
 import { CalendarPlus } from "lucide-react";
+import { todayIso } from "@/lib/dateHelpers";
 
 type Patient = { id: string; name: string; phone: string };
 
@@ -21,11 +22,6 @@ function SubmitButton() {
       {pending ? "Booking…" : "Book appointment"}
     </button>
   );
-}
-
-function todayIso() {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
 export function NewClinicAppointmentClient({ patients, lang }: { patients: Patient[]; lang: Lang }) {

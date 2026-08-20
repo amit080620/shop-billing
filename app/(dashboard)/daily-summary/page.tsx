@@ -5,17 +5,13 @@ import { formatMoney } from "@/lib/format";
 import { PageHeader } from "@/app/components/PageHeader";
 import { Users, Receipt, Calculator } from "lucide-react";
 import { DatePicker } from "./DatePicker";
+import { todayIso } from "@/lib/dateHelpers";
 
 const METHODS = ["cash", "card", "upi", "online", "other"] as const;
 type Method = (typeof METHODS)[number];
 
 function emptyTotals(): Record<Method, number> {
   return { cash: 0, card: 0, upi: 0, online: 0, other: 0 };
-}
-
-function todayIso() {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
 export default async function DailySummaryPage({

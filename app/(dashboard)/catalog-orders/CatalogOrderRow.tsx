@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { acceptCatalogOrderAction, rejectCatalogOrderAction } from "@/lib/actions/catalog";
 import { formatMoney } from "@/lib/format";
+import { buildWhatsAppLink } from "@/lib/whatsapp";
 import { MessageCircle } from "lucide-react";
 
 type Request = {
@@ -70,8 +71,7 @@ export function CatalogOrderRow({
       upiLink,
       `Once we receive the payment, we'll start preparing your order right away.`,
     ].join("\n\n");
-    const digitsOnly = request.customerPhone.replace(/\D/g, "");
-    window.open(`https://wa.me/${digitsOnly}?text=${encodeURIComponent(message)}`, "_blank");
+    window.open(buildWhatsAppLink(request.customerPhone, message), "_blank");
   }
 
   return (

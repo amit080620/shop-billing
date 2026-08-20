@@ -6,6 +6,7 @@ import { EmptyState } from "@/app/components/EmptyState";
 import { useTranslation } from "@/lib/i18n/useTranslation";
 import type { Lang } from "@/lib/i18n/dictionary";
 import { Tag } from "lucide-react";
+import { buildWhatsAppLink } from "@/lib/whatsapp";
 
 type Customer = { id: string; name: string; phone: string };
 
@@ -180,12 +181,6 @@ export function OffersClient({
       )}
     </div>
   );
-}
-
-function buildWhatsAppLink(phone: string, message: string) {
-  const digits = phone.replace(/\D/g, "");
-  const withCountryCode = digits.length === 10 ? `91${digits}` : digits;
-  return `https://wa.me/${withCountryCode}?text=${encodeURIComponent(message)}`;
 }
 
 function WhatsAppIcon() {

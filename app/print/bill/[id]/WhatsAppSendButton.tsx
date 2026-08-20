@@ -3,6 +3,7 @@
 import { formatMoney } from "@/lib/format";
 import { useTranslation } from "@/lib/i18n/useTranslation";
 import type { Lang } from "@/lib/i18n/dictionary";
+import { buildWhatsAppLink } from "@/lib/whatsapp";
 
 export function WhatsAppSendButton({
   customerName,
@@ -35,9 +36,6 @@ export function WhatsAppSendButton({
     );
   }
 
-  const digits = customerPhone.replace(/\D/g, "");
-  const withCountryCode = digits.length === 10 ? `91${digits}` : digits;
-
   const lines = [
     t("wa.billGreeting", { name: customerName ?? "there", shop: shopName }),
     t("wa.billInvoiceNo", { number: invoiceNumber }),
@@ -55,7 +53,7 @@ export function WhatsAppSendButton({
   }
   lines.push(t("wa.billThanks"));
 
-  const href = `https://wa.me/${withCountryCode}?text=${encodeURIComponent(lines.join("\n"))}`;
+  const href = buildWhatsAppLink(customerPhone, lines.join("\n"));
 
   return (
     <a
