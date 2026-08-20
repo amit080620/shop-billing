@@ -73,7 +73,7 @@ export default async function DashboardLayout({
         </div>
       </div>
 
-      <main className="page-enter mx-auto max-w-lg px-4 py-4 md:max-w-5xl md:px-8 md:py-8 xl:max-w-6xl">{children}</main>
+      <main className="page-enter mx-auto max-w-lg px-4 py-4 pb-24 md:max-w-5xl md:px-8 md:py-8 md:pb-8 xl:max-w-6xl">{children}</main>
 
       <BottomNav lang={lang} businessType={session.businessType} permissions={session.permissions} />
       <WelcomeTour storageKey={`tour-seen-${session.shopId}`} businessType={session.businessType} />

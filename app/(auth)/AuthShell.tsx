@@ -19,7 +19,7 @@ export function AuthShell({
 }) {
   return (
     <div
-      className="flex min-h-screen flex-col items-center justify-center px-6 py-12"
+      className="flex flex-col items-center justify-center px-6 py-12 md:min-h-screen"
       style={{
         background:
           "radial-gradient(1200px 600px at 50% -10%, var(--brand-soft), var(--background) 60%)",

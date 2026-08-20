@@ -457,7 +457,11 @@ label.neu-card:active {
     outline-offset: 2px;
   }
   .btn-primary:disabled {
-    opacity: 0.6;
+    opacity: 1;
+    background: var(--background);
+    color: var(--muted);
+    border: 1px solid var(--border);
+    box-shadow: none;
   }
   .btn-primary-sm {
     border-radius: var(--radius-sm);
