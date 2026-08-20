@@ -36,6 +36,31 @@ export default async function ReportsPage() {
             sub="What you actually earned — sales minus stock cost"
           />
           <ReportLink
+            href="/reports/credit-aging"
+            label="Udhaar aging"
+            sub="Who's owed the longest — chase the oldest first"
+          />
+          <ReportLink
+            href="/reports/win-back"
+            label="Win them back"
+            sub="Regulars who've gone quiet — worth a nudge"
+          />
+          <ReportLink
+            href="/reports/staff-performance"
+            label="Staff performance"
+            sub="Who's selling, who's collecting"
+          />
+          <ReportLink
+            href="/reports/vendor-comparison"
+            label="Vendor price comparison"
+            sub="Same item, different vendors — who's cheapest"
+          />
+          <ReportLink
+            href="/reports/ca-export"
+            label="CA export pack"
+            sub="Full-year sales & purchases, ready to send"
+          />
+          <ReportLink
             href="/reports/export"
             label="Export data"
             sub="Bills, petty cash, orders, customers & vendors — as Excel"

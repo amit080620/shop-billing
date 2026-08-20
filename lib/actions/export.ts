@@ -3,7 +3,7 @@
 import { requireSession } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
-export type ExportDataType = "bills" | "restaurant_orders" | "petty_cash" | "online_orders" | "customers" | "vendors";
+export type ExportDataType = "bills" | "restaurant_orders" | "petty_cash" | "online_orders" | "customers" | "vendors" | "purchases";
 
 function csvEscape(value: unknown): string {
   const s = value === null || value === undefined ? "" : String(value);
@@ -146,6 +146,27 @@ export async function exportReportAction(
     return {
       csv: toCsv(headers, rows),
       filename: `new_vendors_${from}_to_${to}.csv`,
+      headers,
+      rows,
+    };
+  }
+
+  if (type === "purchases") {
+    const { data } = await admin
+      .from("purchases")
+      .select("purchase_date, total, paid_amount, payable_amount, vendors ( name )")
+      .eq("shop_id", session.shopId)
+      .gte("purchase_date", from)
+      .lte("purchase_date", to)
+      .order("purchase_date", { ascending: true });
+    const rows = (data ?? []).map((p) => {
+      const vendor = Array.isArray(p.vendors) ? p.vendors[0] : p.vendors;
+      return [p.purchase_date, vendor?.name ?? "", Number(p.total), Number(p.paid_amount), Number(p.payable_amount)];
+    });
+    const headers = ["Date", "Vendor", "Total", "Paid", "Payable"];
+    return {
+      csv: toCsv(headers, rows),
+      filename: `purchases_${from}_to_${to}.csv`,
       headers,
       rows,
     };
