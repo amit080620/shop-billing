@@ -3,13 +3,14 @@
 import { useState } from "react";
 import { CameraCapture } from "@/app/components/CameraCapture";
 import { preprocessImage } from "@/lib/ocr/preprocess";
+import { detectBlur } from "@/lib/ocr/blurDetection";
 import { Camera } from "lucide-react";
 import { runOCR, PSM } from "@/lib/ocr/tesseract";
 import { parsePettyCashFields } from "@/lib/ocr/parser";
 import { confidenceLevel } from "@/lib/ocr/types";
 import type { ExtractedPettyCashFields } from "@/lib/ocr/types";
 
-type Step = "capture" | "processing" | "review" | "error";
+type Step = "capture" | "blurry" | "processing" | "review" | "error";
 
 export function ScanBillModal({
   onConfirm,
@@ -25,8 +26,9 @@ export function ScanBillModal({
   const [extracted, setExtracted] = useState<ExtractedPettyCashFields | null>(null);
   const [vendorInput, setVendorInput] = useState("");
   const [amountInput, setAmountInput] = useState("");
+  const [pendingFile, setPendingFile] = useState<Blob | null>(null);
 
-  async function handleCapture(file: Blob) {
+  async function processFile(file: Blob) {
     setStep("processing");
     setErrorMessage(null);
     try {
@@ -60,8 +62,42 @@ export function ScanBillModal({
     }
   }
 
+  async function handleCapture(file: Blob) {
+    setPendingFile(file);
+    const { isBlurry } = await detectBlur(file);
+    if (isBlurry) {
+      setStep("blurry");
+      return;
+    }
+    await processFile(file);
+  }
+
   if (step === "capture") {
     return <CameraCapture onCapture={handleCapture} onCancel={onCancel} />;
+  }
+
+  if (step === "blurry") {
+    return (
+      <div className="flex flex-col items-center gap-4 p-6 text-center">
+        <p className="text-3xl">📷</p>
+        <p className="text-base font-semibold text-foreground">This photo looks a bit blurry</p>
+        <p className="text-sm text-muted">
+          Reading text from a blurry photo rarely works well. Hold the camera steady and make sure the bill is
+          well-lit before tapping the shutter.
+        </p>
+        <div className="flex w-full gap-2">
+          <button onClick={() => setStep("capture")} className="btn-primary flex-1">
+            Retake photo
+          </button>
+          <button
+            onClick={() => pendingFile && processFile(pendingFile)}
+            className="flex-1 rounded-lg border border-border px-4 py-2.5 text-sm font-medium text-foreground"
+          >
+            Use anyway
+          </button>
+        </div>
+      </div>
+    );
   }
 
   if (step === "processing") {

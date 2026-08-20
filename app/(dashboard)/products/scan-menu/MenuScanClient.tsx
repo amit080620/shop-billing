@@ -55,10 +55,26 @@ export function MenuScanClient() {
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [justSaved, setJustSaved] = useState<number | null>(null);
+  const [blurWarning, setBlurWarning] = useState<File | null>(null);
 
-  async function handleFile(file: File) {
+  async function handleFile(file: File, skipBlurCheck = false) {
     setError(null);
     setItems([]);
+    setBlurWarning(null);
+
+    // Genuinely check sharpness BEFORE spending time on OCR — a
+    // blurry photo would just waste the wait and produce garbage
+    // results, so this catches it at the cheapest possible point.
+    if (!skipBlurCheck) {
+      const { detectBlur } = await import("@/lib/ocr/blurDetection");
+      const { isBlurry } = await detectBlur(file);
+      if (isBlurry) {
+        setPreviewUrl(URL.createObjectURL(file));
+        setBlurWarning(file);
+        return;
+      }
+    }
+
     setPreviewUrl(URL.createObjectURL(file));
     setIsScanning(true);
     setOcrProgress(0);
@@ -168,6 +184,27 @@ export function MenuScanClient() {
         <div className="neu-card overflow-hidden p-2">
           {/* eslint-disable-next-line @next/next/no-img-element -- local camera capture preview, not a stored asset */}
           <img src={previewUrl} alt="Scanned menu" className="max-h-56 w-full rounded-lg object-contain" />
+        </div>
+      )}
+
+      {blurWarning && (
+        <div className="neu-card flex flex-col items-center gap-3 p-4 text-center">
+          <p className="text-sm font-semibold text-foreground">This photo looks a bit blurry</p>
+          <p className="text-xs text-muted">
+            Reading text from a blurry photo rarely works well. Hold the camera steady and make sure the menu is
+            well-lit before tapping the shutter.
+          </p>
+          <div className="flex w-full gap-2">
+            <button onClick={() => fileInputRef.current?.click()} className="btn-primary-sm flex-1">
+              Retake photo
+            </button>
+            <button
+              onClick={() => blurWarning && handleFile(blurWarning, true)}
+              className="flex-1 rounded-lg border border-border px-3 py-2 text-xs font-medium text-foreground"
+            >
+              Use anyway
+            </button>
+          </div>
         </div>
       )}
 
