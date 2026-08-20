@@ -68,11 +68,16 @@ export function tabsFor(businessType: string, t: (key: string) => string, permis
   // other business type — Buy (purchases) moves into More instead,
   // since it's genuinely a less frequent action day-to-day than
   // checking reports.
+  // Buy (vendor purchases for spare parts/materials) is genuinely a
+  // routine, frequent action for a repair shop — unlike the trade-offs
+  // made for Gym/Lab (attendance logging, test catalog), which are
+  // genuinely less frequent. Reports gets a prominent shortcut on the
+  // Service Home dashboard instead of its own tab slot here.
   const SERVICE_TABS = [
     { href: "/", label: t("nav.home"), icon: HomeIcon },
     { href: "/bills/new", label: "Sell", icon: SellIcon },
+    { href: "/purchases/new", label: t("nav.buy"), icon: BuyIcon },
     { href: "/service", label: "Jobs", icon: ServiceIcon },
-    { href: "/reports", label: t("nav.reports"), icon: ReportIcon },
     { href: "/more", label: t("nav.more"), icon: MoreIcon },
   ];
 

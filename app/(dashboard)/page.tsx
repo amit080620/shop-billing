@@ -999,6 +999,16 @@ async function ServiceHome({
         />
       </section>
 
+      <Link
+        href="/reports"
+        className="neu-card flex items-center justify-between px-4 py-3 text-sm font-medium text-foreground"
+      >
+        <span className="flex items-center gap-2">
+          <TrendingDown size={16} className="rotate-180 text-brand-text" /> View reports
+        </span>
+        <span className="text-muted">→</span>
+      </Link>
+
       <div className="grid grid-cols-2 gap-2">
         <Link
           href="/bills/new"
