@@ -60,7 +60,7 @@ export default async function MorePage() {
       </MenuGroup>
 
       {(session.businessType === "pharmacy" || session.businessType === "clinic") && (
-        <MenuGroup title="Medicine stock">
+        <MenuGroup title="Medicine stock" defaultOpen>
           <MenuLink href="/pharmacy/expiry" label="Expiry alerts" sub="Medicines nearing or past expiry" icon={ExpiryIcon} tone="warning" />
           <MenuLink href="/pharmacy/write-offs" label="Write-off history" sub="Stock lost to expiry or damage" icon={ClockIcon} />
           {session.businessType === "pharmacy" && (
@@ -73,7 +73,7 @@ export default async function MorePage() {
       )}
 
       {session.businessType === "restaurant" && (
-        <MenuGroup title="Restaurant">
+        <MenuGroup title="Restaurant" defaultOpen>
           <MenuLink href="/restaurant-kds" label="Kitchen display (TV)" sub="Big-screen view for the kitchen" icon={KitchenIcon} tone="secondary" />
           <MenuLink href="/restaurant/kds-settings" label="Kitchen display settings" sub="Cards per row, text size" icon={KitchenIcon} tone="secondary" />
           <MenuLink href="/restaurant/combos" label="Combo deals" sub="Bundle menu items at a set price" icon={BoxIcon} />
@@ -82,7 +82,7 @@ export default async function MorePage() {
       )}
 
       {session.businessType === "service" && (
-        <MenuGroup title="Service & repairs">
+        <MenuGroup title="Service & repairs" defaultOpen>
           <MenuLink href="/service" label="All jobs" sub="Every repair, by status" icon={WrenchIcon} tone="secondary" />
           <MenuLink href="/service/new" label="New job" sub="Take in an item for repair" icon={WrenchIcon} tone="secondary" />
           <MenuLink href="/service/reports" label="Job report" sub="Earnings, technician split, item types" icon={ClockIcon} />
@@ -90,39 +90,39 @@ export default async function MorePage() {
       )}
 
       {session.businessType === "rental" && (
-        <MenuGroup title="Rentals">
+        <MenuGroup title="Rentals" defaultOpen>
           <MenuLink href="/rentals/history" label="Rental history" sub="Past returns & cancellations" icon={ClockIcon} />
         </MenuGroup>
       )}
 
       {session.businessType === "transport" && (
-        <MenuGroup title="Transport">
+        <MenuGroup title="Transport" defaultOpen>
           <MenuLink href="/transport/vehicles" label="Vehicles" sub="Manage trucks & per-km rates" icon={TruckIcon} tone="secondary" />
           <MenuLink href="/transport/reports" label="Vehicle-wise trips" sub="Rounds, km & earnings per vehicle" icon={ClockIcon} />
         </MenuGroup>
       )}
 
       {["hardware", "mart", "general"].includes(session.businessType) && (
-        <MenuGroup title="Hardware">
+        <MenuGroup title="Hardware" defaultOpen>
           <MenuLink href="/warranty" label="Warranty lookup" sub="Check warranty status by phone or invoice" icon={WarrantyIcon} tone="success" />
         </MenuGroup>
       )}
 
       {session.businessType === "salon" && (
-        <MenuGroup title="Salon">
+        <MenuGroup title="Salon" defaultOpen>
           <MenuLink href="/salon" label="Staff-wise revenue" sub="Who's bringing in how much" icon={SalonIcon} tone="secondary" />
         </MenuGroup>
       )}
 
       {session.businessType === "jewellery" && (
-        <MenuGroup title="Jewellery">
+        <MenuGroup title="Jewellery" defaultOpen>
           <MenuLink href="/jewellery/rates" label="Today's rate" sub="Set gold/silver rate per gram" icon={JewelleryIcon} tone="warning" />
           <MenuLink href="/jewellery/exchanges" label="Exchange history" sub="Old gold/silver taken in" icon={ClockIcon} />
         </MenuGroup>
       )}
 
       {session.businessType === "clinic" && (
-        <MenuGroup title="Clinic">
+        <MenuGroup title="Clinic" defaultOpen>
           <MenuLink href="/clinic/appointments" label="Appointments" sub="Book & manage patient visits" icon={ClinicIcon} tone="info" />
           <MenuLink href="/clinic/prescriptions/new" label="New prescription" sub="Write an Rx for a patient" icon={ClinicIcon} tone="info" />
           <MenuLink href="/clinic/settings" label="Prescription pad settings" sub="Letterhead, header/footer, Rx fields" icon={ClinicIcon} tone="info" />
@@ -131,7 +131,7 @@ export default async function MorePage() {
       )}
 
       {session.businessType === "gym" && (
-        <MenuGroup title="Gym">
+        <MenuGroup title="Gym" defaultOpen>
           <MenuLink href="/gym/members" label="Members" sub="View members, expiry status, PT sessions" icon={GymIcon} tone="success" />
           <MenuLink href="/gym/members/new" label="Sell membership" sub="New sign-up or renewal" icon={GymIcon} tone="success" />
           {isModuleEnabled(session.enabledModules, "leads_crm") && (
@@ -149,7 +149,7 @@ export default async function MorePage() {
       )}
 
       {session.businessType === "lab" && (
-        <MenuGroup title="Lab">
+        <MenuGroup title="Lab" defaultOpen>
           <MenuLink href="/lab/orders" label="Orders" sub="Booked, in-progress, and completed orders" icon={LabIcon} tone="info" />
           <MenuLink href="/lab/orders/new" label="New order" sub="Book tests for a patient" icon={LabIcon} tone="info" />
           <MenuLink href="/lab/tests" label="Test catalog & packages" sub="Set up tests, prices, reference ranges" icon={LabIcon} tone="info" />
@@ -167,7 +167,7 @@ export default async function MorePage() {
         <MenuLink href="/invoice-settings" label="Invoice design" sub="Tagline, footer, terms, accent colour" icon={InvoiceDesignIcon} tone="secondary" />
       </MenuGroup>
 
-      <MenuGroup title="Money">
+      <MenuGroup title="Money" defaultOpen>
         <MenuLink href="/bills/all" label="All bills" sub="Browse & reprint any past bill" icon={({ className }) => <ReceiptIcon className={className} />} tone="brand" />
         {isModuleEnabled(session.enabledModules, "petty_cash") && (
           <MenuLink href="/petty-cash" label="Petty cash" sub="Small day-to-day cash expenses" icon={PettyCashIcon} tone="warning" />
@@ -180,7 +180,7 @@ export default async function MorePage() {
         </MenuGroup>
       )}
 
-      <MenuGroup title="People">
+      <MenuGroup title="People" defaultOpen>
         <MenuLink
           href="/customers"
           label={session.businessType === "clinic" ? "Patients" : session.businessType === "gym" ? "Members" : t("more.customers")}
@@ -201,7 +201,7 @@ export default async function MorePage() {
         )}
       </MenuGroup>
 
-      <MenuGroup title="Catalog">
+      <MenuGroup title="Catalog" defaultOpen>
         <MenuLink href="/products" label={terminology.productPlural} sub={terminology.productSub} icon={BoxIcon} />
         {isModuleEnabled(session.enabledModules, "stock_audit") && (
           <MenuLink href="/stock-audit" label="Stock audit" sub="Count physical stock, reconcile mismatches" icon={AuditIcon} tone="warning" />
@@ -242,12 +242,35 @@ export default async function MorePage() {
   );
 }
 
-function MenuGroup({ title, children }: { title: string; children: React.ReactNode }) {
+function MenuGroup({
+  title,
+  children,
+  defaultOpen = false,
+}: {
+  title: string;
+  children: React.ReactNode;
+  defaultOpen?: boolean;
+}) {
   return (
-    <section className="flex flex-col gap-2">
-      <h2 className="px-1 text-xs font-semibold uppercase tracking-wide text-muted">{title}</h2>
-      <div className="neu-tray flex flex-col gap-2 p-2">{children}</div>
-    </section>
+    <details className="group flex flex-col gap-2" open={defaultOpen}>
+      <summary className="flex cursor-pointer list-none items-center justify-between px-1 text-xs font-semibold uppercase tracking-wide text-muted">
+        {title}
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className="shrink-0 transition-transform duration-200 group-open:rotate-180"
+        >
+          <polyline points="6 9 12 15 18 9" />
+        </svg>
+      </summary>
+      <div className="neu-tray mt-2 flex flex-col gap-2 p-2">{children}</div>
+    </details>
   );
 }
 
