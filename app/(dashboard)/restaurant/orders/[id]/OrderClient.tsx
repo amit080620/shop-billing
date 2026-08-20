@@ -17,6 +17,7 @@ import {
   setWaiterAction,
   markItemServedAction,
   mergeTableAction,
+  getOrderUpiQrAction,
   type SettlePayment,
 } from "@/lib/actions/restaurant";
 import { addComboToOrderAction } from "@/lib/actions/combos";
@@ -673,6 +674,16 @@ function BillPrintView({
   onClose: () => void;
   t: Translator;
 }) {
+  const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
+  const [creditAmount, setCreditAmount] = useState(0);
+
+  useEffect(() => {
+    getOrderUpiQrAction(order.id).then((result) => {
+      if (result.qrDataUrl) setQrDataUrl(result.qrDataUrl);
+      if (result.creditAmount) setCreditAmount(result.creditAmount);
+    });
+  }, [order.id]);
+
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-black/50" onClick={onClose}>
       <div className="no-print flex justify-end gap-2 bg-surface p-3" onClick={(e) => e.stopPropagation()}>
@@ -728,6 +739,13 @@ function BillPrintView({
           </div>
         )}
         <div className="mt-1 flex justify-between border-t border-black pt-1 text-sm font-bold"><span>{t("order.total")}</span><span>{formatMoney(order.total)}</span></div>
+        {qrDataUrl && creditAmount > 0 && (
+          <div className="mt-3 flex flex-col items-center gap-1 border-t border-dashed border-gray-400 pt-3">
+            <p className="text-xs font-semibold text-gray-700">Scan to pay {formatMoney(creditAmount)}</p>
+            {/* eslint-disable-next-line @next/next/no-img-element -- static data URL */}
+            <img src={qrDataUrl} alt="UPI payment QR code" className="h-32 w-32" />
+          </div>
+        )}
         <p className="mt-3 text-center text-[10px]">{t("order.thankYou")}</p>
       </div>
       <style jsx global>{`

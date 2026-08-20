@@ -6,7 +6,7 @@ import { createSupabaseAdminClient } from "../supabase/admin";
 import { round2 } from "../gst";
 import { logError } from "../audit";
 
-export type ActionState = { error?: string } | null;
+export type ActionState = { error?: string; jobId?: string } | null;
 
 function currentFinancialYear() {
   const now = new Date();
@@ -108,7 +108,7 @@ export async function createJobAction(
   }
 
   revalidatePath("/service");
-  return null;
+  return { jobId: job.id };
 }
 
 export async function updateJobStatusAction(

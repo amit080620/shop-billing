@@ -24,6 +24,11 @@ create table if not exists shops (
   state_code text, -- 2-digit GST state code; drives CGST+SGST vs IGST
   pincode text,
   gst_scheme text not null default 'regular' check (gst_scheme in ('regular', 'composition')),
+  -- Loyalty program — 0 means off (the default for every shop until an
+  -- owner deliberately enables it in Settings). Points are earned per
+  -- ₹100 of PAID amount (not credit), redeemed at redemption_value ₹/point.
+  loyalty_points_per_100 numeric(6, 2) not null default 0,
+  loyalty_redemption_value numeric(6, 2) not null default 1,
   -- true: product/menu prices are the FINAL amount the customer pays —
   -- GST is backed out of it, never added on top (e.g. a ₹100 Thali
   -- always bills at ₹100). false: prices are the pre-tax base and GST
@@ -105,8 +110,10 @@ create table if not exists customers (
   address text,
   state text,
   state_code text,
+  loyalty_points integer not null default 0,
   created_at timestamptz not null default now()
 );
+alter table customers add column if not exists loyalty_points integer not null default 0;
 alter table customers add column if not exists gstin text;
 alter table customers add column if not exists address text;
 alter table customers add column if not exists state text;
@@ -373,6 +380,18 @@ create table if not exists super_admins (
   created_at timestamptz not null default now()
 );
 alter table super_admins enable row level security;
+
+-- Read-only "Leads Dashboard" access — genuinely separate from
+-- super_admins. Anyone whitelisted here can view the leads list; they
+-- can never be granted more than that, since every mutation in the
+-- admin actions checks super_admins specifically, never this table.
+-- Only super-admin-only server actions ever write to this table.
+create table if not exists team_viewers (
+  user_id uuid primary key references auth.users(id) on delete cascade,
+  name text not null,
+  created_at timestamptz not null default now()
+);
+alter table team_viewers enable row level security;
 
 -- NULL = unlimited (default for all existing shops, so this rolls out
 -- without locking anyone out) — a super admin sets an actual date once a
@@ -1899,6 +1918,20 @@ returns void language sql as $$
   update products
   set stock_quantity = stock_quantity + p_quantity
   where id = p_product_id;
+$$;
+
+create or replace function increment_loyalty_points(p_customer_id uuid, p_points integer)
+returns void language sql as $$
+  update customers
+  set loyalty_points = loyalty_points + p_points
+  where id = p_customer_id;
+$$;
+
+create or replace function redeem_loyalty_points(p_customer_id uuid, p_points integer)
+returns void language sql as $$
+  update customers
+  set loyalty_points = greatest(0, loyalty_points - p_points)
+  where id = p_customer_id;
 $$;
 
 -- ─── PHASE 1: Comprehensive audit log ───────────────────────────────────────

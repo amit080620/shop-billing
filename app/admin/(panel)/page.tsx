@@ -38,6 +38,17 @@ export default async function AdminDashboardPage() {
     <div className="flex flex-col gap-4">
       <h1 className="text-lg font-semibold">All shops</h1>
 
+      <Link
+        href="/admin/team-access"
+        className="flex items-center justify-between rounded-xl border border-gray-800 bg-gray-900 px-4 py-3 text-sm"
+      >
+        <span>
+          <span className="font-medium text-white">Leads Dashboard access</span>
+          <span className="block text-xs text-gray-400">Give your team view-only access to new signups</span>
+        </span>
+        <span className="text-gray-500">→</span>
+      </Link>
+
       <div className="grid grid-cols-3 gap-2">
         <div className="rounded-xl border border-gray-800 bg-gray-900 p-3 text-center">
           <p className="text-xs text-gray-400">Total shops</p>

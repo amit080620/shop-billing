@@ -271,6 +271,25 @@ export async function createBillCore(
     if (stockError) console.error("Could not update stock for product", product.id, stockError);
   }
 
+  // Loyalty points — best-effort, same non-blocking pattern as the
+  // stock decrement above. Based on paid amount only: crediting points
+  // against an unpaid (credit) portion would reward money not actually
+  // received yet.
+  if (customerId && totals.paidAmount > 0) {
+    const { data: shop } = await admin.from("shops").select("loyalty_points_per_100").eq("id", session.shopId).single();
+    const rate = Number(shop?.loyalty_points_per_100 ?? 0);
+    if (rate > 0) {
+      const pointsEarned = Math.floor((totals.paidAmount / 100) * rate);
+      if (pointsEarned > 0) {
+        const { error: pointsError } = await admin.rpc("increment_loyalty_points", {
+          p_customer_id: customerId,
+          p_points: pointsEarned,
+        });
+        if (pointsError) console.error("Could not award loyalty points", customerId, pointsError);
+      }
+    }
+  }
+
   return { billId: bill.id, invoiceNumber };
 }
 

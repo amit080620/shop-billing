@@ -214,3 +214,33 @@ export async function uploadSettingsImageAction(kind: SettingsImageKind, formDat
   revalidatePath("/salon/settings/booking");
   return { url };
 }
+
+export async function saveLoyaltySettingsAction(settings: {
+  pointsPer100: number;
+  redemptionValue: number;
+}): Promise<{ error?: string }> {
+  const session = await requireOwner();
+  const admin = createSupabaseAdminClient();
+
+  if (!Number.isFinite(settings.pointsPer100) || settings.pointsPer100 < 0) {
+    return { error: "Points rate must be 0 or higher" };
+  }
+  if (!Number.isFinite(settings.redemptionValue) || settings.redemptionValue < 0) {
+    return { error: "Redemption value must be 0 or higher" };
+  }
+
+  const { error } = await admin
+    .from("shops")
+    .update({
+      loyalty_points_per_100: settings.pointsPer100,
+      loyalty_redemption_value: settings.redemptionValue,
+    })
+    .eq("id", session.shopId);
+  if (error) {
+    console.error("Could not save loyalty settings", error);
+    return { error: "Could not save settings" };
+  }
+  revalidatePath("/more");
+  revalidatePath("/loyalty-settings");
+  return {};
+}

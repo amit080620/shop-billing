@@ -16,7 +16,7 @@ export default async function CustomerLedgerPage({
 
   const { data: customer } = await admin
     .from("customers")
-    .select("id, name, phone, gstin, address, state_code")
+    .select("id, name, phone, gstin, address, state_code, loyalty_points")
     .eq("id", id)
     .eq("shop_id", session.shopId) // ownership check
     .single();
@@ -103,6 +103,7 @@ export default async function CustomerLedgerPage({
         gstin: customer.gstin,
         address: customer.address,
         stateCode: customer.state_code,
+        loyaltyPoints: Number(customer.loyalty_points ?? 0),
       }}
       shopName={session.shopName}
       balance={balance}

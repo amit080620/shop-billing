@@ -22,6 +22,8 @@ export interface Database {
           state_code: string | null;
           pincode: string | null;
           gst_scheme: "regular" | "composition";
+          loyalty_points_per_100: number;
+          loyalty_redemption_value: number;
           price_includes_gst: boolean;
           invoice_prefix: string;
           logo_url: string | null;
@@ -46,6 +48,8 @@ export interface Database {
           state_code?: string | null;
           pincode?: string | null;
           gst_scheme?: "regular" | "composition";
+          loyalty_points_per_100?: number;
+          loyalty_redemption_value?: number;
           price_includes_gst?: boolean;
           invoice_prefix?: string;
           logo_url?: string | null;
@@ -70,6 +74,8 @@ export interface Database {
           state_code?: string | null;
           pincode?: string | null;
           gst_scheme?: "regular" | "composition";
+          loyalty_points_per_100?: number;
+          loyalty_redemption_value?: number;
           price_includes_gst?: boolean;
           invoice_prefix?: string;
           logo_url?: string | null;
@@ -277,6 +283,7 @@ export interface Database {
           fitness_goal: string | null;
           height_cm: number | null;
           weight_kg: number | null;
+          loyalty_points: number;
           created_at: string;
         };
         Insert: {
@@ -296,6 +303,7 @@ export interface Database {
           fitness_goal?: string | null;
           height_cm?: number | null;
           weight_kg?: number | null;
+          loyalty_points?: number;
           created_at?: string;
         };
         Update: {
@@ -315,6 +323,7 @@ export interface Database {
           fitness_goal?: string | null;
           height_cm?: number | null;
           weight_kg?: number | null;
+          loyalty_points?: number;
           created_at?: string;
         };
         Relationships: [
@@ -2221,6 +2230,12 @@ export interface Database {
         Update: { user_id?: string; name?: string; created_at?: string };
         Relationships: [];
       };
+      team_viewers: {
+        Row: { user_id: string; name: string; created_at: string };
+        Insert: { user_id: string; name: string; created_at?: string };
+        Update: { user_id?: string; name?: string; created_at?: string };
+        Relationships: [];
+      };
       subscription_transactions: {
         Row: {
           id: string;
@@ -2379,6 +2394,14 @@ export interface Database {
       };
       increment_stock: {
         Args: { p_product_id: string; p_quantity: number };
+        Returns: undefined;
+      };
+      increment_loyalty_points: {
+        Args: { p_customer_id: string; p_points: number };
+        Returns: undefined;
+      };
+      redeem_loyalty_points: {
+        Args: { p_customer_id: string; p_points: number };
         Returns: undefined;
       };
     };

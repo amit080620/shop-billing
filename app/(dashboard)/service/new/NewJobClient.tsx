@@ -75,7 +75,7 @@ export function NewJobClient({ customers, lang }: { customers: Customer[]; lang:
       const result = await createJobAction(prev, formData);
       if (!result?.error) {
         showToast("Job card created");
-        router.push("/service");
+        router.push(result?.jobId ? `/service/${result.jobId}` : "/service");
       }
       return result;
     },

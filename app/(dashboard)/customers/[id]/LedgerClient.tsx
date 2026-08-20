@@ -54,7 +54,7 @@ export function LedgerClient({
   growthLogs,
   photos,
 }: {
-  customer: { id: string; name: string; phone: string; gstin: string | null; address: string | null; stateCode: string | null };
+  customer: { id: string; name: string; phone: string; gstin: string | null; address: string | null; stateCode: string | null; loyaltyPoints: number };
   shopName: string;
   balance: number;
   bills: Bill[];
@@ -109,6 +109,9 @@ export function LedgerClient({
             <p className={`text-2xl font-semibold ${balance > 0 ? "text-credit" : "text-foreground"}`}>
               {formatMoney(balance)}
             </p>
+            {customer.loyaltyPoints > 0 && (
+              <p className="mt-1 text-xs font-medium text-brand-text">🎁 {customer.loyaltyPoints} loyalty points</p>
+            )}
           </div>
           {balance > 0 && (
             <a

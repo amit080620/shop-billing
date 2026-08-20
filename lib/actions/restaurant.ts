@@ -818,3 +818,30 @@ export async function saveKdsSettingsAction(columns: number, fontScale: "normal"
   revalidatePath("/restaurant/kds-settings");
   return {};
 }
+
+/** Fetches the current pending-balance UPI QR for a settled order, so
+ * the print/receipt modal (a client component, which can't call the
+ * server-only QR generator directly) can show a scan-to-pay code at
+ * the table when the customer hasn't paid the full amount — the same
+ * pattern already used on the regular bill print page, extended here
+ * since restaurant orders settle as their own record, not a `bills` row. */
+export async function getOrderUpiQrAction(
+  orderId: string,
+): Promise<{ qrDataUrl?: string; creditAmount?: number }> {
+  const session = await requireSession();
+  const admin = createSupabaseAdminClient();
+
+  const { data: order } = await admin
+    .from("restaurant_orders")
+    .select("credit_amount, order_number")
+    .eq("id", orderId)
+    .eq("shop_id", session.shopId)
+    .single();
+  if (!order || Number(order.credit_amount) <= 0) return {};
+  if (!session.shopUpiId) return {};
+
+  const { buildUpiLink, generateQrDataUrl } = await import("../qr");
+  const link = buildUpiLink(session.shopUpiId, session.shopName, Number(order.credit_amount), `Order ${order.order_number}`);
+  const qrDataUrl = await generateQrDataUrl(link);
+  return { qrDataUrl, creditAmount: Number(order.credit_amount) };
+}
