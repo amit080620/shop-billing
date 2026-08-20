@@ -6,7 +6,6 @@ import { getTranslator } from "@/lib/i18n/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { formatMoney, formatDateTime } from "@/lib/format";
 import { buildUpiLink, generateQrDataUrl } from "@/lib/qr";
-import { customerNounFor } from "@/lib/businessType";
 import { PrintButton } from "./PrintButton";
 import { WhatsAppSendButton } from "./WhatsAppSendButton";
 import { BillCreatedConfirmation } from "./BillCreatedConfirmation";
@@ -15,6 +14,8 @@ import { EditBillButton } from "./EditBillButton";
 import { DownloadImageButton } from "./DownloadImageButton";
 import { BluetoothPrintButton } from "./BluetoothPrintButton";
 import { InfoTooltip } from "./InfoTooltip";
+import { ThermalRenderer, type ThermalReceiptData } from "@/lib/print/ThermalRenderer";
+import { A4Renderer, type A4InvoiceData } from "@/lib/print/A4Renderer";
 
 export default async function PrintBillPage({
   params,
@@ -37,6 +38,15 @@ export default async function PrintBillPage({
     .select("tagline, footer_text, terms_and_conditions, bank_details, accent_color, header_image_url, footer_image_url")
     .eq("shop_id", session.shopId)
     .maybeSingle();
+
+  const { data: shopAddressRow } = await admin
+    .from("shops")
+    .select("address_line1, address_line2, city, state, pincode")
+    .eq("id", session.shopId)
+    .maybeSingle();
+  const shopAddressText = [shopAddressRow?.address_line1, shopAddressRow?.address_line2, shopAddressRow?.city, shopAddressRow?.state, shopAddressRow?.pincode]
+    .filter(Boolean)
+    .join(", ") || null;
 
   const { data: bill } = await admin
     .from("bills")
@@ -94,17 +104,119 @@ export default async function PrintBillPage({
     footerText: null,
   };
 
+  const totalMrpSavings = (items ?? []).reduce(
+    (s, item) => s + (item.mrp != null && item.mrp > item.unit_price ? (item.mrp - item.unit_price) * item.quantity : 0),
+    0,
+  );
+
+  const thermalData: ThermalReceiptData = {
+    shopName: session.shopName,
+    gstin: session.shopGstin,
+    invoiceNumber: bill.invoice_number,
+    dateText: formatDateTime(bill.created_at),
+    customerName: customer?.name ?? null,
+    customerPhone: customer?.phone ?? null,
+    customerGstin: customer?.gstin ?? null,
+    serviceProviderName: bill.service_provider_name,
+    placeOfSupplyText: isIntra ? "Place: Same state (CGST+SGST)" : "Place: Different state (IGST)",
+    items: (items ?? []).map((it) => ({
+      name: it.product_name,
+      qty: Number(it.quantity),
+      rate: Number(it.unit_price),
+      amount: Number(it.line_total),
+      mrp: it.mrp != null ? Number(it.mrp) : null,
+      warrantyText: it.warranty_expires_on
+        ? `Warranty till ${new Date(it.warranty_expires_on).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata", day: "numeric", month: "short", year: "numeric" })}`
+        : null,
+    })),
+    savingsOffMrp: totalMrpSavings,
+    subtotal: Number(bill.subtotal),
+    discountLabel: bill.discount_amount > 0 ? `Discount (${bill.discount_type === "percent" ? `${bill.discount_value}%` : "flat"})` : null,
+    discountAmount: Number(bill.discount_amount),
+    taxableAmount: Number(bill.taxable_amount),
+    isIntraState: isIntra,
+    cgstAmount: Number(bill.cgst_amount),
+    sgstAmount: Number(bill.sgst_amount),
+    igstAmount: Number(bill.igst_amount),
+    roundOffAmount: Number(bill.round_off_amount),
+    total: Number(bill.total),
+    paidAmount: Number(bill.paid_amount),
+    paymentLabel,
+    creditAmount: Number(bill.credit_amount),
+    tagline: invoiceSettings?.tagline ?? null,
+    bankDetails: invoiceSettings?.bank_details ?? null,
+    termsAndConditions: invoiceSettings?.terms_and_conditions ?? null,
+    footerText: invoiceSettings?.footer_text ?? null,
+    voidedBanner: bill.status === "voided" ? "VOIDED" : null,
+  };
+
+  const a4Data: A4InvoiceData = {
+    shopName: session.shopName,
+    shopLogoUrl: session.shopLogoUrl,
+    shopAddress: shopAddressText,
+    gstin: session.shopGstin,
+    tagline: invoiceSettings?.tagline ?? null,
+    accentColor: invoiceSettings?.accent_color ?? null,
+    invoiceNumber: bill.invoice_number,
+    dateText: formatDateTime(bill.created_at),
+    customerName: customer?.name ?? null,
+    customerAddress: customer?.address ?? null,
+    customerPhone: customer?.phone ?? null,
+    customerGstin: customer?.gstin ?? null,
+    serviceProviderName: bill.service_provider_name,
+    placeOfSupplyText: isIntra ? "Same state (CGST + SGST)" : "Different state (IGST)",
+    items: (items ?? []).map((it) => ({
+      name: it.product_name,
+      hsnCode: it.hsn_code,
+      qty: Number(it.quantity),
+      rate: Number(it.unit_price),
+      mrp: it.mrp != null ? Number(it.mrp) : null,
+      taxPercent: Number(it.gst_percent),
+      amount: Number(it.line_total),
+      warrantyText: it.warranty_expires_on
+        ? `Warranty till ${new Date(it.warranty_expires_on).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata", day: "numeric", month: "short", year: "numeric" })}`
+        : null,
+    })),
+    savingsOffMrp: totalMrpSavings,
+    subtotal: Number(bill.subtotal),
+    discountLabel: bill.discount_amount > 0 ? `Discount (${bill.discount_type === "percent" ? `${bill.discount_value}%` : "flat"})` : null,
+    discountAmount: Number(bill.discount_amount),
+    taxableAmount: Number(bill.taxable_amount),
+    isIntraState: isIntra,
+    cgstAmount: Number(bill.cgst_amount),
+    sgstAmount: Number(bill.sgst_amount),
+    igstAmount: Number(bill.igst_amount),
+    roundOffAmount: Number(bill.round_off_amount),
+    total: Number(bill.total),
+    paidAmount: Number(bill.paid_amount),
+    paymentLabel,
+    creditAmount: Number(bill.credit_amount),
+    bankDetails: invoiceSettings?.bank_details ?? null,
+    termsAndConditions: invoiceSettings?.terms_and_conditions ?? null,
+    footerText: invoiceSettings?.footer_text ?? null,
+    voidedReason: bill.status === "voided" ? bill.void_reason : null,
+    editedNote: bill.edited_at ? `Corrected on ${formatDateTime(bill.edited_at)} — ${bill.edit_reason}` : null,
+    upiQrDataUrl,
+    upiId: session.shopUpiId,
+  };
+
   return (
     <>
       <Suspense fallback={null}>
         <BillCreatedConfirmation amount={formatMoney(bill.total)} />
       </Suspense>
+      <style>{`
+        @media print {
+          @page {
+            size: ${isThermal ? (is58mm ? "58mm auto" : "80mm auto") : "A4"};
+            margin: ${isThermal ? "2mm" : "15mm"};
+          }
+        }
+      `}</style>
     <div
-      className={`relative mx-auto bg-white text-black ${
-        is58mm ? "w-[190px] p-1.5 font-mono text-[11px]" : isThermal ? "w-[280px] p-2 font-mono text-xs" : "max-w-2xl p-8"
-      }`}
+      className={`relative mx-auto bg-white text-black ${isThermal ? "" : "max-w-2xl p-8"}`}
     >
-      {bill.status === "voided" && (
+      {bill.status === "voided" && !isThermal && (
         <div
           className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center overflow-hidden"
           aria-hidden="true"
@@ -112,7 +224,7 @@ export default async function PrintBillPage({
           <span
             className="select-none whitespace-nowrap font-black text-red-600/25"
             style={{
-              fontSize: isThermal ? "28px" : "72px",
+              fontSize: "72px",
               transform: "rotate(-25deg)",
             }}
           >
@@ -133,27 +245,9 @@ export default async function PrintBillPage({
           upiLink={upiLink}
         />
         <div className="flex flex-wrap items-center gap-1.5">
-          <a
-            href={`/print/bill/${id}?format=full`}
-            className="rounded-full bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-700"
-            style={{ boxShadow: "-2px -2px 4px rgba(255,255,255,0.9), 2px 2px 4px rgba(0,0,0,0.1)" }}
-          >
-            Full page
-          </a>
-          <a
-            href={`/print/bill/${id}?format=thermal`}
-            className="rounded-full bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-700"
-            style={{ boxShadow: "-2px -2px 4px rgba(255,255,255,0.9), 2px 2px 4px rgba(0,0,0,0.1)" }}
-          >
-            Thermal 72mm
-          </a>
-          <a
-            href={`/print/bill/${id}?format=thermal58`}
-            className="rounded-full bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-700"
-            style={{ boxShadow: "-2px -2px 4px rgba(255,255,255,0.9), 2px 2px 4px rgba(0,0,0,0.1)" }}
-          >
-            Thermal 58mm
-          </a>
+          <FormatPill href={`/print/bill/${id}?format=full`} label="A4" active={!isThermal} />
+          <FormatPill href={`/print/bill/${id}?format=thermal58`} label="Thermal 58mm" active={is58mm} />
+          <FormatPill href={`/print/bill/${id}?format=thermal`} label="Thermal 80mm" active={isThermal && !is58mm} />
         </div>
         <div className="flex flex-wrap items-center gap-1.5">
           <DownloadImageButton invoiceNumber={bill.invoice_number} upiLink={upiLink} isThermal={isThermal} />
@@ -204,178 +298,11 @@ export default async function PrintBillPage({
       )}
 
       <div id="invoice-capture-area" className="animate-print-slip bg-white">
-      {invoiceSettings?.header_image_url && (
-        // eslint-disable-next-line @next/next/no-img-element -- print page, needs to render for print dialog
-        <img src={invoiceSettings.header_image_url} alt="" className={`mb-2 w-full object-contain ${isThermal ? "max-h-12" : "max-h-20"}`} />
+      {isThermal ? (
+        <ThermalRenderer data={thermalData} paperWidth={is58mm ? 58 : 80} />
+      ) : (
+        <A4Renderer data={a4Data} />
       )}
-      <div className="mb-1 flex items-center gap-3">
-        {session.shopLogoUrl && (
-          // Plain <img>, not next/image — this render also feeds the browser
-          // print dialog, where next/image's lazy-loading can leave it blank.
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={session.shopLogoUrl}
-            alt=""
-            className={isThermal ? "h-8 w-8 object-contain" : "h-12 w-12 object-contain"}
-          />
-        )}
-        <div className="flex flex-1 items-center justify-between">
-          <div>
-            <h1 className={isThermal ? "text-sm font-bold" : "text-xl font-bold"}>
-              {session.shopName}
-            </h1>
-            {invoiceSettings?.tagline && (
-              <p className={isThermal ? "text-[8px] text-gray-500" : "text-xs text-gray-500"}>{invoiceSettings.tagline}</p>
-            )}
-          </div>
-          <p
-            className={isThermal ? "text-[9px] font-semibold" : "text-sm font-semibold"}
-            style={{ color: invoiceSettings?.accent_color ?? undefined }}
-          >
-            Tax Invoice
-          </p>
-        </div>
-      </div>
-      {session.shopGstin && (
-        <p className={isThermal ? "text-[9px] text-gray-600" : "text-xs text-gray-500"}>
-          GSTIN: {session.shopGstin}
-        </p>
-      )}
-
-      <div className={`mt-2 flex justify-between ${isThermal ? "text-[10px]" : "text-sm"}`}>
-        <span>Invoice #{bill.invoice_number}</span>
-        <span>{formatDateTime(bill.created_at)}</span>
-      </div>
-
-      <div className={`mt-2 border-t border-dashed border-gray-400 pt-2 ${isThermal ? "" : "text-sm text-gray-700"}`}>
-        <p>Bill to: {customer?.name ?? `Walk-in ${customerNounFor(session.businessType).toLowerCase()}`}</p>
-        {bill.service_provider_name && <p>Stylist: {bill.service_provider_name}</p>}
-        {customer?.phone && <p className={isThermal ? "text-[9px]" : "text-xs text-gray-500"}>{customer.phone}</p>}
-        {customer?.gstin && <p className={isThermal ? "text-[9px]" : "text-xs text-gray-500"}>GSTIN: {customer.gstin}</p>}
-        <p className={isThermal ? "text-[9px] text-gray-600" : "text-xs text-gray-500"}>
-          Place of supply: {isIntra ? "Same state (CGST + SGST)" : "Different state (IGST)"}
-        </p>
-      </div>
-
-      <table className="mt-3 w-full border-collapse">
-        <thead>
-          <tr className={isThermal ? "border-b border-black" : "border-b border-gray-300 text-sm"}>
-            <th className="py-1 text-left">Item</th>
-            {!isThermal && <th className="py-1 text-left">HSN</th>}
-            <th className="py-1 text-right">Qty</th>
-            <th className="py-1 text-right">Rate</th>
-            <th className="py-1 text-right">Amount</th>
-          </tr>
-        </thead>
-        <tbody>
-          {(items ?? []).map((item, i) => (
-            <tr key={i} className={isThermal ? "" : "text-sm"}>
-              <td className="py-1">
-                {item.product_name}
-                {item.warranty_expires_on && (
-                  <div className="text-xs text-gray-500">
-                    Warranty till {new Date(item.warranty_expires_on).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata", day: "numeric", month: "short", year: "numeric" })}
-                  </div>
-                )}
-              </td>
-              {!isThermal && <td className="py-1 text-gray-500">{item.hsn_code ?? "—"}</td>}
-              <td className="py-1 text-right">{item.quantity}</td>
-              <td className="py-1 text-right">
-                {item.mrp != null && item.mrp > item.unit_price && (
-                  <div className="text-xs text-gray-400 line-through">{formatMoney(item.mrp)}</div>
-                )}
-                {formatMoney(item.unit_price)}
-              </td>
-              <td className="py-1 text-right">{formatMoney(item.line_total)}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-
-      <div className={`mt-3 flex flex-col gap-1 border-t border-dashed border-gray-400 pt-2 ${isThermal ? "" : "text-sm"}`}>
-        {(() => {
-          const totalMrpSavings = (items ?? []).reduce(
-            (s, item) => s + (item.mrp != null && item.mrp > item.unit_price ? (item.mrp - item.unit_price) * item.quantity : 0),
-            0,
-          );
-          return totalMrpSavings > 0 ? (
-            <SummaryRow label="You saved (off MRP)" value={formatMoney(totalMrpSavings)} />
-          ) : null;
-        })()}
-        <SummaryRow label="Subtotal" value={formatMoney(bill.subtotal)} />
-        {bill.discount_amount > 0 && (
-          <SummaryRow
-            label={`Discount (${
-              bill.discount_type === "percent" ? `${bill.discount_value}%` : "flat"
-            })`}
-            value={`− ${formatMoney(bill.discount_amount)}`}
-          />
-        )}
-        <SummaryRow label="Taxable value" value={formatMoney(bill.taxable_amount)} />
-        {isIntra ? (
-          <>
-            <SummaryRow label="CGST" value={`+ ${formatMoney(bill.cgst_amount)}`} />
-            <SummaryRow label="SGST" value={`+ ${formatMoney(bill.sgst_amount)}`} />
-          </>
-        ) : (
-          <SummaryRow label="IGST" value={`+ ${formatMoney(bill.igst_amount)}`} />
-        )}
-        {Number(bill.round_off_amount) !== 0 && (
-          <SummaryRow
-            label="Round off"
-            value={`${Number(bill.round_off_amount) > 0 ? "+ " : "− "}${formatMoney(Math.abs(Number(bill.round_off_amount)))}`}
-          />
-        )}
-        <SummaryRow label="Total" value={formatMoney(bill.total)} bold />
-        <SummaryRow label={`Paid (${paymentLabel})`} value={formatMoney(bill.paid_amount)} />
-        {bill.credit_amount > 0 && (
-          <SummaryRow label="Credit (udhaar)" value={formatMoney(bill.credit_amount)} bold />
-        )}
-      </div>
-
-      {upiQrDataUrl && (
-        <div id="upi-qr-block" className="mt-3 flex flex-col items-center gap-1 border-t border-dashed border-gray-400 pt-3">
-          <p className={isThermal ? "text-[9px] font-semibold" : "text-xs font-semibold text-gray-700"}>
-            Scan to pay {formatMoney(bill.credit_amount)}
-          </p>
-          {/* eslint-disable-next-line @next/next/no-img-element -- static data URL, not a Next-optimizable remote image */}
-          <img
-            src={upiQrDataUrl}
-            alt="UPI payment QR code"
-            className={isThermal ? "h-28 w-28" : "h-36 w-36"}
-          />
-          <p className={isThermal ? "text-[8px] text-gray-500" : "text-[10px] text-gray-500"}>
-            {session.shopUpiId}
-          </p>
-        </div>
-      )}
-
-      {invoiceSettings?.bank_details && (
-        <div className={`mt-3 border-t border-dashed border-gray-300 pt-2 ${isThermal ? "text-[9px]" : "text-xs text-gray-600"}`}>
-          <p className="font-semibold text-gray-700">Bank details</p>
-          {invoiceSettings.bank_details.split("\n").map((line, i) => (
-            <p key={i}>{line}</p>
-          ))}
-        </div>
-      )}
-
-      {invoiceSettings?.terms_and_conditions && (
-        <div className={`mt-2 ${isThermal ? "text-[8px] text-gray-500" : "text-[10px] text-gray-500"}`}>
-          <p className="font-semibold">Terms & conditions</p>
-          {invoiceSettings.terms_and_conditions.split("\n").map((line, i) => (
-            <p key={i}>{line}</p>
-          ))}
-        </div>
-      )}
-
-      {invoiceSettings?.footer_image_url && (
-        // eslint-disable-next-line @next/next/no-img-element -- print page, needs to render for print dialog
-        <img src={invoiceSettings.footer_image_url} alt="" className={`mt-4 w-full object-contain ${isThermal ? "max-h-10" : "max-h-16"}`} />
-      )}
-
-      <p className={`mt-6 text-center ${isThermal ? "text-[10px]" : "text-xs text-gray-500"}`}>
-        {invoiceSettings?.footer_text || "Thank you for your business!"}
-      </p>
       </div>
     </div>
     </>
@@ -397,11 +324,18 @@ function paymentMethodLabel(method: string) {
   }
 }
 
-function SummaryRow({ label, value, bold }: { label: string; value: string; bold?: boolean }) {
+function FormatPill({ href, label, active }: { href: string; label: string; active: boolean }) {
   return (
-    <div className={`flex justify-between ${bold ? "font-bold" : ""}`}>
-      <span>{label}</span>
-      <span>{value}</span>
-    </div>
+    <a
+      href={href}
+      className={`rounded-full px-3 py-1.5 text-xs font-medium ${active ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-700"}`}
+      style={
+        active
+          ? undefined
+          : { boxShadow: "-2px -2px 4px rgba(255,255,255,0.9), 2px 2px 4px rgba(0,0,0,0.1)" }
+      }
+    >
+      {label}
+    </a>
   );
 }

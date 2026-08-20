@@ -4,6 +4,9 @@
 // abstraction layer. Builds a Uint8Array ready to send to a printer
 // over Bluetooth, USB, or serial.
 
+import type { ThermalPrinterProfile } from "./print/printerProfile";
+import { buildDivider, buildHeaderRow, buildItemRowLines } from "./print/textGrid";
+
 const ESC = 0x1b;
 const GS = 0x1d;
 
@@ -100,8 +103,23 @@ export type ReceiptData = {
 
 /** Builds the full receipt as ESC/POS bytes. charsWide should be 32 for
  * 58mm paper or 48 for 80mm paper (standard characters-per-line for
- * those widths in the default font). */
+ * those widths in the default font). Uses the same genuine
+ * column-preserving grid algorithm as the on-screen thermal preview
+ * (lib/print/textGrid.ts), so a long item name wraps exactly the same
+ * way on the real printed receipt as it does in the browser preview —
+ * never independently calculated. */
 export function buildReceiptEscPos(data: ReceiptData, charsWide: 32 | 48 = 32): Uint8Array {
+  const profile: ThermalPrinterProfile = {
+    paperWidthMm: charsWide === 32 ? 58 : 80,
+    charactersPerLine: charsWide,
+    fontMode: "A",
+    leftMarginChars: 0,
+    rightMarginChars: 0,
+    boldSupport: true,
+    doubleWidthSupport: true,
+    doubleHeightSupport: true,
+  };
+
   const b = new EscPosBuilder();
   b.init();
 
@@ -114,13 +132,14 @@ export function buildReceiptEscPos(data: ReceiptData, charsWide: 32 | 48 = 32): 
   b.text(`Bill: ${data.invoiceNumber}`).newline();
   b.text(data.dateText).newline();
   if (data.customerName) b.text(`Customer: ${data.customerName}`).newline();
-  b.divider(charsWide);
+  b.text(buildDivider(profile)).newline();
 
+  b.text(buildHeaderRow(profile)).newline();
   for (const item of data.items) {
-    b.text(`${item.name}`).newline();
-    b.row(`  ${item.qty} x Rs.${item.price.toFixed(2)}`, `Rs.${item.lineTotal.toFixed(2)}`, charsWide);
+    const rowLines = buildItemRowLines(item.name, String(item.qty), item.price.toFixed(2), item.lineTotal.toFixed(2), profile);
+    for (const line of rowLines) b.text(line).newline();
   }
-  b.divider(charsWide);
+  b.text(buildDivider(profile)).newline();
 
   b.row("Subtotal", `Rs.${data.subtotal.toFixed(2)}`, charsWide);
   if (data.discount) b.row("Discount", `-Rs.${data.discount.toFixed(2)}`, charsWide);

@@ -381,8 +381,8 @@ export function TablesClient({ tables, lang }: { tables: Table[]; lang: Lang }) 
                 {table.status === "occupied"
                   ? table.openOrderTotal === 0
                     ? (
-                      <button onClick={(e) => handleClearEmpty(table, e)} className="underline decoration-dotted">
-                        Free table
+                      <button onClick={(e) => handleClearEmpty(table, e)} className="flex items-center gap-1 underline decoration-dotted">
+                        <X size={11} /> Empty — tap to clear
                       </button>
                     )
                     : formatMoney(table.openOrderTotal)

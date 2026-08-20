@@ -1383,7 +1383,7 @@ async function RestaurantHome({ shopId }: { shopId: string }) {
 
   const [{ data: tables }, { data: openOrders }, { data: weekSettled }, { data: recentSettled }] = await Promise.all([
     admin.from("restaurant_tables").select("id, status").eq("shop_id", shopId),
-    admin.from("restaurant_orders").select("id, restaurant_order_items ( status )").eq("shop_id", shopId).eq("status", "open"),
+    admin.from("restaurant_orders").select("id, table_id, restaurant_order_items ( status )").eq("shop_id", shopId).eq("status", "open"),
     admin.from("restaurant_orders").select("total, settled_at").eq("shop_id", shopId).eq("status", "settled").gte("settled_at", startOfWeek.toISOString()),
     admin
       .from("restaurant_orders")
@@ -1394,7 +1394,15 @@ async function RestaurantHome({ shopId }: { shopId: string }) {
       .limit(5),
   ]);
 
-  const occupied = (tables ?? []).filter((t) => t.status === "occupied").length;
+  // Genuinely only count tables with a real (non-empty) open order —
+  // a table whose status flag says "occupied" but whose order has no
+  // items is an orphaned/stuck record (staff opened it, added
+  // nothing), not a genuinely occupied table, matching the same
+  // definition the Tables screen itself uses.
+  const tablesWithRealOrders = new Set(
+    (openOrders ?? []).filter((o) => (o.restaurant_order_items ?? []).length > 0).map((o) => o.table_id),
+  );
+  const occupied = (tables ?? []).filter((t) => t.status === "occupied" && tablesWithRealOrders.has(t.id)).length;
   // "In kitchen" = orders with at least one item still pending, matching
   // KdsClient's visibleTickets rule. An order stays open until its bill is
   // settled, so counting raw open orders wrongly kept fully-served-but-
