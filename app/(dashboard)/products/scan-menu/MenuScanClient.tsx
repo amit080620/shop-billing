@@ -5,6 +5,7 @@ import { PageHeader } from "@/app/components/PageHeader";
 import { createProductsFromScanAction, listExistingProductNamesAction, type ScannedMenuItem } from "@/lib/actions/menu-scan";
 import { findClosestMatch } from "@/lib/fuzzyMatch";
 import { correctNumericOCR } from "@/lib/ocr/parser";
+import { rebuildLinesFromWords } from "@/lib/ocr/lineGrouping";
 import { Camera, ScanLine, Trash2, Loader2, CheckCircle2 } from "lucide-react";
 
 type DraftItem = ScannedMenuItem & { id: string; include: boolean; matchedExistingName: string | null };
@@ -16,9 +17,8 @@ type DraftItem = ScannedMenuItem & { id: string; include: boolean; matchedExisti
  * below them, until the next header. This is a genuine best-effort
  * heuristic, not perfect OCR understanding — that's exactly why the
  * review step below lets you fix or remove anything before it's added. */
-function parseMenuText(raw: string): ScannedMenuItem[] {
-  const lines = raw
-    .split("\n")
+function parseMenuText(rawLines: string[]): ScannedMenuItem[] {
+  const lines = rawLines
     .map((l) => l.trim().replace(/[|;:]+$/, "")) // trim common trailing OCR noise
     .filter((l) => l.length > 1);
 
@@ -92,7 +92,13 @@ export function MenuScanClient() {
         PSM.SPARSE_TEXT,
       );
 
-      const parsed = parseMenuText(ocr.rawText);
+      // Genuinely rebuild lines from each word's own position rather
+      // than trusting Tesseract's line-breaking blindly — more robust
+      // for a real menu photo's multi-column layout. Falls back to
+      // the raw text's own line breaks in the rare case word-level
+      // data came back empty.
+      const reconstructedLines = ocr.words.length > 0 ? rebuildLinesFromWords(ocr.words) : ocr.rawText.split("\n");
+      const parsed = parseMenuText(reconstructedLines);
       if (parsed.length === 0) {
         setError("Couldn't find any items with prices in this photo — try a clearer, well-lit shot, straight-on (not angled).");
       } else {

@@ -2,6 +2,7 @@
 
 import { deskewImage } from "./deskew";
 import { adaptiveNormalize } from "./adaptiveNormalize";
+import { sharpenImage } from "./sharpen";
 
 /** Downscales very large phone-camera photos to a sane max dimension —
  * Tesseract doesn't need 12-megapixel input, and a smaller image
@@ -44,5 +45,6 @@ export async function preprocessImage(file: File | Blob): Promise<Blob> {
   // itself when the photo's lighting is already even, so this is a
   // strict improvement over the old flat global stretch rather than a
   // behavior change on photos that didn't need correcting.
-  return adaptiveNormalize(resized);
+  const sharpened = await sharpenImage(resized);
+  return adaptiveNormalize(sharpened);
 }

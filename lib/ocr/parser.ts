@@ -9,14 +9,17 @@ const TOTAL_KEYWORDS = ["GRAND TOTAL", "NET TOTAL", "NET AMOUNT", "TOTAL PAYABLE
 // applied to strings that already look numeric, so a store name like
 // "SOMA STORES" is never mangled into "50MA5TORE5".
 export function correctNumericOCR(raw: string): string {
-  if (!/^[\dOIlSBoO.,₹Rs\s]+$/i.test(raw)) return raw;
+  if (!/^[\dOIlSBoOZg.,₹Rs\s]+$/i.test(raw)) return raw;
   return raw
     .replace(/O/g, "0")
     .replace(/o/g, "0")
     .replace(/I/g, "1")
     .replace(/l/g, "1")
     .replace(/S/g, "5")
-    .replace(/B/g, "8");
+    .replace(/B/g, "8")
+    .replace(/Z/g, "2")
+    .replace(/z/g, "2")
+    .replace(/g/g, "9");
 }
 
 function parseAmount(text: string): number | null {
