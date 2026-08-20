@@ -33,14 +33,18 @@ export function tabsFor(businessType: string, t: (key: string) => string, permis
   ];
 
   // A restaurant's whole day revolves around tables and the kitchen —
-  // Sell/Buy (built for retail stock transactions) aren't what a restaurant
-  // reaches for dozens of times a shift, so the primary tab becomes Tables,
-  // with the kitchen display one tap away instead of buried in More.
+  // Sell (built for retail stock transactions) isn't what a restaurant
+  // reaches for dozens of times a shift, so the primary tab becomes
+  // Tables, with the kitchen display one tap away instead of buried in
+  // More. Buy (vendor purchases for ingredients/supplies) stays a
+  // genuine direct tab — never hidden in More. Reports gets a
+  // consistent Home-dashboard shortcut across every business type
+  // instead of competing for a tab slot anywhere.
   const RESTAURANT_TABS = [
     { href: "/", label: t("nav.home"), icon: HomeIcon },
     { href: "/restaurant", label: t("nav.tables"), icon: TableIcon },
     { href: "/restaurant-kds", label: t("nav.kitchen"), icon: KitchenIcon },
-    { href: "/reports", label: t("nav.reports"), icon: ReportIcon },
+    { href: "/purchases/new", label: t("nav.buy"), icon: BuyIcon },
     { href: "/more", label: t("nav.more"), icon: MoreIcon },
   ];
 
@@ -48,7 +52,7 @@ export function tabsFor(businessType: string, t: (key: string) => string, permis
     { href: "/", label: t("nav.home"), icon: HomeIcon },
     { href: "/bills/new", label: t("nav.sell"), icon: SellIcon },
     { href: "/rentals/new", label: t("nav.newRental"), icon: BuyIcon },
-    { href: "/reports", label: t("nav.reports"), icon: ReportIcon },
+    { href: "/purchases/new", label: t("nav.buy"), icon: BuyIcon },
     { href: "/more", label: t("nav.more"), icon: MoreIcon },
   ];
 
@@ -60,7 +64,7 @@ export function tabsFor(businessType: string, t: (key: string) => string, permis
     { href: "/", label: t("nav.home"), icon: HomeIcon },
     { href: "/bills/new", label: t("nav.sell"), icon: SellIcon },
     { href: "/transport/vehicles", label: "Vehicles", icon: TruckNavIcon },
-    { href: "/transport/reports", label: t("nav.reports"), icon: ReportIcon },
+    { href: "/purchases/new", label: t("nav.buy"), icon: BuyIcon },
     { href: "/more", label: t("nav.more"), icon: MoreIcon },
   ];
 
@@ -85,7 +89,7 @@ export function tabsFor(businessType: string, t: (key: string) => string, permis
     { href: "/", label: t("nav.home"), icon: HomeIcon },
     { href: "/bills/new", label: t("nav.sell"), icon: SellIcon },
     { href: "/salon/appointments", label: "Appointments", icon: SalonNavIcon },
-    { href: "/reports", label: t("nav.reports"), icon: ReportIcon },
+    { href: "/purchases/new", label: t("nav.buy"), icon: BuyIcon },
     { href: "/more", label: t("nav.more"), icon: MoreIcon },
   ];
 
@@ -93,7 +97,7 @@ export function tabsFor(businessType: string, t: (key: string) => string, permis
     { href: "/", label: t("nav.home"), icon: HomeIcon },
     { href: "/bills/new", label: t("nav.sell"), icon: SellIcon },
     { href: "/jewellery/rates", label: "Rate", icon: JewelleryNavIcon },
-    { href: "/reports", label: t("nav.reports"), icon: ReportIcon },
+    { href: "/purchases/new", label: t("nav.buy"), icon: BuyIcon },
     { href: "/more", label: t("nav.more"), icon: MoreIcon },
   ];
 
@@ -101,7 +105,7 @@ export function tabsFor(businessType: string, t: (key: string) => string, permis
     { href: "/", label: t("nav.home"), icon: HomeIcon },
     { href: "/clinic/prescriptions/new", label: "New Rx", icon: ClinicNavIcon },
     { href: "/clinic/appointments", label: "Appointments", icon: ClinicAppointmentIcon },
-    { href: "/reports", label: t("nav.reports"), icon: ReportIcon },
+    { href: "/purchases/new", label: t("nav.buy"), icon: BuyIcon },
     { href: "/more", label: t("nav.more"), icon: MoreIcon },
   ];
 
@@ -109,7 +113,7 @@ export function tabsFor(businessType: string, t: (key: string) => string, permis
     { href: "/", label: t("nav.home"), icon: HomeIcon },
     { href: "/gym/members/new", label: "Sell", icon: SellIcon },
     { href: "/gym/members", label: "Members", icon: TableIcon },
-    { href: "/reports", label: t("nav.reports"), icon: ReportIcon },
+    { href: "/purchases/new", label: t("nav.buy"), icon: BuyIcon },
     { href: "/more", label: t("nav.more"), icon: MoreIcon },
   ];
 
@@ -117,7 +121,7 @@ export function tabsFor(businessType: string, t: (key: string) => string, permis
     { href: "/", label: t("nav.home"), icon: HomeIcon },
     { href: "/lab/orders/new", label: "New order", icon: SellIcon },
     { href: "/lab/orders", label: "Orders", icon: TableIcon },
-    { href: "/reports", label: t("nav.reports"), icon: ReportIcon },
+    { href: "/purchases/new", label: t("nav.buy"), icon: BuyIcon },
     { href: "/more", label: t("nav.more"), icon: MoreIcon },
   ];
 

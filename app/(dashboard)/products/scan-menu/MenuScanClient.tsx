@@ -2,11 +2,12 @@
 
 import { useState, useRef } from "react";
 import { PageHeader } from "@/app/components/PageHeader";
-import { createProductsFromScanAction, type ScannedMenuItem } from "@/lib/actions/menu-scan";
+import { createProductsFromScanAction, listExistingProductNamesAction, type ScannedMenuItem } from "@/lib/actions/menu-scan";
+import { findClosestMatch } from "@/lib/fuzzyMatch";
 import { correctNumericOCR } from "@/lib/ocr/parser";
-import { Camera, ScanLine, Trash2, Loader2 } from "lucide-react";
+import { Camera, ScanLine, Trash2, Loader2, CheckCircle2 } from "lucide-react";
 
-type DraftItem = ScannedMenuItem & { id: string; include: boolean };
+type DraftItem = ScannedMenuItem & { id: string; include: boolean; matchedExistingName: string | null };
 
 /** Turns raw OCR text into candidate menu items. Menu lines usually end
  * with a price ("Chicken Biryani ... 220" / "Paneer Tikka Rs.180" /
@@ -79,7 +80,18 @@ export function MenuScanClient() {
       if (parsed.length === 0) {
         setError("Couldn't find any items with prices in this photo — try a clearer, well-lit shot, straight-on (not angled).");
       } else {
-        setItems(parsed.map((p, i) => ({ ...p, id: `${Date.now()}-${i}`, include: true })));
+        // Genuine offline fuzzy-match against this shop's own existing
+        // products — catches OCR near-misses ("Chicken Biriyani" vs an
+        // existing "Chicken Biryani") so a re-scan doesn't quietly
+        // create duplicates. No AI involved, just edit-distance math
+        // against data the shop already owns.
+        const existing = await listExistingProductNamesAction();
+        setItems(
+          parsed.map((p, i) => {
+            const match = findClosestMatch(p.name, existing);
+            return { ...p, id: `${Date.now()}-${i}`, include: !match, matchedExistingName: match?.name ?? null };
+          }),
+        );
       }
     } catch {
       setError("Scanning failed — please try again with a clearer photo.");
@@ -200,6 +212,11 @@ export function MenuScanClient() {
                     className="rounded-lg px-2.5 py-1.5 text-sm outline-none"
                     placeholder="Item name"
                   />
+                  {item.matchedExistingName && (
+                    <p className="flex items-center gap-1 text-[11px] text-success">
+                      <CheckCircle2 size={12} /> Looks like you already have &quot;{item.matchedExistingName}&quot; — unticked to avoid a duplicate
+                    </p>
+                  )}
                   <div className="flex gap-1.5">
                     <input
                       type="number"

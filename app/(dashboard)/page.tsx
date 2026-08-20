@@ -234,6 +234,16 @@ async function RetailHome({
       </section>
 
       <Link
+        href="/reports"
+        className="neu-card flex items-center justify-between px-4 py-3 text-sm font-medium text-foreground"
+      >
+        <span className="flex items-center gap-2">
+          <TrendingDown size={16} className="rotate-180 text-brand-text" /> View reports
+        </span>
+        <span className="text-muted">→</span>
+      </Link>
+
+      <Link
         href="/bills/new"
         className="hover-lift flex items-center justify-center gap-2 rounded-xl px-4 py-4 text-center font-semibold text-white shadow-md"
         style={{ background: "linear-gradient(135deg, var(--brand-light), var(--brand-dark))" }}
@@ -339,6 +349,16 @@ async function LabHome({
         <StatCard label={t("home.todaySales")} value={formatMoney(todayTotal)} href="/daily-summary" icon={Wallet} />
         <StatCard label="Pending orders" value={String(pendingOrders?.length ?? 0)} href="/lab/orders" icon={FlaskConical} />
       </section>
+
+      <Link
+        href="/reports"
+        className="neu-card flex items-center justify-between px-4 py-3 text-sm font-medium text-foreground"
+      >
+        <span className="flex items-center gap-2">
+          <TrendingDown size={16} className="rotate-180 text-brand-text" /> View reports
+        </span>
+        <span className="text-muted">→</span>
+      </Link>
 
       <div className="grid grid-cols-2 gap-3">
         <Link
@@ -473,6 +493,16 @@ async function GymHome({
         <StatCard label="Check-ins today" value={String(todayAttendance?.length ?? 0)} href="/gym/attendance" icon={CheckCircle2} />
       </section>
 
+      <Link
+        href="/reports"
+        className="neu-card flex items-center justify-between px-4 py-3 text-sm font-medium text-foreground"
+      >
+        <span className="flex items-center gap-2">
+          <TrendingDown size={16} className="rotate-180 text-brand-text" /> View reports
+        </span>
+        <span className="text-muted">→</span>
+      </Link>
+
       <div className="grid grid-cols-2 gap-3">
         <Link
           href="/gym/members/new"
@@ -571,6 +601,16 @@ async function ClinicHome({
         <StatCard label={t("home.todaySales")} value={formatMoney(todayTotal)} href="/daily-summary" icon={Wallet} />
         <StatCard label="Appointments today" value={String(todayAppointments?.length ?? 0)} href="/clinic/appointments" icon={Calendar} />
       </section>
+
+      <Link
+        href="/reports"
+        className="neu-card flex items-center justify-between px-4 py-3 text-sm font-medium text-foreground"
+      >
+        <span className="flex items-center gap-2">
+          <TrendingDown size={16} className="rotate-180 text-brand-text" /> View reports
+        </span>
+        <span className="text-muted">→</span>
+      </Link>
 
       <div className="grid grid-cols-2 gap-3">
         <Link
@@ -714,6 +754,16 @@ async function JewelleryHome({
       </section>
 
       <Link
+        href="/reports"
+        className="neu-card flex items-center justify-between px-4 py-3 text-sm font-medium text-foreground"
+      >
+        <span className="flex items-center gap-2">
+          <TrendingDown size={16} className="rotate-180 text-brand-text" /> View reports
+        </span>
+        <span className="text-muted">→</span>
+      </Link>
+
+      <Link
         href="/bills/new"
         className="hover-lift flex items-center justify-center gap-2 rounded-xl px-4 py-4 text-center font-semibold text-white shadow-md"
         style={{ background: "linear-gradient(135deg, var(--brand-light), var(--brand-dark))" }}
@@ -810,6 +860,16 @@ async function SalonHome({
         <StatCard label={t("home.todaySales")} value={formatMoney(todayTotal)} href="/daily-summary" icon={Wallet} />
         <StatCard label="Appointments today" value={String(todayAppointments?.length ?? 0)} href="/salon/appointments" icon={Calendar} />
       </section>
+
+      <Link
+        href="/reports"
+        className="neu-card flex items-center justify-between px-4 py-3 text-sm font-medium text-foreground"
+      >
+        <span className="flex items-center gap-2">
+          <TrendingDown size={16} className="rotate-180 text-brand-text" /> View reports
+        </span>
+        <span className="text-muted">→</span>
+      </Link>
 
       {todayAppointments && todayAppointments.length > 0 && (
         <section>
@@ -1135,6 +1195,16 @@ async function TransportHome({
       </section>
 
       <Link
+        href="/reports"
+        className="neu-card flex items-center justify-between px-4 py-3 text-sm font-medium text-foreground"
+      >
+        <span className="flex items-center gap-2">
+          <TrendingDown size={16} className="rotate-180 text-brand-text" /> View reports
+        </span>
+        <span className="text-muted">→</span>
+      </Link>
+
+      <Link
         href="/bills/new"
         className="hover-lift flex items-center justify-center gap-2 rounded-xl px-4 py-4 text-center font-semibold text-white shadow-md"
         style={{ background: "linear-gradient(135deg, var(--brand-light), var(--brand-dark))" }}
@@ -1254,6 +1324,16 @@ async function PharmacyHome({
       </section>
 
       <Link
+        href="/reports"
+        className="neu-card flex items-center justify-between px-4 py-3 text-sm font-medium text-foreground"
+      >
+        <span className="flex items-center gap-2">
+          <TrendingDown size={16} className="rotate-180 text-brand-text" /> View reports
+        </span>
+        <span className="text-muted">→</span>
+      </Link>
+
+      <Link
         href="/bills/new"
         className="hover-lift flex items-center justify-center gap-2 rounded-xl px-4 py-4 text-center font-semibold text-white shadow-md"
         style={{ background: "linear-gradient(135deg, var(--brand-light), var(--brand-dark))" }}
@@ -1348,6 +1428,16 @@ async function RestaurantHome({ shopId }: { shopId: string }) {
         <StatCard label="Orders in kitchen" value={String(ordersInKitchen)} tone={ordersInKitchen > 0 ? "credit" : "default"} href="/restaurant-kds" icon={ChefHat} />
         <StatCard label="Today's revenue" value={formatMoney(todayRevenue)} href="/restaurant/reports" className="col-span-2" icon={Wallet} />
       </section>
+
+      <Link
+        href="/reports"
+        className="neu-card flex items-center justify-between px-4 py-3 text-sm font-medium text-foreground"
+      >
+        <span className="flex items-center gap-2">
+          <TrendingDown size={16} className="rotate-180 text-brand-text" /> View reports
+        </span>
+        <span className="text-muted">→</span>
+      </Link>
 
       <Link
         href="/restaurant"
@@ -1445,6 +1535,16 @@ async function RentalHome({ shopId }: { shopId: string }) {
         <StatCard label="Active & booked" value={String(activeCount)} href="/rentals" icon={Repeat} />
         <StatCard label="Overdue" value={String(overdueCount)} tone={overdueCount > 0 ? "credit" : "default"} href="/rentals" icon={Clock} />
       </section>
+
+      <Link
+        href="/reports"
+        className="neu-card flex items-center justify-between px-4 py-3 text-sm font-medium text-foreground"
+      >
+        <span className="flex items-center gap-2">
+          <TrendingDown size={16} className="rotate-180 text-brand-text" /> View reports
+        </span>
+        <span className="text-muted">→</span>
+      </Link>
 
       <Link
         href="/rentals/new"

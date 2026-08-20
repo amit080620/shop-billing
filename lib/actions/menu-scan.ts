@@ -6,6 +6,18 @@ import { revalidatePath } from "next/cache";
 
 export type ScannedMenuItem = { name: string; price: number; categoryName: string | null };
 
+/** Existing product names for this shop only — used client-side for
+ * genuine offline fuzzy-matching against freshly-scanned menu items,
+ * so a re-scan of a menu the shop already digitized doesn't quietly
+ * create duplicate products for items OCR read slightly differently
+ * this time around (e.g. "Chicken Biryani" vs "Chicken Biriyani"). */
+export async function listExistingProductNamesAction(): Promise<{ id: string; name: string }[]> {
+  const session = await requireSession();
+  const admin = createSupabaseAdminClient();
+  const { data } = await admin.from("products").select("id, name").eq("shop_id", session.shopId);
+  return data ?? [];
+}
+
 export async function createProductsFromScanAction(
   items: ScannedMenuItem[],
 ): Promise<{ error?: string; created?: number }> {
