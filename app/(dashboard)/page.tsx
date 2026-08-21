@@ -15,10 +15,20 @@ export default async function AppEntryPage() {
     redirect("/restaurant");
   }
 
-  const admin = createSupabaseAdminClient();
-  const { data: shop } = await admin.from("shops").select("fast_billing_enabled").eq("id", session.shopId).single();
+  // Genuinely defensive — a transient database hiccup here shouldn't
+  // crash the person's very first screen. Fall back to Normal Billing
+  // (the safest, always-correct default) rather than letting an
+  // unhandled error surface as a confusing generic crash screen.
+  let fastBillingEnabled = false;
+  try {
+    const admin = createSupabaseAdminClient();
+    const { data: shop } = await admin.from("shops").select("fast_billing_enabled").eq("id", session.shopId).single();
+    fastBillingEnabled = shop?.fast_billing_enabled ?? false;
+  } catch (err) {
+    console.error("Could not check fast_billing_enabled on app entry", err);
+  }
 
-  if (shop?.fast_billing_enabled) {
+  if (fastBillingEnabled) {
     redirect("/fast-billing");
   }
 

@@ -7,8 +7,14 @@ export default async function FastBillingPage() {
   const session = await requireSession();
   const admin = createSupabaseAdminClient();
 
-  const { data: shop } = await admin.from("shops").select("fast_billing_enabled").eq("id", session.shopId).single();
-  if (!shop?.fast_billing_enabled) {
+  let fastBillingEnabled = false;
+  try {
+    const { data: shop } = await admin.from("shops").select("fast_billing_enabled").eq("id", session.shopId).single();
+    fastBillingEnabled = shop?.fast_billing_enabled ?? false;
+  } catch (err) {
+    console.error("Could not check fast_billing_enabled", err);
+  }
+  if (!fastBillingEnabled) {
     redirect("/fast-billing-settings");
   }
 

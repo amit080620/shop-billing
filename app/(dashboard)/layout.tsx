@@ -19,7 +19,13 @@ export default async function DashboardLayout({
 }) {
   const session = await requireSession();
   const admin = createSupabaseAdminClient();
-  const { data: shop } = await admin.from("shops").select("fast_billing_enabled").eq("id", session.shopId).single();
+  let fastBillingEnabled = false;
+  try {
+    const { data: shop } = await admin.from("shops").select("fast_billing_enabled").eq("id", session.shopId).single();
+    fastBillingEnabled = shop?.fast_billing_enabled ?? false;
+  } catch (err) {
+    console.error("Could not check fast_billing_enabled in layout", err);
+  }
   const lang = await getLang();
   const roleLabel = session.role === "owner" ? translate(lang, "role.owner") : translate(lang, "role.staff");
 
@@ -33,7 +39,7 @@ export default async function DashboardLayout({
         roleLabel={roleLabel}
         shopLogoUrl={session.shopLogoUrl}
         permissions={session.permissions}
-        fastBillingEnabled={shop?.fast_billing_enabled ?? false}
+        fastBillingEnabled={fastBillingEnabled}
       />
 
       <header
@@ -97,7 +103,7 @@ export default async function DashboardLayout({
 
       <main className="page-enter mx-auto max-w-lg px-4 py-4 pb-24 md:max-w-5xl md:px-8 md:py-8 md:pb-8 xl:max-w-6xl">{children}</main>
 
-      <BottomNav lang={lang} businessType={session.businessType} permissions={session.permissions} fastBillingEnabled={shop?.fast_billing_enabled ?? false} />
+      <BottomNav lang={lang} businessType={session.businessType} permissions={session.permissions} fastBillingEnabled={fastBillingEnabled} />
       <WelcomeTour storageKey={`tour-seen-${session.shopId}`} businessType={session.businessType} />
       {isModuleEnabled(session.enabledModules, "public_catalog") && <CatalogOrderAlert />}
     </div>
