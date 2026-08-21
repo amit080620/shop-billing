@@ -36,6 +36,7 @@ const STATIC_PAGES: { title: string; subtitle: string; href: string; keywords: s
   { title: "Menu PDF", subtitle: "Downloadable clickable menu", href: "/catalog-settings/menu-pdf", keywords: ["menu pdf", "download menu"] },
   { title: "Branches", subtitle: "Manage multiple locations", href: "/branches", keywords: ["branch", "location"] },
   { title: "Help & support", subtitle: "Guides and contact", href: "/help", keywords: ["help", "support", "guide"] },
+  { title: "Privacy notice", subtitle: "What data we collect and why", href: "/privacy-policy", keywords: ["privacy", "data", "dpdp"] },
   { title: "Audit log", subtitle: "Who did what, and when", href: "/audit-log", keywords: ["audit", "log", "history"] },
   { title: "Error log", subtitle: "Unexpected failures caught automatically", href: "/error-log", keywords: ["error", "bug", "crash"] },
   { title: "Birthdays", subtitle: "Wish customers, bring them back", href: "/birthdays", keywords: ["birthday", "wish"] },

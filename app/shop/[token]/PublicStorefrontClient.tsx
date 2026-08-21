@@ -436,6 +436,13 @@ export function PublicStorefrontClient({
                 className="rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-brand"
               />
               {error && <p className="text-xs text-danger">{error}</p>}
+              <p className="text-[11px] text-muted">
+                By placing this order, you agree we&apos;ll use your name and phone number to process it. See our{" "}
+                <a href="/privacy-policy" target="_blank" rel="noopener noreferrer" className="underline">
+                  privacy notice
+                </a>
+                .
+              </p>
               <button onClick={submit} disabled={isPending} className="btn-primary w-full text-center disabled:opacity-60">
                 {isPending ? "Sending…" : "Send order"}
               </button>
