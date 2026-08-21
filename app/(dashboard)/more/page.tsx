@@ -10,6 +10,7 @@ import { getTerminology } from "@/lib/businessType";
 import { LanguageToggle } from "@/lib/i18n/LanguageToggle";
 import { SubscriptionCard } from "@/app/components/SubscriptionCard";
 import { InstallAppButton } from "@/app/components/InstallAppButton";
+import { MoreSearchBox } from "./MoreSearchBox";
 import { isModuleEnabled } from "@/lib/modules";
 import { Users, Bell, Clock, Truck, Package, UserCog, Settings, Megaphone, HelpCircle, PartyPopper, WifiOff, CalendarClock, ChefHat, BookOpen, ClipboardCheck, ShieldCheck, Scissors, Gem, Store, Stethoscope, Palette, Wallet, Building2, Dumbbell, FlaskConical, Receipt as ReceiptIcon, AlertTriangle, Cake, PackagePlus, Wrench, Gift, Zap } from "lucide-react";
 
@@ -24,6 +25,7 @@ export default async function MorePage() {
   return (
     <div className="flex flex-col gap-5">
       <h1 className="text-lg font-semibold text-foreground">{t("more.title")}</h1>
+      <MoreSearchBox />
 
       <SubscriptionCard />
       <InstallAppButton />
@@ -300,6 +302,8 @@ function MenuLink({
   return (
     <Link
       href={href}
+      data-menu-search-item
+      data-menu-search-text={`${label} ${sub}`.toLowerCase()}
       className="neu-card flex items-center gap-3 px-4 py-3.5 transition active:scale-[0.98]"
     >
       <span

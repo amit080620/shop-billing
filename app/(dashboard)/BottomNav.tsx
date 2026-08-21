@@ -25,7 +25,7 @@ export function tabsFor(businessType: string, t: (key: string) => string, permis
     return [{ href: "/restaurant-kds", label: t("nav.kitchen"), icon: KitchenIcon }];
   }
   const RETAIL_TABS = [
-    { href: "/", label: t("nav.home"), icon: HomeIcon },
+    { href: "/dashboard", label: t("nav.home"), icon: HomeIcon },
     { href: "/bills/new", label: t("nav.sell"), icon: SellIcon },
     { href: "/purchases/new", label: t("nav.buy"), icon: BuyIcon },
     { href: "/reports", label: t("nav.reports"), icon: ReportIcon },
@@ -41,7 +41,7 @@ export function tabsFor(businessType: string, t: (key: string) => string, permis
   // consistent Home-dashboard shortcut across every business type
   // instead of competing for a tab slot anywhere.
   const RESTAURANT_TABS = [
-    { href: "/", label: t("nav.home"), icon: HomeIcon },
+    { href: "/dashboard", label: t("nav.home"), icon: HomeIcon },
     { href: "/restaurant", label: t("nav.tables"), icon: TableIcon },
     { href: "/restaurant-kds", label: t("nav.kitchen"), icon: KitchenIcon },
     { href: "/purchases/new", label: t("nav.buy"), icon: BuyIcon },
@@ -49,7 +49,7 @@ export function tabsFor(businessType: string, t: (key: string) => string, permis
   ];
 
   const RENTAL_TABS = [
-    { href: "/", label: t("nav.home"), icon: HomeIcon },
+    { href: "/dashboard", label: t("nav.home"), icon: HomeIcon },
     { href: "/bills/new", label: t("nav.sell"), icon: SellIcon },
     { href: "/rentals/new", label: t("nav.newRental"), icon: BuyIcon },
     { href: "/purchases/new", label: t("nav.buy"), icon: BuyIcon },
@@ -61,7 +61,7 @@ export function tabsFor(businessType: string, t: (key: string) => string, permis
   // keeping the vehicle list current — so those replace Buy/Reports up
   // front, same treatment as Restaurant got for Tables/Kitchen.
   const TRANSPORT_TABS = [
-    { href: "/", label: t("nav.home"), icon: HomeIcon },
+    { href: "/dashboard", label: t("nav.home"), icon: HomeIcon },
     { href: "/bills/new", label: t("nav.sell"), icon: SellIcon },
     { href: "/transport/vehicles", label: "Vehicles", icon: TruckNavIcon },
     { href: "/purchases/new", label: t("nav.buy"), icon: BuyIcon },
@@ -78,7 +78,7 @@ export function tabsFor(businessType: string, t: (key: string) => string, permis
   // genuinely less frequent. Reports gets a prominent shortcut on the
   // Service Home dashboard instead of its own tab slot here.
   const SERVICE_TABS = [
-    { href: "/", label: t("nav.home"), icon: HomeIcon },
+    { href: "/dashboard", label: t("nav.home"), icon: HomeIcon },
     { href: "/bills/new", label: "Sell", icon: SellIcon },
     { href: "/purchases/new", label: t("nav.buy"), icon: BuyIcon },
     { href: "/service", label: "Jobs", icon: ServiceIcon },
@@ -86,7 +86,7 @@ export function tabsFor(businessType: string, t: (key: string) => string, permis
   ];
 
   const SALON_TABS = [
-    { href: "/", label: t("nav.home"), icon: HomeIcon },
+    { href: "/dashboard", label: t("nav.home"), icon: HomeIcon },
     { href: "/bills/new", label: t("nav.sell"), icon: SellIcon },
     { href: "/salon/appointments", label: "Appointments", icon: SalonNavIcon },
     { href: "/purchases/new", label: t("nav.buy"), icon: BuyIcon },
@@ -94,7 +94,7 @@ export function tabsFor(businessType: string, t: (key: string) => string, permis
   ];
 
   const JEWELLERY_TABS = [
-    { href: "/", label: t("nav.home"), icon: HomeIcon },
+    { href: "/dashboard", label: t("nav.home"), icon: HomeIcon },
     { href: "/bills/new", label: t("nav.sell"), icon: SellIcon },
     { href: "/jewellery/rates", label: "Rate", icon: JewelleryNavIcon },
     { href: "/purchases/new", label: t("nav.buy"), icon: BuyIcon },
@@ -102,7 +102,7 @@ export function tabsFor(businessType: string, t: (key: string) => string, permis
   ];
 
   const CLINIC_TABS = [
-    { href: "/", label: t("nav.home"), icon: HomeIcon },
+    { href: "/dashboard", label: t("nav.home"), icon: HomeIcon },
     { href: "/clinic/prescriptions/new", label: "New Rx", icon: ClinicNavIcon },
     { href: "/clinic/appointments", label: "Appointments", icon: ClinicAppointmentIcon },
     { href: "/purchases/new", label: t("nav.buy"), icon: BuyIcon },
@@ -110,7 +110,7 @@ export function tabsFor(businessType: string, t: (key: string) => string, permis
   ];
 
   const GYM_TABS = [
-    { href: "/", label: t("nav.home"), icon: HomeIcon },
+    { href: "/dashboard", label: t("nav.home"), icon: HomeIcon },
     { href: "/gym/members/new", label: "Sell", icon: SellIcon },
     { href: "/gym/members", label: "Members", icon: TableIcon },
     { href: "/purchases/new", label: t("nav.buy"), icon: BuyIcon },
@@ -118,7 +118,7 @@ export function tabsFor(businessType: string, t: (key: string) => string, permis
   ];
 
   const LAB_TABS = [
-    { href: "/", label: t("nav.home"), icon: HomeIcon },
+    { href: "/dashboard", label: t("nav.home"), icon: HomeIcon },
     { href: "/lab/orders/new", label: "New order", icon: SellIcon },
     { href: "/lab/orders", label: "Orders", icon: TableIcon },
     { href: "/purchases/new", label: t("nav.buy"), icon: BuyIcon },
@@ -150,7 +150,7 @@ export function BottomNav({ lang, businessType, permissions = [] }: { lang: Lang
       <ul className="mx-auto flex max-w-lg items-stretch justify-between px-1">
         {tabs.map((tab) => {
           const active =
-            tab.href === "/" ? pathname === "/" : pathname.startsWith(tab.href);
+            pathname.startsWith(tab.href);
           const Icon = tab.icon;
           return (
             <li key={tab.href} className="flex-1 py-1.5">

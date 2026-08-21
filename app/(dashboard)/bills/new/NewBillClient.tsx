@@ -634,20 +634,28 @@ export function NewBillClient({
                 {formatMoney(totals.subtotal)}
               </span>
             </div>
-            <div ref={cartEndRef} />
+            <div ref={cartEndRef} className="pb-32 md:pb-16" />
           </section>
         )}
 
-        <button
-          disabled={cart.length === 0 || (customerMode === "existing" && !selectedCustomer)}
-          onClick={() => {
-            setPaidAmount(totals.total);
-            setStep("ticket");
-          }}
-          className="btn-primary text-center disabled:opacity-40"
-        >
-          {t("bill.completeTicket")} →
-        </button>
+        <div className="fixed inset-x-0 bottom-24 z-20 border-t border-border bg-background px-4 py-3 shadow-lg md:bottom-0 md:shadow-none">
+          <div className="mx-auto flex max-w-lg items-center justify-between gap-3 md:max-w-5xl xl:max-w-6xl">
+            <div className="min-w-0">
+              <p className="text-xs text-muted">{t("bill.subtotal")}</p>
+              <p className="truncate text-lg font-bold text-foreground">{formatMoney(totals.subtotal)}</p>
+            </div>
+            <button
+              disabled={cart.length === 0 || (customerMode === "existing" && !selectedCustomer)}
+              onClick={() => {
+                setPaidAmount(totals.total);
+                setStep("ticket");
+              }}
+              className="btn-primary shrink-0 px-6 text-center disabled:opacity-40"
+            >
+              {t("bill.completeTicket")} →
+            </button>
+          </div>
+        </div>
       </div>
     );
   }
