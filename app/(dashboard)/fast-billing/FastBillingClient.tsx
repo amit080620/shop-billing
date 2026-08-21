@@ -118,7 +118,7 @@ export function FastBillingClient({
       </div>
 
       {/* Product grid — large tappable tiles, image-first */}
-      <div className="grid flex-1 grid-cols-3 gap-2 px-3 py-3 pb-28 sm:grid-cols-4">
+      <div className="grid flex-1 grid-cols-3 gap-2 px-3 py-3 pb-40 sm:grid-cols-4 md:pb-20">
         {visibleProducts.map((product) => {
           const inCart = cart.find((l) => l.productId === product.id);
           const outOfStock = product.trackInventory && product.stockQuantity <= 0;
@@ -155,7 +155,7 @@ export function FastBillingClient({
 
       {/* Persistent bottom bar — always know item count + total */}
       {itemCount > 0 && (
-        <div className="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-background px-3 py-2.5 md:bottom-0">
+        <div className="fixed inset-x-0 bottom-24 z-20 border-t border-border bg-background px-3 py-2.5 shadow-lg md:bottom-0 md:shadow-none">
           <button onClick={() => setShowBill(true)} className="btn-primary flex w-full items-center justify-between px-4">
             <span>
               {itemCount} item{itemCount === 1 ? "" : "s"}
