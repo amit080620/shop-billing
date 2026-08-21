@@ -44,7 +44,7 @@ export default async function NewBillPage() {
       .eq("shop_id", session.shopId)
       .eq("status", "active")
       .gte("created_at", last30.toISOString()),
-    admin.from("shops").select("invoice_prefix, loyalty_redemption_value").eq("id", session.shopId).single(),
+    admin.from("shops").select("invoice_prefix, loyalty_redemption_value, fast_billing_enabled").eq("id", session.shopId).single(),
     admin.from("vehicles").select("id, name, rate_per_km").eq("shop_id", session.shopId).eq("is_active", true).order("name"),
     admin.from("metal_rates").select("metal_type, rate_per_gram, effective_date").eq("shop_id", session.shopId).order("effective_date", { ascending: false }).limit(20),
   ]);
@@ -70,9 +70,19 @@ export default async function NewBillPage() {
   }
 
   return (
-    <NewBillClient
-      shopStateCode={session.shopStateCode}
-      lang={lang}
+    <div className="flex flex-col gap-3">
+      {shop?.fast_billing_enabled && (
+        <Link
+          href="/fast-billing"
+          className="flex items-center justify-between rounded-xl bg-brand-soft px-4 py-3 text-sm font-medium text-brand-text"
+        >
+          <span>⚡ Switch to Fast Billing — tap-to-add for quick sales</span>
+          <span>→</span>
+        </Link>
+      )}
+      <NewBillClient
+        shopStateCode={session.shopStateCode}
+        lang={lang}
       loyaltyRedemptionValue={Number(shop?.loyalty_redemption_value ?? 1)}
       shopContext={{
         shopId: session.shopId,
@@ -112,5 +122,6 @@ export default async function NewBillPage() {
       silverRate={metalRates?.find((r) => r.metal_type === "silver") ? Number(metalRates.find((r) => r.metal_type === "silver")!.rate_per_gram) : null}
       businessType={session.businessType}
     />
+    </div>
   );
 }
