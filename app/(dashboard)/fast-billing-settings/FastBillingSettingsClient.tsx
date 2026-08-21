@@ -34,10 +34,18 @@ export function FastBillingSettingsClient({ enabled, productCount }: { enabled: 
           disabled={isSaving}
           role="switch"
           aria-checked={isOn}
-          className={`relative h-7 w-12 shrink-0 rounded-full transition-colors ${isOn ? "bg-brand" : "bg-border"}`}
+          className="relative h-8 w-14 shrink-0 rounded-full p-1"
+          style={{
+            boxShadow: "inset 4px 4px 8px var(--neu-dark), inset -4px -4px 8px var(--neu-light)",
+          }}
         >
           <span
-            className={`absolute top-0.5 h-6 w-6 rounded-full bg-white shadow transition-transform ${isOn ? "translate-x-5" : "translate-x-0.5"}`}
+            className={`absolute top-1 flex h-6 w-6 items-center justify-center rounded-full transition-transform ${isOn ? "translate-x-6 bg-brand" : "translate-x-0 bg-background"}`}
+            style={{
+              boxShadow: isOn
+                ? "-2px -2px 5px rgba(255,255,255,0.35), 2px 2px 5px rgba(0,0,0,0.25)"
+                : "-2px -2px 5px var(--neu-light), 2px 2px 5px var(--neu-dark)",
+            }}
           />
         </button>
       </div>
