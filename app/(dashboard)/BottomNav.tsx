@@ -3,11 +3,9 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  Home,
   Receipt,
   PackagePlus,
   BarChart3,
-  Menu,
   LayoutGrid,
   ChefHat,
   Truck,
@@ -16,113 +14,102 @@ import {
   CalendarClock,
   Gem,
   Stethoscope,
+  Zap,
 } from "lucide-react";
 import { useTranslation } from "@/lib/i18n/useTranslation";
 import type { Lang } from "@/lib/i18n/dictionary";
 
-export function tabsFor(businessType: string, t: (key: string) => string, permissions: string[] = []) {
+export function tabsFor(businessType: string, t: (key: string) => string, permissions: string[] = [], fastBillingEnabled = false) {
   if (permissions.includes("kitchen_only")) {
     return [{ href: "/restaurant-kds", label: t("nav.kitchen"), icon: KitchenIcon }];
   }
+
+  const fastBillingTab = fastBillingEnabled ? [{ href: "/fast-billing", label: "Fast Bill", icon: FastBillIcon }] : [];
+  const reportsTab = { href: "/reports", label: t("nav.reports"), icon: ReportIcon };
+
+  // Home and More genuinely move to the top header now (next to the
+  // shop name) — they're destinations you visit occasionally, not
+  // dozens of times a shift, so they no longer need to occupy one of
+  // the precious 5 thumb-reach bottom slots. Every business type below
+  // keeps its own core actions, plus Reports (now universal) and Fast
+  // Billing (only when the shop has genuinely turned it on).
   const RETAIL_TABS = [
-    { href: "/dashboard", label: t("nav.home"), icon: HomeIcon },
     { href: "/bills/new", label: t("nav.sell"), icon: SellIcon },
     { href: "/purchases/new", label: t("nav.buy"), icon: BuyIcon },
-    { href: "/reports", label: t("nav.reports"), icon: ReportIcon },
-    { href: "/more", label: t("nav.more"), icon: MoreIcon },
+    reportsTab,
+    ...fastBillingTab,
   ];
 
-  // A restaurant's whole day revolves around tables and the kitchen —
-  // Sell (built for retail stock transactions) isn't what a restaurant
-  // reaches for dozens of times a shift, so the primary tab becomes
-  // Tables, with the kitchen display one tap away instead of buried in
-  // More. Buy (vendor purchases for ingredients/supplies) stays a
-  // genuine direct tab — never hidden in More. Reports gets a
-  // consistent Home-dashboard shortcut across every business type
-  // instead of competing for a tab slot anywhere.
   const RESTAURANT_TABS = [
-    { href: "/dashboard", label: t("nav.home"), icon: HomeIcon },
     { href: "/restaurant", label: t("nav.tables"), icon: TableIcon },
     { href: "/restaurant-kds", label: t("nav.kitchen"), icon: KitchenIcon },
     { href: "/purchases/new", label: t("nav.buy"), icon: BuyIcon },
-    { href: "/more", label: t("nav.more"), icon: MoreIcon },
+    reportsTab,
+    ...fastBillingTab,
   ];
 
   const RENTAL_TABS = [
-    { href: "/dashboard", label: t("nav.home"), icon: HomeIcon },
     { href: "/bills/new", label: t("nav.sell"), icon: SellIcon },
     { href: "/rentals/new", label: t("nav.newRental"), icon: BuyIcon },
     { href: "/purchases/new", label: t("nav.buy"), icon: BuyIcon },
-    { href: "/more", label: t("nav.more"), icon: MoreIcon },
+    reportsTab,
+    ...fastBillingTab,
   ];
 
-  // A transport & materials shop lives in two screens all day: billing
-  // (material + the vehicle's transport charge on the same bill) and
-  // keeping the vehicle list current — so those replace Buy/Reports up
-  // front, same treatment as Restaurant got for Tables/Kitchen.
   const TRANSPORT_TABS = [
-    { href: "/dashboard", label: t("nav.home"), icon: HomeIcon },
     { href: "/bills/new", label: t("nav.sell"), icon: SellIcon },
     { href: "/transport/vehicles", label: "Vehicles", icon: TruckNavIcon },
     { href: "/purchases/new", label: t("nav.buy"), icon: BuyIcon },
-    { href: "/more", label: t("nav.more"), icon: MoreIcon },
+    reportsTab,
+    ...fastBillingTab,
   ];
 
-  // Reports needs to be as directly reachable here as it is for every
-  // other business type — Buy (purchases) moves into More instead,
-  // since it's genuinely a less frequent action day-to-day than
-  // checking reports.
-  // Buy (vendor purchases for spare parts/materials) is genuinely a
-  // routine, frequent action for a repair shop — unlike the trade-offs
-  // made for Gym/Lab (attendance logging, test catalog), which are
-  // genuinely less frequent. Reports gets a prominent shortcut on the
-  // Service Home dashboard instead of its own tab slot here.
   const SERVICE_TABS = [
-    { href: "/dashboard", label: t("nav.home"), icon: HomeIcon },
     { href: "/bills/new", label: "Sell", icon: SellIcon },
     { href: "/purchases/new", label: t("nav.buy"), icon: BuyIcon },
     { href: "/service", label: "Jobs", icon: ServiceIcon },
-    { href: "/more", label: t("nav.more"), icon: MoreIcon },
+    reportsTab,
+    ...fastBillingTab,
   ];
 
   const SALON_TABS = [
-    { href: "/dashboard", label: t("nav.home"), icon: HomeIcon },
     { href: "/bills/new", label: t("nav.sell"), icon: SellIcon },
     { href: "/salon/appointments", label: "Appointments", icon: SalonNavIcon },
     { href: "/purchases/new", label: t("nav.buy"), icon: BuyIcon },
-    { href: "/more", label: t("nav.more"), icon: MoreIcon },
+    reportsTab,
+    ...fastBillingTab,
   ];
 
   const JEWELLERY_TABS = [
-    { href: "/dashboard", label: t("nav.home"), icon: HomeIcon },
     { href: "/bills/new", label: t("nav.sell"), icon: SellIcon },
     { href: "/jewellery/rates", label: "Rate", icon: JewelleryNavIcon },
     { href: "/purchases/new", label: t("nav.buy"), icon: BuyIcon },
-    { href: "/more", label: t("nav.more"), icon: MoreIcon },
+    reportsTab,
+    ...fastBillingTab,
   ];
 
   const CLINIC_TABS = [
-    { href: "/dashboard", label: t("nav.home"), icon: HomeIcon },
     { href: "/clinic/prescriptions/new", label: "New Rx", icon: ClinicNavIcon },
     { href: "/clinic/appointments", label: "Appointments", icon: ClinicAppointmentIcon },
     { href: "/purchases/new", label: t("nav.buy"), icon: BuyIcon },
-    { href: "/more", label: t("nav.more"), icon: MoreIcon },
+    reportsTab,
+    ...fastBillingTab,
   ];
 
   const GYM_TABS = [
-    { href: "/dashboard", label: t("nav.home"), icon: HomeIcon },
     { href: "/gym/members/new", label: "Sell", icon: SellIcon },
     { href: "/gym/members", label: "Members", icon: TableIcon },
     { href: "/purchases/new", label: t("nav.buy"), icon: BuyIcon },
-    { href: "/more", label: t("nav.more"), icon: MoreIcon },
+    reportsTab,
+    ...fastBillingTab,
   ];
 
   const LAB_TABS = [
-    { href: "/dashboard", label: t("nav.home"), icon: HomeIcon },
     { href: "/lab/orders/new", label: "New order", icon: SellIcon },
     { href: "/lab/orders", label: "Orders", icon: TableIcon },
     { href: "/purchases/new", label: t("nav.buy"), icon: BuyIcon },
-    { href: "/more", label: t("nav.more"), icon: MoreIcon },
+    reportsTab,
+    ...fastBillingTab,
   ];
 
   if (businessType === "restaurant") return RESTAURANT_TABS;
@@ -137,10 +124,10 @@ export function tabsFor(businessType: string, t: (key: string) => string, permis
   return RETAIL_TABS;
 }
 
-export function BottomNav({ lang, businessType, permissions = [] }: { lang: Lang; businessType: string; permissions?: string[] }) {
+export function BottomNav({ lang, businessType, permissions = [], fastBillingEnabled = false }: { lang: Lang; businessType: string; permissions?: string[]; fastBillingEnabled?: boolean }) {
   const pathname = usePathname();
   const { t } = useTranslation(lang);
-  const tabs = tabsFor(businessType, t, permissions);
+  const tabs = tabsFor(businessType, t, permissions, fastBillingEnabled);
 
   return (
     <nav
@@ -180,9 +167,6 @@ export function BottomNav({ lang, businessType, permissions = [] }: { lang: Lang
   );
 }
 
-function HomeIcon({ active }: { active: boolean }) {
-  return <Home size={22} strokeWidth={active ? 2.3 : 1.8} />;
-}
 function SellIcon({ active }: { active: boolean }) {
   return <Receipt size={22} strokeWidth={active ? 2.3 : 1.8} />;
 }
@@ -192,8 +176,8 @@ function BuyIcon({ active }: { active: boolean }) {
 function ReportIcon({ active }: { active: boolean }) {
   return <BarChart3 size={22} strokeWidth={active ? 2.3 : 1.8} />;
 }
-function MoreIcon({ active }: { active: boolean }) {
-  return <Menu size={22} strokeWidth={active ? 2.3 : 1.8} />;
+function FastBillIcon({ active }: { active: boolean }) {
+  return <Zap size={22} strokeWidth={active ? 2.3 : 1.8} />;
 }
 function TableIcon({ active }: { active: boolean }) {
   return <LayoutGrid size={22} strokeWidth={active ? 2.3 : 1.8} />;

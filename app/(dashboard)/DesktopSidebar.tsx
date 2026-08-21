@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { useTranslation } from "@/lib/i18n/useTranslation";
 import { tabsFor } from "./BottomNav";
 import type { Lang } from "@/lib/i18n/dictionary";
-import { HelpCircle } from "lucide-react";
+import { HelpCircle, LayoutDashboard, Menu } from "lucide-react";
 
 export function DesktopSidebar({
   lang,
@@ -15,6 +15,7 @@ export function DesktopSidebar({
   roleLabel,
   shopLogoUrl,
   permissions = [],
+  fastBillingEnabled = false,
 }: {
   lang: Lang;
   businessType: string;
@@ -23,10 +24,11 @@ export function DesktopSidebar({
   roleLabel: string;
   shopLogoUrl: string | null;
   permissions?: string[];
+  fastBillingEnabled?: boolean;
 }) {
   const pathname = usePathname();
   const { t } = useTranslation(lang);
-  const tabs = tabsFor(businessType, t, permissions);
+  const tabs = tabsFor(businessType, t, permissions, fastBillingEnabled);
 
   return (
     <aside className="no-print fixed inset-y-0 left-0 z-20 hidden w-60 flex-col border-r border-border bg-surface md:flex">
@@ -42,12 +44,18 @@ export function DesktopSidebar({
             {shopName.charAt(0).toUpperCase()}
           </div>
         )}
-        <div className="min-w-0">
+        <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-semibold text-foreground">{shopName}</p>
           <p className="truncate text-xs text-muted">
             {staffName} · {roleLabel}
           </p>
         </div>
+        <Link href="/dashboard" className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-muted hover:bg-background" aria-label="Dashboard">
+          <LayoutDashboard size={16} />
+        </Link>
+        <Link href="/more" className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-muted hover:bg-background" aria-label="More">
+          <Menu size={16} />
+        </Link>
       </div>
       <ul className="flex flex-1 flex-col gap-0.5 overflow-y-auto p-3">
         {tabs.map((tab) => {

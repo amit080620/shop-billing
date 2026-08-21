@@ -10,7 +10,6 @@ import { getTerminology } from "@/lib/businessType";
 import { LanguageToggle } from "@/lib/i18n/LanguageToggle";
 import { SubscriptionCard } from "@/app/components/SubscriptionCard";
 import { InstallAppButton } from "@/app/components/InstallAppButton";
-import { MoreSearchBox } from "./MoreSearchBox";
 import { isModuleEnabled } from "@/lib/modules";
 import { Users, Bell, Clock, Truck, Package, UserCog, Settings, Megaphone, HelpCircle, PartyPopper, WifiOff, CalendarClock, ChefHat, BookOpen, ClipboardCheck, ShieldCheck, Scissors, Gem, Store, Stethoscope, Palette, Wallet, Building2, Dumbbell, FlaskConical, Receipt as ReceiptIcon, AlertTriangle, Cake, PackagePlus, Wrench, Gift, Zap } from "lucide-react";
 
@@ -25,7 +24,6 @@ export default async function MorePage() {
   return (
     <div className="flex flex-col gap-5">
       <h1 className="text-lg font-semibold text-foreground">{t("more.title")}</h1>
-      <MoreSearchBox />
 
       <SubscriptionCard />
       <InstallAppButton />
@@ -62,7 +60,7 @@ export default async function MorePage() {
       </MenuGroup>
 
       {(session.businessType === "pharmacy" || session.businessType === "clinic") && (
-        <MenuGroup title="Medicine stock" defaultOpen>
+        <MenuGroup title="Medicine stock">
           <MenuLink href="/pharmacy/expiry" label="Expiry alerts" sub="Medicines nearing or past expiry" icon={ExpiryIcon} tone="warning" />
           <MenuLink href="/pharmacy/write-offs" label="Write-off history" sub="Stock lost to expiry or damage" icon={ClockIcon} />
           {session.businessType === "pharmacy" && (
@@ -75,7 +73,7 @@ export default async function MorePage() {
       )}
 
       {session.businessType === "restaurant" && (
-        <MenuGroup title="Restaurant" defaultOpen>
+        <MenuGroup title="Restaurant">
           <MenuLink href="/restaurant-kds" label="Kitchen display (TV)" sub="Big-screen view for the kitchen" icon={KitchenIcon} tone="secondary" />
           <MenuLink href="/restaurant/kds-settings" label="Kitchen display settings" sub="Cards per row, text size" icon={KitchenIcon} tone="secondary" />
           <MenuLink href="/restaurant/combos" label="Combo deals" sub="Bundle menu items at a set price" icon={BoxIcon} />
@@ -84,7 +82,7 @@ export default async function MorePage() {
       )}
 
       {session.businessType === "service" && (
-        <MenuGroup title="Service & repairs" defaultOpen>
+        <MenuGroup title="Service & repairs">
           <MenuLink href="/service" label="All jobs" sub="Every repair, by status" icon={WrenchIcon} tone="secondary" />
           <MenuLink href="/service/new" label="New job" sub="Take in an item for repair" icon={WrenchIcon} tone="secondary" />
           <MenuLink href="/service/reports" label="Job report" sub="Earnings, technician split, item types" icon={ClockIcon} />
@@ -92,39 +90,39 @@ export default async function MorePage() {
       )}
 
       {session.businessType === "rental" && (
-        <MenuGroup title="Rentals" defaultOpen>
+        <MenuGroup title="Rentals">
           <MenuLink href="/rentals/history" label="Rental history" sub="Past returns & cancellations" icon={ClockIcon} />
         </MenuGroup>
       )}
 
       {session.businessType === "transport" && (
-        <MenuGroup title="Transport" defaultOpen>
+        <MenuGroup title="Transport">
           <MenuLink href="/transport/vehicles" label="Vehicles" sub="Manage trucks & per-km rates" icon={TruckIcon} tone="secondary" />
           <MenuLink href="/transport/reports" label="Vehicle-wise trips" sub="Rounds, km & earnings per vehicle" icon={ClockIcon} />
         </MenuGroup>
       )}
 
       {["hardware", "mart", "general"].includes(session.businessType) && (
-        <MenuGroup title="Hardware" defaultOpen>
+        <MenuGroup title="Hardware">
           <MenuLink href="/warranty" label="Warranty lookup" sub="Check warranty status by phone or invoice" icon={WarrantyIcon} tone="success" />
         </MenuGroup>
       )}
 
       {session.businessType === "salon" && (
-        <MenuGroup title="Salon" defaultOpen>
+        <MenuGroup title="Salon">
           <MenuLink href="/salon" label="Staff-wise revenue" sub="Who's bringing in how much" icon={SalonIcon} tone="secondary" />
         </MenuGroup>
       )}
 
       {session.businessType === "jewellery" && (
-        <MenuGroup title="Jewellery" defaultOpen>
+        <MenuGroup title="Jewellery">
           <MenuLink href="/jewellery/rates" label="Today's rate" sub="Set gold/silver rate per gram" icon={JewelleryIcon} tone="warning" />
           <MenuLink href="/jewellery/exchanges" label="Exchange history" sub="Old gold/silver taken in" icon={ClockIcon} />
         </MenuGroup>
       )}
 
       {session.businessType === "clinic" && (
-        <MenuGroup title="Clinic" defaultOpen>
+        <MenuGroup title="Clinic">
           <MenuLink href="/clinic/appointments" label="Appointments" sub="Book & manage patient visits" icon={ClinicIcon} tone="info" />
           <MenuLink href="/clinic/prescriptions/new" label="New prescription" sub="Write an Rx for a patient" icon={ClinicIcon} tone="info" />
           <MenuLink href="/clinic/settings" label="Prescription pad settings" sub="Letterhead, header/footer, Rx fields" icon={ClinicIcon} tone="info" />
@@ -133,7 +131,7 @@ export default async function MorePage() {
       )}
 
       {session.businessType === "gym" && (
-        <MenuGroup title="Gym" defaultOpen>
+        <MenuGroup title="Gym">
           <MenuLink href="/gym/members" label="Members" sub="View members, expiry status, PT sessions" icon={GymIcon} tone="success" />
           <MenuLink href="/gym/members/new" label="Sell membership" sub="New sign-up or renewal" icon={GymIcon} tone="success" />
           {isModuleEnabled(session.enabledModules, "leads_crm") && (
@@ -151,7 +149,7 @@ export default async function MorePage() {
       )}
 
       {session.businessType === "lab" && (
-        <MenuGroup title="Lab" defaultOpen>
+        <MenuGroup title="Lab">
           <MenuLink href="/lab/orders" label="Orders" sub="Booked, in-progress, and completed orders" icon={LabIcon} tone="info" />
           <MenuLink href="/lab/orders/new" label="New order" sub="Book tests for a patient" icon={LabIcon} tone="info" />
           <MenuLink href="/lab/tests" label="Test catalog & packages" sub="Set up tests, prices, reference ranges" icon={LabIcon} tone="info" />
@@ -169,7 +167,7 @@ export default async function MorePage() {
         <MenuLink href="/invoice-settings" label="Invoice design" sub="Tagline, footer, terms, accent colour" icon={InvoiceDesignIcon} tone="secondary" />
       </MenuGroup>
 
-      <MenuGroup title="Money" defaultOpen>
+      <MenuGroup title="Money">
         <MenuLink href="/bills/all" label="All bills" sub="Browse & reprint any past bill" icon={({ className }) => <ReceiptIcon className={className} />} tone="brand" />
         {isModuleEnabled(session.enabledModules, "petty_cash") && (
           <MenuLink href="/petty-cash" label="Petty cash" sub="Small day-to-day cash expenses" icon={PettyCashIcon} tone="warning" />
@@ -182,7 +180,7 @@ export default async function MorePage() {
         </MenuGroup>
       )}
 
-      <MenuGroup title="People" defaultOpen>
+      <MenuGroup title="People">
         <MenuLink
           href="/customers"
           label={session.businessType === "clinic" ? "Patients" : session.businessType === "gym" ? "Members" : t("more.customers")}
@@ -203,7 +201,7 @@ export default async function MorePage() {
         )}
       </MenuGroup>
 
-      <MenuGroup title="Catalog" defaultOpen>
+      <MenuGroup title="Catalog">
         <MenuLink href="/products" label={terminology.productPlural} sub={terminology.productSub} icon={BoxIcon} />
         {isModuleEnabled(session.enabledModules, "stock_audit") && (
           <MenuLink href="/stock-audit" label="Stock audit" sub="Count physical stock, reconcile mismatches" icon={AuditIcon} tone="warning" />
@@ -302,8 +300,6 @@ function MenuLink({
   return (
     <Link
       href={href}
-      data-menu-search-item
-      data-menu-search-text={`${label} ${sub}`.toLowerCase()}
       className="neu-card flex items-center gap-3 px-4 py-3.5 transition active:scale-[0.98]"
     >
       <span

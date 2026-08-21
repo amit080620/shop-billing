@@ -1,5 +1,8 @@
 import Image from "next/image";
+import Link from "next/link";
+import { LayoutDashboard, Menu } from "lucide-react";
 import { requireSession } from "@/lib/auth";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { getLang } from "@/lib/i18n/server";
 import { translate } from "@/lib/i18n/dictionary";
 import { BottomNav } from "./BottomNav";
@@ -15,6 +18,8 @@ export default async function DashboardLayout({
   children: React.ReactNode;
 }) {
   const session = await requireSession();
+  const admin = createSupabaseAdminClient();
+  const { data: shop } = await admin.from("shops").select("fast_billing_enabled").eq("id", session.shopId).single();
   const lang = await getLang();
   const roleLabel = session.role === "owner" ? translate(lang, "role.owner") : translate(lang, "role.staff");
 
@@ -28,6 +33,7 @@ export default async function DashboardLayout({
         roleLabel={roleLabel}
         shopLogoUrl={session.shopLogoUrl}
         permissions={session.permissions}
+        fastBillingEnabled={shop?.fast_billing_enabled ?? false}
       />
 
       <header
@@ -60,6 +66,22 @@ export default async function DashboardLayout({
               {session.staffName} · {roleLabel}
             </p>
           </div>
+          <Link
+            href="/dashboard"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-muted"
+            style={{ boxShadow: "-2px -2px 5px var(--neu-light), 2px 2px 5px var(--neu-dark)" }}
+            aria-label="Dashboard"
+          >
+            <LayoutDashboard size={17} />
+          </Link>
+          <Link
+            href="/more"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-muted"
+            style={{ boxShadow: "-2px -2px 5px var(--neu-light), 2px 2px 5px var(--neu-dark)" }}
+            aria-label="More"
+          >
+            <Menu size={17} />
+          </Link>
         </div>
       </header>
 
@@ -75,7 +97,7 @@ export default async function DashboardLayout({
 
       <main className="page-enter mx-auto max-w-lg px-4 py-4 pb-24 md:max-w-5xl md:px-8 md:py-8 md:pb-8 xl:max-w-6xl">{children}</main>
 
-      <BottomNav lang={lang} businessType={session.businessType} permissions={session.permissions} />
+      <BottomNav lang={lang} businessType={session.businessType} permissions={session.permissions} fastBillingEnabled={shop?.fast_billing_enabled ?? false} />
       <WelcomeTour storageKey={`tour-seen-${session.shopId}`} businessType={session.businessType} />
       {isModuleEnabled(session.enabledModules, "public_catalog") && <CatalogOrderAlert />}
     </div>
