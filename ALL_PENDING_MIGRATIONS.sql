@@ -1,8 +1,8 @@
 -- ============================================================
 -- The Ray — Shop Billing SaaS
--- ALL migrations combined — genuinely up-to-date as of this
--- delivery (through 0011). Run this ONCE on an EXISTING
--- database that already has the baseline (0000) applied.
+-- ALL migrations combined — genuinely up-to-date (through 0012).
+-- Run this ONCE on an EXISTING database that already has the
+-- baseline (0000) applied.
 --
 -- If this is a genuinely BRAND NEW database, run
 -- supabase/schema.sql instead (the full baseline) — do NOT
@@ -140,4 +140,15 @@ create table if not exists team_viewers (
   created_at timestamptz not null default now()
 );
 alter table team_viewers enable row level security;
+
+-- ==== 0012_fast_billing.sql ====
+-- Fast Billing — genuinely opt-in (default false for every existing
+-- shop, so nothing changes until an owner deliberately turns it on).
+alter table shops add column if not exists fast_billing_enabled boolean not null default false;
+
+-- Per-product Fast Billing display config — genuinely separate from
+-- the product's normal catalog visibility (show_in_catalog is for the
+-- public online storefront, this is for the in-shop quick-tile grid).
+alter table products add column if not exists show_in_fast_billing boolean not null default false;
+alter table products add column if not exists fast_billing_order integer not null default 0;
 

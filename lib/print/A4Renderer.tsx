@@ -75,6 +75,16 @@ export function A4Renderer({ data }: { data: A4InvoiceData }) {
       className="bg-white text-[#1a1a1a]"
       style={{ fontFamily: A4_FONT_STACK, fontSize: "13px", lineHeight: 1.55 }}
     >
+      <style>{`
+        @media print {
+          /* Genuinely repeats the column headers on every printed page
+             when the item table spans more than one page — a real
+             browser print feature, not a JS re-implementation. */
+          thead { display: table-header-group; }
+          tbody tr { break-inside: avoid; page-break-inside: avoid; }
+        }
+      `}</style>
+
       {data.voidedReason && (
         <div className="mb-6 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
           This invoice has been voided — {data.voidedReason}
@@ -166,7 +176,7 @@ export function A4Renderer({ data }: { data: A4InvoiceData }) {
 
       {/* Tax summary + Grand Total — right-aligned, restrained,
           typography-driven hierarchy rather than a colored box. */}
-      <div className="mt-8 flex justify-end">
+      <div className="mt-8 flex justify-end" style={{ breakInside: "avoid" }}>
         <div className="w-full max-w-[280px]">
           {data.savingsOffMrp != null && data.savingsOffMrp > 0 && (
             <SummaryLine label="You saved (off MRP)" value={money(data.savingsOffMrp)} />
