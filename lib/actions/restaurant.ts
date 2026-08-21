@@ -83,6 +83,7 @@ export async function deleteTableAction(tableId: string): Promise<{ error?: stri
  * always called after any item add/remove, so the stored total can never
  * silently drift from what's actually in the order. */
 export async function recalcOrderTotals(orderId: string) {
+  await requireSession();
   const admin = createSupabaseAdminClient();
   const { data: order } = await admin
     .from("restaurant_orders")
