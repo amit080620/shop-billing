@@ -15,7 +15,7 @@ export default async function ProductsPage() {
     admin
       .from("products")
       .select(
-        "id, name, price, gst_percent, hsn_code, barcode, unit, category_id, track_inventory, stock_quantity, low_stock_threshold, is_rentable, rental_rate_hourly, rental_rate_daily, rental_rate_weekly, rental_rate_monthly, security_deposit, is_pharma, requires_prescription, salt_composition, rack_location, drug_schedule, units_per_pack, loose_unit_name, has_warranty, warranty_months, mrp, metal_type, purity, making_charge_type, making_charge_value, wastage_percent, bulk_min_qty, bulk_price, hallmark_number, image_url, offer_price, offer_label, show_in_catalog, categories ( name )",
+        "id, name, price, gst_percent, hsn_code, barcode, unit, category_id, track_inventory, stock_quantity, low_stock_threshold, is_rentable, rental_rate_hourly, rental_rate_daily, rental_rate_weekly, rental_rate_monthly, security_deposit, is_pharma, requires_prescription, salt_composition, rack_location, drug_schedule, units_per_pack, loose_unit_name, has_warranty, warranty_months, mrp, metal_type, purity, making_charge_type, making_charge_value, wastage_percent, bulk_min_qty, bulk_price, hallmark_number, image_url, offer_price, offer_label, show_in_catalog, show_in_fast_billing, categories ( name )",
       )
       .eq("shop_id", session.shopId)
       .order("name"),
@@ -72,6 +72,7 @@ export default async function ProductsPage() {
         offerPrice: p.offer_price !== null ? Number(p.offer_price) : null,
         offerLabel: p.offer_label,
         showInCatalog: p.show_in_catalog,
+        showInFastBilling: p.show_in_fast_billing,
         categoryName: Array.isArray(p.categories)
           ? p.categories[0]?.name
           : (p.categories as { name: string } | null)?.name ?? null,

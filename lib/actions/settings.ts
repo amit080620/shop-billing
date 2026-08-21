@@ -244,3 +244,18 @@ export async function saveLoyaltySettingsAction(settings: {
   revalidatePath("/loyalty-settings");
   return {};
 }
+
+export async function toggleFastBillingAction(enabled: boolean): Promise<{ error?: string }> {
+  const session = await requireOwner();
+  const admin = createSupabaseAdminClient();
+
+  const { error } = await admin.from("shops").update({ fast_billing_enabled: enabled }).eq("id", session.shopId);
+  if (error) {
+    console.error("Could not toggle Fast Billing", error);
+    return { error: "Could not save this setting" };
+  }
+  revalidatePath("/more");
+  revalidatePath("/fast-billing-settings");
+  revalidatePath("/");
+  return {};
+}

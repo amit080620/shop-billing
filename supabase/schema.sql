@@ -29,6 +29,7 @@ create table if not exists shops (
   -- ₹100 of PAID amount (not credit), redeemed at redemption_value ₹/point.
   loyalty_points_per_100 numeric(6, 2) not null default 0,
   loyalty_redemption_value numeric(6, 2) not null default 1,
+  fast_billing_enabled boolean not null default false,
   -- true: product/menu prices are the FINAL amount the customer pays —
   -- GST is backed out of it, never added on top (e.g. a ₹100 Thali
   -- always bills at ₹100). false: prices are the pre-tax base and GST
@@ -1362,6 +1363,8 @@ alter table products add column if not exists image_url text;
 alter table products add column if not exists offer_price numeric(12, 2);
 alter table products add column if not exists offer_label text;
 alter table products add column if not exists show_in_catalog boolean not null default true;
+alter table products add column if not exists show_in_fast_billing boolean not null default false;
+alter table products add column if not exists fast_billing_order integer not null default 0;
 
 insert into storage.buckets (id, name, public)
 values ('product-images', 'product-images', true)

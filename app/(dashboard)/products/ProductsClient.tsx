@@ -73,6 +73,7 @@ type Product = {
   offerPrice: number | null;
   offerLabel: string | null;
   showInCatalog: boolean;
+  showInFastBilling: boolean;
 };
 type Category = { id: string; name: string };
 
@@ -475,6 +476,15 @@ export function ProductsClient({
                 className="h-4 w-4 rounded border-border"
               />
               Show this item in the public catalog
+            </label>
+            <label className="flex items-center gap-2 text-sm text-foreground">
+              <input
+                type="checkbox"
+                name="showInFastBilling"
+                defaultChecked={editingProduct?.showInFastBilling ?? false}
+                className="h-4 w-4 rounded border-border"
+              />
+              Show this item in Fast Billing (quick tap-to-add grid)
             </label>
             <div className="grid grid-cols-2 gap-3">
               <Field

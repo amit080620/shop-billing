@@ -49,6 +49,7 @@ export async function createProductAction(
     offerPrice: formData.get("offerPrice") || null,
     offerLabel: formData.get("offerLabel"),
     showInCatalog: formData.get("showInCatalog") !== "off",
+    showInFastBilling: formData.get("showInFastBilling") === "on",
     bulkMinQty: formData.get("bulkMinQty") || null,
     bulkPrice: formData.get("bulkPrice") || null,
   });
@@ -109,6 +110,7 @@ export async function createProductAction(
     offer_price: parsed.data.offerPrice ?? null,
     offer_label: parsed.data.offerLabel ?? null,
     show_in_catalog: parsed.data.showInCatalog,
+    show_in_fast_billing: parsed.data.showInFastBilling,
   }).select("id").single();
   if (error) {
     if (error.code === "23505") {
@@ -164,6 +166,7 @@ export async function updateProductAction(
     offerPrice: formData.get("offerPrice") || null,
     offerLabel: formData.get("offerLabel"),
     showInCatalog: formData.get("showInCatalog") !== "off",
+    showInFastBilling: formData.get("showInFastBilling") === "on",
     bulkMinQty: formData.get("bulkMinQty") || null,
     bulkPrice: formData.get("bulkPrice") || null,
   });
@@ -212,6 +215,7 @@ export async function updateProductAction(
       offer_price: parsed.data.offerPrice ?? null,
       offer_label: parsed.data.offerLabel ?? null,
       show_in_catalog: parsed.data.showInCatalog,
+      show_in_fast_billing: parsed.data.showInFastBilling,
     })
     .eq("id", productId)
     .eq("shop_id", session.shopId); // ownership check baked into the query

@@ -11,7 +11,7 @@ import { LanguageToggle } from "@/lib/i18n/LanguageToggle";
 import { SubscriptionCard } from "@/app/components/SubscriptionCard";
 import { InstallAppButton } from "@/app/components/InstallAppButton";
 import { isModuleEnabled } from "@/lib/modules";
-import { Users, Bell, Clock, Truck, Package, UserCog, Settings, Megaphone, HelpCircle, PartyPopper, WifiOff, CalendarClock, ChefHat, BookOpen, ClipboardCheck, ShieldCheck, Scissors, Gem, Store, Stethoscope, Palette, Wallet, Building2, Dumbbell, FlaskConical, Receipt as ReceiptIcon, AlertTriangle, Cake, PackagePlus, Wrench, Gift } from "lucide-react";
+import { Users, Bell, Clock, Truck, Package, UserCog, Settings, Megaphone, HelpCircle, PartyPopper, WifiOff, CalendarClock, ChefHat, BookOpen, ClipboardCheck, ShieldCheck, Scissors, Gem, Store, Stethoscope, Palette, Wallet, Building2, Dumbbell, FlaskConical, Receipt as ReceiptIcon, AlertTriangle, Cake, PackagePlus, Wrench, Gift, Zap } from "lucide-react";
 
 export default async function MorePage() {
   const session = await requireSession();
@@ -224,6 +224,7 @@ export default async function MorePage() {
         )}
         <MenuLink href="/festivals" label="Festival planner" sub="Upcoming festivals & stock-up reminders" icon={FestivalIcon} tone="secondary" />
         <MenuLink href="/loyalty-settings" label="Loyalty program" sub="Reward regulars for coming back" icon={GiftIcon} tone="secondary" />
+        <MenuLink href="/fast-billing-settings" label="Fast billing" sub="Tap-to-add counter for busy hours" icon={ZapIcon} tone="secondary" />
       </MenuGroup>
 
       <MenuGroup title="Shop setup">
@@ -360,6 +361,9 @@ function FestivalIcon({ className }: { className?: string }) {
 }
 function GiftIcon({ className }: { className?: string }) {
   return <Gift className={className} size={18} strokeWidth={1.8} />;
+}
+function ZapIcon({ className }: { className?: string }) {
+  return <Zap className={className} size={18} strokeWidth={1.8} />;
 }
 function OfflineIcon({ className }: { className?: string }) {
   return <WifiOff className={className} size={18} strokeWidth={1.8} />;

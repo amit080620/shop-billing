@@ -24,6 +24,7 @@ export interface Database {
           gst_scheme: "regular" | "composition";
           loyalty_points_per_100: number;
           loyalty_redemption_value: number;
+          fast_billing_enabled: boolean;
           price_includes_gst: boolean;
           invoice_prefix: string;
           logo_url: string | null;
@@ -50,6 +51,7 @@ export interface Database {
           gst_scheme?: "regular" | "composition";
           loyalty_points_per_100?: number;
           loyalty_redemption_value?: number;
+          fast_billing_enabled?: boolean;
           price_includes_gst?: boolean;
           invoice_prefix?: string;
           logo_url?: string | null;
@@ -76,6 +78,7 @@ export interface Database {
           gst_scheme?: "regular" | "composition";
           loyalty_points_per_100?: number;
           loyalty_redemption_value?: number;
+          fast_billing_enabled?: boolean;
           price_includes_gst?: boolean;
           invoice_prefix?: string;
           logo_url?: string | null;
@@ -172,6 +175,8 @@ export interface Database {
           offer_price: number | null;
           offer_label: string | null;
           show_in_catalog: boolean;
+          show_in_fast_billing: boolean;
+          fast_billing_order: number;
           created_at: string;
         };
         Insert: {
@@ -215,6 +220,8 @@ export interface Database {
           offer_price?: number | null;
           offer_label?: string | null;
           show_in_catalog?: boolean;
+          show_in_fast_billing?: boolean;
+          fast_billing_order?: number;
           created_at?: string;
         };
         Update: {
@@ -258,6 +265,8 @@ export interface Database {
           offer_price?: number | null;
           offer_label?: string | null;
           show_in_catalog?: boolean;
+          show_in_fast_billing?: boolean;
+          fast_billing_order?: number;
           created_at?: string;
         };
         Relationships: [
