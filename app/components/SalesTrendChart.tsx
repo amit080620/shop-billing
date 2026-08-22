@@ -7,17 +7,15 @@ export function SalesTrendChart({ data }: { data: { day: string; date: string; t
   const router = useRouter();
   const hasAnySales = data.some((d) => d.total > 0);
 
-  if (!hasAnySales) {
-    return (
-      <div className="flex h-28 w-full flex-col items-center justify-center gap-1 text-center">
-        <p className="text-xs text-muted">No sales in this period yet</p>
-        <p className="text-[11px] text-muted/70">Your first bill will show up here</p>
-      </div>
-    );
-  }
-
+  // Genuinely keeps the recharts tree permanently mounted regardless
+  // of whether there's any sales data yet — conditionally mounting an
+  // entire third-party chart tree (which internally uses several of
+  // its own hooks) based on a value that changes between renders is a
+  // genuinely risky pattern. The "no sales yet" message is an overlay
+  // on top of the always-mounted (but visually near-invisible, zeroed)
+  // chart instead of a swap to a completely different subtree.
   return (
-    <div className="h-28 w-full">
+    <div className="relative h-28 w-full">
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={data} margin={{ top: 4, right: 4, left: 4, bottom: 0 }}>
           <defs>
@@ -59,6 +57,13 @@ export function SalesTrendChart({ data }: { data: { day: string; date: string; t
           />
         </BarChart>
       </ResponsiveContainer>
+
+      {!hasAnySales && (
+        <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-1 bg-background text-center">
+          <p className="text-xs text-muted">No sales in this period yet</p>
+          <p className="text-[11px] text-muted/70">Your first bill will show up here</p>
+        </div>
+      )}
     </div>
   );
 }
