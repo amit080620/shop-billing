@@ -1228,6 +1228,18 @@ export interface Database {
           { foreignKeyName: "prescriptions_patient_id_fkey"; columns: ["patient_id"]; isOneToOne: false; referencedRelation: "customers"; referencedColumns: ["id"] },
         ];
       };
+      treatment_plans: {
+        Row: { id: string; shop_id: string; patient_id: string | null; patient_name: string; patient_phone: string | null; doctor_name: string | null; notes: string | null; status: string; bill_id: string | null; staff_id: string; created_at: string };
+        Insert: { id?: string; shop_id: string; patient_id?: string | null; patient_name: string; patient_phone?: string | null; doctor_name?: string | null; notes?: string | null; status?: string; bill_id?: string | null; staff_id: string; created_at?: string };
+        Update: { id?: string; shop_id?: string; patient_id?: string | null; patient_name?: string; patient_phone?: string | null; doctor_name?: string | null; notes?: string | null; status?: string; bill_id?: string | null; staff_id?: string; created_at?: string };
+        Relationships: [];
+      };
+      treatment_plan_items: {
+        Row: { id: string; treatment_plan_id: string; tooth_number: string | null; procedure_name: string; description: string | null; estimated_cost: number; status: string; completed_at: string | null; sort_order: number };
+        Insert: { id?: string; treatment_plan_id: string; tooth_number?: string | null; procedure_name: string; description?: string | null; estimated_cost?: number; status?: string; completed_at?: string | null; sort_order?: number };
+        Update: { id?: string; treatment_plan_id?: string; tooth_number?: string | null; procedure_name?: string; description?: string | null; estimated_cost?: number; status?: string; completed_at?: string | null; sort_order?: number };
+        Relationships: [];
+      };
       shop_medicine_library: {
         Row: { id: string; shop_id: string; medicine_name: string; usage_count: number; last_used_at: string; created_at: string };
         Insert: { id?: string; shop_id: string; medicine_name: string; usage_count?: number; last_used_at?: string; created_at?: string };

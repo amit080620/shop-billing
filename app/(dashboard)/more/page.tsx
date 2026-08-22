@@ -128,6 +128,7 @@ export default async function MorePage() {
           <MenuLink href="/clinic/settings" label="Prescription pad settings" sub="Letterhead, header/footer, Rx fields" icon={ClinicIcon} tone="info" />
           <MenuLink href="/clinic/settings/booking" label="Online booking" sub="Working hours & shareable booking link" icon={ClinicIcon} tone="info" />
           <MenuLink href="/clinic/medicine-library" label="Medicine library" sub="Saved medicines — no need to retype names" icon={MedicineLibraryIcon} tone="info" />
+          <MenuLink href="/clinic/treatment-plans" label="Treatment plans" sub="Plan → quotation → bill, all linked" icon={ClinicIcon} tone="info" />
         </MenuGroup>
       )}
 
