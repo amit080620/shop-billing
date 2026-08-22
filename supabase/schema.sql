@@ -63,6 +63,7 @@ create table if not exists staff (
   role text not null check (role in ('owner', 'staff')),
   created_at timestamptz not null default now()
 );
+create index if not exists idx_staff_shop_id on staff(shop_id);
 
 create table if not exists categories (
   id uuid primary key default uuid_generate_v4(),

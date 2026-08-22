@@ -1,6 +1,6 @@
 -- ============================================================
 -- The Ray — Shop Billing SaaS
--- ALL migrations combined — genuinely up-to-date (through 0012).
+-- ALL migrations combined — genuinely up-to-date (through 0013).
 -- Run this ONCE on an EXISTING database that already has the
 -- baseline (0000) applied.
 --
@@ -151,4 +151,12 @@ alter table shops add column if not exists fast_billing_enabled boolean not null
 -- public online storefront, this is for the in-shop quick-tile grid).
 alter table products add column if not exists show_in_fast_billing boolean not null default false;
 alter table products add column if not exists fast_billing_order integer not null default 0;
+
+-- ==== 0013_missing_indexes.sql ====
+-- Genuine performance fix — staff can grow to several rows per shop
+-- and is queried on every staff-management screen. (categories was
+-- also checked, but it already has an implicit index via its own
+-- unique(shop_id, name) constraint, so it genuinely doesn't need a
+-- separate one.)
+create index if not exists idx_staff_shop_id on staff(shop_id);
 
