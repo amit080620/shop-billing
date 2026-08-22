@@ -5,6 +5,7 @@ import { requireSession } from "../auth";
 import { createSupabaseAdminClient } from "../supabase/admin";
 import { round2 } from "../gst";
 import { logError } from "../audit";
+import { checkRateLimit } from "../rateLimit";
 
 export async function saveCatalogSettingsAction(settings: {
   isEnabled: boolean;
@@ -53,6 +54,12 @@ export async function submitCatalogOrderAction(
   const digitsOnly = input.phone.replace(/\D/g, "");
   if (digitsOnly.length < 10 || digitsOnly.length > 12) return { error: "Enter a valid mobile number" };
   if (input.items.length === 0) return { error: "Your cart is empty" };
+
+  // Genuine best-effort abuse deterrence — this is a public,
+  // unauthenticated endpoint anyone with the shop's link can hit.
+  if (!checkRateLimit(`catalog-order:${publicToken}:${digitsOnly}`, 5, 10 * 60 * 1000)) {
+    return { error: "Too many orders submitted recently — please wait a few minutes and try again." };
+  }
 
   const { data: settings } = await admin
     .from("catalog_settings")

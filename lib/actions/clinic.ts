@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { requireSession } from "../auth";
 import { createSupabaseAdminClient } from "../supabase/admin";
 import { logError } from "../audit";
+import { checkRateLimit } from "../rateLimit";
 
 export type ActionState = { error?: string } | null;
 
@@ -133,6 +134,13 @@ export async function createPublicBookingAction(
 
   if (!input.name.trim()) return { error: "Enter your name" };
   if (!input.phone.trim()) return { error: "Enter your phone number" };
+
+  // Genuine best-effort abuse deterrence — this is a public,
+  // unauthenticated endpoint anyone with the shop's link can hit.
+  const bookingDigitsOnly = input.phone.replace(/\D/g, "");
+  if (!checkRateLimit(`booking:${publicToken}:${bookingDigitsOnly}`, 5, 10 * 60 * 1000)) {
+    return { error: "Too many booking attempts recently — please wait a few minutes and try again." };
+  }
 
   const { data: settings } = await admin
     .from("booking_settings")
