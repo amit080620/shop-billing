@@ -30,7 +30,7 @@ export default async function DashboardLayout({
   const roleLabel = session.role === "owner" ? translate(lang, "role.owner") : translate(lang, "role.staff");
 
   return (
-    <div className="min-h-screen bg-background pb-24 md:pb-0 md:pl-60">
+    <div className="min-h-screen bg-background pb-24 md:pb-0 md:pl-72">
       <DesktopSidebar
         lang={lang}
         businessType={session.businessType}
