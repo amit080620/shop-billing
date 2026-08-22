@@ -70,7 +70,7 @@ export default async function PrintTreatmentPlanPage({ params }: { params: Promi
       </div>
 
       {(() => {
-        const chart = plan.dental_chart as Record<string, string> | null;
+        const chart = plan.dental_chart as Record<string, string[]> | null;
         return (
           chart &&
           Object.keys(chart).length > 0 && (

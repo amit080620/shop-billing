@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { Smile } from "lucide-react";
+import { Smile, Check } from "lucide-react";
 
-export const TOOTH_CONDITIONS = ["healthy", "cavity", "filled", "missing", "crown", "root_canal", "extraction", "bridge", "implant", "sealant"] as const;
+export const TOOTH_CONDITIONS = ["cavity", "filled", "missing", "crown", "root_canal", "extraction", "bridge", "implant", "sealant"] as const;
 export const CONDITION_COLORS: Record<string, string> = {
   healthy: "bg-surface border-border text-muted",
   cavity: "bg-red-100 border-red-400 text-red-700",
@@ -33,15 +33,23 @@ const UPPER_LEFT = [21, 22, 23, 24, 25, 26, 27, 28];
 const LOWER_LEFT = [31, 32, 33, 34, 35, 36, 37, 38];
 const LOWER_RIGHT = [48, 47, 46, 45, 44, 43, 42, 41];
 
-/** A genuine small SVG tooth icon whose visual treatment changes per
- * condition — Crown genuinely shows a cap, RCT genuinely highlights
- * the root, etc., rather than just a differently-colored number. */
-export function ToothIcon({ condition, size = 22 }: { condition: string; size?: number }) {
-  const crownFill =
-    condition === "cavity" ? "#f87171" : condition === "filled" ? "#93c5fd" : condition === "missing" ? "none" : "#fefce8";
-  const rootFill = condition === "root_canal" ? "#dc2626" : condition === "missing" ? "none" : "#fef3c7";
-  const strokeColor = condition === "missing" ? "#9ca3af" : "#78716c";
-  const strokeDash = condition === "missing" ? "2 2" : undefined;
+/** Genuinely a chart where each tooth holds a LIST of conditions, not
+ * just one — a real tooth commonly gets RCT done first, then a Crown
+ * placed on top weeks later, and the chart needs to genuinely
+ * remember both, not have the second procedure silently erase the
+ * first. */
+export type ToothChartData = Record<string, string[]>;
+
+/** A genuine small SVG tooth icon that visually COMBINES every marker
+ * that applies — a tooth with both RCT and a Crown genuinely shows
+ * the red root highlight AND the gold cap together. */
+export function ToothIcon({ conditions, size = 22 }: { conditions: string[]; size?: number }) {
+  const has = (c: string) => conditions.includes(c);
+
+  const crownFill = has("cavity") ? "#f87171" : has("filled") ? "#93c5fd" : has("missing") ? "none" : "#fefce8";
+  const rootFill = has("root_canal") ? "#dc2626" : has("missing") ? "none" : "#fef3c7";
+  const strokeColor = has("missing") ? "#9ca3af" : "#78716c";
+  const strokeDash = has("missing") ? "2 2" : undefined;
 
   return (
     <svg width={size} height={size} viewBox="0 0 24 28" fill="none">
@@ -59,7 +67,7 @@ export function ToothIcon({ condition, size = 22 }: { condition: string; size?: 
         strokeWidth="1.3"
         strokeDasharray={strokeDash}
       />
-      {condition === "crown" && (
+      {has("crown") && (
         <path
           d="M12 2 C6 2 4 6 4 9 C4 12.5 6 15 9 15.5 L15 15.5 C18 15 20 12.5 20 9 C20 6 18 2 12 2 Z"
           fill="url(#goldCap)"
@@ -67,7 +75,7 @@ export function ToothIcon({ condition, size = 22 }: { condition: string; size?: 
           strokeWidth="1.3"
         />
       )}
-      {condition === "crown" && (
+      {has("crown") && (
         <defs>
           <linearGradient id="goldCap" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stopColor="#fde68a" />
@@ -75,40 +83,46 @@ export function ToothIcon({ condition, size = 22 }: { condition: string; size?: 
           </linearGradient>
         </defs>
       )}
-      {condition === "bridge" && <rect x="2" y="7" width="20" height="3" rx="1.5" fill="#0891b2" opacity="0.85" />}
-      {condition === "implant" && <rect x="10.5" y="14" width="3" height="12" fill="#6b7280" />}
-      {condition === "sealant" && <path d="M6 6 Q12 3 18 6" stroke="#65a30d" strokeWidth="1.5" fill="none" />}
-      {condition === "extraction" && <line x1="3" y1="4" x2="21" y2="24" stroke="#e11d48" strokeWidth="2" strokeLinecap="round" />}
+      {has("bridge") && <rect x="2" y="7" width="20" height="3" rx="1.5" fill="#0891b2" opacity="0.85" />}
+      {has("implant") && <rect x="10.5" y="14" width="3" height="12" fill="#6b7280" />}
+      {has("sealant") && <path d="M6 6 Q12 3 18 6" stroke="#65a30d" strokeWidth="1.5" fill="none" />}
+      {has("extraction") && <line x1="3" y1="4" x2="21" y2="24" stroke="#e11d48" strokeWidth="2" strokeLinecap="round" />}
     </svg>
   );
 }
 
-/** The genuine shared tooth chart — tap a tooth number, pick a
- * procedure directly from a popup (RCT, Crown, etc.), used identically
- * in both Prescriptions and Treatment Plans, so a doctor's tooth-level
- * work is genuinely captured the same way everywhere in the app. */
-export function ToothChart({ chart, onChange }: { chart: Record<string, string>; onChange: (chart: Record<string, string>) => void }) {
+/** The genuine shared tooth chart — tap a tooth to open a multi-select
+ * checklist (RCT, Crown, both, etc.), used identically in both
+ * Prescriptions and Treatment Plans. */
+export function ToothChart({ chart, onChange }: { chart: ToothChartData; onChange: (chart: ToothChartData) => void }) {
   const [openTooth, setOpenTooth] = useState<number | null>(null);
 
-  function selectCondition(tooth: number, condition: string) {
+  function toggleCondition(tooth: number, condition: string) {
+    const current = chart[tooth] ?? [];
     const updated = { ...chart };
-    if (condition === "healthy") delete updated[tooth];
-    else updated[tooth] = condition;
+    if (current.includes(condition)) {
+      const next = current.filter((c) => c !== condition);
+      if (next.length === 0) delete updated[tooth];
+      else updated[tooth] = next;
+    } else {
+      updated[tooth] = [...current, condition];
+    }
     onChange(updated);
-    setOpenTooth(null);
   }
 
   function ToothButton({ tooth }: { tooth: number }) {
-    const condition = chart[tooth] ?? "healthy";
+    const conditions = chart[tooth] ?? [];
+    const label = conditions.length > 0 ? conditions.map((c) => CONDITION_LABELS[c] ?? c).join(" + ") : "Healthy";
+    const colorKey = conditions[0] ?? "healthy";
     return (
       <div className="relative">
         <button
           type="button"
           onClick={() => setOpenTooth(openTooth === tooth ? null : tooth)}
-          className={`flex h-11 w-11 flex-col items-center justify-center gap-0.5 rounded-lg border ${CONDITION_COLORS[condition]}`}
-          title={CONDITION_LABELS[condition]}
+          className={`flex h-11 w-11 flex-col items-center justify-center gap-0.5 rounded-lg border ${CONDITION_COLORS[colorKey]}`}
+          title={label}
         >
-          <ToothIcon condition={condition} size={18} />
+          <ToothIcon conditions={conditions} size={18} />
           <span className="text-[9px] font-semibold leading-none">{tooth}</span>
         </button>
 
@@ -116,23 +130,29 @@ export function ToothChart({ chart, onChange }: { chart: Record<string, string>;
           <>
             <div className="fixed inset-0 z-40" onClick={() => setOpenTooth(null)} />
             <div
-              className="absolute left-1/2 top-full z-50 mt-1.5 w-44 -translate-x-1/2 rounded-xl border border-border bg-surface p-1.5"
+              className="absolute left-1/2 top-full z-50 mt-1.5 w-48 -translate-x-1/2 rounded-xl border border-border bg-surface p-1.5"
               style={{ boxShadow: "-4px -4px 10px var(--neu-light), 4px 4px 12px var(--neu-dark)" }}
             >
-              <p className="px-2 py-1 text-[10px] font-semibold text-muted">Tooth {tooth} — pick a procedure</p>
-              {TOOTH_CONDITIONS.map((c) => (
-                <button
-                  key={c}
-                  type="button"
-                  onClick={() => selectCondition(tooth, c)}
-                  className={`flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-xs ${
-                    condition === c ? "bg-brand-soft font-semibold text-brand-text" : "text-foreground hover:bg-background"
-                  }`}
-                >
-                  <ToothIcon condition={c} size={16} />
-                  {CONDITION_LABELS[c]}
-                </button>
-              ))}
+              <p className="px-2 py-1 text-[10px] font-semibold text-muted">Tooth {tooth} — tap all that apply</p>
+              {TOOTH_CONDITIONS.map((c) => {
+                const checked = conditions.includes(c);
+                return (
+                  <button
+                    key={c}
+                    type="button"
+                    onClick={() => toggleCondition(tooth, c)}
+                    className={`flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-xs ${
+                      checked ? "bg-brand-soft font-semibold text-brand-text" : "text-foreground hover:bg-background"
+                    }`}
+                  >
+                    <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded border border-border">
+                      {checked && <Check size={11} />}
+                    </span>
+                    <ToothIcon conditions={[c]} size={16} />
+                    {CONDITION_LABELS[c]}
+                  </button>
+                );
+              })}
             </div>
           </>
         )}
@@ -143,7 +163,10 @@ export function ToothChart({ chart, onChange }: { chart: Record<string, string>;
   return (
     <section className="flex flex-col gap-2 rounded-xl border border-border bg-surface p-3.5">
       <p className="flex items-center gap-1.5 text-sm font-semibold text-foreground"><Smile size={14} /> Tooth chart</p>
-      <p className="text-xs text-muted">Tap a tooth to pick its procedure directly — Crown shows a cap, RCT highlights the root.</p>
+      <p className="text-xs text-muted">
+        Tap a tooth, then tick every procedure that applies — a tooth can genuinely have both RCT and a Crown
+        marked together.
+      </p>
       <div className="flex flex-col items-center gap-2 overflow-visible">
         <div className="flex gap-1">
           {UPPER_RIGHT.map((t) => (
@@ -165,9 +188,9 @@ export function ToothChart({ chart, onChange }: { chart: Record<string, string>;
         </div>
       </div>
       <div className="mt-1 flex flex-wrap gap-2">
-        {TOOTH_CONDITIONS.filter((c) => c !== "healthy").map((c) => (
+        {TOOTH_CONDITIONS.map((c) => (
           <span key={c} className={`flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-medium ${CONDITION_COLORS[c]}`}>
-            <ToothIcon condition={c} size={12} />
+            <ToothIcon conditions={[c]} size={12} />
             {CONDITION_LABELS[c]}
           </span>
         ))}
@@ -176,15 +199,16 @@ export function ToothChart({ chart, onChange }: { chart: Record<string, string>;
   );
 }
 
-/** A genuine static (read-only, no popups) render of the tooth chart —
- * used on the printed quotation, where the patient just needs to SEE
- * which teeth are being treated, not tap anything. */
-export function ToothChartStatic({ chart }: { chart: Record<string, string> }) {
+/** A genuine static (read-only) render of the tooth chart — used on
+ * the printed quotation. */
+export function ToothChartStatic({ chart }: { chart: ToothChartData }) {
   function Tooth({ tooth }: { tooth: number }) {
-    const condition = chart[tooth] ?? "healthy";
+    const conditions = chart[tooth] ?? [];
+    const label = conditions.length > 0 ? conditions.map((c) => CONDITION_LABELS[c] ?? c).join(" + ") : "Healthy";
+    const colorKey = conditions[0] ?? "healthy";
     return (
-      <div className={`flex h-9 w-9 flex-col items-center justify-center gap-0.5 rounded border ${CONDITION_COLORS[condition]}`}>
-        <ToothIcon condition={condition} size={14} />
+      <div className={`flex h-9 w-9 flex-col items-center justify-center gap-0.5 rounded border ${CONDITION_COLORS[colorKey]}`} title={label}>
+        <ToothIcon conditions={conditions} size={14} />
         <span className="text-[8px] font-semibold leading-none">{tooth}</span>
       </div>
     );

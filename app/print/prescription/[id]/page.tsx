@@ -4,6 +4,7 @@ import { requireSession } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { PrintButton } from "@/app/print/bill/[id]/PrintButton";
 import { GenerateBillButton } from "./GenerateBillButton";
+import { ToothChartStatic } from "@/app/components/ToothChart";
 
 export default async function PrintPrescriptionPage({
   params,
@@ -113,14 +114,10 @@ export default async function PrintPrescriptionPage({
       )}
 
       {/* Dental chart */}
-      {prescription.dental_chart && Object.keys(prescription.dental_chart as Record<string, string>).length > 0 && (
-        <div className="mt-4 rounded-lg border border-gray-200 p-2.5">
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Tooth chart</p>
-          <p className="text-xs text-gray-700">
-            {Object.entries(prescription.dental_chart as Record<string, string>)
-              .map(([tooth, condition]) => `#${tooth}: ${condition.replace("_", " ")}`)
-              .join(" · ")}
-          </p>
+      {prescription.dental_chart && Object.keys(prescription.dental_chart as Record<string, string[]>).length > 0 && (
+        <div className="mt-4 flex flex-col items-center gap-2 rounded-lg border border-gray-200 p-2.5">
+          <p className="self-start text-[11px] font-semibold uppercase tracking-wide text-gray-500">Tooth chart</p>
+          <ToothChartStatic chart={prescription.dental_chart as Record<string, string[]>} />
         </div>
       )}
 

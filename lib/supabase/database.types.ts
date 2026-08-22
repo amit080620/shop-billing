@@ -1189,7 +1189,7 @@ export interface Database {
           doctor_name: string | null;
           custom_sections: { label: string; value: string }[];
           follow_up_date: string | null;
-          dental_chart: Record<string, string> | null;
+          dental_chart: Record<string, string[]> | null;
           vitals: Record<string, string | number> | null;
           bill_id: string | null;
           staff_id: string;
@@ -1209,7 +1209,7 @@ export interface Database {
           doctor_name?: string | null;
           custom_sections?: { label: string; value: string }[];
           follow_up_date?: string | null;
-          dental_chart?: Record<string, string> | null;
+          dental_chart?: Record<string, string[]> | null;
           vitals?: Record<string, string | number> | null;
           bill_id?: string | null;
           staff_id: string;
@@ -1229,7 +1229,7 @@ export interface Database {
           doctor_name?: string | null;
           custom_sections?: { label: string; value: string }[];
           follow_up_date?: string | null;
-          dental_chart?: Record<string, string> | null;
+          dental_chart?: Record<string, string[]> | null;
           vitals?: Record<string, string | number> | null;
           bill_id?: string | null;
           staff_id?: string;

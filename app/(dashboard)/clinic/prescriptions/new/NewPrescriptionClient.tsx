@@ -21,7 +21,7 @@ import { SearchableSelect } from "@/app/components/SearchableSelect";
 import { COMMON_MEDICINE_NAMES } from "@/lib/constants/commonMedicines";
 import type { Lang } from "@/lib/i18n/dictionary";
 import { FileText, ClipboardList } from "lucide-react";
-import { ToothChart } from "@/app/components/ToothChart";
+import { ToothChart, type ToothChartData } from "@/app/components/ToothChart";
 import { todayIso } from "@/lib/dateHelpers";
 
 type Patient = { id: string; name: string; phone: string; dateOfBirth: string | null; gender: string | null };
@@ -76,7 +76,7 @@ export function NewPrescriptionClient({
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
-  const [dentalChart, setDentalChart] = useState<Record<string, string>>({});
+  const [dentalChart, setDentalChart] = useState<ToothChartData>({});
   const [vitals, setVitals] = useState<Record<string, string>>({});
 
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);

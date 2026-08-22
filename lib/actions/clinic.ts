@@ -272,7 +272,7 @@ export async function createPrescriptionAction(input: {
   followUpDate: string | null;
   appointmentId: string | null;
   items: PrescriptionItemInput[];
-  dentalChart?: Record<string, string>;
+  dentalChart?: Record<string, string[]>;
   vitals?: Record<string, string | number>;
 }): Promise<{ error?: string; prescriptionId?: string }> {
   const session = await requireSession();

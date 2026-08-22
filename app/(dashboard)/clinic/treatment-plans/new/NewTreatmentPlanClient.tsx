@@ -10,7 +10,7 @@ import { SearchableSelect } from "@/app/components/SearchableSelect";
 import { useToast } from "@/app/components/Toast";
 import type { Lang } from "@/lib/i18n/dictionary";
 import { ClipboardList, Plus, Trash2 } from "lucide-react";
-import { ToothChart, CONDITION_LABELS } from "@/app/components/ToothChart";
+import { ToothChart, CONDITION_LABELS, type ToothChartData } from "@/app/components/ToothChart";
 
 type Patient = { id: string; name: string; phone: string };
 type PlanItem = { key: string; toothNumber: string; procedureName: string; description: string; estimatedCost: string };
@@ -64,36 +64,36 @@ export function NewTreatmentPlanClient({
   const [doctorName, setDoctorName] = useState(prefillDoctorName ?? "");
   const [notes, setNotes] = useState("");
   const [items, setItems] = useState<PlanItem[]>([newItem()]);
-  const [dentalChart, setDentalChart] = useState<Record<string, string>>({});
+  const [dentalChart, setDentalChart] = useState<ToothChartData>({});
 
-  function handleDentalChartChange(newChart: Record<string, string>) {
+  function handleDentalChartChange(newChart: ToothChartData) {
     setDentalChart(newChart);
     setItems((prev) => {
-      // Genuinely drop any auto-added row whose tooth no longer has a
-      // condition set (tapped back to "healthy").
-      const withoutStale = prev.filter((it) => {
-        if (!it.key.startsWith("tooth-")) return true;
-        const tooth = it.key.slice("tooth-".length);
-        return Boolean(newChart[tooth]);
-      });
+      // Genuinely build the full set of (tooth, condition) pairs that
+      // should genuinely exist right now.
+      const activeKeys = new Set<string>();
+      for (const [tooth, conditions] of Object.entries(newChart)) {
+        for (const condition of conditions) activeKeys.add(`tooth-${tooth}-${condition}`);
+      }
 
-      // Genuinely upsert a row for every tooth that has a condition —
-      // updates the existing row if the tooth's procedure changed,
-      // adds a fresh one otherwise. Never duplicates a tooth's row.
+      // Genuinely drop any auto-added row whose (tooth, condition)
+      // pair is no longer checked on the chart.
+      const withoutStale = prev.filter((it) => !it.key.startsWith("tooth-") || activeKeys.has(it.key));
+
+      // Genuinely add a fresh row for every (tooth, condition) pair
+      // that's genuinely new — a tooth with BOTH RCT and Crown ticked
+      // gets TWO separate rows, one per procedure, never merged.
       let next = withoutStale;
-      for (const [tooth, condition] of Object.entries(newChart)) {
-        const key = `tooth-${tooth}`;
-        const label = CONDITION_LABELS[condition] ?? condition;
-        const existingIndex = next.findIndex((it) => it.key === key);
-        if (existingIndex !== -1) {
-          next = next.map((it, i) => (i === existingIndex ? { ...it, procedureName: label } : it));
-        } else {
+      for (const [tooth, conditions] of Object.entries(newChart)) {
+        for (const condition of conditions) {
+          const key = `tooth-${tooth}-${condition}`;
+          if (next.some((it) => it.key === key)) continue;
           next = [
             ...next,
             {
               key,
               toothNumber: tooth,
-              procedureName: label,
+              procedureName: CONDITION_LABELS[condition] ?? condition,
               description: "",
               estimatedCost: String(DEFAULT_TOOTH_PROCEDURE_COST[condition] ?? 0),
             },
