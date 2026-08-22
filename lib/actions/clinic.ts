@@ -216,6 +216,13 @@ export async function savePrescriptionSettingsAction(settings: {
   showShopLogo: boolean;
   customFieldLabels: string[];
   specialty: string;
+  rxShowPrice: boolean;
+  rxShowManufacturer: boolean;
+  rxShowComposition: boolean;
+  rxShowPackSize: boolean;
+  rxShowSideEffects: boolean;
+  rxShowDrugInteractions: boolean;
+  rxShowDescription: boolean;
 }): Promise<{ error?: string }> {
   const session = await requireSession();
   const admin = createSupabaseAdminClient();
@@ -226,6 +233,13 @@ export async function savePrescriptionSettingsAction(settings: {
     show_shop_logo: settings.showShopLogo,
     custom_field_labels: settings.customFieldLabels,
     specialty: settings.specialty as "general" | "dental" | "cardiology" | "dermatology" | "physiotherapy" | "orthopedic" | "ent" | "gynecology" | "pediatric" | "psychiatry",
+    rx_show_price: settings.rxShowPrice,
+    rx_show_manufacturer: settings.rxShowManufacturer,
+    rx_show_composition: settings.rxShowComposition,
+    rx_show_pack_size: settings.rxShowPackSize,
+    rx_show_side_effects: settings.rxShowSideEffects,
+    rx_show_drug_interactions: settings.rxShowDrugInteractions,
+    rx_show_description: settings.rxShowDescription,
     updated_at: new Date().toISOString(),
   });
   if (error) {
@@ -617,15 +631,22 @@ export async function exportMedicineLibraryCsvAction(): Promise<{ csv: string; f
   const admin = createSupabaseAdminClient();
   const { data } = await admin
     .from("shop_medicine_library")
-    .select("medicine_name, price, is_discontinued, manufacturer_name, medicine_type, pack_size_label, composition, description, side_effects")
+    .select("medicine_name, price, is_discontinued, manufacturer_name, medicine_type, pack_size_label, composition, description, side_effects, short_composition1, short_composition2, drug_interactions")
     .eq("shop_id", session.shopId)
     .order("medicine_name");
 
-  const headers = ["name", "price", "is_discontinued", "manufacturer_name", "type", "pack_size_label", "composition", "description", "side_effects"];
+  const headers = [
+    "name", "price", "is_discontinued", "manufacturer_name", "type", "pack_size_label",
+    "short_composition1", "short_composition2", "composition", "description", "side_effects", "drug_interactions",
+  ];
   const lines = [headers.map(csvEscape).join(",")];
   for (const m of data ?? []) {
     lines.push(
-      [m.medicine_name, m.price ?? "", m.is_discontinued, m.manufacturer_name ?? "", m.medicine_type ?? "", m.pack_size_label ?? "", m.composition ?? "", m.description ?? "", m.side_effects ?? ""]
+      [
+        m.medicine_name, m.price ?? "", m.is_discontinued, m.manufacturer_name ?? "", m.medicine_type ?? "",
+        m.pack_size_label ?? "", m.short_composition1 ?? "", m.short_composition2 ?? "", m.composition ?? "",
+        m.description ?? "", m.side_effects ?? "", m.drug_interactions ? JSON.stringify(m.drug_interactions) : "",
+      ]
         .map(csvEscape)
         .join(","),
     );
@@ -673,9 +694,12 @@ export async function importMedicineLibraryRowsAction(rows: string[][]): Promise
   const manufacturerIdx = idx("manufacturer_name", "manufacturer");
   const typeIdx = idx("type", "medicine_type");
   const packIdx = idx("pack_size_label", "pack_size");
-  const compositionIdx = idx("salt_composition", "composition", "short_composition1");
+  const compositionIdx = idx("salt_composition", "composition");
+  const composition1Idx = idx("short_composition1");
+  const composition2Idx = idx("short_composition2");
   const descIdx = idx("medicine_desc", "description");
   const sideEffectsIdx = idx("side_effects");
+  const drugInteractionsIdx = idx("drug_interactions");
 
   // Genuinely never throws regardless of the cell's actual type — a
   // genuine Excel file parsed client-side often has NUMBER cells for
@@ -699,6 +723,9 @@ export async function importMedicineLibraryRowsAction(rows: string[][]): Promise
     composition: string | null;
     description: string | null;
     side_effects: string | null;
+    short_composition1: string | null;
+    short_composition2: string | null;
+    drug_interactions: unknown;
   }[] = [];
 
   for (const row of rows.slice(1)) {
@@ -706,6 +733,18 @@ export async function importMedicineLibraryRowsAction(rows: string[][]): Promise
     if (!name) continue;
 
     const priceRaw = cell(row, priceIdx);
+    const drugInteractionsRaw = cell(row, drugInteractionsIdx);
+    let drugInteractions: unknown = null;
+    if (drugInteractionsRaw) {
+      try {
+        drugInteractions = JSON.parse(drugInteractionsRaw);
+      } catch {
+        // Genuinely not valid JSON — keep the raw text rather than
+        // silently discarding real data, so nothing is genuinely lost.
+        drugInteractions = drugInteractionsRaw;
+      }
+    }
+
     records.push({
       shop_id: session.shopId,
       medicine_name: name,
@@ -717,6 +756,9 @@ export async function importMedicineLibraryRowsAction(rows: string[][]): Promise
       composition: cell(row, compositionIdx) || null,
       description: cell(row, descIdx) || null,
       side_effects: cell(row, sideEffectsIdx) || null,
+      short_composition1: cell(row, composition1Idx) || null,
+      short_composition2: cell(row, composition2Idx) || null,
+      drug_interactions: drugInteractions,
     });
   }
 

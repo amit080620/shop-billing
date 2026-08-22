@@ -16,6 +16,13 @@ export function SettingsClient({
   headerImageUrl,
   footerImageUrl,
   specialty: initialSpecialty,
+  rxShowPrice: initialRxShowPrice,
+  rxShowManufacturer: initialRxShowManufacturer,
+  rxShowComposition: initialRxShowComposition,
+  rxShowPackSize: initialRxShowPackSize,
+  rxShowSideEffects: initialRxShowSideEffects,
+  rxShowDrugInteractions: initialRxShowDrugInteractions,
+  rxShowDescription: initialRxShowDescription,
 }: {
   headerText: string;
   footerText: string;
@@ -24,6 +31,13 @@ export function SettingsClient({
   headerImageUrl: string | null;
   footerImageUrl: string | null;
   specialty: string;
+  rxShowPrice: boolean;
+  rxShowManufacturer: boolean;
+  rxShowComposition: boolean;
+  rxShowPackSize: boolean;
+  rxShowSideEffects: boolean;
+  rxShowDrugInteractions: boolean;
+  rxShowDescription: boolean;
 }) {
   const router = useRouter();
   const [headerText, setHeaderText] = useState(initialHeaderText);
@@ -31,6 +45,13 @@ export function SettingsClient({
   const [showShopLogo, setShowShopLogo] = useState(initialShowShopLogo);
   const [specialty, setSpecialty] = useState(initialSpecialty);
   const [labels, setLabels] = useState<string[]>(initialLabels.length > 0 ? initialLabels : [""]);
+  const [rxShowPrice, setRxShowPrice] = useState(initialRxShowPrice);
+  const [rxShowManufacturer, setRxShowManufacturer] = useState(initialRxShowManufacturer);
+  const [rxShowComposition, setRxShowComposition] = useState(initialRxShowComposition);
+  const [rxShowPackSize, setRxShowPackSize] = useState(initialRxShowPackSize);
+  const [rxShowSideEffects, setRxShowSideEffects] = useState(initialRxShowSideEffects);
+  const [rxShowDrugInteractions, setRxShowDrugInteractions] = useState(initialRxShowDrugInteractions);
+  const [rxShowDescription, setRxShowDescription] = useState(initialRxShowDescription);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const [isPending, startTransition] = useTransition();
@@ -67,6 +88,13 @@ export function SettingsClient({
         showShopLogo,
         customFieldLabels: labels.map((l) => l.trim()).filter(Boolean),
         specialty,
+        rxShowPrice,
+        rxShowManufacturer,
+        rxShowComposition,
+        rxShowPackSize,
+        rxShowSideEffects,
+        rxShowDrugInteractions,
+        rxShowDescription,
       });
       if (result.error) {
         setError(result.error);
@@ -211,6 +239,21 @@ export function SettingsClient({
         </button>
       </div>
 
+      <div className="flex flex-col gap-2 rounded-xl border border-border bg-surface p-3.5">
+        <p className="text-sm font-semibold text-foreground">Medicine details shown on the printed Rx</p>
+        <p className="text-xs text-muted">
+          Your medicine library can hold a lot of detail per medicine — choose exactly what genuinely prints on
+          the prescription, field by field.
+        </p>
+        <FieldToggle label="Price" checked={rxShowPrice} onChange={setRxShowPrice} />
+        <FieldToggle label="Manufacturer" checked={rxShowManufacturer} onChange={setRxShowManufacturer} />
+        <FieldToggle label="Salt / composition" checked={rxShowComposition} onChange={setRxShowComposition} />
+        <FieldToggle label="Pack size" checked={rxShowPackSize} onChange={setRxShowPackSize} />
+        <FieldToggle label="Side effects" checked={rxShowSideEffects} onChange={setRxShowSideEffects} />
+        <FieldToggle label="Drug interactions" checked={rxShowDrugInteractions} onChange={setRxShowDrugInteractions} />
+        <FieldToggle label="Description" checked={rxShowDescription} onChange={setRxShowDescription} />
+      </div>
+
       {error && <p className="text-sm text-danger">{error}</p>}
       <button
         onClick={save}
@@ -218,6 +261,30 @@ export function SettingsClient({
         className={`btn-primary w-full text-center disabled:opacity-60 ${saved ? "animate-save-success" : ""}`}
       >
         {isPending ? "Saving…" : saved ? "Saved ✓" : "Save settings"}
+      </button>
+    </div>
+  );
+}
+
+function FieldToggle({ label, checked, onChange }: { label: string; checked: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <div className="flex items-center justify-between py-1">
+      <span className="text-sm text-foreground">{label}</span>
+      <button
+        onClick={() => onChange(!checked)}
+        role="switch"
+        aria-checked={checked}
+        className="relative h-7 w-12 shrink-0 rounded-full p-1"
+        style={{ boxShadow: "inset 3px 3px 6px var(--neu-dark), inset -3px -3px 6px var(--neu-light)" }}
+      >
+        <span
+          className={`absolute top-1 flex h-5 w-5 items-center justify-center rounded-full transition-transform ${checked ? "translate-x-5 bg-brand" : "translate-x-0 bg-background"}`}
+          style={{
+            boxShadow: checked
+              ? "-2px -2px 4px rgba(255,255,255,0.35), 2px 2px 4px rgba(0,0,0,0.25)"
+              : "-2px -2px 4px var(--neu-light), 2px 2px 4px var(--neu-dark)",
+          }}
+        />
       </button>
     </div>
   );

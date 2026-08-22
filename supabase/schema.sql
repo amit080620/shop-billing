@@ -1250,6 +1250,13 @@ create table if not exists prescription_settings (
   footer_text text,
   show_shop_logo boolean not null default true,
   custom_field_labels jsonb not null default '["Chief Complaint", "Diagnosis", "Advice"]'::jsonb,
+  rx_show_price boolean not null default false,
+  rx_show_manufacturer boolean not null default false,
+  rx_show_composition boolean not null default true,
+  rx_show_pack_size boolean not null default false,
+  rx_show_side_effects boolean not null default false,
+  rx_show_drug_interactions boolean not null default false,
+  rx_show_description boolean not null default false,
   updated_at timestamptz not null default now()
 );
 alter table prescription_settings enable row level security;
@@ -1339,6 +1346,9 @@ create table if not exists shop_medicine_library (
   composition text,
   description text,
   side_effects text,
+  short_composition1 text,
+  short_composition2 text,
+  drug_interactions jsonb,
   is_discontinued boolean not null default false,
   unique (shop_id, medicine_name)
 );

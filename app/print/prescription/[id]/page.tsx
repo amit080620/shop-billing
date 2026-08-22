@@ -23,7 +23,7 @@ export default async function PrintPrescriptionPage({
       .eq("id", id)
       .eq("shop_id", session.shopId)
       .single(),
-    admin.from("prescription_settings").select("header_text, footer_text, show_shop_logo, header_image_url, footer_image_url").eq("shop_id", session.shopId).maybeSingle(),
+    admin.from("prescription_settings").select("header_text, footer_text, show_shop_logo, header_image_url, footer_image_url, rx_show_price, rx_show_manufacturer, rx_show_composition, rx_show_pack_size, rx_show_side_effects, rx_show_drug_interactions, rx_show_description").eq("shop_id", session.shopId).maybeSingle(),
     admin.from("shops").select("name, logo_url").eq("id", session.shopId).single(),
     admin.from("invoice_settings").select("accent_color").eq("shop_id", session.shopId).maybeSingle(),
   ]);
@@ -35,6 +35,21 @@ export default async function PrintPrescriptionPage({
     .select("medicine_name, dosage, frequency, duration, instructions, quantity")
     .eq("prescription_id", id)
     .order("sort_order", { ascending: true });
+
+  // Genuinely look up each medicine's rich library details (matched
+  // by name) so the field-visibility toggles have real data to show —
+  // a name-only match, since that's the only link between a
+  // prescription line and the library.
+  const medicineNames = (items ?? []).map((it) => it.medicine_name);
+  const { data: libraryDetails } =
+    medicineNames.length > 0
+      ? await admin
+          .from("shop_medicine_library")
+          .select("medicine_name, price, manufacturer_name, composition, short_composition1, short_composition2, pack_size_label, side_effects, description, drug_interactions")
+          .eq("shop_id", session.shopId)
+          .in("medicine_name", medicineNames)
+      : { data: [] };
+  const detailsByName = new Map((libraryDetails ?? []).map((d) => [d.medicine_name, d]));
 
   const customer = Array.isArray(prescription.customers)
     ? prescription.customers[0]
@@ -128,16 +143,40 @@ export default async function PrintPrescriptionPage({
         <div className="mt-5">
           <p className="text-2xl font-serif italic" style={{ color: invoiceSettings?.accent_color ?? "#1f2937" }}>℞</p>
           <ul className="mt-1 flex flex-col gap-3">
-            {items.map((item, i) => (
-              <li key={i} className="border-b border-dashed border-gray-200 pb-2 text-sm">
-                <p className="font-medium text-gray-900">
-                  {i + 1}. {item.medicine_name} {item.dosage ? `— ${item.dosage}` : ""}
-                </p>
-                <p className="pl-4 text-xs text-gray-600">
-                  {[item.frequency, item.duration, item.instructions].filter(Boolean).join(" · ")}
-                </p>
-              </li>
-            ))}
+            {items.map((item, i) => {
+              const detail = detailsByName.get(item.medicine_name);
+              const composition = detail?.short_composition1
+                ? [detail.short_composition1, detail.short_composition2].filter(Boolean).join(" + ")
+                : detail?.composition;
+              return (
+                <li key={i} className="border-b border-dashed border-gray-200 pb-2 text-sm">
+                  <p className="font-medium text-gray-900">
+                    {i + 1}. {item.medicine_name} {item.dosage ? `— ${item.dosage}` : ""}
+                  </p>
+                  <p className="pl-4 text-xs text-gray-600">
+                    {[item.frequency, item.duration, item.instructions].filter(Boolean).join(" · ")}
+                  </p>
+                  {detail && (
+                    <div className="pl-4 text-[11px] text-gray-500">
+                      {settings?.rx_show_composition && composition && <p>Composition: {composition}</p>}
+                      {settings?.rx_show_manufacturer && detail.manufacturer_name && <p>Manufacturer: {detail.manufacturer_name}</p>}
+                      {settings?.rx_show_pack_size && detail.pack_size_label && <p>Pack: {detail.pack_size_label}</p>}
+                      {settings?.rx_show_price && detail.price != null && <p>Price: ₹{Number(detail.price).toLocaleString("en-IN")}</p>}
+                      {settings?.rx_show_description && detail.description && <p>{detail.description}</p>}
+                      {settings?.rx_show_side_effects && detail.side_effects && <p>Side effects: {detail.side_effects}</p>}
+                      {settings?.rx_show_drug_interactions && detail.drug_interactions != null && (
+                        <p>
+                          Interactions:{" "}
+                          {typeof detail.drug_interactions === "string"
+                            ? detail.drug_interactions
+                            : JSON.stringify(detail.drug_interactions)}
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </li>
+              );
+            })}
           </ul>
         </div>
       )}
