@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { X } from "lucide-react";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -16,24 +17,41 @@ function detectPlatform(): Platform {
   return "desktop";
 }
 
+const DISMISS_KEY = "installPromptDismissedUntil";
+// Genuinely comes back after a while, rather than being gone forever —
+// someone's circumstances change (e.g. they get a dedicated work
+// phone), but it should NEVER nag on every single visit like before.
+const DISMISS_DAYS = 14;
+
 /** Chrome's automatic "Add to Home Screen" banner fires on its own
  * engagement heuristics (visit count, time on site) that are outside our
  * control, and iOS Safari never fires beforeinstallprompt at all — it
  * has no such API. Relying purely on that event means the install path
  * silently disappears for a large share of visitors. This always shows
  * SOMETHING: the one-tap flow when the browser offers it, otherwise
- * platform-specific manual steps that are guaranteed to work. */
+ * platform-specific manual steps that are guaranteed to work.
+ *
+ * Genuinely remembers a "not now" — this used to show unconditionally
+ * on every visit with no way to dismiss it, which is genuinely just
+ * nagging. A real PWA install has genuine value for an app opened
+ * dozens of times a day (faster launch, no browser chrome eating
+ * screen space, better offline behaviour) — the fix for a naggy
+ * prompt is to make it respectful, not to remove the value entirely. */
 export function InstallAppButton() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [installed, setInstalled] = useState(false);
   const [platform, setPlatform] = useState<Platform>("desktop");
   const [showManualSteps, setShowManualSteps] = useState(false);
+  const [dismissed, setDismissed] = useState(true); // genuinely start hidden until the localStorage check below resolves, avoiding a flash
 
   useEffect(() => {
     setPlatform(detectPlatform());
     if (window.matchMedia("(display-mode: standalone)").matches || (window.navigator as { standalone?: boolean }).standalone) {
       setInstalled(true);
     }
+
+    const dismissedUntil = Number(localStorage.getItem(DISMISS_KEY) ?? 0);
+    setDismissed(Date.now() < dismissedUntil);
 
     function onBeforeInstallPrompt(e: Event) {
       e.preventDefault();
@@ -51,7 +69,12 @@ export function InstallAppButton() {
     };
   }, []);
 
-  if (installed) return null;
+  if (installed || dismissed) return null;
+
+  function handleDismiss() {
+    localStorage.setItem(DISMISS_KEY, String(Date.now() + DISMISS_DAYS * 24 * 60 * 60 * 1000));
+    setDismissed(true);
+  }
 
   async function handleClick() {
     if (deferredPrompt) {
@@ -65,13 +88,23 @@ export function InstallAppButton() {
 
   return (
     <div className="flex flex-col gap-2">
-      <button
-        onClick={handleClick}
-        className="flex w-full items-center justify-center gap-2 rounded-xl border border-brand bg-brand-soft px-4 py-3 text-sm font-semibold text-brand-text"
-        style={{ boxShadow: "-4px -4px 10px var(--neu-light), 4px 4px 10px var(--neu-dark)" }}
-      >
-        Install app on this device
-      </button>
+      <div className="flex items-center gap-2">
+        <button
+          onClick={handleClick}
+          className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-brand bg-brand-soft px-4 py-3 text-sm font-semibold text-brand-text"
+          style={{ boxShadow: "-4px -4px 10px var(--neu-light), 4px 4px 10px var(--neu-dark)" }}
+        >
+          Install app on this device
+        </button>
+        <button
+          onClick={handleDismiss}
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-muted"
+          style={{ boxShadow: "-3px -3px 7px var(--neu-light), 3px 3px 7px var(--neu-dark)" }}
+          aria-label="Not now"
+        >
+          <X size={16} />
+        </button>
+      </div>
 
       {showManualSteps && !deferredPrompt && (
         <div className="rounded-lg border border-border bg-surface p-3 text-xs text-foreground">

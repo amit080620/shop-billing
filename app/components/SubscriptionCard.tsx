@@ -77,49 +77,31 @@ export async function SubscriptionCard() {
   );
 
   return (
-    <div className="flex flex-col gap-2 overflow-hidden rounded-2xl p-2.5" style={{ background: tone.gradient, boxShadow: "-6px -6px 14px var(--neu-light), 6px 6px 14px var(--neu-dark)" }}>
-      <div
-        className="flex items-center justify-between rounded-xl px-3.5 py-2.5"
-        style={{ boxShadow: "-2px -2px 5px rgba(255,255,255,0.25), 2px 2px 6px rgba(0,0,0,0.25)" }}
-      >
-        <p className="text-sm font-semibold text-white/95">{t("subscription.title")}</p>
+    <a
+      href={`https://wa.me/${SUPPORT_WHATSAPP_NUMBER}?text=${whatsappMessage}`}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="flex items-center justify-between gap-3 rounded-2xl px-4 py-3 transition active:scale-[0.98]"
+      style={{ background: tone.gradient, boxShadow: "-4px -4px 10px var(--neu-light), 4px 4px 10px var(--neu-dark)" }}
+    >
+      <div className="min-w-0">
+        <p className="truncate text-sm font-semibold text-white/95">{t("subscription.title")}</p>
+        <p className="truncate text-[11px] text-white/80">
+          {t("subscription.validUntil")} {dateFormat(validUntil)}
+        </p>
+      </div>
+      <div className="flex shrink-0 items-center gap-2">
+        <div className="text-right">
+          <p className="text-lg font-bold leading-none text-white">{isExpired ? 0 : daysRemaining}</p>
+          <p className="text-[10px] text-white/80">{isExpired ? t("subscription.daysOverdue", { days: Math.abs(daysRemaining) }) : t("subscription.daysRemaining")}</p>
+        </div>
         <span
-          className="rounded-full px-2.5 py-0.5 text-[11px] font-semibold"
+          className="rounded-full px-2.5 py-1 text-[11px] font-semibold"
           style={{ backgroundColor: tone.chipBg, color: tone.chipText }}
         >
           {isExpired ? t("subscription.expired") : percentUsed >= 75 ? t("subscription.expiringSoon") : t("subscription.active")}
         </span>
       </div>
-
-      <div
-        className="rounded-xl px-3.5 py-3"
-        style={{ boxShadow: "-2px -2px 5px rgba(255,255,255,0.25), 2px 2px 6px rgba(0,0,0,0.25)" }}
-      >
-        <p className="text-3xl font-bold text-white" style={{ textShadow: "1px 2px 1px rgba(255,255,255,0.3), -1px -1px 2px rgba(0,0,0,0.45)" }}>
-          {isExpired ? 0 : daysRemaining}
-        </p>
-        <p className="text-xs text-white/90">
-          {isExpired ? t("subscription.daysOverdue", { days: Math.abs(daysRemaining) }) : t("subscription.daysRemaining")}
-        </p>
-      </div>
-
-      <div
-        className="flex items-center justify-between rounded-xl px-3.5 py-2.5 text-xs text-white/90"
-        style={{ boxShadow: "inset 2px 2px 5px rgba(0,0,0,0.2), inset -2px -2px 5px rgba(255,255,255,0.1)" }}
-      >
-        <span>{t("subscription.validUntil")}</span>
-        <span className="font-medium text-white">{dateFormat(validUntil)}</span>
-      </div>
-
-      <a
-        href={`https://wa.me/${SUPPORT_WHATSAPP_NUMBER}?text=${whatsappMessage}`}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold text-white transition active:scale-[0.98]"
-        style={{ boxShadow: "-2px -2px 5px rgba(255,255,255,0.25), 2px 2px 6px rgba(0,0,0,0.25)" }}
-      >
-        {t("subscription.rechargeContact")}
-      </a>
-    </div>
+    </a>
   );
 }
