@@ -37,7 +37,7 @@ export default async function AppointmentsPage({
         }
         icon={<Calendar size={18} strokeWidth={1.8} />}
       />
-      <Link href="/" className="text-sm text-muted">
+      <Link href="/dashboard" className="text-sm text-muted">
         ← Home
       </Link>
 

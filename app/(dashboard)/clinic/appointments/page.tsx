@@ -4,6 +4,7 @@ import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { PageHeader } from "@/app/components/PageHeader";
 import { EmptyState } from "@/app/components/EmptyState";
 import { ClinicAppointmentRow } from "./ClinicAppointmentRow";
+import { AppointmentsCalendar } from "@/app/components/AppointmentsCalendar";
 import { Calendar } from "lucide-react";
 import { todayIso } from "@/lib/dateHelpers";
 
@@ -50,20 +51,10 @@ export default async function ClinicAppointmentsPage({
         <span className="text-muted">→</span>
       </Link>
 
-      <form className="flex items-center gap-2" action="/clinic/appointments">
-        <input
-          type="date"
-          name="date"
-          defaultValue={selectedDate}
-          className="flex-1 rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand"
-        />
-        <button type="submit" className="rounded-lg border border-border px-3 py-2 text-xs font-medium text-foreground">
-          Go
-        </button>
-        <Link href="/clinic/appointments" className="rounded-lg border border-border px-3 py-2 text-xs font-medium text-brand">
-          Today
-        </Link>
-      </form>
+      <AppointmentsCalendar basePath="/clinic/appointments" selectedDate={selectedDate} />
+      <Link href="/clinic/appointments" className="self-start rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-brand">
+        Today
+      </Link>
 
       {(!appointments || appointments.length === 0) ? (
         <EmptyState text="No appointments booked for this date." />

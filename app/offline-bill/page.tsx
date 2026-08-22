@@ -198,7 +198,7 @@ export default function OfflineBillPage() {
           once while online (visit the Sell screen) so it can save a local copy of your products
           and customers to work from.
         </p>
-        <Link href="/" className="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-white">
+        <Link href="/dashboard" className="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-white">
           Go to the app
         </Link>
       </div>
@@ -379,7 +379,7 @@ export default function OfflineBillPage() {
         </section>
       )}
 
-      <Link href="/" className="text-center text-xs text-muted underline">
+      <Link href="/dashboard" className="text-center text-xs text-muted underline">
         Back to the app
       </Link>
     </div>

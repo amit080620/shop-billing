@@ -57,7 +57,7 @@ export default async function SalonStaffReportPage({
         subtitle="Who's bringing in how much — handy for commission."
         icon={<Scissors size={18} strokeWidth={1.8} />}
       />
-      <Link href="/" className="text-sm text-muted">
+      <Link href="/dashboard" className="text-sm text-muted">
         ← Home
       </Link>
 
