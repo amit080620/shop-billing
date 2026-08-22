@@ -1228,6 +1228,12 @@ export interface Database {
           { foreignKeyName: "prescriptions_patient_id_fkey"; columns: ["patient_id"]; isOneToOne: false; referencedRelation: "customers"; referencedColumns: ["id"] },
         ];
       };
+      shop_medicine_library: {
+        Row: { id: string; shop_id: string; medicine_name: string; usage_count: number; last_used_at: string; created_at: string };
+        Insert: { id?: string; shop_id: string; medicine_name: string; usage_count?: number; last_used_at?: string; created_at?: string };
+        Update: { id?: string; shop_id?: string; medicine_name?: string; usage_count?: number; last_used_at?: string; created_at?: string };
+        Relationships: [];
+      };
       prescription_items: {
         Row: { id: string; prescription_id: string; medicine_name: string; dosage: string | null; frequency: string | null; duration: string | null; instructions: string | null; quantity: number | null; sort_order: number };
         Insert: { id?: string; prescription_id: string; medicine_name: string; dosage?: string | null; frequency?: string | null; duration?: string | null; instructions?: string | null; quantity?: number | null; sort_order?: number };

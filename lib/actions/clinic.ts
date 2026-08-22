@@ -484,3 +484,52 @@ export async function deletePatientPhotoAction(photoId: string, patientId: strin
   revalidatePath(`/customers/${patientId}`);
   return {};
 }
+
+/** Genuinely fetches this shop's own growing medicine library — sorted
+ * so the medicines used most often, and most recently, appear first,
+ * making the common ones one-tap away instead of needing to be typed. */
+export async function getMedicineLibraryAction(): Promise<{ names: string[] }> {
+  const session = await requireSession();
+  const admin = createSupabaseAdminClient();
+  const { data } = await admin
+    .from("shop_medicine_library")
+    .select("medicine_name")
+    .eq("shop_id", session.shopId)
+    .order("usage_count", { ascending: false })
+    .order("last_used_at", { ascending: false })
+    .limit(200);
+  return { names: (data ?? []).map((r) => r.medicine_name) };
+}
+
+/** Genuinely saves every medicine name used in a prescription to this
+ * shop's own library — a name typed once is remembered forever, so it
+ * never needs to be typed in full again. Called automatically whenever
+ * a prescription is saved; never requires the person to do anything
+ * extra themselves. */
+export async function saveMedicinesToLibraryAction(medicineNames: string[]): Promise<void> {
+  const session = await requireSession();
+  const admin = createSupabaseAdminClient();
+  const uniqueNames = [...new Set(medicineNames.map((n) => n.trim()).filter(Boolean))];
+  if (uniqueNames.length === 0) return;
+
+  for (const name of uniqueNames) {
+    // Genuine upsert — a name used before gets its usage count bumped
+    // (so truly frequent medicines float to the top of the list over
+    // time), a new name gets genuinely added for the first time.
+    const { data: existing } = await admin
+      .from("shop_medicine_library")
+      .select("id, usage_count")
+      .eq("shop_id", session.shopId)
+      .eq("medicine_name", name)
+      .maybeSingle();
+
+    if (existing) {
+      await admin
+        .from("shop_medicine_library")
+        .update({ usage_count: existing.usage_count + 1, last_used_at: new Date().toISOString() })
+        .eq("id", existing.id);
+    } else {
+      await admin.from("shop_medicine_library").insert({ shop_id: session.shopId, medicine_name: name });
+    }
+  }
+}
