@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { listMedicineLibraryAction } from "@/lib/actions/clinic";
 import { PageHeader } from "@/app/components/PageHeader";
-import { EmptyState } from "@/app/components/EmptyState";
 import { Pill } from "lucide-react";
 import { MedicineLibraryClient } from "./MedicineLibraryClient";
 
@@ -19,11 +18,7 @@ export default async function MedicineLibraryPage() {
         next time instead of typing the full name again.
       </p>
 
-      {medicines.length === 0 ? (
-        <EmptyState text="No medicines saved yet — they'll genuinely appear here the first time you write a prescription." />
-      ) : (
-        <MedicineLibraryClient medicines={medicines} />
-      )}
+      <MedicineLibraryClient medicines={medicines} />
     </div>
   );
 }

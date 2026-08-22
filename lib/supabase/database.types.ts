@@ -1241,9 +1241,9 @@ export interface Database {
         Relationships: [];
       };
       shop_medicine_library: {
-        Row: { id: string; shop_id: string; medicine_name: string; usage_count: number; last_used_at: string; created_at: string };
-        Insert: { id?: string; shop_id: string; medicine_name: string; usage_count?: number; last_used_at?: string; created_at?: string };
-        Update: { id?: string; shop_id?: string; medicine_name?: string; usage_count?: number; last_used_at?: string; created_at?: string };
+        Row: { id: string; shop_id: string; medicine_name: string; usage_count: number; last_used_at: string; created_at: string; price: number | null; manufacturer_name: string | null; medicine_type: string | null; pack_size_label: string | null; composition: string | null; description: string | null; side_effects: string | null; is_discontinued: boolean };
+        Insert: { id?: string; shop_id: string; medicine_name: string; usage_count?: number; last_used_at?: string; created_at?: string; price?: number | null; manufacturer_name?: string | null; medicine_type?: string | null; pack_size_label?: string | null; composition?: string | null; description?: string | null; side_effects?: string | null; is_discontinued?: boolean };
+        Update: { id?: string; shop_id?: string; medicine_name?: string; usage_count?: number; last_used_at?: string; created_at?: string; price?: number | null; manufacturer_name?: string | null; medicine_type?: string | null; pack_size_label?: string | null; composition?: string | null; description?: string | null; side_effects?: string | null; is_discontinued?: boolean };
         Relationships: [];
       };
       prescription_items: {

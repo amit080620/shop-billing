@@ -1332,6 +1332,14 @@ create table if not exists shop_medicine_library (
   usage_count integer not null default 1,
   last_used_at timestamptz not null default now(),
   created_at timestamptz not null default now(),
+  price numeric(10,2),
+  manufacturer_name text,
+  medicine_type text,
+  pack_size_label text,
+  composition text,
+  description text,
+  side_effects text,
+  is_discontinued boolean not null default false,
   unique (shop_id, medicine_name)
 );
 create index if not exists idx_shop_medicine_library_shop_id on shop_medicine_library(shop_id);

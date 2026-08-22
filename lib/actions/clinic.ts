@@ -557,3 +557,165 @@ export async function deleteMedicineFromLibraryAction(id: string): Promise<{ err
   revalidatePath("/clinic/medicine-library");
   return {};
 }
+
+function csvEscape(value: unknown): string {
+  const s = value === null || value === undefined ? "" : String(value);
+  if (s.includes(",") || s.includes('"') || s.includes("\n")) {
+    return `"${s.replace(/"/g, '""')}"`;
+  }
+  return s;
+}
+
+/** Genuinely a minimal, dependency-free CSV parser — handles quoted
+ * fields (with embedded commas/newlines/escaped quotes), which a
+ * real-world medicine database export genuinely needs. */
+function parseCsv(text: string): string[][] {
+  const rows: string[][] = [];
+  let row: string[] = [];
+  let field = "";
+  let inQuotes = false;
+
+  for (let i = 0; i < text.length; i++) {
+    const char = text[i];
+    if (inQuotes) {
+      if (char === '"' && text[i + 1] === '"') {
+        field += '"';
+        i++;
+      } else if (char === '"') {
+        inQuotes = false;
+      } else {
+        field += char;
+      }
+    } else {
+      if (char === '"') inQuotes = true;
+      else if (char === ",") {
+        row.push(field);
+        field = "";
+      } else if (char === "\n" || char === "\r") {
+        if (char === "\r" && text[i + 1] === "\n") i++;
+        row.push(field);
+        field = "";
+        if (row.some((c) => c.trim() !== "")) rows.push(row);
+        row = [];
+      } else {
+        field += char;
+      }
+    }
+  }
+  if (field !== "" || row.length > 0) {
+    row.push(field);
+    if (row.some((c) => c.trim() !== "")) rows.push(row);
+  }
+  return rows;
+}
+
+/** Genuinely exports the full medicine library as a CSV, matching the
+ * same rich format it can import — so a shop can back up, edit in a
+ * spreadsheet, and re-import. */
+export async function exportMedicineLibraryCsvAction(): Promise<{ csv: string; filename: string }> {
+  const session = await requireSession();
+  const admin = createSupabaseAdminClient();
+  const { data } = await admin
+    .from("shop_medicine_library")
+    .select("medicine_name, price, is_discontinued, manufacturer_name, medicine_type, pack_size_label, composition, description, side_effects")
+    .eq("shop_id", session.shopId)
+    .order("medicine_name");
+
+  const headers = ["name", "price", "is_discontinued", "manufacturer_name", "type", "pack_size_label", "composition", "description", "side_effects"];
+  const lines = [headers.map(csvEscape).join(",")];
+  for (const m of data ?? []) {
+    lines.push(
+      [m.medicine_name, m.price ?? "", m.is_discontinued, m.manufacturer_name ?? "", m.medicine_type ?? "", m.pack_size_label ?? "", m.composition ?? "", m.description ?? "", m.side_effects ?? ""]
+        .map(csvEscape)
+        .join(","),
+    );
+  }
+  return { csv: lines.join("\n"), filename: `medicine-library-${new Date().toISOString().slice(0, 10)}.csv` };
+}
+
+/** Genuinely bulk-imports a medicine database CSV — matches the
+ * user's real-world example format (id, name, price, is_discontinued,
+ * manufacturer_name, type, pack_size_label, short_composition1/2 or
+ * salt_composition, medicine_desc, side_effects). Column names are
+ * matched case-insensitively and flexibly, since real-world exports
+ * vary in exact naming. Existing medicines (matched by name) are
+ * genuinely updated rather than duplicated. */
+export async function importMedicineLibraryCsvAction(csvText: string): Promise<{ imported: number; error?: string }> {
+  const session = await requireSession();
+  const admin = createSupabaseAdminClient();
+
+  const rows = parseCsv(csvText);
+  if (rows.length < 2) return { imported: 0, error: "The file is genuinely empty or has no data rows" };
+
+  const header = rows[0].map((h) => h.trim().toLowerCase());
+  const idx = (...names: string[]) => {
+    for (const n of names) {
+      const i = header.indexOf(n);
+      if (i !== -1) return i;
+    }
+    return -1;
+  };
+
+  const nameIdx = idx("name", "medicine_name");
+  if (nameIdx === -1) return { imported: 0, error: "Could not find a 'name' column in the file" };
+
+  const priceIdx = idx("price");
+  const discontinuedIdx = idx("is_discontinued", "discontinued");
+  const manufacturerIdx = idx("manufacturer_name", "manufacturer");
+  const typeIdx = idx("type", "medicine_type");
+  const packIdx = idx("pack_size_label", "pack_size");
+  const compositionIdx = idx("salt_composition", "composition", "short_composition1");
+  const descIdx = idx("medicine_desc", "description");
+  const sideEffectsIdx = idx("side_effects");
+
+  const records: {
+    shop_id: string;
+    medicine_name: string;
+    price: number | null;
+    is_discontinued: boolean;
+    manufacturer_name: string | null;
+    medicine_type: string | null;
+    pack_size_label: string | null;
+    composition: string | null;
+    description: string | null;
+    side_effects: string | null;
+  }[] = [];
+
+  for (const row of rows.slice(1)) {
+    const name = row[nameIdx]?.trim();
+    if (!name) continue;
+
+    records.push({
+      shop_id: session.shopId,
+      medicine_name: name,
+      price: priceIdx !== -1 && row[priceIdx] ? Number(row[priceIdx]) || null : null,
+      is_discontinued: discontinuedIdx !== -1 ? /^(true|1|yes)$/i.test(row[discontinuedIdx]?.trim() ?? "") : false,
+      manufacturer_name: manufacturerIdx !== -1 ? row[manufacturerIdx]?.trim() || null : null,
+      medicine_type: typeIdx !== -1 ? row[typeIdx]?.trim() || null : null,
+      pack_size_label: packIdx !== -1 ? row[packIdx]?.trim() || null : null,
+      composition: compositionIdx !== -1 ? row[compositionIdx]?.trim() || null : null,
+      description: descIdx !== -1 ? row[descIdx]?.trim() || null : null,
+      side_effects: sideEffectsIdx !== -1 ? row[sideEffectsIdx]?.trim() || null : null,
+    });
+  }
+
+  // Genuinely a single bulk upsert rather than a select+insert/update
+  // loop per row — a real medicine database CSV can have thousands of
+  // rows, and per-row round-trips would genuinely be far too slow.
+  // Supabase/Postgres batches this efficiently in chunks to stay
+  // within request-size limits.
+  const CHUNK_SIZE = 500;
+  let imported = 0;
+  for (let i = 0; i < records.length; i += CHUNK_SIZE) {
+    const chunk = records.slice(i, i + CHUNK_SIZE);
+    const { error } = await admin.from("shop_medicine_library").upsert(chunk, { onConflict: "shop_id,medicine_name" });
+    if (error) {
+      console.error("Could not import medicine chunk", error);
+      continue;
+    }
+    imported += chunk.length;
+  }
+
+  revalidatePath("/clinic/medicine-library");
+  return { imported };
+}

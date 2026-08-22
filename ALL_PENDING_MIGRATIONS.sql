@@ -1,6 +1,6 @@
 -- ============================================================
 -- The Ray — Shop Billing SaaS
--- ALL migrations combined — genuinely up-to-date (through 0015).
+-- ALL migrations combined — genuinely up-to-date (through 0016).
 -- Run this ONCE on an EXISTING database that already has the
 -- baseline (0000) applied.
 --
@@ -208,4 +208,16 @@ create table if not exists treatment_plan_items (
 );
 alter table treatment_plan_items enable row level security;
 create index if not exists idx_treatment_plan_items_plan on treatment_plan_items(treatment_plan_id);
+
+-- ==== 0016_medicine_library_details.sql ====
+-- Genuine expansion of the medicine library to hold rich clinical data
+-- (for CSV import of a real medicine database), not just a bare name.
+alter table shop_medicine_library add column if not exists price numeric(10,2);
+alter table shop_medicine_library add column if not exists manufacturer_name text;
+alter table shop_medicine_library add column if not exists medicine_type text;
+alter table shop_medicine_library add column if not exists pack_size_label text;
+alter table shop_medicine_library add column if not exists composition text;
+alter table shop_medicine_library add column if not exists description text;
+alter table shop_medicine_library add column if not exists side_effects text;
+alter table shop_medicine_library add column if not exists is_discontinued boolean not null default false;
 
