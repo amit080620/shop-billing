@@ -10,6 +10,7 @@ import { SearchableSelect } from "@/app/components/SearchableSelect";
 import { useToast } from "@/app/components/Toast";
 import type { Lang } from "@/lib/i18n/dictionary";
 import { ClipboardList, Plus, Trash2 } from "lucide-react";
+import { ToothChart } from "@/app/components/ToothChart";
 
 type Patient = { id: string; name: string; phone: string };
 type PlanItem = { key: string; toothNumber: string; procedureName: string; description: string; estimatedCost: string };
@@ -34,6 +35,7 @@ export function NewTreatmentPlanClient({ patients, lang }: { patients: Patient[]
   const [doctorName, setDoctorName] = useState("");
   const [notes, setNotes] = useState("");
   const [items, setItems] = useState<PlanItem[]>([newItem()]);
+  const [dentalChart, setDentalChart] = useState<Record<string, string>>({});
   const [error, setError] = useState("");
 
   function updateItem(key: string, patch: Partial<PlanItem>) {
@@ -71,6 +73,7 @@ export function NewTreatmentPlanClient({ patients, lang }: { patients: Patient[]
           description: it.description || null,
           estimatedCost: Number(it.estimatedCost) || 0,
         })),
+        dentalChart,
       });
       if (result.error || !result.planId) {
         setError(result.error ?? "Could not save treatment plan");
@@ -129,6 +132,8 @@ export function NewTreatmentPlanClient({ patients, lang }: { patients: Patient[]
           className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-brand"
         />
       </label>
+
+      <ToothChart chart={dentalChart} onChange={setDentalChart} />
 
       <div className="flex flex-col gap-2.5">
         <p className="text-sm font-medium text-foreground">Treatments planned</p>

@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { requireSession } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { PrintButton } from "@/app/print/bill/[id]/PrintButton";
+import { ToothChartStatic } from "@/app/components/ToothChart";
 
 export default async function PrintTreatmentPlanPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -11,7 +12,7 @@ export default async function PrintTreatmentPlanPage({ params }: { params: Promi
   const [{ data: plan }, { data: shop }] = await Promise.all([
     admin
       .from("treatment_plans")
-      .select("id, patient_name, patient_phone, doctor_name, notes, created_at")
+      .select("id, patient_name, patient_phone, doctor_name, notes, dental_chart, created_at")
       .eq("id", id)
       .eq("shop_id", session.shopId)
       .single(),
@@ -67,6 +68,19 @@ export default async function PrintTreatmentPlanPage({ params }: { params: Promi
           <p className="font-medium">{new Date(plan.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</p>
         </div>
       </div>
+
+      {(() => {
+        const chart = plan.dental_chart as Record<string, string> | null;
+        return (
+          chart &&
+          Object.keys(chart).length > 0 && (
+            <div className="mt-6 flex flex-col items-center gap-2 rounded border border-gray-200 p-3">
+              <p className="text-xs font-semibold uppercase text-gray-500">Tooth chart</p>
+              <ToothChartStatic chart={chart} />
+            </div>
+          )
+        );
+      })()}
 
       <table className="mt-6 w-full border-collapse text-sm">
         <thead>

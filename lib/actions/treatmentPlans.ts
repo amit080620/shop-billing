@@ -19,6 +19,7 @@ export async function createTreatmentPlanAction(input: {
   doctorName: string | null;
   notes: string | null;
   items: TreatmentPlanItemInput[];
+  dentalChart?: Record<string, string>;
 }): Promise<{ planId?: string; error?: string }> {
   const session = await requireSession();
   const admin = createSupabaseAdminClient();
@@ -37,6 +38,7 @@ export async function createTreatmentPlanAction(input: {
       notes: input.notes,
       status: "active",
       staff_id: session.userId,
+      dental_chart: input.dentalChart && Object.keys(input.dentalChart).length > 0 ? input.dentalChart : null,
     })
     .select("id")
     .single();
@@ -102,6 +104,7 @@ export async function getTreatmentPlanAction(planId: string): Promise<{
     notes: string | null;
     status: string;
     billId: string | null;
+    dentalChart: Record<string, string> | null;
     createdAt: string;
   } | null;
   items: { id: string; toothNumber: string | null; procedureName: string; description: string | null; estimatedCost: number; status: string }[];
@@ -111,7 +114,7 @@ export async function getTreatmentPlanAction(planId: string): Promise<{
 
   const { data: plan } = await admin
     .from("treatment_plans")
-    .select("id, patient_id, patient_name, patient_phone, doctor_name, notes, status, bill_id, created_at")
+    .select("id, patient_id, patient_name, patient_phone, doctor_name, notes, status, bill_id, dental_chart, created_at")
     .eq("id", planId)
     .eq("shop_id", session.shopId)
     .single();
@@ -134,6 +137,7 @@ export async function getTreatmentPlanAction(planId: string): Promise<{
       notes: plan.notes,
       status: plan.status,
       billId: plan.bill_id,
+      dentalChart: (plan.dental_chart as Record<string, string> | null) ?? null,
       createdAt: plan.created_at,
     },
     items: (items ?? []).map((it) => ({

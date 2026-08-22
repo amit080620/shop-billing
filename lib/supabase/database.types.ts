@@ -1229,9 +1229,9 @@ export interface Database {
         ];
       };
       treatment_plans: {
-        Row: { id: string; shop_id: string; patient_id: string | null; patient_name: string; patient_phone: string | null; doctor_name: string | null; notes: string | null; status: string; bill_id: string | null; staff_id: string; created_at: string };
-        Insert: { id?: string; shop_id: string; patient_id?: string | null; patient_name: string; patient_phone?: string | null; doctor_name?: string | null; notes?: string | null; status?: string; bill_id?: string | null; staff_id: string; created_at?: string };
-        Update: { id?: string; shop_id?: string; patient_id?: string | null; patient_name?: string; patient_phone?: string | null; doctor_name?: string | null; notes?: string | null; status?: string; bill_id?: string | null; staff_id?: string; created_at?: string };
+        Row: { id: string; shop_id: string; patient_id: string | null; patient_name: string; patient_phone: string | null; doctor_name: string | null; notes: string | null; status: string; bill_id: string | null; staff_id: string; dental_chart: unknown; created_at: string };
+        Insert: { id?: string; shop_id: string; patient_id?: string | null; patient_name: string; patient_phone?: string | null; doctor_name?: string | null; notes?: string | null; status?: string; bill_id?: string | null; staff_id: string; dental_chart?: unknown; created_at?: string };
+        Update: { id?: string; shop_id?: string; patient_id?: string | null; patient_name?: string; patient_phone?: string | null; doctor_name?: string | null; notes?: string | null; status?: string; bill_id?: string | null; staff_id?: string; dental_chart?: unknown; created_at?: string };
         Relationships: [];
       };
       treatment_plan_items: {

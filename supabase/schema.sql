@@ -1367,6 +1367,7 @@ create table if not exists treatment_plans (
   status text not null default 'draft' check (status in ('draft', 'active', 'completed')),
   bill_id uuid references bills(id) on delete set null,
   staff_id uuid not null references staff(id),
+  dental_chart jsonb,
   created_at timestamptz not null default now()
 );
 alter table treatment_plans enable row level security;

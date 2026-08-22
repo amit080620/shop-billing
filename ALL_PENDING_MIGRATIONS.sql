@@ -1,6 +1,6 @@
 -- ============================================================
 -- The Ray — Shop Billing SaaS
--- ALL migrations combined — genuinely up-to-date (through 0017).
+-- ALL migrations combined — genuinely up-to-date (through 0018).
 -- Run this ONCE on an EXISTING database that already has the
 -- baseline (0000) applied.
 --
@@ -239,4 +239,10 @@ alter table prescription_settings add column if not exists rx_show_pack_size boo
 alter table prescription_settings add column if not exists rx_show_side_effects boolean not null default false;
 alter table prescription_settings add column if not exists rx_show_drug_interactions boolean not null default false;
 alter table prescription_settings add column if not exists rx_show_description boolean not null default false;
+
+-- ==== 0018_treatment_plan_dental_chart.sql ====
+-- Genuinely attach the tooth chart directly to a treatment plan, so
+-- the printed quotation given to the patient can show visually which
+-- teeth are being treated, not just a text list.
+alter table treatment_plans add column if not exists dental_chart jsonb;
 
