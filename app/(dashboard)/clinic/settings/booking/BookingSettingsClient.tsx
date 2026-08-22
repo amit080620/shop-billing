@@ -211,17 +211,38 @@ export function BookingSettingsClient({
         </div>
       )}
 
-      <label className="flex flex-col gap-1.5 text-sm">
-        <span className="font-medium text-foreground">Slot length (minutes)</span>
-        <input
-          type="number"
-          min={5}
-          step={5}
-          value={slotDuration}
-          onChange={(e) => setSlotDuration(e.target.value)}
-          className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand"
-        />
-      </label>
+      <div className="flex flex-col gap-1.5 text-sm">
+        <span className="font-medium text-foreground">Gap between appointments (minutes)</span>
+        <p className="text-xs text-muted">After one appointment, the next slot opens this many minutes later.</p>
+        <div className="flex flex-wrap gap-2">
+          {["10", "15", "20", "30"].map((preset) => (
+            <button
+              key={preset}
+              type="button"
+              onClick={() => setSlotDuration(preset)}
+              className={`rounded-lg border px-3.5 py-2 text-sm font-medium ${
+                slotDuration === preset ? "border-brand bg-brand-soft text-brand-text" : "border-border text-muted"
+              }`}
+              style={
+                slotDuration === preset
+                  ? { boxShadow: "-2px -2px 5px var(--neu-light), 2px 2px 5px var(--neu-dark)" }
+                  : undefined
+              }
+            >
+              {preset} min
+            </button>
+          ))}
+          <input
+            type="number"
+            min={5}
+            step={5}
+            value={["10", "15", "20", "30"].includes(slotDuration) ? "" : slotDuration}
+            onChange={(e) => setSlotDuration(e.target.value)}
+            placeholder="Custom"
+            className="w-24 rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand"
+          />
+        </div>
+      </div>
 
       <div className="flex flex-col gap-2">
         <p className="text-sm font-medium text-foreground">Working hours</p>

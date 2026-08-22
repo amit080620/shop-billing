@@ -39,6 +39,17 @@ export default async function ClinicAppointmentsPage({
         ← Clinic
       </Link>
 
+      <Link
+        href="/clinic/settings/booking"
+        className="flex items-center justify-between rounded-xl border border-border bg-surface px-4 py-3 text-sm font-medium text-foreground"
+        style={{ boxShadow: "-3px -3px 8px var(--neu-light), 3px 3px 8px var(--neu-dark)" }}
+      >
+        <span className="flex items-center gap-2">
+          <Calendar size={15} className="text-brand-text" /> Calendar management — working hours & slot gap
+        </span>
+        <span className="text-muted">→</span>
+      </Link>
+
       <form className="flex items-center gap-2" action="/clinic/appointments">
         <input
           type="date"
