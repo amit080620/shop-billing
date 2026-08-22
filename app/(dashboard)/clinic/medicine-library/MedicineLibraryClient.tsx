@@ -3,7 +3,7 @@
 import { useState, useTransition, useRef } from "react";
 import Link from "next/link";
 import { Trash2, Upload, Download, ChevronDown, Settings2 } from "lucide-react";
-import { deleteMedicineFromLibraryAction, importMedicineLibraryRowsAction, exportMedicineLibraryCsvAction } from "@/lib/actions/clinic";
+import { deleteMedicineFromLibraryAction, bulkDeleteMedicinesFromLibraryAction, importMedicineLibraryRowsAction, exportMedicineLibraryCsvAction } from "@/lib/actions/clinic";
 import { useToast } from "@/app/components/Toast";
 
 type Medicine = {
@@ -69,8 +69,33 @@ export function MedicineLibraryClient({ medicines: initial }: { medicines: Medic
   const [isImporting, setIsImporting] = useState(false);
   const [search, setSearch] = useState("");
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { showToast } = useToast();
+
+  function toggleSelect(id: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function toggleSelectAll() {
+    setSelectedIds((prev) => (prev.size === visible.length ? new Set() : new Set(visible.map((m) => m.id))));
+  }
+
+  function bulkDelete() {
+    const ids = [...selectedIds];
+    if (ids.length === 0) return;
+    setMedicines((prev) => prev.filter((m) => !selectedIds.has(m.id)));
+    setSelectedIds(new Set());
+    startTransition(async () => {
+      const result = await bulkDeleteMedicinesFromLibraryAction(ids);
+      showToast(`Removed ${result.deleted} medicine${result.deleted === 1 ? "" : "s"}`);
+    });
+  }
 
   function remove(id: string) {
     setMedicines((prev) => prev.filter((m) => m.id !== id));
@@ -191,9 +216,31 @@ export function MedicineLibraryClient({ medicines: initial }: { medicines: Medic
         {medicines.length} medicine{medicines.length === 1 ? "" : "s"} saved
       </p>
 
+      <div className="flex items-center justify-between">
+        <label className="flex items-center gap-2 text-xs font-medium text-foreground">
+          <input
+            type="checkbox"
+            checked={visible.length > 0 && selectedIds.size === visible.length}
+            onChange={toggleSelectAll}
+            className="h-4 w-4 rounded border-border accent-brand"
+          />
+          Select all
+        </label>
+        {selectedIds.size > 0 && (
+          <button
+            onClick={bulkDelete}
+            disabled={isPending}
+            className="flex items-center gap-1.5 rounded-lg bg-danger px-3 py-1.5 text-xs font-medium text-white disabled:opacity-60"
+          >
+            <Trash2 size={13} /> Delete {selectedIds.size} selected
+          </button>
+        )}
+      </div>
+
       <ul className="flex flex-col gap-2">
         {visible.map((m) => {
           const isExpanded = expandedId === m.id;
+          const isSelected = selectedIds.has(m.id);
           const composition = m.shortComposition1
             ? [m.shortComposition1, m.shortComposition2].filter(Boolean).join(" + ")
             : m.composition;
@@ -202,38 +249,50 @@ export function MedicineLibraryClient({ medicines: initial }: { medicines: Medic
           );
           return (
             <li key={m.id} className="neu-card overflow-hidden">
-              <button
-                onClick={() => hasDetails && setExpandedId(isExpanded ? null : m.id)}
-                className="flex w-full items-center justify-between gap-3 p-3 text-left"
-              >
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium text-foreground">
-                    {m.medicineName}
-                    {m.isDiscontinued && <span className="ml-1.5 rounded-full bg-red-100 px-1.5 py-0.5 text-[9px] font-semibold text-red-700">Discontinued</span>}
-                  </p>
-                  <p className="text-xs text-muted">
-                    {m.manufacturerName ? `${m.manufacturerName} · ` : ""}
-                    Used {m.usageCount} time{m.usageCount === 1 ? "" : "s"}
-                    {m.price ? ` · ₹${Number(m.price).toLocaleString("en-IN")}` : ""}
-                  </p>
+              <div className="flex items-center gap-2 p-3">
+                <input
+                  type="checkbox"
+                  checked={isSelected}
+                  onChange={() => toggleSelect(m.id)}
+                  className="h-4 w-4 shrink-0 rounded border-border accent-brand"
+                  aria-label={`Select ${m.medicineName}`}
+                />
+                <div
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => hasDetails && setExpandedId(isExpanded ? null : m.id)}
+                  onKeyDown={(e) => e.key === "Enter" && hasDetails && setExpandedId(isExpanded ? null : m.id)}
+                  className="flex flex-1 items-center justify-between gap-3 text-left"
+                >
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium text-foreground">
+                      {m.medicineName}
+                      {m.isDiscontinued && <span className="ml-1.5 rounded-full bg-red-100 px-1.5 py-0.5 text-[9px] font-semibold text-red-700">Discontinued</span>}
+                    </p>
+                    <p className="text-xs text-muted">
+                      {m.manufacturerName ? `${m.manufacturerName} · ` : ""}
+                      Used {m.usageCount} time{m.usageCount === 1 ? "" : "s"}
+                      {m.price ? ` · ₹${Number(m.price).toLocaleString("en-IN")}` : ""}
+                    </p>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-1">
+                    {hasDetails && (
+                      <ChevronDown size={16} className={`text-muted transition-transform ${isExpanded ? "rotate-180" : ""}`} />
+                    )}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        remove(m.id);
+                      }}
+                      disabled={isPending}
+                      className="rounded-lg p-2 text-danger disabled:opacity-50"
+                      aria-label={`Remove ${m.medicineName}`}
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
                 </div>
-                <div className="flex shrink-0 items-center gap-1">
-                  {hasDetails && (
-                    <ChevronDown size={16} className={`text-muted transition-transform ${isExpanded ? "rotate-180" : ""}`} />
-                  )}
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      remove(m.id);
-                    }}
-                    disabled={isPending}
-                    className="rounded-lg p-2 text-danger disabled:opacity-50"
-                    aria-label={`Remove ${m.medicineName}`}
-                  >
-                    <Trash2 size={16} />
-                  </button>
-                </div>
-              </button>
+              </div>
 
               {isExpanded && hasDetails && (
                 <div className="flex flex-col gap-1.5 border-t border-border px-3 py-3 text-xs">

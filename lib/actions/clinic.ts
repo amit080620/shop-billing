@@ -606,6 +606,23 @@ export async function deleteMedicineFromLibraryAction(id: string): Promise<{ err
   return {};
 }
 
+/** Genuinely deletes many medicines at once — used by the library
+ * screen's "Select all" / multi-select bulk delete. */
+export async function bulkDeleteMedicinesFromLibraryAction(ids: string[]): Promise<{ deleted: number; error?: string }> {
+  const session = await requireSession();
+  const admin = createSupabaseAdminClient();
+  if (ids.length === 0) return { deleted: 0 };
+  const { error, count } = await admin
+    .from("shop_medicine_library")
+    .delete({ count: "exact" })
+    .in("id", ids)
+    .eq("shop_id", session.shopId);
+  if (error) return { deleted: 0, error: "Could not remove the selected medicines" };
+  revalidatePath("/clinic/medicine-library");
+  return { deleted: count ?? 0 };
+}
+
+
 function csvEscape(value: unknown): string {
   const s = value === null || value === undefined ? "" : String(value);
   if (s.includes(",") || s.includes('"') || s.includes("\n")) {
