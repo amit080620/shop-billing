@@ -10,7 +10,7 @@ import { SearchableSelect } from "@/app/components/SearchableSelect";
 import { useToast } from "@/app/components/Toast";
 import type { Lang } from "@/lib/i18n/dictionary";
 import { ClipboardList, Plus, Trash2 } from "lucide-react";
-import { ToothChart } from "@/app/components/ToothChart";
+import { ToothChart, CONDITION_LABELS } from "@/app/components/ToothChart";
 
 type Patient = { id: string; name: string; phone: string };
 type PlanItem = { key: string; toothNumber: string; procedureName: string; description: string; estimatedCost: string };
@@ -19,6 +19,20 @@ const COMMON_PROCEDURES = [
   "Consultation", "Scaling & Polishing", "Filling", "Root Canal Treatment (RCT)", "Crown", "Bridge",
   "Extraction", "Implant", "Sealant", "Whitening", "Denture", "Braces / Aligners",
 ];
+
+// Genuinely a starting estimate per tooth-chart procedure — the
+// doctor can still edit the exact amount afterward, this just saves
+// having to type it fresh every single time.
+const DEFAULT_TOOTH_PROCEDURE_COST: Record<string, number> = {
+  cavity: 500,
+  filled: 800,
+  crown: 5000,
+  root_canal: 4000,
+  extraction: 1000,
+  bridge: 8000,
+  implant: 25000,
+  sealant: 600,
+};
 
 function newItem(): PlanItem {
   return { key: Math.random().toString(36).slice(2), toothNumber: "", procedureName: "", description: "", estimatedCost: "" };
@@ -36,6 +50,50 @@ export function NewTreatmentPlanClient({ patients, lang }: { patients: Patient[]
   const [notes, setNotes] = useState("");
   const [items, setItems] = useState<PlanItem[]>([newItem()]);
   const [dentalChart, setDentalChart] = useState<Record<string, string>>({});
+
+  function handleDentalChartChange(newChart: Record<string, string>) {
+    setDentalChart(newChart);
+    setItems((prev) => {
+      // Genuinely drop any auto-added row whose tooth no longer has a
+      // condition set (tapped back to "healthy").
+      const withoutStale = prev.filter((it) => {
+        if (!it.key.startsWith("tooth-")) return true;
+        const tooth = it.key.slice("tooth-".length);
+        return Boolean(newChart[tooth]);
+      });
+
+      // Genuinely upsert a row for every tooth that has a condition —
+      // updates the existing row if the tooth's procedure changed,
+      // adds a fresh one otherwise. Never duplicates a tooth's row.
+      let next = withoutStale;
+      for (const [tooth, condition] of Object.entries(newChart)) {
+        const key = `tooth-${tooth}`;
+        const label = CONDITION_LABELS[condition] ?? condition;
+        const existingIndex = next.findIndex((it) => it.key === key);
+        if (existingIndex !== -1) {
+          next = next.map((it, i) => (i === existingIndex ? { ...it, procedureName: label } : it));
+        } else {
+          next = [
+            ...next,
+            {
+              key,
+              toothNumber: tooth,
+              procedureName: label,
+              description: "",
+              estimatedCost: String(DEFAULT_TOOTH_PROCEDURE_COST[condition] ?? 0),
+            },
+          ];
+        }
+      }
+
+      // Genuinely drop the one always-present blank starter row once
+      // the tooth chart has added real rows, so it doesn't linger as
+      // an empty, confusing entry.
+      if (next.length > 1) next = next.filter((it) => it.procedureName.trim() !== "" || it.key.startsWith("tooth-"));
+
+      return next.length > 0 ? next : [newItem()];
+    });
+  }
   const [error, setError] = useState("");
 
   function updateItem(key: string, patch: Partial<PlanItem>) {
@@ -46,6 +104,14 @@ export function NewTreatmentPlanClient({ patients, lang }: { patients: Patient[]
   }
   function removeItem(key: string) {
     setItems((prev) => (prev.length > 1 ? prev.filter((it) => it.key !== key) : prev));
+    if (key.startsWith("tooth-")) {
+      const tooth = key.slice("tooth-".length);
+      setDentalChart((prev) => {
+        const next = { ...prev };
+        delete next[tooth];
+        return next;
+      });
+    }
   }
 
   const total = items.reduce((s, it) => s + (Number(it.estimatedCost) || 0), 0);
@@ -133,7 +199,7 @@ export function NewTreatmentPlanClient({ patients, lang }: { patients: Patient[]
         />
       </label>
 
-      <ToothChart chart={dentalChart} onChange={setDentalChart} />
+      <ToothChart chart={dentalChart} onChange={handleDentalChartChange} />
 
       <div className="flex flex-col gap-2.5">
         <p className="text-sm font-medium text-foreground">Treatments planned</p>
