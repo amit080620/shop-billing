@@ -95,11 +95,27 @@ export function MedicineLibraryClient({ medicines: initial }: { medicines: Medic
         rows = parseCsvClientSide(text);
       }
 
-      const result = await importMedicineLibraryRowsAction(rows);
-      if (result.error) {
-        showToast(result.error);
+      const header = rows[0];
+      const dataRows = rows.slice(1);
+      const CLIENT_CHUNK_SIZE = 1000;
+      let totalImported = 0;
+      let firstError: string | undefined;
+
+      // Genuinely sends the file in multiple smaller requests rather
+      // than one giant one — a large real-world medicine database
+      // (thousands of rows) could otherwise exceed request-size or
+      // timeout limits that a small test file would never hit.
+      for (let i = 0; i < dataRows.length; i += CLIENT_CHUNK_SIZE) {
+        const chunkRows = [header, ...dataRows.slice(i, i + CLIENT_CHUNK_SIZE)];
+        const result = await importMedicineLibraryRowsAction(chunkRows);
+        if (result.error && !firstError) firstError = result.error;
+        totalImported += result.imported;
+      }
+
+      if (firstError && totalImported === 0) {
+        showToast(firstError);
       } else {
-        showToast(`Imported ${result.imported} medicine${result.imported === 1 ? "" : "s"}`);
+        showToast(`Imported ${totalImported} medicine${totalImported === 1 ? "" : "s"}`);
         window.location.reload();
       }
     } catch (err) {
