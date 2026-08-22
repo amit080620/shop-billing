@@ -222,29 +222,60 @@ export function TablesClient({ tables, lang }: { tables: Table[]; lang: Lang }) 
         icon={<LayoutGrid size={18} strokeWidth={1.8} />}
       />
 
-      <div className="flex gap-2 overflow-x-auto">
+      <div className="flex gap-2.5 overflow-x-auto pb-1">
         <Link
           href="/restaurant/reports"
-          className="shrink-0 rounded-full bg-background px-3 py-1.5 text-xs font-medium text-muted"
-          style={{ boxShadow: "-2px -2px 5px var(--neu-light), 2px 2px 5px var(--neu-dark)" }}
+          className="shrink-0 rounded-2xl px-4 py-2.5 text-xs font-semibold text-foreground transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97]"
+          style={{
+            background: "linear-gradient(155deg, var(--surface) 0%, var(--background) 100%)",
+            boxShadow: "-5px -5px 12px var(--neu-light), 5px 5px 14px var(--neu-dark), inset 0 1px 0 rgba(255,255,255,0.4)",
+            border: "1px solid var(--border)",
+          }}
         >
           {t("tables.salesReports")}
         </Link>
         <Link
           href="/restaurant/combos"
-          className="flex shrink-0 items-center gap-1 rounded-full bg-background px-3 py-1.5 text-xs font-medium text-muted"
-          style={{ boxShadow: "-2px -2px 5px var(--neu-light), 2px 2px 5px var(--neu-dark)" }}
+          className="flex shrink-0 items-center gap-1.5 rounded-2xl px-4 py-2.5 text-xs font-semibold text-foreground transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97]"
+          style={{
+            background: "linear-gradient(155deg, var(--surface) 0%, var(--background) 100%)",
+            boxShadow: "-5px -5px 12px var(--neu-light), 5px 5px 14px var(--neu-dark), inset 0 1px 0 rgba(255,255,255,0.4)",
+            border: "1px solid var(--border)",
+          }}
         >
-          <Layers size={12} /> Combos
+          <Layers size={13} /> Combos
         </Link>
         <Link
           href="/restaurant/reservations"
-          className="flex shrink-0 items-center gap-1 rounded-full bg-background px-3 py-1.5 text-xs font-medium text-muted"
-          style={{ boxShadow: "-2px -2px 5px var(--neu-light), 2px 2px 5px var(--neu-dark)" }}
+          className="flex shrink-0 items-center gap-1.5 rounded-2xl px-4 py-2.5 text-xs font-semibold text-foreground transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97]"
+          style={{
+            background: "linear-gradient(155deg, var(--surface) 0%, var(--background) 100%)",
+            boxShadow: "-5px -5px 12px var(--neu-light), 5px 5px 14px var(--neu-dark), inset 0 1px 0 rgba(255,255,255,0.4)",
+            border: "1px solid var(--border)",
+          }}
         >
-          <CalendarClock size={12} /> Reservations
+          <CalendarClock size={13} /> Reservations
         </Link>
       </div>
+
+      {/* Genuine legend — explains exactly what each table color means, with a
+          colored dot per state, matching the real data (Free / Reserved / Occupied). */}
+      {tables.length > 0 && (
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 px-1 text-[11px] text-muted">
+          <span className="flex items-center gap-1.5">
+            <span className="h-2.5 w-2.5 rounded-full" style={{ background: "linear-gradient(135deg, #34d399, #059669)", boxShadow: "0 0 0 2px var(--background), 0 1px 2px rgba(0,0,0,0.3)" }} />
+            Free
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="h-2.5 w-2.5 rounded-full" style={{ background: "linear-gradient(135deg, #fbbf24, #d97706)", boxShadow: "0 0 0 2px var(--background), 0 1px 2px rgba(0,0,0,0.3)" }} />
+            Reserved
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="h-2.5 w-2.5 rounded-full" style={{ background: "linear-gradient(135deg, #f87171, #dc2626)", boxShadow: "0 0 0 2px var(--background), 0 1px 2px rgba(0,0,0,0.3)" }} />
+            Occupied — tap to bill
+          </span>
+        </div>
+      )}
 
       {requests.length > 0 && (
         <section className="flex flex-col gap-2 rounded-xl border border-brand bg-brand-soft p-3">
@@ -304,19 +335,26 @@ export function TablesClient({ tables, lang }: { tables: Table[]; lang: Lang }) 
       {error && <p className="text-sm text-danger">{error}</p>}
 
       {tables.length > 0 && (
-        <div className="flex gap-1.5 overflow-x-auto pb-0.5">
+        <div className="flex gap-2 overflow-x-auto pb-1">
           {(["all", "inside", "outside", "takeaway"] as const).map((s) => (
             <button
               key={s}
               type="button"
               onClick={() => setSectionFilter(s)}
-              className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium ${
-                sectionFilter === s ? "border-brand bg-brand-soft text-brand-text" : "border-border text-muted"
+              className={`shrink-0 rounded-2xl px-4 py-2 text-xs font-semibold transition-all duration-200 active:scale-[0.97] ${
+                sectionFilter === s ? "text-brand-text" : "text-muted hover:-translate-y-0.5"
               }`}
               style={
                 sectionFilter === s
-                  ? { boxShadow: "-2px -2px 5px var(--neu-light), 2px 2px 5px var(--neu-dark)" }
-                  : undefined
+                  ? {
+                      background: "linear-gradient(155deg, var(--brand-soft) 0%, var(--background) 100%)",
+                      boxShadow: "inset -3px -3px 7px rgba(255,255,255,0.5), inset 3px 3px 7px var(--neu-dark), 0 0 0 1.5px var(--brand-light)",
+                    }
+                  : {
+                      background: "linear-gradient(155deg, var(--surface) 0%, var(--background) 100%)",
+                      boxShadow: "-4px -4px 10px var(--neu-light), 4px 4px 12px var(--neu-dark), inset 0 1px 0 rgba(255,255,255,0.35)",
+                      border: "1px solid var(--border)",
+                    }
               }
             >
               {s === "all" ? "All tables" : SECTION_LABEL[s]}
@@ -337,24 +375,31 @@ export function TablesClient({ tables, lang }: { tables: Table[]; lang: Lang }) 
               role="button"
               tabIndex={0}
               onClick={() => handleTableTap(table)}
-              style={{ boxShadow: "-6px -6px 14px var(--neu-light), 6px 6px 14px var(--neu-dark)" }}
-              className={`hover-lift relative flex flex-col items-center justify-center gap-1 rounded-xl border p-4 md:gap-1.5 md:rounded-2xl md:p-6 ${
+              style={{
+                background:
+                  table.status === "occupied"
+                    ? "linear-gradient(155deg, #fef2f2 0%, #fee2e2 100%)"
+                    : table.reservation
+                      ? "linear-gradient(155deg, #fffbeb 0%, #fef3c7 100%)"
+                      : "linear-gradient(155deg, #f0fdf4 0%, #dcfce7 100%)",
+                boxShadow:
+                  table.status === "occupied"
+                    ? "-6px -6px 14px var(--neu-light), 6px 6px 16px var(--neu-dark), inset 0 1.5px 0 rgba(255,255,255,0.6), 0 0 0 1.5px rgba(220,38,38,0.25)"
+                    : table.reservation
+                      ? "-6px -6px 14px var(--neu-light), 6px 6px 16px var(--neu-dark), inset 0 1.5px 0 rgba(255,255,255,0.6), 0 0 0 1.5px rgba(217,119,6,0.25)"
+                      : "-6px -6px 14px var(--neu-light), 6px 6px 16px var(--neu-dark), inset 0 1.5px 0 rgba(255,255,255,0.6), 0 0 0 1.5px rgba(5,150,105,0.25)",
+              }}
+              className={`hover-lift relative flex flex-col items-center justify-center gap-1 rounded-2xl p-4 transition-all duration-200 hover:-translate-y-1 active:translate-y-0 active:scale-[0.97] md:gap-1.5 md:p-6 ${
                 isPending ? "opacity-60" : ""
-              } ${
-                table.status === "occupied"
-                  ? "border-danger bg-red-50"
-                  : table.reservation
-                    ? "border-amber-500 bg-amber-50"
-                    : "border-brand bg-brand-soft"
               }`}
             >
               {table.readyCount > 0 && (
-                <span className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-brand text-[10px] font-bold text-white">
+                <span className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-brand text-[10px] font-bold text-white" style={{ boxShadow: "0 2px 5px rgba(0,0,0,0.35)" }}>
                   <Bell size={11} />
                 </span>
               )}
               {!table.readyCount && table.status !== "occupied" && table.reservation && (
-                <span className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-amber-500 text-[10px] font-bold text-white">
+                <span className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-amber-500 text-[10px] font-bold text-white" style={{ boxShadow: "0 2px 5px rgba(0,0,0,0.35)" }}>
                   <CalendarClock size={11} />
                 </span>
               )}
@@ -364,20 +409,22 @@ export function TablesClient({ tables, lang }: { tables: Table[]; lang: Lang }) 
                   showQr(table);
                 }}
                 className="absolute -left-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-gray-700 text-[10px] text-white"
+                style={{ boxShadow: "0 2px 5px rgba(0,0,0,0.35)" }}
                 aria-label="Show QR code"
               >
                 <QrCode size={11} />
               </button>
               <span
                 className={`absolute -bottom-1.5 -left-1.5 flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold ${SECTION_BADGE[table.section ?? "inside"].className}`}
+                style={{ boxShadow: "0 2px 5px rgba(0,0,0,0.3)" }}
                 title={SECTION_LABEL[table.section ?? "inside"]}
               >
                 {SECTION_BADGE[table.section ?? "inside"].letter}
               </span>
-              <span className={`text-sm font-semibold md:text-lg ${table.status === "occupied" ? "text-danger" : table.reservation ? "text-amber-700" : "text-brand-text"}`}>
+              <span className={`text-sm font-bold md:text-lg ${table.status === "occupied" ? "text-red-700" : table.reservation ? "text-amber-800" : "text-emerald-800"}`}>
                 {table.name}
               </span>
-              <span className={`text-[11px] md:text-xs ${table.status === "occupied" ? "text-danger" : table.reservation ? "text-amber-700" : "text-brand-text"}`}>
+              <span className={`text-[11px] font-medium md:text-xs ${table.status === "occupied" ? "text-red-600" : table.reservation ? "text-amber-700" : "text-emerald-700"}`}>
                 {table.status === "occupied"
                   ? table.openOrderTotal === 0
                     ? (
