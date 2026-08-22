@@ -867,3 +867,149 @@ export async function importMedicineLibraryRowsAction(rows: string[][]): Promise
   revalidatePath("/clinic/medicine-library");
   return { imported };
 }
+
+// ─── Prescription Templates — save a full Rx as a reusable preset ──────
+
+export type PrescriptionTemplateMedicine = {
+  medicineName: string;
+  dosage: string;
+  frequency: string;
+  duration: string;
+  instructions: string;
+};
+
+export async function savePrescriptionTemplateAction(input: {
+  name: string;
+  chiefComplaint: string;
+  diagnosis: string;
+  advice: string;
+  customSections: { label: string; value: string }[];
+  medicines: PrescriptionTemplateMedicine[];
+}): Promise<{ error?: string }> {
+  const session = await requireSession();
+  const admin = createSupabaseAdminClient();
+  if (!input.name.trim()) return { error: "Give this template a name" };
+
+  const { error } = await admin.from("prescription_templates").upsert(
+    {
+      shop_id: session.shopId,
+      name: input.name.trim(),
+      chief_complaint: input.chiefComplaint || null,
+      diagnosis: input.diagnosis || null,
+      advice: input.advice || null,
+      custom_sections: input.customSections,
+      medicines: input.medicines,
+    },
+    { onConflict: "shop_id,name" },
+  );
+  if (error) {
+    console.error("Could not save prescription template", error);
+    return { error: "Could not save template" };
+  }
+  revalidatePath("/clinic/prescriptions/new");
+  return {};
+}
+
+export async function listPrescriptionTemplatesAction(): Promise<
+  { id: string; name: string; usageCount: number }[]
+> {
+  const session = await requireSession();
+  const admin = createSupabaseAdminClient();
+  const { data } = await admin
+    .from("prescription_templates")
+    .select("id, name, usage_count")
+    .eq("shop_id", session.shopId)
+    .order("usage_count", { ascending: false })
+    .order("name", { ascending: true });
+  return (data ?? []).map((t) => ({ id: t.id, name: t.name, usageCount: t.usage_count }));
+}
+
+/** Genuinely fetches a template's full contents to prefill a new
+ * prescription, and bumps its usage count so genuinely popular
+ * templates float to the top of the list. */
+export async function applyPrescriptionTemplateAction(templateId: string): Promise<{
+  chiefComplaint: string;
+  diagnosis: string;
+  advice: string;
+  customSections: { label: string; value: string }[];
+  medicines: PrescriptionTemplateMedicine[];
+} | null> {
+  const session = await requireSession();
+  const admin = createSupabaseAdminClient();
+  const { data: template } = await admin
+    .from("prescription_templates")
+    .select("id, chief_complaint, diagnosis, advice, custom_sections, medicines, usage_count")
+    .eq("id", templateId)
+    .eq("shop_id", session.shopId)
+    .single();
+  if (!template) return null;
+
+  await admin.from("prescription_templates").update({ usage_count: template.usage_count + 1 }).eq("id", template.id);
+
+  return {
+    chiefComplaint: template.chief_complaint ?? "",
+    diagnosis: template.diagnosis ?? "",
+    advice: template.advice ?? "",
+    customSections: (template.custom_sections as { label: string; value: string }[]) ?? [],
+    medicines: (template.medicines as PrescriptionTemplateMedicine[]) ?? [],
+  };
+}
+
+export async function deletePrescriptionTemplateAction(templateId: string): Promise<{ error?: string }> {
+  const session = await requireSession();
+  const admin = createSupabaseAdminClient();
+  const { error } = await admin.from("prescription_templates").delete().eq("id", templateId).eq("shop_id", session.shopId);
+  if (error) return { error: "Could not delete template" };
+  revalidatePath("/clinic/prescriptions/new");
+  return {};
+}
+
+// ─── Quick phrases — a growing per-field library of frequently-typed text ──
+
+/** Genuinely fetches the most-used phrases for one field (e.g. "Chief
+ * Complaint"), so they can be shown as tap-to-fill chips right above
+ * that field, fastest ones first. */
+export async function getQuickPhrasesAction(fieldLabel: string): Promise<string[]> {
+  const session = await requireSession();
+  const admin = createSupabaseAdminClient();
+  const { data } = await admin
+    .from("prescription_quick_phrases")
+    .select("phrase")
+    .eq("shop_id", session.shopId)
+    .eq("field_label", fieldLabel)
+    .order("usage_count", { ascending: false })
+    .order("last_used_at", { ascending: false })
+    .limit(8);
+  return (data ?? []).map((r) => r.phrase);
+}
+
+/** Genuinely saves every non-empty field value used in a prescription
+ * to the quick-phrase library, one entry per field label — called
+ * automatically on save, growing the chip suggestions over time with
+ * zero extra effort from the doctor. */
+export async function saveQuickPhrasesAction(fields: { label: string; value: string }[]): Promise<void> {
+  const session = await requireSession();
+  const admin = createSupabaseAdminClient();
+
+  for (const field of fields) {
+    const phrase = field.value.trim();
+    if (!phrase) continue;
+
+    const { data: existing } = await admin
+      .from("prescription_quick_phrases")
+      .select("id, usage_count")
+      .eq("shop_id", session.shopId)
+      .eq("field_label", field.label)
+      .eq("phrase", phrase)
+      .maybeSingle();
+
+    if (existing) {
+      await admin
+        .from("prescription_quick_phrases")
+        .update({ usage_count: existing.usage_count + 1, last_used_at: new Date().toISOString() })
+        .eq("id", existing.id);
+    } else {
+      await admin.from("prescription_quick_phrases").insert({ shop_id: session.shopId, field_label: field.label, phrase });
+    }
+  }
+}

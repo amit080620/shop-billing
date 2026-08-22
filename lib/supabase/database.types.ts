@@ -801,6 +801,18 @@ export interface Database {
         Update: { shop_id?: string; slot_duration_minutes?: number; working_hours?: Record<string, { start: string; end: string }[]>; is_public_booking_enabled?: boolean; public_token?: string; doctor_name?: string | null; doctor_qualifications?: string | null; doctor_photo_url?: string | null; unavailable_dates?: string[]; updated_at?: string };
         Relationships: [];
       };
+      prescription_templates: {
+        Row: { id: string; shop_id: string; name: string; chief_complaint: string | null; diagnosis: string | null; advice: string | null; custom_sections: { label: string; value: string }[]; medicines: unknown; usage_count: number; created_at: string };
+        Insert: { id?: string; shop_id: string; name: string; chief_complaint?: string | null; diagnosis?: string | null; advice?: string | null; custom_sections?: { label: string; value: string }[]; medicines?: unknown; usage_count?: number; created_at?: string };
+        Update: { id?: string; shop_id?: string; name?: string; chief_complaint?: string | null; diagnosis?: string | null; advice?: string | null; custom_sections?: { label: string; value: string }[]; medicines?: unknown; usage_count?: number; created_at?: string };
+        Relationships: [];
+      };
+      prescription_quick_phrases: {
+        Row: { id: string; shop_id: string; field_label: string; phrase: string; usage_count: number; last_used_at: string };
+        Insert: { id?: string; shop_id: string; field_label: string; phrase: string; usage_count?: number; last_used_at?: string };
+        Update: { id?: string; shop_id?: string; field_label?: string; phrase?: string; usage_count?: number; last_used_at?: string };
+        Relationships: [];
+      };
       clinic_appointments: {
         Row: {
           id: string;
