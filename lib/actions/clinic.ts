@@ -551,16 +551,50 @@ export async function saveMedicinesToLibraryAction(medicineNames: string[]): Pro
 /** Genuinely fetches the full library with usage stats, for a visible
  * management screen where the shop can review or clean it up. */
 export async function listMedicineLibraryAction(): Promise<
-  { id: string; medicineName: string; usageCount: number; lastUsedAt: string }[]
+  {
+    id: string;
+    medicineName: string;
+    usageCount: number;
+    lastUsedAt: string;
+    price: number | null;
+    manufacturerName: string | null;
+    medicineType: string | null;
+    packSizeLabel: string | null;
+    composition: string | null;
+    shortComposition1: string | null;
+    shortComposition2: string | null;
+    description: string | null;
+    sideEffects: string | null;
+    drugInteractions: unknown;
+    isDiscontinued: boolean;
+  }[]
 > {
   const session = await requireSession();
   const admin = createSupabaseAdminClient();
   const { data } = await admin
     .from("shop_medicine_library")
-    .select("id, medicine_name, usage_count, last_used_at")
+    .select(
+      "id, medicine_name, usage_count, last_used_at, price, manufacturer_name, medicine_type, pack_size_label, composition, short_composition1, short_composition2, description, side_effects, drug_interactions, is_discontinued",
+    )
     .eq("shop_id", session.shopId)
     .order("usage_count", { ascending: false });
-  return (data ?? []).map((r) => ({ id: r.id, medicineName: r.medicine_name, usageCount: r.usage_count, lastUsedAt: r.last_used_at }));
+  return (data ?? []).map((r) => ({
+    id: r.id,
+    medicineName: r.medicine_name,
+    usageCount: r.usage_count,
+    lastUsedAt: r.last_used_at,
+    price: r.price,
+    manufacturerName: r.manufacturer_name,
+    medicineType: r.medicine_type,
+    packSizeLabel: r.pack_size_label,
+    composition: r.composition,
+    shortComposition1: r.short_composition1,
+    shortComposition2: r.short_composition2,
+    description: r.description,
+    sideEffects: r.side_effects,
+    drugInteractions: r.drug_interactions,
+    isDiscontinued: r.is_discontinued,
+  }));
 }
 
 export async function deleteMedicineFromLibraryAction(id: string): Promise<{ error?: string }> {

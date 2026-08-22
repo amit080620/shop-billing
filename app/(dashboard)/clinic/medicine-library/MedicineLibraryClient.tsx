@@ -1,16 +1,29 @@
 "use client";
 
 import { useState, useTransition, useRef } from "react";
-import { Trash2, Upload, Download } from "lucide-react";
-import * as XLSX from "xlsx";
+import Link from "next/link";
+import { Trash2, Upload, Download, ChevronDown, Settings2 } from "lucide-react";
 import { deleteMedicineFromLibraryAction, importMedicineLibraryRowsAction, exportMedicineLibraryCsvAction } from "@/lib/actions/clinic";
 import { useToast } from "@/app/components/Toast";
 
-type Medicine = { id: string; medicineName: string; usageCount: number; lastUsedAt: string };
+type Medicine = {
+  id: string;
+  medicineName: string;
+  usageCount: number;
+  lastUsedAt: string;
+  price: number | null;
+  manufacturerName: string | null;
+  medicineType: string | null;
+  packSizeLabel: string | null;
+  composition: string | null;
+  shortComposition1: string | null;
+  shortComposition2: string | null;
+  description: string | null;
+  sideEffects: string | null;
+  drugInteractions: unknown;
+  isDiscontinued: boolean;
+};
 
-/** Genuinely a minimal CSV parser (handles quoted fields with embedded
- * commas/newlines) — kept client-side so both CSV and Excel funnel
- * into the exact same row-array shape before reaching the server. */
 function parseCsvClientSide(text: string): string[][] {
   const rows: string[][] = [];
   let row: string[] = [];
@@ -55,6 +68,7 @@ export function MedicineLibraryClient({ medicines: initial }: { medicines: Medic
   const [isPending, startTransition] = useTransition();
   const [isImporting, setIsImporting] = useState(false);
   const [search, setSearch] = useState("");
+  const [expandedId, setExpandedId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { showToast } = useToast();
 
@@ -80,12 +94,7 @@ export function MedicineLibraryClient({ medicines: initial }: { medicines: Medic
       let rows: string[][];
 
       if (isExcel) {
-        // Genuinely parse real Excel binary format via SheetJS —
-        // sheet_to_json with header:1 gives a genuine array-of-arrays
-        // matching the CSV parser's shape, with { raw: false } so
-        // every cell (including numeric ones like price) genuinely
-        // comes through as a string, never a raw number that would
-        // crash a later .trim() call.
+        const XLSX = await import("xlsx");
         const buffer = await file.arrayBuffer();
         const workbook = XLSX.read(buffer, { type: "array" });
         const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
@@ -101,10 +110,6 @@ export function MedicineLibraryClient({ medicines: initial }: { medicines: Medic
       let totalImported = 0;
       let firstError: string | undefined;
 
-      // Genuinely sends the file in multiple smaller requests rather
-      // than one giant one — a large real-world medicine database
-      // (thousands of rows) could otherwise exceed request-size or
-      // timeout limits that a small test file would never hit.
       for (let i = 0; i < dataRows.length; i += CLIENT_CHUNK_SIZE) {
         const chunkRows = [header, ...dataRows.slice(i, i + CLIENT_CHUNK_SIZE)];
         const result = await importMedicineLibraryRowsAction(chunkRows);
@@ -143,6 +148,17 @@ export function MedicineLibraryClient({ medicines: initial }: { medicines: Medic
     <div className="flex flex-col gap-3">
       <input ref={fileInputRef} type="file" accept=".csv,.xlsx,.xls" onChange={handleFileSelected} className="hidden" />
 
+      <Link
+        href="/clinic/settings"
+        className="flex items-center justify-between rounded-xl border border-border bg-surface px-4 py-3 text-sm font-medium text-foreground"
+        style={{ boxShadow: "-3px -3px 8px var(--neu-light), 3px 3px 8px var(--neu-dark)" }}
+      >
+        <span className="flex items-center gap-2">
+          <Settings2 size={15} className="text-brand-text" /> Control which fields print on the Rx
+        </span>
+        <span className="text-muted">→</span>
+      </Link>
+
       <div className="flex gap-2">
         <button
           onClick={handleImportClick}
@@ -159,8 +175,9 @@ export function MedicineLibraryClient({ medicines: initial }: { medicines: Medic
         </button>
       </div>
       <p className="text-[11px] text-muted">
-        Columns: name, price, is_discontinued, manufacturer_name, type, pack_size_label, composition,
-        description, side_effects. Medicines matched by name are updated, not duplicated.
+        Columns: name, price, is_discontinued, manufacturer_name, type, pack_size_label, short_composition1,
+        short_composition2, composition, description, side_effects, drug_interactions. Tap a medicine below to see
+        everything that was genuinely imported for it.
       </p>
 
       <input
@@ -175,27 +192,94 @@ export function MedicineLibraryClient({ medicines: initial }: { medicines: Medic
       </p>
 
       <ul className="flex flex-col gap-2">
-        {visible.map((m) => (
-          <li
-            key={m.id}
-            className="neu-card flex items-center justify-between gap-3 p-3"
-          >
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-medium text-foreground">{m.medicineName}</p>
-              <p className="text-xs text-muted">
-                Used {m.usageCount} time{m.usageCount === 1 ? "" : "s"} · last on {new Date(m.lastUsedAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
-              </p>
-            </div>
-            <button
-              onClick={() => remove(m.id)}
-              disabled={isPending}
-              className="shrink-0 rounded-lg p-2 text-danger disabled:opacity-50"
-              aria-label={`Remove ${m.medicineName}`}
-            >
-              <Trash2 size={16} />
-            </button>
-          </li>
-        ))}
+        {visible.map((m) => {
+          const isExpanded = expandedId === m.id;
+          const composition = m.shortComposition1
+            ? [m.shortComposition1, m.shortComposition2].filter(Boolean).join(" + ")
+            : m.composition;
+          const hasDetails = Boolean(
+            m.price || m.manufacturerName || composition || m.packSizeLabel || m.description || m.sideEffects || m.drugInteractions,
+          );
+          return (
+            <li key={m.id} className="neu-card overflow-hidden">
+              <button
+                onClick={() => hasDetails && setExpandedId(isExpanded ? null : m.id)}
+                className="flex w-full items-center justify-between gap-3 p-3 text-left"
+              >
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium text-foreground">
+                    {m.medicineName}
+                    {m.isDiscontinued && <span className="ml-1.5 rounded-full bg-red-100 px-1.5 py-0.5 text-[9px] font-semibold text-red-700">Discontinued</span>}
+                  </p>
+                  <p className="text-xs text-muted">
+                    {m.manufacturerName ? `${m.manufacturerName} · ` : ""}
+                    Used {m.usageCount} time{m.usageCount === 1 ? "" : "s"}
+                    {m.price ? ` · ₹${Number(m.price).toLocaleString("en-IN")}` : ""}
+                  </p>
+                </div>
+                <div className="flex shrink-0 items-center gap-1">
+                  {hasDetails && (
+                    <ChevronDown size={16} className={`text-muted transition-transform ${isExpanded ? "rotate-180" : ""}`} />
+                  )}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      remove(m.id);
+                    }}
+                    disabled={isPending}
+                    className="rounded-lg p-2 text-danger disabled:opacity-50"
+                    aria-label={`Remove ${m.medicineName}`}
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+              </button>
+
+              {isExpanded && hasDetails && (
+                <div className="flex flex-col gap-1.5 border-t border-border px-3 py-3 text-xs">
+                  {composition && (
+                    <p>
+                      <span className="font-medium text-foreground">Composition: </span>
+                      <span className="text-muted">{composition}</span>
+                    </p>
+                  )}
+                  {m.packSizeLabel && (
+                    <p>
+                      <span className="font-medium text-foreground">Pack: </span>
+                      <span className="text-muted">{m.packSizeLabel}</span>
+                    </p>
+                  )}
+                  {m.medicineType && (
+                    <p>
+                      <span className="font-medium text-foreground">Type: </span>
+                      <span className="text-muted">{m.medicineType}</span>
+                    </p>
+                  )}
+                  {m.sideEffects && (
+                    <p>
+                      <span className="font-medium text-foreground">Side effects: </span>
+                      <span className="text-muted">{m.sideEffects}</span>
+                    </p>
+                  )}
+                  {m.description && (
+                    <p>
+                      <span className="font-medium text-foreground">About: </span>
+                      <span className="text-muted">{m.description}</span>
+                    </p>
+                  )}
+                  {m.drugInteractions != null && (
+                    <p>
+                      <span className="font-medium text-foreground">Interactions: </span>
+                      <span className="text-muted">
+                        {typeof m.drugInteractions === "string" ? m.drugInteractions : JSON.stringify(m.drugInteractions)}
+                      </span>
+                    </p>
+                  )}
+                </div>
+              )}
+            </li>
+          );
+        })}
       </ul>
 
       {medicines.length === 0 && (
