@@ -11,7 +11,7 @@ import { LanguageToggle } from "@/lib/i18n/LanguageToggle";
 import { SubscriptionCard } from "@/app/components/SubscriptionCard";
 import { InstallAppButton } from "@/app/components/InstallAppButton";
 import { isModuleEnabled } from "@/lib/modules";
-import { Users, Bell, Clock, Truck, Package, UserCog, Settings, Megaphone, HelpCircle, PartyPopper, WifiOff, CalendarClock, ChefHat, BookOpen, ClipboardCheck, ShieldCheck, Scissors, Gem, Store, Stethoscope, Palette, Wallet, Building2, Dumbbell, FlaskConical, Receipt as ReceiptIcon, AlertTriangle, Cake, PackagePlus, Wrench, Gift, Zap } from "lucide-react";
+import { Users, Bell, Clock, Truck, Package, UserCog, Settings, Megaphone, HelpCircle, PartyPopper, WifiOff, CalendarClock, ChefHat, BookOpen, ClipboardCheck, ShieldCheck, Scissors, Gem, Store, Stethoscope, Palette, Wallet, Building2, Dumbbell, FlaskConical, Receipt as ReceiptIcon, AlertTriangle, Cake, PackagePlus, Wrench, Gift, Zap, Pill } from "lucide-react";
 
 export default async function MorePage() {
   const session = await requireSession();
@@ -127,6 +127,7 @@ export default async function MorePage() {
           <MenuLink href="/clinic/prescriptions/new" label="New prescription" sub="Write an Rx for a patient" icon={ClinicIcon} tone="info" />
           <MenuLink href="/clinic/settings" label="Prescription pad settings" sub="Letterhead, header/footer, Rx fields" icon={ClinicIcon} tone="info" />
           <MenuLink href="/clinic/settings/booking" label="Online booking" sub="Working hours & shareable booking link" icon={ClinicIcon} tone="info" />
+          <MenuLink href="/clinic/medicine-library" label="Medicine library" sub="Saved medicines — no need to retype names" icon={MedicineLibraryIcon} tone="info" />
         </MenuGroup>
       )}
 
@@ -394,6 +395,9 @@ function CatalogIcon({ className }: { className?: string }) {
 }
 function ClinicIcon({ className }: { className?: string }) {
   return <Stethoscope className={className} size={18} strokeWidth={1.8} />;
+}
+function MedicineLibraryIcon({ className }: { className?: string }) {
+  return <Pill className={className} size={18} strokeWidth={1.8} />;
 }
 function InvoiceDesignIcon({ className }: { className?: string }) {
   return <Palette className={className} size={18} strokeWidth={1.8} />;

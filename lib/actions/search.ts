@@ -74,6 +74,7 @@ const STATIC_PAGES: { title: string; subtitle: string; href: string; keywords: s
   { title: "Lab tests", subtitle: "Test catalog & pricing", href: "/lab/tests", keywords: ["lab test catalog"] },
   { title: "Clinic appointments", subtitle: "Booking calendar", href: "/clinic/appointments", keywords: ["clinic appointment"] },
   { title: "New prescription", subtitle: "Write a prescription", href: "/clinic/prescriptions/new", keywords: ["prescription", "rx"] },
+  { title: "Medicine library", subtitle: "Saved medicines — no retyping", href: "/clinic/medicine-library", keywords: ["medicine library", "drug list"] },
   { title: "Medicine expiry", subtitle: "Batches expiring soon", href: "/pharmacy/expiry", keywords: ["expiry", "medicine"] },
   { title: "Write-offs", subtitle: "Expired/damaged stock removal", href: "/pharmacy/write-offs", keywords: ["write-off", "damaged stock"] },
   { title: "Doctors", subtitle: "Prescribing doctor directory", href: "/pharmacy/doctors", keywords: ["doctor"] },

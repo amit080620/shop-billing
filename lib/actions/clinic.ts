@@ -533,3 +533,27 @@ export async function saveMedicinesToLibraryAction(medicineNames: string[]): Pro
     }
   }
 }
+
+/** Genuinely fetches the full library with usage stats, for a visible
+ * management screen where the shop can review or clean it up. */
+export async function listMedicineLibraryAction(): Promise<
+  { id: string; medicineName: string; usageCount: number; lastUsedAt: string }[]
+> {
+  const session = await requireSession();
+  const admin = createSupabaseAdminClient();
+  const { data } = await admin
+    .from("shop_medicine_library")
+    .select("id, medicine_name, usage_count, last_used_at")
+    .eq("shop_id", session.shopId)
+    .order("usage_count", { ascending: false });
+  return (data ?? []).map((r) => ({ id: r.id, medicineName: r.medicine_name, usageCount: r.usage_count, lastUsedAt: r.last_used_at }));
+}
+
+export async function deleteMedicineFromLibraryAction(id: string): Promise<{ error?: string }> {
+  const session = await requireSession();
+  const admin = createSupabaseAdminClient();
+  const { error } = await admin.from("shop_medicine_library").delete().eq("id", id).eq("shop_id", session.shopId);
+  if (error) return { error: "Could not remove medicine" };
+  revalidatePath("/clinic/medicine-library");
+  return {};
+}
