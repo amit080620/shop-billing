@@ -14,13 +14,35 @@ import { ToothChart } from "@/app/components/ToothChart";
 import { todayIso } from "@/lib/dateHelpers";
 
 type Patient = { id: string; name: string; phone: string; dateOfBirth: string | null; gender: string | null };
-type MedicineRow = PrescriptionItemInput & { key: string };
+type MedicineRow = PrescriptionItemInput & {
+  key: string;
+  composition?: string;
+  packSizeLabel?: string;
+  medicineType?: string;
+  sideEffects?: string;
+  description?: string;
+  showFullDetails?: boolean;
+};
 
 const FREQUENCY_PRESETS = ["1-0-0", "0-1-0", "0-0-1", "1-0-1", "1-1-1", "1-1-0", "SOS"];
 const INSTRUCTION_PRESETS = ["Before food", "After food", "With food", "Empty stomach", "At bedtime"];
 
 function newMedicineRow(): MedicineRow {
-  return { key: Math.random().toString(36).slice(2), medicineName: "", dosage: "", frequency: "", duration: "", instructions: "", quantity: undefined };
+  return {
+    key: Math.random().toString(36).slice(2),
+    medicineName: "",
+    dosage: "",
+    frequency: "",
+    duration: "",
+    instructions: "",
+    quantity: undefined,
+    composition: "",
+    packSizeLabel: "",
+    medicineType: "",
+    sideEffects: "",
+    description: "",
+    showFullDetails: false,
+  };
 }
 
 export function NewPrescriptionClient({
@@ -112,8 +134,26 @@ export function NewPrescriptionClient({
       }
       // Genuinely grow the shop's medicine library — any name typed
       // here becomes a one-tap suggestion on every future prescription.
-      const usedNames = medicines.filter((m) => m.medicineName.trim()).map((m) => m.medicineName.trim());
-      if (usedNames.length > 0) saveMedicinesToLibraryAction(usedNames);
+      // Genuinely awaited — without this, the immediate page navigation
+      // right after could cancel the save request mid-flight before it
+      // ever reached the database.
+      const usedMedicines = medicines
+        .filter((m) => m.medicineName.trim())
+        .map((m) => ({
+          name: m.medicineName.trim(),
+          composition: m.composition?.trim() || undefined,
+          packSizeLabel: m.packSizeLabel?.trim() || undefined,
+          medicineType: m.medicineType?.trim() || undefined,
+          sideEffects: m.sideEffects?.trim() || undefined,
+          description: m.description?.trim() || undefined,
+        }));
+      if (usedMedicines.length > 0) {
+        try {
+          await saveMedicinesToLibraryAction(usedMedicines);
+        } catch (err) {
+          console.error("Genuinely could not save medicines to the library", err);
+        }
+      }
       router.push(`/print/prescription/${result.prescriptionId}`);
     });
   }
@@ -276,6 +316,53 @@ export function NewPrescriptionClient({
               placeholder="Instructions (e.g. after food)"
               className="rounded-lg border border-border px-3 py-1.5 text-xs outline-none focus:border-brand"
             />
+
+            <button
+              type="button"
+              onClick={() => updateMedicine(med.key, { showFullDetails: !med.showFullDetails })}
+              className="self-start text-xs font-medium text-brand"
+            >
+              {med.showFullDetails ? "− Hide" : "+ Add"} full details (composition, pack, side effects…)
+            </button>
+
+            {med.showFullDetails && (
+              <div className="flex flex-col gap-1.5 rounded-lg bg-background p-2">
+                <input
+                  value={med.composition ?? ""}
+                  onChange={(e) => updateMedicine(med.key, { composition: e.target.value })}
+                  placeholder="Composition (e.g. Albendazole (200mg))"
+                  className="rounded-lg border border-border px-2.5 py-1.5 text-xs outline-none focus:border-brand"
+                />
+                <div className="grid grid-cols-2 gap-2">
+                  <input
+                    value={med.packSizeLabel ?? ""}
+                    onChange={(e) => updateMedicine(med.key, { packSizeLabel: e.target.value })}
+                    placeholder="Pack (e.g. bottle of 10 ml Syrup)"
+                    className="rounded-lg border border-border px-2.5 py-1.5 text-xs outline-none focus:border-brand"
+                  />
+                  <input
+                    value={med.medicineType ?? ""}
+                    onChange={(e) => updateMedicine(med.key, { medicineType: e.target.value })}
+                    placeholder="Type (e.g. allopathy)"
+                    className="rounded-lg border border-border px-2.5 py-1.5 text-xs outline-none focus:border-brand"
+                  />
+                </div>
+                <input
+                  value={med.sideEffects ?? ""}
+                  onChange={(e) => updateMedicine(med.key, { sideEffects: e.target.value })}
+                  placeholder="Side effects"
+                  className="rounded-lg border border-border px-2.5 py-1.5 text-xs outline-none focus:border-brand"
+                />
+                <textarea
+                  value={med.description ?? ""}
+                  onChange={(e) => updateMedicine(med.key, { description: e.target.value })}
+                  placeholder="About this medicine (optional)"
+                  rows={2}
+                  className="rounded-lg border border-border px-2.5 py-1.5 text-xs outline-none focus:border-brand"
+                />
+                <p className="text-[10px] text-muted">These genuinely save to your medicine library, so you never need to type them again.</p>
+              </div>
+            )}
           </div>
         ))}
         <button type="button" onClick={addMedicineRow} className="self-start text-sm font-medium text-brand">

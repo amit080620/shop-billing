@@ -520,19 +520,37 @@ export async function getMedicineLibraryAction(): Promise<{ names: string[] }> {
  * never needs to be typed in full again. Called automatically whenever
  * a prescription is saved; never requires the person to do anything
  * extra themselves. */
-export async function saveMedicinesToLibraryAction(medicineNames: string[]): Promise<void> {
+/** Genuinely saves every medicine used in a prescription to this
+ * shop's own library — a name typed once is remembered forever, so it
+ * never needs to be typed in full again. If the doctor genuinely filled
+ * in the optional full-details fields (composition, pack size, type,
+ * side effects, description), those are saved too, not just the name.
+ * Called automatically whenever a prescription is saved. */
+export async function saveMedicinesToLibraryAction(
+  medicines: { name: string; composition?: string; packSizeLabel?: string; medicineType?: string; sideEffects?: string; description?: string }[],
+): Promise<void> {
   const session = await requireSession();
   const admin = createSupabaseAdminClient();
-  const uniqueNames = [...new Set(medicineNames.map((n) => n.trim()).filter(Boolean))];
-  if (uniqueNames.length === 0) return;
 
-  for (const name of uniqueNames) {
+  const seen = new Set<string>();
+  const uniqueMedicines = medicines.filter((m) => {
+    const name = m.name.trim();
+    if (!name || seen.has(name)) return false;
+    seen.add(name);
+    return true;
+  });
+  if (uniqueMedicines.length === 0) return;
+
+  for (const med of uniqueMedicines) {
+    const name = med.name.trim();
     // Genuine upsert — a name used before gets its usage count bumped
     // (so truly frequent medicines float to the top of the list over
-    // time), a new name gets genuinely added for the first time.
+    // time), a new name gets genuinely added for the first time. Any
+    // genuinely newly-provided detail field fills in a previously
+    // empty one, without overwriting existing data with blanks.
     const { data: existing } = await admin
       .from("shop_medicine_library")
-      .select("id, usage_count")
+      .select("id, usage_count, composition, pack_size_label, medicine_type, side_effects, description")
       .eq("shop_id", session.shopId)
       .eq("medicine_name", name)
       .maybeSingle();
@@ -540,10 +558,26 @@ export async function saveMedicinesToLibraryAction(medicineNames: string[]): Pro
     if (existing) {
       await admin
         .from("shop_medicine_library")
-        .update({ usage_count: existing.usage_count + 1, last_used_at: new Date().toISOString() })
+        .update({
+          usage_count: existing.usage_count + 1,
+          last_used_at: new Date().toISOString(),
+          composition: existing.composition || med.composition || null,
+          pack_size_label: existing.pack_size_label || med.packSizeLabel || null,
+          medicine_type: existing.medicine_type || med.medicineType || null,
+          side_effects: existing.side_effects || med.sideEffects || null,
+          description: existing.description || med.description || null,
+        })
         .eq("id", existing.id);
     } else {
-      await admin.from("shop_medicine_library").insert({ shop_id: session.shopId, medicine_name: name });
+      await admin.from("shop_medicine_library").insert({
+        shop_id: session.shopId,
+        medicine_name: name,
+        composition: med.composition || null,
+        pack_size_label: med.packSizeLabel || null,
+        medicine_type: med.medicineType || null,
+        side_effects: med.sideEffects || null,
+        description: med.description || null,
+      });
     }
   }
 }
