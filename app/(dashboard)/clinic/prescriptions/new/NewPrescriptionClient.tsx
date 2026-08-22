@@ -62,7 +62,9 @@ export function NewPrescriptionClient({
   // mount — any medicine typed before is available for one-tap
   // selection, no need to type the full name again.
   useEffect(() => {
-    getMedicineLibraryAction().then((r) => setShopMedicineLibrary(r.names));
+    getMedicineLibraryAction()
+      .then((r) => setShopMedicineLibrary(r.names))
+      .catch((err) => console.error("Genuinely could not load the shop's medicine library", err));
   }, []);
 
   // The shop's own history genuinely comes first (most relevant, since
