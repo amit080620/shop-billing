@@ -8,7 +8,7 @@ type MockResponse = { data: unknown; error: unknown };
  * resolves to the configured response, exactly like the real client. */
 function createMockQueryBuilder(response: MockResponse) {
   const builder: Record<string, unknown> = {};
-  const chainMethods = ["select", "eq", "in", "insert", "update", "delete", "order", "limit", "gt", "not", "single", "maybeSingle"];
+  const chainMethods = ["select", "eq", "in", "insert", "update", "upsert", "delete", "order", "limit", "gt", "not", "single", "maybeSingle"];
   for (const method of chainMethods) {
     builder[method] = () => builder;
   }

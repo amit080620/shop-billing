@@ -641,13 +641,22 @@ export async function exportMedicineLibraryCsvAction(): Promise<{ csv: string; f
  * vary in exact naming. Existing medicines (matched by name) are
  * genuinely updated rather than duplicated. */
 export async function importMedicineLibraryCsvAction(csvText: string): Promise<{ imported: number; error?: string }> {
+  const rows = parseCsv(csvText);
+  return importMedicineLibraryRowsAction(rows);
+}
+
+/** Genuinely the shared core — accepts already-parsed rows (works
+ * identically whether they came from a plain CSV or a genuine Excel
+ * .xlsx file parsed client-side), so Excel uploads never have to be
+ * forced through a raw-text CSV parser that would choke on binary
+ * spreadsheet data. */
+export async function importMedicineLibraryRowsAction(rows: string[][]): Promise<{ imported: number; error?: string }> {
   const session = await requireSession();
   const admin = createSupabaseAdminClient();
 
-  const rows = parseCsv(csvText);
   if (rows.length < 2) return { imported: 0, error: "The file is genuinely empty or has no data rows" };
 
-  const header = rows[0].map((h) => h.trim().toLowerCase());
+  const header = rows[0].map((h) => String(h ?? "").trim().toLowerCase());
   const idx = (...names: string[]) => {
     for (const n of names) {
       const i = header.indexOf(n);
@@ -668,6 +677,17 @@ export async function importMedicineLibraryCsvAction(csvText: string): Promise<{
   const descIdx = idx("medicine_desc", "description");
   const sideEffectsIdx = idx("side_effects");
 
+  // Genuinely never throws regardless of the cell's actual type — a
+  // genuine Excel file parsed client-side often has NUMBER cells for
+  // numeric columns (price) rather than strings, and blindly calling
+  // .trim() on those would genuinely crash the whole import.
+  function cell(row: unknown[], i: number): string {
+    if (i === -1) return "";
+    const v = row[i];
+    if (v === null || v === undefined) return "";
+    return String(v).trim();
+  }
+
   const records: {
     shop_id: string;
     medicine_name: string;
@@ -682,20 +702,21 @@ export async function importMedicineLibraryCsvAction(csvText: string): Promise<{
   }[] = [];
 
   for (const row of rows.slice(1)) {
-    const name = row[nameIdx]?.trim();
+    const name = cell(row, nameIdx);
     if (!name) continue;
 
+    const priceRaw = cell(row, priceIdx);
     records.push({
       shop_id: session.shopId,
       medicine_name: name,
-      price: priceIdx !== -1 && row[priceIdx] ? Number(row[priceIdx]) || null : null,
-      is_discontinued: discontinuedIdx !== -1 ? /^(true|1|yes)$/i.test(row[discontinuedIdx]?.trim() ?? "") : false,
-      manufacturer_name: manufacturerIdx !== -1 ? row[manufacturerIdx]?.trim() || null : null,
-      medicine_type: typeIdx !== -1 ? row[typeIdx]?.trim() || null : null,
-      pack_size_label: packIdx !== -1 ? row[packIdx]?.trim() || null : null,
-      composition: compositionIdx !== -1 ? row[compositionIdx]?.trim() || null : null,
-      description: descIdx !== -1 ? row[descIdx]?.trim() || null : null,
-      side_effects: sideEffectsIdx !== -1 ? row[sideEffectsIdx]?.trim() || null : null,
+      price: priceRaw ? Number(priceRaw) || null : null,
+      is_discontinued: /^(true|1|yes)$/i.test(cell(row, discontinuedIdx)),
+      manufacturer_name: cell(row, manufacturerIdx) || null,
+      medicine_type: cell(row, typeIdx) || null,
+      pack_size_label: cell(row, packIdx) || null,
+      composition: cell(row, compositionIdx) || null,
+      description: cell(row, descIdx) || null,
+      side_effects: cell(row, sideEffectsIdx) || null,
     });
   }
 

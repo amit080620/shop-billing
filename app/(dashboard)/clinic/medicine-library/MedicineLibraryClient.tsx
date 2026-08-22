@@ -2,10 +2,53 @@
 
 import { useState, useTransition, useRef } from "react";
 import { Trash2, Upload, Download } from "lucide-react";
-import { deleteMedicineFromLibraryAction, importMedicineLibraryCsvAction, exportMedicineLibraryCsvAction } from "@/lib/actions/clinic";
+import * as XLSX from "xlsx";
+import { deleteMedicineFromLibraryAction, importMedicineLibraryRowsAction, exportMedicineLibraryCsvAction } from "@/lib/actions/clinic";
 import { useToast } from "@/app/components/Toast";
 
 type Medicine = { id: string; medicineName: string; usageCount: number; lastUsedAt: string };
+
+/** Genuinely a minimal CSV parser (handles quoted fields with embedded
+ * commas/newlines) — kept client-side so both CSV and Excel funnel
+ * into the exact same row-array shape before reaching the server. */
+function parseCsvClientSide(text: string): string[][] {
+  const rows: string[][] = [];
+  let row: string[] = [];
+  let field = "";
+  let inQuotes = false;
+  for (let i = 0; i < text.length; i++) {
+    const char = text[i];
+    if (inQuotes) {
+      if (char === '"' && text[i + 1] === '"') {
+        field += '"';
+        i++;
+      } else if (char === '"') {
+        inQuotes = false;
+      } else {
+        field += char;
+      }
+    } else {
+      if (char === '"') inQuotes = true;
+      else if (char === ",") {
+        row.push(field);
+        field = "";
+      } else if (char === "\n" || char === "\r") {
+        if (char === "\r" && text[i + 1] === "\n") i++;
+        row.push(field);
+        field = "";
+        if (row.some((c) => c.trim() !== "")) rows.push(row);
+        row = [];
+      } else {
+        field += char;
+      }
+    }
+  }
+  if (field !== "" || row.length > 0) {
+    row.push(field);
+    if (row.some((c) => c.trim() !== "")) rows.push(row);
+  }
+  return rows;
+}
 
 export function MedicineLibraryClient({ medicines: initial }: { medicines: Medicine[] }) {
   const [medicines, setMedicines] = useState(initial);
@@ -33,18 +76,35 @@ export function MedicineLibraryClient({ medicines: initial }: { medicines: Medic
 
     setIsImporting(true);
     try {
-      const text = await file.text();
-      const result = await importMedicineLibraryCsvAction(text);
+      const isExcel = /\.xlsx?$/i.test(file.name);
+      let rows: string[][];
+
+      if (isExcel) {
+        // Genuinely parse real Excel binary format via SheetJS —
+        // sheet_to_json with header:1 gives a genuine array-of-arrays
+        // matching the CSV parser's shape, with { raw: false } so
+        // every cell (including numeric ones like price) genuinely
+        // comes through as a string, never a raw number that would
+        // crash a later .trim() call.
+        const buffer = await file.arrayBuffer();
+        const workbook = XLSX.read(buffer, { type: "array" });
+        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+        rows = XLSX.utils.sheet_to_json<string[]>(firstSheet, { header: 1, raw: false, defval: "" });
+      } else {
+        const text = await file.text();
+        rows = parseCsvClientSide(text);
+      }
+
+      const result = await importMedicineLibraryRowsAction(rows);
       if (result.error) {
         showToast(result.error);
       } else {
         showToast(`Imported ${result.imported} medicine${result.imported === 1 ? "" : "s"}`);
-        // Genuinely reload the page's server data so the newly
-        // imported medicines show up in the list immediately.
         window.location.reload();
       }
-    } catch {
-      showToast("Could not read that file — please upload a genuine CSV file");
+    } catch (err) {
+      console.error("Genuine medicine-library import failure", err);
+      showToast("Could not read that file — please check it's a genuine CSV or Excel file");
     } finally {
       setIsImporting(false);
     }
@@ -65,7 +125,7 @@ export function MedicineLibraryClient({ medicines: initial }: { medicines: Medic
 
   return (
     <div className="flex flex-col gap-3">
-      <input ref={fileInputRef} type="file" accept=".csv" onChange={handleFileSelected} className="hidden" />
+      <input ref={fileInputRef} type="file" accept=".csv,.xlsx,.xls" onChange={handleFileSelected} className="hidden" />
 
       <div className="flex gap-2">
         <button
@@ -73,7 +133,7 @@ export function MedicineLibraryClient({ medicines: initial }: { medicines: Medic
           disabled={isImporting}
           className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-border bg-surface px-3 py-2 text-xs font-medium text-foreground disabled:opacity-60"
         >
-          <Upload size={14} /> {isImporting ? "Importing…" : "Upload CSV"}
+          <Upload size={14} /> {isImporting ? "Importing…" : "Upload CSV / Excel"}
         </button>
         <button
           onClick={handleExport}
@@ -83,7 +143,7 @@ export function MedicineLibraryClient({ medicines: initial }: { medicines: Medic
         </button>
       </div>
       <p className="text-[11px] text-muted">
-        CSV columns: name, price, is_discontinued, manufacturer_name, type, pack_size_label, composition,
+        Columns: name, price, is_discontinued, manufacturer_name, type, pack_size_label, composition,
         description, side_effects. Medicines matched by name are updated, not duplicated.
       </p>
 
