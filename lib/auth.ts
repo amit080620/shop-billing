@@ -44,15 +44,25 @@ export type SessionContext = {
 // Auth token validation itself (getAuthenticatedUser) is NEVER cached.
 const getCachedStaffAndShop = unstable_cache(
   async (userId: string) => {
-    const admin = createSupabaseAdminClient();
-    const { data: staff, error } = await admin
-      .from("staff")
-      .select(
-        "id, name, role, permissions, shop_id, shops ( name, state_code, gstin, gst_scheme, price_includes_gst, logo_url, upi_id, subscription_valid_until, business_type, business_type_locked, enabled_modules )",
-      )
-      .eq("id", userId)
-      .single();
-    return { staff, error };
+    try {
+      const admin = createSupabaseAdminClient();
+      const { data: staff, error } = await admin
+        .from("staff")
+        .select(
+          "id, name, role, permissions, shop_id, shops ( name, state_code, gstin, gst_scheme, price_includes_gst, logo_url, upi_id, subscription_valid_until, business_type, business_type_locked, enabled_modules )",
+        )
+        .eq("id", userId)
+        .single();
+      return { staff, error };
+    } catch (err) {
+      // Genuinely the most critical guard in the whole app — this runs
+      // on EVERY authenticated page load, before anything else. A
+      // transient network/connection hiccup here must never crash the
+      // entire app; it should look exactly like "no session found" so
+      // the person just lands on login and can simply try again.
+      console.error("getCachedStaffAndShop genuinely failed", err);
+      return { staff: null, error: err };
+    }
   },
   ["staff-and-shop"],
   { revalidate: 10 },
