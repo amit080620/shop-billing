@@ -38,15 +38,30 @@ function newItem(): PlanItem {
   return { key: Math.random().toString(36).slice(2), toothNumber: "", procedureName: "", description: "", estimatedCost: "" };
 }
 
-export function NewTreatmentPlanClient({ patients, lang }: { patients: Patient[]; lang: Lang }) {
+export function NewTreatmentPlanClient({
+  patients,
+  lang,
+  prefillPatientId,
+  prefillPatientName,
+  prefillPatientPhone,
+  prefillDoctorName,
+}: {
+  patients: Patient[];
+  lang: Lang;
+  prefillPatientId?: string;
+  prefillPatientName?: string;
+  prefillPatientPhone?: string;
+  prefillDoctorName?: string;
+}) {
   const router = useRouter();
   const { showToast } = useToast();
   const [isPending, startTransition] = useTransition();
 
-  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
-  const [patientName, setPatientName] = useState("");
-  const [patientPhone, setPatientPhone] = useState("");
-  const [doctorName, setDoctorName] = useState("");
+  const prefillMatchedPatient = prefillPatientId ? patients.find((p) => p.id === prefillPatientId) ?? null : null;
+  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(prefillMatchedPatient);
+  const [patientName, setPatientName] = useState(prefillPatientName ?? "");
+  const [patientPhone, setPatientPhone] = useState(prefillPatientPhone ?? "");
+  const [doctorName, setDoctorName] = useState(prefillDoctorName ?? "");
   const [notes, setNotes] = useState("");
   const [items, setItems] = useState<PlanItem[]>([newItem()]);
   const [dentalChart, setDentalChart] = useState<Record<string, string>>({});

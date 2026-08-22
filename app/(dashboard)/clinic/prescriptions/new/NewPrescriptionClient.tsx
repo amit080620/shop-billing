@@ -355,6 +355,17 @@ export function NewPrescriptionClient({
       {specialty === "dental" && <ToothChart chart={dentalChart} onChange={setDentalChart} />}
       {specialty in VITALS_FIELDS && <VitalsPanel specialty={specialty} vitals={vitals} onChange={setVitals} />}
 
+      {patientName.trim() && (
+        <Link
+          href={`/clinic/treatment-plans/new?patientId=${selectedPatient?.id ?? ""}&patientName=${encodeURIComponent(patientName)}&patientPhone=${encodeURIComponent(patientPhone)}&doctorName=${encodeURIComponent(doctorName)}`}
+          className="flex items-center justify-between rounded-xl border border-brand bg-brand-soft px-4 py-3 text-sm font-medium text-brand-text"
+          style={{ boxShadow: "-3px -3px 8px var(--neu-light), 3px 3px 8px var(--neu-dark)" }}
+        >
+          <span>+ Give {patientName} a treatment plan / quotation</span>
+          <span>→</span>
+        </Link>
+      )}
+
       {/* Custom Rx sections — fully driven by clinic settings, no hard limit */}
       {sections.map((section, i) => (
         <label key={i} className="flex flex-col gap-1.5 text-sm">
