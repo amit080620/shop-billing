@@ -33,17 +33,19 @@ export function DesktopSidebar({
   return (
     <aside className="no-print fixed inset-y-0 left-0 z-20 hidden w-72 flex-col border-r border-border bg-surface md:flex">
       <div className="flex items-center gap-3 border-b border-border px-4 py-5">
-        {shopLogoUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element -- shop logo, small
-          <img src={shopLogoUrl} alt="" className="h-10 w-10 shrink-0 rounded-full object-contain ring-2 ring-brand-soft" />
-        ) : (
-          <div
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-base font-semibold text-white shadow-sm"
-            style={{ background: "linear-gradient(135deg, var(--brand-light), var(--brand-dark))" }}
-          >
-            {shopName.charAt(0).toUpperCase()}
-          </div>
-        )}
+        <Link href="/profile" aria-label="Profile & settings">
+          {shopLogoUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element -- shop logo, small
+            <img src={shopLogoUrl} alt="" className="h-10 w-10 shrink-0 rounded-full object-contain ring-2 ring-brand-soft" />
+          ) : (
+            <div
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-base font-semibold text-white shadow-sm"
+              style={{ background: "linear-gradient(135deg, var(--brand-light), var(--brand-dark))" }}
+            >
+              {shopName.charAt(0).toUpperCase()}
+            </div>
+          )}
+        </Link>
         <div className="min-w-0 flex-1">
           <p className="line-clamp-2 text-sm font-semibold leading-snug text-foreground">{shopName}</p>
           <p className="truncate text-xs text-muted">

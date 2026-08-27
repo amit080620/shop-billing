@@ -141,18 +141,38 @@ export function TablesClient({ tables, lang }: { tables: Table[]; lang: Lang }) 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const [bookingTable, setBookingTable] = useState<Table | null>(null);
+  const [bookingName, setBookingName] = useState("");
+  const [bookingPhone, setBookingPhone] = useState("");
+
   function handleTableTap(table: Table) {
+    if (table.openOrderId) {
+      router.push(`/restaurant/orders/${table.openOrderId}`);
+      return;
+    }
+    // Genuinely open the booking popup instead of starting the order
+    // immediately — this is what lets a customer's name/phone be
+    // captured (for loyalty points) without ever being mandatory.
+    setBookingName("");
+    setBookingPhone("");
+    setBookingTable(table);
+  }
+
+  function confirmBooking(skipDetails: boolean) {
+    if (!bookingTable) return;
+    const table = bookingTable;
     setError(null);
     startTransition(async () => {
-      if (table.openOrderId) {
-        router.push(`/restaurant/orders/${table.openOrderId}`);
-        return;
-      }
-      const result = await startOrderAction(table.id);
+      const result = await startOrderAction(
+        table.id,
+        skipDetails ? undefined : bookingName.trim() || undefined,
+        skipDetails ? undefined : bookingPhone.trim() || undefined,
+      );
       if (result.error) {
         setError(result.error);
         return;
       }
+      setBookingTable(null);
       router.push(`/restaurant/orders/${result.orderId}`);
     });
   }
@@ -505,6 +525,52 @@ export function TablesClient({ tables, lang }: { tables: Table[]; lang: Lang }) 
               </button>
               <button onClick={() => setQrTable(null)} className="flex-1 rounded-lg border border-border px-4 py-2 text-sm font-medium text-muted">
                 Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {bookingTable && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 md:items-center" onClick={() => setBookingTable(null)}>
+          <div
+            className="w-full max-w-sm rounded-t-2xl bg-surface p-5 md:rounded-2xl"
+            onClick={(e) => e.stopPropagation()}
+            style={{ boxShadow: "-6px -6px 16px var(--neu-light), 6px 6px 18px var(--neu-dark)" }}
+          >
+            <p className="text-base font-semibold text-foreground">Table {bookingTable.name}</p>
+            <p className="mt-1 text-xs text-muted">
+              Add the customer&apos;s name and mobile number to genuinely track loyalty points for this order —
+              or skip straight ahead, nothing here is required.
+            </p>
+            <div className="mt-4 flex flex-col gap-2.5">
+              <input
+                value={bookingName}
+                onChange={(e) => setBookingName(e.target.value)}
+                placeholder="Customer name (optional)"
+                className="rounded-lg border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-brand"
+              />
+              <input
+                value={bookingPhone}
+                onChange={(e) => setBookingPhone(e.target.value.replace(/\D/g, "").slice(0, 10))}
+                placeholder="Mobile number (optional, for loyalty points)"
+                inputMode="numeric"
+                className="rounded-lg border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-brand"
+              />
+            </div>
+            <div className="mt-4 flex flex-col gap-2">
+              <button
+                onClick={() => confirmBooking(false)}
+                disabled={isPending}
+                className="btn-primary w-full text-center disabled:opacity-60"
+              >
+                {isPending ? "Booking…" : "Book table"}
+              </button>
+              <button
+                onClick={() => confirmBooking(true)}
+                disabled={isPending}
+                className="w-full rounded-lg border border-border py-2.5 text-sm font-medium text-muted disabled:opacity-60"
+              >
+                Continue without loyalty points
               </button>
             </div>
           </div>

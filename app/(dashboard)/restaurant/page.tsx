@@ -10,7 +10,7 @@ export default async function RestaurantPage() {
 
   const todayIso = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, "0")}-${String(new Date().getDate()).padStart(2, "0")}`;
 
-  const tablesQuery = await admin.from("restaurant_tables").select("id, name, status, section, qr_token").eq("shop_id", session.shopId).order("name");
+  const tablesQuery = await admin.from("restaurant_tables").select("id, name, status, section, qr_token").eq("shop_id", session.shopId).eq("is_deleted", false).order("name");
   let tables = tablesQuery.data;
   if (tablesQuery.error) {
     // Most likely cause: the `section` column migration
@@ -18,7 +18,7 @@ export default async function RestaurantPage() {
     // database yet. Retry without it so the Tables screen still works;
     // the I/O/T badges just won't show until the migration runs.
     console.error("restaurant_tables query failed, retrying without `section`:", tablesQuery.error);
-    const fallback = await admin.from("restaurant_tables").select("id, name, status, qr_token").eq("shop_id", session.shopId).order("name");
+    const fallback = await admin.from("restaurant_tables").select("id, name, status, qr_token").eq("shop_id", session.shopId).eq("is_deleted", false).order("name");
     tables = (fallback.data ?? []).map((t) => ({ ...t, section: null as "inside" | "outside" | "takeaway" | null }));
   }
 

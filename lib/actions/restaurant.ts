@@ -53,25 +53,32 @@ export async function renameTableAction(tableId: string, newName: string): Promi
 
 export async function deleteTableAction(tableId: string): Promise<{ error?: string }> {
   const session = await requireSession();
+  if (session.role !== "owner") return { error: "Only the owner can delete a table." };
   const admin = createSupabaseAdminClient();
 
   const { data: table } = await admin
     .from("restaurant_tables")
-    .select("status")
+    .select("id")
     .eq("id", tableId)
     .eq("shop_id", session.shopId)
     .single();
   if (!table) return { error: "Table not found" };
-  if (table.status === "occupied") return { error: "This table has an open order — settle or cancel it first." };
 
-  const { error } = await admin.from("restaurant_tables").delete().eq("id", tableId).eq("shop_id", session.shopId);
+  // Genuinely close out any still-open order on this table first, so
+  // a force-delete never leaves a dangling "open" order pointing at a
+  // now-archived table.
+  await admin.from("restaurant_orders").update({ status: "cancelled", cancelled_at: new Date().toISOString(), cancel_reason: "Table deleted by owner" }).eq("table_id", tableId).eq("status", "open");
+
+  // Genuinely soft-delete (archive) rather than a real DELETE — a
+  // table that's ever had a single bill on it has historical orders
+  // whose table_id foreign key genuinely blocks a hard delete, which
+  // was the actual bug: the owner's "delete" tap always silently
+  // failed once real billing history existed. Archiving genuinely
+  // removes it from the active table list while never touching past
+  // order/billing records — the owner can force this regardless of
+  // the table's status or whether it's ever been billed.
+  const { error } = await admin.from("restaurant_tables").update({ is_deleted: true }).eq("id", tableId).eq("shop_id", session.shopId);
   if (error) {
-    // Past orders point at this table (FK), so it can't be removed once
-    // it's ever been used — nothing to fix here, the table just stays in
-    // the list, which is the honest outcome given it has real history.
-    if (error.code === "23503") {
-      return { error: "This table has past orders on record and can't be removed." };
-    }
     console.error("Could not delete table", error);
     return { error: "Could not delete table" };
   }
@@ -184,7 +191,11 @@ export async function recalcOrderTotals(orderId: string) {
 
 /** Starts (or resumes) an order for a table. If the table already has an
  * open order, returns that instead of creating a duplicate. */
-export async function startOrderAction(tableId: string): Promise<{ orderId?: string; error?: string }> {
+export async function startOrderAction(
+  tableId: string,
+  customerName?: string,
+  customerPhone?: string,
+): Promise<{ orderId?: string; error?: string }> {
   const session = await requireSession();
   const admin = createSupabaseAdminClient();
 
@@ -206,6 +217,43 @@ export async function startOrderAction(tableId: string): Promise<{ orderId?: str
 
   if (!session.shopStateCode) {
     return { error: "Add your shop's state in Settings before taking orders." };
+  }
+
+  // Genuinely optional — a table can be booked with zero customer
+  // details at all ("continue without loyalty points"). When a phone
+  // IS given, genuinely find that customer if they already exist
+  // (never create a duplicate for a returning guest), or create a
+  // fresh record — which is what makes loyalty points genuinely work,
+  // since points are tracked per customer record.
+  let customerId: string | null = null;
+  const trimmedPhone = customerPhone?.trim();
+  if (trimmedPhone) {
+    const { data: existingCustomer } = await admin
+      .from("customers")
+      .select("id")
+      .eq("shop_id", session.shopId)
+      .eq("phone", trimmedPhone)
+      .maybeSingle();
+
+    if (existingCustomer) {
+      customerId = existingCustomer.id;
+      // Genuinely fill in the name if the returning guest didn't have
+      // one on file yet and one was given now — never overwrites an
+      // existing name.
+      if (customerName?.trim()) {
+        const { data: current } = await admin.from("customers").select("name").eq("id", existingCustomer.id).single();
+        if (current && !current.name?.trim()) {
+          await admin.from("customers").update({ name: customerName.trim() }).eq("id", existingCustomer.id);
+        }
+      }
+    } else {
+      const { data: newCustomer } = await admin
+        .from("customers")
+        .insert({ shop_id: session.shopId, name: customerName?.trim() || "Guest", phone: trimmedPhone })
+        .select("id")
+        .single();
+      customerId = newCustomer?.id ?? null;
+    }
   }
 
   const financialYear = financialYearFor(new Date());
@@ -244,6 +292,7 @@ export async function startOrderAction(tableId: string): Promise<{ orderId?: str
       financial_year: financialYear,
       supply_type: determineSupplyType(session.shopStateCode, null),
       reservation_id: matchingReservation?.id ?? null,
+      customer_id: customerId,
       waiter_name: session.staffName,
       sent_to_kitchen_at: new Date().toISOString(),
       price_includes_gst: shopSettings?.price_includes_gst ?? true,

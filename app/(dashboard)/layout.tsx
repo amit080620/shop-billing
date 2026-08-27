@@ -47,23 +47,14 @@ export default async function DashboardLayout({
         style={{ boxShadow: "var(--shadow-sm)" }}
       >
         <div className="mx-auto flex max-w-lg items-center gap-3">
-          {session.shopLogoUrl ? (
-            <Image
-              src={session.shopLogoUrl}
-              alt=""
-              width={36}
-              height={36}
-              unoptimized
-              className="h-9 w-9 shrink-0 rounded-full object-contain ring-2 ring-brand-soft"
-            />
-          ) : (
-            <div
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-semibold text-white shadow-sm"
-              style={{ background: "linear-gradient(135deg, var(--brand-light), var(--brand-dark))" }}
-            >
-              {session.shopName.charAt(0).toUpperCase()}
-            </div>
-          )}
+          <Link
+            href="/more"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-muted"
+            style={{ boxShadow: "-2px -2px 5px var(--neu-light), 2px 2px 5px var(--neu-dark)" }}
+            aria-label="Menu"
+          >
+            <Menu size={17} />
+          </Link>
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-semibold text-foreground">
               {session.shopName}
@@ -80,13 +71,24 @@ export default async function DashboardLayout({
           >
             <LayoutDashboard size={17} />
           </Link>
-          <Link
-            href="/more"
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-muted"
-            style={{ boxShadow: "-2px -2px 5px var(--neu-light), 2px 2px 5px var(--neu-dark)" }}
-            aria-label="More"
-          >
-            <Menu size={17} />
+          <Link href="/profile" aria-label="Profile & settings">
+            {session.shopLogoUrl ? (
+              <Image
+                src={session.shopLogoUrl}
+                alt=""
+                width={36}
+                height={36}
+                unoptimized
+                className="h-9 w-9 shrink-0 rounded-full object-contain ring-2 ring-brand-soft"
+              />
+            ) : (
+              <div
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-semibold text-white shadow-sm"
+                style={{ background: "linear-gradient(135deg, var(--brand-light), var(--brand-dark))" }}
+              >
+                {session.shopName.charAt(0).toUpperCase()}
+              </div>
+            )}
           </Link>
         </div>
       </header>

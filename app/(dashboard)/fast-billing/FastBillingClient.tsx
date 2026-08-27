@@ -1,10 +1,10 @@
 "use client";
 
-import { useMemo, useState, useActionState } from "react";
+import { useMemo, useState, useActionState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { X, Minus, Plus, Trash2, Search } from "lucide-react";
 import { formatMoney } from "@/lib/format";
-import { createBillAction } from "@/lib/actions/bills";
+import { createBillAction, resolveFastBillingCustomerAction } from "@/lib/actions/bills";
 import { QuantityGrid } from "./QuantityGrid";
 
 export type FastProduct = {
@@ -305,14 +305,21 @@ function FastCheckoutButton({
 }) {
   const [discountType, setDiscountType] = useState<"percent" | "flat">("flat");
   const [discountValue, setDiscountValue] = useState(0);
-  const [paymentMethod, setPaymentMethod] = useState<"cash" | "card" | "upi" | "online" | "other">("cash");
+  const [paymentMethod, setPaymentMethod] = useState<"cash" | "card" | "upi" | "online" | "other" | "udhar">("cash");
   const [showOptions, setShowOptions] = useState(false);
+  const [udharName, setUdharName] = useState("");
+  const [udharPhone, setUdharPhone] = useState("");
+  const [udharError, setUdharError] = useState<string | null>(null);
+  const [isResolvingCustomer, setIsResolvingCustomer] = useState(false);
+  const [resolvedCustomerId, setResolvedCustomerId] = useState<string | null>(null);
   const [state, formAction, isPending] = useActionState(createBillAction, null);
+  const formRef = useRef<HTMLFormElement>(null);
 
   const subtotal = cart.reduce((s, l) => s + l.qty * l.price, 0);
+  const isUdhar = paymentMethod === "udhar";
 
   const payload = JSON.stringify({
-    customerId: null,
+    customerId: isUdhar ? resolvedCustomerId : null,
     items: cart.map((l) => ({
       productId: l.productId,
       description: l.name,
@@ -324,14 +331,14 @@ function FastCheckoutButton({
     })),
     discountType,
     discountValue,
-    // Fast Billing's "paidAmount" is deliberately the FULL total — a
-    // quick counter transaction is genuinely paid in full at the
-    // register, never left as udhaar; createBillCore computes the
-    // exact total itself and this simply gets clamped to match it
+    // Genuinely a real credit sale when Udhar is selected — paidAmount
+    // stays 0 so the full amount is left outstanding against the
+    // customer, exactly matching what "udhar" genuinely means. Every
+    // other payment method keeps the original full-paid behaviour
     // (the same safe Math.min(paid, total) behaviour used everywhere
     // else in the app), so there's no separate total math here.
-    paidAmount: Number.MAX_SAFE_INTEGER,
-    paymentMethod,
+    paidAmount: isUdhar ? 0 : Number.MAX_SAFE_INTEGER,
+    paymentMethod: isUdhar ? "other" : paymentMethod,
   });
 
   return (
@@ -376,25 +383,91 @@ function FastCheckoutButton({
 
           <div>
             <p className="mb-1.5 text-xs font-medium text-muted">Payment method</p>
-            <div className="grid grid-cols-4 gap-1.5">
-              {(["cash", "upi", "card", "other"] as const).map((m) => (
+            <div className="grid grid-cols-5 gap-1.5">
+              {(["cash", "upi", "card", "other", "udhar"] as const).map((m) => (
                 <button
                   key={m}
-                  onClick={() => setPaymentMethod(m)}
-                  className={`rounded-lg py-2 text-xs font-medium capitalize ${paymentMethod === m ? "bg-brand text-white" : "bg-background text-muted"}`}
+                  onClick={() => {
+                    setPaymentMethod(m);
+                    setUdharError(null);
+                  }}
+                  className={`rounded-lg py-2 text-xs font-medium capitalize ${
+                    paymentMethod === m ? (m === "udhar" ? "bg-credit text-white" : "bg-brand text-white") : "bg-background text-muted"
+                  }`}
                 >
                   {m}
                 </button>
               ))}
             </div>
+
+            {isUdhar && (
+              <div className="mt-2.5 flex flex-col gap-2 rounded-lg border border-dashed border-credit bg-credit-soft p-2.5">
+                <p className="text-[11px] text-credit">
+                  A mobile number is genuinely needed here — this is who the udhar is recovered from later.
+                </p>
+                <input
+                  value={udharName}
+                  onChange={(e) => setUdharName(e.target.value)}
+                  placeholder="Customer name (optional)"
+                  className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand"
+                />
+                <input
+                  value={udharPhone}
+                  onChange={(e) => {
+                    setUdharPhone(e.target.value.replace(/\D/g, "").slice(0, 10));
+                    setUdharError(null);
+                  }}
+                  placeholder="Mobile number — required for udhar"
+                  inputMode="numeric"
+                  className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand"
+                />
+                {udharError && <p className="text-xs text-danger">{udharError}</p>}
+              </div>
+            )}
           </div>
         </div>
       )}
 
-      <form action={formAction}>
+      <form ref={formRef} action={formAction}>
         <input type="hidden" name="payload" value={payload} />
-        <button type="submit" disabled={isPending || cart.length === 0} className="btn-primary w-full disabled:opacity-60">
-          {isPending ? "Creating bill…" : `Checkout · ${formatMoney(subtotal)}`}
+        <button
+          type="button"
+          disabled={isPending || isResolvingCustomer || cart.length === 0}
+          onClick={async () => {
+            // Genuinely every non-Udhar payment method submits exactly
+            // as fast as before — the extra async step only happens
+            // when Udhar is genuinely selected, since that's the only
+            // case that genuinely needs a customer to recover from.
+            if (!isUdhar) {
+              formRef.current?.requestSubmit();
+              return;
+            }
+            if (!udharPhone.trim()) {
+              setUdharError("Enter a mobile number to genuinely track this udhar for recovery");
+              return;
+            }
+            setIsResolvingCustomer(true);
+            const result = await resolveFastBillingCustomerAction(udharName, udharPhone);
+            setIsResolvingCustomer(false);
+            if (result.error || !result.customerId) {
+              setUdharError(result.error ?? "Could not save customer details");
+              return;
+            }
+            setResolvedCustomerId(result.customerId);
+            // Genuinely wait one tick so the payload (which reads
+            // resolvedCustomerId) re-renders with the new id before
+            // the form actually submits.
+            requestAnimationFrame(() => formRef.current?.requestSubmit());
+          }}
+          className={`w-full disabled:opacity-60 ${isUdhar ? "btn-primary bg-credit" : "btn-primary"}`}
+        >
+          {isPending
+            ? "Creating bill…"
+            : isResolvingCustomer
+              ? "Saving customer…"
+              : isUdhar
+                ? `Book as udhar · ${formatMoney(subtotal)}`
+                : `Checkout · ${formatMoney(subtotal)}`}
         </button>
       </form>
     </div>

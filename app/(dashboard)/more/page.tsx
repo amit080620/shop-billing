@@ -2,62 +2,18 @@ import Link from "next/link";
 import { requireSession } from "@/lib/auth";
 import { LogoutButton } from "./LogoutButton";
 import { getTranslator } from "@/lib/i18n/server";
-import { getTheme, getAccent, getTextColor } from "@/lib/theme";
-import { ThemeToggle } from "@/app/components/ThemeToggle";
-import { AccentToggle } from "@/app/components/AccentToggle";
-import { TextColorToggle } from "@/app/components/TextColorToggle";
 import { getTerminology } from "@/lib/businessType";
-import { LanguageToggle } from "@/lib/i18n/LanguageToggle";
-import { SubscriptionCard } from "@/app/components/SubscriptionCard";
-import { InstallAppButton } from "@/app/components/InstallAppButton";
 import { isModuleEnabled } from "@/lib/modules";
 import { Users, Bell, Clock, Truck, Package, UserCog, Settings, Megaphone, HelpCircle, PartyPopper, WifiOff, CalendarClock, ChefHat, BookOpen, ClipboardCheck, ShieldCheck, Scissors, Gem, Store, Stethoscope, Palette, Wallet, Building2, Dumbbell, FlaskConical, Receipt as ReceiptIcon, AlertTriangle, Cake, PackagePlus, Wrench, Gift, Zap, Pill } from "lucide-react";
 
 export default async function MorePage() {
   const session = await requireSession();
-  const { lang, t } = await getTranslator();
-  const theme = await getTheme();
-  const accent = await getAccent();
-  const textColor = await getTextColor();
+  const { t } = await getTranslator();
   const terminology = getTerminology(session.businessType);
 
   return (
     <div className="flex flex-col gap-5">
       <h1 className="text-lg font-semibold text-foreground">{t("more.title")}</h1>
-
-      <SubscriptionCard />
-      <InstallAppButton />
-
-      <MenuGroup title="Preferences">
-        <div className="neu-card flex items-center justify-between px-4 py-3.5">
-          <div>
-            <p className="text-sm font-medium text-foreground">{t("more.language")}</p>
-            <p className="text-xs text-muted">Applies to this device only</p>
-          </div>
-          <LanguageToggle lang={lang} compact />
-        </div>
-        <div className="neu-card flex items-center justify-between px-4 py-3.5">
-          <div>
-            <p className="text-sm font-medium text-foreground">Theme</p>
-            <p className="text-xs text-muted">Applies to this device only</p>
-          </div>
-          <ThemeToggle theme={theme} compact />
-        </div>
-        <div className="neu-card flex items-center justify-between px-4 py-3.5">
-          <div>
-            <p className="text-sm font-medium text-foreground">Accent color</p>
-            <p className="text-xs text-muted">Applies to this device only</p>
-          </div>
-          <AccentToggle accent={accent} />
-        </div>
-        <div className="neu-card flex flex-col gap-2 px-4 py-3.5">
-          <div>
-            <p className="text-sm font-medium text-foreground">Text color</p>
-            <p className="text-xs text-muted">Applies to this device only</p>
-          </div>
-          <TextColorToggle textColor={textColor} />
-        </div>
-      </MenuGroup>
 
       {(session.businessType === "pharmacy" || session.businessType === "clinic") && (
         <MenuGroup title="Medicine stock">

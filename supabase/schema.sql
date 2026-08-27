@@ -27,7 +27,7 @@ create table if not exists shops (
   -- Loyalty program — 0 means off (the default for every shop until an
   -- owner deliberately enables it in Settings). Points are earned per
   -- ₹100 of PAID amount (not credit), redeemed at redemption_value ₹/point.
-  loyalty_points_per_100 numeric(6, 2) not null default 0,
+  loyalty_points_per_100 numeric(6, 2) not null default 5,
   loyalty_redemption_value numeric(6, 2) not null default 1,
   fast_billing_enabled boolean not null default false,
   -- true: product/menu prices are the FINAL amount the customer pays —
@@ -538,6 +538,7 @@ create table if not exists restaurant_tables (
   -- order sent to the kitchen — these get deleted once settled, unlike
   -- a shop's real, permanently-reused dine-in tables.
   is_virtual boolean not null default false,
+  is_deleted boolean not null default false,
   created_at timestamptz not null default now()
 );
 alter table restaurant_tables enable row level security;
@@ -606,8 +607,10 @@ create table if not exists restaurant_orders (
   -- item in the order reaches that status.
   sent_to_kitchen_at timestamptz,
   first_ready_at timestamptz,
-  served_at timestamptz
+  served_at timestamptz,
+  customer_id uuid references customers(id)
 );
+create index if not exists idx_restaurant_orders_customer on restaurant_orders(customer_id);
 alter table restaurant_orders enable row level security;
 create index if not exists idx_restaurant_orders_shop on restaurant_orders(shop_id);
 create index if not exists idx_restaurant_orders_status on restaurant_orders(shop_id, status);

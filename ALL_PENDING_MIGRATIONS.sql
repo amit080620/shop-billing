@@ -1,6 +1,6 @@
 -- ============================================================
 -- The Ray — Shop Billing SaaS
--- ALL migrations combined — genuinely up-to-date (through 0019).
+-- ALL migrations combined — genuinely up-to-date (through 0022).
 -- Run this ONCE on an EXISTING database that already has the
 -- baseline (0000) applied.
 --
@@ -283,4 +283,30 @@ create table if not exists prescription_quick_phrases (
 );
 create index if not exists idx_prescription_quick_phrases_shop on prescription_quick_phrases(shop_id, field_label);
 alter table prescription_quick_phrases enable row level security;
+
+-- ==== 0020_loyalty_default_5_percent.sql ====
+-- Genuinely turn loyalty points ON by default at 5% (5 points per
+-- ₹100 spent, each point worth ₹1) instead of off — still fully
+-- editable per-shop at /loyalty-settings.
+alter table shops alter column loyalty_points_per_100 set default 5;
+
+-- Genuinely apply the new 5% default to every EXISTING shop that
+-- hasn't customized it (still sitting at the old untouched 0
+-- default) — shops that already set their own rate are left alone.
+update shops set loyalty_points_per_100 = 5 where loyalty_points_per_100 = 0;
+
+-- ==== 0021_restaurant_order_customer.sql ====
+-- Genuinely lets a table booking capture which customer it's for
+-- (optional — a table can still be booked with zero customer
+-- details, per the "continue without loyalty points" flow).
+alter table restaurant_orders add column if not exists customer_id uuid references customers(id);
+create index if not exists idx_restaurant_orders_customer on restaurant_orders(customer_id);
+
+-- ==== 0022_restaurant_table_soft_delete.sql ====
+-- Genuinely soft-delete for restaurant tables — hard-deleting a table
+-- that has ever had a bill on it always failed against the foreign
+-- key from restaurant_orders.table_id. Archiving (is_deleted = true)
+-- genuinely lets an owner force-remove a table from the active list
+-- without ever breaking historical order/billing records.
+alter table restaurant_tables add column if not exists is_deleted boolean not null default false;
 

@@ -310,6 +310,51 @@ export async function createBillCore(
   return { billId: bill.id, invoiceNumber };
 }
 
+/** Genuinely resolves a customer for Fast Billing's Udhar (credit)
+ * flow — finds them by phone if they've bought here before (never
+ * creates a duplicate for a returning credit customer), or creates a
+ * fresh record. A credit sale genuinely needs someone to recover
+ * payment from, which is the whole reason this capture happens only
+ * when Udhar is genuinely selected, not on every fast-billing sale. */
+export async function resolveFastBillingCustomerAction(
+  name: string,
+  phone: string,
+): Promise<{ customerId?: string; error?: string }> {
+  const session = await requireSession();
+  const admin = createSupabaseAdminClient();
+
+  const trimmedPhone = phone.trim();
+  if (!trimmedPhone) return { error: "A mobile number is genuinely needed to track udhar for recovery" };
+
+  const { data: existing } = await admin
+    .from("customers")
+    .select("id")
+    .eq("shop_id", session.shopId)
+    .eq("phone", trimmedPhone)
+    .maybeSingle();
+
+  if (existing) {
+    if (name.trim()) {
+      const { data: current } = await admin.from("customers").select("name").eq("id", existing.id).single();
+      if (current && !current.name?.trim()) {
+        await admin.from("customers").update({ name: name.trim() }).eq("id", existing.id);
+      }
+    }
+    return { customerId: existing.id };
+  }
+
+  const { data: created, error } = await admin
+    .from("customers")
+    .insert({ shop_id: session.shopId, name: name.trim() || "Udhar customer", phone: trimmedPhone })
+    .select("id")
+    .single();
+  if (error || !created) {
+    console.error("Could not create udhar customer", error);
+    return { error: "Could not save customer details" };
+  }
+  return { customerId: created.id };
+}
+
 export async function createBillAction(
   _prev: ActionState,
   formData: FormData,
