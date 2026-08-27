@@ -355,7 +355,7 @@ export async function generateBillFromPrescriptionAction(
 
   const { data: prescription } = await admin
     .from("prescriptions")
-    .select("id, patient_id, patient_name, bill_id")
+    .select("id, patient_id, patient_name, doctor_name, bill_id")
     .eq("id", prescriptionId)
     .eq("shop_id", session.shopId)
     .single();
@@ -380,6 +380,8 @@ export async function generateBillFromPrescriptionAction(
   const { createBillCore } = await import("./bills");
   const result = await createBillCore(session, {
     customerId: prescription.patient_id,
+    doctorName: prescription.doctor_name ?? undefined,
+    patientName: prescription.patient_name,
     items: items.map((item) => {
       const match = productByName.get(item.medicine_name.toLowerCase());
       return {
