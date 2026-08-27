@@ -3,10 +3,12 @@ import { requireSession } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { getLang } from "@/lib/i18n/server";
 import { NewBillClient } from "./NewBillClient";
+import { getBarcodeScanModeAction } from "@/lib/actions/settings";
 
 export default async function NewBillPage() {
   const session = await requireSession();
   const lang = await getLang();
+  const barcodeScanMode = await getBarcodeScanModeAction();
 
   if (!session.shopStateCode) {
     return (
@@ -83,6 +85,7 @@ export default async function NewBillPage() {
       <NewBillClient
         shopStateCode={session.shopStateCode}
         lang={lang}
+        barcodeScanMode={barcodeScanMode}
       loyaltyRedemptionValue={Number(shop?.loyalty_redemption_value ?? 1)}
       shopContext={{
         shopId: session.shopId,

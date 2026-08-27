@@ -4,12 +4,14 @@ import { getTerminology } from "@/lib/businessType";
 import { getTranslator } from "@/lib/i18n/server";
 import { ProductsClient } from "./ProductsClient";
 import { isModuleEnabled } from "@/lib/modules";
+import { getBarcodeScanModeAction } from "@/lib/actions/settings";
 
 export default async function ProductsPage() {
   const session = await requireSession();
   const { lang } = await getTranslator();
   const admin = createSupabaseAdminClient();
   const terminology = getTerminology(session.businessType);
+  const barcodeScanMode = await getBarcodeScanModeAction();
 
   const [{ data: products }, { data: categories }] = await Promise.all([
     admin
@@ -32,6 +34,7 @@ export default async function ProductsPage() {
       businessType={session.businessType}
       isOwner={session.role === "owner"}
       bulkImportExportEnabled={isModuleEnabled(session.enabledModules, "bulk_import_export")}
+      barcodeScanMode={barcodeScanMode}
       initialProducts={(products ?? []).map((p) => ({
         id: p.id,
         name: p.name,

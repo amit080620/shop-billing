@@ -106,6 +106,7 @@ export function ProductsClient({
   businessType,
   isOwner,
   bulkImportExportEnabled,
+  barcodeScanMode = "both",
 }: {
   initialProducts: Product[];
   categories: Category[];
@@ -114,6 +115,7 @@ export function ProductsClient({
   businessType: string;
   isOwner: boolean;
   bulkImportExportEnabled: boolean;
+  barcodeScanMode?: "camera" | "hardware" | "both";
 }) {
   const { t } = useTranslation(lang);
   const orderedUnits = getUnitsForBusinessType(businessType, UNITS);
@@ -283,13 +285,15 @@ export function ProductsClient({
           placeholder={t("products.searchPlaceholder")}
           className="neu-card px-3.5 py-2.5 text-sm outline-none focus:border-brand"
         />
-        <BarcodeScanInput
-          placeholder={t("products.scanPlaceholder")}
-          onScan={handleInventoryScan}
-        />
+        {barcodeScanMode !== "camera" && (
+          <BarcodeScanInput
+            placeholder={t("products.scanPlaceholder")}
+            onScan={handleInventoryScan}
+          />
+        )}
         {scanNotice && <p className="text-xs text-credit">{scanNotice}</p>}
         <div className="flex flex-wrap gap-2">
-          <CameraBarcodeScanner onScan={handleInventoryScan} compact />
+          {barcodeScanMode !== "hardware" && <CameraBarcodeScanner onScan={handleInventoryScan} compact />}
           {bulkImportExportEnabled && (
             <BulkImportExport
               businessType={businessType}
@@ -459,12 +463,14 @@ export function ProductsClient({
               placeholder={t("products.barcodePlaceholder")}
               className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-brand"
             />
-            <CameraBarcodeScanner
-              label={t("products.scanWithCamera")}
-              onScan={(code) => {
-                if (barcodeRef.current) barcodeRef.current.value = code;
-              }}
-            />
+            {barcodeScanMode !== "hardware" && (
+              <CameraBarcodeScanner
+                label={t("products.scanWithCamera")}
+                onScan={(code) => {
+                  if (barcodeRef.current) barcodeRef.current.value = code;
+                }}
+              />
+            )}
           </div>
           <div className="flex flex-col gap-3 rounded-lg border border-dashed border-brand bg-brand-soft p-3">
             <p className="text-xs text-brand-text">Public catalog — shown on your shareable order link (More → Catalog link)</p>

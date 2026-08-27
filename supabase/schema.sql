@@ -28,6 +28,7 @@ create table if not exists shops (
   -- owner deliberately enables it in Settings). Points are earned per
   -- ₹100 of PAID amount (not credit), redeemed at redemption_value ₹/point.
   loyalty_points_per_100 numeric(6, 2) not null default 5,
+  barcode_scan_mode text not null default 'both' check (barcode_scan_mode in ('camera', 'hardware', 'both')),
   loyalty_redemption_value numeric(6, 2) not null default 1,
   fast_billing_enabled boolean not null default false,
   -- true: product/menu prices are the FINAL amount the customer pays —

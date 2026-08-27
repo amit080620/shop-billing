@@ -1,6 +1,6 @@
 -- ============================================================
 -- The Ray — Shop Billing SaaS
--- ALL migrations combined — genuinely up-to-date (through 0026).
+-- ALL migrations combined — genuinely up-to-date (through 0027).
 -- Run this ONCE on an EXISTING database that already has the
 -- baseline (0000) applied.
 --
@@ -367,4 +367,12 @@ alter table thermal_print_settings add column if not exists t80_shop_name_size i
 alter table thermal_print_settings add column if not exists t80_shop_name_italic boolean not null default false;
 alter table thermal_print_settings add column if not exists t80_total_size integer not null default 2 check (t80_total_size between 1 and 6);
 alter table thermal_print_settings add column if not exists t80_total_italic boolean not null default false;
+
+-- ==== 0027_barcode_scan_mode.sql ====
+-- Genuinely a shop-level preference for barcode scanning — some
+-- shops use a hardware laser-scanner device (types the code and
+-- presses Enter automatically), others use their phone's camera.
+-- Defaults to 'both' so nothing changes for existing shops until
+-- they genuinely pick a preference in Profile settings.
+alter table shops add column if not exists barcode_scan_mode text not null default 'both' check (barcode_scan_mode in ('camera', 'hardware', 'both'));
 

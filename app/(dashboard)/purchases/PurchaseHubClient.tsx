@@ -13,6 +13,7 @@ type Payment = { id: string; vendorName: string; amount: number; paymentMethod: 
 export function PurchaseHubClient({ purchases, payments }: { purchases: Purchase[]; payments: Payment[] }) {
   const [topContext, setTopContext] = useState<"purchase" | "history">("purchase");
   const [historyTab, setHistoryTab] = useState<"purchase" | "payments">("purchase");
+  const [purchaseTab, setPurchaseTab] = useState<"add" | "payment">("add");
 
   const totalPurchase = purchases.reduce((s, p) => s + p.total, 0);
   const totalPaid = payments.reduce((s, p) => s + p.amount, 0);
@@ -38,27 +39,43 @@ export function PurchaseHubClient({ purchases, payments }: { purchases: Purchase
 
       {topContext === "purchase" ? (
         <div className="flex flex-col gap-3">
-          <Link href="/purchases/new" className="neu-card flex items-center gap-3 p-4 transition active:scale-[0.98]">
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-brand-soft text-brand-text">
-              <Plus size={20} strokeWidth={1.8} />
-            </span>
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-semibold text-foreground">Add Purchase</p>
-              <p className="text-xs text-muted">Record a new purchase from a supplier</p>
-            </div>
-            <ArrowRight size={16} className="shrink-0 text-muted" />
-          </Link>
+          <div className="flex gap-2">
+            {(["add", "payment"] as const).map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setPurchaseTab(tab)}
+                className={`flex-1 rounded-lg py-2 text-sm font-medium ${
+                  purchaseTab === tab ? "bg-brand-soft text-brand-text" : "text-muted"
+                }`}
+              >
+                {tab === "add" ? "Add Purchase" : "Make Payment"}
+              </button>
+            ))}
+          </div>
 
-          <Link href="/vendors" className="neu-card flex items-center gap-3 p-4 transition active:scale-[0.98]">
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-brand-soft text-brand-text">
-              <Wallet size={20} strokeWidth={1.8} />
-            </span>
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-semibold text-foreground">Make Payment</p>
-              <p className="text-xs text-muted">Pick a supplier to settle their outstanding balance</p>
-            </div>
-            <ArrowRight size={16} className="shrink-0 text-muted" />
-          </Link>
+          {purchaseTab === "add" ? (
+            <Link href="/purchases/new" className="neu-card flex items-center gap-3 p-4 transition active:scale-[0.98]">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-brand-soft text-brand-text">
+                <Plus size={20} strokeWidth={1.8} />
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-semibold text-foreground">Add Purchase</p>
+                <p className="text-xs text-muted">Record a new purchase from a supplier</p>
+              </div>
+              <ArrowRight size={16} className="shrink-0 text-muted" />
+            </Link>
+          ) : (
+            <Link href="/vendors" className="neu-card flex items-center gap-3 p-4 transition active:scale-[0.98]">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-brand-soft text-brand-text">
+                <Wallet size={20} strokeWidth={1.8} />
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-semibold text-foreground">Make Payment</p>
+                <p className="text-xs text-muted">Pick a supplier to settle their outstanding balance</p>
+              </div>
+              <ArrowRight size={16} className="shrink-0 text-muted" />
+            </Link>
+          )}
         </div>
       ) : (
         <div className="flex flex-col gap-3">

@@ -9,6 +9,8 @@ import { getTranslator } from "@/lib/i18n/server";
 import { SubscriptionCard } from "@/app/components/SubscriptionCard";
 import { InstallAppButton } from "@/app/components/InstallAppButton";
 import { LogoutButton } from "../more/LogoutButton";
+import { BarcodeScanModeToggle } from "@/app/components/BarcodeScanModeToggle";
+import { getBarcodeScanModeAction } from "@/lib/actions/settings";
 import { Settings, ChevronRight, Printer, Palette, HelpCircle } from "lucide-react";
 
 export default async function ProfilePage() {
@@ -17,6 +19,7 @@ export default async function ProfilePage() {
   const theme = await getTheme();
   const accent = await getAccent();
   const textColor = await getTextColor();
+  const barcodeScanMode = await getBarcodeScanModeAction();
 
   return (
     <div className="flex flex-col gap-5">
@@ -162,6 +165,13 @@ export default async function ProfilePage() {
           </div>
         </div>
       </div>
+
+      {session.role === "owner" && (
+        <div className="flex flex-col gap-2">
+          <p className="px-1 text-xs font-semibold uppercase tracking-wide text-muted">Barcode scanning</p>
+          <BarcodeScanModeToggle initial={barcodeScanMode} />
+        </div>
+      )}
 
       <Link
         href="/help"

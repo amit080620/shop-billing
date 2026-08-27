@@ -92,6 +92,7 @@ export function NewBillClient({
   goldRate,
   silverRate,
   loyaltyRedemptionValue,
+  barcodeScanMode = "both",
 }: {
   shopStateCode: string;
   products: Product[];
@@ -101,6 +102,7 @@ export function NewBillClient({
   vehicles: { id: string; name: string; ratePerKm: number }[];
   businessType: string;
   goldRate: number | null;
+  barcodeScanMode?: "camera" | "hardware" | "both";
   silverRate: number | null;
   loyaltyRedemptionValue: number;
   shopContext: {
@@ -468,11 +470,13 @@ export function NewBillClient({
               ))}
             </div>
           )}
-          <BarcodeScanInput
-            placeholder={t("bill.scanPlaceholder")}
-            onScan={handleBarcodeScan}
-          />
-          <CameraBarcodeScanner onScan={handleBarcodeScan} />
+          {barcodeScanMode !== "camera" && (
+            <BarcodeScanInput
+              placeholder={t("bill.scanPlaceholder")}
+              onScan={handleBarcodeScan}
+            />
+          )}
+          {barcodeScanMode !== "hardware" && <CameraBarcodeScanner onScan={handleBarcodeScan} />}
           {scanError && <p className="text-xs text-credit">{scanError}</p>}
           <SearchableSelect
             lang={lang}

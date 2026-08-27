@@ -23,6 +23,7 @@ export interface Database {
           pincode: string | null;
           gst_scheme: "regular" | "composition";
           loyalty_points_per_100: number;
+          barcode_scan_mode: "camera" | "hardware" | "both";
           loyalty_redemption_value: number;
           fast_billing_enabled: boolean;
           price_includes_gst: boolean;
@@ -50,6 +51,7 @@ export interface Database {
           pincode?: string | null;
           gst_scheme?: "regular" | "composition";
           loyalty_points_per_100?: number;
+          barcode_scan_mode?: "camera" | "hardware" | "both";
           loyalty_redemption_value?: number;
           fast_billing_enabled?: boolean;
           price_includes_gst?: boolean;
@@ -77,6 +79,7 @@ export interface Database {
           pincode?: string | null;
           gst_scheme?: "regular" | "composition";
           loyalty_points_per_100?: number;
+          barcode_scan_mode?: "camera" | "hardware" | "both";
           loyalty_redemption_value?: number;
           fast_billing_enabled?: boolean;
           price_includes_gst?: boolean;
