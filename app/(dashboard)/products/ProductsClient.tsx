@@ -733,7 +733,7 @@ export function ProductsClient({
 
       {deleteError && <p className="rounded-lg bg-credit-soft px-3.5 py-2.5 text-sm text-credit">{deleteError}</p>}
       {imageError && <p className="rounded-lg bg-credit-soft px-3.5 py-2.5 text-sm text-credit">{imageError}</p>}
-      <p className="flex items-center gap-1 text-xs text-muted"><Camera size={12} /> Tap the photo icon on any item to add one — best size: a square image, about 500×500px, under 2MB.</p>
+      <p className="flex items-center gap-1 text-xs text-muted"><Camera size={12} /> Tap the photo icon on any item to add one — any size works, it&apos;s automatically cropped to a clean square.</p>
 
       {filtered.length === 0 ? (
         <EmptyState

@@ -447,3 +447,32 @@ export async function lookupCatalogCustomerAction(
 
   return customer?.name ? { name: customer.name } : {};
 }
+
+/** Genuinely advances an accepted delivery order through its
+ * lifecycle — Ready for Delivery → Dispatched → Completed. Only
+ * touches orders the shop has already accepted; the pending/reject
+ * review workflow is genuinely untouched by this. */
+export async function setDeliveryStatusAction(
+  requestId: string,
+  deliveryStatus: "ready" | "dispatched" | "completed",
+): Promise<{ error?: string }> {
+  const session = await requireSession();
+  const admin = createSupabaseAdminClient();
+
+  const { data: request } = await admin
+    .from("catalog_order_requests")
+    .select("id, status")
+    .eq("id", requestId)
+    .eq("shop_id", session.shopId)
+    .single();
+  if (!request) return { error: "Order not found" };
+  if (request.status !== "accepted") return { error: "Only accepted orders can be moved through delivery" };
+
+  const { error } = await admin.from("catalog_order_requests").update({ delivery_status: deliveryStatus }).eq("id", requestId);
+  if (error) {
+    console.error("Could not update delivery status", error);
+    return { error: "Could not update delivery status" };
+  }
+  revalidatePath("/catalog-orders");
+  return {};
+}

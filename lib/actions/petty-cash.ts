@@ -17,6 +17,8 @@ export async function createPettyCashEntryAction(
   const description = formData.get("description");
   const amount = formData.get("amount");
   const category = formData.get("category");
+  const expenseType = formData.get("expenseType");
+  const paymentMethod = formData.get("paymentMethod");
 
   if (typeof description !== "string" || !description.trim()) return { error: "Enter what this expense was for" };
   const amountNum = Number(amount);
@@ -27,6 +29,8 @@ export async function createPettyCashEntryAction(
     description: description.trim(),
     amount: amountNum,
     category: typeof category === "string" && category.trim() ? category.trim() : null,
+    expense_type: expenseType === "owner" ? "owner" : "business",
+    payment_method: typeof paymentMethod === "string" && paymentMethod.trim() ? paymentMethod.trim() : "cash",
     staff_id: session.userId,
   });
   if (error) {

@@ -159,3 +159,58 @@ export async function createPurchaseAction(
 
   redirect(`/vendors/${vendorId}`);
 }
+
+/** Genuinely a separate dataset from payments — purchase transactions,
+ * each showing what was bought, from whom, and what's still owed on
+ * it specifically (never merged with the payments list). */
+export async function listPurchasesAction(): Promise<
+  { id: string; vendorName: string; purchaseDate: string; billNumber: string; total: number; paidAmount: number; outstanding: number; paymentMethod: string }[]
+> {
+  const session = await requireSession();
+  const admin = createSupabaseAdminClient();
+  const { data } = await admin
+    .from("purchases")
+    .select("id, purchase_date, vendor_invoice_number, total, paid_amount, payment_method, vendors ( name )")
+    .eq("shop_id", session.shopId)
+    .order("purchase_date", { ascending: false })
+    .limit(200);
+  return (data ?? []).map((p) => {
+    const vendor = Array.isArray(p.vendors) ? p.vendors[0] : p.vendors;
+    return {
+      id: p.id,
+      vendorName: vendor?.name ?? "Unknown supplier",
+      purchaseDate: p.purchase_date,
+      billNumber: p.vendor_invoice_number,
+      total: Number(p.total),
+      paidAmount: Number(p.paid_amount),
+      outstanding: Number(p.total) - Number(p.paid_amount),
+      paymentMethod: p.payment_method,
+    };
+  });
+}
+
+/** Genuinely a separate dataset from purchases — every payment made
+ * to a supplier, regardless of which purchase it was against. */
+export async function listPurchasePaymentsAction(): Promise<
+  { id: string; vendorName: string; amount: number; paymentMethod: string; note: string | null; createdAt: string }[]
+> {
+  const session = await requireSession();
+  const admin = createSupabaseAdminClient();
+  const { data } = await admin
+    .from("purchase_payments")
+    .select("id, amount, payment_method, note, created_at, vendors ( name )")
+    .eq("shop_id", session.shopId)
+    .order("created_at", { ascending: false })
+    .limit(200);
+  return (data ?? []).map((p) => {
+    const vendor = Array.isArray(p.vendors) ? p.vendors[0] : p.vendors;
+    return {
+      id: p.id,
+      vendorName: vendor?.name ?? "Unknown supplier",
+      amount: Number(p.amount),
+      paymentMethod: p.payment_method,
+      note: p.note,
+      createdAt: p.created_at,
+    };
+  });
+}

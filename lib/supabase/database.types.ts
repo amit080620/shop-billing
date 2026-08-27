@@ -780,9 +780,9 @@ export interface Database {
         Relationships: [];
       };
       catalog_order_requests: {
-        Row: { id: string; shop_id: string; customer_name: string; customer_phone: string; notes: string | null; status: "pending" | "accepted" | "rejected"; bill_id: string | null; wants_delivery: boolean; delivery_charge: number; created_at: string };
-        Insert: { id?: string; shop_id: string; customer_name: string; customer_phone: string; notes?: string | null; status?: "pending" | "accepted" | "rejected"; bill_id?: string | null; wants_delivery?: boolean; delivery_charge?: number; created_at?: string };
-        Update: { id?: string; shop_id?: string; customer_name?: string; customer_phone?: string; notes?: string | null; status?: "pending" | "accepted" | "rejected"; bill_id?: string | null; wants_delivery?: boolean; delivery_charge?: number; created_at?: string };
+        Row: { id: string; shop_id: string; customer_name: string; customer_phone: string; notes: string | null; status: "pending" | "accepted" | "rejected"; bill_id: string | null; wants_delivery: boolean; delivery_charge: number; delivery_status: "ready" | "dispatched" | "completed" | null; created_at: string };
+        Insert: { id?: string; shop_id: string; customer_name: string; customer_phone: string; notes?: string | null; status?: "pending" | "accepted" | "rejected"; bill_id?: string | null; wants_delivery?: boolean; delivery_charge?: number; delivery_status?: "ready" | "dispatched" | "completed" | null; created_at?: string };
+        Update: { id?: string; shop_id?: string; customer_name?: string; customer_phone?: string; notes?: string | null; status?: "pending" | "accepted" | "rejected"; bill_id?: string | null; wants_delivery?: boolean; delivery_charge?: number; delivery_status?: "ready" | "dispatched" | "completed" | null; created_at?: string };
         Relationships: [
           { foreignKeyName: "catalog_order_requests_bill_id_fkey"; columns: ["bill_id"]; isOneToOne: false; referencedRelation: "bills"; referencedColumns: ["id"] },
         ];
@@ -799,6 +799,12 @@ export interface Database {
         Row: { shop_id: string; slot_duration_minutes: number; working_hours: Record<string, { start: string; end: string }[]>; is_public_booking_enabled: boolean; public_token: string; doctor_name: string | null; doctor_qualifications: string | null; doctor_photo_url: string | null; unavailable_dates: string[]; updated_at: string };
         Insert: { shop_id: string; slot_duration_minutes?: number; working_hours?: Record<string, { start: string; end: string }[]>; is_public_booking_enabled?: boolean; public_token?: string; doctor_name?: string | null; doctor_qualifications?: string | null; doctor_photo_url?: string | null; unavailable_dates?: string[]; updated_at?: string };
         Update: { shop_id?: string; slot_duration_minutes?: number; working_hours?: Record<string, { start: string; end: string }[]>; is_public_booking_enabled?: boolean; public_token?: string; doctor_name?: string | null; doctor_qualifications?: string | null; doctor_photo_url?: string | null; unavailable_dates?: string[]; updated_at?: string };
+        Relationships: [];
+      };
+      thermal_print_settings: {
+        Row: { shop_id: string; t58_shop_name_bold: boolean; t58_shop_name_large: boolean; t58_items_bold: boolean; t58_total_bold: boolean; t58_total_large: boolean; t80_shop_name_bold: boolean; t80_shop_name_large: boolean; t80_items_bold: boolean; t80_total_bold: boolean; t80_total_large: boolean; updated_at: string };
+        Insert: { shop_id: string; t58_shop_name_bold?: boolean; t58_shop_name_large?: boolean; t58_items_bold?: boolean; t58_total_bold?: boolean; t58_total_large?: boolean; t80_shop_name_bold?: boolean; t80_shop_name_large?: boolean; t80_items_bold?: boolean; t80_total_bold?: boolean; t80_total_large?: boolean; updated_at?: string };
+        Update: { shop_id?: string; t58_shop_name_bold?: boolean; t58_shop_name_large?: boolean; t58_items_bold?: boolean; t58_total_bold?: boolean; t58_total_large?: boolean; t80_shop_name_bold?: boolean; t80_shop_name_large?: boolean; t80_items_bold?: boolean; t80_total_bold?: boolean; t80_total_large?: boolean; updated_at?: string };
         Relationships: [];
       };
       prescription_templates: {
@@ -1169,9 +1175,9 @@ export interface Database {
         Relationships: [];
       };
       petty_cash_entries: {
-        Row: { id: string; shop_id: string; description: string; amount: number; category: string | null; staff_id: string; created_at: string };
-        Insert: { id?: string; shop_id: string; description: string; amount: number; category?: string | null; staff_id: string; created_at?: string };
-        Update: { id?: string; shop_id?: string; description?: string; amount?: number; category?: string | null; staff_id?: string; created_at?: string };
+        Row: { id: string; shop_id: string; description: string; amount: number; category: string | null; expense_type: "business" | "owner"; payment_method: string; bill_image_url: string | null; staff_id: string; created_at: string };
+        Insert: { id?: string; shop_id: string; description: string; amount: number; category?: string | null; expense_type?: "business" | "owner"; payment_method?: string; bill_image_url?: string | null; staff_id: string; created_at?: string };
+        Update: { id?: string; shop_id?: string; description?: string; amount?: number; category?: string | null; expense_type?: "business" | "owner"; payment_method?: string; bill_image_url?: string | null; staff_id?: string; created_at?: string };
         Relationships: [];
       };
       prescriptions: {

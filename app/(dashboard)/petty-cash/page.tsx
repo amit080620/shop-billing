@@ -15,7 +15,7 @@ export default async function PettyCashPage() {
 
   const { data: entries } = await admin
     .from("petty_cash_entries")
-    .select("id, description, amount, category, created_at")
+    .select("id, description, amount, category, expense_type, created_at")
     .eq("shop_id", session.shopId)
     .gte("created_at", startOfMonth.toISOString())
     .order("created_at", { ascending: false })
@@ -28,6 +28,7 @@ export default async function PettyCashPage() {
         description: e.description,
         amount: Number(e.amount),
         category: e.category,
+        expenseType: e.expense_type,
         createdAt: e.created_at,
       }))}
     />

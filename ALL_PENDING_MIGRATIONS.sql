@@ -1,6 +1,6 @@
 -- ============================================================
 -- The Ray — Shop Billing SaaS
--- ALL migrations combined — genuinely up-to-date (through 0022).
+-- ALL migrations combined — genuinely up-to-date (through 0025).
 -- Run this ONCE on an EXISTING database that already has the
 -- baseline (0000) applied.
 --
@@ -309,4 +309,47 @@ create index if not exists idx_restaurant_orders_customer on restaurant_orders(c
 -- genuinely lets an owner force-remove a table from the active list
 -- without ever breaking historical order/billing records.
 alter table restaurant_tables add column if not exists is_deleted boolean not null default false;
+
+-- ==== 0023_thermal_print_settings.sql ====
+-- Genuinely separate thermal-print formatting settings per paper
+-- width (58mm vs 80mm) — a Bluetooth thermal printer renders its own
+-- text (no CSS/HTML involved), so this is what gives the owner real
+-- control over exactly how the shop name, item table, and total line
+-- look on the actual printed receipt.
+create table if not exists thermal_print_settings (
+  shop_id uuid primary key references shops(id) on delete cascade,
+  -- 58mm settings
+  t58_shop_name_bold boolean not null default true,
+  t58_shop_name_large boolean not null default true,
+  t58_items_bold boolean not null default false,
+  t58_total_bold boolean not null default true,
+  t58_total_large boolean not null default true,
+  -- 80mm settings
+  t80_shop_name_bold boolean not null default true,
+  t80_shop_name_large boolean not null default true,
+  t80_items_bold boolean not null default false,
+  t80_total_bold boolean not null default true,
+  t80_total_large boolean not null default true,
+  updated_at timestamptz not null default now()
+);
+alter table thermal_print_settings enable row level security;
+
+-- ==== 0024_expense_business_owner.sql ====
+-- Genuinely add the Business vs Owner expense distinction to the
+-- existing Petty Cash feature — this is what turns it into the
+-- "Record Expense → Business Expense / Owner Expense" hierarchy,
+-- without building a duplicate parallel system. Every existing entry
+-- genuinely defaults to 'business' (the original, only behaviour),
+-- so nothing about past data changes.
+alter table petty_cash_entries add column if not exists expense_type text not null default 'business' check (expense_type in ('business', 'owner'));
+alter table petty_cash_entries add column if not exists payment_method text not null default 'cash' check (payment_method in ('cash', 'card', 'upi', 'online', 'other'));
+alter table petty_cash_entries add column if not exists bill_image_url text;
+
+-- ==== 0025_delivery_lifecycle.sql ====
+-- Genuinely adds the delivery lifecycle (Ready for Delivery →
+-- Dispatched → Completed) on top of an already-accepted catalog
+-- order — the existing pending/accepted/rejected review workflow is
+-- untouched; this tracks what happens to an order AFTER the shop has
+-- agreed to fulfill it.
+alter table catalog_order_requests add column if not exists delivery_status text check (delivery_status in ('ready', 'dispatched', 'completed'));
 

@@ -10,21 +10,32 @@ import { ModuleBlocked } from "@/app/components/ModuleBlocked";
 export default async function CatalogOrdersPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string }>;
+  searchParams: Promise<{ status?: string; deliveryView?: string }>;
 }) {
   const session = await requireSession();
   if (!isModuleEnabled(session.enabledModules, "public_catalog")) return <ModuleBlocked moduleKey="public_catalog" />;
-  const { status } = await searchParams;
+  const { status, deliveryView } = await searchParams;
   const activeFilter = status && status !== "all" ? status : "pending";
+  // Genuinely only meaningful within the "accepted" tab — "Active Home
+  // Delivery" (still in progress, or not a delivery order at all) vs
+  // "Delivery History" (genuinely completed deliveries only).
+  const activeDeliveryView = deliveryView === "history" ? "history" : "active";
   const admin = createSupabaseAdminClient();
 
-  const { data: requests } = await admin
+  let query = admin
     .from("catalog_order_requests")
-    .select("id, customer_name, customer_phone, notes, status, bill_id, created_at")
+    .select("id, customer_name, customer_phone, notes, status, bill_id, wants_delivery, delivery_status, created_at")
     .eq("shop_id", session.shopId)
-    .eq("status", activeFilter as "pending" | "accepted" | "rejected")
-    .order("created_at", { ascending: false })
-    .limit(100);
+    .eq("status", activeFilter as "pending" | "accepted" | "rejected");
+
+  if (activeFilter === "accepted") {
+    query =
+      activeDeliveryView === "history"
+        ? query.eq("wants_delivery", true).eq("delivery_status", "completed")
+        : query.or("wants_delivery.eq.false,delivery_status.is.null,delivery_status.neq.completed");
+  }
+
+  const { data: requests } = await query.order("created_at", { ascending: false }).limit(100);
 
   const requestIds = (requests ?? []).map((r) => r.id);
   const { data: allItems } = requestIds.length
@@ -67,8 +78,32 @@ export default async function CatalogOrdersPage({
         ))}
       </div>
 
+      {activeFilter === "accepted" && (
+        <div className="flex gap-2">
+          {(["active", "history"] as const).map((v) => (
+            <Link
+              key={v}
+              href={`/catalog-orders?status=accepted&deliveryView=${v}`}
+              className={`flex-1 rounded-xl py-2 text-center text-sm font-semibold ${
+                activeDeliveryView === v ? "bg-brand text-white" : "border border-border text-muted"
+              }`}
+            >
+              {v === "active" ? "Active Home Delivery" : "Delivery History"}
+            </Link>
+          ))}
+        </div>
+      )}
+
       {(!requests || requests.length === 0) ? (
-        <EmptyState text="No orders here." />
+        <EmptyState
+          text={
+            activeFilter === "accepted" && activeDeliveryView === "history"
+              ? "No completed deliveries yet — they'll appear here once a delivery is marked Completed."
+              : activeFilter === "pending"
+                ? "No orders waiting for review right now."
+                : "No orders here."
+          }
+        />
       ) : (
         <ul className="flex flex-col gap-2 md:grid md:grid-cols-2 md:gap-3">
           {requests.map((r) => (
@@ -83,6 +118,8 @@ export default async function CatalogOrdersPage({
                 customerPhone: r.customer_phone,
                 notes: r.notes,
                 status: r.status,
+                wantsDelivery: r.wants_delivery,
+                deliveryStatus: r.delivery_status,
                 billId: r.bill_id,
                 createdAt: r.created_at,
                 items: itemsByRequest.get(r.id) ?? [],

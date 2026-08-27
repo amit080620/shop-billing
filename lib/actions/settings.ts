@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { requireOwner } from "../auth";
+import { requireOwner, requireSession } from "../auth";
 import { createSupabaseAdminClient } from "../supabase/admin";
 import { shopSettingsSchema, LOGO_MAX_BYTES, LOGO_ALLOWED_TYPES } from "../validation/schemas";
 import { stateNameForCode } from "../constants/states";
@@ -257,5 +257,75 @@ export async function toggleFastBillingAction(enabled: boolean): Promise<{ error
   revalidatePath("/more");
   revalidatePath("/fast-billing-settings");
   revalidatePath("/");
+  return {};
+}
+
+export type ThermalPrintSettings = {
+  t58ShopNameBold: boolean;
+  t58ShopNameLarge: boolean;
+  t58ItemsBold: boolean;
+  t58TotalBold: boolean;
+  t58TotalLarge: boolean;
+  t80ShopNameBold: boolean;
+  t80ShopNameLarge: boolean;
+  t80ItemsBold: boolean;
+  t80TotalBold: boolean;
+  t80TotalLarge: boolean;
+};
+
+const THERMAL_PRINT_DEFAULTS: ThermalPrintSettings = {
+  t58ShopNameBold: true,
+  t58ShopNameLarge: true,
+  t58ItemsBold: false,
+  t58TotalBold: true,
+  t58TotalLarge: true,
+  t80ShopNameBold: true,
+  t80ShopNameLarge: true,
+  t80ItemsBold: false,
+  t80TotalBold: true,
+  t80TotalLarge: true,
+};
+
+export async function getThermalPrintSettingsAction(): Promise<ThermalPrintSettings> {
+  const session = await requireSession();
+  const admin = createSupabaseAdminClient();
+  const { data } = await admin.from("thermal_print_settings").select("*").eq("shop_id", session.shopId).maybeSingle();
+  if (!data) return THERMAL_PRINT_DEFAULTS;
+  return {
+    t58ShopNameBold: data.t58_shop_name_bold,
+    t58ShopNameLarge: data.t58_shop_name_large,
+    t58ItemsBold: data.t58_items_bold,
+    t58TotalBold: data.t58_total_bold,
+    t58TotalLarge: data.t58_total_large,
+    t80ShopNameBold: data.t80_shop_name_bold,
+    t80ShopNameLarge: data.t80_shop_name_large,
+    t80ItemsBold: data.t80_items_bold,
+    t80TotalBold: data.t80_total_bold,
+    t80TotalLarge: data.t80_total_large,
+  };
+}
+
+export async function saveThermalPrintSettingsAction(settings: ThermalPrintSettings): Promise<{ error?: string }> {
+  const session = await requireSession();
+  const admin = createSupabaseAdminClient();
+  const { error } = await admin.from("thermal_print_settings").upsert({
+    shop_id: session.shopId,
+    t58_shop_name_bold: settings.t58ShopNameBold,
+    t58_shop_name_large: settings.t58ShopNameLarge,
+    t58_items_bold: settings.t58ItemsBold,
+    t58_total_bold: settings.t58TotalBold,
+    t58_total_large: settings.t58TotalLarge,
+    t80_shop_name_bold: settings.t80ShopNameBold,
+    t80_shop_name_large: settings.t80ShopNameLarge,
+    t80_items_bold: settings.t80ItemsBold,
+    t80_total_bold: settings.t80TotalBold,
+    t80_total_large: settings.t80TotalLarge,
+    updated_at: new Date().toISOString(),
+  });
+  if (error) {
+    console.error("Could not save thermal print settings", error);
+    return { error: "Could not save settings" };
+  }
+  revalidatePath("/thermal-print-settings");
   return {};
 }

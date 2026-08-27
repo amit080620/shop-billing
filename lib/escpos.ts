@@ -101,14 +101,33 @@ export type ReceiptData = {
   footerText?: string | null;
 };
 
+export type ReceiptFormatSettings = {
+  shopNameBold: boolean;
+  shopNameLarge: boolean;
+  itemsBold: boolean;
+  totalBold: boolean;
+  totalLarge: boolean;
+};
+
+const DEFAULT_FORMAT_SETTINGS: ReceiptFormatSettings = {
+  shopNameBold: true,
+  shopNameLarge: true,
+  itemsBold: false,
+  totalBold: true,
+  totalLarge: true,
+};
+
 /** Builds the full receipt as ESC/POS bytes. charsWide should be 32 for
  * 58mm paper or 48 for 80mm paper (standard characters-per-line for
  * those widths in the default font). Uses the same genuine
  * column-preserving grid algorithm as the on-screen thermal preview
  * (lib/print/textGrid.ts), so a long item name wraps exactly the same
  * way on the real printed receipt as it does in the browser preview —
- * never independently calculated. */
-export function buildReceiptEscPos(data: ReceiptData, charsWide: 32 | 48 = 32): Uint8Array {
+ * never independently calculated. Formatting (bold/large-size) for the
+ * shop name, item table, and total line is genuinely controlled by
+ * the owner's own thermal print settings, not hardcoded, since a
+ * Bluetooth printer renders its own text with no CSS involved. */
+export function buildReceiptEscPos(data: ReceiptData, charsWide: 32 | 48 = 32, format: ReceiptFormatSettings = DEFAULT_FORMAT_SETTINGS): Uint8Array {
   const profile: ThermalPrinterProfile = {
     paperWidthMm: charsWide === 32 ? 58 : 80,
     charactersPerLine: charsWide,
@@ -123,7 +142,7 @@ export function buildReceiptEscPos(data: ReceiptData, charsWide: 32 | 48 = 32): 
   const b = new EscPosBuilder();
   b.init();
 
-  b.align("center").doubleSize(true).bold(true).text(data.shopName).newline();
+  b.align("center").doubleSize(format.shopNameLarge).bold(format.shopNameBold).text(data.shopName).newline();
   b.doubleSize(false).bold(false);
   if (data.gstin) b.text(`GSTIN: ${data.gstin}`).newline();
   b.newline();
@@ -134,19 +153,21 @@ export function buildReceiptEscPos(data: ReceiptData, charsWide: 32 | 48 = 32): 
   if (data.customerName) b.text(`Customer: ${data.customerName}`).newline();
   b.text(buildDivider(profile)).newline();
 
+  b.bold(format.itemsBold);
   b.text(buildHeaderRow(profile)).newline();
   for (const item of data.items) {
     const rowLines = buildItemRowLines(item.name, String(item.qty), item.price.toFixed(2), item.lineTotal.toFixed(2), profile);
     for (const line of rowLines) b.text(line).newline();
   }
+  b.bold(false);
   b.text(buildDivider(profile)).newline();
 
   b.row("Subtotal", `Rs.${data.subtotal.toFixed(2)}`, charsWide);
   if (data.discount) b.row("Discount", `-Rs.${data.discount.toFixed(2)}`, charsWide);
   if (data.taxTotal) b.row("Tax", `Rs.${data.taxTotal.toFixed(2)}`, charsWide);
 
-  b.bold(true).doubleSize(true);
-  b.row("TOTAL", `Rs.${data.total.toFixed(2)}`, Math.floor(charsWide * 0.62));
+  b.bold(format.totalBold).doubleSize(format.totalLarge);
+  b.row("TOTAL", `Rs.${data.total.toFixed(2)}`, Math.floor(charsWide * (format.totalLarge ? 0.62 : 1)));
   b.doubleSize(false).bold(false);
 
   if (data.paidAmount !== undefined) b.row("Paid", `Rs.${data.paidAmount.toFixed(2)}`, charsWide);

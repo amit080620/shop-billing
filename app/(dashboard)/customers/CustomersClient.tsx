@@ -52,6 +52,7 @@ export function CustomersClient({
   totalCount,
   initialSearch,
   bulkImportExportEnabled,
+  basePath = "/customers",
 }: {
   initialCustomers: Customer[];
   isClinic: boolean;
@@ -61,6 +62,7 @@ export function CustomersClient({
   totalCount: number;
   initialSearch: string;
   bulkImportExportEnabled: boolean;
+  basePath?: string;
 }) {
   const router = useRouter();
   const [showForm, setShowForm] = useState(false);
@@ -88,7 +90,7 @@ export function CustomersClient({
     const timer = setTimeout(() => {
       const params = new URLSearchParams();
       if (search) params.set("q", search);
-      router.push(`/customers${params.toString() ? `?${params.toString()}` : ""}`);
+      router.push(`${basePath}${params.toString() ? `?${params.toString()}` : ""}`);
     }, 400);
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -98,7 +100,7 @@ export function CustomersClient({
     const params = new URLSearchParams();
     if (search) params.set("q", search);
     params.set("page", String(nextPage));
-    router.push(`/customers?${params.toString()}`);
+    router.push(`${basePath}?${params.toString()}`);
   }
 
   const filtered = initialCustomers;

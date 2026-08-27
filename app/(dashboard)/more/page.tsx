@@ -4,7 +4,7 @@ import { LogoutButton } from "./LogoutButton";
 import { getTranslator } from "@/lib/i18n/server";
 import { getTerminology } from "@/lib/businessType";
 import { isModuleEnabled } from "@/lib/modules";
-import { Users, Bell, Clock, Truck, Package, UserCog, Settings, Megaphone, HelpCircle, PartyPopper, WifiOff, CalendarClock, ChefHat, BookOpen, ClipboardCheck, ShieldCheck, Scissors, Gem, Store, Stethoscope, Palette, Wallet, Building2, Dumbbell, FlaskConical, Receipt as ReceiptIcon, AlertTriangle, Cake, PackagePlus, Wrench, Gift, Zap, Pill } from "lucide-react";
+import { Users, Bell, Clock, Truck, Package, UserCog, Megaphone, HelpCircle, PartyPopper, WifiOff, CalendarClock, ChefHat, BookOpen, ClipboardCheck, ShieldCheck, Scissors, Gem, Store, Stethoscope, Palette, Wallet, Building2, Dumbbell, FlaskConical, Receipt as ReceiptIcon, AlertTriangle, Cake, PackagePlus, Wrench, Gift, Zap, Pill } from "lucide-react";
 
 export default async function MorePage() {
   const session = await requireSession();
@@ -140,12 +140,12 @@ export default async function MorePage() {
 
       <MenuGroup title="People">
         <MenuLink
-          href="/customers"
-          label={session.businessType === "clinic" ? "Patients" : session.businessType === "gym" ? "Members" : t("more.customers")}
-          sub={session.businessType === "clinic" ? "Patient records and history" : session.businessType === "gym" ? "Member records and history" : t("more.customers.sub")}
+          href="/parties"
+          label="Parties"
+          sub={session.businessType === "clinic" ? "Patients & suppliers" : session.businessType === "gym" ? "Members & suppliers" : "Customers & suppliers, one place"}
           icon={PeopleIcon}
         />
-        <MenuLink href="/vendors" label={t("more.vendors")} sub={t("more.vendors.sub")} icon={TruckIcon} tone="secondary" />
+        <MenuLink href="/purchases" label="Purchase" sub="Add purchase, pay suppliers, history" icon={TruckIcon} tone="secondary" />
         {session.role === "owner" && (
           <>
             <MenuLink href="/staff" label={t("more.staff")} sub={t("more.staff.sub")} icon={UsersIcon} tone="success" />
@@ -186,9 +186,6 @@ export default async function MorePage() {
       </MenuGroup>
 
       <MenuGroup title="Shop setup">
-        {session.role === "owner" && (
-          <MenuLink href="/settings" label={t("more.settings")} sub={t("more.settings.sub")} icon={GearIcon} />
-        )}
         <MenuLink href="/help" label="Help & guide" sub="How every screen and button works" icon={HelpIcon} tone="info" />
       </MenuGroup>
 
@@ -304,9 +301,6 @@ function ReorderIcon({ className }: { className?: string }) {
 }
 function WrenchIcon({ className }: { className?: string }) {
   return <Wrench className={className} size={18} strokeWidth={1.8} />;
-}
-function GearIcon({ className }: { className?: string }) {
-  return <Settings className={className} size={18} strokeWidth={1.8} />;
 }
 function MegaphoneIcon({ className }: { className?: string }) {
   return <Megaphone className={className} size={18} strokeWidth={1.8} />;

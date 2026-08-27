@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Bluetooth } from "lucide-react";
 import { printViaBluetooth, isWebBluetoothSupported } from "@/lib/bluetooth-print";
 import { buildReceiptEscPos, type ReceiptData } from "@/lib/escpos";
+import { getThermalPrintSettingsAction } from "@/lib/actions/settings";
 
 export function BluetoothPrintButton({ receipt, paperWidth }: { receipt: ReceiptData; paperWidth: 32 | 48 }) {
   const [status, setStatus] = useState<"idle" | "connecting" | "done" | "error">("idle");
@@ -13,7 +14,15 @@ export function BluetoothPrintButton({ receipt, paperWidth }: { receipt: Receipt
   async function handlePrint() {
     setStatus("connecting");
     setError(null);
-    const bytes = buildReceiptEscPos(receipt, paperWidth);
+    // Genuinely fetch the owner's own formatting preferences for
+    // this exact paper width — a 58mm printer and an 80mm printer
+    // genuinely have their own separate settings.
+    const settings = await getThermalPrintSettingsAction();
+    const format =
+      paperWidth === 32
+        ? { shopNameBold: settings.t58ShopNameBold, shopNameLarge: settings.t58ShopNameLarge, itemsBold: settings.t58ItemsBold, totalBold: settings.t58TotalBold, totalLarge: settings.t58TotalLarge }
+        : { shopNameBold: settings.t80ShopNameBold, shopNameLarge: settings.t80ShopNameLarge, itemsBold: settings.t80ItemsBold, totalBold: settings.t80TotalBold, totalLarge: settings.t80TotalLarge };
+    const bytes = buildReceiptEscPos(receipt, paperWidth, format);
     const result = await printViaBluetooth(bytes);
     if (result.error) {
       setStatus("error");

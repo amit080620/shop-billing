@@ -466,10 +466,30 @@ export async function uploadProductImageAction(productId: string, formData: Form
   const { data: product } = await admin.from("products").select("id").eq("id", productId).eq("shop_id", session.shopId).single();
   if (!product) return { error: "Item not found" };
 
-  const extension = file.name.split(".").pop() || "jpg";
-  const path = `${session.shopId}/${productId}.${extension}`;
+  // Genuinely normalize EVERY uploaded image to the exact same
+  // 600×600 square before it's ever stored — this is what makes
+  // every product tile look uniformly "branded" regardless of what
+  // dimensions or aspect ratio the original photo happened to be.
+  // Without this, a wide landscape photo and a tall portrait photo
+  // display very differently even inside an identical CSS box, since
+  // object-cover crops each one to a different visible region — this
+  // fixes that at the source rather than relying on CSS alone.
+  const sharp = (await import("sharp")).default;
+  const rawBuffer = Buffer.from(await file.arrayBuffer());
+  let processedBuffer: Buffer;
+  try {
+    processedBuffer = await sharp(rawBuffer)
+      .resize(600, 600, { fit: "cover", position: "attention" })
+      .jpeg({ quality: 82 })
+      .toBuffer();
+  } catch (err) {
+    console.error("Could not process product image", err);
+    return { error: "That image could not be processed — try a different file" };
+  }
 
-  const { error: uploadError } = await admin.storage.from("product-images").upload(path, file, { upsert: true, contentType: file.type });
+  const path = `${session.shopId}/${productId}.jpg`;
+
+  const { error: uploadError } = await admin.storage.from("product-images").upload(path, processedBuffer, { upsert: true, contentType: "image/jpeg" });
   if (uploadError) {
     console.error("Could not upload product image", uploadError);
     return { error: "Could not upload image" };

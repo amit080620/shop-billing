@@ -9,7 +9,7 @@ import { getTranslator } from "@/lib/i18n/server";
 import { SubscriptionCard } from "@/app/components/SubscriptionCard";
 import { InstallAppButton } from "@/app/components/InstallAppButton";
 import { LogoutButton } from "../more/LogoutButton";
-import { Settings, ChevronRight } from "lucide-react";
+import { Settings, ChevronRight, Printer } from "lucide-react";
 
 export default async function ProfilePage() {
   const session = await requireSession();
@@ -74,6 +74,40 @@ export default async function ProfilePage() {
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-medium text-foreground">{t("more.settings")}</p>
           <p className="truncate text-xs text-muted">{t("more.settings.sub")}</p>
+        </div>
+        <ChevronRight size={16} className="shrink-0 text-muted" />
+      </Link>
+
+      <Link
+        href="/thermal-print-settings"
+        className="neu-card flex items-center gap-3 px-4 py-3.5 transition active:scale-[0.98]"
+      >
+        <span
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-soft text-brand-text"
+          style={{ boxShadow: "-3px -3px 7px var(--neu-light), 3px 3px 7px var(--neu-dark)" }}
+        >
+          <Printer size={18} strokeWidth={1.8} />
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-medium text-foreground">Thermal print settings</p>
+          <p className="truncate text-xs text-muted">Bold & size for 58mm and 80mm receipts</p>
+        </div>
+        <ChevronRight size={16} className="shrink-0 text-muted" />
+      </Link>
+
+      <Link
+        href="/thermal-print-settings"
+        className="neu-card flex items-center gap-3 px-4 py-3.5 transition active:scale-[0.98]"
+      >
+        <span
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-soft text-brand-text"
+          style={{ boxShadow: "-3px -3px 7px var(--neu-light), 3px 3px 7px var(--neu-dark)" }}
+        >
+          <Printer size={18} strokeWidth={1.8} />
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-medium text-foreground">Thermal print settings</p>
+          <p className="truncate text-xs text-muted">Bold & size for 58mm / 80mm receipts</p>
         </div>
         <ChevronRight size={16} className="shrink-0 text-muted" />
       </Link>

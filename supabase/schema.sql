@@ -1247,6 +1247,26 @@ alter table customers add column if not exists known_allergies text;
 -- bills) since a prescription pad conventionally carries the doctor's
 -- own registration details, qualifications, and clinic timings, not a
 -- generic shop header.
+-- Genuinely separate thermal-print formatting settings per paper
+-- width (58mm vs 80mm) — gives the owner real control over exactly
+-- how the shop name, item table, and total line look on the actual
+-- printed receipt.
+create table if not exists thermal_print_settings (
+  shop_id uuid primary key references shops(id) on delete cascade,
+  t58_shop_name_bold boolean not null default true,
+  t58_shop_name_large boolean not null default true,
+  t58_items_bold boolean not null default false,
+  t58_total_bold boolean not null default true,
+  t58_total_large boolean not null default true,
+  t80_shop_name_bold boolean not null default true,
+  t80_shop_name_large boolean not null default true,
+  t80_items_bold boolean not null default false,
+  t80_total_bold boolean not null default true,
+  t80_total_large boolean not null default true,
+  updated_at timestamptz not null default now()
+);
+alter table thermal_print_settings enable row level security;
+
 create table if not exists prescription_settings (
   shop_id uuid primary key references shops(id) on delete cascade,
   header_text text,
@@ -1502,6 +1522,7 @@ create table if not exists catalog_order_requests (
   bill_id uuid references bills(id) on delete set null,
   wants_delivery boolean not null default false,
   delivery_charge numeric(12, 2) not null default 0,
+  delivery_status text check (delivery_status in ('ready', 'dispatched', 'completed')),
   created_at timestamptz not null default now()
 );
 alter table catalog_order_requests enable row level security;
@@ -1568,6 +1589,9 @@ create table if not exists petty_cash_entries (
   description text not null,
   amount numeric(12, 2) not null check (amount > 0),
   category text,
+  expense_type text not null default 'business' check (expense_type in ('business', 'owner')),
+  payment_method text not null default 'cash' check (payment_method in ('cash', 'card', 'upi', 'online', 'other')),
+  bill_image_url text,
   staff_id uuid not null references staff(id),
   created_at timestamptz not null default now()
 );

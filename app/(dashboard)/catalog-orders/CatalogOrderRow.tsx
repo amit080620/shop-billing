@@ -3,10 +3,10 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { acceptCatalogOrderAction, rejectCatalogOrderAction } from "@/lib/actions/catalog";
+import { acceptCatalogOrderAction, rejectCatalogOrderAction, setDeliveryStatusAction } from "@/lib/actions/catalog";
 import { formatMoney } from "@/lib/format";
 import { buildWhatsAppLink } from "@/lib/whatsapp";
-import { MessageCircle } from "lucide-react";
+import { MessageCircle, Package, Truck, CheckCircle2 } from "lucide-react";
 
 type Request = {
   id: string;
@@ -15,6 +15,8 @@ type Request = {
   notes: string | null;
   status: "pending" | "accepted" | "rejected";
   billId: string | null;
+  wantsDelivery: boolean;
+  deliveryStatus: "ready" | "dispatched" | "completed" | null;
   createdAt: string;
   items: { productName: string; quantity: number; price: number }[];
 };
@@ -168,6 +170,36 @@ export function CatalogOrderRow({
         <Link href={`/print/bill/${request.billId}`} className="mt-2 inline-block text-xs font-medium text-brand">
           View bill →
         </Link>
+      )}
+
+      {request.status === "accepted" && request.wantsDelivery && request.deliveryStatus !== "completed" && (
+        <div className="mt-2 flex items-center gap-2">
+          <p className="text-xs text-muted">Delivery:</p>
+          {(["ready", "dispatched", "completed"] as const).map((s) => {
+            const Icon = s === "ready" ? Package : s === "dispatched" ? Truck : CheckCircle2;
+            const isActive = request.deliveryStatus === s;
+            const isPast =
+              (s === "ready" && (request.deliveryStatus === "dispatched" || request.deliveryStatus === "completed")) ||
+              (s === "dispatched" && request.deliveryStatus === "completed");
+            return (
+              <button
+                key={s}
+                onClick={() => {
+                  startTransition(async () => {
+                    await setDeliveryStatusAction(request.id, s);
+                    router.refresh();
+                  });
+                }}
+                disabled={isPending}
+                className={`flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-medium capitalize disabled:opacity-60 ${
+                  isActive || isPast ? "bg-brand text-white" : "border border-border text-muted"
+                }`}
+              >
+                <Icon size={11} /> {s}
+              </button>
+            );
+          })}
+        </div>
       )}
 
       {kotItems && (

@@ -13,9 +13,10 @@ import { PageHeader } from "@/app/components/PageHeader";
 import { Camera, X } from "lucide-react";
 import { ScanBillModal } from "./ScanBillModal";
 
-type Entry = { id: string; description: string; amount: number; category: string | null; createdAt: string };
+type Entry = { id: string; description: string; amount: number; category: string | null; expenseType: "business" | "owner"; createdAt: string };
 
 const QUICK_CATEGORIES = ["Tea/Snacks", "Stationery", "Transport", "Cleaning", "Repairs", "Other"];
+const PAYMENT_METHODS = ["cash", "upi", "card", "other"] as const;
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -33,9 +34,17 @@ export function PettyCashClient({ entries }: { entries: Entry[] }) {
   const [description, setDescription] = useState("");
   const [amount, setAmount] = useState("");
   const [category, setCategory] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState<(typeof PAYMENT_METHODS)[number]>("cash");
   const [isPending, startTransition] = useTransition();
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const { showToast } = useToast();
+
+  // Genuinely the top-level "Record Expense" context — Business or
+  // Owner. Selecting one genuinely changes both what the entry form
+  // saves AND which history/totals are shown below, exactly matching
+  // "Record Expense → Business Expense / Owner Expense" — the two
+  // are never mixed into one combined total.
+  const [expenseType, setExpenseType] = useState<"business" | "owner">("business");
 
   const [state, formAction] = useActionState(
     async (prev: { error?: string } | null, formData: FormData) => {
@@ -45,7 +54,7 @@ export function PettyCashClient({ entries }: { entries: Entry[] }) {
         setCategory("");
         setDescription("");
         setAmount("");
-        showToast("Expense recorded");
+        showToast(expenseType === "owner" ? "Owner expense recorded" : "Business expense recorded");
         router.refresh();
       }
       return result;
@@ -53,17 +62,19 @@ export function PettyCashClient({ entries }: { entries: Entry[] }) {
     null,
   );
 
+  const filteredEntries = useMemo(() => entries.filter((e) => e.expenseType === expenseType), [entries, expenseType]);
+
   const todayTotal = useMemo(() => {
     const todayStart = new Date();
     todayStart.setHours(0, 0, 0, 0);
-    return entries.filter((e) => new Date(e.createdAt) >= todayStart).reduce((s, e) => s + e.amount, 0);
-  }, [entries]);
-  const monthTotal = useMemo(() => entries.reduce((s, e) => s + e.amount, 0), [entries]);
+    return filteredEntries.filter((e) => new Date(e.createdAt) >= todayStart).reduce((s, e) => s + e.amount, 0);
+  }, [filteredEntries]);
+  const monthTotal = useMemo(() => filteredEntries.reduce((s, e) => s + e.amount, 0), [filteredEntries]);
 
   return (
     <div className="flex flex-col gap-4">
       <PageHeader
-        title="Petty cash"
+        title="Expense"
         subtitle="Small day-to-day cash expenses — tea, stationery, auto fare — so cash in hand actually adds up."
         action={
           <button onClick={() => setShowForm((v) => !v)} className="btn-primary-sm">
@@ -74,6 +85,22 @@ export function PettyCashClient({ entries }: { entries: Entry[] }) {
         icon={<img src="/assets/ray-icons/cash.svg" alt="" className="h-9 w-9 md:h-11 md:w-11" />}
         bareIcon
       />
+
+      {/* Top-level context switch — Business vs Owner, genuinely
+          separate datasets, never merged. */}
+      <div className="flex gap-2">
+        {(["business", "owner"] as const).map((t) => (
+          <button
+            key={t}
+            onClick={() => setExpenseType(t)}
+            className={`flex-1 rounded-xl py-2.5 text-sm font-semibold capitalize ${
+              expenseType === t ? "bg-brand text-white" : "border border-border text-muted"
+            }`}
+          >
+            {t} expense
+          </button>
+        ))}
+      </div>
 
       <div className="grid grid-cols-2 gap-3">
         <div className="neu-card p-3.5 text-center">
@@ -87,8 +114,9 @@ export function PettyCashClient({ entries }: { entries: Entry[] }) {
       </div>
 
       {showForm && (
-        <Popup open={showForm} onClose={() => setShowForm(false)} title="Add expense">
+        <Popup open={showForm} onClose={() => setShowForm(false)} title={`Add ${expenseType} expense`}>
         <form action={formAction} className="flex flex-col gap-3 rounded-xl border border-dashed border-brand bg-brand-soft p-4">
+          <input type="hidden" name="expenseType" value={expenseType} />
           <button
             type="button"
             onClick={() => setShowScan(true)}
@@ -130,6 +158,24 @@ export function PettyCashClient({ entries }: { entries: Entry[] }) {
               </button>
             ))}
           </div>
+          <input type="hidden" name="paymentMethod" value={paymentMethod} />
+          <div>
+            <p className="mb-1 text-xs text-muted">Payment method</p>
+            <div className="grid grid-cols-4 gap-1.5">
+              {PAYMENT_METHODS.map((m) => (
+                <button
+                  key={m}
+                  type="button"
+                  onClick={() => setPaymentMethod(m)}
+                  className={`rounded-lg py-1.5 text-xs font-medium capitalize ${
+                    paymentMethod === m ? "bg-brand text-white" : "bg-surface text-muted"
+                  }`}
+                >
+                  {m}
+                </button>
+              ))}
+            </div>
+          </div>
           {state?.error && <p className="text-sm text-danger">{state.error}</p>}
           <div className="flex gap-2">
             <SubmitButton />
@@ -141,11 +187,11 @@ export function PettyCashClient({ entries }: { entries: Entry[] }) {
         </Popup>
       )}
 
-      {entries.length === 0 ? (
-        <EmptyState text="No petty cash expenses logged yet." />
+      {filteredEntries.length === 0 ? (
+        <EmptyState text={`No ${expenseType} expenses logged yet — they'll appear here once you record one.`} />
       ) : (
         <ul className="flex flex-col gap-2 md:grid md:grid-cols-2 md:gap-3">
-          {entries.map((e) => (
+          {filteredEntries.map((e) => (
             <li
               key={e.id}
               className={`neu-card flex items-center justify-between px-3.5 py-2.5 ${deletingId === e.id ? "animate-delete" : ""}`}
