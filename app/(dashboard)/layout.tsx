@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { LayoutDashboard, Menu } from "lucide-react";
+import { LayoutDashboard } from "lucide-react";
 import { requireSession } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { getLang } from "@/lib/i18n/server";
@@ -11,6 +11,7 @@ import { WelcomeTour } from "./WelcomeTour";
 import { UniversalSearch } from "@/app/components/UniversalSearch";
 import { CatalogOrderAlert } from "@/app/components/CatalogOrderAlert";
 import { isModuleEnabled } from "@/lib/modules";
+import { HamburgerToggle } from "./HamburgerToggle";
 
 export default async function DashboardLayout({
   children,
@@ -47,14 +48,10 @@ export default async function DashboardLayout({
         style={{ boxShadow: "var(--shadow-sm)" }}
       >
         <div className="mx-auto flex max-w-lg items-center gap-3">
-          <Link
-            href="/more"
+          <HamburgerToggle
             className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-muted"
             style={{ boxShadow: "-2px -2px 5px var(--neu-light), 2px 2px 5px var(--neu-dark)" }}
-            aria-label="Menu"
-          >
-            <Menu size={17} />
-          </Link>
+          />
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-semibold text-foreground">
               {session.shopName}

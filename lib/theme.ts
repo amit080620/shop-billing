@@ -1,9 +1,11 @@
 import "server-only";
 import { cookies } from "next/headers";
 
-export async function getTheme(): Promise<"light" | "dark"> {
+export async function getTheme(): Promise<"light" | "dark" | "auto"> {
   const cookieStore = await cookies();
-  return cookieStore.get("theme")?.value === "dark" ? "dark" : "light";
+  const v = cookieStore.get("theme")?.value;
+  if (v === "dark" || v === "auto") return v;
+  return "light";
 }
 
 export async function getAccent(): Promise<"blue" | "saffron" | "gray"> {

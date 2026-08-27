@@ -1,6 +1,6 @@
 -- ============================================================
 -- The Ray — Shop Billing SaaS
--- ALL migrations combined — genuinely up-to-date (through 0025).
+-- ALL migrations combined — genuinely up-to-date (through 0026).
 -- Run this ONCE on an EXISTING database that already has the
 -- baseline (0000) applied.
 --
@@ -352,4 +352,19 @@ alter table petty_cash_entries add column if not exists bill_image_url text;
 -- untouched; this tracks what happens to an order AFTER the shop has
 -- agreed to fulfill it.
 alter table catalog_order_requests add column if not exists delivery_status text check (delivery_status in ('ready', 'dispatched', 'completed'));
+
+-- ==== 0026_thermal_size_italic.sql ====
+-- Genuinely replace the binary large/not-large toggle with a real
+-- size LEVEL (1-6) matching what ESC/POS thermal printers actually
+-- support (discrete width/height multiplier steps, not arbitrary
+-- point sizes like a word processor) — and add genuine italic
+-- support (ESC 4/5, a real command in the standard Epson ESC/POS set).
+alter table thermal_print_settings add column if not exists t58_shop_name_size integer not null default 2 check (t58_shop_name_size between 1 and 6);
+alter table thermal_print_settings add column if not exists t58_shop_name_italic boolean not null default false;
+alter table thermal_print_settings add column if not exists t58_total_size integer not null default 2 check (t58_total_size between 1 and 6);
+alter table thermal_print_settings add column if not exists t58_total_italic boolean not null default false;
+alter table thermal_print_settings add column if not exists t80_shop_name_size integer not null default 2 check (t80_shop_name_size between 1 and 6);
+alter table thermal_print_settings add column if not exists t80_shop_name_italic boolean not null default false;
+alter table thermal_print_settings add column if not exists t80_total_size integer not null default 2 check (t80_total_size between 1 and 6);
+alter table thermal_print_settings add column if not exists t80_total_italic boolean not null default false;
 

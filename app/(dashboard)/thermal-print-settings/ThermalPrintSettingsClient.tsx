@@ -30,30 +30,57 @@ function Toggle({ label, checked, onChange }: { label: string; checked: boolean;
   );
 }
 
+function SizeSelect({ value, onChange }: { value: number; onChange: (v: number) => void }) {
+  return (
+    <div className="flex items-center justify-between py-1">
+      <span className="text-sm text-foreground">Size</span>
+      <select
+        value={value}
+        onChange={(e) => onChange(Number(e.target.value))}
+        className="rounded-lg border border-border bg-background px-2.5 py-1.5 text-sm outline-none focus:border-brand"
+      >
+        {[1, 2, 3, 4, 5, 6].map((n) => (
+          <option key={n} value={n}>
+            {n}× {n === 1 ? "(normal)" : ""}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+}
+
 function PaperSizeSection({
   title,
   shopNameBold,
   setShopNameBold,
-  shopNameLarge,
-  setShopNameLarge,
+  shopNameItalic,
+  setShopNameItalic,
+  shopNameSize,
+  setShopNameSize,
   itemsBold,
   setItemsBold,
   totalBold,
   setTotalBold,
-  totalLarge,
-  setTotalLarge,
+  totalItalic,
+  setTotalItalic,
+  totalSize,
+  setTotalSize,
 }: {
   title: string;
   shopNameBold: boolean;
   setShopNameBold: (v: boolean) => void;
-  shopNameLarge: boolean;
-  setShopNameLarge: (v: boolean) => void;
+  shopNameItalic: boolean;
+  setShopNameItalic: (v: boolean) => void;
+  shopNameSize: number;
+  setShopNameSize: (v: number) => void;
   itemsBold: boolean;
   setItemsBold: (v: boolean) => void;
   totalBold: boolean;
   setTotalBold: (v: boolean) => void;
-  totalLarge: boolean;
-  setTotalLarge: (v: boolean) => void;
+  totalItalic: boolean;
+  setTotalItalic: (v: boolean) => void;
+  totalSize: number;
+  setTotalSize: (v: number) => void;
 }) {
   return (
     <div className="flex flex-col gap-1 rounded-xl border border-border bg-surface p-3.5">
@@ -61,14 +88,16 @@ function PaperSizeSection({
 
       <p className="mt-1 text-xs font-medium text-muted">Shop name line</p>
       <Toggle label="Bold" checked={shopNameBold} onChange={setShopNameBold} />
-      <Toggle label="Large size" checked={shopNameLarge} onChange={setShopNameLarge} />
+      <Toggle label="Italic" checked={shopNameItalic} onChange={setShopNameItalic} />
+      <SizeSelect value={shopNameSize} onChange={setShopNameSize} />
 
       <p className="mt-2 text-xs font-medium text-muted">Item table</p>
       <Toggle label="Bold" checked={itemsBold} onChange={setItemsBold} />
 
       <p className="mt-2 text-xs font-medium text-muted">Total line</p>
       <Toggle label="Bold" checked={totalBold} onChange={setTotalBold} />
-      <Toggle label="Large size" checked={totalLarge} onChange={setTotalLarge} />
+      <Toggle label="Italic" checked={totalItalic} onChange={setTotalItalic} />
+      <SizeSelect value={totalSize} onChange={setTotalSize} />
     </div>
   );
 }
@@ -100,38 +129,46 @@ export function ThermalPrintSettingsClient({ initial }: { initial: ThermalPrintS
       </Link>
 
       <p className="text-xs text-muted">
-        A Bluetooth thermal printer renders its own text — there&apos;s no page layout involved, so these are
-        the genuine controls it actually supports: bold and large size. (Italic isn&apos;t something thermal
-        printers can genuinely do — they print fixed dot-matrix characters, not custom fonts.) 58mm and 80mm
-        paper are configured separately since receipts on each often want different emphasis.
+        A Bluetooth thermal printer renders its own fixed characters — size is a genuine multiplier of the
+        base font (1× is normal, 2× is double, and so on), not a point-size like a word processor. Italic uses
+        the standard printer command, though support varies a little by printer model. 58mm and 80mm paper are
+        configured separately since receipts on each often want different emphasis.
       </p>
 
       <PaperSizeSection
         title="58mm paper"
         shopNameBold={settings.t58ShopNameBold}
         setShopNameBold={(v) => update("t58ShopNameBold", v)}
-        shopNameLarge={settings.t58ShopNameLarge}
-        setShopNameLarge={(v) => update("t58ShopNameLarge", v)}
+        shopNameItalic={settings.t58ShopNameItalic}
+        setShopNameItalic={(v) => update("t58ShopNameItalic", v)}
+        shopNameSize={settings.t58ShopNameSize}
+        setShopNameSize={(v) => update("t58ShopNameSize", v)}
         itemsBold={settings.t58ItemsBold}
         setItemsBold={(v) => update("t58ItemsBold", v)}
         totalBold={settings.t58TotalBold}
         setTotalBold={(v) => update("t58TotalBold", v)}
-        totalLarge={settings.t58TotalLarge}
-        setTotalLarge={(v) => update("t58TotalLarge", v)}
+        totalItalic={settings.t58TotalItalic}
+        setTotalItalic={(v) => update("t58TotalItalic", v)}
+        totalSize={settings.t58TotalSize}
+        setTotalSize={(v) => update("t58TotalSize", v)}
       />
 
       <PaperSizeSection
         title="80mm paper"
         shopNameBold={settings.t80ShopNameBold}
         setShopNameBold={(v) => update("t80ShopNameBold", v)}
-        shopNameLarge={settings.t80ShopNameLarge}
-        setShopNameLarge={(v) => update("t80ShopNameLarge", v)}
+        shopNameItalic={settings.t80ShopNameItalic}
+        setShopNameItalic={(v) => update("t80ShopNameItalic", v)}
+        shopNameSize={settings.t80ShopNameSize}
+        setShopNameSize={(v) => update("t80ShopNameSize", v)}
         itemsBold={settings.t80ItemsBold}
         setItemsBold={(v) => update("t80ItemsBold", v)}
         totalBold={settings.t80TotalBold}
         setTotalBold={(v) => update("t80TotalBold", v)}
-        totalLarge={settings.t80TotalLarge}
-        setTotalLarge={(v) => update("t80TotalLarge", v)}
+        totalItalic={settings.t80TotalItalic}
+        setTotalItalic={(v) => update("t80TotalItalic", v)}
+        totalSize={settings.t80TotalSize}
+        setTotalSize={(v) => update("t80TotalSize", v)}
       />
 
       <button onClick={save} disabled={isPending} className={`btn-primary w-full text-center disabled:opacity-60 ${saved ? "animate-save-success" : ""}`}>

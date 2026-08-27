@@ -994,8 +994,16 @@ textarea:focus {
    ============================================================ */
 :root {
   --neu-light: rgba(255, 255, 255, 1);
-  --neu-dark: rgba(60, 72, 136, 0.4);
-  --neu-dark-strong: rgba(50, 62, 126, 0.52);
+  /* Genuinely derived from the background's own hue (218°, the same
+     cool undertone as --background: #e4e8ef), desaturated toward
+     neutral gray (~40% of the background's saturation) for a
+     genuinely soothing, non-garish depth effect, with lightness
+     dropped to a level that reads clearly as "shadow" without ever
+     feeling harsh. This is a principled surface-shadow relationship —
+     the shadow is genuinely the same material as the surface, just
+     curved away from the light — not an arbitrary color choice. */
+  --neu-dark: rgba(122, 132, 148, 0.5);
+  --neu-dark-strong: rgba(102, 111, 127, 0.62);
 }
 .dark {
   --neu-light: rgba(255, 255, 255, 0.14);

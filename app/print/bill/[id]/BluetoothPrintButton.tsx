@@ -20,8 +20,8 @@ export function BluetoothPrintButton({ receipt, paperWidth }: { receipt: Receipt
     const settings = await getThermalPrintSettingsAction();
     const format =
       paperWidth === 32
-        ? { shopNameBold: settings.t58ShopNameBold, shopNameLarge: settings.t58ShopNameLarge, itemsBold: settings.t58ItemsBold, totalBold: settings.t58TotalBold, totalLarge: settings.t58TotalLarge }
-        : { shopNameBold: settings.t80ShopNameBold, shopNameLarge: settings.t80ShopNameLarge, itemsBold: settings.t80ItemsBold, totalBold: settings.t80TotalBold, totalLarge: settings.t80TotalLarge };
+        ? { shopNameBold: settings.t58ShopNameBold, shopNameItalic: settings.t58ShopNameItalic, shopNameSize: settings.t58ShopNameSize, itemsBold: settings.t58ItemsBold, totalBold: settings.t58TotalBold, totalItalic: settings.t58TotalItalic, totalSize: settings.t58TotalSize }
+        : { shopNameBold: settings.t80ShopNameBold, shopNameItalic: settings.t80ShopNameItalic, shopNameSize: settings.t80ShopNameSize, itemsBold: settings.t80ItemsBold, totalBold: settings.t80TotalBold, totalItalic: settings.t80TotalItalic, totalSize: settings.t80TotalSize };
     const bytes = buildReceiptEscPos(receipt, paperWidth, format);
     const result = await printViaBluetooth(bytes);
     if (result.error) {

@@ -262,28 +262,36 @@ export async function toggleFastBillingAction(enabled: boolean): Promise<{ error
 
 export type ThermalPrintSettings = {
   t58ShopNameBold: boolean;
-  t58ShopNameLarge: boolean;
+  t58ShopNameSize: number;
+  t58ShopNameItalic: boolean;
   t58ItemsBold: boolean;
   t58TotalBold: boolean;
-  t58TotalLarge: boolean;
+  t58TotalSize: number;
+  t58TotalItalic: boolean;
   t80ShopNameBold: boolean;
-  t80ShopNameLarge: boolean;
+  t80ShopNameSize: number;
+  t80ShopNameItalic: boolean;
   t80ItemsBold: boolean;
   t80TotalBold: boolean;
-  t80TotalLarge: boolean;
+  t80TotalSize: number;
+  t80TotalItalic: boolean;
 };
 
 const THERMAL_PRINT_DEFAULTS: ThermalPrintSettings = {
   t58ShopNameBold: true,
-  t58ShopNameLarge: true,
+  t58ShopNameSize: 2,
+  t58ShopNameItalic: false,
   t58ItemsBold: false,
   t58TotalBold: true,
-  t58TotalLarge: true,
+  t58TotalSize: 2,
+  t58TotalItalic: false,
   t80ShopNameBold: true,
-  t80ShopNameLarge: true,
+  t80ShopNameSize: 2,
+  t80ShopNameItalic: false,
   t80ItemsBold: false,
   t80TotalBold: true,
-  t80TotalLarge: true,
+  t80TotalSize: 2,
+  t80TotalItalic: false,
 };
 
 export async function getThermalPrintSettingsAction(): Promise<ThermalPrintSettings> {
@@ -293,15 +301,19 @@ export async function getThermalPrintSettingsAction(): Promise<ThermalPrintSetti
   if (!data) return THERMAL_PRINT_DEFAULTS;
   return {
     t58ShopNameBold: data.t58_shop_name_bold,
-    t58ShopNameLarge: data.t58_shop_name_large,
+    t58ShopNameSize: data.t58_shop_name_size,
+    t58ShopNameItalic: data.t58_shop_name_italic,
     t58ItemsBold: data.t58_items_bold,
     t58TotalBold: data.t58_total_bold,
-    t58TotalLarge: data.t58_total_large,
+    t58TotalSize: data.t58_total_size,
+    t58TotalItalic: data.t58_total_italic,
     t80ShopNameBold: data.t80_shop_name_bold,
-    t80ShopNameLarge: data.t80_shop_name_large,
+    t80ShopNameSize: data.t80_shop_name_size,
+    t80ShopNameItalic: data.t80_shop_name_italic,
     t80ItemsBold: data.t80_items_bold,
     t80TotalBold: data.t80_total_bold,
-    t80TotalLarge: data.t80_total_large,
+    t80TotalSize: data.t80_total_size,
+    t80TotalItalic: data.t80_total_italic,
   };
 }
 
@@ -311,15 +323,19 @@ export async function saveThermalPrintSettingsAction(settings: ThermalPrintSetti
   const { error } = await admin.from("thermal_print_settings").upsert({
     shop_id: session.shopId,
     t58_shop_name_bold: settings.t58ShopNameBold,
-    t58_shop_name_large: settings.t58ShopNameLarge,
+    t58_shop_name_size: settings.t58ShopNameSize,
+    t58_shop_name_italic: settings.t58ShopNameItalic,
     t58_items_bold: settings.t58ItemsBold,
     t58_total_bold: settings.t58TotalBold,
-    t58_total_large: settings.t58TotalLarge,
+    t58_total_size: settings.t58TotalSize,
+    t58_total_italic: settings.t58TotalItalic,
     t80_shop_name_bold: settings.t80ShopNameBold,
-    t80_shop_name_large: settings.t80ShopNameLarge,
+    t80_shop_name_size: settings.t80ShopNameSize,
+    t80_shop_name_italic: settings.t80ShopNameItalic,
     t80_items_bold: settings.t80ItemsBold,
     t80_total_bold: settings.t80TotalBold,
-    t80_total_large: settings.t80TotalLarge,
+    t80_total_size: settings.t80TotalSize,
+    t80_total_italic: settings.t80TotalItalic,
     updated_at: new Date().toISOString(),
   });
   if (error) {

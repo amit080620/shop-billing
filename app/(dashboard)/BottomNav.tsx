@@ -35,7 +35,7 @@ export function tabsFor(businessType: string, t: (key: string) => string, permis
   // Billing (only when the shop has genuinely turned it on).
   const RETAIL_TABS = [
     { href: "/bills/new", label: t("nav.sell"), icon: SellIcon },
-    { href: "/purchases/new", label: t("nav.buy"), icon: BuyIcon },
+    { href: "/purchases", label: t("nav.buy"), icon: BuyIcon },
     reportsTab,
     ...fastBillingTab,
   ];
@@ -43,7 +43,7 @@ export function tabsFor(businessType: string, t: (key: string) => string, permis
   const RESTAURANT_TABS = [
     { href: "/restaurant", label: t("nav.tables"), icon: TableIcon },
     { href: "/restaurant-kds", label: t("nav.kitchen"), icon: KitchenIcon },
-    { href: "/purchases/new", label: t("nav.buy"), icon: BuyIcon },
+    { href: "/purchases", label: t("nav.buy"), icon: BuyIcon },
     reportsTab,
     ...fastBillingTab,
   ];
@@ -51,7 +51,7 @@ export function tabsFor(businessType: string, t: (key: string) => string, permis
   const RENTAL_TABS = [
     { href: "/bills/new", label: t("nav.sell"), icon: SellIcon },
     { href: "/rentals/new", label: t("nav.newRental"), icon: BuyIcon },
-    { href: "/purchases/new", label: t("nav.buy"), icon: BuyIcon },
+    { href: "/purchases", label: t("nav.buy"), icon: BuyIcon },
     reportsTab,
     ...fastBillingTab,
   ];
@@ -59,14 +59,14 @@ export function tabsFor(businessType: string, t: (key: string) => string, permis
   const TRANSPORT_TABS = [
     { href: "/bills/new", label: t("nav.sell"), icon: SellIcon },
     { href: "/transport/vehicles", label: "Vehicles", icon: TruckNavIcon },
-    { href: "/purchases/new", label: t("nav.buy"), icon: BuyIcon },
+    { href: "/purchases", label: t("nav.buy"), icon: BuyIcon },
     reportsTab,
     ...fastBillingTab,
   ];
 
   const SERVICE_TABS = [
     { href: "/bills/new", label: "Sell", icon: SellIcon },
-    { href: "/purchases/new", label: t("nav.buy"), icon: BuyIcon },
+    { href: "/purchases", label: t("nav.buy"), icon: BuyIcon },
     { href: "/service", label: "Jobs", icon: ServiceIcon },
     reportsTab,
     ...fastBillingTab,
@@ -75,7 +75,7 @@ export function tabsFor(businessType: string, t: (key: string) => string, permis
   const SALON_TABS = [
     { href: "/bills/new", label: t("nav.sell"), icon: SellIcon },
     { href: "/salon/appointments", label: "Appointments", icon: SalonNavIcon },
-    { href: "/purchases/new", label: t("nav.buy"), icon: BuyIcon },
+    { href: "/purchases", label: t("nav.buy"), icon: BuyIcon },
     reportsTab,
     ...fastBillingTab,
   ];
@@ -83,7 +83,7 @@ export function tabsFor(businessType: string, t: (key: string) => string, permis
   const JEWELLERY_TABS = [
     { href: "/bills/new", label: t("nav.sell"), icon: SellIcon },
     { href: "/jewellery/rates", label: "Rate", icon: JewelleryNavIcon },
-    { href: "/purchases/new", label: t("nav.buy"), icon: BuyIcon },
+    { href: "/purchases", label: t("nav.buy"), icon: BuyIcon },
     reportsTab,
     ...fastBillingTab,
   ];
@@ -91,7 +91,7 @@ export function tabsFor(businessType: string, t: (key: string) => string, permis
   const CLINIC_TABS = [
     { href: "/clinic/prescriptions/new", label: "New Rx", icon: ClinicNavIcon },
     { href: "/clinic/appointments", label: "Appointments", icon: ClinicAppointmentIcon },
-    { href: "/purchases/new", label: t("nav.buy"), icon: BuyIcon },
+    { href: "/purchases", label: t("nav.buy"), icon: BuyIcon },
     reportsTab,
     ...fastBillingTab,
   ];
@@ -99,7 +99,7 @@ export function tabsFor(businessType: string, t: (key: string) => string, permis
   const GYM_TABS = [
     { href: "/gym/members/new", label: "Sell", icon: SellIcon },
     { href: "/gym/members", label: "Members", icon: TableIcon },
-    { href: "/purchases/new", label: t("nav.buy"), icon: BuyIcon },
+    { href: "/purchases", label: t("nav.buy"), icon: BuyIcon },
     reportsTab,
     ...fastBillingTab,
   ];
@@ -107,7 +107,7 @@ export function tabsFor(businessType: string, t: (key: string) => string, permis
   const LAB_TABS = [
     { href: "/lab/orders/new", label: "New order", icon: SellIcon },
     { href: "/lab/orders", label: "Orders", icon: TableIcon },
-    { href: "/purchases/new", label: t("nav.buy"), icon: BuyIcon },
+    { href: "/purchases", label: t("nav.buy"), icon: BuyIcon },
     reportsTab,
     ...fastBillingTab,
   ];

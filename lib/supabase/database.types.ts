@@ -802,9 +802,9 @@ export interface Database {
         Relationships: [];
       };
       thermal_print_settings: {
-        Row: { shop_id: string; t58_shop_name_bold: boolean; t58_shop_name_large: boolean; t58_items_bold: boolean; t58_total_bold: boolean; t58_total_large: boolean; t80_shop_name_bold: boolean; t80_shop_name_large: boolean; t80_items_bold: boolean; t80_total_bold: boolean; t80_total_large: boolean; updated_at: string };
-        Insert: { shop_id: string; t58_shop_name_bold?: boolean; t58_shop_name_large?: boolean; t58_items_bold?: boolean; t58_total_bold?: boolean; t58_total_large?: boolean; t80_shop_name_bold?: boolean; t80_shop_name_large?: boolean; t80_items_bold?: boolean; t80_total_bold?: boolean; t80_total_large?: boolean; updated_at?: string };
-        Update: { shop_id?: string; t58_shop_name_bold?: boolean; t58_shop_name_large?: boolean; t58_items_bold?: boolean; t58_total_bold?: boolean; t58_total_large?: boolean; t80_shop_name_bold?: boolean; t80_shop_name_large?: boolean; t80_items_bold?: boolean; t80_total_bold?: boolean; t80_total_large?: boolean; updated_at?: string };
+        Row: { shop_id: string; t58_shop_name_bold: boolean; t58_shop_name_size: number; t58_shop_name_italic: boolean; t58_items_bold: boolean; t58_total_bold: boolean; t58_total_size: number; t58_total_italic: boolean; t80_shop_name_bold: boolean; t80_shop_name_size: number; t80_shop_name_italic: boolean; t80_items_bold: boolean; t80_total_bold: boolean; t80_total_size: number; t80_total_italic: boolean; updated_at: string };
+        Insert: { shop_id: string; t58_shop_name_bold?: boolean; t58_shop_name_size?: number; t58_shop_name_italic?: boolean; t58_items_bold?: boolean; t58_total_bold?: boolean; t58_total_size?: number; t58_total_italic?: boolean; t80_shop_name_bold?: boolean; t80_shop_name_size?: number; t80_shop_name_italic?: boolean; t80_items_bold?: boolean; t80_total_bold?: boolean; t80_total_size?: number; t80_total_italic?: boolean; updated_at?: string };
+        Update: { shop_id?: string; t58_shop_name_bold?: boolean; t58_shop_name_size?: number; t58_shop_name_italic?: boolean; t58_items_bold?: boolean; t58_total_bold?: boolean; t58_total_size?: number; t58_total_italic?: boolean; t80_shop_name_bold?: boolean; t80_shop_name_size?: number; t80_shop_name_italic?: boolean; t80_items_bold?: boolean; t80_total_bold?: boolean; t80_total_size?: number; t80_total_italic?: boolean; updated_at?: string };
         Relationships: [];
       };
       prescription_templates: {

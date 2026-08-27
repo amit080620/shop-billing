@@ -4,6 +4,7 @@ import { LogoutButton } from "./LogoutButton";
 import { getTranslator } from "@/lib/i18n/server";
 import { getTerminology } from "@/lib/businessType";
 import { isModuleEnabled } from "@/lib/modules";
+import { MoreDrawerShell } from "./MoreDrawerShell";
 import { Users, Bell, Clock, Truck, Package, UserCog, Megaphone, HelpCircle, PartyPopper, WifiOff, CalendarClock, ChefHat, BookOpen, ClipboardCheck, ShieldCheck, Scissors, Gem, Store, Stethoscope, Palette, Wallet, Building2, Dumbbell, FlaskConical, Receipt as ReceiptIcon, AlertTriangle, Cake, PackagePlus, Wrench, Gift, Zap, Pill } from "lucide-react";
 
 export default async function MorePage() {
@@ -12,6 +13,7 @@ export default async function MorePage() {
   const terminology = getTerminology(session.businessType);
 
   return (
+    <MoreDrawerShell>
     <div className="flex flex-col gap-5">
       <h1 className="text-lg font-semibold text-foreground">{t("more.title")}</h1>
 
@@ -121,10 +123,6 @@ export default async function MorePage() {
         <MenuLink href="/catalog-orders" label="Catalog orders" sub="Review orders that came in" icon={CatalogIcon} tone="secondary" />
       </MenuGroup>
 
-      <MenuGroup title="Branding">
-        <MenuLink href="/invoice-settings" label="Invoice design" sub="Tagline, footer, terms, accent colour" icon={InvoiceDesignIcon} tone="secondary" />
-      </MenuGroup>
-
       <MenuGroup title="Money">
         <MenuLink href="/bills/all" label="All bills" sub="Browse & reprint any past bill" icon={({ className }) => <ReceiptIcon className={className} />} tone="brand" />
         {isModuleEnabled(session.enabledModules, "petty_cash") && (
@@ -139,13 +137,7 @@ export default async function MorePage() {
       )}
 
       <MenuGroup title="People">
-        <MenuLink
-          href="/parties"
-          label="Parties"
-          sub={session.businessType === "clinic" ? "Patients & suppliers" : session.businessType === "gym" ? "Members & suppliers" : "Customers & suppliers, one place"}
-          icon={PeopleIcon}
-        />
-        <MenuLink href="/purchases" label="Purchase" sub="Add purchase, pay suppliers, history" icon={TruckIcon} tone="secondary" />
+        <MenuLink href="/parties" label="Parties" sub={session.businessType === "clinic" ? "Patients & suppliers" : session.businessType === "gym" ? "Members & suppliers" : "Customers & suppliers, one place"} icon={PeopleIcon} />
         {session.role === "owner" && (
           <>
             <MenuLink href="/staff" label={t("more.staff")} sub={t("more.staff.sub")} icon={UsersIcon} tone="success" />
@@ -185,9 +177,6 @@ export default async function MorePage() {
         <MenuLink href="/fast-billing-settings" label="Fast billing" sub="Tap-to-add counter for busy hours" icon={ZapIcon} tone="secondary" />
       </MenuGroup>
 
-      <MenuGroup title="Shop setup">
-        <MenuLink href="/help" label="Help & guide" sub="How every screen and button works" icon={HelpIcon} tone="info" />
-      </MenuGroup>
 
       <div className="neu-card px-4 py-3.5 text-sm text-muted">
         {t("more.loggedInAs")} {session.staffName} ({session.email})
@@ -195,6 +184,7 @@ export default async function MorePage() {
 
       <LogoutButton logoutLabel={t("more.logout")} thisDeviceLabel="Log out of this device" allDevicesLabel="Log out of all devices" />
     </div>
+    </MoreDrawerShell>
   );
 }
 
@@ -304,9 +294,6 @@ function WrenchIcon({ className }: { className?: string }) {
 }
 function MegaphoneIcon({ className }: { className?: string }) {
   return <Megaphone className={className} size={18} strokeWidth={1.8} />;
-}
-function HelpIcon({ className }: { className?: string }) {
-  return <HelpCircle className={className} size={18} strokeWidth={1.8} />;
 }
 function FestivalIcon({ className }: { className?: string }) {
   return <PartyPopper className={className} size={18} strokeWidth={1.8} />;

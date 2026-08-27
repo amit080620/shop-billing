@@ -1254,15 +1254,19 @@ alter table customers add column if not exists known_allergies text;
 create table if not exists thermal_print_settings (
   shop_id uuid primary key references shops(id) on delete cascade,
   t58_shop_name_bold boolean not null default true,
-  t58_shop_name_large boolean not null default true,
+  t58_shop_name_size integer not null default 2 check (t58_shop_name_size between 1 and 6),
+  t58_shop_name_italic boolean not null default false,
   t58_items_bold boolean not null default false,
   t58_total_bold boolean not null default true,
-  t58_total_large boolean not null default true,
+  t58_total_size integer not null default 2 check (t58_total_size between 1 and 6),
+  t58_total_italic boolean not null default false,
   t80_shop_name_bold boolean not null default true,
-  t80_shop_name_large boolean not null default true,
+  t80_shop_name_size integer not null default 2 check (t80_shop_name_size between 1 and 6),
+  t80_shop_name_italic boolean not null default false,
   t80_items_bold boolean not null default false,
   t80_total_bold boolean not null default true,
-  t80_total_large boolean not null default true,
+  t80_total_size integer not null default 2 check (t80_total_size between 1 and 6),
+  t80_total_italic boolean not null default false,
   updated_at timestamptz not null default now()
 );
 alter table thermal_print_settings enable row level security;

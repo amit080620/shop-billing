@@ -5,7 +5,8 @@ import { usePathname } from "next/navigation";
 import { useTranslation } from "@/lib/i18n/useTranslation";
 import { tabsFor } from "./BottomNav";
 import type { Lang } from "@/lib/i18n/dictionary";
-import { HelpCircle, LayoutDashboard, Menu } from "lucide-react";
+import { HelpCircle, LayoutDashboard } from "lucide-react";
+import { HamburgerToggle } from "./HamburgerToggle";
 
 export function DesktopSidebar({
   lang,
@@ -55,9 +56,7 @@ export function DesktopSidebar({
         <Link href="/dashboard" className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-muted hover:bg-background" aria-label="Dashboard">
           <LayoutDashboard size={16} />
         </Link>
-        <Link href="/more" className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-muted hover:bg-background" aria-label="More">
-          <Menu size={16} />
-        </Link>
+        <HamburgerToggle className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-muted hover:bg-background" />
       </div>
       <ul className="flex flex-1 flex-col gap-0.5 overflow-y-auto p-3">
         {tabs.map((tab) => {

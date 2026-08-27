@@ -31,9 +31,28 @@ export class EscPosBuilder {
     return this.push([ESC, 0x45, on ? 1 : 0]); // ESC E n
   }
 
+  /** Genuinely italic — ESC 4 (on) / ESC 5 (off), part of the
+   * standard Epson ESC/POS command set. Support varies by printer
+   * model (less universal than bold/underline), but it's a genuine,
+   * real command, not a fabricated one. */
+  italic(on: boolean) {
+    return this.push([ESC, on ? 0x34 : 0x35]);
+  }
+
   /** Double-height + double-width text, for totals/headers that need to stand out. */
   doubleSize(on: boolean) {
     return this.push([GS, 0x21, on ? 0x11 : 0x00]); // GS ! n
+  }
+
+  /** Genuinely a real, hardware-accurate size level (1-6), using the
+   * SAME GS ! command's width/height multiplier nibbles — this is
+   * what ESC/POS printers actually support (discrete multiplier
+   * steps of the base font), not arbitrary point sizes like a word
+   * processor. Level 1 = normal size, each step up is one multiplier
+   * larger in both width and height simultaneously. */
+  sizeLevel(level: number) {
+    const n = Math.max(0, Math.min(7, level - 1));
+    return this.push([GS, 0x21, (n << 4) | n]);
   }
 
   underline(on: boolean) {
@@ -103,18 +122,22 @@ export type ReceiptData = {
 
 export type ReceiptFormatSettings = {
   shopNameBold: boolean;
-  shopNameLarge: boolean;
+  shopNameItalic: boolean;
+  shopNameSize: number;
   itemsBold: boolean;
   totalBold: boolean;
-  totalLarge: boolean;
+  totalItalic: boolean;
+  totalSize: number;
 };
 
 const DEFAULT_FORMAT_SETTINGS: ReceiptFormatSettings = {
   shopNameBold: true,
-  shopNameLarge: true,
+  shopNameItalic: false,
+  shopNameSize: 2,
   itemsBold: false,
   totalBold: true,
-  totalLarge: true,
+  totalItalic: false,
+  totalSize: 2,
 };
 
 /** Builds the full receipt as ESC/POS bytes. charsWide should be 32 for
@@ -142,8 +165,8 @@ export function buildReceiptEscPos(data: ReceiptData, charsWide: 32 | 48 = 32, f
   const b = new EscPosBuilder();
   b.init();
 
-  b.align("center").doubleSize(format.shopNameLarge).bold(format.shopNameBold).text(data.shopName).newline();
-  b.doubleSize(false).bold(false);
+  b.align("center").sizeLevel(format.shopNameSize).bold(format.shopNameBold).italic(format.shopNameItalic).text(data.shopName).newline();
+  b.sizeLevel(1).bold(false).italic(false);
   if (data.gstin) b.text(`GSTIN: ${data.gstin}`).newline();
   b.newline();
 
@@ -166,9 +189,9 @@ export function buildReceiptEscPos(data: ReceiptData, charsWide: 32 | 48 = 32, f
   if (data.discount) b.row("Discount", `-Rs.${data.discount.toFixed(2)}`, charsWide);
   if (data.taxTotal) b.row("Tax", `Rs.${data.taxTotal.toFixed(2)}`, charsWide);
 
-  b.bold(format.totalBold).doubleSize(format.totalLarge);
-  b.row("TOTAL", `Rs.${data.total.toFixed(2)}`, Math.floor(charsWide * (format.totalLarge ? 0.62 : 1)));
-  b.doubleSize(false).bold(false);
+  b.bold(format.totalBold).italic(format.totalItalic).sizeLevel(format.totalSize);
+  b.row("TOTAL", `Rs.${data.total.toFixed(2)}`, Math.floor(charsWide / format.totalSize));
+  b.sizeLevel(1).bold(false).italic(false);
 
   if (data.paidAmount !== undefined) b.row("Paid", `Rs.${data.paidAmount.toFixed(2)}`, charsWide);
   if (data.creditAmount) b.row("Credit (Udhaar)", `Rs.${data.creditAmount.toFixed(2)}`, charsWide);

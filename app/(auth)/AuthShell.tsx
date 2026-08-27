@@ -11,7 +11,7 @@ export function AuthShell({
   footer,
 }: {
   lang: Lang;
-  theme: "light" | "dark";
+  theme: "light" | "dark" | "auto";
   title: string;
   subtitle: string;
   children: React.ReactNode;

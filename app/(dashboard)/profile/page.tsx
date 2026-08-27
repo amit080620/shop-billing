@@ -9,7 +9,7 @@ import { getTranslator } from "@/lib/i18n/server";
 import { SubscriptionCard } from "@/app/components/SubscriptionCard";
 import { InstallAppButton } from "@/app/components/InstallAppButton";
 import { LogoutButton } from "../more/LogoutButton";
-import { Settings, ChevronRight, Printer } from "lucide-react";
+import { Settings, ChevronRight, Printer, Palette, HelpCircle } from "lucide-react";
 
 export default async function ProfilePage() {
   const session = await requireSession();
@@ -112,6 +112,23 @@ export default async function ProfilePage() {
         <ChevronRight size={16} className="shrink-0 text-muted" />
       </Link>
 
+      <Link
+        href="/invoice-settings"
+        className="neu-card flex items-center gap-3 px-4 py-3.5 transition active:scale-[0.98]"
+      >
+        <span
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-soft text-brand-text"
+          style={{ boxShadow: "-3px -3px 7px var(--neu-light), 3px 3px 7px var(--neu-dark)" }}
+        >
+          <Palette size={18} strokeWidth={1.8} />
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-medium text-foreground">Invoice design</p>
+          <p className="truncate text-xs text-muted">Tagline, footer, terms, accent colour</p>
+        </div>
+        <ChevronRight size={16} className="shrink-0 text-muted" />
+      </Link>
+
       <div className="flex flex-col gap-2">
         <p className="px-1 text-xs font-semibold uppercase tracking-wide text-muted">Preferences</p>
         <div className="neu-tray flex flex-col gap-2 p-2">
@@ -145,6 +162,23 @@ export default async function ProfilePage() {
           </div>
         </div>
       </div>
+
+      <Link
+        href="/help"
+        className="neu-card flex items-center gap-3 px-4 py-3.5 transition active:scale-[0.98]"
+      >
+        <span
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-soft text-brand-text"
+          style={{ boxShadow: "-3px -3px 7px var(--neu-light), 3px 3px 7px var(--neu-dark)" }}
+        >
+          <HelpCircle size={18} strokeWidth={1.8} />
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-medium text-foreground">Help & guide</p>
+          <p className="truncate text-xs text-muted">How every screen and button works</p>
+        </div>
+        <ChevronRight size={16} className="shrink-0 text-muted" />
+      </Link>
 
       <LogoutButton logoutLabel={t("more.logout")} thisDeviceLabel="Log out of this device" allDevicesLabel="Log out of all devices" />
     </div>
