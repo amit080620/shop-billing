@@ -94,20 +94,22 @@
   --muted: #7f7883;
   --border: rgba(255, 255, 255, 0.09);
 
-  /* Brand — same neutral charcoal family, shifted lighter so it still
-     reads clearly against the near-black background while keeping
-     enough contrast for white button text (~7.8:1 on --brand). */
-  --brand: #52525b;
-  --brand-dark: #3f3f46;
-  --brand-light: #a1a1aa;
-  --brand-soft: #232328;
-  /* Dedicated text-on-soft-background color — brighter than --brand so
-     "text-brand-dark label on bg-brand-soft chip" usages stay readable
-     against the dark tinted chip background (WCAG AA needs 4.5:1). */
-  --brand-text: #d4d4d8;
+  /* Brand — dark mode only: warm amber sampled from the reference
+     screenshot (~#CD8900 family). --brand itself is deepened to
+     ~5:1 contrast so hardcoded `bg-brand text-white` buttons stay
+     readable; the brighter, truer amber lives in --brand-light /
+     --brand-text / the gradient's bright stop, where it's paired
+     with dark backgrounds instead of white text. Light mode stays
+     the neutral charcoal — this color is dark-mode only. */
+  --brand: #9c6402;
+  --brand-dark: #7a4e02;
+  --brand-light: #cd8900;
+  --brand-soft: #2b2008;
+  --brand-text: #f0b84d;
+  --ray-gradient: linear-gradient(135deg, #f0b84d 0%, #cd8900 45%, #9c6402 100%);
 
-  --secondary: #71717a;
-  --secondary-soft: #232328;
+  --secondary: #cd8900;
+  --secondary-soft: #2b2008;
 
   --success: #35b985;
   --success-soft: #102420;
