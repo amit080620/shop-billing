@@ -155,14 +155,14 @@ export function NewPurchaseClient({
     lines.every((l) => l.description.trim() && l.quantity > 0);
 
   return (
-    <form action={formAction} className="flex flex-col gap-4">
+    <form action={formAction} className="flex flex-col gap-5">
       <input type="hidden" name="payload" value={payload} />
       <h1 className="text-lg font-semibold text-foreground">Record purchase</h1>
       <p className="text-sm text-muted">
         Enter what&apos;s on the vendor&apos;s bill — this is your input GST / ITC record.
       </p>
 
-      <section className="flex flex-col gap-2">
+      <section className="flex flex-col gap-2.5">
         <p className="text-sm font-medium text-foreground">Vendor</p>
         {vendor ? (
           <div className="flex items-center justify-between neu-card px-3.5 py-2.5">
@@ -206,14 +206,14 @@ export function NewPurchaseClient({
         )}
       </section>
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-3 neu-card p-3.5">
         <label className="flex flex-col gap-1.5 text-sm">
           <span className="font-medium text-foreground">Vendor&apos;s invoice #</span>
           <input
             value={vendorInvoiceNumber}
             onChange={(e) => setVendorInvoiceNumber(e.target.value)}
             required
-            className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-brand"
+            className="rounded-lg border border-border px-3 py-2.5 text-sm outline-none focus:border-brand"
           />
         </label>
         <label className="flex flex-col gap-1.5 text-sm">
@@ -223,12 +223,12 @@ export function NewPurchaseClient({
             value={purchaseDate}
             onChange={(e) => setPurchaseDate(e.target.value)}
             required
-            className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-brand"
+            className="rounded-lg border border-border px-3 py-2.5 text-sm outline-none focus:border-brand"
           />
         </label>
       </div>
 
-      <section className="flex flex-col gap-2">
+      <section className="flex flex-col gap-3">
         <p className="text-sm font-medium text-foreground">Items</p>
         {products.length > 0 && (
           <SearchableSelect
@@ -249,81 +249,85 @@ export function NewPurchaseClient({
           + Add item not in catalog
         </button>
 
-        {lines.map((line) => (
-          <div key={line.key} className="flex flex-col gap-2 neu-card p-3">
-            <div className="flex items-center gap-2">
-              <input
-                value={line.description}
-                onChange={(e) => updateLine(line.key, { description: e.target.value })}
-                placeholder="Item description"
-                className="min-w-0 flex-1 rounded-lg border border-border px-2.5 py-1.5 text-sm outline-none focus:border-brand"
-              />
-              <button
-                type="button"
-                onClick={() => removeLine(line.key)}
-                className="shrink-0 text-xs font-medium text-danger"
-              >
-                Remove
-              </button>
-            </div>
-            <div className="grid grid-cols-4 gap-2">
-              <LabeledInput
-                label="Qty"
-                type="number"
-                value={line.quantity}
-                onChange={(v) => updateLine(line.key, { quantity: Number(v) || 0 })}
-              />
-              <LabeledInput
-                label="Rate ₹"
-                type="number"
-                value={line.unitPrice}
-                onChange={(v) => updateLine(line.key, { unitPrice: Number(v) || 0 })}
-              />
-              <label className="flex flex-col gap-1 text-xs">
-                <span className="font-medium text-muted">GST %</span>
-                <select
-                  value={line.gstPercent}
-                  onChange={(e) => updateLine(line.key, { gstPercent: Number(e.target.value) })}
-                  className="rounded-lg border border-border px-2 py-1.5 text-sm outline-none focus:border-brand"
-                >
-                  {COMMON_GST_RATES.map((r) => (
-                    <option key={r} value={r}>
-                      {r}%
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <LabeledInput
-                label="HSN"
-                type="text"
-                value={line.hsnCode}
-                onChange={(v) => updateLine(line.key, { hsnCode: String(v) })}
-              />
-            </div>
-            {line.isPharma && (
-              <div className="grid grid-cols-3 gap-2 rounded-lg border border-dashed border-brand bg-brand-soft p-2">
-                <LabeledInput
-                  label="Batch no."
-                  type="text"
-                  value={line.batchNumber}
-                  onChange={(v) => updateLine(line.key, { batchNumber: String(v) })}
-                />
-                <LabeledInput
-                  label="Mfg date"
-                  type="date"
-                  value={line.mfgDate}
-                  onChange={(v) => updateLine(line.key, { mfgDate: String(v) })}
-                />
-                <LabeledInput
-                  label="Expiry date"
-                  type="date"
-                  value={line.expiryDate}
-                  onChange={(v) => updateLine(line.key, { expiryDate: String(v) })}
-                />
+        {lines.length > 0 && (
+          <div className="flex flex-col gap-2.5">
+            {lines.map((line) => (
+              <div key={line.key} className="flex flex-col gap-2.5 neu-card p-3.5">
+                <div className="flex items-center gap-2">
+                  <input
+                    value={line.description}
+                    onChange={(e) => updateLine(line.key, { description: e.target.value })}
+                    placeholder="Item description"
+                    className="min-w-0 flex-1 rounded-lg border border-border px-2.5 py-2 text-sm outline-none focus:border-brand"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removeLine(line.key)}
+                    className="shrink-0 text-xs font-medium text-danger"
+                  >
+                    Remove
+                  </button>
+                </div>
+                <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
+                  <LabeledInput
+                    label="Qty"
+                    type="number"
+                    value={line.quantity}
+                    onChange={(v) => updateLine(line.key, { quantity: Number(v) || 0 })}
+                  />
+                  <LabeledInput
+                    label="Rate ₹"
+                    type="number"
+                    value={line.unitPrice}
+                    onChange={(v) => updateLine(line.key, { unitPrice: Number(v) || 0 })}
+                  />
+                  <label className="flex flex-col gap-1 text-xs">
+                    <span className="font-medium text-muted">GST %</span>
+                    <select
+                      value={line.gstPercent}
+                      onChange={(e) => updateLine(line.key, { gstPercent: Number(e.target.value) })}
+                      className="rounded-lg border border-border px-2 py-2 text-sm outline-none focus:border-brand"
+                    >
+                      {COMMON_GST_RATES.map((r) => (
+                        <option key={r} value={r}>
+                          {r}%
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <LabeledInput
+                    label="HSN"
+                    type="text"
+                    value={line.hsnCode}
+                    onChange={(v) => updateLine(line.key, { hsnCode: String(v) })}
+                  />
+                </div>
+                {line.isPharma && (
+                  <div className="grid grid-cols-1 gap-2.5 rounded-lg border border-dashed border-brand bg-brand-soft p-2.5 sm:grid-cols-3">
+                    <LabeledInput
+                      label="Batch no."
+                      type="text"
+                      value={line.batchNumber}
+                      onChange={(v) => updateLine(line.key, { batchNumber: String(v) })}
+                    />
+                    <LabeledInput
+                      label="Mfg date"
+                      type="date"
+                      value={line.mfgDate}
+                      onChange={(v) => updateLine(line.key, { mfgDate: String(v) })}
+                    />
+                    <LabeledInput
+                      label="Expiry date"
+                      type="date"
+                      value={line.expiryDate}
+                      onChange={(v) => updateLine(line.key, { expiryDate: String(v) })}
+                    />
+                  </div>
+                )}
               </div>
-            )}
+            ))}
           </div>
-        ))}
+        )}
       </section>
 
       {lines.length > 0 && (
@@ -433,7 +437,7 @@ function LabeledInput({
         type={type}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="rounded-lg border border-border px-2 py-1.5 text-sm outline-none focus:border-brand"
+        className="rounded-lg border border-border px-2 py-2 text-sm outline-none focus:border-brand"
       />
     </label>
   );
