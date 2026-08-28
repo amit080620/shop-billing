@@ -235,6 +235,30 @@ export async function lookupCustomerByPhoneAction(phone: string): Promise<{ name
   return { name: data?.name?.trim() || null };
 }
 
+/** Same lookup as above but returns everything Fast Billing's checkout
+ * needs to actually REDEEM points against a sale (not just show the
+ * name) — the id to send loyalty RPCs against, and the live points
+ * balance to compute a redemption discount from. One query, so this
+ * stays fast enough to run on every phone digit typed. */
+export async function lookupCustomerForBillingAction(
+  phone: string,
+): Promise<{ id: string; name: string; loyaltyPoints: number } | null> {
+  const session = await requireSession();
+  const normalized = normalizePhone(phone);
+  if (normalized.length < 10) return null;
+
+  const admin = createSupabaseAdminClient();
+  const { data } = await admin
+    .from("customers")
+    .select("id, name, loyalty_points")
+    .eq("shop_id", session.shopId)
+    .eq("phone", normalized)
+    .maybeSingle();
+
+  if (!data) return null;
+  return { id: data.id, name: data.name, loyaltyPoints: Number(data.loyalty_points ?? 0) };
+}
+
 /** Called directly from client components (not via a <form>) to add a
  * customer inline mid-flow — e.g. from the New Bill screen — without
  * navigating away. Returns the created row so the caller can select it

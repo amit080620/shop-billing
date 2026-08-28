@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { X, Minus, Plus, Trash2, Search } from "lucide-react";
 import { formatMoney } from "@/lib/format";
 import { createBillAction, resolveFastBillingCustomerAction } from "@/lib/actions/bills";
-import { lookupCustomerByPhoneAction } from "@/lib/actions/customers";
+import { lookupCustomerForBillingAction } from "@/lib/actions/customers";
 import { QuantityGrid } from "./QuantityGrid";
 
 export type FastProduct = {
@@ -33,10 +33,12 @@ export function FastBillingClient({
   products,
   shopStateCode,
   businessType,
+  loyaltyRedemptionValue,
 }: {
   products: FastProduct[];
   shopStateCode: string | null;
   businessType: string;
+  loyaltyRedemptionValue: number;
 }) {
   const router = useRouter();
   const [cart, setCart] = useState<FastCartLine[]>([]);
@@ -198,6 +200,7 @@ export function FastBillingClient({
           onClose={() => setShowBill(false)}
           shopStateCode={shopStateCode}
           businessType={businessType}
+          loyaltyRedemptionValue={loyaltyRedemptionValue}
         />
       )}
     </div>
@@ -224,12 +227,14 @@ function FastBillSheet({
   onClose,
   shopStateCode,
   businessType,
+  loyaltyRedemptionValue,
 }: {
   cart: FastCartLine[];
   onUpdateQty: (productId: string, qty: number) => void;
   onClose: () => void;
   shopStateCode: string | null;
   businessType: string;
+  loyaltyRedemptionValue: number;
 }) {
   const [editingQty, setEditingQty] = useState<FastCartLine | null>(null);
   const subtotal = cart.reduce((s, l) => s + l.qty * l.price, 0);
@@ -291,7 +296,7 @@ function FastBillSheet({
             <span className="text-muted">Subtotal</span>
             <span className="font-semibold text-foreground">{formatMoney(subtotal)}</span>
           </div>
-          <FastCheckoutButton cart={cart} shopStateCode={shopStateCode} businessType={businessType} />
+          <FastCheckoutButton cart={cart} shopStateCode={shopStateCode} businessType={businessType} loyaltyRedemptionValue={loyaltyRedemptionValue} />
         </div>
       )}
 
@@ -316,18 +321,22 @@ function FastBillSheet({
  * here recalculates anything independently. */
 function FastCheckoutButton({
   cart,
+  loyaltyRedemptionValue,
 }: {
   cart: FastCartLine[];
   shopStateCode: string | null;
   businessType: string;
+  loyaltyRedemptionValue: number;
 }) {
   const [discountType, setDiscountType] = useState<"percent" | "flat">("flat");
   const [discountValue, setDiscountValue] = useState(0);
   const [showDiscountInput, setShowDiscountInput] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<"cash" | "card" | "upi" | "online" | "other" | "udhar">("cash");
-  const [udharName, setUdharName] = useState("");
-  const [udharPhone, setUdharPhone] = useState("");
-  const [udharError, setUdharError] = useState<string | null>(null);
+  const [customerName, setCustomerName] = useState("");
+  const [customerPhone, setCustomerPhone] = useState("");
+  const [customerError, setCustomerError] = useState<string | null>(null);
+  const [matchedCustomer, setMatchedCustomer] = useState<{ id: string; name: string; loyaltyPoints: number } | null>(null);
+  const [redeemPoints, setRedeemPoints] = useState(false);
   const [isResolvingCustomer, setIsResolvingCustomer] = useState(false);
   const [resolvedCustomerId, setResolvedCustomerId] = useState<string | null>(null);
   const [state, formAction, isPending] = useActionState(createBillAction, null);
@@ -336,8 +345,41 @@ function FastCheckoutButton({
   const subtotal = cart.reduce((s, l) => s + l.qty * l.price, 0);
   const isUdhar = paymentMethod === "udhar";
 
+  // Whichever customer this sale is actually linked to — either
+  // matched live off the phone number as it was typed, or (for a
+  // genuinely new customer) resolved at submit time below.
+  const effectiveCustomerId = matchedCustomer?.id ?? resolvedCustomerId;
+
+  // Same formula regular billing uses (NewBillClient) — capped at the
+  // customer's real balance AND at the subtotal itself, so redeeming
+  // can never discount a sale below ₹0 or spend more points than they
+  // actually have. Only makes sense combined with a flat discount
+  // (it IS a flat rupee amount), same restriction as regular billing.
+  const redemptionValue =
+    redeemPoints && matchedCustomer && discountType === "flat"
+      ? Math.min(Math.min(matchedCustomer.loyaltyPoints, 1_000_000) * loyaltyRedemptionValue, subtotal)
+      : 0;
+  const redeemedPointsCount = redemptionValue > 0 && loyaltyRedemptionValue > 0 ? Math.ceil(redemptionValue / loyaltyRedemptionValue) : 0;
+
+  function handlePhoneChange(value: string) {
+    const digits = value.replace(/\D/g, "").slice(0, 10);
+    setCustomerPhone(digits);
+    setCustomerError(null);
+    setMatchedCustomer(null);
+    setResolvedCustomerId(null);
+    setRedeemPoints(false);
+    if (digits.length === 10) {
+      lookupCustomerForBillingAction(digits).then((found) => {
+        if (found) {
+          setMatchedCustomer(found);
+          setCustomerName((prev) => (prev.trim() ? prev : found.name));
+        }
+      });
+    }
+  }
+
   const payload = JSON.stringify({
-    customerId: isUdhar ? resolvedCustomerId : null,
+    customerId: effectiveCustomerId,
     items: cart.map((l) => ({
       productId: l.productId,
       description: l.name,
@@ -348,7 +390,9 @@ function FastCheckoutButton({
       stockQuantity: l.qty,
     })),
     discountType,
-    discountValue,
+    // Points redemption combines with any manual flat discount,
+    // exactly like regular billing.
+    discountValue: discountType === "flat" ? discountValue + redemptionValue : discountValue,
     // Genuinely a real credit sale when Udhar is selected — paidAmount
     // stays 0 so the full amount is left outstanding against the
     // customer, exactly matching what "udhar" genuinely means. Every
@@ -357,6 +401,7 @@ function FastCheckoutButton({
     // else in the app), so there's no separate total math here.
     paidAmount: isUdhar ? 0 : Number.MAX_SAFE_INTEGER,
     paymentMethod: isUdhar ? "other" : paymentMethod,
+    redeemedPoints: discountType === "flat" && redeemPoints ? redeemedPointsCount : 0,
   });
 
   return (
@@ -372,7 +417,7 @@ function FastCheckoutButton({
             key={m}
             onClick={() => {
               setPaymentMethod(m);
-              setUdharError(null);
+              setCustomerError(null);
             }}
             className={`rounded-full py-2 text-xs font-medium capitalize ${
               paymentMethod === m ? (m === "udhar" ? "bg-credit text-white" : "bg-brand text-white") : "bg-surface text-muted"
@@ -383,36 +428,50 @@ function FastCheckoutButton({
         ))}
       </div>
 
-      {isUdhar && (
-        <div className="flex flex-col gap-2 rounded-lg border border-dashed border-credit bg-credit-soft p-2.5">
-          <p className="text-[11px] text-credit">
-            A mobile number is genuinely needed here — this is who the udhar is recovered from later.
+      {/* Customer — always available (not just for Udhar), since ANY
+          paid sale can earn/redeem loyalty points, not only credit
+          ones. Required only when Udhar is selected. */}
+      <div className={`flex flex-col gap-2 rounded-lg border p-2.5 ${isUdhar ? "border-dashed border-credit bg-credit-soft" : "border-border"}`}>
+        <p className={`text-[11px] ${isUdhar ? "text-credit" : "text-muted"}`}>
+          {isUdhar
+            ? "A mobile number is genuinely needed here — this is who the udhar is recovered from later."
+            : "Customer mobile (optional) — links this sale for loyalty points"}
+        </p>
+        <input
+          value={customerName}
+          onChange={(e) => setCustomerName(e.target.value)}
+          placeholder="Customer name (optional)"
+          className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand"
+        />
+        <input
+          value={customerPhone}
+          onChange={(e) => handlePhoneChange(e.target.value)}
+          placeholder={isUdhar ? "Mobile number — required for udhar" : "Mobile number (optional)"}
+          inputMode="numeric"
+          className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand"
+        />
+        {customerError && <p className="text-xs text-danger">{customerError}</p>}
+
+        {matchedCustomer && (
+          <p className="text-xs font-medium text-brand-text">
+            🎁 {matchedCustomer.name} has {matchedCustomer.loyaltyPoints} loyalty point{matchedCustomer.loyaltyPoints === 1 ? "" : "s"}
           </p>
-          <input
-            value={udharName}
-            onChange={(e) => setUdharName(e.target.value)}
-            placeholder="Customer name (optional)"
-            className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand"
-          />
-          <input
-            value={udharPhone}
-            onChange={(e) => {
-              const digits = e.target.value.replace(/\D/g, "").slice(0, 10);
-              setUdharPhone(digits);
-              setUdharError(null);
-              if (digits.length === 10) {
-                lookupCustomerByPhoneAction(digits).then((r) => {
-                  if (r.name) setUdharName((prev) => (prev.trim() ? prev : r.name!));
-                });
-              }
-            }}
-            placeholder="Mobile number — required for udhar"
-            inputMode="numeric"
-            className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand"
-          />
-          {udharError && <p className="text-xs text-danger">{udharError}</p>}
-        </div>
-      )}
+        )}
+
+        {matchedCustomer && matchedCustomer.loyaltyPoints > 0 && loyaltyRedemptionValue > 0 && (
+          discountType === "flat" ? (
+            <label className="flex items-center gap-2 rounded-lg bg-brand-soft px-3 py-2 text-sm">
+              <input type="checkbox" checked={redeemPoints} onChange={(e) => setRedeemPoints(e.target.checked)} className="h-4 w-4" />
+              <span className="text-brand-text">
+                Redeem {redeemedPointsCount || matchedCustomer.loyaltyPoints} points for{" "}
+                {formatMoney(redemptionValue || matchedCustomer.loyaltyPoints * loyaltyRedemptionValue)} off
+              </span>
+            </label>
+          ) : (
+            <p className="text-xs text-muted">Switch discount to &quot;Flat&quot; below to redeem their points.</p>
+          )
+        )}
+      </div>
 
       {/* Discount — a collapsed "Discount & payment" row used to hide
           this behind an extra tap; now it's one tap to open (or zero,
@@ -468,23 +527,27 @@ function FastCheckoutButton({
           type="button"
           disabled={isPending || isResolvingCustomer || cart.length === 0}
           onClick={async () => {
-            // Genuinely every non-Udhar payment method submits exactly
-            // as fast as before — the extra async step only happens
-            // when Udhar is genuinely selected, since that's the only
-            // case that genuinely needs a customer to recover from.
-            if (!isUdhar) {
+            // Udhar strictly needs a phone number to recover from.
+            if (isUdhar && !customerPhone.trim()) {
+              setCustomerError("Enter a mobile number to genuinely track this udhar for recovery");
+              return;
+            }
+            // Already resolved (existing customer matched by phone, or
+            // no phone typed at all) — submit immediately, no extra
+            // round trip, so most sales stay exactly as fast as
+            // before.
+            if (matchedCustomer || !customerPhone.trim()) {
               formRef.current?.requestSubmit();
               return;
             }
-            if (!udharPhone.trim()) {
-              setUdharError("Enter a mobile number to genuinely track this udhar for recovery");
-              return;
-            }
+            // A phone was typed but didn't match anyone on file yet —
+            // create them now so this sale actually links to a real
+            // customer record (and can start earning points).
             setIsResolvingCustomer(true);
-            const result = await resolveFastBillingCustomerAction(udharName, udharPhone);
+            const result = await resolveFastBillingCustomerAction(customerName, customerPhone);
             setIsResolvingCustomer(false);
             if (result.error || !result.customerId) {
-              setUdharError(result.error ?? "Could not save customer details");
+              setCustomerError(result.error ?? "Could not save customer details");
               return;
             }
             setResolvedCustomerId(result.customerId);
@@ -500,8 +563,8 @@ function FastCheckoutButton({
             : isResolvingCustomer
               ? "Saving customer…"
               : isUdhar
-                ? `Book as udhar · ${formatMoney(subtotal)}`
-                : `Checkout · ${formatMoney(subtotal)}`}
+                ? `Book as udhar · ${formatMoney(subtotal - redemptionValue)}`
+                : `Checkout · ${formatMoney(subtotal - redemptionValue)}`}
         </button>
       </form>
     </div>

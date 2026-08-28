@@ -8,9 +8,11 @@ export default async function FastBillingPage() {
   const admin = createSupabaseAdminClient();
 
   let fastBillingEnabled = false;
+  let loyaltyRedemptionValue = 1;
   try {
-    const { data: shop } = await admin.from("shops").select("fast_billing_enabled").eq("id", session.shopId).single();
+    const { data: shop } = await admin.from("shops").select("fast_billing_enabled, loyalty_redemption_value").eq("id", session.shopId).single();
     fastBillingEnabled = shop?.fast_billing_enabled ?? false;
+    loyaltyRedemptionValue = Number(shop?.loyalty_redemption_value ?? 1);
   } catch (err) {
     console.error("Could not check fast_billing_enabled", err);
   }
@@ -40,5 +42,12 @@ export default async function FastBillingPage() {
     };
   });
 
-  return <FastBillingClient products={items} shopStateCode={session.shopStateCode} businessType={session.businessType} />;
+  return (
+    <FastBillingClient
+      products={items}
+      shopStateCode={session.shopStateCode}
+      businessType={session.businessType}
+      loyaltyRedemptionValue={loyaltyRedemptionValue}
+    />
+  );
 }
