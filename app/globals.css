@@ -1069,3 +1069,21 @@ textarea:focus {
   background: #1f2937;
   color: #f3f4f6;
 }
+
+/* ─── Global "field clears the keyboard" rule ─────────────────────────
+   Applies to every input/textarea/select/contenteditable on every
+   screen in the app (mobile dashboard, auth pages, the offline PWA
+   shell — all share this globals.css). scroll-margin-bottom leaves
+   room under the field so scrollIntoView (native or the JS fallback
+   in FocusScrollIntoView below) doesn't just clear the visual
+   viewport but also the app's OWN fixed bottom nav (~88px) and the
+   on-screen keyboard sitting below it; scroll-margin-top clears the
+   sticky mobile header (~64px). Desktop is unaffected — nothing here
+   causes a layout shift when there's no keyboard. */
+input:not([type="checkbox"]):not([type="radio"]),
+textarea,
+select,
+[contenteditable="true"] {
+  scroll-margin-top: 76px;
+  scroll-margin-bottom: 140px;
+}

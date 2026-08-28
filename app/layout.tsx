@@ -4,6 +4,7 @@ import { getLang } from "@/lib/i18n/server";
 import { ServiceWorkerRegistration } from "./components/ServiceWorkerRegistration";
 import { ToastProvider } from "./components/Toast";
 import { AutoThemeApplier } from "./components/ThemeToggle";
+import { FocusScrollIntoView } from "./components/FocusScrollIntoView";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -59,6 +60,7 @@ export default async function RootLayout({
       <body className="font-sans antialiased">
         <AutoThemeApplier theme={theme} />
         <ServiceWorkerRegistration />
+        <FocusScrollIntoView />
         <ToastProvider>{children}</ToastProvider>
       </body>
     </html>
