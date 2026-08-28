@@ -17,7 +17,6 @@ export type SearchResult = {
 const STATIC_PAGES: { title: string; subtitle: string; href: string; keywords: string[] }[] = [
   { title: "Language", subtitle: "English, Hindi, Marathi", href: "/more", keywords: ["language", "hindi", "marathi", "bhasha"] },
   { title: "Theme", subtitle: "Light or dark mode", href: "/more", keywords: ["theme", "dark", "light", "mode"] },
-  { title: "Accent color", subtitle: "Blue, Copper, Gold, Purple, Coral", href: "/more", keywords: ["accent", "color", "colour", "blue", "copper", "gold", "purple", "coral"] },
   { title: "Text color", subtitle: "Black, Navy, Charcoal, Slate", href: "/more", keywords: ["text color", "text colour"] },
   { title: "New Bill", subtitle: "Sell / create a bill", href: "/bills/new", keywords: ["sell", "new bill", "billing", "invoice"] },
   { title: "All bills", subtitle: "Browse & reprint past bills", href: "/bills/all", keywords: ["bills", "reprint", "invoice history"] },
