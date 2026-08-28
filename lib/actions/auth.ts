@@ -5,6 +5,7 @@ import { headers, cookies } from "next/headers";
 import { createSupabaseServerClient } from "../supabase/server";
 import { createSupabaseAdminClient } from "../supabase/admin";
 import { signupSchema, loginSchema } from "../validation/schemas";
+import { revalidateStaffCache } from "../auth";
 
 export type ActionState = { error?: string } | null;
 
@@ -87,6 +88,7 @@ export async function signupAction(
     return { error: "Account created — please log in." };
   }
 
+  revalidateStaffCache();
   redirect("/");
 }
 
@@ -151,12 +153,15 @@ export async function loginAction(
   }
 
   if (permissions.includes("kitchen_only")) {
+    revalidateStaffCache();
     redirect("/restaurant-kds");
   }
   if (staffRow && staffRow.role !== "owner" && shop?.business_type === "restaurant") {
+    revalidateStaffCache();
     redirect("/restaurant");
   }
 
+  revalidateStaffCache();
   redirect("/");
 }
 
