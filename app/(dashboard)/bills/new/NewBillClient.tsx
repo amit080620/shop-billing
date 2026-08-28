@@ -11,6 +11,7 @@ import { calculateTransactionTotals } from "@/lib/validation/schemas";
 import { determineSupplyType, round2 } from "@/lib/gst";
 import { UNITS } from "@/lib/constants/states";
 import { formatMoney } from "@/lib/format";
+import { useSyncCalculatorAmount } from "@/lib/calculatorAmount";
 import { SearchableSelect } from "@/app/components/SearchableSelect";
 import { InlineQuickAdd } from "@/app/components/InlineQuickAdd";
 import { Spinner } from "@/app/components/Spinner";
@@ -221,6 +222,9 @@ export function NewBillClient({
   );
 
   const [state, formAction] = useActionState(createBillAction, null);
+
+  // The floating calculator picks this up automatically when opened.
+  useSyncCalculatorAmount(cart.length > 0 ? totals.total : null);
 
   function handleBarcodeScan(code: string) {
     const match = products.find((p) => p.barcode === code);

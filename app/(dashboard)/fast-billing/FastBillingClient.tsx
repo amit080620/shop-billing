@@ -6,6 +6,7 @@ import { X, Minus, Plus, Trash2, Search } from "lucide-react";
 import { formatMoney } from "@/lib/format";
 import { createBillAction, resolveFastBillingCustomerAction } from "@/lib/actions/bills";
 import { lookupCustomerForBillingAction } from "@/lib/actions/customers";
+import { useSyncCalculatorAmount } from "@/lib/calculatorAmount";
 import { QuantityGrid } from "./QuantityGrid";
 
 export type FastProduct = {
@@ -65,6 +66,9 @@ export function FastBillingClient({
 
   const itemCount = cart.reduce((s, l) => s + l.qty, 0);
   const total = cart.reduce((s, l) => s + l.qty * l.price, 0);
+
+  // The floating calculator picks this up automatically when opened.
+  useSyncCalculatorAmount(itemCount > 0 ? total : null);
 
   function addToCart(product: FastProduct, qty: number) {
     setCart((prev) => {

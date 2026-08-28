@@ -7,3 +7,12 @@ export async function getTheme(): Promise<"light" | "dark" | "auto"> {
   if (v === "dark" || v === "auto") return v;
   return "light";
 }
+
+/** Floating calculator — defaults ON since it's a genuinely useful
+ * everyday shop tool (checking change, quick math while someone's
+ * mid-purchase), toggleable off in Preferences for anyone who'd
+ * rather not have the bubble on screen. */
+export async function getCalculatorEnabled(): Promise<boolean> {
+  const cookieStore = await cookies();
+  return cookieStore.get("calc")?.value !== "off";
+}

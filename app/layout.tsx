@@ -1,10 +1,12 @@
 import type { Metadata, Viewport } from "next";
-import { getTheme } from "@/lib/theme";
+import { getTheme, getCalculatorEnabled } from "@/lib/theme";
 import { getLang } from "@/lib/i18n/server";
 import { ServiceWorkerRegistration } from "./components/ServiceWorkerRegistration";
 import { ToastProvider } from "./components/Toast";
 import { AutoThemeApplier } from "./components/ThemeToggle";
 import { FocusScrollIntoView } from "./components/FocusScrollIntoView";
+import { FloatingCalculator } from "./components/FloatingCalculator";
+import { CalculatorAmountProvider } from "@/lib/calculatorAmount";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -45,6 +47,7 @@ export default async function RootLayout({
 }>) {
   const theme = await getTheme();
   const lang = await getLang();
+  const calculatorEnabled = await getCalculatorEnabled();
 
   return (
     <html lang={lang} className={theme === "dark" ? "dark" : undefined}>
@@ -61,7 +64,10 @@ export default async function RootLayout({
         <AutoThemeApplier theme={theme} />
         <ServiceWorkerRegistration />
         <FocusScrollIntoView />
-        <ToastProvider>{children}</ToastProvider>
+        <CalculatorAmountProvider>
+          <ToastProvider>{children}</ToastProvider>
+          <FloatingCalculator enabled={calculatorEnabled} />
+        </CalculatorAmountProvider>
       </body>
     </html>
   );
