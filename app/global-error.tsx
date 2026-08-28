@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { logClientErrorAction } from "@/lib/actions/errorReporting";
 
 export default function GlobalError({
   error,
@@ -9,6 +10,8 @@ export default function GlobalError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const [autoRetried, setAutoRetried] = useState(false);
+
   useEffect(() => {
     // Genuinely the last line of defense — logs the full error even
     // when it happens in the root layout itself, before this app's
@@ -17,7 +20,29 @@ export default function GlobalError({
     if (error.digest) {
       console.error("Error digest (search this in Vercel logs):", error.digest);
     }
+
+    logClientErrorAction(error.message || "Unknown root-level client error", {
+      digest: error.digest ?? null,
+      stack: error.stack ?? null,
+      url: typeof window !== "undefined" ? window.location.pathname : null,
+      boundary: "global-error",
+    });
+
+    // A large share of "client-side exception" crashes right after
+    // reopening the app are a stale JS chunk left over from BEFORE the
+    // latest deploy (see ServiceWorkerRegistration's controllerchange
+    // handler for the other half of this fix). That's transient — a
+    // single reload fetches the current build and clears it. Guarded
+    // by sessionStorage so a genuinely repeating error still falls
+    // through to the manual "Try again" UI instead of reload-looping.
+    if (typeof window !== "undefined" && !window.sessionStorage.getItem("ray-crash-auto-retried")) {
+      window.sessionStorage.setItem("ray-crash-auto-retried", "1");
+      setAutoRetried(true);
+      window.location.reload();
+    }
   }, [error]);
+
+  if (autoRetried) return null;
 
   return (
     <html>
@@ -40,9 +65,12 @@ export default function GlobalError({
           </p>
           {error.digest && <p style={{ fontSize: "12px", color: "#999" }}>Reference: {error.digest}</p>}
           <button
-            onClick={() => reset()}
+            onClick={() => {
+              window.sessionStorage.removeItem("ray-crash-auto-retried");
+              reset();
+            }}
             style={{
-              background: "linear-gradient(135deg, #6a2bbf, #0427f3)",
+              background: "linear-gradient(135deg, #6366f1, #4338ca)",
               color: "white",
               border: "none",
               borderRadius: "10px",
