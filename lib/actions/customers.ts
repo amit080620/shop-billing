@@ -5,8 +5,52 @@ import { requireSession } from "../auth";
 import { createSupabaseAdminClient } from "../supabase/admin";
 import { customerSchema, paymentSchema } from "../validation/schemas";
 import { stateNameForCode } from "../constants/states";
+import { normalizePhone } from "../phone";
 
 export type ActionState = { error?: string } | null;
+
+/** The one place every "create a customer from just a phone number"
+ * flow (Fast Billing udhar, catalog orders, restaurant table booking,
+ * gym leads, quick-add from the bill screen, etc.) should go through.
+ * Normalizes the phone first so "+91 98765..." and "98765..." resolve
+ * to the same customer instead of splitting their udhar/loyalty/order
+ * history across two records. Fills in a blank name on an existing
+ * customer if one is now available, but never overwrites a name
+ * that's already set. */
+export async function findOrCreateCustomerByPhone(
+  admin: ReturnType<typeof createSupabaseAdminClient>,
+  shopId: string,
+  phone: string,
+  name?: string,
+): Promise<{ id: string; created: boolean } | null> {
+  const normalized = normalizePhone(phone);
+  if (!normalized) return null;
+
+  const { data: existing } = await admin
+    .from("customers")
+    .select("id, name")
+    .eq("shop_id", shopId)
+    .eq("phone", normalized)
+    .maybeSingle();
+
+  if (existing) {
+    if (name?.trim() && !existing.name?.trim()) {
+      await admin.from("customers").update({ name: name.trim() }).eq("id", existing.id);
+    }
+    return { id: existing.id, created: false };
+  }
+
+  const { data: created, error } = await admin
+    .from("customers")
+    .insert({ shop_id: shopId, name: name?.trim() || "Customer", phone: normalized })
+    .select("id")
+    .single();
+  if (error || !created) {
+    console.error("Could not find-or-create customer by phone", error);
+    return null;
+  }
+  return { id: created.id, created: true };
+}
 
 export async function createCustomerAction(
   _prev: ActionState,
@@ -25,10 +69,22 @@ export async function createCustomerAction(
   }
 
   const admin = createSupabaseAdminClient();
+  const normalized = normalizePhone(parsed.data.phone);
+
+  const { data: existing } = await admin
+    .from("customers")
+    .select("id")
+    .eq("shop_id", session.shopId)
+    .eq("phone", normalized)
+    .maybeSingle();
+  if (existing) {
+    return { error: "A customer with this phone number already exists" };
+  }
+
   const { error } = await admin.from("customers").insert({
     shop_id: session.shopId,
     name: parsed.data.name,
-    phone: parsed.data.phone,
+    phone: normalized,
     gstin: parsed.data.gstin ?? null,
     address: parsed.data.address ?? null,
     state_code: parsed.data.stateCode ?? null,
@@ -61,11 +117,12 @@ export async function updateCustomerAction(
   }
 
   const admin = createSupabaseAdminClient();
+  const normalized = normalizePhone(parsed.data.phone);
   const { error } = await admin
     .from("customers")
     .update({
       name: parsed.data.name,
-      phone: parsed.data.phone,
+      phone: normalized,
       gstin: parsed.data.gstin ?? null,
       address: parsed.data.address ?? null,
       state_code: parsed.data.stateCode ?? null,
@@ -141,9 +198,23 @@ export async function quickCreateCustomerAction(
   }
 
   const admin = createSupabaseAdminClient();
+  const normalized = normalizePhone(parsed.data.phone);
+
+  const { data: existing } = await admin
+    .from("customers")
+    .select("id, name, phone, gstin, state_code")
+    .eq("shop_id", session.shopId)
+    .eq("phone", normalized)
+    .maybeSingle();
+  if (existing) {
+    // Same person, already on file — reuse them instead of creating a
+    // second record that would split their udhar/loyalty history.
+    return { customer: existing };
+  }
+
   const { data, error } = await admin
     .from("customers")
-    .insert({ shop_id: session.shopId, name: parsed.data.name, phone: parsed.data.phone })
+    .insert({ shop_id: session.shopId, name: parsed.data.name, phone: normalized })
     .select("id, name, phone, gstin, state_code")
     .single();
   if (error || !data) {

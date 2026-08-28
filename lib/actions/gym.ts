@@ -5,6 +5,7 @@ import { requireOwner, requireSession } from "../auth";
 import { createSupabaseAdminClient } from "../supabase/admin";
 import { round2 } from "../gst";
 import { logError } from "../audit";
+import { findOrCreateCustomerByPhone } from "./customers";
 
 export type ActionState = { error?: string } | null;
 
@@ -84,18 +85,9 @@ export async function sellMembershipAction(input: {
 
   let memberId = input.memberId;
   if (!memberId) {
-    const { data: existing } = await admin.from("customers").select("id").eq("shop_id", session.shopId).eq("phone", input.memberPhone.trim()).maybeSingle();
-    if (existing) {
-      memberId = existing.id;
-    } else {
-      const { data: newMember, error: memberError } = await admin
-        .from("customers")
-        .insert({ shop_id: session.shopId, name: input.memberName.trim(), phone: input.memberPhone.trim() })
-        .select("id")
-        .single();
-      if (memberError || !newMember) return { error: "Could not create member record" };
-      memberId = newMember.id;
-    }
+    const result = await findOrCreateCustomerByPhone(admin, session.shopId, input.memberPhone, input.memberName);
+    if (!result) return { error: "Could not create member record" };
+    memberId = result.id;
   }
 
   const startDate = new Date();

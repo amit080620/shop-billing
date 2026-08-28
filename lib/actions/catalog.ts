@@ -6,6 +6,7 @@ import { createSupabaseAdminClient } from "../supabase/admin";
 import { round2 } from "../gst";
 import { logError } from "../audit";
 import { checkRateLimit } from "../rateLimit";
+import { findOrCreateCustomerByPhone } from "./customers";
 
 export async function saveCatalogSettingsAction(settings: {
   isEnabled: boolean;
@@ -196,27 +197,8 @@ export async function acceptCatalogOrderAction(
   let linkedCustomerId: string | null = null;
   const phoneDigits = request.customer_phone.replace(/\D/g, "");
   if (phoneDigits.length >= 10) {
-    const { data: existingCustomer } = await admin
-      .from("customers")
-      .select("id")
-      .eq("shop_id", session.shopId)
-      .eq("phone", request.customer_phone)
-      .maybeSingle();
-
-    if (existingCustomer) {
-      linkedCustomerId = existingCustomer.id;
-    } else {
-      const { data: newCustomer } = await admin
-        .from("customers")
-        .insert({
-          shop_id: session.shopId,
-          name: request.customer_name,
-          phone: request.customer_phone,
-        })
-        .select("id")
-        .single();
-      linkedCustomerId = newCustomer?.id ?? null;
-    }
+    const result = await findOrCreateCustomerByPhone(admin, session.shopId, request.customer_phone, request.customer_name);
+    linkedCustomerId = result?.id ?? null;
   }
 
   if (sendToKot && session.businessType === "restaurant") {

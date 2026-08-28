@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { requireSession, requireOwner } from "../auth";
 import { createSupabaseAdminClient } from "../supabase/admin";
 import { determineSupplyType, financialYearFor, round2, splitTax, splitTaxInclusive } from "../gst";
+import { findOrCreateCustomerByPhone } from "./customers";
 
 export type ActionState = { error?: string } | null;
 
@@ -228,32 +229,8 @@ export async function startOrderAction(
   let customerId: string | null = null;
   const trimmedPhone = customerPhone?.trim();
   if (trimmedPhone) {
-    const { data: existingCustomer } = await admin
-      .from("customers")
-      .select("id")
-      .eq("shop_id", session.shopId)
-      .eq("phone", trimmedPhone)
-      .maybeSingle();
-
-    if (existingCustomer) {
-      customerId = existingCustomer.id;
-      // Genuinely fill in the name if the returning guest didn't have
-      // one on file yet and one was given now — never overwrites an
-      // existing name.
-      if (customerName?.trim()) {
-        const { data: current } = await admin.from("customers").select("name").eq("id", existingCustomer.id).single();
-        if (current && !current.name?.trim()) {
-          await admin.from("customers").update({ name: customerName.trim() }).eq("id", existingCustomer.id);
-        }
-      }
-    } else {
-      const { data: newCustomer } = await admin
-        .from("customers")
-        .insert({ shop_id: session.shopId, name: customerName?.trim() || "Guest", phone: trimmedPhone })
-        .select("id")
-        .single();
-      customerId = newCustomer?.id ?? null;
-    }
+    const result = await findOrCreateCustomerByPhone(admin, session.shopId, trimmedPhone, customerName || "Guest");
+    customerId = result?.id ?? null;
   }
 
   const financialYear = financialYearFor(new Date());

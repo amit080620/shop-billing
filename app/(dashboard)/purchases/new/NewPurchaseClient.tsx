@@ -59,9 +59,11 @@ export function NewPurchaseClient({
   const [purchaseDate, setPurchaseDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [lines, setLines] = useState<Line[]>([]);
   const [paidAmount, setPaidAmount] = useState<number | "">("");
-  const [paymentMethod, setPaymentMethod] = useState<"cash" | "card" | "upi" | "online" | "other">("cash");
+  const [paymentMethod, setPaymentMethod] = useState<"cash" | "card" | "upi" | "online" | "other" | "udhar">("cash");
   const [itcEligible, setItcEligible] = useState(true);
   const [reverseCharge, setReverseCharge] = useState(false);
+
+  const isUdhar = paymentMethod === "udhar";
 
   const totals = useMemo(
     () =>
@@ -73,10 +75,10 @@ export function NewPurchaseClient({
         })),
         discountType: "flat",
         discountValue: 0,
-        paidAmount: typeof paidAmount === "number" ? paidAmount : 0,
+        paidAmount: isUdhar ? 0 : typeof paidAmount === "number" ? paidAmount : 0,
         supplyType: "intra", // preview only — server recomputes from real vendor state
       }),
-    [lines, paidAmount],
+    [lines, paidAmount, isUdhar],
   );
 
   const [state, formAction] = useActionState(createPurchaseAction, null);
@@ -142,8 +144,8 @@ export function NewPurchaseClient({
       expiryDate: l.isPharma && l.expiryDate ? l.expiryDate : undefined,
       mfgDate: l.isPharma && l.mfgDate ? l.mfgDate : undefined,
     })),
-    paidAmount: typeof paidAmount === "number" ? paidAmount : totals.total,
-    paymentMethod,
+    paidAmount: isUdhar ? 0 : typeof paidAmount === "number" ? paidAmount : totals.total,
+    paymentMethod: isUdhar ? "other" : paymentMethod,
     itcEligible,
     reverseCharge,
   });
@@ -343,23 +345,34 @@ export function NewPurchaseClient({
             type="number"
             min="0"
             step="0.01"
-            value={paidAmount}
+            value={isUdhar ? 0 : paidAmount}
+            disabled={isUdhar}
             onChange={(e) => setPaidAmount(e.target.value === "" ? "" : Number(e.target.value))}
             placeholder={formatMoney(totals.total)}
-            className="rounded-lg border border-border px-3.5 py-2.5 text-sm outline-none focus:border-brand"
+            className="rounded-lg border border-border px-3.5 py-2.5 text-sm outline-none focus:border-brand disabled:bg-surface-2 disabled:text-muted"
           />
+          {isUdhar && (
+            <span className="text-xs text-credit">
+              Marked as Udhar — nothing paid now, full amount goes to vendor outstanding.
+            </span>
+          )}
         </label>
         <div className="flex flex-col gap-1.5 text-sm">
           <span className="font-medium text-foreground">Paid via</span>
           <div className="flex flex-wrap gap-2">
-            {(["cash", "card", "upi", "online", "other"] as const).map((m) => (
+            {(["cash", "card", "upi", "online", "other", "udhar"] as const).map((m) => (
               <button
                 key={m}
                 type="button"
-                onClick={() => setPaymentMethod(m)}
+                onClick={() => {
+                  setPaymentMethod(m);
+                  if (m === "udhar") setPaidAmount(0);
+                }}
                 className={`rounded-full border px-3 py-1.5 text-xs font-medium capitalize ${
                   paymentMethod === m
-                    ? "border-brand bg-brand-soft text-brand-text"
+                    ? m === "udhar"
+                      ? "border-credit bg-credit-soft text-credit"
+                      : "border-brand bg-brand-soft text-brand-text"
                     : "border-border text-muted"
                 }`}
               >

@@ -7,6 +7,7 @@ import { createSupabaseAdminClient } from "../supabase/admin";
 import { billSchema, calculateTransactionTotals, type BillInput } from "../validation/schemas";
 import { determineSupplyType, financialYearFor, round2 } from "../gst";
 import { logAuditEvent } from "../audit";
+import { findOrCreateCustomerByPhone } from "./customers";
 
 export type ActionState = { error?: string } | null;
 
@@ -323,36 +324,11 @@ export async function resolveFastBillingCustomerAction(
   const session = await requireSession();
   const admin = createSupabaseAdminClient();
 
-  const trimmedPhone = phone.trim();
-  if (!trimmedPhone) return { error: "A mobile number is genuinely needed to track udhar for recovery" };
+  if (!phone.trim()) return { error: "A mobile number is genuinely needed to track udhar for recovery" };
 
-  const { data: existing } = await admin
-    .from("customers")
-    .select("id")
-    .eq("shop_id", session.shopId)
-    .eq("phone", trimmedPhone)
-    .maybeSingle();
-
-  if (existing) {
-    if (name.trim()) {
-      const { data: current } = await admin.from("customers").select("name").eq("id", existing.id).single();
-      if (current && !current.name?.trim()) {
-        await admin.from("customers").update({ name: name.trim() }).eq("id", existing.id);
-      }
-    }
-    return { customerId: existing.id };
-  }
-
-  const { data: created, error } = await admin
-    .from("customers")
-    .insert({ shop_id: session.shopId, name: name.trim() || "Udhar customer", phone: trimmedPhone })
-    .select("id")
-    .single();
-  if (error || !created) {
-    console.error("Could not create udhar customer", error);
-    return { error: "Could not save customer details" };
-  }
-  return { customerId: created.id };
+  const result = await findOrCreateCustomerByPhone(admin, session.shopId, phone, name || "Udhar customer");
+  if (!result) return { error: "Could not save customer details" };
+  return { customerId: result.id };
 }
 
 export async function createBillAction(
