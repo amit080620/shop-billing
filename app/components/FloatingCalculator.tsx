@@ -7,7 +7,13 @@ import { formatMoney } from "@/lib/format";
 
 const POSITION_KEY = "ray-calc-position";
 const BUBBLE_SIZE = 52;
+const EXPANDED_WIDTH = 280;
+const EXPANDED_HEIGHT = 420;
 const IDLE_DIM_MS = 3500;
+
+function getSize(isOpen: boolean): { w: number; h: number } {
+  return isOpen ? { w: EXPANDED_WIDTH, h: EXPANDED_HEIGHT } : { w: BUBBLE_SIZE, h: BUBBLE_SIZE };
+}
 
 function round(n: number): number {
   return Math.round(n * 1e8) / 1e8;
@@ -87,6 +93,22 @@ export function FloatingCalculator({ enabled }: { enabled: boolean }) {
     setPos({ x: window.innerWidth - BUBBLE_SIZE - 16, y: window.innerHeight - BUBBLE_SIZE - 112 });
   }, []);
 
+  useEffect(() => {
+    function onResize() {
+      setPos((current) => {
+        if (!current) return current;
+        const { w, h } = getSize(open);
+        return {
+          x: clamp(current.x, 8, window.innerWidth - w - 8),
+          y: clamp(current.y, 8, window.innerHeight - h - 8),
+        };
+      });
+    }
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
+
   function onDragStart(clientX: number, clientY: number) {
     if (!pos) return;
     dragState.current = { dragging: true, moved: false, startX: clientX, startY: clientY, originX: pos.x, originY: pos.y };
@@ -97,10 +119,10 @@ export function FloatingCalculator({ enabled }: { enabled: boolean }) {
     const dx = clientX - dragState.current.startX;
     const dy = clientY - dragState.current.startY;
     if (Math.abs(dx) > 4 || Math.abs(dy) > 4) dragState.current.moved = true;
-    const size = open ? 280 : BUBBLE_SIZE;
+    const { w, h } = getSize(open);
     setPos({
-      x: clamp(dragState.current.originX + dx, 8, window.innerWidth - size - 8),
-      y: clamp(dragState.current.originY + dy, 8, window.innerHeight - size - 8),
+      x: clamp(dragState.current.originX + dx, 8, window.innerWidth - w - 8),
+      y: clamp(dragState.current.originY + dy, 8, window.innerHeight - h - 8),
     });
   }
   function onDragEnd() {
@@ -131,6 +153,25 @@ export function FloatingCalculator({ enabled }: { enabled: boolean }) {
     return () => {
       if (idleTimer.current) clearTimeout(idleTimer.current);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
+
+  // The actual fix for "opens off-screen": the collapsed bubble (52px)
+  // can legally sit much closer to an edge than the expanded panel
+  // (280x420) can. The moment it opens, pull the position back inside
+  // bounds for the EXPANDED size — this is what stops a bubble parked
+  // near a corner from opening into a panel that's half off-screen.
+  useEffect(() => {
+    if (open) {
+      setPos((current) => {
+        if (!current) return current;
+        const { w, h } = getSize(true);
+        return {
+          x: clamp(current.x, 8, window.innerWidth - w - 8),
+          y: clamp(current.y, 8, window.innerHeight - h - 8),
+        };
+      });
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
