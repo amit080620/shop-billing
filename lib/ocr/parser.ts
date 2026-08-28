@@ -117,3 +117,68 @@ export function parsePettyCashFields(ocr: OCRResult): ExtractedPettyCashFields {
 // testable on its own" requirement.
 export const _internal = { parseAmount, correctNumericOCR, extractAmount, extractVendorName, extractDate };
 export type { OCRWord };
+
+/** A vendor bill's item rows are almost always "description ... qty
+ * ... rate" (sometimes with a trailing line total too, which is
+ * intentionally ignored here — quantity × rate is recomputed by the
+ * purchase form itself, so a mismatched OCR'd total can never
+ * silently override the two numbers that actually matter). Lines
+ * that don't match this shape (headers, the bill's own totals,
+ * GSTIN/address lines) are simply skipped — deterministic, no AI,
+ * and every result stays in the form's normal editable rows for
+ * review before saving, same as the menu-scan path.
+ *
+ * Deliberately token-by-token rather than one big regex: an ordinary
+ * word like "Oil" contains O/I/l, the exact letters this file treats
+ * as OCR digit-confusion, so a case-insensitive whole-line pattern
+ * can misread a real word as part of the price. Checking each
+ * whitespace-separated token on its own for being genuinely
+ * number-shaped avoids that. */
+export function parsePurchaseBillItems(rawLines: string[]): { description: string; quantity: number; unitPrice: number }[] {
+  const lines = rawLines.map((l) => l.trim().replace(/[|;:]+$/, "")).filter((l) => l.length > 2);
+  const skipWords = /^(total|subtotal|grand total|gstin|gst no|invoice|bill no|amount|net amount|cgst|sgst|igst|discount)\b/i;
+
+  function toNumber(token: string): number | null {
+    const cleaned = token.replace(/^(rs\.?|inr|₹)/i, "").replace(/,/g, "");
+    // Case-SENSITIVE on purpose — only the specific OCR-confusable
+    // letters (O, I, l, S, B, Z, g), not their lowercase/uppercase
+    // counterparts, which is what keeps real words from matching.
+    if (!/^[0-9OIlSBZg.]+$/.test(cleaned)) return null;
+    const n = parseFloat(correctNumericOCR(cleaned));
+    return Number.isFinite(n) && n > 0 ? n : null;
+  }
+
+  const items: { description: string; quantity: number; unitPrice: number }[] = [];
+  for (const line of lines) {
+    if (skipWords.test(line)) continue;
+    const tokens = line.split(/\s+/).filter(Boolean);
+    if (tokens.length < 3) continue;
+
+    const last = toNumber(tokens[tokens.length - 1]);
+    const secondLast = toNumber(tokens[tokens.length - 2]);
+    const thirdLast = tokens.length >= 3 ? toNumber(tokens[tokens.length - 3]) : null;
+
+    let quantity: number, unitPrice: number, descTokenCount: number;
+    if (last !== null && secondLast !== null && thirdLast !== null) {
+      // Three trailing numbers = qty, rate, line-total — take the
+      // first two, the total is recomputed by the form anyway.
+      quantity = thirdLast;
+      unitPrice = secondLast;
+      descTokenCount = tokens.length - 3;
+    } else if (last !== null && secondLast !== null) {
+      quantity = secondLast;
+      unitPrice = last;
+      descTokenCount = tokens.length - 2;
+    } else {
+      continue;
+    }
+
+    const description = tokens.slice(0, descTokenCount).join(" ").trim();
+    if (description.length < 2 || skipWords.test(description)) continue;
+    if (quantity <= 0 || quantity > 100000) continue;
+    if (unitPrice <= 0 || unitPrice > 10000000) continue;
+
+    items.push({ description, quantity, unitPrice });
+  }
+  return items;
+}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useRef } from "react";
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import { createPurchaseAction } from "@/lib/actions/purchases";
@@ -12,6 +12,9 @@ import type { Lang } from "@/lib/i18n/dictionary";
 import { SearchableSelect } from "@/app/components/SearchableSelect";
 import { InlineQuickAdd } from "@/app/components/InlineQuickAdd";
 import { InfoTooltip } from "@/app/components/InfoTooltip";
+import { rebuildLinesFromWords } from "@/lib/ocr/lineGrouping";
+import { parsePurchaseBillItems } from "@/lib/ocr/parser";
+import { Camera, Loader2 } from "lucide-react";
 
 type Vendor = { id: string; name: string; gstin: string | null; phone: string | null };
 type Product = { id: string; name: string; hsnCode: string | null; isPharma: boolean };
@@ -83,6 +86,60 @@ export function NewPurchaseClient({
   );
 
   const [state, formAction] = useActionState(createPurchaseAction, null);
+  const [isScanning, setIsScanning] = useState(false);
+  const [scanProgress, setScanProgress] = useState(0);
+  const [scanError, setScanError] = useState<string | null>(null);
+  const scanInputRef = useRef<HTMLInputElement>(null);
+
+  /** Photo of the vendor's paper bill -> item rows appended straight
+   * into the same editable list below (addCustomLine's shape) — this
+   * IS the review step, no separate screen needed. Same free,
+   * on-device OCR pipeline as Scan Menu; nothing new to maintain. */
+  async function handleScanBill(file: File) {
+    setScanError(null);
+    setIsScanning(true);
+    setScanProgress(0);
+    try {
+      const { preprocessImage } = await import("@/lib/ocr/preprocess");
+      const { runOCR, PSM } = await import("@/lib/ocr/tesseract");
+
+      const processed = await preprocessImage(file);
+      const ocr = await runOCR(
+        processed,
+        (status, p) => {
+          if (status === "recognizing text") setScanProgress(Math.round(p * 100));
+        },
+        PSM.SPARSE_TEXT,
+      );
+      const reconstructedLines = ocr.words.length > 0 ? rebuildLinesFromWords(ocr.words) : ocr.rawText.split("\n");
+      const parsed = parsePurchaseBillItems(reconstructedLines);
+
+      if (parsed.length === 0) {
+        setScanError("Couldn't find item rows on this bill — try a clearer, straight-on photo, or add items manually below.");
+      } else {
+        setLines((prev) => [
+          ...prev,
+          ...parsed.map((item) => ({
+            key: crypto.randomUUID(),
+            productId: null,
+            description: item.description,
+            hsnCode: "",
+            quantity: item.quantity,
+            unitPrice: item.unitPrice,
+            gstPercent: 0,
+            isPharma: false,
+            batchNumber: "",
+            expiryDate: "",
+            mfgDate: "",
+          })),
+        ]);
+      }
+    } catch {
+      setScanError("Scanning failed — please try again with a clearer photo.");
+    } finally {
+      setIsScanning(false);
+    }
+  }
 
   function addProduct(p: Product) {
     setLines((prev) => [
@@ -231,6 +288,30 @@ export function NewPurchaseClient({
 
       <section className="flex flex-col gap-3">
         <p className="text-sm font-medium text-foreground">Items</p>
+
+        <input
+          ref={scanInputRef}
+          type="file"
+          accept="image/*"
+          capture="environment"
+          className="hidden"
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (file) handleScanBill(file);
+            e.target.value = "";
+          }}
+        />
+        <button
+          type="button"
+          onClick={() => scanInputRef.current?.click()}
+          disabled={isScanning}
+          className="flex items-center justify-center gap-2 rounded-lg border border-dashed border-brand bg-brand-soft px-3.5 py-2.5 text-sm font-medium text-brand-text disabled:opacity-60"
+        >
+          {isScanning ? <Loader2 size={16} className="animate-spin" /> : <Camera size={16} />}
+          {isScanning ? `Reading the bill… ${scanProgress}%` : "Scan vendor bill — fill items from a photo"}
+        </button>
+        {scanError && <p className="text-xs text-danger">{scanError}</p>}
+
         {products.length > 0 && (
           <SearchableSelect
             lang={lang}
