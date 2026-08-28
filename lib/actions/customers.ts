@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { requireSession } from "../auth";
+import { requireSession, requireOwner } from "../auth";
 import { createSupabaseAdminClient } from "../supabase/admin";
 import { customerSchema, paymentSchema } from "../validation/schemas";
 import { stateNameForCode } from "../constants/states";
@@ -180,6 +180,35 @@ export async function recordPaymentAction(
   }
 
   revalidatePath(`/customers/${parsed.data.partyId}`);
+  return null;
+}
+
+/** Owner-only. Deliberately a real hard delete, not a soft-delete flag
+ * — but only succeeds for a customer with NO history at all (no
+ * bills, restaurant orders, rentals, payments, memberships...). The
+ * database's own foreign key constraints are what actually enforce
+ * this: if the delete fails with a foreign-key-violation, that IS the
+ * signal this customer has real financial/order history that must
+ * stay intact for GST/compliance reasons, so it's turned into a clear
+ * message instead of a raw DB error. This also means it stays correct
+ * automatically as new customer-linked tables get added later,
+ * without needing to individually list and check every one here. */
+export async function deleteCustomerAction(customerId: string): Promise<ActionState> {
+  const session = await requireOwner();
+  const admin = createSupabaseAdminClient();
+
+  const { error } = await admin.from("customers").delete().eq("id", customerId).eq("shop_id", session.shopId);
+  if (error) {
+    if (error.code === "23503") {
+      return {
+        error: "This customer has bills, orders, or payment history and can't be deleted — those records need to stay for GST/financial compliance.",
+      };
+    }
+    console.error("Could not delete customer", error);
+    return { error: "Could not delete customer" };
+  }
+
+  revalidatePath("/customers");
   return null;
 }
 

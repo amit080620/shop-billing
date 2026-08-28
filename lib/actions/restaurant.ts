@@ -540,7 +540,7 @@ export async function settleOrderAction(
 
   const { data: order } = await admin
     .from("restaurant_orders")
-    .select("id, status, table_id, total, taxable_amount, discount_value, discount_type, reservation_id")
+    .select("id, status, table_id, total, taxable_amount, discount_value, discount_type, reservation_id, customer_id")
     .eq("id", orderId)
     .eq("shop_id", session.shopId)
     .single();
@@ -587,6 +587,27 @@ export async function settleOrderAction(
       credit_amount: creditAmount,
     })
     .eq("id", orderId);
+
+  // Loyalty points — best-effort, same rule createBillAction uses:
+  // based on what was actually paid, only for a linked customer (a
+  // table settled with no phone captured has nowhere to credit
+  // points). Restaurant orders never went through this at all before,
+  // which is why a dine-in customer's points never grew no matter how
+  // many times they paid in full.
+  if (order.customer_id && paidAmount > 0) {
+    const { data: shop } = await admin.from("shops").select("loyalty_points_per_100").eq("id", session.shopId).single();
+    const rate = Number(shop?.loyalty_points_per_100 ?? 0);
+    if (rate > 0) {
+      const pointsEarned = Math.floor((paidAmount / 100) * rate);
+      if (pointsEarned > 0) {
+        const { error: pointsError } = await admin.rpc("increment_loyalty_points", {
+          p_customer_id: order.customer_id,
+          p_points: pointsEarned,
+        });
+        if (pointsError) console.error("Could not award loyalty points for restaurant order", order.customer_id, pointsError);
+      }
+    }
+  }
 
   const { data: settledTable } = await admin
     .from("restaurant_tables")

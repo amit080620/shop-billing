@@ -86,6 +86,7 @@ export default async function CustomerLedgerPage({
   return (
     <LedgerClient
       lang={lang}
+      isOwner={session.role === "owner"}
       specialty={specialty}
       growthLogs={(growthLogs ?? []).map((g) => ({
         id: g.id,

@@ -16,6 +16,7 @@ import { DownloadStatementButton } from "./DownloadStatementButton";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { EditCustomerButton } from "./EditCustomerButton";
+import { DeleteCustomerButton } from "./DeleteCustomerButton";
 import { PaymentMethodPicker } from "@/app/components/PaymentMethodPicker";
 import { useTranslation } from "@/lib/i18n/useTranslation";
 import type { Lang } from "@/lib/i18n/dictionary";
@@ -51,6 +52,7 @@ export function LedgerClient({
   payments,
   returns,
   lang,
+  isOwner,
   specialty,
   growthLogs,
   photos,
@@ -62,6 +64,7 @@ export function LedgerClient({
   payments: Payment[];
   returns: Return[];
   lang: Lang;
+  isOwner: boolean;
   specialty: string;
   growthLogs: { id: string; heightCm: number | null; weightKg: number | null; headCircumferenceCm: number | null; note: string | null; createdAt: string }[];
   photos: { id: string; photoUrl: string; label: string; note: string | null; createdAt: string }[];
@@ -102,7 +105,10 @@ export function LedgerClient({
             <h1 className="text-lg font-semibold text-foreground">{customer.name}</h1>
             <p className="text-sm text-muted">{customer.phone}</p>
           </div>
-          <EditCustomerButton customer={customer} />
+          <div className="flex flex-col items-end gap-2">
+            <EditCustomerButton customer={customer} />
+            {isOwner && <DeleteCustomerButton customerId={customer.id} customerName={customer.name} />}
+          </div>
         </div>
         <div className="mt-3 flex items-end justify-between">
           <div>

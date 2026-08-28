@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createTableAction, startOrderAction, renameTableAction, deleteTableAction, clearEmptyOrderAction } from "@/lib/actions/restaurant";
+import { lookupCustomerByPhoneAction } from "@/lib/actions/customers";
 import {
   listPendingTableRequestsAction,
   acceptTableOrderRequestAction,
@@ -551,7 +552,15 @@ export function TablesClient({ tables, lang }: { tables: Table[]; lang: Lang }) 
               />
               <input
                 value={bookingPhone}
-                onChange={(e) => setBookingPhone(e.target.value.replace(/\D/g, "").slice(0, 10))}
+                onChange={(e) => {
+                  const digits = e.target.value.replace(/\D/g, "").slice(0, 10);
+                  setBookingPhone(digits);
+                  if (digits.length === 10) {
+                    lookupCustomerByPhoneAction(digits).then((r) => {
+                      if (r.name) setBookingName((prev) => (prev.trim() ? prev : r.name!));
+                    });
+                  }
+                }}
                 placeholder="Mobile number (optional, for loyalty points)"
                 inputMode="numeric"
                 className="rounded-lg border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-brand"
