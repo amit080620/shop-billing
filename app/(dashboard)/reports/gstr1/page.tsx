@@ -21,62 +21,68 @@ export default async function Gstr1Page({
   const start = new Date(year, month - 1, 1);
   const end = new Date(year, month, 1);
 
-  const { data: bills } = await admin
-    .from("bills")
-    .select(
-      "id, invoice_number, created_at, taxable_amount, supply_type, cgst_amount, sgst_amount, igst_amount, total, customers ( name, gstin, state, state_code )",
-    )
-    .eq("shop_id", session.shopId)
-    .eq("status", "active")
-    .gte("created_at", start.toISOString())
-    .lt("created_at", end.toISOString())
-    .order("invoice_number");
+  const [{ data: bills }, { data: restaurantOrders }, { data: rentals }] = await Promise.all([
+    admin
+      .from("bills")
+      .select(
+        "id, invoice_number, created_at, taxable_amount, supply_type, cgst_amount, sgst_amount, igst_amount, total, customers ( name, gstin, state, state_code )",
+      )
+      .eq("shop_id", session.shopId)
+      .eq("status", "active")
+      .gte("created_at", start.toISOString())
+      .lt("created_at", end.toISOString())
+      .order("invoice_number"),
+    // Restaurant sales never touch `bills` — without folding them in here,
+    // a restaurant's entire outward-supply GST filing would silently miss
+    // every table's revenue. Dine-in customers essentially never carry a
+    // registered GSTIN, so these are added straight into B2C Small + the
+    // HSN/SAC summary, same as any other unregistered walk-in sale.
+    admin
+      .from("restaurant_orders")
+      .select("id, taxable_amount, cgst_amount, sgst_amount, igst_amount, total")
+      .eq("shop_id", session.shopId)
+      .eq("status", "settled")
+      .gte("settled_at", start.toISOString())
+      .lt("settled_at", end.toISOString()),
+    // Same reasoning for rentals — their own table, never `bills`.
+    admin
+      .from("rentals")
+      .select("id, rental_number, created_at, subtotal, supply_type, cgst_amount, sgst_amount, igst_amount, total, customers ( name, gstin, state, state_code )")
+      .eq("shop_id", session.shopId)
+      .neq("status", "cancelled")
+      .gte("created_at", start.toISOString())
+      .lt("created_at", end.toISOString()),
+  ]);
 
   const billIds = (bills ?? []).map((b) => b.id);
-  const { data: items } = billIds.length
-    ? await admin
-        .from("bill_items")
-        .select("bill_id, hsn_code, quantity, unit_price, gst_percent, line_subtotal, cgst_amount, sgst_amount, igst_amount, line_total")
-        .in("bill_id", billIds)
-    : { data: [] as never[] };
-
-  // Restaurant sales never touch `bills` — without folding them in here,
-  // a restaurant's entire outward-supply GST filing would silently miss
-  // every table's revenue. Dine-in customers essentially never carry a
-  // registered GSTIN, so these are added straight into B2C Small + the
-  // HSN/SAC summary, same as any other unregistered walk-in sale.
-  const { data: restaurantOrders } = await admin
-    .from("restaurant_orders")
-    .select("id, taxable_amount, cgst_amount, sgst_amount, igst_amount, total")
-    .eq("shop_id", session.shopId)
-    .eq("status", "settled")
-    .gte("settled_at", start.toISOString())
-    .lt("settled_at", end.toISOString());
   const restaurantOrderIds = (restaurantOrders ?? []).map((o) => o.id);
-  const { data: restaurantItems } = restaurantOrderIds.length
-    ? await admin
-        .from("restaurant_order_items")
-        .select("order_id, quantity, gst_percent, line_subtotal, cgst_amount, sgst_amount, igst_amount")
-        .in("order_id", restaurantOrderIds)
-    : { data: [] as never[] };
+  const rentalIds = (rentals ?? []).map((r) => r.id);
 
-  // Same reasoning for rentals — their own table, never `bills`.
-  const { data: rentals } = await admin
-    .from("rentals")
-    .select("id, rental_number, created_at, subtotal, supply_type, cgst_amount, sgst_amount, igst_amount, total, customers ( name, gstin, state, state_code )")
-    .eq("shop_id", session.shopId)
-    .neq("status", "cancelled")
-    .gte("created_at", start.toISOString())
-    .lt("created_at", end.toISOString());
+  // Each of these depends only on its own parent above, so they're
+  // independent of each other and can run concurrently too.
+  const [{ data: items }, { data: restaurantItems }, { data: rentalItems }] = await Promise.all([
+    billIds.length
+      ? admin
+          .from("bill_items")
+          .select("bill_id, hsn_code, quantity, unit_price, gst_percent, line_subtotal, cgst_amount, sgst_amount, igst_amount, line_total")
+          .in("bill_id", billIds)
+      : Promise.resolve({ data: [] as never[] }),
+    restaurantOrderIds.length
+      ? admin
+          .from("restaurant_order_items")
+          .select("order_id, quantity, gst_percent, line_subtotal, cgst_amount, sgst_amount, igst_amount")
+          .in("order_id", restaurantOrderIds)
+      : Promise.resolve({ data: [] as never[] }),
+    rentalIds.length
+      ? admin.from("rental_items").select("rental_id, product_id, quantity, gst_percent, line_subtotal, cgst_amount, sgst_amount, igst_amount").in("rental_id", rentalIds)
+      : Promise.resolve({ data: [] as never[] }),
+  ]);
+
   const normalizedRentals = (rentals ?? []).map((r) => {
     const customer = Array.isArray(r.customers) ? r.customers[0] : r.customers;
     return { ...r, customer: customer ?? null };
   });
 
-  const rentalIds = (rentals ?? []).map((r) => r.id);
-  const { data: rentalItems } = rentalIds.length
-    ? await admin.from("rental_items").select("rental_id, product_id, quantity, gst_percent, line_subtotal, cgst_amount, sgst_amount, igst_amount").in("rental_id", rentalIds)
-    : { data: [] as never[] };
   const rentalProductIds = [...new Set((rentalItems ?? []).map((i) => i.product_id).filter(Boolean))] as string[];
   const { data: rentalProducts } = rentalProductIds.length
     ? await admin.from("products").select("id, hsn_code").in("id", rentalProductIds)

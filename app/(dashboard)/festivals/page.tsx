@@ -13,15 +13,13 @@ export default async function FestivalsPage() {
   const session = await requireSession();
   const admin = createSupabaseAdminClient();
 
-  const { data: products } = await admin
-    .from("products")
-    .select("id, name, price, unit, stock_quantity, low_stock_threshold, track_inventory, categories ( name )")
-    .eq("shop_id", session.shopId);
-
-  const { data: notes } = await admin
-    .from("festival_notes")
-    .select("festival_slug, note")
-    .eq("shop_id", session.shopId);
+  const [{ data: products }, { data: notes }] = await Promise.all([
+    admin
+      .from("products")
+      .select("id, name, price, unit, stock_quantity, low_stock_threshold, track_inventory, categories ( name )")
+      .eq("shop_id", session.shopId),
+    admin.from("festival_notes").select("festival_slug, note").eq("shop_id", session.shopId),
+  ]);
   const notesBySlug = new Map((notes ?? []).map((n) => [n.festival_slug, n.note]));
 
   const catalog = (products ?? []).map((p) => ({
