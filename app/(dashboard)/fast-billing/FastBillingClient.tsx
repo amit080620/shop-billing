@@ -126,13 +126,30 @@ export function FastBillingClient({
           return (
             <button
               key={product.id}
-              onClick={() => !outOfStock && setSelectedProduct(product)}
+              onClick={() => {
+                if (outOfStock) return;
+                // A single tap instantly adds 1 — no modal in the way.
+                // Tapping again adds another. This is what makes
+                // repeat items (tea, samosas...) fast to ring up.
+                addToCart(product, 1);
+              }}
               disabled={outOfStock}
               className="relative flex flex-col overflow-hidden rounded-xl bg-surface text-left disabled:opacity-40"
               style={{ boxShadow: "-3px -3px 8px var(--neu-light), 3px 3px 8px var(--neu-dark)" }}
             >
               {inCart && (
-                <span className="absolute right-1 top-1 z-10 flex h-6 min-w-6 items-center justify-center rounded-full bg-brand px-1 text-xs font-bold text-white">
+                <span
+                  role="button"
+                  tabIndex={0}
+                  onClick={(e) => {
+                    // Jump straight to a specific quantity (e.g. "8
+                    // tea") without tapping the tile 8 times — the
+                    // one case that still genuinely needs the grid.
+                    e.stopPropagation();
+                    setSelectedProduct(product);
+                  }}
+                  className="absolute right-1 top-1 z-10 flex h-6 min-w-6 items-center justify-center rounded-full bg-brand px-1 text-xs font-bold text-white"
+                >
                   {inCart.qty}
                 </span>
               )}
@@ -306,8 +323,8 @@ function FastCheckoutButton({
 }) {
   const [discountType, setDiscountType] = useState<"percent" | "flat">("flat");
   const [discountValue, setDiscountValue] = useState(0);
+  const [showDiscountInput, setShowDiscountInput] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<"cash" | "card" | "upi" | "online" | "other" | "udhar">("cash");
-  const [showOptions, setShowOptions] = useState(false);
   const [udharName, setUdharName] = useState("");
   const [udharPhone, setUdharPhone] = useState("");
   const [udharError, setUdharError] = useState<string | null>(null);
@@ -343,96 +360,106 @@ function FastCheckoutButton({
   });
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-2.5">
       {state?.error && <p className="text-sm text-danger">{state.error}</p>}
 
-      <button onClick={() => setShowOptions((v) => !v)} className="flex items-center justify-between rounded-lg border border-border px-3 py-2 text-sm text-foreground">
-        <span>Discount &amp; payment</span>
-        <span className="text-muted">
-          {discountValue > 0 ? `${discountType === "percent" ? `${discountValue}%` : formatMoney(discountValue)} off · ` : ""}
-          {paymentMethod.toUpperCase()}
-        </span>
-      </button>
+      {/* Payment method — always-visible capsule row, no tap needed to
+          reveal it. Cash is the sane default so most sales need zero
+          taps here at all. */}
+      <div className="grid grid-cols-5 gap-1.5">
+        {(["cash", "upi", "card", "udhar", "other"] as const).map((m) => (
+          <button
+            key={m}
+            onClick={() => {
+              setPaymentMethod(m);
+              setUdharError(null);
+            }}
+            className={`rounded-full py-2 text-xs font-medium capitalize ${
+              paymentMethod === m ? (m === "udhar" ? "bg-credit text-white" : "bg-brand text-white") : "bg-surface text-muted"
+            }`}
+          >
+            {m}
+          </button>
+        ))}
+      </div>
 
-      {showOptions && (
-        <div className="neu-card flex flex-col gap-3 p-3">
-          <div>
-            <p className="mb-1.5 text-xs font-medium text-muted">Discount</p>
-            <div className="flex gap-2">
-              <button
-                onClick={() => setDiscountType("flat")}
-                className={`flex-1 rounded-lg py-2 text-sm font-medium ${discountType === "flat" ? "bg-brand text-white" : "bg-background text-muted"}`}
-              >
-                ₹ Flat
-              </button>
-              <button
-                onClick={() => setDiscountType("percent")}
-                className={`flex-1 rounded-lg py-2 text-sm font-medium ${discountType === "percent" ? "bg-brand text-white" : "bg-background text-muted"}`}
-              >
-                % Percent
-              </button>
-            </div>
-            <input
-              type="number"
-              min={0}
-              value={discountValue || ""}
-              onChange={(e) => setDiscountValue(Math.max(0, Number(e.target.value) || 0))}
-              placeholder="0"
-              className="mt-2 w-full rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-brand"
-            />
-          </div>
-
-          <div>
-            <p className="mb-1.5 text-xs font-medium text-muted">Payment method</p>
-            <div className="grid grid-cols-5 gap-1.5">
-              {(["cash", "upi", "card", "other", "udhar"] as const).map((m) => (
-                <button
-                  key={m}
-                  onClick={() => {
-                    setPaymentMethod(m);
-                    setUdharError(null);
-                  }}
-                  className={`rounded-lg py-2 text-xs font-medium capitalize ${
-                    paymentMethod === m ? (m === "udhar" ? "bg-credit text-white" : "bg-brand text-white") : "bg-background text-muted"
-                  }`}
-                >
-                  {m}
-                </button>
-              ))}
-            </div>
-
-            {isUdhar && (
-              <div className="mt-2.5 flex flex-col gap-2 rounded-lg border border-dashed border-credit bg-credit-soft p-2.5">
-                <p className="text-[11px] text-credit">
-                  A mobile number is genuinely needed here — this is who the udhar is recovered from later.
-                </p>
-                <input
-                  value={udharName}
-                  onChange={(e) => setUdharName(e.target.value)}
-                  placeholder="Customer name (optional)"
-                  className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand"
-                />
-                <input
-                  value={udharPhone}
-                  onChange={(e) => {
-                    const digits = e.target.value.replace(/\D/g, "").slice(0, 10);
-                    setUdharPhone(digits);
-                    setUdharError(null);
-                    if (digits.length === 10) {
-                      lookupCustomerByPhoneAction(digits).then((r) => {
-                        if (r.name) setUdharName((prev) => (prev.trim() ? prev : r.name!));
-                      });
-                    }
-                  }}
-                  placeholder="Mobile number — required for udhar"
-                  inputMode="numeric"
-                  className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand"
-                />
-                {udharError && <p className="text-xs text-danger">{udharError}</p>}
-              </div>
-            )}
-          </div>
+      {isUdhar && (
+        <div className="flex flex-col gap-2 rounded-lg border border-dashed border-credit bg-credit-soft p-2.5">
+          <p className="text-[11px] text-credit">
+            A mobile number is genuinely needed here — this is who the udhar is recovered from later.
+          </p>
+          <input
+            value={udharName}
+            onChange={(e) => setUdharName(e.target.value)}
+            placeholder="Customer name (optional)"
+            className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand"
+          />
+          <input
+            value={udharPhone}
+            onChange={(e) => {
+              const digits = e.target.value.replace(/\D/g, "").slice(0, 10);
+              setUdharPhone(digits);
+              setUdharError(null);
+              if (digits.length === 10) {
+                lookupCustomerByPhoneAction(digits).then((r) => {
+                  if (r.name) setUdharName((prev) => (prev.trim() ? prev : r.name!));
+                });
+              }
+            }}
+            placeholder="Mobile number — required for udhar"
+            inputMode="numeric"
+            className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand"
+          />
+          {udharError && <p className="text-xs text-danger">{udharError}</p>}
         </div>
+      )}
+
+      {/* Discount — a collapsed "Discount & payment" row used to hide
+          this behind an extra tap; now it's one tap to open (or zero,
+          once a discount is already set — the summary itself stays
+          tappable to change it), directly on this screen. */}
+      {showDiscountInput ? (
+        <div className="flex flex-col gap-2 rounded-lg border border-border p-2.5">
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-medium text-muted">Discount</p>
+            <button onClick={() => setShowDiscountInput(false)} className="text-xs text-muted">
+              Done
+            </button>
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setDiscountType("flat")}
+              className={`flex-1 rounded-lg py-2 text-sm font-medium ${discountType === "flat" ? "bg-brand text-white" : "bg-background text-muted"}`}
+            >
+              ₹ Flat
+            </button>
+            <button
+              onClick={() => setDiscountType("percent")}
+              className={`flex-1 rounded-lg py-2 text-sm font-medium ${discountType === "percent" ? "bg-brand text-white" : "bg-background text-muted"}`}
+            >
+              % Percent
+            </button>
+          </div>
+          <input
+            type="number"
+            min={0}
+            autoFocus
+            value={discountValue || ""}
+            onChange={(e) => setDiscountValue(Math.max(0, Number(e.target.value) || 0))}
+            placeholder="0"
+            className="w-full rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-brand"
+          />
+        </div>
+      ) : (
+        <button
+          onClick={() => setShowDiscountInput(true)}
+          className="flex items-center justify-between rounded-lg border border-border px-3 py-2 text-sm text-foreground"
+        >
+          <span>Discount</span>
+          <span className="text-muted">
+            {discountValue > 0 ? `${discountType === "percent" ? `${discountValue}%` : formatMoney(discountValue)} off` : "None · tap to add"}
+          </span>
+        </button>
       )}
 
       <form ref={formRef} action={formAction}>
