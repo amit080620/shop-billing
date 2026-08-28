@@ -135,44 +135,163 @@
 }
 
 /* ============================================================
-   Accent color choice — Blue (default, matches the logo) or
-   Saffron. Only the brand tokens change; secondary/semantic
-   colors (success/warning/danger etc.) stay the same in both, so
-   status meaning never gets confused with the accent choice.
+   Accent color choice — Blue (default, matches the logo) or one of
+   four material-matched themes: Copper, Gold, Purple, Coral. Only
+   the brand tokens change in light mode; secondary/semantic colors
+   (success/warning/danger etc.) stay the same across all of them so
+   status meaning never gets confused with the accent choice. In dark
+   mode each theme also warms/cools the base surfaces themselves
+   (background, cards, borders, neumorphic shadows) to match its hue,
+   so it reads as a genuinely different dark theme, not just a
+   different button color.
    ============================================================ */
-[data-accent="saffron"] {
-  --brand: #e8720e;
-  --brand-dark: #b85400;
-  --brand-light: #ff9d40;
-  --brand-soft: #fff3e5;
-  --brand-text: #b85400;
-  --ray-gradient: linear-gradient(135deg, #e8720e 0%, #ff9d40 50%, #ffc178 100%);
-  --neu-dark: rgba(150, 90, 30, 0.32);
-  --neu-dark-strong: rgba(130, 76, 22, 0.44);
+
+/* ---------- Copper ---------- */
+[data-accent="copper"] {
+  --brand: #8f5140;
+  --brand-dark: #63382d;
+  --brand-light: #c47a61;
+  --brand-soft: #fbeeea;
+  --brand-text: #63382d;
+  --secondary: #ad6752;
+  --secondary-soft: #fbeeea;
+  --ray-gradient: linear-gradient(135deg, #e8ae95 0%, #c47a61 45%, #8f5140 100%);
+  --neu-dark: rgba(99, 56, 45, 0.32);
+  --neu-dark-strong: rgba(80, 45, 36, 0.44);
 }
-.dark[data-accent="saffron"] {
-  --brand: #ffa94d;
-  --brand-dark: #e8871a;
-  --brand-light: #ffc178;
-  --brand-soft: #3d2410;
-  --brand-text: #ffb366;
-  --ray-gradient: linear-gradient(135deg, #e8871a 0%, #ffa94d 50%, #ffc178 100%);
+.dark[data-accent="copper"] {
+  --background: #140f0d;
+  --surface: #1c1512;
+  --surface-2: #241b17;
+  --overlay: #241b17;
+  --edge-highlight: rgba(255, 180, 150, 0.06);
+  --foreground: #f5ece7;
+  --muted: #a68e83;
+  --border: rgba(196, 122, 97, 0.16);
+
+  --brand: #c47a61;
+  --brand-dark: #8f5140;
+  --brand-light: #e8ae95;
+  --brand-soft: #2a1a15;
+  --brand-text: #e8ae95;
+  --secondary: #ad6752;
+  --secondary-soft: #2a1a15;
+  --ray-gradient: linear-gradient(135deg, #f4d5c7 0%, #e8ae95 30%, #c47a61 62%, #8f5140 100%);
+
+  --neu-light: rgba(255, 190, 160, 0.08);
+  --neu-dark: rgba(0, 0, 0, 0.74);
+  --neu-dark-strong: rgba(0, 0, 0, 0.86);
 }
-[data-accent="gray"] {
-  --brand: #475569;
-  --brand-dark: #334155;
-  --brand-light: #64748b;
-  --brand-soft: #eef1f5;
-  --brand-text: #334155;
-  --ray-gradient: linear-gradient(135deg, #475569 0%, #64748b 50%, #94a3b8 100%);
+
+/* ---------- Gold / Amber (rich amber-orange-gold, not champagne) ---------- */
+[data-accent="gold"] {
+  --brand: #d87520;
+  --brand-dark: #b85d17;
+  --brand-light: #f2b84f;
+  --brand-soft: #fef2e2;
+  --brand-text: #b85d17;
+  --secondary: #e99535;
+  --secondary-soft: #fef2e2;
+  --ray-gradient: linear-gradient(135deg, #fbe9a0 0%, #f2b84f 45%, #d87520 100%);
+  --neu-dark: rgba(184, 93, 23, 0.3);
+  --neu-dark-strong: rgba(150, 75, 15, 0.42);
 }
-.dark[data-accent="gray"] {
-  --brand: #94a3b8;
-  --brand-dark: #64748b;
-  --brand-light: #cbd5e1;
-  --brand-soft: #2a3240;
-  --brand-text: #cbd5e1;
-  --ray-gradient: linear-gradient(135deg, #64748b 0%, #94a3b8 50%, #cbd5e1 100%);
+.dark[data-accent="gold"] {
+  --background: #150f08;
+  --surface: #1f160d;
+  --surface-2: #271c11;
+  --overlay: #271c11;
+  --edge-highlight: rgba(255, 210, 130, 0.06);
+  --foreground: #f7efdf;
+  --muted: #ab9a76;
+  --border: rgba(217, 149, 53, 0.16);
+
+  --brand: #f2b84f;
+  --brand-dark: #d87520;
+  --brand-light: #fbe9a0;
+  --brand-soft: #2c2109;
+  --brand-text: #fbe9a0;
+  --secondary: #e99535;
+  --secondary-soft: #2c2109;
+  --ray-gradient: linear-gradient(135deg, #fff7d8 0%, #fbe9a0 28%, #f2b84f 58%, #d87520 82%, #8a3f12 100%);
+
+  --neu-light: rgba(255, 220, 150, 0.09);
+  --neu-dark: rgba(0, 0, 0, 0.74);
+  --neu-dark-strong: rgba(0, 0, 0, 0.86);
+}
+
+/* ---------- Purple / Violet ---------- */
+[data-accent="purple"] {
+  --brand: #4b2fa8;
+  --brand-dark: #30208f;
+  --brand-light: #874fd0;
+  --brand-soft: #f4eefc;
+  --brand-text: #30208f;
+  --secondary: #6942c0;
+  --secondary-soft: #f4eefc;
+  --ray-gradient: linear-gradient(135deg, #cc82e8 0%, #874fd0 45%, #4b2fa8 100%);
+  --neu-dark: rgba(48, 32, 143, 0.28);
+  --neu-dark-strong: rgba(38, 24, 115, 0.4);
+}
+.dark[data-accent="purple"] {
+  --background: #120a24;
+  --surface: #1a1030;
+  --surface-2: #22163a;
+  --overlay: #22163a;
+  --edge-highlight: rgba(200, 160, 255, 0.06);
+  --foreground: #f0eaf9;
+  --muted: #a397c2;
+  --border: rgba(135, 79, 208, 0.18);
+
+  --brand: #874fd0;
+  --brand-dark: #4b2fa8;
+  --brand-light: #cc82e8;
+  --brand-soft: #221336;
+  --brand-text: #cc82e8;
+  --secondary: #6942c0;
+  --secondary-soft: #221336;
+  --ray-gradient: linear-gradient(135deg, #f8ddfb 0%, #cc82e8 30%, #874fd0 62%, #4b2fa8 100%);
+
+  --neu-light: rgba(200, 160, 255, 0.08);
+  --neu-dark: rgba(0, 0, 0, 0.74);
+  --neu-dark-strong: rgba(0, 0, 0, 0.86);
+}
+
+/* ---------- Coral / Red-Orange ---------- */
+[data-accent="coral"] {
+  --brand: #e22f24;
+  --brand-dark: #c71d16;
+  --brand-light: #f66a4d;
+  --brand-soft: #ffede7;
+  --brand-text: #c71d16;
+  --secondary: #ee4935;
+  --secondary-soft: #ffede7;
+  --ray-gradient: linear-gradient(135deg, #ffaa83 0%, #f66a4d 45%, #e22f24 100%);
+  --neu-dark: rgba(199, 29, 22, 0.26);
+  --neu-dark-strong: rgba(160, 20, 15, 0.38);
+}
+.dark[data-accent="coral"] {
+  --background: #170b09;
+  --surface: #201310;
+  --surface-2: #291a15;
+  --overlay: #291a15;
+  --edge-highlight: rgba(255, 170, 130, 0.06);
+  --foreground: #f9ece7;
+  --muted: #b3897d;
+  --border: rgba(238, 73, 53, 0.16);
+
+  --brand: #f66a4d;
+  --brand-dark: #e22f24;
+  --brand-light: #ffaa83;
+  --brand-soft: #2c130e;
+  --brand-text: #ffaa83;
+  --secondary: #ee4935;
+  --secondary-soft: #2c130e;
+  --ray-gradient: linear-gradient(135deg, #ffd0bb 0%, #ffaa83 30%, #f66a4d 62%, #e22f24 100%);
+
+  --neu-light: rgba(255, 190, 160, 0.08);
+  --neu-dark: rgba(0, 0, 0, 0.74);
+  --neu-dark-strong: rgba(0, 0, 0, 0.86);
 }
 
 /* Text color choice — besides the default near-black. Only applies in

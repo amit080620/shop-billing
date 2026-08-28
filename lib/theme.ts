@@ -8,10 +8,10 @@ export async function getTheme(): Promise<"light" | "dark" | "auto"> {
   return "light";
 }
 
-export async function getAccent(): Promise<"blue" | "saffron" | "gray"> {
+export async function getAccent(): Promise<"blue" | "copper" | "gold" | "purple" | "coral"> {
   const cookieStore = await cookies();
   const v = cookieStore.get("accent")?.value;
-  return v === "saffron" || v === "gray" ? v : "blue";
+  return v === "copper" || v === "gold" || v === "purple" || v === "coral" ? v : "blue";
 }
 
 export async function getTextColor(): Promise<"default" | "navy" | "charcoal" | "slate"> {
