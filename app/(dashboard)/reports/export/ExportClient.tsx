@@ -4,7 +4,6 @@ import { useState } from "react";
 import { PageHeader } from "@/app/components/PageHeader";
 import { exportReportAction, type ExportDataType } from "@/lib/actions/export";
 import { Download, FileSpreadsheet, FileText } from "lucide-react";
-import { jsPDF } from "jspdf";
 import { todayIso, isoDaysAgo, isoMonthsAgo } from "@/lib/dateHelpers";
 
 const DATA_TYPES: { value: ExportDataType; label: string; onlyFor?: string }[] = [
@@ -75,6 +74,7 @@ export function ExportClient({ businessType }: { businessType: string }) {
       return;
     }
 
+    const { jsPDF } = await import("jspdf");
     const doc = new jsPDF({ orientation: "landscape", unit: "pt" });
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();

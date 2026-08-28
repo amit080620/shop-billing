@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { PageHeader } from "@/app/components/PageHeader";
 import { getMenuForPdfAction } from "@/lib/actions/menu-pdf";
-import { jsPDF } from "jspdf";
 import { FileText, Download } from "lucide-react";
 
 export function MenuPdfClient() {
@@ -30,6 +29,7 @@ export function MenuPdfClient() {
       ? `${window.location.origin}/shop/${result.publicToken}`
       : null;
 
+    const { jsPDF } = await import("jspdf");
     const doc = new jsPDF({ unit: "pt", format: "a4" });
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();

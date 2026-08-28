@@ -144,7 +144,6 @@ export function NewBillClient({
           stateCode: c.state_code,
         })),
       )
-        .then(() => console.log("[offline-db] Cached for offline use:", products.length, "products,", customers.length, "customers"))
         .catch((err) => console.error("[offline-db] Failed to cache for offline use:", err));
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps

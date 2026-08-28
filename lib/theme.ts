@@ -7,15 +7,3 @@ export async function getTheme(): Promise<"light" | "dark" | "auto"> {
   if (v === "dark" || v === "auto") return v;
   return "light";
 }
-
-export async function getAccent(): Promise<"blue" | "saffron" | "gray"> {
-  const cookieStore = await cookies();
-  const v = cookieStore.get("accent")?.value;
-  return v === "saffron" || v === "gray" ? v : "blue";
-}
-
-export async function getTextColor(): Promise<"default" | "navy" | "charcoal" | "slate"> {
-  const cookieStore = await cookies();
-  const v = cookieStore.get("textColor")?.value;
-  return v === "navy" || v === "charcoal" || v === "slate" ? v : "default";
-}

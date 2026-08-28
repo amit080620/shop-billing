@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { getTheme, getAccent, getTextColor } from "@/lib/theme";
+import { getTheme } from "@/lib/theme";
 import { getLang } from "@/lib/i18n/server";
 import { ServiceWorkerRegistration } from "./components/ServiceWorkerRegistration";
 import { ToastProvider } from "./components/Toast";
@@ -34,7 +34,7 @@ export const viewport: Viewport = {
   // this is the root fix for popups where the keyboard covers inputs
   // and scrolling/dismissal feels broken on mobile.
   interactiveWidget: "resizes-content",
-  themeColor: "#0427f3",
+  themeColor: "#4f46e5",
 };
 
 export default async function RootLayout({
@@ -43,12 +43,10 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const theme = await getTheme();
-  const accent = await getAccent();
-  const textColor = await getTextColor();
   const lang = await getLang();
 
   return (
-    <html lang={lang} className={theme === "dark" ? "dark" : undefined} data-accent={accent} data-text={textColor}>
+    <html lang={lang} className={theme === "dark" ? "dark" : undefined}>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
