@@ -183,6 +183,29 @@ export async function recordPaymentAction(
   return null;
 }
 
+/** Read-only phone → name lookup, used to auto-fill a customer's name
+ * the moment their (already on-file) mobile number is typed into any
+ * "add customer"-style form, instead of the person having to remember
+ * and retype a name that's already saved. Normalizes first so "+91
+ * 98765..." typed against a customer saved as "98765..." still finds
+ * them. Returns null on no match — never an error, since this runs
+ * silently as someone types. */
+export async function lookupCustomerByPhoneAction(phone: string): Promise<{ name: string | null }> {
+  const session = await requireSession();
+  const normalized = normalizePhone(phone);
+  if (normalized.length < 10) return { name: null };
+
+  const admin = createSupabaseAdminClient();
+  const { data } = await admin
+    .from("customers")
+    .select("name")
+    .eq("shop_id", session.shopId)
+    .eq("phone", normalized)
+    .maybeSingle();
+
+  return { name: data?.name?.trim() || null };
+}
+
 /** Called directly from client components (not via a <form>) to add a
  * customer inline mid-flow — e.g. from the New Bill screen — without
  * navigating away. Returns the created row so the caller can select it

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { X, Minus, Plus, Trash2, Search } from "lucide-react";
 import { formatMoney } from "@/lib/format";
 import { createBillAction, resolveFastBillingCustomerAction } from "@/lib/actions/bills";
+import { lookupCustomerByPhoneAction } from "@/lib/actions/customers";
 import { QuantityGrid } from "./QuantityGrid";
 
 export type FastProduct = {
@@ -414,8 +415,14 @@ function FastCheckoutButton({
                 <input
                   value={udharPhone}
                   onChange={(e) => {
-                    setUdharPhone(e.target.value.replace(/\D/g, "").slice(0, 10));
+                    const digits = e.target.value.replace(/\D/g, "").slice(0, 10);
+                    setUdharPhone(digits);
                     setUdharError(null);
+                    if (digits.length === 10) {
+                      lookupCustomerByPhoneAction(digits).then((r) => {
+                        if (r.name) setUdharName((prev) => (prev.trim() ? prev : r.name!));
+                      });
+                    }
                   }}
                   placeholder="Mobile number — required for udhar"
                   inputMode="numeric"

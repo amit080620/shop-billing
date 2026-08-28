@@ -9,7 +9,7 @@ import { determineSupplyType } from "@/lib/gst";
 import { formatMoney } from "@/lib/format";
 import { SearchableSelect } from "@/app/components/SearchableSelect";
 import { InlineQuickAdd } from "@/app/components/InlineQuickAdd";
-import { quickCreateCustomerAction } from "@/lib/actions/customers";
+import { quickCreateCustomerAction, lookupCustomerByPhoneAction } from "@/lib/actions/customers";
 import { useTranslation } from "@/lib/i18n/useTranslation";
 import type { Lang } from "@/lib/i18n/dictionary";
 
@@ -197,6 +197,7 @@ export function NewRentalClient({
                 { name: "phone", label: t("rental.phone"), type: "tel", required: true },
               ]}
               contactFields={{ name: "name", phone: "phone" }}
+              phoneAutofill={async (phone) => (await lookupCustomerByPhoneAction(phone)).name}
               onSubmit={async (v) => {
                 const r = await quickCreateCustomerAction(v.name, v.phone);
                 return { data: r.customer, error: r.error };

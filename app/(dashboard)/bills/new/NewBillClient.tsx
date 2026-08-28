@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import { createBillAction } from "@/lib/actions/bills";
-import { quickCreateCustomerAction } from "@/lib/actions/customers";
+import { quickCreateCustomerAction, lookupCustomerByPhoneAction } from "@/lib/actions/customers";
 import { quickCreateProductAction } from "@/lib/actions/products";
 import { calculateTransactionTotals } from "@/lib/validation/schemas";
 import { determineSupplyType, round2 } from "@/lib/gst";
@@ -445,6 +445,7 @@ export function NewBillClient({
                   }}
                   onCreated={setSelectedCustomer}
                   contactFields={{ name: "name", phone: "phone" }}
+                  phoneAutofill={async (phone) => (await lookupCustomerByPhoneAction(phone)).name}
                 />
               </div>
             ))}

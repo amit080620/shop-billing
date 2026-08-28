@@ -20,6 +20,7 @@ export function InlineQuickAdd<T>({
   onSubmit,
   onCreated,
   contactFields,
+  phoneAutofill,
 }: {
   triggerLabel: string;
   fields: Field[];
@@ -28,11 +29,26 @@ export function InlineQuickAdd<T>({
   /** When set, shows a "Pick from contacts" button (Android Chrome only —
    * hides itself elsewhere) that fills these two field names. */
   contactFields?: { name: string; phone: string };
+  /** When set alongside contactFields, looks up the typed phone number
+   * (debounced) and auto-fills the name field if that number is
+   * already on file — never overwrites a name the person already
+   * typed themselves. */
+  phoneAutofill?: (phone: string) => Promise<string | null>;
 }) {
   const [open, setOpen] = useState(false);
   const [values, setValues] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+
+  function handlePhoneChange(phone: string) {
+    if (!phoneAutofill || !contactFields) return;
+    const digits = phone.replace(/\D/g, "");
+    if (digits.length < 10) return;
+    phoneAutofill(phone).then((name) => {
+      if (!name) return;
+      setValues((v) => (v[contactFields.name]?.trim() ? v : { ...v, [contactFields.name]: name }));
+    });
+  }
 
   function submit() {
     setError(null);
@@ -92,7 +108,11 @@ export function InlineQuickAdd<T>({
             required={f.required}
             placeholder={f.placeholder ?? f.label}
             value={values[f.name] ?? ""}
-            onChange={(e) => setValues((v) => ({ ...v, [f.name]: e.target.value }))}
+            onChange={(e) => {
+              const value = e.target.value;
+              setValues((v) => ({ ...v, [f.name]: value }));
+              if (f.name === contactFields?.phone) handlePhoneChange(value);
+            }}
             className="neu-card px-3 py-2 text-sm outline-none focus:border-brand"
           />
         ),
