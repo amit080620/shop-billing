@@ -264,34 +264,42 @@ export type ThermalPrintSettings = {
   t58ShopNameBold: boolean;
   t58ShopNameSize: number;
   t58ShopNameItalic: boolean;
+  t58ShopNameAlign: "left" | "center" | "right";
   t58ItemsBold: boolean;
   t58TotalBold: boolean;
   t58TotalSize: number;
   t58TotalItalic: boolean;
+  t58TotalAlign: "left" | "center" | "right";
   t80ShopNameBold: boolean;
   t80ShopNameSize: number;
   t80ShopNameItalic: boolean;
+  t80ShopNameAlign: "left" | "center" | "right";
   t80ItemsBold: boolean;
   t80TotalBold: boolean;
   t80TotalSize: number;
   t80TotalItalic: boolean;
+  t80TotalAlign: "left" | "center" | "right";
 };
 
 const THERMAL_PRINT_DEFAULTS: ThermalPrintSettings = {
   t58ShopNameBold: true,
   t58ShopNameSize: 2,
   t58ShopNameItalic: false,
+  t58ShopNameAlign: "center",
   t58ItemsBold: false,
   t58TotalBold: true,
   t58TotalSize: 2,
   t58TotalItalic: false,
+  t58TotalAlign: "left",
   t80ShopNameBold: true,
   t80ShopNameSize: 2,
   t80ShopNameItalic: false,
+  t80ShopNameAlign: "center",
   t80ItemsBold: false,
   t80TotalBold: true,
   t80TotalSize: 2,
   t80TotalItalic: false,
+  t80TotalAlign: "left",
 };
 
 export async function getThermalPrintSettingsAction(): Promise<ThermalPrintSettings> {
@@ -303,17 +311,21 @@ export async function getThermalPrintSettingsAction(): Promise<ThermalPrintSetti
     t58ShopNameBold: data.t58_shop_name_bold,
     t58ShopNameSize: data.t58_shop_name_size,
     t58ShopNameItalic: data.t58_shop_name_italic,
+    t58ShopNameAlign: data.t58_shop_name_align,
     t58ItemsBold: data.t58_items_bold,
     t58TotalBold: data.t58_total_bold,
     t58TotalSize: data.t58_total_size,
     t58TotalItalic: data.t58_total_italic,
+    t58TotalAlign: data.t58_total_align,
     t80ShopNameBold: data.t80_shop_name_bold,
     t80ShopNameSize: data.t80_shop_name_size,
     t80ShopNameItalic: data.t80_shop_name_italic,
+    t80ShopNameAlign: data.t80_shop_name_align,
     t80ItemsBold: data.t80_items_bold,
     t80TotalBold: data.t80_total_bold,
     t80TotalSize: data.t80_total_size,
     t80TotalItalic: data.t80_total_italic,
+    t80TotalAlign: data.t80_total_align,
   };
 }
 
@@ -325,17 +337,21 @@ export async function saveThermalPrintSettingsAction(settings: ThermalPrintSetti
     t58_shop_name_bold: settings.t58ShopNameBold,
     t58_shop_name_size: settings.t58ShopNameSize,
     t58_shop_name_italic: settings.t58ShopNameItalic,
+    t58_shop_name_align: settings.t58ShopNameAlign,
     t58_items_bold: settings.t58ItemsBold,
     t58_total_bold: settings.t58TotalBold,
     t58_total_size: settings.t58TotalSize,
     t58_total_italic: settings.t58TotalItalic,
+    t58_total_align: settings.t58TotalAlign,
     t80_shop_name_bold: settings.t80ShopNameBold,
     t80_shop_name_size: settings.t80ShopNameSize,
     t80_shop_name_italic: settings.t80ShopNameItalic,
+    t80_shop_name_align: settings.t80ShopNameAlign,
     t80_items_bold: settings.t80ItemsBold,
     t80_total_bold: settings.t80TotalBold,
     t80_total_size: settings.t80TotalSize,
     t80_total_italic: settings.t80TotalItalic,
+    t80_total_align: settings.t80TotalAlign,
     updated_at: new Date().toISOString(),
   });
   if (error) {
@@ -364,5 +380,24 @@ export async function saveBarcodeScanModeAction(mode: "camera" | "hardware" | "b
   revalidatePath("/profile");
   revalidatePath("/bills/new");
   revalidatePath("/products");
+  return {};
+}
+
+export async function getDefaultPrintFormatAction(): Promise<"full" | "thermal58" | "thermal"> {
+  const session = await requireSession();
+  const admin = createSupabaseAdminClient();
+  const { data } = await admin.from("shops").select("default_print_format").eq("id", session.shopId).single();
+  return (data?.default_print_format as "full" | "thermal58" | "thermal") ?? "full";
+}
+
+export async function saveDefaultPrintFormatAction(format: "full" | "thermal58" | "thermal"): Promise<{ error?: string }> {
+  const session = await requireOwner();
+  const admin = createSupabaseAdminClient();
+  const { error } = await admin.from("shops").update({ default_print_format: format }).eq("id", session.shopId);
+  if (error) {
+    console.error("Could not save default print format", error);
+    return { error: "Could not save this setting" };
+  }
+  revalidatePath("/profile");
   return {};
 }

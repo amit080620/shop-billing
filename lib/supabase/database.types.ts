@@ -23,7 +23,7 @@ export interface Database {
           pincode: string | null;
           gst_scheme: "regular" | "composition";
           loyalty_points_per_100: number;
-          barcode_scan_mode: "camera" | "hardware" | "both";
+          barcode_scan_mode: "camera" | "hardware" | "both"; default_print_format: "full" | "thermal58" | "thermal";
           loyalty_redemption_value: number;
           fast_billing_enabled: boolean;
           price_includes_gst: boolean;
@@ -51,7 +51,7 @@ export interface Database {
           pincode?: string | null;
           gst_scheme?: "regular" | "composition";
           loyalty_points_per_100?: number;
-          barcode_scan_mode?: "camera" | "hardware" | "both";
+          barcode_scan_mode?: "camera" | "hardware" | "both"; default_print_format?: "full" | "thermal58" | "thermal";
           loyalty_redemption_value?: number;
           fast_billing_enabled?: boolean;
           price_includes_gst?: boolean;
@@ -79,7 +79,7 @@ export interface Database {
           pincode?: string | null;
           gst_scheme?: "regular" | "composition";
           loyalty_points_per_100?: number;
-          barcode_scan_mode?: "camera" | "hardware" | "both";
+          barcode_scan_mode?: "camera" | "hardware" | "both"; default_print_format?: "full" | "thermal58" | "thermal";
           loyalty_redemption_value?: number;
           fast_billing_enabled?: boolean;
           price_includes_gst?: boolean;
@@ -805,9 +805,9 @@ export interface Database {
         Relationships: [];
       };
       thermal_print_settings: {
-        Row: { shop_id: string; t58_shop_name_bold: boolean; t58_shop_name_size: number; t58_shop_name_italic: boolean; t58_items_bold: boolean; t58_total_bold: boolean; t58_total_size: number; t58_total_italic: boolean; t80_shop_name_bold: boolean; t80_shop_name_size: number; t80_shop_name_italic: boolean; t80_items_bold: boolean; t80_total_bold: boolean; t80_total_size: number; t80_total_italic: boolean; updated_at: string };
-        Insert: { shop_id: string; t58_shop_name_bold?: boolean; t58_shop_name_size?: number; t58_shop_name_italic?: boolean; t58_items_bold?: boolean; t58_total_bold?: boolean; t58_total_size?: number; t58_total_italic?: boolean; t80_shop_name_bold?: boolean; t80_shop_name_size?: number; t80_shop_name_italic?: boolean; t80_items_bold?: boolean; t80_total_bold?: boolean; t80_total_size?: number; t80_total_italic?: boolean; updated_at?: string };
-        Update: { shop_id?: string; t58_shop_name_bold?: boolean; t58_shop_name_size?: number; t58_shop_name_italic?: boolean; t58_items_bold?: boolean; t58_total_bold?: boolean; t58_total_size?: number; t58_total_italic?: boolean; t80_shop_name_bold?: boolean; t80_shop_name_size?: number; t80_shop_name_italic?: boolean; t80_items_bold?: boolean; t80_total_bold?: boolean; t80_total_size?: number; t80_total_italic?: boolean; updated_at?: string };
+        Row: { shop_id: string; t58_shop_name_bold: boolean; t58_shop_name_size: number; t58_shop_name_italic: boolean; t58_shop_name_align: "left" | "center" | "right"; t58_items_bold: boolean; t58_total_bold: boolean; t58_total_size: number; t58_total_italic: boolean; t58_total_align: "left" | "center" | "right"; t80_shop_name_bold: boolean; t80_shop_name_size: number; t80_shop_name_italic: boolean; t80_shop_name_align: "left" | "center" | "right"; t80_items_bold: boolean; t80_total_bold: boolean; t80_total_size: number; t80_total_italic: boolean; t80_total_align: "left" | "center" | "right"; updated_at: string };
+        Insert: { shop_id: string; t58_shop_name_bold?: boolean; t58_shop_name_size?: number; t58_shop_name_italic?: boolean; t58_shop_name_align?: "left" | "center" | "right"; t58_items_bold?: boolean; t58_total_bold?: boolean; t58_total_size?: number; t58_total_italic?: boolean; t58_total_align?: "left" | "center" | "right"; t80_shop_name_bold?: boolean; t80_shop_name_size?: number; t80_shop_name_italic?: boolean; t80_shop_name_align?: "left" | "center" | "right"; t80_items_bold?: boolean; t80_total_bold?: boolean; t80_total_size?: number; t80_total_italic?: boolean; t80_total_align?: "left" | "center" | "right"; updated_at?: string };
+        Update: { shop_id?: string; t58_shop_name_bold?: boolean; t58_shop_name_size?: number; t58_shop_name_italic?: boolean; t58_shop_name_align?: "left" | "center" | "right"; t58_items_bold?: boolean; t58_total_bold?: boolean; t58_total_size?: number; t58_total_italic?: boolean; t58_total_align?: "left" | "center" | "right"; t80_shop_name_bold?: boolean; t80_shop_name_size?: number; t80_shop_name_italic?: boolean; t80_shop_name_align?: "left" | "center" | "right"; t80_items_bold?: boolean; t80_total_bold?: boolean; t80_total_size?: number; t80_total_italic?: boolean; t80_total_align?: "left" | "center" | "right"; updated_at?: string };
         Relationships: [];
       };
       prescription_templates: {

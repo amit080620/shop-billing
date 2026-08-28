@@ -29,6 +29,7 @@ create table if not exists shops (
   -- ₹100 of PAID amount (not credit), redeemed at redemption_value ₹/point.
   loyalty_points_per_100 numeric(6, 2) not null default 5,
   barcode_scan_mode text not null default 'both' check (barcode_scan_mode in ('camera', 'hardware', 'both')),
+  default_print_format text not null default 'full' check (default_print_format in ('full', 'thermal58', 'thermal')),
   loyalty_redemption_value numeric(6, 2) not null default 1,
   fast_billing_enabled boolean not null default false,
   -- true: product/menu prices are the FINAL amount the customer pays —
@@ -1257,17 +1258,21 @@ create table if not exists thermal_print_settings (
   t58_shop_name_bold boolean not null default true,
   t58_shop_name_size integer not null default 2 check (t58_shop_name_size between 1 and 6),
   t58_shop_name_italic boolean not null default false,
+  t58_shop_name_align text not null default 'center' check (t58_shop_name_align in ('left', 'center', 'right')),
   t58_items_bold boolean not null default false,
   t58_total_bold boolean not null default true,
   t58_total_size integer not null default 2 check (t58_total_size between 1 and 6),
   t58_total_italic boolean not null default false,
+  t58_total_align text not null default 'left' check (t58_total_align in ('left', 'center', 'right')),
   t80_shop_name_bold boolean not null default true,
   t80_shop_name_size integer not null default 2 check (t80_shop_name_size between 1 and 6),
   t80_shop_name_italic boolean not null default false,
+  t80_shop_name_align text not null default 'center' check (t80_shop_name_align in ('left', 'center', 'right')),
   t80_items_bold boolean not null default false,
   t80_total_bold boolean not null default true,
   t80_total_size integer not null default 2 check (t80_total_size between 1 and 6),
   t80_total_italic boolean not null default false,
+  t80_total_align text not null default 'left' check (t80_total_align in ('left', 'center', 'right')),
   updated_at timestamptz not null default now()
 );
 alter table thermal_print_settings enable row level security;

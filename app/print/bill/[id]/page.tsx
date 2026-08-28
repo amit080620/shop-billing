@@ -26,13 +26,23 @@ export default async function PrintBillPage({
   searchParams: Promise<{ format?: string }>;
 }) {
   const { id } = await params;
-  const { format } = await searchParams;
-  const isThermal = format === "thermal" || format === "thermal58";
-  const is58mm = format === "thermal58";
+  const { format: formatParam } = await searchParams;
 
   const session = await requireSession();
   const { lang } = await getTranslator();
   const admin = createSupabaseAdminClient();
+
+  // Genuinely fall back to the shop's own default print format only
+  // when no explicit ?format= was given — tapping a format pill on
+  // this very screen always overrides the default for that view.
+  let format = formatParam;
+  if (!format) {
+    const { data: shopRow } = await admin.from("shops").select("default_print_format").eq("id", session.shopId).single();
+    const defaultFormat = shopRow?.default_print_format ?? "full";
+    format = defaultFormat === "thermal58" ? "thermal58" : defaultFormat === "thermal" ? "thermal" : "full";
+  }
+  const isThermal = format === "thermal" || format === "thermal58";
+  const is58mm = format === "thermal58";
 
   const { data: invoiceSettings } = await admin
     .from("invoice_settings")
@@ -234,47 +244,50 @@ export default async function PrintBillPage({
           </span>
         </div>
       )}
-      <div className="no-print mb-4 flex flex-col gap-2">
-        <WhatsAppSendButton
-          lang={lang}
-          customerName={customer?.name ?? null}
-          customerPhone={customer?.phone ?? null}
-          shopName={session.shopName}
-          invoiceNumber={bill.invoice_number}
-          total={Number(bill.total)}
-          paidAmount={Number(bill.paid_amount)}
-          creditAmount={Number(bill.credit_amount)}
-          upiLink={upiLink}
-        />
-        <div className="flex flex-wrap items-center gap-1.5">
-          <FormatPill href={`/print/bill/${id}?format=full`} label="A4" active={!isThermal} />
-          <FormatPill href={`/print/bill/${id}?format=thermal58`} label="Thermal 58mm" active={is58mm} />
-          <FormatPill href={`/print/bill/${id}?format=thermal`} label="Thermal 80mm" active={isThermal && !is58mm} />
+      <div className="no-print mb-4 flex flex-col gap-2.5">
+        {/* Row 1: WhatsApp */}
+        <div className="flex items-center gap-1.5">
+          <WhatsAppSendButton
+            lang={lang}
+            customerName={customer?.name ?? null}
+            customerPhone={customer?.phone ?? null}
+            shopName={session.shopName}
+            invoiceNumber={bill.invoice_number}
+            total={Number(bill.total)}
+            paidAmount={Number(bill.paid_amount)}
+            creditAmount={Number(bill.credit_amount)}
+            upiLink={upiLink}
+          />
+          <InfoTooltip message="WhatsApp text messages can't carry a file — download the PDF above, then attach it yourself in the WhatsApp chat for a clean copy. If there's a balance due, the QR area in that PDF is also tappable in most PDF viewers, opening the customer's UPI app directly." />
         </div>
-        <div className="flex flex-wrap items-center gap-1.5">
+
+        {/* Row 2: All remaining actions as compact pills in a single flex-wrap row */}
+        <div className="flex flex-wrap gap-1.5">
+          <FormatPill href={`/print/bill/${id}?format=full`} label="A4" active={!isThermal} />
+          <FormatPill href={`/print/bill/${id}?format=thermal58`} label="58mm" active={is58mm} />
+          <FormatPill href={`/print/bill/${id}?format=thermal`} label="80mm" active={isThermal && !is58mm} />
           <DownloadImageButton invoiceNumber={bill.invoice_number} upiLink={upiLink} isThermal={isThermal} />
           <PrintButton />
           <BluetoothPrintButton receipt={receiptData} paperWidth={is58mm ? 32 : 48} />
-          <InfoTooltip message="WhatsApp text messages can't carry a file — download the PDF above, then attach it yourself in the WhatsApp chat for a clean copy. If there's a balance due, the QR area in that PDF is also tappable in most PDF viewers, opening the customer's UPI app directly." />
+          {bill.status === "active" && hasPermission(session, "process_returns") && (
+            <Link
+              href={`/returns/new?billId=${bill.id}`}
+              className="no-print inline-flex items-center gap-1 rounded-full border border-brand px-3 py-1.5 text-xs font-medium text-brand-text"
+            >
+              ↩ Return
+            </Link>
+          )}
+          {hasPermission(session, "edit_bills") && bill.status === "active" && (
+            <EditBillButton
+              billId={bill.id}
+              invoiceNumber={bill.invoice_number}
+              items={(items ?? []).map((i) => ({ id: i.id, productName: i.product_name, quantity: Number(i.quantity) }))}
+            />
+          )}
+          {hasPermission(session, "void_bills") && bill.status === "active" && (
+            <VoidBillButton billId={bill.id} invoiceNumber={bill.invoice_number} />
+          )}
         </div>
-        {bill.status === "active" && hasPermission(session, "process_returns") && (
-          <Link
-            href={`/returns/new?billId=${bill.id}`}
-            className="no-print block rounded-lg border border-brand px-4 py-2.5 text-center text-sm font-medium text-brand-text"
-          >
-            ↩️ Return / Exchange
-          </Link>
-        )}
-        {hasPermission(session, "edit_bills") && bill.status === "active" && (
-          <EditBillButton
-            billId={bill.id}
-            invoiceNumber={bill.invoice_number}
-            items={(items ?? []).map((i) => ({ id: i.id, productName: i.product_name, quantity: Number(i.quantity) }))}
-          />
-        )}
-        {hasPermission(session, "void_bills") && bill.status === "active" && (
-          <VoidBillButton billId={bill.id} invoiceNumber={bill.invoice_number} />
-        )}
       </div>
 
       {bill.status === "voided" && (

@@ -124,20 +124,24 @@ export type ReceiptFormatSettings = {
   shopNameBold: boolean;
   shopNameItalic: boolean;
   shopNameSize: number;
+  shopNameAlign: "left" | "center" | "right";
   itemsBold: boolean;
   totalBold: boolean;
   totalItalic: boolean;
   totalSize: number;
+  totalAlign: "left" | "center" | "right";
 };
 
 const DEFAULT_FORMAT_SETTINGS: ReceiptFormatSettings = {
   shopNameBold: true,
   shopNameItalic: false,
   shopNameSize: 2,
+  shopNameAlign: "center",
   itemsBold: false,
   totalBold: true,
   totalItalic: false,
   totalSize: 2,
+  totalAlign: "left",
 };
 
 /** Builds the full receipt as ESC/POS bytes. charsWide should be 32 for
@@ -165,7 +169,7 @@ export function buildReceiptEscPos(data: ReceiptData, charsWide: 32 | 48 = 32, f
   const b = new EscPosBuilder();
   b.init();
 
-  b.align("center").sizeLevel(format.shopNameSize).bold(format.shopNameBold).italic(format.shopNameItalic).text(data.shopName).newline();
+  b.align(format.shopNameAlign).sizeLevel(format.shopNameSize).bold(format.shopNameBold).italic(format.shopNameItalic).text(data.shopName).newline();
   b.sizeLevel(1).bold(false).italic(false);
   if (data.gstin) b.text(`GSTIN: ${data.gstin}`).newline();
   b.newline();
@@ -190,7 +194,14 @@ export function buildReceiptEscPos(data: ReceiptData, charsWide: 32 | 48 = 32, f
   if (data.taxTotal) b.row("Tax", `Rs.${data.taxTotal.toFixed(2)}`, charsWide);
 
   b.bold(format.totalBold).italic(format.totalItalic).sizeLevel(format.totalSize);
-  b.row("TOTAL", `Rs.${data.total.toFixed(2)}`, Math.floor(charsWide / format.totalSize));
+  if (format.totalAlign === "left") {
+    b.align("left");
+    b.row("TOTAL", `Rs.${data.total.toFixed(2)}`, Math.floor(charsWide / format.totalSize));
+  } else {
+    b.align(format.totalAlign);
+    b.text(`TOTAL Rs.${data.total.toFixed(2)}`).newline();
+  }
+  b.align("left");
   b.sizeLevel(1).bold(false).italic(false);
 
   if (data.paidAmount !== undefined) b.row("Paid", `Rs.${data.paidAmount.toFixed(2)}`, charsWide);
