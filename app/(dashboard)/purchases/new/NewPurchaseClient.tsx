@@ -357,7 +357,7 @@ export function NewPurchaseClient({
             className="rounded-lg border border-border px-3.5 py-2.5 text-sm outline-none focus:border-brand disabled:bg-surface-2 disabled:text-muted"
           />
           {isUdhar && (
-            <span className="text-xs text-credit">
+            <span className="text-xs text-danger">
               Marked as Udhar — nothing paid now, full amount goes to vendor outstanding.
             </span>
           )}
@@ -376,7 +376,7 @@ export function NewPurchaseClient({
                 className={`rounded-full border px-3 py-1.5 text-xs font-medium capitalize ${
                   paymentMethod === m
                     ? m === "udhar"
-                      ? "border-credit bg-credit-soft text-credit"
+                      ? "border-danger bg-danger-soft text-danger"
                       : "border-brand bg-brand-soft text-brand-text"
                     : "border-border text-muted"
                 }`}

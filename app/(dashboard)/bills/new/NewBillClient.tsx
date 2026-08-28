@@ -862,7 +862,7 @@ export function NewBillClient({
             disabled={customerMode === "walkin"}
             className={`flex-1 rounded-lg border px-3 py-2 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-40 ${
               paidAmount === 0
-                ? "border-credit bg-credit-soft text-credit"
+                ? "border-danger bg-danger-soft text-danger"
                 : "border-border text-muted"
             }`}
           >

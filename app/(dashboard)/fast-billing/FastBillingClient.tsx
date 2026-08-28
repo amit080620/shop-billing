@@ -424,7 +424,7 @@ function FastCheckoutButton({
               setCustomerError(null);
             }}
             className={`rounded-full py-2 text-xs font-medium capitalize ${
-              paymentMethod === m ? (m === "udhar" ? "bg-credit text-white" : "bg-brand text-white") : "bg-surface text-muted"
+              paymentMethod === m ? (m === "udhar" ? "bg-danger text-white" : "bg-brand text-white") : "bg-surface text-muted"
             }`}
           >
             {m}
@@ -435,8 +435,8 @@ function FastCheckoutButton({
       {/* Customer — always available (not just for Udhar), since ANY
           paid sale can earn/redeem loyalty points, not only credit
           ones. Required only when Udhar is selected. */}
-      <div className={`flex flex-col gap-2 rounded-lg border p-2.5 ${isUdhar ? "border-dashed border-credit bg-credit-soft" : "border-border"}`}>
-        <p className={`text-[11px] ${isUdhar ? "text-credit" : "text-muted"}`}>
+      <div className={`flex flex-col gap-2 rounded-lg border p-2.5 ${isUdhar ? "border-dashed border-danger bg-danger-soft" : "border-border"}`}>
+        <p className={`text-[11px] ${isUdhar ? "text-danger" : "text-muted"}`}>
           {isUdhar
             ? "A mobile number is genuinely needed here — this is who the udhar is recovered from later."
             : "Customer mobile (optional) — links this sale for loyalty points"}
@@ -560,7 +560,7 @@ function FastCheckoutButton({
             // the form actually submits.
             requestAnimationFrame(() => formRef.current?.requestSubmit());
           }}
-          className={`w-full disabled:opacity-60 ${isUdhar ? "btn-primary bg-credit" : "btn-primary"}`}
+          className={`w-full disabled:opacity-60 ${isUdhar ? "btn-primary bg-danger" : "btn-primary"}`}
         >
           {isPending
             ? "Creating bill…"
