@@ -1,9 +1,13 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Calculator as CalculatorIcon, X, Delete } from "lucide-react";
+import { Calculator as CalculatorIcon, X, Delete, ArrowLeftRight } from "lucide-react";
 import { useCalculatorAmount } from "@/lib/calculatorAmount";
 import { formatMoney } from "@/lib/format";
+
+const POSITION_KEY = "ray-calc-position";
+const BUBBLE_SIZE = 52;
+const IDLE_DIM_MS = 3500;
 
 function round(n: number): number {
   return Math.round(n * 1e8) / 1e8;
@@ -24,41 +28,121 @@ function calc(a: number, b: number, op: string): number {
   }
 }
 
-/** A genuinely floating, collapsible calculator — a small bubble that
- * expands into a full calculator on tap. Mounted once at the root, so
- * it's available on every screen (toggleable off in Preferences for
- * anyone who doesn't want it).
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(max, Math.max(min, value));
+}
+
+/** A genuinely floating, draggable calculator — like iPhone's
+ * AssistiveTouch: drag it anywhere on screen, it stays there (even
+ * across app restarts), and dims itself out of the way after a few
+ * seconds of not being touched so it never permanently blocks
+ * content. Tap it any time to bring it back to full opacity and
+ * open it. Mounted once at the root, so it's available on every
+ * screen (toggleable off in Preferences).
  *
- * The one thing that makes this more than a generic calculator: when
- * it's opened WHILE a billing screen has an active bill total (Sell,
- * Fast Billing...), that total is pre-loaded into the display —
- * genuinely useful for "customer's giving me a ₹500 note, how much
- * change" without retyping the bill amount. Opened with no active
- * bill, it just starts blank like any calculator.
+ * Opens in a dedicated "Change due" mode whenever a billing screen
+ * has an active bill total — enter what the customer physically
+ * handed over, and it shows the change to hand back as a plain
+ * positive number, computed the correct direction every time (never
+ * a confusing "-270" from subtracting in the wrong order). A "Calc"
+ * toggle switches to a normal free-form calculator when that's what's
+ * actually needed instead.
  */
 export function FloatingCalculator({ enabled }: { enabled: boolean }) {
   const [open, setOpen] = useState(false);
+  const [mode, setMode] = useState<"change" | "calc">("calc");
   const [display, setDisplay] = useState("0");
+  const [receivedInput, setReceivedInput] = useState("");
   const [previousValue, setPreviousValue] = useState<number | null>(null);
   const [operator, setOperator] = useState<string | null>(null);
   const [waitingForOperand, setWaitingForOperand] = useState(false);
-  const [prefilledFromBill, setPrefilledFromBill] = useState(false);
   const billAmount = useCalculatorAmount();
   const wasOpen = useRef(false);
 
-  // The actual auto-fill moment: transitioning closed -> open picks up
-  // whatever the active bill total is RIGHT NOW. Re-opening later
-  // picks up the (possibly updated) total again, but doesn't fight
-  // someone who's mid-calculation while it's already open.
+  // ---------- Drag-to-reposition (AssistiveTouch-style) ----------
+  const [pos, setPos] = useState<{ x: number; y: number } | null>(null);
+  const dragState = useRef<{ dragging: boolean; moved: boolean; startX: number; startY: number; originX: number; originY: number }>({
+    dragging: false,
+    moved: false,
+    startX: 0,
+    startY: 0,
+    originX: 0,
+    originY: 0,
+  });
+
+  useEffect(() => {
+    try {
+      const saved = window.localStorage.getItem(POSITION_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved) as { x: number; y: number };
+        setPos({
+          x: clamp(parsed.x, 8, window.innerWidth - BUBBLE_SIZE - 8),
+          y: clamp(parsed.y, 8, window.innerHeight - BUBBLE_SIZE - 8),
+        });
+        return;
+      }
+    } catch {
+      // fall through to default position below
+    }
+    setPos({ x: window.innerWidth - BUBBLE_SIZE - 16, y: window.innerHeight - BUBBLE_SIZE - 112 });
+  }, []);
+
+  function onDragStart(clientX: number, clientY: number) {
+    if (!pos) return;
+    dragState.current = { dragging: true, moved: false, startX: clientX, startY: clientY, originX: pos.x, originY: pos.y };
+    setDimmed(false);
+  }
+  function onDragMove(clientX: number, clientY: number) {
+    if (!dragState.current.dragging) return;
+    const dx = clientX - dragState.current.startX;
+    const dy = clientY - dragState.current.startY;
+    if (Math.abs(dx) > 4 || Math.abs(dy) > 4) dragState.current.moved = true;
+    const size = open ? 280 : BUBBLE_SIZE;
+    setPos({
+      x: clamp(dragState.current.originX + dx, 8, window.innerWidth - size - 8),
+      y: clamp(dragState.current.originY + dy, 8, window.innerHeight - size - 8),
+    });
+  }
+  function onDragEnd() {
+    if (!dragState.current.dragging) return;
+    dragState.current.dragging = false;
+    setPos((current) => {
+      if (current) {
+        try {
+          window.localStorage.setItem(POSITION_KEY, JSON.stringify(current));
+        } catch {
+          // best-effort persistence only
+        }
+      }
+      return current;
+    });
+  }
+
+  // ---------- Auto-dim when idle (collapsed bubble only) ----------
+  const [dimmed, setDimmed] = useState(false);
+  const idleTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  function resetIdleTimer() {
+    setDimmed(false);
+    if (idleTimer.current) clearTimeout(idleTimer.current);
+    if (!open) idleTimer.current = setTimeout(() => setDimmed(true), IDLE_DIM_MS);
+  }
+  useEffect(() => {
+    resetIdleTimer();
+    return () => {
+      if (idleTimer.current) clearTimeout(idleTimer.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
+
+  // Opening picks up whatever the active bill total is RIGHT NOW, and
+  // defaults into Change mode when there IS one — that's the actual
+  // everyday use case ("customer handed me ₹500, what's the change").
   useEffect(() => {
     if (open && !wasOpen.current) {
-      if (billAmount && billAmount > 0) {
-        setDisplay(String(billAmount));
-        setPrefilledFromBill(true);
-      } else {
-        setDisplay("0");
-        setPrefilledFromBill(false);
-      }
+      const hasBill = !!billAmount && billAmount > 0;
+      setMode(hasBill ? "change" : "calc");
+      setReceivedInput("");
+      setDisplay("0");
       setPreviousValue(null);
       setOperator(null);
       setWaitingForOperand(false);
@@ -66,10 +150,13 @@ export function FloatingCalculator({ enabled }: { enabled: boolean }) {
     wasOpen.current = open;
   }, [open, billAmount]);
 
-  if (!enabled) return null;
+  if (!enabled || !pos) return null;
 
   function inputDigit(d: string) {
-    setPrefilledFromBill(false);
+    if (mode === "change") {
+      setReceivedInput((prev) => (prev === "0" ? d : prev.length < 12 ? prev + d : prev));
+      return;
+    }
     if (waitingForOperand) {
       setDisplay(d);
       setWaitingForOperand(false);
@@ -79,7 +166,10 @@ export function FloatingCalculator({ enabled }: { enabled: boolean }) {
   }
 
   function inputDecimal() {
-    setPrefilledFromBill(false);
+    if (mode === "change") {
+      setReceivedInput((prev) => (prev.includes(".") ? prev : (prev || "0") + "."));
+      return;
+    }
     if (waitingForOperand) {
       setDisplay("0.");
       setWaitingForOperand(false);
@@ -89,25 +179,31 @@ export function FloatingCalculator({ enabled }: { enabled: boolean }) {
   }
 
   function backspace() {
-    setPrefilledFromBill(false);
+    if (mode === "change") {
+      setReceivedInput((prev) => (prev.length > 1 ? prev.slice(0, -1) : ""));
+      return;
+    }
     setDisplay((prev) => (prev.length > 1 ? prev.slice(0, -1) : "0"));
   }
 
   function clearAll() {
+    if (mode === "change") {
+      setReceivedInput("");
+      return;
+    }
     setDisplay("0");
     setPreviousValue(null);
     setOperator(null);
     setWaitingForOperand(false);
-    setPrefilledFromBill(false);
   }
 
   function handlePercent() {
-    setPrefilledFromBill(false);
+    if (mode === "change") return;
     setDisplay(String(round(parseFloat(display) / 100)));
   }
 
   function performOperation(nextOperator: string) {
-    setPrefilledFromBill(false);
+    if (mode === "change") return;
     const inputValue = parseFloat(display);
     if (previousValue === null) {
       setPreviousValue(inputValue);
@@ -121,7 +217,7 @@ export function FloatingCalculator({ enabled }: { enabled: boolean }) {
   }
 
   function handleEquals() {
-    setPrefilledFromBill(false);
+    if (mode === "change") return;
     const inputValue = parseFloat(display);
     if (operator && previousValue !== null) {
       const result = calc(previousValue, inputValue, operator);
@@ -132,13 +228,34 @@ export function FloatingCalculator({ enabled }: { enabled: boolean }) {
     }
   }
 
+  const received = parseFloat(receivedInput || "0") || 0;
+  const bill = billAmount ?? 0;
+  const changeDue = round(received - bill);
+
   if (!open) {
     return (
       <button
-        onClick={() => setOpen(true)}
+        onPointerDown={(e) => {
+          e.currentTarget.setPointerCapture(e.pointerId);
+          onDragStart(e.clientX, e.clientY);
+        }}
+        onPointerMove={(e) => onDragMove(e.clientX, e.clientY)}
+        onPointerUp={() => {
+          onDragEnd();
+          resetIdleTimer();
+          if (!dragState.current.moved) setOpen(true);
+        }}
         aria-label="Open calculator"
-        className="fixed bottom-24 right-4 z-40 flex items-center justify-center rounded-full bg-brand text-white md:bottom-6"
-        style={{ width: 52, height: 52, boxShadow: "0 8px 20px rgba(0,0,0,0.25)" }}
+        className="fixed z-40 flex items-center justify-center rounded-full bg-brand text-white transition-opacity duration-500"
+        style={{
+          left: pos.x,
+          top: pos.y,
+          width: BUBBLE_SIZE,
+          height: BUBBLE_SIZE,
+          boxShadow: "0 8px 20px rgba(0,0,0,0.25)",
+          opacity: dimmed ? 0.4 : 1,
+          touchAction: "none",
+        }}
       >
         <CalculatorIcon size={22} />
       </button>
@@ -147,50 +264,95 @@ export function FloatingCalculator({ enabled }: { enabled: boolean }) {
 
   return (
     <div
-      className="fixed bottom-24 right-4 z-40 flex w-[280px] flex-col overflow-hidden rounded-2xl bg-surface md:bottom-6"
-      style={{ boxShadow: "0 16px 40px rgba(0,0,0,0.35)" }}
+      className="fixed z-40 flex w-[280px] flex-col overflow-hidden rounded-2xl bg-surface"
+      style={{ left: pos.x, top: pos.y, boxShadow: "0 16px 40px rgba(0,0,0,0.35)" }}
     >
-      <div className="flex items-center justify-between border-b border-border bg-brand px-3.5 py-2.5">
-        <span className="text-sm font-semibold text-white">Calculator</span>
-        <button onClick={() => setOpen(false)} aria-label="Close calculator" className="rounded-full p-1 text-white/80 hover:text-white">
-          <X size={18} />
-        </button>
+      <div
+        onPointerDown={(e) => {
+          e.currentTarget.setPointerCapture(e.pointerId);
+          onDragStart(e.clientX, e.clientY);
+        }}
+        onPointerMove={(e) => onDragMove(e.clientX, e.clientY)}
+        onPointerUp={onDragEnd}
+        className="flex items-center justify-between border-b border-border bg-brand px-3.5 py-2.5"
+        style={{ touchAction: "none", cursor: "grab" }}
+      >
+        <span className="text-sm font-semibold text-white">{mode === "change" ? "Change due" : "Calculator"}</span>
+        <div className="flex items-center gap-1">
+          {billAmount !== null && billAmount > 0 && (
+            <button
+              onClick={() => setMode((m) => (m === "change" ? "calc" : "change"))}
+              aria-label="Switch mode"
+              className="flex items-center gap-1 rounded-full bg-white/15 px-2 py-1 text-[10px] font-medium text-white"
+            >
+              <ArrowLeftRight size={11} />
+              {mode === "change" ? "Calc" : "Change"}
+            </button>
+          )}
+          <button onClick={() => setOpen(false)} aria-label="Close calculator" className="rounded-full p-1 text-white/80 hover:text-white">
+            <X size={18} />
+          </button>
+        </div>
       </div>
 
-      <div className="flex flex-col gap-0.5 bg-background px-4 py-3">
-        {prefilledFromBill && <span className="text-[10px] font-medium uppercase tracking-wide text-brand-text">From this bill</span>}
-        <div className="truncate text-right font-mono text-3xl font-semibold text-foreground">{display}</div>
-        {operator && previousValue !== null && (
-          <div className="text-right text-xs text-muted">
-            {formatMoney(previousValue)} {operator}
+      {mode === "change" ? (
+        <div className="flex flex-col gap-2 bg-background px-4 py-3">
+          <div className="flex items-center justify-between text-xs text-muted">
+            <span>Bill amount</span>
+            <span className="font-medium text-foreground">{formatMoney(bill)}</span>
           </div>
-        )}
-      </div>
+          <div className="flex flex-col gap-0.5">
+            <span className="text-[10px] font-medium uppercase tracking-wide text-muted">Customer gave</span>
+            <div className="truncate text-right font-mono text-2xl font-semibold text-foreground">
+              {receivedInput ? formatMoney(received) : "₹0"}
+            </div>
+          </div>
+          {receivedInput && (
+            <div
+              className={`flex items-center justify-between rounded-lg px-3 py-2 text-sm font-semibold ${
+                changeDue >= 0 ? "bg-brand-soft text-brand-text" : "bg-danger-soft text-danger"
+              }`}
+            >
+              <span>{changeDue >= 0 ? "Change to return" : "Still short by"}</span>
+              <span>{formatMoney(Math.abs(changeDue))}</span>
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className="flex flex-col gap-0.5 bg-background px-4 py-3">
+          <div className="truncate text-right font-mono text-3xl font-semibold text-foreground">{display}</div>
+          {operator && previousValue !== null && (
+            <div className="text-right text-xs text-muted">
+              {formatMoney(previousValue)} {operator}
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="grid grid-cols-4 gap-px bg-border p-px">
         <CalcKey label="C" onClick={clearAll} variant="muted" />
         <CalcKey icon={<Delete size={16} />} onClick={backspace} variant="muted" />
-        <CalcKey label="%" onClick={handlePercent} variant="muted" />
-        <CalcKey label="÷" onClick={() => performOperation("÷")} variant="operator" active={operator === "÷"} />
+        <CalcKey label="%" onClick={handlePercent} variant="muted" disabled={mode === "change"} />
+        <CalcKey label="÷" onClick={() => performOperation("÷")} variant="operator" active={operator === "÷"} disabled={mode === "change"} />
 
         <CalcKey label="7" onClick={() => inputDigit("7")} />
         <CalcKey label="8" onClick={() => inputDigit("8")} />
         <CalcKey label="9" onClick={() => inputDigit("9")} />
-        <CalcKey label="×" onClick={() => performOperation("×")} variant="operator" active={operator === "×"} />
+        <CalcKey label="×" onClick={() => performOperation("×")} variant="operator" active={operator === "×"} disabled={mode === "change"} />
 
         <CalcKey label="4" onClick={() => inputDigit("4")} />
         <CalcKey label="5" onClick={() => inputDigit("5")} />
         <CalcKey label="6" onClick={() => inputDigit("6")} />
-        <CalcKey label="−" onClick={() => performOperation("−")} variant="operator" active={operator === "−"} />
+        <CalcKey label="−" onClick={() => performOperation("−")} variant="operator" active={operator === "−"} disabled={mode === "change"} />
 
         <CalcKey label="1" onClick={() => inputDigit("1")} />
         <CalcKey label="2" onClick={() => inputDigit("2")} />
         <CalcKey label="3" onClick={() => inputDigit("3")} />
-        <CalcKey label="+" onClick={() => performOperation("+")} variant="operator" active={operator === "+"} />
+        <CalcKey label="+" onClick={() => performOperation("+")} variant="operator" active={operator === "+"} disabled={mode === "change"} />
 
         <CalcKey label="0" onClick={() => inputDigit("0")} wide />
         <CalcKey label="." onClick={inputDecimal} />
-        <CalcKey label="=" onClick={handleEquals} variant="equals" />
+        <CalcKey label="=" onClick={handleEquals} variant="equals" disabled={mode === "change"} />
       </div>
     </div>
   );
@@ -203,6 +365,7 @@ function CalcKey({
   variant = "default",
   active = false,
   wide = false,
+  disabled = false,
 }: {
   label?: string;
   icon?: React.ReactNode;
@@ -210,8 +373,9 @@ function CalcKey({
   variant?: "default" | "muted" | "operator" | "equals";
   active?: boolean;
   wide?: boolean;
+  disabled?: boolean;
 }) {
-  const base = "flex h-14 items-center justify-center text-lg font-medium select-none";
+  const base = "flex h-14 items-center justify-center text-lg font-medium select-none disabled:opacity-30";
   const styles =
     variant === "equals"
       ? "bg-brand text-white font-semibold"
@@ -223,7 +387,7 @@ function CalcKey({
           ? "bg-surface text-muted text-sm font-semibold"
           : "bg-surface text-foreground";
   return (
-    <button onClick={onClick} className={`${base} ${styles} ${wide ? "col-span-2" : ""}`}>
+    <button onClick={onClick} disabled={disabled} className={`${base} ${styles} ${wide ? "col-span-2" : ""}`}>
       {icon ?? label}
     </button>
   );
