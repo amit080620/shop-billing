@@ -126,37 +126,55 @@ export function LedgerClient({
             </a>
           )}
         </div>
-        <div className="mt-3 flex gap-2">
-          <button
-            onClick={() => {
-              const link = `${window.location.origin}/khata/${customer.id}`;
-              const message = [
-                `Hi ${customer.name}, here's your khata with ${shopName}.`,
-                balance > 0 ? `Balance due: ${formatMoney(balance)}` : `Your account is fully settled.`,
-                ``,
-                `View it any time: ${link}`,
-              ].join("\n");
-              window.open(buildWhatsAppLink(customer.phone, message), "_blank");
-            }}
-            className="flex-1 rounded-lg border border-border px-3 py-2 text-xs font-medium text-foreground"
-          >
-            Share khata
-          </button>
-          <button
-            onClick={() => {
-              const link = `${window.location.origin}/warranty-card/${customer.id}`;
-              const message = [
-                `Hi ${customer.name}, here's your warranty card from ${shopName}.`,
-                `It shows every item still under warranty — works even if you lose the paper bill.`,
-                ``,
-                link,
-              ].join("\n");
-              window.open(buildWhatsAppLink(customer.phone, message), "_blank");
-            }}
-            className="flex-1 rounded-lg border border-border px-3 py-2 text-xs font-medium text-foreground"
-          >
-            Share warranty
-          </button>
+        <div className="mt-3 flex flex-col gap-2">
+          <div className="flex gap-2">
+            <Link
+              href={`/khata/${customer.id}`}
+              target="_blank"
+              className="flex-1 rounded-lg bg-brand-soft px-3 py-2 text-center text-xs font-medium text-brand-text"
+            >
+              View khata
+            </Link>
+            <Link
+              href={`/warranty-card/${customer.id}`}
+              target="_blank"
+              className="flex-1 rounded-lg bg-brand-soft px-3 py-2 text-center text-xs font-medium text-brand-text"
+            >
+              View warranty
+            </Link>
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={() => {
+                const link = `${window.location.origin}/khata/${customer.id}`;
+                const message = [
+                  `Hi ${customer.name}, here's your khata with ${shopName}.`,
+                  balance > 0 ? `Balance due: ${formatMoney(balance)}` : `Your account is fully settled.`,
+                  ``,
+                  `View it any time: ${link}`,
+                ].join("\n");
+                window.open(buildWhatsAppLink(customer.phone, message), "_blank");
+              }}
+              className="flex-1 rounded-lg border border-border px-3 py-2 text-xs font-medium text-foreground"
+            >
+              Share khata
+            </button>
+            <button
+              onClick={() => {
+                const link = `${window.location.origin}/warranty-card/${customer.id}`;
+                const message = [
+                  `Hi ${customer.name}, here's your warranty card from ${shopName}.`,
+                  `It shows every item still under warranty — works even if you lose the paper bill.`,
+                  ``,
+                  link,
+                ].join("\n");
+                window.open(buildWhatsAppLink(customer.phone, message), "_blank");
+              }}
+              className="flex-1 rounded-lg border border-border px-3 py-2 text-xs font-medium text-foreground"
+            >
+              Share warranty
+            </button>
+          </div>
         </div>
       </div>
 
