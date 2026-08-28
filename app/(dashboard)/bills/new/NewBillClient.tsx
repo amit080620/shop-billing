@@ -379,34 +379,32 @@ export function NewBillClient({
           </Link>
         )}
 
-        <section className="flex flex-col gap-1.5">
-          <div className="flex items-center gap-2">
-            <p className="text-xs font-semibold text-muted">{t("bill.customer")}</p>
-            <div className="flex flex-1 gap-1.5">
-              <button
-                onClick={() => {
-                  setCustomerMode("walkin");
-                  setSelectedCustomer(null);
-                }}
-                className={`flex-1 rounded-md border px-2 py-1.5 text-xs font-medium ${
-                  customerMode === "walkin"
-                    ? "border-brand bg-brand-soft text-brand-text"
-                    : "border-border text-muted"
-                }`}
-              >
-                {t("bill.walkin")}
-              </button>
-              <button
-                onClick={() => setCustomerMode("existing")}
-                className={`flex-1 rounded-md border px-2 py-1.5 text-xs font-medium ${
-                  customerMode === "existing"
-                    ? "border-brand bg-brand-soft text-brand-text"
-                    : "border-border text-muted"
-                }`}
-              >
-                {t("bill.existingCustomer")}
-              </button>
-            </div>
+        <section className="flex flex-col gap-2">
+          <p className="text-xs font-semibold text-muted">{t("bill.customer")}</p>
+          <div className="flex gap-2">
+            <button
+              onClick={() => {
+                setCustomerMode("walkin");
+                setSelectedCustomer(null);
+              }}
+              className={`flex-1 rounded-xl py-2.5 text-sm font-semibold ${
+                customerMode === "walkin"
+                  ? "bg-brand text-white"
+                  : "border border-border text-muted"
+              }`}
+            >
+              {t("bill.walkin")}
+            </button>
+            <button
+              onClick={() => setCustomerMode("existing")}
+              className={`flex-1 rounded-xl py-2.5 text-sm font-semibold ${
+                customerMode === "existing"
+                  ? "bg-brand text-white"
+                  : "border border-border text-muted"
+              }`}
+            >
+              {t("bill.existingCustomer")}
+            </button>
           </div>
 
           {customerMode === "existing" &&
