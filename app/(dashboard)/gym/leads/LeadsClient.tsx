@@ -69,7 +69,7 @@ export function LeadsClient({ leads }: { leads: Lead[] }) {
   const filtered = filter === "all" ? leads : leads.filter((l) => l.status === filter);
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-3">
       <PageHeader
         title="Leads"
         subtitle="Trial enquiries and walk-ins — track who to follow up with."

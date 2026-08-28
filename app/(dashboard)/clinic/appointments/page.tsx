@@ -25,7 +25,7 @@ export default async function ClinicAppointmentsPage({
     .order("appointment_time", { ascending: true });
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-3">
       <PageHeader
         title="Appointments"
         action={

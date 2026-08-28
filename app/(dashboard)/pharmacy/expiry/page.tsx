@@ -32,7 +32,7 @@ export default async function ExpiryAlertsPage() {
   const upcoming = (batches ?? []).filter((b) => { const d = daysUntil(b.expiry_date); return d > 30 && d <= 90; });
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-3">
       <PageHeader
         title={t("expiry.title")}
         subtitle={t("expiry.subtitle")}

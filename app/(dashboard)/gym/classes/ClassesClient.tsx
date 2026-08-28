@@ -82,7 +82,7 @@ export function ClassesClient({
   );
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-3">
       <PageHeader
         title="Classes"
         subtitle="Weekly schedule — a lightweight roster, not a live capacity/waitlist system."

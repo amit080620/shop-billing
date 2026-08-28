@@ -32,7 +32,7 @@ export default async function DoctorsReportPage() {
   const doctors = [...byDoctor.entries()].sort((a, b) => b[1].count - a[1].count);
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-3">
       <PageHeader
         title={t("doctors.title")}
         subtitle={t("doctors.subtitle")}

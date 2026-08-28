@@ -75,7 +75,7 @@ export default async function ScheduleXRegisterPage({
     .sort((a, b) => a.date.localeCompare(b.date));
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-3">
       <PageHeader
         title={t("scheduleX.title")}
         subtitle={t("scheduleX.subtitle")}

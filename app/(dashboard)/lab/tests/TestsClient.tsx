@@ -64,7 +64,7 @@ export function TestsClient({ tests, packages }: { tests: Test[]; packages: Pack
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-3">
       <PageHeader
         title="Test catalog"
         icon={<TestTube size={18} strokeWidth={1.8} />}

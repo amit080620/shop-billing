@@ -27,7 +27,7 @@ export default async function ReservationsPage({
     .order("reservation_time", { ascending: true });
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-3">
       <PageHeader
         title="Reservations"
         action={

@@ -44,7 +44,7 @@ export function TreatmentPlanDetailClient({ plan, items: initialItems }: { plan:
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-3">
       <PageHeader title={plan.patientName} icon={<ClipboardList size={18} strokeWidth={1.8} />} />
       <Link href="/clinic/treatment-plans" className="text-sm text-muted">
         ← Treatment plans

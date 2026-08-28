@@ -99,7 +99,7 @@ export function CombosClient({ products, combos, lang }: { products: Product[]; 
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-3">
       <PageHeader
         title={t("combos.title")}
         subtitle={t("combos.subtitle")}

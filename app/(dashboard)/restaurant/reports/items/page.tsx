@@ -97,7 +97,7 @@ export default async function ItemWiseReportPage({
   const totalRevenue = itemRows.reduce((s, r) => s + r.revenue, 0);
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-3">
       <PageHeader
         title={t("rreports.itemsTitle")}
         subtitle={t("rreports.itemsSubtitle")}

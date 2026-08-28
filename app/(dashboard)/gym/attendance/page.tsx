@@ -40,7 +40,7 @@ export default async function GymAttendancePage() {
   const currentlyIn = (todayAttendance ?? []).filter((a) => !a.checked_out_at).length;
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-3">
       <PageHeader
         title="Attendance"
         icon={<ClipboardCheck size={18} strokeWidth={1.8} />}

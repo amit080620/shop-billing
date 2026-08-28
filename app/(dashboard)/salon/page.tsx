@@ -51,7 +51,7 @@ export default async function SalonStaffReportPage({
   const totalRevenue = rows.reduce((s, r) => s + r.revenue, 0);
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-3">
       <PageHeader
         title="Staff-wise revenue"
         subtitle="Who's bringing in how much — handy for commission."

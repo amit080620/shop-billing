@@ -59,7 +59,7 @@ export function VehiclesClient({ vehicles, lang }: { vehicles: Vehicle[]; lang: 
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-3">
       <PageHeader
         title={t("vehicles.title")}
         subtitle={t("vehicles.subtitle")}

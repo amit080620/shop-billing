@@ -13,7 +13,7 @@ const LINKS = [
 
 export default function ClinicHubPage() {
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-3">
       <PageHeader title="Clinic" icon={<Calendar size={18} strokeWidth={1.8} />} />
 
       <div className="flex flex-col gap-2">

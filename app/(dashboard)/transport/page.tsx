@@ -9,7 +9,7 @@ const LINKS = [
 
 export default function TransportHubPage() {
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-3">
       <PageHeader title="Transport" icon={<Truck size={18} strokeWidth={1.8} />} />
       <div className="flex flex-col gap-2">
         {LINKS.map((l) => (

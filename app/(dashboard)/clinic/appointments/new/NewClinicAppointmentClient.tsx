@@ -44,7 +44,7 @@ export function NewClinicAppointmentClient({ patients, lang }: { patients: Patie
   );
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-3">
       <PageHeader
         title="Book appointment"
         icon={<CalendarPlus size={18} strokeWidth={1.8} />}

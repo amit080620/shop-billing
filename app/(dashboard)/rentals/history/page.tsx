@@ -21,7 +21,7 @@ export default async function RentalHistoryPage() {
     .limit(100);
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-3">
       <PageHeader
         title={t("rentalsPage.historyTitle")}
         icon={<History size={18} strokeWidth={1.8} />}

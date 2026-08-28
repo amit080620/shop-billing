@@ -55,7 +55,7 @@ export function MemberDetailClient({
   const [isPending, startTransition] = useTransition();
 
   return (
-    <div className="flex flex-col gap-4 pb-6">
+    <div className="flex flex-col gap-3 pb-6">
       <PageHeader
         title={member.name}
         subtitle={member.phone}

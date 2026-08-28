@@ -44,7 +44,7 @@ export default async function LabOrdersPage({
   const { data: orders } = await query;
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-3">
       <PageHeader
         title="Lab orders"
         action={

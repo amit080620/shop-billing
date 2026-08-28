@@ -14,7 +14,7 @@ const LINKS = [
 
 export default function GymHubPage() {
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-3">
       <PageHeader title="Gym" icon={<Dumbbell size={18} strokeWidth={1.8} />} />
       <div className="flex flex-col gap-2">
         {LINKS.map((l) => (

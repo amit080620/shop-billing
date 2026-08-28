@@ -48,7 +48,7 @@ export function AvailabilityCalendar({
   const nextMonth = month === 12 ? { y: year + 1, m: 1 } : { y: year, m: month + 1 };
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-3">
       <select
         value={selectedProductId}
         onChange={(e) => go(e.target.value, year, month)}

@@ -8,7 +8,7 @@ export default async function MedicineLibraryPage() {
   const medicines = await listMedicineLibraryAction();
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-3">
       <PageHeader title="Medicine library" icon={<Pill size={18} strokeWidth={1.8} />} />
       <Link href="/clinic" className="text-sm text-muted">
         ← Clinic

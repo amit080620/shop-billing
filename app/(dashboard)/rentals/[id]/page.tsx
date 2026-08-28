@@ -39,7 +39,7 @@ export default async function RentalDetailPage({
   const customer = Array.isArray(rental.customers) ? rental.customers[0] : rental.customers;
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-3">
       <Link href="/rentals" className="text-sm text-muted">
         {t("rentalsPage.backToRentals")}
       </Link>

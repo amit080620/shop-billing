@@ -64,12 +64,12 @@ export function SellMembershipClient({
         return;
       }
       showToast("Membership sold");
-      router.push(`/print/bill/${result.billId}`);
+      router.push(`/print/bill/${result.billId}?new=1`);
     });
   }
 
   return (
-    <div className="flex flex-col gap-4 pb-6">
+    <div className="flex flex-col gap-3 pb-6">
       <PageHeader
         title="Sell membership"
         icon={<UserPlus size={18} strokeWidth={1.8} />}

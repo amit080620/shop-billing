@@ -53,7 +53,7 @@ export function PlansClient({ plans }: { plans: Plan[] }) {
   );
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-3">
       <PageHeader
         title="Membership plans"
         action={

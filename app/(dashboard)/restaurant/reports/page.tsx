@@ -46,7 +46,7 @@ export default async function RestaurantReportsPage({
   const methodRows = [...byMethod.entries()].sort((a, b) => b[1] - a[1]);
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-3">
       <PageHeader
         title={t("rreports.title")}
         icon={<BarChart3 size={18} strokeWidth={1.8} />}

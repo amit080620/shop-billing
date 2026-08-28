@@ -108,7 +108,7 @@ export function SettingsClient({
   }
 
   return (
-    <div className="flex flex-col gap-4 pb-6">
+    <div className="flex flex-col gap-3 pb-6">
       <PageHeader
         title="Prescription pad settings"
         subtitle="Set your letterhead once — every prescription you print uses this."

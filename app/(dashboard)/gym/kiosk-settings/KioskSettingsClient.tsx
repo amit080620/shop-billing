@@ -32,7 +32,7 @@ export function KioskSettingsClient({ isEnabled: initialEnabled, publicToken }: 
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-3">
       <PageHeader
         title="Self check-in kiosk"
         subtitle="Leave this link open on a tablet or old phone at the entrance — members check themselves in by typing their phone number. No staff needed per member."

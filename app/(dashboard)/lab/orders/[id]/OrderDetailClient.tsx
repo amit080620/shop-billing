@@ -78,12 +78,12 @@ export function OrderDetailClient({ order, items }: { order: Order; items: Item[
         setError(result.error ?? "Could not generate bill");
         return;
       }
-      router.push(`/print/bill/${result.billId}`);
+      router.push(`/print/bill/${result.billId}?new=1`);
     });
   }
 
   return (
-    <div className="flex flex-col gap-4 pb-6">
+    <div className="flex flex-col gap-3 pb-6">
       <PageHeader
         title={order.patientName}
         subtitle={`#${order.orderNumber} · ${order.patientPhone}`}

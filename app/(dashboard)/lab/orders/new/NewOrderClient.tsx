@@ -80,7 +80,7 @@ export function NewOrderClient({
   }
 
   return (
-    <div className="flex flex-col gap-4 pb-6">
+    <div className="flex flex-col gap-3 pb-6">
       <PageHeader
         title="New order"
         icon={<FlaskConical size={18} strokeWidth={1.8} />}

@@ -31,7 +31,7 @@ export default async function RestaurantBillDetailPage({
   const table = Array.isArray(order.restaurant_tables) ? order.restaurant_tables[0] : order.restaurant_tables;
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-3">
       <Link href="/restaurant/reports" className="text-sm text-muted">
         {t("rreports.backToReports")}
       </Link>

@@ -23,7 +23,7 @@ export default async function JewelleryExchangesPage() {
   const totalValue = (exchanges ?? []).reduce((s, e) => s + Number(e.exchange_value), 0);
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-3">
       <PageHeader
         title="Exchange history"
         subtitle="Old gold/silver taken in — for your melting & refining records."

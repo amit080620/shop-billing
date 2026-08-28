@@ -44,7 +44,7 @@ export function RatesClient({
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-3">
       <PageHeader
         title="Today's rate"
         subtitle="Set the per-gram rate each morning — it applies to every gold/silver item billed today."

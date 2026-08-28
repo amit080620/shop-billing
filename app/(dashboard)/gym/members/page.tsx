@@ -5,7 +5,7 @@ import { getTranslator } from "@/lib/i18n/server";
 import { PageHeader } from "@/app/components/PageHeader";
 import { EmptyState } from "@/app/components/EmptyState";
 import { MemberRow } from "./MemberRow";
-import { Users, User, ClipboardList, CheckCircle2 } from "lucide-react";
+import { Users, User, ClipboardList, CheckCircle2, Filter } from "lucide-react";
 
 type MembershipRow = {
   id: string;
@@ -53,7 +53,7 @@ export default async function GymMembersPage({
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-3">
       <PageHeader
         title="Members"
         action={
@@ -72,7 +72,7 @@ export default async function GymMembersPage({
               style={!showMineOnly ? { boxShadow: "-2px -2px 5px var(--neu-light), 2px 2px 5px var(--neu-dark)" } : undefined}
             >
               {/* eslint-disable-next-line @next/next/no-img-element -- small branded SVG icon */}
-              <img src="/assets/ray-icons/filter.svg" alt="" className="h-3 w-3" /> All members
+              <Filter size={11} strokeWidth={2} /> All members
             </Link>
             <Link
               href="/gym/members?mine=1"

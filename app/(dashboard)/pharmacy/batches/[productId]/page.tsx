@@ -40,7 +40,7 @@ export default async function BatchesPage({
     .order("expiry_date", { ascending: true });
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-3">
       <Link href="/products" className="text-sm text-muted">
         {t("batches.backToInventory")}
       </Link>

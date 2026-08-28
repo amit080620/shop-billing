@@ -231,7 +231,7 @@ export function TablesClient({ tables, lang }: { tables: Table[]; lang: Lang }) 
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-3">
       <PageHeader
         title={t("tables.title")}
         action={

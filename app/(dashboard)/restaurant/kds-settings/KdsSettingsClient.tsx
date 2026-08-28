@@ -29,7 +29,7 @@ export function KdsSettingsClient({ columns: initialColumns, fontScale: initialF
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-3">
       <PageHeader
         title="Kitchen display settings"
         subtitle="How tickets show on the KDS TV/screen — bigger, bolder text helps if it's mounted far from the line."

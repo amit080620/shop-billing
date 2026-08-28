@@ -52,7 +52,7 @@ export default async function RentalAvailabilityPage({
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-3">
       <PageHeader
         title="Availability calendar"
         subtitle="See which days an item is already booked, at a glance."

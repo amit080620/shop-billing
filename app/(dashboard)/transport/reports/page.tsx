@@ -75,7 +75,7 @@ export default async function TransportReportsPage({
   const grandTotalRounds = vehicleRows.reduce((s, v) => s + v.rounds, 0);
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-3">
       <PageHeader
         title={t("treports.title")}
         subtitle={t("treports.subtitle")}

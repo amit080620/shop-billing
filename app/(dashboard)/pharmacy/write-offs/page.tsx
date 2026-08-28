@@ -29,7 +29,7 @@ export default async function WriteOffsPage() {
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-3">
       <PageHeader
         title={t("writeoffs.title")}
         subtitle={t("writeoffs.subtitle")}
