@@ -7,7 +7,7 @@ export default async function ReportsPage() {
   const session = await requireSession();
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-3">
       <PageHeader
         title="Reports"
         // eslint-disable-next-line @next/next/no-img-element -- small branded SVG icon

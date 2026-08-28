@@ -76,10 +76,9 @@ export default async function NewBillPage() {
       {shop?.fast_billing_enabled && (
         <Link
           href="/fast-billing"
-          className="flex items-center justify-between rounded-xl bg-brand-soft px-4 py-3 text-sm font-medium text-brand-text"
+          className="inline-flex items-center gap-1.5 self-start rounded-full border border-brand bg-brand-soft px-3 py-1 text-xs font-medium text-brand-text"
         >
-          <span>⚡ Switch to Fast Billing — tap-to-add for quick sales</span>
-          <span>→</span>
+          <span>⚡</span> Fast Billing →
         </Link>
       )}
       <NewBillClient

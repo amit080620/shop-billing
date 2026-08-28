@@ -38,13 +38,13 @@ export function PurchaseHubClient({ purchases, payments }: { purchases: Purchase
       </div>
 
       {topContext === "purchase" ? (
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-2">
           <div className="flex gap-2">
             {(["add", "payment"] as const).map((tab) => (
               <button
                 key={tab}
                 onClick={() => setPurchaseTab(tab)}
-                className={`flex-1 rounded-lg py-2 text-sm font-medium ${
+                className={`flex-1 rounded-lg py-1.5 text-sm font-medium ${
                   purchaseTab === tab ? "bg-brand-soft text-brand-text" : "text-muted"
                 }`}
               >
@@ -54,42 +54,42 @@ export function PurchaseHubClient({ purchases, payments }: { purchases: Purchase
           </div>
 
           {purchaseTab === "add" ? (
-            <Link href="/purchases/new" className="neu-card flex items-center gap-3 p-4 transition active:scale-[0.98]">
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-brand-soft text-brand-text">
-                <Plus size={20} strokeWidth={1.8} />
+            <Link href="/purchases/new" className="neu-card flex items-center gap-2.5 p-3 transition active:scale-[0.98]">
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-soft text-brand-text">
+                <Plus size={16} strokeWidth={2} />
               </span>
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-semibold text-foreground">Add Purchase</p>
                 <p className="text-xs text-muted">Record a new purchase from a supplier</p>
               </div>
-              <ArrowRight size={16} className="shrink-0 text-muted" />
+              <ArrowRight size={14} className="shrink-0 text-muted" />
             </Link>
           ) : (
-            <Link href="/vendors" className="neu-card flex items-center gap-3 p-4 transition active:scale-[0.98]">
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-brand-soft text-brand-text">
-                <Wallet size={20} strokeWidth={1.8} />
+            <Link href="/vendors" className="neu-card flex items-center gap-2.5 p-3 transition active:scale-[0.98]">
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-soft text-brand-text">
+                <Wallet size={16} strokeWidth={2} />
               </span>
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-semibold text-foreground">Make Payment</p>
                 <p className="text-xs text-muted">Pick a supplier to settle their outstanding balance</p>
               </div>
-              <ArrowRight size={16} className="shrink-0 text-muted" />
+              <ArrowRight size={14} className="shrink-0 text-muted" />
             </Link>
           )}
         </div>
       ) : (
         <div className="flex flex-col gap-3">
-          <div className="grid grid-cols-3 gap-2">
-            <div className="neu-card p-3">
-              <p className="text-[11px] text-muted">Total Purchase</p>
+          <div className="grid grid-cols-3 gap-1.5">
+            <div className="neu-card p-2.5">
+              <p className="text-[10px] text-muted">Total Purchase</p>
               <p className="text-sm font-semibold text-foreground">{formatMoney(totalPurchase)}</p>
             </div>
-            <div className="neu-card p-3">
-              <p className="text-[11px] text-muted">Total Payments</p>
+            <div className="neu-card p-2.5">
+              <p className="text-[10px] text-muted">Total Payments</p>
               <p className="text-sm font-semibold text-foreground">{formatMoney(totalPaid)}</p>
             </div>
-            <div className="neu-card p-3">
-              <p className="text-[11px] text-muted">Outstanding</p>
+            <div className="neu-card p-2.5">
+              <p className="text-[10px] text-muted">Outstanding</p>
               <p className="text-sm font-semibold text-danger">{formatMoney(totalOutstanding)}</p>
             </div>
           </div>

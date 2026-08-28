@@ -14,12 +14,12 @@ export function PageHeader({
   bareIcon?: boolean;
 }) {
   return (
-    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between md:gap-4">
-      <div className="flex items-center gap-3 md:gap-4">
+    <div className="flex items-center justify-between gap-2">
+      <div className="flex items-center gap-2.5">
         <PageIcon bare={bareIcon}>{icon}</PageIcon>
         <div>
-          <h1 className="text-lg font-semibold text-foreground md:text-2xl">{title}</h1>
-          {subtitle && <p className="text-sm text-muted md:text-base">{subtitle}</p>}
+          <h1 className="text-base font-semibold text-foreground md:text-xl">{title}</h1>
+          {subtitle && <p className="text-xs text-muted md:text-sm">{subtitle}</p>}
         </div>
       </div>
       {action}

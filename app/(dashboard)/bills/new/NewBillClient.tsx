@@ -369,45 +369,44 @@ export function NewBillClient({
 
   if (step === "cart") {
     return (
-      <div className="flex flex-col gap-4">
-        <h1 className="text-lg font-semibold text-foreground">{t("bill.title")}</h1>
-
+      <div className="flex flex-col gap-3">
         {!isOnline && (
           <Link
             href="/offline-bill"
-            className="rounded-lg border border-credit bg-credit-soft px-3.5 py-3 text-sm text-credit"
+            className="rounded-lg border border-credit bg-credit-soft px-3 py-2 text-xs text-credit"
           >
-            You&apos;re offline — this screen needs a connection. Tap here for offline billing
-            instead (bills sync automatically once you&apos;re back online). →
+            You&apos;re offline — tap here for offline billing instead. →
           </Link>
         )}
 
-        <section className="flex flex-col gap-2">
-          <p className="text-sm font-medium text-foreground">{t("bill.customer")}</p>
-          <div className="flex gap-2">
-            <button
-              onClick={() => {
-                setCustomerMode("walkin");
-                setSelectedCustomer(null);
-              }}
-              className={`flex-1 rounded-lg border px-3 py-2 text-sm font-medium ${
-                customerMode === "walkin"
-                  ? "border-brand bg-brand-soft text-brand-text"
-                  : "border-border text-muted"
-              }`}
-            >
-              {t("bill.walkin")}
-            </button>
-            <button
-              onClick={() => setCustomerMode("existing")}
-              className={`flex-1 rounded-lg border px-3 py-2 text-sm font-medium ${
-                customerMode === "existing"
-                  ? "border-brand bg-brand-soft text-brand-text"
-                  : "border-border text-muted"
-              }`}
-            >
-              {t("bill.existingCustomer")}
-            </button>
+        <section className="flex flex-col gap-1.5">
+          <div className="flex items-center gap-2">
+            <p className="text-xs font-semibold text-muted">{t("bill.customer")}</p>
+            <div className="flex flex-1 gap-1.5">
+              <button
+                onClick={() => {
+                  setCustomerMode("walkin");
+                  setSelectedCustomer(null);
+                }}
+                className={`flex-1 rounded-md border px-2 py-1.5 text-xs font-medium ${
+                  customerMode === "walkin"
+                    ? "border-brand bg-brand-soft text-brand-text"
+                    : "border-border text-muted"
+                }`}
+              >
+                {t("bill.walkin")}
+              </button>
+              <button
+                onClick={() => setCustomerMode("existing")}
+                className={`flex-1 rounded-md border px-2 py-1.5 text-xs font-medium ${
+                  customerMode === "existing"
+                    ? "border-brand bg-brand-soft text-brand-text"
+                    : "border-border text-muted"
+                }`}
+              >
+                {t("bill.existingCustomer")}
+              </button>
+            </div>
           </div>
 
           {customerMode === "existing" &&
@@ -454,8 +453,8 @@ export function NewBillClient({
             ))}
         </section>
 
-        <section className="flex flex-col gap-2">
-          <p className="text-sm font-medium text-foreground">{t("bill.addProducts")}</p>
+        <section className="flex flex-col gap-1.5">
+          <p className="text-xs font-semibold text-muted">{t("bill.addProducts")}</p>
           {frequentProducts.length > 0 && (
             <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1">
               {frequentProducts.map((p) => (

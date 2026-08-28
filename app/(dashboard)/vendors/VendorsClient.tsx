@@ -58,7 +58,7 @@ export function VendorsClient({ initialVendors }: { initialVendors: Vendor[] }) 
   const totalPayable = initialVendors.reduce((s, v) => s + v.balance, 0);
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-3">
       <PageHeader
         title="Vendors"
         icon={<Building2 size={18} strokeWidth={1.8} />}

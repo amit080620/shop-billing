@@ -72,10 +72,9 @@ export function PettyCashClient({ entries }: { entries: Entry[] }) {
   const monthTotal = useMemo(() => filteredEntries.reduce((s, e) => s + e.amount, 0), [filteredEntries]);
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-3">
       <PageHeader
         title="Expense"
-        subtitle="Small day-to-day cash expenses — tea, stationery, auto fare — so cash in hand actually adds up."
         action={
           <button onClick={() => setShowForm((v) => !v)} className="btn-primary-sm">
             + Expense
@@ -102,14 +101,14 @@ export function PettyCashClient({ entries }: { entries: Entry[] }) {
         ))}
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
-        <div className="neu-card p-3.5 text-center">
+      <div className="grid grid-cols-2 gap-2">
+        <div className="neu-card p-3 text-center">
           <p className="text-xs text-muted">Today</p>
-          <p className="mt-1 text-lg font-semibold text-foreground neu-text">{formatMoney(todayTotal)}</p>
+          <p className="mt-0.5 text-base font-semibold text-foreground neu-text">{formatMoney(todayTotal)}</p>
         </div>
-        <div className="neu-card p-3.5 text-center">
+        <div className="neu-card p-3 text-center">
           <p className="text-xs text-muted">This month</p>
-          <p className="mt-1 text-lg font-semibold text-foreground neu-text">{formatMoney(monthTotal)}</p>
+          <p className="mt-0.5 text-base font-semibold text-foreground neu-text">{formatMoney(monthTotal)}</p>
         </div>
       </div>
 

@@ -23,7 +23,7 @@ export function FastBillingSettingsClient({ enabled, productCount }: { enabled: 
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-3">
       <div className="neu-card flex items-center justify-between p-4">
         <div>
           <p className="text-sm font-medium text-foreground">Fast Billing</p>

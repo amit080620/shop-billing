@@ -78,7 +78,7 @@ export default async function DashboardPage() {
     .sort((a, b) => a.daysUntil - b.daysUntil)[0];
 
   return (
-    <div className="flex flex-col gap-5">
+    <div className="flex flex-col gap-3">
       <div>
         <p className="text-lg font-semibold text-foreground">{t(greetingKey())}, {session.staffName.split(" ")[0]}</p>
         <p className="text-sm text-muted">{t("home.subtitle", { shop: session.shopName })}</p>

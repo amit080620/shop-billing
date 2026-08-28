@@ -255,24 +255,24 @@ export function ProductsClient({
         icon={<img src="/assets/ray-icons/product.svg" alt="" className="h-9 w-9 md:h-11 md:w-11" />}
         bareIcon
         action={
-          <div className="flex gap-2">
+          <div className="flex gap-1.5">
             <Link
               href="/products/scan-menu"
-              className="rounded-lg border border-border px-3 py-1.5 text-sm font-medium text-foreground"
+              className="rounded-lg border border-border px-2.5 py-1 text-xs font-medium text-muted"
             >
               Scan menu
             </Link>
             <button
               onClick={() => setShowCategoryForm((v) => !v)}
-              className="rounded-lg border border-border px-3 py-1.5 text-sm font-medium text-foreground"
+              className="rounded-lg border border-border px-2.5 py-1 text-xs font-medium text-muted"
             >
-              {t("products.addCategory")}
+              + Category
             </button>
             <button
               onClick={() => (showForm && !editingProduct ? setShowForm(false) : openNewProductForm())}
-              className="btn-primary-sm"
+              className="btn-primary-sm text-xs"
             >
-              {terminology.addProductLabel}
+              + {terminology.productSingular}
             </button>
           </div>
         }
@@ -739,7 +739,7 @@ export function ProductsClient({
 
       {deleteError && <p className="rounded-lg bg-credit-soft px-3.5 py-2.5 text-sm text-credit">{deleteError}</p>}
       {imageError && <p className="rounded-lg bg-credit-soft px-3.5 py-2.5 text-sm text-credit">{imageError}</p>}
-      <p className="flex items-center gap-1 text-xs text-muted"><Camera size={12} /> Tap the photo icon on any item to add one — any size works, it&apos;s automatically cropped to a clean square.</p>
+      <p className="flex items-center gap-1 text-xs text-muted"><Camera size={12} /> Tap photo icon to add — any size, auto-cropped square.</p>
 
       {filtered.length === 0 ? (
         <EmptyState

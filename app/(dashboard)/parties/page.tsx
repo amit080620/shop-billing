@@ -128,7 +128,7 @@ export default async function PartiesPage({
   const admin = createSupabaseAdminClient();
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-3">
       <PageHeader title="Parties" icon={<Users size={18} strokeWidth={1.8} />} />
 
       {/* Top-level context switch — Customers vs Suppliers, genuinely
