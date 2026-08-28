@@ -374,11 +374,13 @@ export function NewPurchaseClient({
                   if (m === "udhar") setPaidAmount(0);
                 }}
                 className={`rounded-full border px-3 py-1.5 text-xs font-medium capitalize ${
-                  paymentMethod === m
-                    ? m === "udhar"
-                      ? "border-danger bg-danger-soft text-danger"
-                      : "border-brand bg-brand-soft text-brand-text"
-                    : "border-border text-muted"
+                  m === "udhar"
+                    ? paymentMethod === m
+                      ? "border-danger bg-danger text-white"
+                      : "border-danger bg-danger-soft text-danger"
+                    : paymentMethod === m
+                      ? "border-brand bg-brand-soft text-brand-text"
+                      : "border-border text-muted"
                 }`}
               >
                 {m}

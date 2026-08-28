@@ -424,7 +424,13 @@ function FastCheckoutButton({
               setCustomerError(null);
             }}
             className={`rounded-full py-2 text-xs font-medium capitalize ${
-              paymentMethod === m ? (m === "udhar" ? "bg-danger text-white" : "bg-brand text-white") : "bg-surface text-muted"
+              m === "udhar"
+                ? paymentMethod === m
+                  ? "bg-danger text-white"
+                  : "bg-danger-soft text-danger"
+                : paymentMethod === m
+                  ? "bg-brand text-white"
+                  : "bg-surface text-muted"
             }`}
           >
             {m}
