@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 
-export function BillCreatedConfirmation({ amount }: { amount?: string }) {
+export function BillCreatedConfirmation({ amount, pointsEarned }: { amount?: string; pointsEarned?: number }) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
@@ -45,6 +45,9 @@ export function BillCreatedConfirmation({ amount }: { amount?: string }) {
         <div className="text-center">
           <p className="text-base font-semibold text-foreground">Bill created</p>
           {amount && <p className="mt-0.5 text-sm text-muted">{amount}</p>}
+          {!!pointsEarned && pointsEarned > 0 && (
+            <p className="mt-1 text-xs font-medium text-brand-text">🎁 +{pointsEarned} loyalty points earned</p>
+          )}
         </div>
       </div>
     </div>

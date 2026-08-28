@@ -110,9 +110,9 @@ export function LedgerClient({
             <p className={`text-2xl font-semibold ${balance > 0 ? "text-credit" : "text-foreground"}`}>
               {formatMoney(balance)}
             </p>
-            {customer.loyaltyPoints > 0 && (
-              <p className="mt-1 text-xs font-medium text-brand-text">🎁 {customer.loyaltyPoints} loyalty points</p>
-            )}
+            <p className="mt-1 text-xs font-medium text-brand-text">
+              🎁 {customer.loyaltyPoints} loyalty point{customer.loyaltyPoints === 1 ? "" : "s"}
+            </p>
           </div>
           {balance > 0 && (
             <a

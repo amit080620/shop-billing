@@ -36,8 +36,12 @@ export default async function PrintBillPage({
   // when no explicit ?format= was given — tapping a format pill on
   // this very screen always overrides the default for that view.
   let format = formatParam;
+  const { data: shopRow } = await admin
+    .from("shops")
+    .select("default_print_format, loyalty_points_per_100")
+    .eq("id", session.shopId)
+    .single();
   if (!format) {
-    const { data: shopRow } = await admin.from("shops").select("default_print_format").eq("id", session.shopId).single();
     const defaultFormat = shopRow?.default_print_format ?? "full";
     format = defaultFormat === "thermal58" ? "thermal58" : defaultFormat === "thermal" ? "thermal" : "full";
   }
@@ -62,7 +66,7 @@ export default async function PrintBillPage({
   const { data: bill } = await admin
     .from("bills")
     .select(
-      "id, invoice_number, subtotal, discount_type, discount_value, discount_amount, taxable_amount, supply_type, cgst_amount, sgst_amount, igst_amount, gst_amount, round_off_amount, payment_method, status, void_reason, voided_at, total, paid_amount, credit_amount, created_at, service_provider_name, edited_at, edit_reason, customers ( name, phone, gstin, address )",
+      "id, invoice_number, subtotal, discount_type, discount_value, discount_amount, taxable_amount, supply_type, cgst_amount, sgst_amount, igst_amount, gst_amount, round_off_amount, payment_method, status, void_reason, voided_at, total, paid_amount, credit_amount, created_at, service_provider_name, edited_at, edit_reason, customer_id, customers ( name, phone, gstin, address )",
     )
     .eq("id", id)
     .eq("shop_id", session.shopId) // ownership check
@@ -211,11 +215,19 @@ export default async function PrintBillPage({
     upiId: session.shopUpiId,
   };
 
+  // Same formula bills.ts used when it actually awarded the points —
+  // recomputed here (not re-read from the customer's live balance,
+  // which could include other bills/redemptions since) so this always
+  // reflects exactly what THIS bill earned.
+  const loyaltyRate = Number(shopRow?.loyalty_points_per_100 ?? 0);
+  const pointsEarned =
+    bill.customer_id && loyaltyRate > 0 ? Math.floor((Number(bill.paid_amount) / 100) * loyaltyRate) : 0;
+
   return (
     <>
       <BillSuccessSound />
       <Suspense fallback={null}>
-        <BillCreatedConfirmation amount={formatMoney(bill.total)} />
+        <BillCreatedConfirmation amount={formatMoney(bill.total)} pointsEarned={pointsEarned} />
       </Suspense>
       <style>{`
         @media print {

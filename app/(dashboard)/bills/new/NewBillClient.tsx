@@ -769,6 +769,13 @@ export function NewBillClient({
           className="rounded-lg border border-border px-3.5 py-2.5 text-sm outline-none focus:border-brand"
         />
 
+        {customerMode === "existing" && selectedCustomer && (
+          <p className="text-xs font-medium text-brand-text">
+            🎁 {selectedCustomer.name} has {selectedCustomer.loyalty_points ?? 0} loyalty point
+            {(selectedCustomer.loyalty_points ?? 0) === 1 ? "" : "s"}
+          </p>
+        )}
+
         {customerMode === "existing" &&
           selectedCustomer &&
           (selectedCustomer.loyalty_points ?? 0) > 0 &&
