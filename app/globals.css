@@ -16,21 +16,20 @@
   --muted: #737078;
   --border: #e3e6ef;
 
-  /* Brand — deliberately neutral charcoal, no hue. Every button in the
-     app is hardcoded `bg-brand text-white`, so this needs to stay dark
-     enough for white text to read clearly while looking like a clean,
-     confident "ink" color rather than a colored accent. */
-  --brand: #27272a;
-  --brand-dark: #18181b;
-  --brand-light: #52525b;
-  --brand-soft: #f4f4f5;
-  --brand-text: #3f3f46;
-  --ray-gradient: linear-gradient(135deg, #3f3f46 0%, #27272a 55%, #18181b 100%);
+  /* Brand — exact hex from The Ray's official brand spec (logo source
+     of truth), a Blue → Purple → Magenta family. Previously
+     approximated by sampling logo pixels; now using the authoritative
+     values so every button/icon/gradient traces to the real spec. */
+  --brand: #0427f3;
+  --brand-dark: #0427f3;
+  --brand-light: #6a2bbf;
+  --brand-soft: #eef0fe;
+  --brand-text: #0427f3;
+  --ray-gradient: linear-gradient(135deg, #0427f3 0%, #6a2bbf 52%, #cd127b 100%);
 
-  /* Secondary — same neutral family, one step lighter for subtle
-     variation where a second tone is needed (rare in this app). */
-  --secondary: #52525b;
-  --secondary-soft: #f4f4f5;
+  /* Secondary accent — the brand's magenta */
+  --secondary: #cd127b;
+  --secondary-soft: #fce8f2;
 
   /* Semantic status colors — corrected to the exact Design OS v2.0
      spec values (were close approximations before, now exact). */
@@ -52,7 +51,6 @@
   --radius-sm: 10px;
   --radius: 14px;
   --radius-lg: 18px;
-  --radius-xl: 24px;
   --radius-2xl: 32px;
 
   /* Elevation — exact Design OS scale. Most cards use Level 1;
@@ -94,22 +92,25 @@
   --muted: #7f7883;
   --border: rgba(255, 255, 255, 0.09);
 
-  /* Brand — dark mode only: warm amber sampled from the reference
-     screenshot (~#CD8900 family). --brand itself is deepened to
-     ~5:1 contrast so hardcoded `bg-brand text-white` buttons stay
-     readable; the brighter, truer amber lives in --brand-light /
-     --brand-text / the gradient's bright stop, where it's paired
-     with dark backgrounds instead of white text. Light mode stays
-     the neutral charcoal — this color is dark-mode only. */
-  --brand: #9c6402;
-  --brand-dark: #7a4e02;
-  --brand-light: #cd8900;
-  --brand-soft: #2b2008;
-  --brand-text: #f0b84d;
-  --ray-gradient: linear-gradient(135deg, #f0b84d 0%, #cd8900 45%, #9c6402 100%);
+  /* Brand — identical to light mode per the brand spec ("the brand
+     gradient remains the same in both themes"). Used for buttons,
+     gradients, and icon accents. */
+  --brand: #0427f3;
+  --brand-dark: #0427f3;
+  --brand-light: #6a2bbf;
+  --brand-soft: #1c1b3d;
+  /* Dedicated text-on-soft-background color — NOT the same as
+     --brand-dark. --brand-dark is reused inside button gradients
+     (paired with white text, needs to stay a deep, saturated blue for
+     THAT contrast); this app's many "text-brand-dark label on
+     bg-brand-soft chip" usages need the opposite — a brighter color
+     for contrast against a dark tinted background. Reusing one token
+     for both measured at ~2:1 contrast for the text case (WCAG AA
+     needs 4.5:1). Kept as a separate token instead. */
+  --brand-text: #7c93ff;
 
-  --secondary: #cd8900;
-  --secondary-soft: #2b2008;
+  --secondary: #cd127b;
+  --secondary-soft: #3a1428;
 
   --success: #35b985;
   --success-soft: #102420;
@@ -127,6 +128,47 @@
   --elevation-2: 0 8px 26px rgba(0, 0, 0, 0.32);
   --elevation-3: 0 18px 44px rgba(0, 0, 0, 0.4);
   --elevation-4: 0 28px 72px rgba(0, 0, 0, 0.5);
+}
+
+/* ============================================================
+   Accent color choice — Blue (default, matches the logo) or
+   Saffron. Only the brand tokens change; secondary/semantic
+   colors (success/warning/danger etc.) stay the same in both, so
+   status meaning never gets confused with the accent choice.
+   ============================================================ */
+[data-accent="saffron"] {
+  --brand: #e8720e;
+  --brand-dark: #b85400;
+  --brand-light: #ff9d40;
+  --brand-soft: #fff3e5;
+  --brand-text: #b85400;
+  --ray-gradient: linear-gradient(135deg, #e8720e 0%, #ff9d40 50%, #ffc178 100%);
+  --neu-dark: rgba(150, 90, 30, 0.32);
+  --neu-dark-strong: rgba(130, 76, 22, 0.44);
+}
+.dark[data-accent="saffron"] {
+  --brand: #ffa94d;
+  --brand-dark: #e8871a;
+  --brand-light: #ffc178;
+  --brand-soft: #3d2410;
+  --brand-text: #ffb366;
+  --ray-gradient: linear-gradient(135deg, #e8871a 0%, #ffa94d 50%, #ffc178 100%);
+}
+[data-accent="gray"] {
+  --brand: #475569;
+  --brand-dark: #334155;
+  --brand-light: #64748b;
+  --brand-soft: #eef1f5;
+  --brand-text: #334155;
+  --ray-gradient: linear-gradient(135deg, #475569 0%, #64748b 50%, #94a3b8 100%);
+}
+.dark[data-accent="gray"] {
+  --brand: #94a3b8;
+  --brand-dark: #64748b;
+  --brand-light: #cbd5e1;
+  --brand-soft: #2a3240;
+  --brand-text: #cbd5e1;
+  --ray-gradient: linear-gradient(135deg, #64748b 0%, #94a3b8 50%, #cbd5e1 100%);
 }
 
 /* Text color choice — besides the default near-black. Only applies in
@@ -168,8 +210,6 @@ html:not(.dark)[data-text="slate"] {
   --color-credit-soft: var(--credit-soft);
   --color-danger: var(--danger);
   --color-danger-soft: var(--danger-soft);
-  --font-sans: "Plus Jakarta Sans", "Noto Sans Devanagari", -apple-system, BlinkMacSystemFont, "Segoe UI",
-    Roboto, Helvetica, Arial, sans-serif;
   --shadow-sm: 0 1px 2px hsl(220 20% 15% / 0.06), 0 1px 1px hsl(220 20% 15% / 0.04);
   --shadow-md: 0 4px 10px hsl(220 20% 15% / 0.08), 0 2px 4px hsl(220 20% 15% / 0.05);
   --shadow-lg: 0 12px 24px hsl(220 20% 15% / 0.12), 0 4px 8px hsl(220 20% 15% / 0.06);
@@ -177,13 +217,6 @@ html:not(.dark)[data-text="slate"] {
   /* Design OS tokens exposed as Tailwind utilities — e.g. rounded-ray-xs,
      shadow-elevation-2, z-modal. Additive: existing shadow-sm/md/lg and
      radius-* classes keep working unchanged. */
-  --radius-ray-xs: var(--radius-xs);
-  --radius-ray-2xl: var(--radius-2xl);
-  --shadow-elevation-0: var(--elevation-0);
-  --shadow-elevation-1: var(--elevation-1);
-  --shadow-elevation-2: var(--elevation-2);
-  --shadow-elevation-3: var(--elevation-3);
-  --shadow-elevation-4: var(--elevation-4);
   --z-base: var(--z-base);
   --z-sticky: var(--z-sticky);
   --z-sidebar: var(--z-sidebar);
@@ -199,8 +232,6 @@ html:not(.dark)[data-text="slate"] {
      for every entrance in the app instead of picking a new easing per
      component. Exits use a mirrored ease-in. */
   --ease-signature: cubic-bezier(0.16, 1, 0.3, 1);
-  --ease-exit: cubic-bezier(0.4, 0, 1, 1);
-  --duration-micro: 120ms;
   --duration-standard: 240ms;
   --duration-emphasis: 480ms;
 }
@@ -392,7 +423,36 @@ label.neu-card:active {
   }
 }
 
+
 @layer components {
+  /* Shared input style — used 94+ times as a copy-pasted className.
+     Using a utility class reduces the repeated string in the JS
+     bundle and makes future style changes genuinely one-place. */
+  .input-field {
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+    outline: none;
+    width: 100%;
+  }
+  .input-field:focus {
+    border-color: var(--brand);
+  }
+  .input-field-sm {
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background-color: var(--surface);
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+    outline: none;
+    width: 100%;
+  }
+  .input-field-sm:focus {
+    border-color: var(--brand);
+  }
   .btn-primary {
     border-radius: var(--radius);
     padding: 0.875rem 1.25rem;

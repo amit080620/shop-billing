@@ -5,7 +5,39 @@ import { getTranslator } from "@/lib/i18n/server";
 import { getTerminology } from "@/lib/businessType";
 import { isModuleEnabled } from "@/lib/modules";
 import { MoreDrawerShell } from "./MoreDrawerShell";
-import { Users, Bell, Clock, Truck, Package, UserCog, Megaphone, HelpCircle, PartyPopper, WifiOff, CalendarClock, ChefHat, BookOpen, ClipboardCheck, ShieldCheck, Scissors, Gem, Store, Stethoscope, Palette, Wallet, Building2, Dumbbell, FlaskConical, Receipt as ReceiptIcon, AlertTriangle, Cake, PackagePlus, Wrench, Gift, Zap, Pill } from "lucide-react";
+import {
+  Users,
+  Bell,
+  Clock,
+  Truck,
+  Package,
+  UserCog,
+  Megaphone,
+  PartyPopper,
+  WifiOff,
+  CalendarClock,
+  ChefHat,
+  BookOpen,
+  ClipboardCheck,
+  ShieldCheck,
+  Scissors,
+  Gem,
+  Store,
+  Stethoscope,
+  Palette,
+  Wallet,
+  Building2,
+  Dumbbell,
+  FlaskConical,
+  AlertTriangle,
+  Cake,
+  PackagePlus,
+  Wrench,
+  Gift,
+  Zap,
+  Pill,
+  Receipt,
+} from "lucide-react";
 
 export default async function MorePage() {
   const session = await requireSession();
@@ -124,7 +156,7 @@ export default async function MorePage() {
       </MenuGroup>
 
       <MenuGroup title="Money">
-        <MenuLink href="/bills/all" label="All bills" sub="Browse & reprint any past bill" icon={({ className }) => <ReceiptIcon className={className} />} tone="brand" />
+        <MenuLink href="/bills/all" label="All bills" sub="Browse & reprint any past bill" icon={({ className }) => <Receipt className={className} />} tone="brand" />
         {isModuleEnabled(session.enabledModules, "petty_cash") && (
           <MenuLink href="/petty-cash" label="Petty cash" sub="Small day-to-day cash expenses" icon={PettyCashIcon} tone="warning" />
         )}

@@ -8,6 +8,11 @@ export async function getTheme(): Promise<"light" | "dark" | "auto"> {
   return "light";
 }
 
+export async function getAccent(): Promise<"blue" | "saffron" | "gray"> {
+  const cookieStore = await cookies();
+  const v = cookieStore.get("accent")?.value;
+  return v === "saffron" || v === "gray" ? v : "blue";
+}
 
 export async function getTextColor(): Promise<"default" | "navy" | "charcoal" | "slate"> {
   const cookieStore = await cookies();

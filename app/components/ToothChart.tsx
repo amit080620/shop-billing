@@ -3,8 +3,8 @@
 import { useState } from "react";
 import { Smile, Check } from "lucide-react";
 
-export const TOOTH_CONDITIONS = ["cavity", "filled", "missing", "crown", "root_canal", "extraction", "bridge", "implant", "sealant"] as const;
-export const CONDITION_COLORS: Record<string, string> = {
+const TOOTH_CONDITIONS = ["cavity", "filled", "missing", "crown", "root_canal", "extraction", "bridge", "implant", "sealant"] as const;
+const CONDITION_COLORS: Record<string, string> = {
   healthy: "bg-surface border-border text-muted",
   cavity: "bg-red-100 border-red-400 text-red-700",
   filled: "bg-blue-100 border-blue-400 text-blue-700",
@@ -43,7 +43,7 @@ export type ToothChartData = Record<string, string[]>;
 /** A genuine small SVG tooth icon that visually COMBINES every marker
  * that applies — a tooth with both RCT and a Crown genuinely shows
  * the red root highlight AND the gold cap together. */
-export function ToothIcon({ conditions, size = 22 }: { conditions: string[]; size?: number }) {
+function ToothIcon({ conditions, size = 22 }: { conditions: string[]; size?: number }) {
   const has = (c: string) => conditions.includes(c);
 
   const crownFill = has("cavity") ? "#f87171" : has("filled") ? "#93c5fd" : has("missing") ? "none" : "#fefce8";

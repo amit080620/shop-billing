@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { X, Camera, Image as ImageIcon } from "lucide-react";
+import { X, Camera, Image } from "lucide-react";
 
 type CameraCaptureProps = {
   onCapture: (file: Blob) => void;
@@ -103,7 +103,7 @@ export function CameraCapture({ onCapture, onCancel }: CameraCaptureProps) {
           onClick={() => fileInputRef.current?.click()}
           className="flex flex-col items-center gap-1 rounded-full bg-white/10 px-4 py-3 text-xs text-white"
         >
-          <ImageIcon size={16} /> Gallery
+          <Image size={16} /> Gallery
         </button>
         {!error && (
           <button

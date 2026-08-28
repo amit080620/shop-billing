@@ -1,4 +1,4 @@
-import { AuthIllustration } from "./AuthIllustration";
+import { AuthIllustrationLazy as AuthIllustration } from "./AuthIllustrationLazy";
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (

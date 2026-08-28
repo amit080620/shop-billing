@@ -2,7 +2,25 @@
 
 import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
-import { Eye, EyeOff, ShoppingCart, Store, Wrench, Pill, UtensilsCrossed, Repeat, Truck, Hammer, Scissors, Gem, Stethoscope, Dumbbell, FlaskConical, Building2, type LucideIcon } from "lucide-react";
+import {
+  Eye,
+  EyeOff,
+  ShoppingCart,
+  Store,
+  Wrench,
+  Pill,
+  UtensilsCrossed,
+  Repeat,
+  Truck,
+  Hammer,
+  Scissors,
+  Gem,
+  Stethoscope,
+  Dumbbell,
+  FlaskConical,
+  Building2,
+  type LucideIcon,
+} from "lucide-react";
 
 // Mirrors businessType.ts's icon choices — kept as a lookup map here
 // (rather than passing the component itself through props) because a
