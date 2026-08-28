@@ -1,3 +1,4 @@
+import { BarChart3 } from "lucide-react";
 import Link from "next/link";
 import { requireSession } from "@/lib/auth";
 import { PageHeader } from "@/app/components/PageHeader";
@@ -11,8 +12,7 @@ export default async function ReportsPage() {
       <PageHeader
         title="Reports"
         // eslint-disable-next-line @next/next/no-img-element -- small branded SVG icon
-        icon={<img src="/assets/ray-icons/report.svg" alt="" className="h-9 w-9 md:h-11 md:w-11" />}
-        bareIcon
+        icon={<BarChart3 size={17} strokeWidth={1.8} />}
       />
 
       <section className="flex flex-col gap-2">

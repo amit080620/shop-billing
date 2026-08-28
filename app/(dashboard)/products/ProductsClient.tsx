@@ -252,8 +252,7 @@ export function ProductsClient({
       <PageHeader
         title={terminology.productPlural}
         // eslint-disable-next-line @next/next/no-img-element -- small branded SVG icon
-        icon={<img src="/assets/ray-icons/product.svg" alt="" className="h-9 w-9 md:h-11 md:w-11" />}
-        bareIcon
+        icon={<Package size={17} strokeWidth={1.8} />}
         action={
           <div className="flex gap-1.5">
             <Link

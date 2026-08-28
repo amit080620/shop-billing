@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ShoppingBag } from "lucide-react";
 import { requireSession } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { PageHeader } from "@/app/components/PageHeader";
@@ -57,8 +58,7 @@ export default async function CatalogOrdersPage({
       <PageHeader
         title="Catalog orders"
         // eslint-disable-next-line @next/next/no-img-element -- small branded SVG icon
-        icon={<img src="/assets/ray-icons/order.svg" alt="" className="h-9 w-9 md:h-11 md:w-11" />}
-        bareIcon
+        icon={<ShoppingBag size={17} strokeWidth={1.8} />}
       />
       <Link href="/catalog-settings" className="text-sm text-muted">
         ← Catalog link settings

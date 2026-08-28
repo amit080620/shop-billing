@@ -10,7 +10,7 @@ import { formatMoney, formatDateTime } from "@/lib/format";
 import { EmptyState } from "@/app/components/EmptyState";
 import { Popup } from "@/app/components/Popup";
 import { PageHeader } from "@/app/components/PageHeader";
-import { Camera, X } from "lucide-react";
+import { Camera, X, Wallet} from "lucide-react";
 import { ScanBillModal } from "./ScanBillModal";
 
 type Entry = { id: string; description: string; amount: number; category: string | null; expenseType: "business" | "owner"; createdAt: string };
@@ -81,8 +81,7 @@ export function PettyCashClient({ entries }: { entries: Entry[] }) {
           </button>
         }
         // eslint-disable-next-line @next/next/no-img-element -- small branded SVG icon
-        icon={<img src="/assets/ray-icons/cash.svg" alt="" className="h-9 w-9 md:h-11 md:w-11" />}
-        bareIcon
+        icon={<Wallet size={17} strokeWidth={1.8} />}
       />
 
       {/* Top-level context switch — Business vs Owner, genuinely

@@ -1,4 +1,5 @@
 "use client";
+import { Bell } from "lucide-react";
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
@@ -51,8 +52,7 @@ export function RemindersClient({
         title="Udhaar reminders"
         subtitle="Select customers (or Select all), then work through the list — you still hit Send in WhatsApp yourself for each one."
         // eslint-disable-next-line @next/next/no-img-element -- small branded SVG icon
-        icon={<img src="/assets/ray-icons/bell.svg" alt="" className="h-9 w-9 md:h-11 md:w-11" />}
-        bareIcon
+        icon={<Bell size={17} strokeWidth={1.8} />}
       />
 
       <div className="rounded-xl border border-border bg-credit-soft p-4">

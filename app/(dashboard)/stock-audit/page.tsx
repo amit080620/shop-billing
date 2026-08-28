@@ -1,3 +1,4 @@
+import { ClipboardCheck } from "lucide-react";
 import Link from "next/link";
 import { requireSession } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
@@ -25,8 +26,7 @@ export default async function StockAuditListPage() {
         title="Stock audit"
         subtitle="Count what's actually on the shelf, reconcile against the system."
         // eslint-disable-next-line @next/next/no-img-element -- small branded SVG icon
-        icon={<img src="/assets/ray-icons/inventory.svg" alt="" className="h-9 w-9 md:h-11 md:w-11" />}
-        bareIcon
+        icon={<ClipboardCheck size={17} strokeWidth={1.8} />}
       />
 
       <StartAuditButton />

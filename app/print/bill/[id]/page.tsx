@@ -13,6 +13,7 @@ import { VoidBillButton } from "./VoidBillButton";
 import { EditBillButton } from "./EditBillButton";
 import { DownloadImageButton } from "./DownloadImageButton";
 import { BluetoothPrintButton } from "./BluetoothPrintButton";
+import { BillSuccessSound } from "./BillSuccessSound";
 import { InfoTooltip } from "./InfoTooltip";
 import { ThermalRenderer, type ThermalReceiptData } from "@/lib/print/ThermalRenderer";
 import { A4Renderer, type A4InvoiceData } from "@/lib/print/A4Renderer";
@@ -202,6 +203,7 @@ export default async function PrintBillPage({
 
   return (
     <>
+      <BillSuccessSound />
       <Suspense fallback={null}>
         <BillCreatedConfirmation amount={formatMoney(bill.total)} />
       </Suspense>
