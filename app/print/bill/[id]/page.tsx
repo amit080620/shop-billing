@@ -14,7 +14,7 @@ import { EditBillButton } from "./EditBillButton";
 import { DownloadImageButton } from "./DownloadImageButton";
 import { BluetoothPrintButton } from "./BluetoothPrintButton";
 import { BillSuccessSound } from "./BillSuccessSound";
-import { InfoTooltip } from "./InfoTooltip";
+import { InfoTooltip } from "@/app/components/InfoTooltip";
 import { ThermalRenderer, type ThermalReceiptData } from "@/lib/print/ThermalRenderer";
 import { A4Renderer, type A4InvoiceData } from "@/lib/print/A4Renderer";
 

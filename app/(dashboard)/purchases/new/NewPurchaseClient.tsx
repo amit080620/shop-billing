@@ -11,6 +11,7 @@ import { COMMON_GST_RATES } from "@/lib/constants/states";
 import type { Lang } from "@/lib/i18n/dictionary";
 import { SearchableSelect } from "@/app/components/SearchableSelect";
 import { InlineQuickAdd } from "@/app/components/InlineQuickAdd";
+import { InfoTooltip } from "@/app/components/InfoTooltip";
 
 type Vendor = { id: string; name: string; gstin: string | null; phone: string | null };
 type Product = { id: string; name: string; hsnCode: string | null; isPharma: boolean };
@@ -157,10 +158,10 @@ export function NewPurchaseClient({
   return (
     <form action={formAction} className="flex flex-col gap-5">
       <input type="hidden" name="payload" value={payload} />
-      <h1 className="text-lg font-semibold text-foreground">Record purchase</h1>
-      <p className="text-sm text-muted">
-        Enter what&apos;s on the vendor&apos;s bill — this is your input GST / ITC record.
-      </p>
+      <div className="flex items-center gap-2">
+        <h1 className="text-lg font-semibold text-foreground">Record purchase</h1>
+        <InfoTooltip message="Enter what's on the vendor's bill — this is your input GST / ITC record." />
+      </div>
 
       <section className="flex flex-col gap-2.5">
         <p className="text-sm font-medium text-foreground">Vendor</p>
