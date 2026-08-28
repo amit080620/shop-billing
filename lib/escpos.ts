@@ -44,14 +44,33 @@ export class EscPosBuilder {
     return this.push([GS, 0x21, on ? 0x11 : 0x00]); // GS ! n
   }
 
-  /** Genuinely a real, hardware-accurate size level (1-6), using the
-   * SAME GS ! command's width/height multiplier nibbles — this is
-   * what ESC/POS printers actually support (discrete multiplier
-   * steps of the base font), not arbitrary point sizes like a word
-   * processor. Level 1 = normal size, each step up is one multiplier
-   * larger in both width and height simultaneously. */
+  /** ESC M n — selects the printer's built-in alternate character
+   * font. Font A (n=0) is the default/larger font every size level
+   * above is measured from; Font B (n=1) is a genuinely smaller,
+   * condensed font baked into the printer's own hardware. This is
+   * the ONLY way to print smaller than "normal" on real ESC/POS
+   * thermal printers — GS ! (sizeLevel below) can only multiply a
+   * font's OWN base size upward, it cannot shrink below whichever
+   * font is currently selected. */
+  selectFont(condensed: boolean) {
+    return this.push([ESC, 0x4d, condensed ? 1 : 0]); // ESC M n
+  }
+
+  /** Genuinely a real, hardware-accurate size level, using the SAME
+   * GS ! command's width/height multiplier nibbles — this is what
+   * ESC/POS printers actually support (discrete multiplier steps of
+   * the base font), not arbitrary point sizes like a word processor.
+   *
+   * Level 0 = "Small" — switches to the printer's condensed Font B
+   * (see selectFont above) at its own native 1× size. This is a
+   * real, distinct physical size, genuinely smaller than level 1 on
+   * real hardware — not a fake in-between step, since ESC/POS has no
+   * concept of a fractional multiplier.
+   * Level 1 = normal size (Font A). Each step above that is one
+   * multiplier larger in both width and height simultaneously. */
   sizeLevel(level: number) {
-    const n = Math.max(0, Math.min(7, level - 1));
+    this.selectFont(level === 0);
+    const n = level === 0 ? 0 : Math.max(0, Math.min(7, level - 1));
     return this.push([GS, 0x21, (n << 4) | n]);
   }
 

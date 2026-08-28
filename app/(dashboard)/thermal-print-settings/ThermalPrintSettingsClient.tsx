@@ -39,6 +39,7 @@ function SizeSelect({ value, onChange }: { value: number; onChange: (v: number) 
         onChange={(e) => onChange(Number(e.target.value))}
         className="rounded-lg border border-border bg-background px-2.5 py-1.5 text-sm outline-none focus:border-brand"
       >
+        <option value={0}>Small</option>
         {[1, 2, 3, 4, 5, 6].map((n) => (
           <option key={n} value={n}>
             {n}× {n === 1 ? "(normal)" : ""}
