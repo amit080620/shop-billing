@@ -2,7 +2,8 @@ import { notFound } from "next/navigation";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { formatMoney, formatDateTime } from "@/lib/format";
 import { buildUpiLink } from "@/lib/qr";
-import { CheckCircle2, IndianRupee, ChevronDown } from "lucide-react";
+import { CheckCircle2, IndianRupee } from "lucide-react";
+import { KhataHistoryBook, type KhataEntry } from "./KhataHistoryBook";
 
 // Looked up by the customer's own UUID — unguessable, and the only
 // thing the customer has. Same trust model the catalog's public_token
@@ -88,7 +89,31 @@ export default async function KhataPage({ params }: { params: Promise<{ customer
     if (entry.kind === "payment") running -= Number(entry.data.amount);
     return { ...entry, balanceAfter: Math.max(0, running) };
   });
-  const timeline = [...withBalance].reverse();
+  const timeline: KhataEntry[] = [...withBalance].reverse().map((entry) =>
+    entry.kind === "bill"
+      ? {
+          kind: "bill",
+          id: entry.data.id,
+          invoiceNumber: entry.data.invoice_number,
+          createdAt: entry.data.created_at,
+          status: entry.data.status,
+          total: Number(entry.data.total),
+          paidAmount: Number(entry.data.paid_amount),
+          creditAmount: Number(entry.data.credit_amount),
+          paymentMethod: entry.data.payment_method,
+          balanceAfter: entry.balanceAfter,
+          items: itemsByBill.get(entry.data.id) ?? [],
+        }
+      : {
+          kind: "payment",
+          id: entry.data.id,
+          createdAt: entry.data.created_at,
+          amount: Number(entry.data.amount),
+          paymentMethod: entry.data.payment_method,
+          note: entry.data.note,
+          balanceAfter: entry.balanceAfter,
+        },
+  );
 
   const upiLink =
     shop?.upi_id && outstanding > 0
@@ -159,87 +184,8 @@ export default async function KhataPage({ params }: { params: Promise<{ customer
         </a>
       )}
 
-      <div className="neu-card flex flex-col gap-2 p-4">
-        <div className="flex items-center justify-between">
-          <p className="text-xs font-medium text-muted">Full account history</p>
-          <p className="text-[11px] text-muted">Balance after each entry →</p>
-        </div>
-        {timeline.length === 0 ? (
-          <p className="py-4 text-center text-sm text-muted">No transactions yet.</p>
-        ) : (
-          <ul className="flex flex-col gap-2">
-            {timeline.map((entry) => {
-              const items = entry.kind === "bill" ? (itemsByBill.get(entry.data.id) ?? []) : [];
-              return entry.kind === "bill" ? (
-                <li key={`bill-${entry.data.id}`} className="border-b border-border/60 pb-2 last:border-0">
-                  {/* A native <details> disclosure — no client-side JS
-                      needed at all, keeps this whole page a plain
-                      server-rendered document (fast, and works even
-                      if the customer's browser has JS disabled). */}
-                  <details className="group">
-                    <summary className="flex cursor-pointer list-none items-center justify-between gap-2 [&::-webkit-details-marker]:hidden">
-                      <div className="min-w-0">
-                        <p className={`flex items-center gap-1 truncate text-sm font-medium text-foreground ${entry.data.status === "voided" ? "line-through opacity-60" : ""}`}>
-                          Bill {entry.data.invoice_number}
-                          {items.length > 0 && (
-                            <ChevronDown size={13} className="shrink-0 text-muted transition-transform group-open:rotate-180" />
-                          )}
-                        </p>
-                        <p className="text-xs text-muted">
-                          {formatDateTime(entry.data.created_at)}
-                          {Number(entry.data.paid_amount) === 0
-                            ? " · Fully on udhar"
-                            : Number(entry.data.credit_amount) > 0
-                              ? ` · ${formatMoney(Number(entry.data.paid_amount))} paid via ${entry.data.payment_method.toUpperCase()}`
-                              : ` · Paid via ${entry.data.payment_method.toUpperCase()}`}
-                        </p>
-                      </div>
-                      <div className="shrink-0 text-right">
-                        {entry.data.status === "voided" ? (
-                          <p className="text-xs font-medium text-danger">Voided</p>
-                        ) : (
-                          <>
-                            <p className="text-sm font-medium text-foreground">{formatMoney(Number(entry.data.total))}</p>
-                            {Number(entry.data.credit_amount) > 0 && (
-                              <p className="text-[11px] text-credit">{formatMoney(Number(entry.data.credit_amount))} on udhar</p>
-                            )}
-                            <p className="text-[10px] text-muted">Bal: {formatMoney(entry.balanceAfter)}</p>
-                          </>
-                        )}
-                      </div>
-                    </summary>
-                    {items.length > 0 && (
-                      <ul className="mt-2 flex flex-col gap-1 rounded-lg bg-background px-3 py-2">
-                        {items.map((item, i) => (
-                          <li key={i} className="flex justify-between text-xs text-muted">
-                            <span className="truncate">
-                              {item.quantity} × {item.name}
-                            </span>
-                            <span className="shrink-0 pl-2 text-foreground">{formatMoney(item.lineTotal)}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </details>
-                </li>
-              ) : (
-                <li key={`pay-${entry.data.id}`} className="flex items-center justify-between gap-2 border-b border-border/60 pb-2 last:border-0">
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-medium text-success">Udhar payment received</p>
-                    <p className="text-xs text-muted">
-                      {formatDateTime(entry.data.created_at)} · via {entry.data.payment_method.toUpperCase()}
-                      {entry.data.note ? ` · ${entry.data.note}` : ""}
-                    </p>
-                  </div>
-                  <div className="shrink-0 text-right">
-                    <p className="text-sm font-medium text-success">− {formatMoney(Number(entry.data.amount))}</p>
-                    <p className="text-[10px] text-muted">Bal: {formatMoney(entry.balanceAfter)}</p>
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
-        )}
+      <div className="neu-card p-4">
+        <KhataHistoryBook entries={timeline} />
       </div>
 
       <p className="text-center text-xs text-muted">
