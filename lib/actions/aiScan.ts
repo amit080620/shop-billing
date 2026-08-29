@@ -91,7 +91,7 @@ export async function scanImageWithAI(
       body: JSON.stringify({
         contents: [
           {
-            parts: [{ text: PROMPTS[mode] }, { inline_data: { mime_type: "image/jpeg", data: imageBase64 } }],
+            parts: [{ text: PROMPTS[mode] }, { inlineData: { mimeType: "image/jpeg", data: imageBase64 } }],
           },
         ],
         generationConfig: { responseMimeType: "application/json", temperature: 0 },
