@@ -16,7 +16,10 @@
 
 export type AIScanItem = { name: string; price?: number; quantity?: number; category?: string | null };
 
-const MODEL = "gemini-2.5-flash-lite";
+// Google retired gemini-2.5-flash-lite for new users (confirmed via
+// live 404 from the API itself) — gemini-3.5-flash-lite is their
+// current recommended free-tier replacement.
+const MODEL = "gemini-3.5-flash-lite";
 
 const PROMPTS = {
   products: `You are reading a photo of a shop's price list — this could be a restaurant menu, a vendor's rate card, a handwritten register page, or a printed catalog sheet. Extract every item that has both a name and a price. Return ONLY a JSON array, no other text, like: [{"name": "Item Name", "price": 120, "category": "optional section/category name or null"}]. Strip any currency symbols or "Rs"/"₹" from the price — return just the plain number. Ignore headers, page totals, and any line without both a clear name and a numeric price.`,
