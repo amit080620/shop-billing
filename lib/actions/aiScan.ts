@@ -43,7 +43,12 @@ function classifyStatus(httpStatus: number): AIScanErrorType {
  * One call per page visit is negligible against the free tier's
  * hundreds-per-day allowance. */
 export async function checkAIScanStatusAction(): Promise<{ status: "connected" | AIScanErrorType }> {
-  const apiKey = process.env.GEMINI_API_KEY;
+  // Genuinely the #1 real-world cause of a mysterious 400 here: a
+  // trailing space or newline left over from copy-pasting the key
+  // into Vercel's environment variable field. Trimming costs nothing
+  // and silently fixes that entire class of "why is this broken"
+  // reports before they even happen.
+  const apiKey = process.env.GEMINI_API_KEY?.trim();
   if (!apiKey) return { status: "not_configured" };
 
   try {
@@ -73,7 +78,7 @@ export async function scanImageWithAI(
   imageBase64: string,
   mode: "products" | "purchase",
 ): Promise<{ items?: AIScanItem[]; error?: string; errorType?: AIScanErrorType }> {
-  const apiKey = process.env.GEMINI_API_KEY;
+  const apiKey = process.env.GEMINI_API_KEY?.trim();
   if (!apiKey) return { error: "AI scan is not set up for this shop yet", errorType: "not_configured" };
 
   try {
