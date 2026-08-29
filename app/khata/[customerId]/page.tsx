@@ -42,6 +42,15 @@ export default async function KhataPage({ params }: { params: Promise<{ customer
   const totalPaidBack = (payments ?? []).reduce((s, p) => s + Number(p.amount), 0);
   const outstanding = Math.max(0, totalCredit - totalPaidBack);
 
+  // At-a-glance summary — without this, "am I settled?" required
+  // manually adding up every line in the history below. Total
+  // business = every bill's full value (what was bought, regardless
+  // of how it was paid). Total paid = paid at billing time + every
+  // udhar payment made since, combined.
+  const totalBusiness = (bills ?? []).reduce((s, b) => s + Number(b.total), 0);
+  const totalPaidAtBilling = (bills ?? []).reduce((s, b) => s + Number(b.paid_amount), 0);
+  const totalPaid = totalPaidAtBilling + totalPaidBack;
+
   // A full, honest ledger — not just "what's currently owed". Every
   // bill (cash, UPI, card, or part-udhar) AND every payment made
   // against past udhar, merged in one timeline. Previously this page
@@ -82,6 +91,23 @@ export default async function KhataPage({ params }: { params: Promise<{ customer
         </div>
       )}
 
+      {(bills ?? []).length > 0 && (
+        <div className="neu-card grid grid-cols-3 gap-2 p-4 text-center">
+          <div>
+            <p className="text-[11px] text-muted">Total business</p>
+            <p className="text-sm font-semibold text-foreground">{formatMoney(totalBusiness)}</p>
+          </div>
+          <div className="border-x border-border/60">
+            <p className="text-[11px] text-muted">Total paid</p>
+            <p className="text-sm font-semibold text-success">{formatMoney(totalPaid)}</p>
+          </div>
+          <div>
+            <p className="text-[11px] text-muted">Currently on udhar</p>
+            <p className={`text-sm font-semibold ${outstanding > 0 ? "text-credit" : "text-success"}`}>{formatMoney(outstanding)}</p>
+          </div>
+        </div>
+      )}
+
       {customer.loyalty_points > 0 && (
         <div className="neu-card flex items-center justify-between p-4">
           <div>
@@ -119,7 +145,12 @@ export default async function KhataPage({ params }: { params: Promise<{ customer
                       Bill {entry.data.invoice_number}
                     </p>
                     <p className="text-xs text-muted">
-                      {formatDateTime(entry.data.created_at)} · Paid via {entry.data.payment_method.toUpperCase()}
+                      {formatDateTime(entry.data.created_at)}
+                      {Number(entry.data.paid_amount) === 0
+                        ? " · Fully on udhar"
+                        : Number(entry.data.credit_amount) > 0
+                          ? ` · ${formatMoney(Number(entry.data.paid_amount))} paid via ${entry.data.payment_method.toUpperCase()}`
+                          : ` · Paid via ${entry.data.payment_method.toUpperCase()}`}
                     </p>
                   </div>
                   <div className="shrink-0 text-right">

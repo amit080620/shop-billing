@@ -92,6 +92,15 @@ export function LedgerClient({
     ...payments.map((p) => ({ type: "payment" as const, at: p.createdAt, data: p })),
   ].sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime());
 
+  // At-a-glance summary, same reasoning as the public khata page —
+  // without this, "how are we doing with this customer overall"
+  // required manually scanning the whole list below.
+  const activeBills = bills.filter((b) => b.status === "active");
+  const totalBusiness = activeBills.reduce((s, b) => s + b.total, 0);
+  const totalPaidAtBilling = activeBills.reduce((s, b) => s + b.paidAmount, 0);
+  const totalPaidBack = payments.reduce((s, p) => s + p.amount, 0);
+  const totalPaid = totalPaidAtBilling + totalPaidBack;
+
   const whatsappHref = buildWhatsAppReminderLink(customer, balance, t);
 
   return (
@@ -133,6 +142,23 @@ export function LedgerClient({
             </a>
           )}
         </div>
+
+        {activeBills.length > 0 && (
+          <div className="mt-3 grid grid-cols-3 gap-2 border-t border-border/60 pt-3 text-center">
+            <div>
+              <p className="text-[11px] text-muted">Total business</p>
+              <p className="text-sm font-semibold text-foreground">{formatMoney(totalBusiness)}</p>
+            </div>
+            <div className="border-x border-border/60">
+              <p className="text-[11px] text-muted">Total paid</p>
+              <p className="text-sm font-semibold text-success">{formatMoney(totalPaid)}</p>
+            </div>
+            <div>
+              <p className="text-[11px] text-muted">Currently on udhar</p>
+              <p className={`text-sm font-semibold ${balance > 0 ? "text-credit" : "text-success"}`}>{formatMoney(balance)}</p>
+            </div>
+          </div>
+        )}
         <div className="mt-3 flex flex-col gap-2">
           <div className="flex gap-2">
             <Link
@@ -267,7 +293,10 @@ export function LedgerClient({
                       </p>
                       <p className="text-xs text-muted">
                         {formatDateTime(entry.data.createdAt)}
-                        {entry.data.paidAmount > 0 && ` · ${entry.data.paymentMethod.toUpperCase()}`}
+                        {entry.data.paidAmount > 0 &&
+                          (entry.data.creditAmount > 0
+                            ? ` · ${formatMoney(entry.data.paidAmount)} paid via ${entry.data.paymentMethod.toUpperCase()}`
+                            : ` · Paid via ${entry.data.paymentMethod.toUpperCase()}`)}
                       </p>
                     </div>
                     <div className="shrink-0 text-right">
