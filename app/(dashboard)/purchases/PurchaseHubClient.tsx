@@ -5,7 +5,7 @@ import Link from "next/link";
 import { formatMoney } from "@/lib/format";
 import { PageHeader } from "@/app/components/PageHeader";
 import { EmptyState } from "@/app/components/EmptyState";
-import { ShoppingCart, Wallet, Plus, ArrowRight } from "lucide-react";
+import { ShoppingCart, Wallet, Plus, ArrowRight, RefreshCw } from "lucide-react";
 
 type Purchase = { id: string; vendorName: string; purchaseDate: string; billNumber: string; total: number; paidAmount: number; outstanding: number; paymentMethod: string };
 type Payment = { id: string; vendorName: string; amount: number; paymentMethod: string; note: string | null; createdAt: string };
@@ -54,16 +54,28 @@ export function PurchaseHubClient({ purchases, payments }: { purchases: Purchase
           </div>
 
           {purchaseTab === "add" ? (
-            <Link href="/purchases/new" className="neu-card flex items-center gap-2.5 p-3 transition active:scale-[0.98]">
-              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-soft text-brand-text">
-                <Plus size={16} strokeWidth={2} />
-              </span>
-              <div className="min-w-0 flex-1">
-                <p className="text-sm font-semibold text-foreground">Add Purchase</p>
-                <p className="text-xs text-muted">Record a new purchase from a supplier</p>
-              </div>
-              <ArrowRight size={14} className="shrink-0 text-muted" />
-            </Link>
+            <>
+              <Link href="/purchases/new" className="neu-card flex items-center gap-2.5 p-3 transition active:scale-[0.98]">
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-soft text-brand-text">
+                  <Plus size={16} strokeWidth={2} />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold text-foreground">Add Purchase</p>
+                  <p className="text-xs text-muted">Record a new purchase from a supplier</p>
+                </div>
+                <ArrowRight size={14} className="shrink-0 text-muted" />
+              </Link>
+              <Link href="/reorder" className="neu-card flex items-center gap-2.5 p-3 transition active:scale-[0.98]">
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-soft text-brand-text">
+                  <RefreshCw size={16} strokeWidth={2} />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold text-foreground">Reorder low stock</p>
+                  <p className="text-xs text-muted">One tap to a pre-filled purchase for everything running low</p>
+                </div>
+                <ArrowRight size={14} className="shrink-0 text-muted" />
+              </Link>
+            </>
           ) : (
             <Link href="/vendors" className="neu-card flex items-center gap-2.5 p-3 transition active:scale-[0.98]">
               <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-soft text-brand-text">

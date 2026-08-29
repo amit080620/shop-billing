@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useRef } from "react";
+import { useMemo, useState, useRef, useEffect } from "react";
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import { createPurchaseAction } from "@/lib/actions/purchases";
@@ -15,6 +15,7 @@ import { InfoTooltip } from "@/app/components/InfoTooltip";
 import { rebuildLinesFromWords } from "@/lib/ocr/lineGrouping";
 import { parsePurchaseBillItems } from "@/lib/ocr/parser";
 import { Camera, Loader2 } from "lucide-react";
+import { REORDER_HANDOFF_KEY, type ReorderHandoff } from "@/lib/reorderHandoff";
 
 type Vendor = { id: string; name: string; gstin: string | null; phone: string | null };
 type Product = { id: string; name: string; hsnCode: string | null; isPharma: boolean };
@@ -68,6 +69,41 @@ export function NewPurchaseClient({
   const [reverseCharge, setReverseCharge] = useState(false);
 
   const isUdhar = paymentMethod === "udhar";
+
+  useEffect(() => {
+    const raw = sessionStorage.getItem(REORDER_HANDOFF_KEY);
+    if (!raw) return;
+    sessionStorage.removeItem(REORDER_HANDOFF_KEY);
+    try {
+      const handoff = JSON.parse(raw) as ReorderHandoff;
+      if (handoff.vendorId && !vendor) {
+        const matched = vendors.find((v) => v.id === handoff.vendorId);
+        if (matched) setVendor(matched);
+      }
+      if (handoff.items.length > 0) {
+        setLines((prev) => [
+          ...prev,
+          ...handoff.items.map((item) => ({
+            key: crypto.randomUUID(),
+            productId: item.productId,
+            description: item.description,
+            hsnCode: item.hsnCode ?? "",
+            quantity: item.quantity,
+            unitPrice: item.unitPrice,
+            gstPercent: 0,
+            isPharma: false,
+            batchNumber: "",
+            expiryDate: "",
+            mfgDate: "",
+          })),
+        ]);
+      }
+    } catch {
+      // A malformed/stale handoff is genuinely harmless to ignore —
+      // the form just starts empty, same as any normal visit.
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const totals = useMemo(
     () =>

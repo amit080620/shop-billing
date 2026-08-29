@@ -8,6 +8,73 @@ import { determineSupplyType, round2 } from "../gst";
 
 export type ActionState = { error?: string } | null;
 
+export type LowStockReorderItem = {
+  productId: string;
+  name: string;
+  unit: string;
+  hsnCode: string | null;
+  currentStock: number;
+  lowStockThreshold: number;
+  suggestedQuantity: number;
+  lastUnitPrice: number | null;
+};
+
+/** Everything currently below its own low-stock threshold, with a
+ * sensible reorder quantity (enough to get back to double the
+ * threshold — a plain, predictable buffer, not a demand-forecast) and
+ * the last price actually paid for it (if this shop has ever bought
+ * it before), so a purchase created from this list starts pre-filled
+ * instead of blank. Genuinely just two queries — no new tables, no
+ * separate job. Shared by both reorder paths on /reorder: "send a
+ * WhatsApp order to the vendor" and "create the purchase directly". */
+export async function getLowStockReorderItemsAction(): Promise<LowStockReorderItem[]> {
+  const session = await requireSession();
+  const admin = createSupabaseAdminClient();
+
+  const { data: products } = await admin
+    .from("products")
+    .select("id, name, unit, hsn_code, stock_quantity, low_stock_threshold")
+    .eq("shop_id", session.shopId)
+    .eq("track_inventory", true)
+    .order("name");
+
+  const lowStock = (products ?? []).filter((p) => Number(p.stock_quantity) <= Number(p.low_stock_threshold));
+  if (lowStock.length === 0) return [];
+
+  const productIds = lowStock.map((p) => p.id);
+  const { data: recentPurchases } = await admin
+    .from("purchase_items")
+    .select("product_id, unit_price, purchases!inner ( purchase_date, shop_id )")
+    .in("product_id", productIds)
+    .eq("purchases.shop_id", session.shopId)
+    .order("purchase_date", { foreignTable: "purchases", ascending: false });
+
+  // First row per product after the desc-ordered query above is its
+  // most recent purchase — Map.set on an already-present key is a
+  // no-op-preventer here since we only want the FIRST (most recent).
+  const lastPriceByProduct = new Map<string, number>();
+  for (const row of recentPurchases ?? []) {
+    if (row.product_id && !lastPriceByProduct.has(row.product_id)) {
+      lastPriceByProduct.set(row.product_id, Number(row.unit_price));
+    }
+  }
+
+  return lowStock.map((p) => {
+    const threshold = Number(p.low_stock_threshold);
+    const current = Number(p.stock_quantity);
+    return {
+      productId: p.id,
+      name: p.name,
+      unit: p.unit,
+      hsnCode: p.hsn_code,
+      currentStock: current,
+      lowStockThreshold: threshold,
+      suggestedQuantity: Math.max(1, Math.ceil(threshold * 1.5 - current)),
+      lastUnitPrice: lastPriceByProduct.get(p.id) ?? null,
+    };
+  });
+}
+
 export async function createPurchaseAction(
   _prev: ActionState,
   formData: FormData,
