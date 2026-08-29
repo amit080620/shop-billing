@@ -25,17 +25,33 @@ export default async function KhataPage({ params }: { params: Promise<{ customer
     admin.from("shops").select("name, logo_url, upi_id, loyalty_redemption_value").eq("id", customer.shop_id).single(),
     admin
       .from("bills")
-      .select("id, invoice_number, total, paid_amount, credit_amount, created_at")
+      .select("id, invoice_number, total, paid_amount, credit_amount, payment_method, status, created_at")
       .eq("customer_id", customerId)
       .eq("status", "active")
       .order("created_at", { ascending: false })
-      .limit(20),
-    admin.from("payments").select("amount, created_at").eq("customer_id", customerId),
+      .limit(30),
+    admin
+      .from("payments")
+      .select("id, amount, payment_method, note, created_at")
+      .eq("customer_id", customerId)
+      .order("created_at", { ascending: false })
+      .limit(30),
   ]);
 
   const totalCredit = (bills ?? []).reduce((s, b) => s + Number(b.credit_amount), 0);
   const totalPaidBack = (payments ?? []).reduce((s, p) => s + Number(p.amount), 0);
   const outstanding = Math.max(0, totalCredit - totalPaidBack);
+
+  // A full, honest ledger — not just "what's currently owed". Every
+  // bill (cash, UPI, card, or part-udhar) AND every payment made
+  // against past udhar, merged in one timeline. Previously this page
+  // only ever listed bills — the moment a customer's udhar was fully
+  // paid off, there was no record left of the payment itself, which
+  // is exactly backwards for something called a khata (account book).
+  const timeline = [
+    ...(bills ?? []).map((b) => ({ kind: "bill" as const, at: b.created_at, data: b })),
+    ...(payments ?? []).map((p) => ({ kind: "payment" as const, at: p.created_at, data: p })),
+  ].sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime());
 
   const upiLink =
     shop?.upi_id && outstanding > 0
@@ -90,25 +106,48 @@ export default async function KhataPage({ params }: { params: Promise<{ customer
       )}
 
       <div className="neu-card flex flex-col gap-2 p-4">
-        <p className="text-xs font-medium text-muted">Recent bills</p>
-        {!bills || bills.length === 0 ? (
-          <p className="py-4 text-center text-sm text-muted">No bills yet.</p>
+        <p className="text-xs font-medium text-muted">Full account history</p>
+        {timeline.length === 0 ? (
+          <p className="py-4 text-center text-sm text-muted">No transactions yet.</p>
         ) : (
           <ul className="flex flex-col gap-2">
-            {bills.map((b) => (
-              <li key={b.id} className="flex items-center justify-between gap-2 border-b border-border/60 pb-2 last:border-0">
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-medium text-foreground">{b.invoice_number}</p>
-                  <p className="text-xs text-muted">{formatDateTime(b.created_at)}</p>
-                </div>
-                <div className="shrink-0 text-right">
-                  <p className="text-sm font-medium text-foreground">{formatMoney(Number(b.total))}</p>
-                  {Number(b.credit_amount) > 0 && (
-                    <p className="text-[11px] text-credit">{formatMoney(Number(b.credit_amount))} due</p>
-                  )}
-                </div>
-              </li>
-            ))}
+            {timeline.map((entry) =>
+              entry.kind === "bill" ? (
+                <li key={`bill-${entry.data.id}`} className="flex items-center justify-between gap-2 border-b border-border/60 pb-2 last:border-0">
+                  <div className="min-w-0">
+                    <p className={`truncate text-sm font-medium text-foreground ${entry.data.status === "voided" ? "line-through opacity-60" : ""}`}>
+                      Bill {entry.data.invoice_number}
+                    </p>
+                    <p className="text-xs text-muted">
+                      {formatDateTime(entry.data.created_at)} · Paid via {entry.data.payment_method.toUpperCase()}
+                    </p>
+                  </div>
+                  <div className="shrink-0 text-right">
+                    {entry.data.status === "voided" ? (
+                      <p className="text-xs font-medium text-danger">Voided</p>
+                    ) : (
+                      <>
+                        <p className="text-sm font-medium text-foreground">{formatMoney(Number(entry.data.total))}</p>
+                        {Number(entry.data.credit_amount) > 0 && (
+                          <p className="text-[11px] text-credit">{formatMoney(Number(entry.data.credit_amount))} on udhar</p>
+                        )}
+                      </>
+                    )}
+                  </div>
+                </li>
+              ) : (
+                <li key={`pay-${entry.data.id}`} className="flex items-center justify-between gap-2 border-b border-border/60 pb-2 last:border-0">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium text-success">Udhar payment received</p>
+                    <p className="text-xs text-muted">
+                      {formatDateTime(entry.data.created_at)} · via {entry.data.payment_method.toUpperCase()}
+                      {entry.data.note ? ` · ${entry.data.note}` : ""}
+                    </p>
+                  </div>
+                  <p className="shrink-0 text-sm font-medium text-success">− {formatMoney(Number(entry.data.amount))}</p>
+                </li>
+              ),
+            )}
           </ul>
         )}
       </div>

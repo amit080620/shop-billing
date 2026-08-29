@@ -126,7 +126,7 @@ export function ProductsClient({
   // tracking" or a transport business seeing "available for rent".
   const showRentalSection = !["restaurant", "pharmacy", "transport"].includes(businessType);
   const showPharmaSection = !["restaurant", "transport", "rental"].includes(businessType);
-  const showWarrantySection = ["hardware", "general", "mart"].includes(businessType);
+  const showWarrantySection = true;
   const showMrpField = ["grocery", "mart", "general"].includes(businessType);
   const showBulkPricingField = ["grocery", "mart", "hardware", "general"].includes(businessType);
   const showJewellerySection = businessType === "jewellery";
