@@ -810,6 +810,12 @@ export interface Database {
         Update: { shop_id?: string; t58_shop_name_bold?: boolean; t58_shop_name_size?: number; t58_shop_name_italic?: boolean; t58_shop_name_align?: "left" | "center" | "right"; t58_items_bold?: boolean; t58_total_bold?: boolean; t58_total_size?: number; t58_total_italic?: boolean; t58_total_align?: "left" | "center" | "right"; t80_shop_name_bold?: boolean; t80_shop_name_size?: number; t80_shop_name_italic?: boolean; t80_shop_name_align?: "left" | "center" | "right"; t80_items_bold?: boolean; t80_total_bold?: boolean; t80_total_size?: number; t80_total_italic?: boolean; t80_total_align?: "left" | "center" | "right"; updated_at?: string };
         Relationships: [];
       };
+      ocr_corrections: {
+        Row: { id: string; shop_id: string; wrong_text: string; correct_text: string; created_at: string };
+        Insert: { id?: string; shop_id: string; wrong_text: string; correct_text: string; created_at?: string };
+        Update: { id?: string; shop_id?: string; wrong_text?: string; correct_text?: string; created_at?: string };
+        Relationships: [];
+      };
       prescription_templates: {
         Row: { id: string; shop_id: string; name: string; chief_complaint: string | null; diagnosis: string | null; advice: string | null; custom_sections: { label: string; value: string }[]; medicines: unknown; usage_count: number; created_at: string };
         Insert: { id?: string; shop_id: string; name: string; chief_complaint?: string | null; diagnosis?: string | null; advice?: string | null; custom_sections?: { label: string; value: string }[]; medicines?: unknown; usage_count?: number; created_at?: string };

@@ -17,6 +17,8 @@ import { parsePurchaseBillItems } from "@/lib/ocr/parser";
 import { scanImageWithAI } from "@/lib/actions/aiScan";
 import { fileToBase64 } from "@/lib/fileToBase64";
 import { AIStatusBadge } from "@/app/components/AIStatusBadge";
+import { getOcrCorrectionsAction, saveOcrCorrectionsAction } from "@/lib/actions/ocrCorrections";
+import { applyCorrections } from "@/lib/applyCorrections";
 import { Camera, Loader2, Image as ImageIcon } from "lucide-react";
 import { REORDER_HANDOFF_KEY, type ReorderHandoff } from "@/lib/reorderHandoff";
 
@@ -34,6 +36,7 @@ type Line = {
   batchNumber: string;
   expiryDate: string;
   mfgDate: string;
+  rawScannedDescription?: string;
 };
 
 function SubmitButton() {
@@ -158,7 +161,7 @@ export function NewPurchaseClient({
       const { preprocessImage } = await import("@/lib/ocr/preprocess");
       const processedForAI = await preprocessImage(file);
       const base64 = await fileToBase64(processedForAI);
-      const aiResult = await scanImageWithAI(base64, "purchase");
+      const [aiResult, corrections] = await Promise.all([scanImageWithAI(base64, "purchase"), getOcrCorrectionsAction()]);
       if (aiResult.errorType) aiStatusRef.current?.reportError(aiResult.errorType);
       if (aiResult.items && aiResult.items.length > 0) {
         setUsedAI(true);
@@ -169,7 +172,8 @@ export function NewPurchaseClient({
             .map((item) => ({
               key: crypto.randomUUID(),
               productId: null,
-              description: item.name,
+              description: applyCorrections(item.name, corrections),
+              rawScannedDescription: item.name,
               hsnCode: "",
               quantity: item.quantity!,
               unitPrice: item.price!,
@@ -204,7 +208,8 @@ export function NewPurchaseClient({
           ...parsed.map((item) => ({
             key: crypto.randomUUID(),
             productId: null,
-            description: item.description,
+            description: applyCorrections(item.description, corrections),
+            rawScannedDescription: item.description,
             hsnCode: "",
             quantity: item.quantity,
             unitPrice: item.unitPrice,
@@ -295,7 +300,24 @@ export function NewPurchaseClient({
     lines.every((l) => l.description.trim() && l.quantity > 0);
 
   return (
-    <form action={formAction} className="flex flex-col gap-5">
+    <form
+      action={formAction}
+      className="flex flex-col gap-5"
+      onSubmit={() => {
+        // Best-effort, never blocks the actual purchase submit below
+        // — anything changed from what the scan actually read gets
+        // remembered for next time.
+        const newCorrections = lines
+          .filter(
+            (l) =>
+              l.rawScannedDescription &&
+              l.description.trim() &&
+              l.rawScannedDescription.trim().toLowerCase() !== l.description.trim().toLowerCase(),
+          )
+          .map((l) => ({ wrong: l.rawScannedDescription!, correct: l.description }));
+        if (newCorrections.length > 0) saveOcrCorrectionsAction(newCorrections).catch(() => {});
+      }}
+    >
       <input type="hidden" name="payload" value={payload} />
       <div className="flex items-center gap-2">
         <h1 className="text-lg font-semibold text-foreground">Record purchase</h1>

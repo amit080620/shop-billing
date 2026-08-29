@@ -9,9 +9,11 @@ import { rebuildLinesFromWords } from "@/lib/ocr/lineGrouping";
 import { scanImageWithAI } from "@/lib/actions/aiScan";
 import { fileToBase64 } from "@/lib/fileToBase64";
 import { AIStatusBadge } from "@/app/components/AIStatusBadge";
-import { Camera, ScanLine, Trash2, Loader2, CheckCircle2, Image as ImageIcon } from "lucide-react";
+import { getOcrCorrectionsAction, saveOcrCorrectionsAction } from "@/lib/actions/ocrCorrections";
+import { applyCorrections } from "@/lib/applyCorrections";
+import { Camera, ScanLine, Trash2, Loader2, CheckCircle2, Image as ImageIcon, Sparkles } from "lucide-react";
 
-type DraftItem = ScannedMenuItem & { id: string; include: boolean; matchedExistingName: string | null };
+type DraftItem = ScannedMenuItem & { id: string; include: boolean; matchedExistingName: string | null; rawScannedName: string };
 
 /** Turns raw OCR text into candidate menu items. Menu lines usually end
  * with a price ("Chicken Biryani ... 220" / "Paneer Tikka Rs.180" /
@@ -87,7 +89,7 @@ export function MenuScanClient() {
     setUsedAI(false);
 
     try {
-      const existing = await listExistingProductNamesAction();
+      const [existing, corrections] = await Promise.all([listExistingProductNamesAction(), getOcrCorrectionsAction()]);
 
       // Try the accurate AI path first — genuinely understands the
       // photo rather than just extracting raw text, so it handles
@@ -114,10 +116,12 @@ export function MenuScanClient() {
           ...aiResult.items!
             .filter((it) => it.price !== undefined)
             .map((it, i) => {
-              const match = findClosestMatch(it.name, existing);
+              const correctedName = applyCorrections(it.name, corrections);
+              const match = findClosestMatch(correctedName, existing);
               return {
                 id: `${Date.now()}-${i}`,
-                name: it.name,
+                name: correctedName,
+                rawScannedName: it.name,
                 price: it.price!,
                 categoryName: it.category ?? null,
                 include: !match,
@@ -157,8 +161,9 @@ export function MenuScanClient() {
         setItems((prev) => [
           ...prev,
           ...parsed.map((p, i) => {
-            const match = findClosestMatch(p.name, existing);
-            return { ...p, id: `${Date.now()}-${i}`, include: !match, matchedExistingName: match?.name ?? null };
+            const correctedName = applyCorrections(p.name, corrections);
+            const match = findClosestMatch(correctedName, existing);
+            return { ...p, name: correctedName, rawScannedName: p.name, id: `${Date.now()}-${i}`, include: !match, matchedExistingName: match?.name ?? null };
           }),
         ]);
       }
@@ -201,6 +206,15 @@ export function MenuScanClient() {
     }
     setError(null);
     setIsSaving(true);
+
+    // Best-effort — genuinely never blocks the actual save below,
+    // even if this fails. Anything the person changed from what the
+    // scan actually read gets remembered for next time.
+    const newCorrections = items
+      .filter((it) => it.name.trim() && it.rawScannedName.trim().toLowerCase() !== it.name.trim().toLowerCase())
+      .map((it) => ({ wrong: it.rawScannedName, correct: it.name }));
+    if (newCorrections.length > 0) saveOcrCorrectionsAction(newCorrections).catch(() => {});
+
     const result = await createProductsFromScanAction(
       selected.map((it) => ({ name: it.name, price: it.price, categoryName: it.categoryName })),
     );
@@ -352,6 +366,11 @@ export function MenuScanClient() {
                   {item.matchedExistingName && (
                     <p className="flex items-center gap-1 text-[11px] text-success">
                       <CheckCircle2 size={12} /> Looks like you already have &quot;{item.matchedExistingName}&quot; — unticked to avoid a duplicate
+                    </p>
+                  )}
+                  {!item.matchedExistingName && item.rawScannedName.trim().toLowerCase() !== item.name.trim().toLowerCase() && (
+                    <p className="flex items-center gap-1 text-[11px] text-brand-text">
+                      <Sparkles size={11} /> Auto-corrected from &quot;{item.rawScannedName}&quot; (a mistake you fixed before)
                     </p>
                   )}
                   <div className="flex gap-1.5">
