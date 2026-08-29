@@ -9,7 +9,7 @@ import { rebuildLinesFromWords } from "@/lib/ocr/lineGrouping";
 import { scanImageWithAI } from "@/lib/actions/aiScan";
 import { fileToBase64 } from "@/lib/fileToBase64";
 import { AIStatusBadge } from "@/app/components/AIStatusBadge";
-import { Camera, ScanLine, Trash2, Loader2, CheckCircle2 } from "lucide-react";
+import { Camera, ScanLine, Trash2, Loader2, CheckCircle2, Image as ImageIcon } from "lucide-react";
 
 type DraftItem = ScannedMenuItem & { id: string; include: boolean; matchedExistingName: string | null };
 
@@ -51,6 +51,7 @@ function parseMenuText(rawLines: string[]): ScannedMenuItem[] {
 
 export function MenuScanClient() {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const galleryInputRef = useRef<HTMLInputElement>(null);
   const aiStatusRef = useRef<{ reportError: (type: import("@/lib/actions/aiScan").AIScanErrorType) => void }>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [ocrProgress, setOcrProgress] = useState(0);
@@ -62,9 +63,9 @@ export function MenuScanClient() {
   const [blurWarning, setBlurWarning] = useState<File | null>(null);
   const [usedAI, setUsedAI] = useState(false);
 
-  async function handleFile(file: File, skipBlurCheck = false) {
+  async function handleFile(file: File, skipBlurCheck = false, append = false) {
     setError(null);
-    setItems([]);
+    if (!append) setItems([]);
     setBlurWarning(null);
 
     // Genuinely check sharpness BEFORE spending time on OCR — a
@@ -108,8 +109,9 @@ export function MenuScanClient() {
       if (aiResult.errorType) aiStatusRef.current?.reportError(aiResult.errorType);
       if (aiResult.items && aiResult.items.length > 0) {
         setUsedAI(true);
-        setItems(
-          aiResult.items
+        setItems((prev) => [
+          ...prev,
+          ...aiResult.items!
             .filter((it) => it.price !== undefined)
             .map((it, i) => {
               const match = findClosestMatch(it.name, existing);
@@ -122,7 +124,7 @@ export function MenuScanClient() {
                 matchedExistingName: match?.name ?? null,
               };
             }),
-        );
+        ]);
         return;
       }
 
@@ -145,24 +147,41 @@ export function MenuScanClient() {
       const reconstructedLines = ocr.words.length > 0 ? rebuildLinesFromWords(ocr.words) : ocr.rawText.split("\n");
       const parsed = parseMenuText(reconstructedLines);
       if (parsed.length === 0) {
-        setError("Couldn't find any items with prices in this photo — try a clearer, well-lit shot, straight-on (not angled).");
+        if (!append) setError("Couldn't find any items with prices in this photo — try a clearer, well-lit shot, straight-on (not angled).");
       } else {
         // Genuine offline fuzzy-match against this shop's own existing
         // products — catches OCR near-misses ("Chicken Biriyani" vs an
         // existing "Chicken Biryani") so a re-scan doesn't quietly
         // create duplicates. No AI involved, just edit-distance math
         // against data the shop already owns.
-        setItems(
-          parsed.map((p, i) => {
+        setItems((prev) => [
+          ...prev,
+          ...parsed.map((p, i) => {
             const match = findClosestMatch(p.name, existing);
             return { ...p, id: `${Date.now()}-${i}`, include: !match, matchedExistingName: match?.name ?? null };
           }),
-        );
+        ]);
       }
     } catch {
       setError("Scanning failed — please try again with a clearer photo.");
     } finally {
       setIsScanning(false);
+    }
+  }
+
+  /** Gallery selection can be more than one photo at once — several
+   * WhatsApp-forwarded pages of a price list, say. Each is scanned in
+   * turn (skipping the blur check — a photo already sitting in the
+   * gallery was presumably good enough to keep) and their results are
+   * merged into one combined review list, rather than the second
+   * photo wiping out the first's results. */
+  async function handleFiles(fileList: FileList | null) {
+    if (!fileList || fileList.length === 0) return;
+    const files = Array.from(fileList);
+    setItems([]);
+    for (const file of files) {
+      // eslint-disable-next-line no-await-in-loop -- deliberately sequential, one photo's OCR/AI pass at a time
+      await handleFile(file, true, true);
     }
   }
 
@@ -198,7 +217,7 @@ export function MenuScanClient() {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
-        <PageHeader icon={<ScanLine size={20} />} title="Scan a price list" subtitle="Free — uses your camera, no extra cost" />
+        <PageHeader icon={<ScanLine size={20} />} title="Scan a price list" subtitle="Camera or gallery — free, no extra cost" />
         <AIStatusBadge ref={aiStatusRef} />
       </div>
 
@@ -223,16 +242,42 @@ export function MenuScanClient() {
         onChange={(e) => {
           const file = e.target.files?.[0];
           if (file) handleFile(file);
+          e.target.value = "";
         }}
       />
-      <button
-        onClick={() => fileInputRef.current?.click()}
-        disabled={isScanning}
-        className="btn-primary flex items-center justify-center gap-2 disabled:opacity-60"
-      >
-        <Camera size={16} />
-        {previewUrl ? "Scan another photo" : "Open camera & scan"}
-      </button>
+      <input
+        ref={galleryInputRef}
+        type="file"
+        accept="image/*"
+        multiple
+        className="hidden"
+        onChange={(e) => {
+          handleFiles(e.target.files);
+          e.target.value = "";
+        }}
+      />
+      <div className="flex gap-2">
+        <button
+          onClick={() => fileInputRef.current?.click()}
+          disabled={isScanning}
+          className="btn-primary flex flex-1 items-center justify-center gap-2 disabled:opacity-60"
+        >
+          <Camera size={16} />
+          {previewUrl ? "Scan another" : "Take photo"}
+        </button>
+        <button
+          onClick={() => galleryInputRef.current?.click()}
+          disabled={isScanning}
+          className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-brand px-3 py-2.5 text-sm font-medium text-brand disabled:opacity-60"
+        >
+          <ImageIcon size={16} />
+          Choose from gallery
+        </button>
+      </div>
+      <p className="text-xs text-muted">
+        Gallery works for anything already saved on the phone — a photo forwarded on WhatsApp, or one taken
+        earlier. Pick several at once for a multi-page price list.
+      </p>
 
       {previewUrl && (
         <div className="neu-card overflow-hidden p-2">

@@ -17,7 +17,7 @@ import { parsePurchaseBillItems } from "@/lib/ocr/parser";
 import { scanImageWithAI } from "@/lib/actions/aiScan";
 import { fileToBase64 } from "@/lib/fileToBase64";
 import { AIStatusBadge } from "@/app/components/AIStatusBadge";
-import { Camera, Loader2 } from "lucide-react";
+import { Camera, Loader2, Image as ImageIcon } from "lucide-react";
 import { REORDER_HANDOFF_KEY, type ReorderHandoff } from "@/lib/reorderHandoff";
 
 type Vendor = { id: string; name: string; gstin: string | null; phone: string | null };
@@ -130,6 +130,7 @@ export function NewPurchaseClient({
   const [scanError, setScanError] = useState<string | null>(null);
   const [usedAI, setUsedAI] = useState(false);
   const scanInputRef = useRef<HTMLInputElement>(null);
+  const galleryInputRef = useRef<HTMLInputElement>(null);
   const aiStatusRef = useRef<{ reportError: (type: import("@/lib/actions/aiScan").AIScanErrorType) => void }>(null);
 
   /** Photo of the vendor's paper bill -> item rows appended straight
@@ -385,15 +386,38 @@ export function NewPurchaseClient({
             e.target.value = "";
           }}
         />
-        <button
-          type="button"
-          onClick={() => scanInputRef.current?.click()}
-          disabled={isScanning}
-          className="flex items-center justify-center gap-2 rounded-lg border border-dashed border-brand bg-brand-soft px-3.5 py-2.5 text-sm font-medium text-brand-text disabled:opacity-60"
-        >
-          {isScanning ? <Loader2 size={16} className="animate-spin" /> : <Camera size={16} />}
-          {isScanning ? `Reading the bill… ${scanProgress}%` : "Scan vendor bill — fill items from a photo"}
-        </button>
+        <input
+          ref={galleryInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (file) handleScanBill(file);
+            e.target.value = "";
+          }}
+        />
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => scanInputRef.current?.click()}
+            disabled={isScanning}
+            className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-dashed border-brand bg-brand-soft px-3.5 py-2.5 text-sm font-medium text-brand-text disabled:opacity-60"
+          >
+            {isScanning ? <Loader2 size={16} className="animate-spin" /> : <Camera size={16} />}
+            {isScanning ? `Reading… ${scanProgress}%` : "Take photo"}
+          </button>
+          <button
+            type="button"
+            onClick={() => galleryInputRef.current?.click()}
+            disabled={isScanning}
+            className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-brand px-3.5 py-2.5 text-sm font-medium text-brand disabled:opacity-60"
+          >
+            <ImageIcon size={16} />
+            From gallery
+          </button>
+        </div>
+        <p className="text-xs text-muted">Gallery works for a vendor bill forwarded on WhatsApp too.</p>
         {usedAI && !isScanning && (
           <p className="flex items-center gap-1 text-[11px] font-medium text-brand-text">
             <span className="rounded-full bg-brand-soft px-1.5 py-0.5">✨ AI-read</span> Review the quantities and rates below before submitting.
