@@ -40,13 +40,13 @@ export default async function CustomerLedgerPage({
   const [{ data: bills }, { data: payments }, { data: returns }] = await Promise.all([
     admin
       .from("bills")
-      .select("id, invoice_number, total, paid_amount, credit_amount, status, created_at")
+      .select("id, invoice_number, total, paid_amount, credit_amount, payment_method, status, created_at")
       .eq("customer_id", id)
       .eq("shop_id", session.shopId)
       .order("created_at", { ascending: false }),
     admin
       .from("payments")
-      .select("id, amount, note, created_at")
+      .select("id, amount, payment_method, note, created_at")
       .eq("customer_id", id)
       .eq("shop_id", session.shopId)
       .order("created_at", { ascending: false }),
@@ -114,6 +114,7 @@ export default async function CustomerLedgerPage({
         total: Number(b.total),
         paidAmount: Number(b.paid_amount),
         creditAmount: Number(b.credit_amount),
+        paymentMethod: b.payment_method,
         status: b.status,
         createdAt: b.created_at,
         items: itemsByBill.get(b.id) ?? [],
@@ -121,6 +122,7 @@ export default async function CustomerLedgerPage({
       payments={(payments ?? []).map((p) => ({
         id: p.id,
         amount: Number(p.amount),
+        paymentMethod: p.payment_method,
         note: p.note,
         createdAt: p.created_at,
       }))}

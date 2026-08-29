@@ -90,7 +90,15 @@ export function FloatingCalculator({ enabled }: { enabled: boolean }) {
     } catch {
       // fall through to default position below
     }
-    setPos({ x: window.innerWidth - BUBBLE_SIZE - 16, y: window.innerHeight - BUBBLE_SIZE - 112 });
+    // The bottom-nav-clearance offset only makes sense on mobile —
+    // this app's bottom nav is hidden at the md breakpoint (768px) on
+    // desktop, so applying that same offset there was needless and
+    // could push the bubble further than intended.
+    const isMobile = window.innerWidth < 768;
+    setPos({
+      x: window.innerWidth - BUBBLE_SIZE - 16,
+      y: window.innerHeight - BUBBLE_SIZE - (isMobile ? 112 : 24),
+    });
   }, []);
 
   useEffect(() => {
@@ -322,6 +330,7 @@ export function FloatingCalculator({ enabled }: { enabled: boolean }) {
         <div className="flex items-center gap-1">
           {billAmount !== null && billAmount > 0 && (
             <button
+              onPointerDown={(e) => e.stopPropagation()}
               onClick={() => setMode((m) => (m === "change" ? "calc" : "change"))}
               aria-label="Switch mode"
               className="flex items-center gap-1 rounded-full bg-white/15 px-2 py-1 text-[10px] font-medium text-white"
@@ -330,7 +339,12 @@ export function FloatingCalculator({ enabled }: { enabled: boolean }) {
               {mode === "change" ? "Calc" : "Change"}
             </button>
           )}
-          <button onClick={() => setOpen(false)} aria-label="Close calculator" className="rounded-full p-1 text-white/80 hover:text-white">
+          <button
+            onPointerDown={(e) => e.stopPropagation()}
+            onClick={() => setOpen(false)}
+            aria-label="Close calculator"
+            className="rounded-full p-1 text-white/80 hover:text-white"
+          >
             <X size={18} />
           </button>
         </div>

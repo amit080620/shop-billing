@@ -28,11 +28,12 @@ type Bill = {
   total: number;
   paidAmount: number;
   creditAmount: number;
+  paymentMethod: string;
   status: "active" | "voided";
   createdAt: string;
   items: BillItem[];
 };
-type Payment = { id: string; amount: number; note: string | null; createdAt: string };
+type Payment = { id: string; amount: number; paymentMethod: string; note: string | null; createdAt: string };
 type Return = { id: string; returnNumber: string; total: number; createdAt: string; invoiceNumber: string };
 
 function SubmitButton() {
@@ -264,7 +265,10 @@ export function LedgerClient({
                       >
                         Bill #{entry.data.invoiceNumber}
                       </p>
-                      <p className="text-xs text-muted">{formatDateTime(entry.data.createdAt)}</p>
+                      <p className="text-xs text-muted">
+                        {formatDateTime(entry.data.createdAt)}
+                        {entry.data.paidAmount > 0 && ` · ${entry.data.paymentMethod.toUpperCase()}`}
+                      </p>
                     </div>
                     <div className="shrink-0 text-right">
                       {entry.data.status === "voided" ? (
@@ -316,7 +320,7 @@ export function LedgerClient({
                       Payment received
                     </p>
                     <p className="truncate text-xs text-muted">
-                      {formatDateTime(entry.data.createdAt)}
+                      {formatDateTime(entry.data.createdAt)} · {entry.data.paymentMethod.toUpperCase()}
                       {entry.data.note ? ` · ${entry.data.note}` : ""}
                     </p>
                   </div>
