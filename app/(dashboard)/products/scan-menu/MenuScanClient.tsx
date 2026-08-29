@@ -263,7 +263,7 @@ export function MenuScanClient() {
                   <div className="flex gap-1.5">
                     <input
                       type="number"
-                      value={item.price}
+                      value={item.price || ""}
                       onChange={(e) => updateItem(item.id, { price: Number(e.target.value) || 0 })}
                       className="w-24 rounded-lg px-2.5 py-1.5 text-sm outline-none"
                       placeholder="Price"

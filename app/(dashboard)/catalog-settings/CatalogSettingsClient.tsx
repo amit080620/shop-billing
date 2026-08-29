@@ -95,7 +95,7 @@ export function CatalogSettingsClient({
             <input
               type="number"
               min={0}
-              value={deliveryCharge}
+              value={deliveryCharge || ""}
               onChange={(e) => setDeliveryCharge(Number(e.target.value) || 0)}
               className="rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-brand"
             />

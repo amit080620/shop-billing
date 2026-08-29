@@ -52,6 +52,34 @@ export async function findOrCreateCustomerByPhone(
   return { id: created.id, created: true };
 }
 
+/** Awards loyalty points for a paid amount, best-effort — used by
+ * every flow that can earn points (regular billing, restaurant order
+ * settlement, and anywhere else that's added later). Previously this
+ * exact ~10-line block was copy-pasted between bills.ts and
+ * restaurant.ts; changing the earning formula meant remembering to
+ * edit it in two places. Based on paid amount only — crediting points
+ * against an unpaid (credit/udhar) portion would reward money not
+ * actually received yet. Never throws; a points-award failure must
+ * never block the sale that earned them. */
+export async function awardLoyaltyPoints(
+  admin: ReturnType<typeof createSupabaseAdminClient>,
+  shopId: string,
+  customerId: string | null,
+  paidAmount: number,
+): Promise<void> {
+  if (!customerId || paidAmount <= 0) return;
+
+  const { data: shop } = await admin.from("shops").select("loyalty_points_per_100").eq("id", shopId).single();
+  const rate = Number(shop?.loyalty_points_per_100 ?? 0);
+  if (rate <= 0) return;
+
+  const pointsEarned = Math.floor((paidAmount / 100) * rate);
+  if (pointsEarned <= 0) return;
+
+  const { error } = await admin.rpc("increment_loyalty_points", { p_customer_id: customerId, p_points: pointsEarned });
+  if (error) console.error("Could not award loyalty points", customerId, error);
+}
+
 export async function createCustomerAction(
   _prev: ActionState,
   formData: FormData,

@@ -284,7 +284,7 @@ export function NewRentalClient({
                       type="number"
                       min={0.01}
                       step="0.01"
-                      value={line.quantity}
+                      value={line.quantity || ""}
                       onChange={(e) => updateLine(line.productId, { quantity: Number(e.target.value) || 0 })}
                       className="rounded-lg border border-border px-2 py-1.5 text-sm outline-none focus:border-brand"
                     />
@@ -295,7 +295,7 @@ export function NewRentalClient({
                       type="number"
                       min={0.01}
                       step="0.01"
-                      value={line.duration}
+                      value={line.duration || ""}
                       onChange={(e) => updateLine(line.productId, { duration: Number(e.target.value) || 0 })}
                       className="rounded-lg border border-border px-2 py-1.5 text-sm outline-none focus:border-brand"
                     />
@@ -306,7 +306,7 @@ export function NewRentalClient({
                       type="number"
                       min={0}
                       step="0.01"
-                      value={line.depositPerUnit}
+                      value={line.depositPerUnit || ""}
                       onChange={(e) => updateLine(line.productId, { depositPerUnit: Number(e.target.value) || 0 })}
                       className="rounded-lg border border-border px-2 py-1.5 text-sm outline-none focus:border-brand"
                     />

@@ -7,7 +7,7 @@ import { createSupabaseAdminClient } from "../supabase/admin";
 import { billSchema, calculateTransactionTotals, type BillInput } from "../validation/schemas";
 import { determineSupplyType, financialYearFor, round2 } from "../gst";
 import { logAuditEvent } from "../audit";
-import { findOrCreateCustomerByPhone } from "./customers";
+import { findOrCreateCustomerByPhone, awardLoyaltyPoints } from "./customers";
 
 export type ActionState = { error?: string } | null;
 
@@ -278,23 +278,8 @@ export async function createBillCore(
   );
 
   // Loyalty points — best-effort, same non-blocking pattern as the
-  // stock decrement above. Based on paid amount only: crediting points
-  // against an unpaid (credit) portion would reward money not actually
-  // received yet.
-  if (customerId && totals.paidAmount > 0) {
-    const { data: shop } = await admin.from("shops").select("loyalty_points_per_100").eq("id", session.shopId).single();
-    const rate = Number(shop?.loyalty_points_per_100 ?? 0);
-    if (rate > 0) {
-      const pointsEarned = Math.floor((totals.paidAmount / 100) * rate);
-      if (pointsEarned > 0) {
-        const { error: pointsError } = await admin.rpc("increment_loyalty_points", {
-          p_customer_id: customerId,
-          p_points: pointsEarned,
-        });
-        if (pointsError) console.error("Could not award loyalty points", customerId, pointsError);
-      }
-    }
-  }
+  // stock decrement above.
+  await awardLoyaltyPoints(admin, session.shopId, customerId, totals.paidAmount);
 
   // Points redemption — best-effort, mirrors the earning hook above.
   // The redeem_loyalty_points RPC itself floors at 0, so this can

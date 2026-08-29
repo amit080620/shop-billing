@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { requireSession, requireOwner } from "../auth";
 import { createSupabaseAdminClient } from "../supabase/admin";
 import { determineSupplyType, financialYearFor, round2, splitTax, splitTaxInclusive } from "../gst";
-import { findOrCreateCustomerByPhone } from "./customers";
+import { findOrCreateCustomerByPhone, awardLoyaltyPoints } from "./customers";
 
 export type ActionState = { error?: string } | null;
 
@@ -594,20 +594,7 @@ export async function settleOrderAction(
   // points). Restaurant orders never went through this at all before,
   // which is why a dine-in customer's points never grew no matter how
   // many times they paid in full.
-  if (order.customer_id && paidAmount > 0) {
-    const { data: shop } = await admin.from("shops").select("loyalty_points_per_100").eq("id", session.shopId).single();
-    const rate = Number(shop?.loyalty_points_per_100 ?? 0);
-    if (rate > 0) {
-      const pointsEarned = Math.floor((paidAmount / 100) * rate);
-      if (pointsEarned > 0) {
-        const { error: pointsError } = await admin.rpc("increment_loyalty_points", {
-          p_customer_id: order.customer_id,
-          p_points: pointsEarned,
-        });
-        if (pointsError) console.error("Could not award loyalty points for restaurant order", order.customer_id, pointsError);
-      }
-    }
-  }
+  await awardLoyaltyPoints(admin, session.shopId, order.customer_id, paidAmount);
 
   const { data: settledTable } = await admin
     .from("restaurant_tables")

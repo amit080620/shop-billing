@@ -46,7 +46,7 @@ export function LoyaltySettingsClient({
             type="number"
             min={0}
             step="0.5"
-            value={rate}
+            value={rate || ""}
             onChange={(e) => setRate(Math.max(0, Number(e.target.value) || 0))}
             className="mt-1 rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-brand"
           />
@@ -58,7 +58,7 @@ export function LoyaltySettingsClient({
             type="number"
             min={0}
             step="0.5"
-            value={value}
+            value={value || ""}
             onChange={(e) => setValue(Math.max(0, Number(e.target.value) || 0))}
             className="mt-1 rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-brand"
           />

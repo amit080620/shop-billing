@@ -879,7 +879,7 @@ function SettleModal({
               <input
                 type="number"
                 min={0}
-                value={discountValue}
+                value={discountValue || ""}
                 onChange={(e) => setDiscountValue(Number(e.target.value) || 0)}
                 className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-brand"
               />
@@ -957,7 +957,7 @@ function SettleModal({
               <input
                 type="number"
                 min={0}
-                value={p.amount}
+                value={p.amount || ""}
                 onChange={(e) => updatePayment(i, { amount: Number(e.target.value) || 0 })}
                 className="flex-1 rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-brand"
               />
