@@ -6,6 +6,8 @@ import { createProductsFromScanAction, listExistingProductNamesAction, type Scan
 import { findClosestMatch } from "@/lib/fuzzyMatch";
 import { correctNumericOCR } from "@/lib/ocr/parser";
 import { rebuildLinesFromWords } from "@/lib/ocr/lineGrouping";
+import { scanImageWithAI } from "@/lib/actions/aiScan";
+import { fileToBase64 } from "@/lib/fileToBase64";
 import { Camera, ScanLine, Trash2, Loader2, CheckCircle2 } from "lucide-react";
 
 type DraftItem = ScannedMenuItem & { id: string; include: boolean; matchedExistingName: string | null };
@@ -56,6 +58,7 @@ export function MenuScanClient() {
   const [isSaving, setIsSaving] = useState(false);
   const [justSaved, setJustSaved] = useState<number | null>(null);
   const [blurWarning, setBlurWarning] = useState<File | null>(null);
+  const [usedAI, setUsedAI] = useState(false);
 
   async function handleFile(file: File, skipBlurCheck = false) {
     setError(null);
@@ -78,8 +81,39 @@ export function MenuScanClient() {
     setPreviewUrl(URL.createObjectURL(file));
     setIsScanning(true);
     setOcrProgress(0);
+    setUsedAI(false);
 
     try {
+      const existing = await listExistingProductNamesAction();
+
+      // Try the accurate AI path first — genuinely understands the
+      // photo rather than just extracting raw text, so it handles
+      // messy handwriting and multi-column layouts much better. Only
+      // falls through to the free on-device OCR below if no API key
+      // is configured or the call fails for any reason, so this is a
+      // pure upgrade, never a new way to break.
+      const base64 = await fileToBase64(file);
+      const aiResult = await scanImageWithAI(base64, "products");
+      if (aiResult.items && aiResult.items.length > 0) {
+        setUsedAI(true);
+        setItems(
+          aiResult.items
+            .filter((it) => it.price !== undefined)
+            .map((it, i) => {
+              const match = findClosestMatch(it.name, existing);
+              return {
+                id: `${Date.now()}-${i}`,
+                name: it.name,
+                price: it.price!,
+                categoryName: it.category ?? null,
+                include: !match,
+                matchedExistingName: match?.name ?? null,
+              };
+            }),
+        );
+        return;
+      }
+
       const { preprocessImage } = await import("@/lib/ocr/preprocess");
       const { runOCR, PSM } = await import("@/lib/ocr/tesseract");
 
@@ -107,7 +141,6 @@ export function MenuScanClient() {
         // existing "Chicken Biryani") so a re-scan doesn't quietly
         // create duplicates. No AI involved, just edit-distance math
         // against data the shop already owns.
-        const existing = await listExistingProductNamesAction();
         setItems(
           parsed.map((p, i) => {
             const match = findClosestMatch(p.name, existing);
@@ -239,6 +272,7 @@ export function MenuScanClient() {
         <>
           <p className="text-xs font-medium text-muted">
             Found {items.length} item{items.length === 1 ? "" : "s"} — review before adding
+            {usedAI && <span className="ml-1.5 rounded-full bg-brand-soft px-1.5 py-0.5 text-[10px] font-medium text-brand-text">✨ AI-read</span>}
           </p>
           <ul className="flex flex-col gap-2">
             {items.map((item) => (

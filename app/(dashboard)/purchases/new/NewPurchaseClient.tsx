@@ -14,6 +14,8 @@ import { InlineQuickAdd } from "@/app/components/InlineQuickAdd";
 import { InfoTooltip } from "@/app/components/InfoTooltip";
 import { rebuildLinesFromWords } from "@/lib/ocr/lineGrouping";
 import { parsePurchaseBillItems } from "@/lib/ocr/parser";
+import { scanImageWithAI } from "@/lib/actions/aiScan";
+import { fileToBase64 } from "@/lib/fileToBase64";
 import { Camera, Loader2 } from "lucide-react";
 import { REORDER_HANDOFF_KEY, type ReorderHandoff } from "@/lib/reorderHandoff";
 
@@ -125,6 +127,7 @@ export function NewPurchaseClient({
   const [isScanning, setIsScanning] = useState(false);
   const [scanProgress, setScanProgress] = useState(0);
   const [scanError, setScanError] = useState<string | null>(null);
+  const [usedAI, setUsedAI] = useState(false);
   const scanInputRef = useRef<HTMLInputElement>(null);
 
   /** Photo of the vendor's paper bill -> item rows appended straight
@@ -136,6 +139,37 @@ export function NewPurchaseClient({
     setIsScanning(true);
     setScanProgress(0);
     try {
+      // Accurate AI path first — genuinely understands "this is a
+      // description, this is a qty, this is a rate" rather than
+      // guessing from raw text positions, so it handles a messy
+      // handwritten vendor bill much better. Falls through to the
+      // free on-device OCR below only if no key is configured or the
+      // call fails — never a new way for scanning to break.
+      const base64 = await fileToBase64(file);
+      const aiResult = await scanImageWithAI(base64, "purchase");
+      if (aiResult.items && aiResult.items.length > 0) {
+        setUsedAI(true);
+        setLines((prev) => [
+          ...prev,
+          ...aiResult.items!
+            .filter((it) => it.price !== undefined && it.quantity !== undefined)
+            .map((item) => ({
+              key: crypto.randomUUID(),
+              productId: null,
+              description: item.name,
+              hsnCode: "",
+              quantity: item.quantity!,
+              unitPrice: item.price!,
+              gstPercent: 0,
+              isPharma: false,
+              batchNumber: "",
+              expiryDate: "",
+              mfgDate: "",
+            })),
+        ]);
+        return;
+      }
+
       const { preprocessImage } = await import("@/lib/ocr/preprocess");
       const { runOCR, PSM } = await import("@/lib/ocr/tesseract");
 
@@ -346,6 +380,11 @@ export function NewPurchaseClient({
           {isScanning ? <Loader2 size={16} className="animate-spin" /> : <Camera size={16} />}
           {isScanning ? `Reading the bill… ${scanProgress}%` : "Scan vendor bill — fill items from a photo"}
         </button>
+        {usedAI && !isScanning && (
+          <p className="flex items-center gap-1 text-[11px] font-medium text-brand-text">
+            <span className="rounded-full bg-brand-soft px-1.5 py-0.5">✨ AI-read</span> Review the quantities and rates below before submitting.
+          </p>
+        )}
         {scanError && <p className="text-xs text-danger">{scanError}</p>}
 
         {products.length > 0 && (
