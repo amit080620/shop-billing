@@ -23,11 +23,17 @@ const PROMPTS = {
   purchase: `You are reading a photo of a vendor's purchase bill or invoice. Extract every line item with its description, quantity, and its PER-UNIT rate (not the line total for that row). Return ONLY a JSON array, no other text, like: [{"name": "Item description", "quantity": 5, "price": 45.50}]. Ignore the bill's own header, GSTIN/tax-registration lines, the grand total row, tax breakdown rows (CGST/SGST/IGST), and any signature/footer text.`,
 };
 
-export type AIScanErrorType = "not_configured" | "quota_exceeded" | "invalid_key" | "network_error";
+export type AIScanErrorType = "not_configured" | "quota_exceeded" | "invalid_key" | "config_error" | "network_error";
 
 function classifyStatus(httpStatus: number): AIScanErrorType {
   if (httpStatus === 429) return "quota_exceeded";
   if (httpStatus === 401 || httpStatus === 403) return "invalid_key";
+  // 400 (malformed request) and 404 (model name not found/retired)
+  // are genuine responses FROM Google, not a connectivity problem —
+  // mislabeling these as "network_error" was hiding exactly the kind
+  // of issue (e.g. a model that's since been retired) that's easy to
+  // fix once it's actually visible.
+  if (httpStatus === 400 || httpStatus === 404) return "config_error";
   return "network_error";
 }
 
@@ -50,8 +56,15 @@ export async function checkAIScanStatusAction(): Promise<{ status: "connected" |
       }),
     });
     if (response.ok) return { status: "connected" };
+    // Genuinely logged now — this was silently swallowed before,
+    // which is exactly why the badge could only ever say a vague
+    // "unreachable" with no way to tell what actually went wrong.
+    // Check Vercel's function logs for this exact line to see the
+    // real HTTP status and Google's own error message.
+    console.error("AI status check failed", response.status, await response.text().catch(() => "(no body)"));
     return { status: classifyStatus(response.status) };
-  } catch {
+  } catch (err) {
+    console.error("AI status check — request itself failed (genuine network/DNS issue)", err);
     return { status: "network_error" };
   }
 }

@@ -12,6 +12,7 @@ const LABELS: Record<Status, string> = {
   not_configured: "AI scan not set up",
   quota_exceeded: "AI quota used up today",
   invalid_key: "AI key invalid",
+  config_error: "AI setup error",
   network_error: "AI unreachable",
 };
 
