@@ -6,7 +6,7 @@ import { useCalculatorAmount } from "@/lib/calculatorAmount";
 import { formatMoney } from "@/lib/format";
 
 const POSITION_KEY = "ray-calc-position";
-const BUBBLE_SIZE = 52;
+const BUBBLE_SIZE = 40;
 const EXPANDED_WIDTH = 280;
 const EXPANDED_HEIGHT = 420;
 const IDLE_DIM_MS = 3500;
@@ -306,7 +306,7 @@ export function FloatingCalculator({ enabled }: { enabled: boolean }) {
           touchAction: "none",
         }}
       >
-        <CalculatorIcon size={22} />
+        <CalculatorIcon size={17} />
       </button>
     );
   }
