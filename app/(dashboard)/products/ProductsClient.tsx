@@ -259,7 +259,7 @@ export function ProductsClient({
               href="/products/scan-menu"
               className="rounded-lg border border-border px-2.5 py-1 text-xs font-medium text-muted"
             >
-              Scan menu
+              Scan price list
             </Link>
             <button
               onClick={() => setShowCategoryForm((v) => !v)}

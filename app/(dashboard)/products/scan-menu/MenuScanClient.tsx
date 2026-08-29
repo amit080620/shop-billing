@@ -153,15 +153,16 @@ export function MenuScanClient() {
 
   return (
     <div className="flex flex-col gap-4">
-      <PageHeader icon={<ScanLine size={20} />} title="Scan a menu" subtitle="Free — uses your camera, no extra cost" />
+      <PageHeader icon={<ScanLine size={20} />} title="Scan a price list" subtitle="Free — uses your camera, no extra cost" />
 
       <div className="neu-card flex flex-col gap-2 p-4">
         <p className="text-sm text-foreground">
-          Take a clear, straight-on photo of a physical menu card. We&apos;ll read the item names and prices and
-          let you review everything before adding it to your own menu.
+          Take a clear, straight-on photo of any physical price list — a menu card, a vendor&apos;s rate list, a
+          handwritten register page, a printed catalog sheet — anything with item names next to prices.
+          We&apos;ll read them and let you review everything before adding it to your own product list.
         </p>
         <p className="text-xs text-muted">
-          This runs free, on-device text recognition — accuracy depends on photo clarity and menu font, so always
+          This runs free, on-device text recognition — accuracy depends on photo clarity and print/handwriting style, so always
           double-check the list below before saving.
         </p>
       </div>
@@ -183,13 +184,13 @@ export function MenuScanClient() {
         className="btn-primary flex items-center justify-center gap-2 disabled:opacity-60"
       >
         <Camera size={16} />
-        {previewUrl ? "Scan another photo" : "Open camera & scan menu"}
+        {previewUrl ? "Scan another photo" : "Open camera & scan"}
       </button>
 
       {previewUrl && (
         <div className="neu-card overflow-hidden p-2">
           {/* eslint-disable-next-line @next/next/no-img-element -- local camera capture preview, not a stored asset */}
-          <img src={previewUrl} alt="Scanned menu" className="max-h-56 w-full rounded-lg object-contain" />
+          <img src={previewUrl} alt="Scanned price list" className="max-h-56 w-full rounded-lg object-contain" />
         </div>
       )}
 
@@ -197,7 +198,7 @@ export function MenuScanClient() {
         <div className="neu-card flex flex-col items-center gap-3 p-4 text-center">
           <p className="text-sm font-semibold text-foreground">This photo looks a bit blurry</p>
           <p className="text-xs text-muted">
-            Reading text from a blurry photo rarely works well. Hold the camera steady and make sure the menu is
+            Reading text from a blurry photo rarely works well. Hold the camera steady and make sure it is
             well-lit before tapping the shutter.
           </p>
           <div className="flex w-full gap-2">
@@ -218,7 +219,7 @@ export function MenuScanClient() {
         <div className="neu-card flex items-center gap-3 p-4">
           <Loader2 size={18} className="animate-spin text-brand" />
           <div className="flex-1">
-            <p className="text-sm text-foreground">Reading the menu… {ocrProgress}%</p>
+            <p className="text-sm text-foreground">Reading the price list… {ocrProgress}%</p>
             <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-background">
               <div className="h-full rounded-full bg-brand transition-all" style={{ width: `${ocrProgress}%` }} />
             </div>
@@ -230,7 +231,7 @@ export function MenuScanClient() {
 
       {justSaved !== null && (
         <div className="neu-card animate-save-success p-4 text-center">
-          <p className="text-sm font-semibold text-success">✅ {justSaved} item{justSaved === 1 ? "" : "s"} added to your menu</p>
+          <p className="text-sm font-semibold text-success">✅ {justSaved} item{justSaved === 1 ? "" : "s"} added to your product list</p>
         </div>
       )}
 
@@ -287,7 +288,7 @@ export function MenuScanClient() {
             disabled={isSaving}
             className="btn-primary flex items-center justify-center gap-2 disabled:opacity-60"
           >
-            {isSaving ? "Adding…" : `Add ${items.filter((i) => i.include).length} selected item(s) to menu`}
+            {isSaving ? "Adding…" : `Add ${items.filter((i) => i.include).length} selected item(s) to your product list`}
           </button>
         </>
       )}
