@@ -171,6 +171,18 @@ export default async function ReportsPage() {
             session.businessType === "general") && (
             <ReportLink href="/reports/sales" label="Sales report" sub="Every bill by date range" />
           )}
+          {/* Genuinely generic — any shop that ticks "Track with batch
+              & expiry date" on a product (available to every business
+              type) has real use for these, not just pharmacies. The
+              pharmacy block above already has its own copy alongside
+              its pharmacy-specific reports, so this is skipped there
+              to avoid listing it twice. */}
+          {!["restaurant", "transport", "rental", "pharmacy"].includes(session.businessType) && (
+            <>
+              <ReportLink href="/pharmacy/expiry" label="Expiry alerts" sub="Batches expiring soon — act before it's stock loss" />
+              <ReportLink href="/pharmacy/write-offs" label="Write-off history" sub="Stock lost to expiry or damage" />
+            </>
+          )}
         </div>
       </section>
 

@@ -656,6 +656,7 @@ export interface Database {
           description: string;
           hsn_code: string | null;
           quantity: number;
+          free_quantity: number;
           unit_price: number;
           gst_percent: number;
           line_subtotal: number;
@@ -672,6 +673,7 @@ export interface Database {
           description: string;
           hsn_code?: string | null;
           quantity: number;
+          free_quantity?: number;
           unit_price: number;
           gst_percent?: number;
           line_subtotal: number;
@@ -688,6 +690,7 @@ export interface Database {
           description?: string;
           hsn_code?: string | null;
           quantity?: number;
+          free_quantity?: number;
           unit_price?: number;
           gst_percent?: number;
           line_subtotal?: number;

@@ -184,7 +184,10 @@ async function RetailHome({
   startOfWeek.setDate(startOfWeek.getDate() - 6);
   startOfWeek.setHours(0, 0, 0, 0);
 
-  const [todayBills, weekBills, allBillsCredit, allPayments, recentBills, allPayables, allVendorPayments] =
+  const expiryCutoff = new Date();
+  expiryCutoff.setDate(expiryCutoff.getDate() + 30);
+
+  const [todayBills, weekBills, allBillsCredit, allPayments, recentBills, allPayables, allVendorPayments, { data: expiringBatches }] =
     await Promise.all([
       admin.from("bills").select("total").eq("shop_id", session.shopId).eq("status", "active").gte("created_at", startOfToday.toISOString()),
       admin.from("bills").select("total, created_at").eq("shop_id", session.shopId).eq("status", "active").gte("created_at", startOfWeek.toISOString()),
@@ -199,7 +202,13 @@ async function RetailHome({
         .limit(5),
       admin.from("purchases").select("payable_amount").eq("shop_id", session.shopId),
       admin.from("purchase_payments").select("amount").eq("shop_id", session.shopId),
+      // Genuinely generic — any shop can tick "Track with batch &
+      // expiry date" on a product, not just pharmacies, so this
+      // shouldn't only live on the pharmacy-specific dashboard.
+      admin.from("medicine_batches").select("id, quantity").eq("shop_id", session.shopId).lte("expiry_date", expiryCutoff.toISOString().slice(0, 10)).gt("quantity", 0),
     ]);
+
+  const expiringCount = expiringBatches?.length ?? 0;
 
   const todayTotal = sum(todayBills.data?.map((b) => b.total));
   const weekTotal = sum(weekBills.data?.map((b) => b.total));
@@ -214,6 +223,19 @@ async function RetailHome({
 
   return (
     <>
+      {expiringCount > 0 && (
+        <Link
+          href="/pharmacy/expiry"
+          className="flex items-center justify-between gap-3 rounded-xl border border-dashed border-credit bg-credit-soft p-4"
+        >
+          <div>
+            <p className="text-sm font-semibold text-credit">{expiringCount} batch{expiringCount === 1 ? "" : "es"} expiring within 30 days</p>
+            <p className="mt-0.5 text-xs text-credit/80">Tap to see which items, before it becomes stock loss.</p>
+          </div>
+          <span className="shrink-0 text-credit">→</span>
+        </Link>
+      )}
+
       <section className="neu-card grid grid-cols-2 gap-3 p-4">
         <div className="border-r border-border/60 pr-3">
           <MiniCalendar />

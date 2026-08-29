@@ -174,6 +174,7 @@ export async function createPurchaseAction(
       description: product?.name ?? item.description,
       hsn_code: item.hsnCode ?? product?.hsn_code ?? null,
       quantity: item.quantity,
+      free_quantity: item.freeQuantity ?? 0,
       unit_price: item.unitPrice,
       gst_percent: item.gstPercent,
       line_subtotal: line.lineSubtotal,
@@ -197,7 +198,8 @@ export async function createPurchaseAction(
     items.map(async (item) => {
       const product = item.productId ? productMap.get(item.productId) : undefined;
       if (!product?.track_inventory) return;
-      const { error: stockError } = await admin.rpc("increment_stock", { p_product_id: product.id, p_quantity: item.quantity });
+      const totalReceived = item.quantity + (item.freeQuantity ?? 0);
+      const { error: stockError } = await admin.rpc("increment_stock", { p_product_id: product.id, p_quantity: totalReceived });
       if (stockError) console.error("Could not update stock for product", product.id, stockError);
     }),
   );
@@ -217,7 +219,7 @@ export async function createPurchaseAction(
         batch_number: item.batchNumber,
         expiry_date: item.expiryDate,
         mfg_date: item.mfgDate || null,
-        quantity: item.quantity,
+        quantity: item.quantity + (item.freeQuantity ?? 0),
         purchase_price: item.unitPrice,
       });
       if (batchError) console.error("Could not record batch for product", product.id, batchError);

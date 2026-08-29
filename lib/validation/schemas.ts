@@ -122,6 +122,10 @@ const lineItemSchema = z.object({
   quantity: z.coerce.number().positive("Quantity must be greater than 0"),
   unitPrice: z.coerce.number().min(0),
   gstPercent: z.coerce.number().min(0).max(100),
+  // Free units from a vendor scheme ("buy 10 get 2 free") — only
+  // meaningful on a purchase line; adds to stock but never to cost.
+  // Ignored everywhere else (bills, rentals).
+  freeQuantity: z.coerce.number().min(0).nullable().optional(),
   // How much to actually decrement from stock/batches, in pack units — only
   // differs from `quantity` when selling loose units off a pack (e.g. 3
   // tablets sold off a 10-tablet strip decrements 0.3 packs, not 3).

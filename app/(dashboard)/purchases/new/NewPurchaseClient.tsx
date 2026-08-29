@@ -30,6 +30,7 @@ type Line = {
   description: string;
   hsnCode: string;
   quantity: number;
+  freeQuantity: number;
   unitPrice: number;
   gstPercent: number;
   isPharma: boolean;
@@ -96,6 +97,7 @@ export function NewPurchaseClient({
             hsnCode: item.hsnCode ?? "",
             quantity: item.quantity,
             unitPrice: item.unitPrice,
+            freeQuantity: 0,
             gstPercent: 0,
             isPharma: false,
             batchNumber: "",
@@ -177,6 +179,7 @@ export function NewPurchaseClient({
               hsnCode: "",
               quantity: item.quantity!,
               unitPrice: item.price!,
+              freeQuantity: 0,
               gstPercent: 0,
               isPharma: false,
               batchNumber: "",
@@ -213,6 +216,7 @@ export function NewPurchaseClient({
             hsnCode: "",
             quantity: item.quantity,
             unitPrice: item.unitPrice,
+            freeQuantity: 0,
             gstPercent: 0,
             isPharma: false,
             batchNumber: "",
@@ -238,6 +242,7 @@ export function NewPurchaseClient({
         hsnCode: p.hsnCode ?? "",
         quantity: 1,
         unitPrice: 0,
+        freeQuantity: 0,
         gstPercent: 0,
         isPharma: p.isPharma,
         batchNumber: "",
@@ -257,6 +262,7 @@ export function NewPurchaseClient({
         hsnCode: "",
         quantity: 1,
         unitPrice: 0,
+        freeQuantity: 0,
         gstPercent: 0,
         isPharma: false,
         batchNumber: "",
@@ -283,6 +289,7 @@ export function NewPurchaseClient({
       description: l.description,
       hsnCode: l.hsnCode || null,
       quantity: l.quantity,
+      freeQuantity: l.freeQuantity || undefined,
       unitPrice: l.unitPrice,
       gstPercent: l.gstPercent,
       batchNumber: l.isPharma && l.batchNumber ? l.batchNumber : undefined,
@@ -485,17 +492,23 @@ export function NewPurchaseClient({
                     Remove
                   </button>
                 </div>
-                <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
+                <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-5">
                   <LabeledInput
                     label="Qty"
                     type="number"
-                    value={line.quantity}
+                    value={line.quantity || ""}
                     onChange={(v) => updateLine(line.key, { quantity: Number(v) || 0 })}
+                  />
+                  <LabeledInput
+                    label="Free qty (scheme)"
+                    type="number"
+                    value={line.freeQuantity || ""}
+                    onChange={(v) => updateLine(line.key, { freeQuantity: Math.max(0, Number(v) || 0) })}
                   />
                   <LabeledInput
                     label="Rate ₹"
                     type="number"
-                    value={line.unitPrice}
+                    value={line.unitPrice || ""}
                     onChange={(v) => updateLine(line.key, { unitPrice: Number(v) || 0 })}
                   />
                   <label className="flex flex-col gap-1 text-xs">
@@ -519,6 +532,11 @@ export function NewPurchaseClient({
                     onChange={(v) => updateLine(line.key, { hsnCode: String(v) })}
                   />
                 </div>
+                {line.freeQuantity > 0 && (
+                  <p className="text-[11px] font-medium text-brand-text">
+                    🎁 {line.quantity} paid + {line.freeQuantity} free = {line.quantity + line.freeQuantity} units added to stock — GST/cost is on the {line.quantity} paid only.
+                  </p>
+                )}
                 {line.isPharma && (
                   <div className="grid grid-cols-1 gap-2.5 rounded-lg border border-dashed border-brand bg-brand-soft p-2.5 sm:grid-cols-3">
                     <LabeledInput

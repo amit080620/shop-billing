@@ -49,9 +49,16 @@ export default async function MorePage() {
     <div className="flex flex-col gap-5">
       <h1 className="text-lg font-semibold text-foreground">{t("more.title")}</h1>
 
-      {(session.businessType === "pharmacy" || session.businessType === "clinic") && (
-        <MenuGroup title="Medicine stock">
-          <MenuLink href="/pharmacy/expiry" label="Expiry alerts" sub="Medicines nearing or past expiry" icon={ExpiryIcon} tone="warning" />
+      {/* "Expiry alerts" and "Write-off history" are genuinely
+          generic — any shop that tracks batch/expiry on a product
+          (the "Track with batch & expiry date" checkbox on the
+          product form, available to every business type) benefits
+          from these, not just pharmacies. Doctor-wise sales and the
+          Schedule X register genuinely are pharmacy-only concepts
+          (prescriptions, narcotic compliance), so those stay gated. */}
+      {!["restaurant", "transport", "rental"].includes(session.businessType) && (
+        <MenuGroup title={session.businessType === "pharmacy" || session.businessType === "clinic" ? "Medicine stock" : "Batch & expiry stock"}>
+          <MenuLink href="/pharmacy/expiry" label="Expiry alerts" sub="Batches nearing or past expiry" icon={ExpiryIcon} tone="warning" />
           <MenuLink href="/pharmacy/write-offs" label="Write-off history" sub="Stock lost to expiry or damage" icon={ClockIcon} />
           {session.businessType === "pharmacy" && (
             <>
