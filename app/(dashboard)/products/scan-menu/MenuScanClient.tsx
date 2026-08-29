@@ -94,7 +94,16 @@ export function MenuScanClient() {
       // falls through to the free on-device OCR below if no API key
       // is configured or the call fails for any reason, so this is a
       // pure upgrade, never a new way to break.
-      const base64 = await fileToBase64(file);
+      // A raw phone-camera photo is genuinely huge (often 8-20MB) —
+      // base64 encoding inflates that further (~33%), which can blow
+      // past request size limits before the image even reaches
+      // Gemini. Reusing the SAME resize/deskew pipeline already built
+      // for the free OCR path keeps this fast, reliable, AND — since
+      // it also straightens and corrects lighting — genuinely helps
+      // Gemini read it better too, not just makes it smaller.
+      const { preprocessImage } = await import("@/lib/ocr/preprocess");
+      const processedForAI = await preprocessImage(file);
+      const base64 = await fileToBase64(processedForAI);
       const aiResult = await scanImageWithAI(base64, "products");
       if (aiResult.errorType) aiStatusRef.current?.reportError(aiResult.errorType);
       if (aiResult.items && aiResult.items.length > 0) {
@@ -117,10 +126,9 @@ export function MenuScanClient() {
         return;
       }
 
-      const { preprocessImage } = await import("@/lib/ocr/preprocess");
       const { runOCR, PSM } = await import("@/lib/ocr/tesseract");
 
-      const processed = await preprocessImage(file);
+      const processed = processedForAI;
       const ocr = await runOCR(
         processed,
         (status, p) => {
