@@ -23,12 +23,45 @@ const PROMPTS = {
   purchase: `You are reading a photo of a vendor's purchase bill or invoice. Extract every line item with its description, quantity, and its PER-UNIT rate (not the line total for that row). Return ONLY a JSON array, no other text, like: [{"name": "Item description", "quantity": 5, "price": 45.50}]. Ignore the bill's own header, GSTIN/tax-registration lines, the grand total row, tax breakdown rows (CGST/SGST/IGST), and any signature/footer text.`,
 };
 
+export type AIScanErrorType = "not_configured" | "quota_exceeded" | "invalid_key" | "network_error";
+
+function classifyStatus(httpStatus: number): AIScanErrorType {
+  if (httpStatus === 429) return "quota_exceeded";
+  if (httpStatus === 401 || httpStatus === 403) return "invalid_key";
+  return "network_error";
+}
+
+/** A single, cheap connectivity check ("reply with one word") — used
+ * to show a live status badge on the scan screens without spending
+ * quota on an actual image scan just to find out if the key works.
+ * One call per page visit is negligible against the free tier's
+ * hundreds-per-day allowance. */
+export async function checkAIScanStatusAction(): Promise<{ status: "connected" | AIScanErrorType }> {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) return { status: "not_configured" };
+
+  try {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: "Reply with just the word OK." }] }],
+        generationConfig: { maxOutputTokens: 5 },
+      }),
+    });
+    if (response.ok) return { status: "connected" };
+    return { status: classifyStatus(response.status) };
+  } catch {
+    return { status: "network_error" };
+  }
+}
+
 export async function scanImageWithAI(
   imageBase64: string,
   mode: "products" | "purchase",
-): Promise<{ items?: AIScanItem[]; error?: string }> {
+): Promise<{ items?: AIScanItem[]; error?: string; errorType?: AIScanErrorType }> {
   const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) return { error: "AI scan is not set up for this shop yet" };
+  if (!apiKey) return { error: "AI scan is not set up for this shop yet", errorType: "not_configured" };
 
   try {
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`, {
@@ -46,7 +79,7 @@ export async function scanImageWithAI(
 
     if (!response.ok) {
       console.error("Gemini scan request failed", response.status, await response.text().catch(() => ""));
-      return { error: "AI scan couldn't process this photo" };
+      return { error: "AI scan couldn't process this photo", errorType: classifyStatus(response.status) };
     }
 
     const data = await response.json();

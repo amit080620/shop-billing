@@ -8,6 +8,7 @@ import { correctNumericOCR } from "@/lib/ocr/parser";
 import { rebuildLinesFromWords } from "@/lib/ocr/lineGrouping";
 import { scanImageWithAI } from "@/lib/actions/aiScan";
 import { fileToBase64 } from "@/lib/fileToBase64";
+import { AIStatusBadge } from "@/app/components/AIStatusBadge";
 import { Camera, ScanLine, Trash2, Loader2, CheckCircle2 } from "lucide-react";
 
 type DraftItem = ScannedMenuItem & { id: string; include: boolean; matchedExistingName: string | null };
@@ -50,6 +51,7 @@ function parseMenuText(rawLines: string[]): ScannedMenuItem[] {
 
 export function MenuScanClient() {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const aiStatusRef = useRef<{ reportError: (type: import("@/lib/actions/aiScan").AIScanErrorType) => void }>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [ocrProgress, setOcrProgress] = useState(0);
   const [isScanning, setIsScanning] = useState(false);
@@ -94,6 +96,7 @@ export function MenuScanClient() {
       // pure upgrade, never a new way to break.
       const base64 = await fileToBase64(file);
       const aiResult = await scanImageWithAI(base64, "products");
+      if (aiResult.errorType) aiStatusRef.current?.reportError(aiResult.errorType);
       if (aiResult.items && aiResult.items.length > 0) {
         setUsedAI(true);
         setItems(
@@ -186,7 +189,10 @@ export function MenuScanClient() {
 
   return (
     <div className="flex flex-col gap-4">
-      <PageHeader icon={<ScanLine size={20} />} title="Scan a price list" subtitle="Free — uses your camera, no extra cost" />
+      <div className="flex items-center justify-between">
+        <PageHeader icon={<ScanLine size={20} />} title="Scan a price list" subtitle="Free — uses your camera, no extra cost" />
+        <AIStatusBadge ref={aiStatusRef} />
+      </div>
 
       <div className="neu-card flex flex-col gap-2 p-4">
         <p className="text-sm text-foreground">

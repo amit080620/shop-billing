@@ -16,6 +16,7 @@ import { rebuildLinesFromWords } from "@/lib/ocr/lineGrouping";
 import { parsePurchaseBillItems } from "@/lib/ocr/parser";
 import { scanImageWithAI } from "@/lib/actions/aiScan";
 import { fileToBase64 } from "@/lib/fileToBase64";
+import { AIStatusBadge } from "@/app/components/AIStatusBadge";
 import { Camera, Loader2 } from "lucide-react";
 import { REORDER_HANDOFF_KEY, type ReorderHandoff } from "@/lib/reorderHandoff";
 
@@ -129,6 +130,7 @@ export function NewPurchaseClient({
   const [scanError, setScanError] = useState<string | null>(null);
   const [usedAI, setUsedAI] = useState(false);
   const scanInputRef = useRef<HTMLInputElement>(null);
+  const aiStatusRef = useRef<{ reportError: (type: import("@/lib/actions/aiScan").AIScanErrorType) => void }>(null);
 
   /** Photo of the vendor's paper bill -> item rows appended straight
    * into the same editable list below (addCustomLine's shape) — this
@@ -147,6 +149,7 @@ export function NewPurchaseClient({
       // call fails — never a new way for scanning to break.
       const base64 = await fileToBase64(file);
       const aiResult = await scanImageWithAI(base64, "purchase");
+      if (aiResult.errorType) aiStatusRef.current?.reportError(aiResult.errorType);
       if (aiResult.items && aiResult.items.length > 0) {
         setUsedAI(true);
         setLines((prev) => [
@@ -357,7 +360,10 @@ export function NewPurchaseClient({
       </div>
 
       <section className="flex flex-col gap-3">
-        <p className="text-sm font-medium text-foreground">Items</p>
+        <div className="flex items-center justify-between">
+          <p className="text-sm font-medium text-foreground">Items</p>
+          <AIStatusBadge ref={aiStatusRef} />
+        </div>
 
         <input
           ref={scanInputRef}
