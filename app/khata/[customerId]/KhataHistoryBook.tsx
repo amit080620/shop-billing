@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronDown, ChevronLeft, ChevronRight, Search, X } from "lucide-react";
 import { formatMoney, formatDateTime } from "@/lib/format";
 
 export type KhataEntry =
@@ -41,6 +41,8 @@ const FLIP_MS = 380;
 export function KhataHistoryBook({ entries }: { entries: KhataEntry[] }) {
   const [page, setPage] = useState(0);
   const [flipDirection, setFlipDirection] = useState<"next" | "prev" | null>(null);
+  const [searchDate, setSearchDate] = useState("");
+  const [searchMiss, setSearchMiss] = useState(false);
   const pageCount = Math.max(1, Math.ceil(entries.length / PAGE_SIZE));
   const current = entries.slice(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE);
 
@@ -56,12 +58,68 @@ export function KhataHistoryBook({ entries }: { entries: KhataEntry[] }) {
     window.setTimeout(() => setFlipDirection(null), FLIP_MS);
   }
 
+  // "Search by date" — genuinely flips straight to the page holding
+  // that day's entries, same as thumbing through a real register to
+  // the right spot. Entries are newest-first, so the first one whose
+  // date is <= the chosen date is the right anchor even when nothing
+  // happened on that exact day (e.g. searching a Sunday when the shop
+  // was closed still lands on the nearest entry before it).
+  function searchByDate(dateStr: string) {
+    setSearchDate(dateStr);
+    setSearchMiss(false);
+    if (!dateStr) return;
+
+    const target = new Date(dateStr + "T23:59:59").getTime();
+    const anchorIndex = entries.findIndex((e) => new Date(e.createdAt).getTime() <= target);
+
+    if (anchorIndex === -1) {
+      // Every entry is AFTER the searched date (e.g. searching before
+      // this customer's very first transaction) — nothing to jump to.
+      setSearchMiss(true);
+      return;
+    }
+
+    const targetPage = Math.floor(anchorIndex / PAGE_SIZE);
+    if (targetPage === page || flipDirection) {
+      setPage(targetPage);
+      return;
+    }
+    goTo(targetPage, targetPage > page ? "next" : "prev");
+  }
+
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-center justify-between">
         <p className="text-xs font-medium text-muted">Full account history</p>
         <p className="text-[11px] text-muted">Balance after each entry →</p>
       </div>
+
+      {entries.length > PAGE_SIZE && (
+        <div className="flex items-center gap-2 rounded-lg border border-border bg-background px-2.5 py-2">
+          <Search size={14} className="shrink-0 text-muted" />
+          <input
+            type="date"
+            value={searchDate}
+            onChange={(e) => searchByDate(e.target.value)}
+            max={new Date().toISOString().slice(0, 10)}
+            className="min-w-0 flex-1 bg-transparent text-xs text-foreground outline-none"
+            aria-label="Jump to a date"
+          />
+          {searchDate && (
+            <button
+              onClick={() => {
+                setSearchDate("");
+                setSearchMiss(false);
+              }}
+              aria-label="Clear date search"
+              className="shrink-0 text-muted"
+            >
+              <X size={14} />
+            </button>
+          )}
+        </div>
+      )}
+      {searchMiss && <p className="text-xs text-muted">Nothing on file before that date — showing the earliest page instead isn&apos;t needed, this account simply didn&apos;t exist yet.</p>}
 
       <div style={{ perspective: "1600px" }}>
         {entries.length === 0 ? (
