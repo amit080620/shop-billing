@@ -131,6 +131,7 @@ export function ProductsClient({
   const showBulkPricingField = ["grocery", "mart", "hardware", "general"].includes(businessType);
   const showJewellerySection = businessType === "jewellery";
   const [showForm, setShowForm] = useState(false);
+  const [showMoreOptions, setShowMoreOptions] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [optionsForProduct, setOptionsForProduct] = useState<{ id: string; name: string } | null>(null);
   const [trackInventory, setTrackInventory] = useState(false);
@@ -192,6 +193,7 @@ export function ProductsClient({
     setIsPharma(false);
     setRequiresPrescription(false);
     setHasWarranty(false);
+    setShowMoreOptions(false);
     setShowForm(true);
   }
 
@@ -202,6 +204,7 @@ export function ProductsClient({
     setIsPharma(p.isPharma);
     setRequiresPrescription(p.requiresPrescription);
     setHasWarranty(p.hasWarranty);
+    setShowMoreOptions(!!(p.barcode || p.mrp != null || p.bulkMinQty != null || p.hsnCode || p.categoryId));
     setShowForm(true);
   }
 
@@ -420,123 +423,152 @@ export function ProductsClient({
               </select>
             </label>
           </div>
-          {showMrpField && (
-            <Field
-              name="mrp"
-              label="MRP (₹, optional — leave blank for loose/unpackaged items)"
-              type="number"
-              step="0.01"
-              min="0"
-              placeholder="e.g. 55"
-              defaultValue={editingProduct?.mrp != null ? String(editingProduct.mrp) : undefined}
-            />
-          )}
-          {showBulkPricingField && (
-            <div className="grid grid-cols-2 gap-3">
-              <Field
-                name="bulkMinQty"
-                label="Bulk qty (optional)"
-                type="number"
-                min="0"
-                step="0.01"
-                placeholder="e.g. 10"
-                defaultValue={editingProduct?.bulkMinQty != null ? String(editingProduct.bulkMinQty) : undefined}
-              />
-              <Field
-                name="bulkPrice"
-                label="Bulk price/unit (₹)"
-                type="number"
-                min="0"
-                step="0.01"
-                placeholder="e.g. 45"
-                defaultValue={editingProduct?.bulkPrice != null ? String(editingProduct.bulkPrice) : undefined}
-              />
-            </div>
-          )}
-          <div className="flex flex-col gap-1.5 text-sm">
-            <span className="font-medium text-foreground">{t("products.barcode")}</span>
-            <input
-              ref={barcodeRef}
-              name="barcode"
-              defaultValue={editingProduct?.barcode ?? ""}
-              placeholder={t("products.barcodePlaceholder")}
+          <label className="flex flex-col gap-1.5 text-sm">
+            <span className="font-medium text-foreground">{t("products.unit")}</span>
+            <select
+              name="unit"
+              defaultValue={editingProduct?.unit ?? "NOS"}
               className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-brand"
-            />
-            {barcodeScanMode !== "hardware" && (
-              <CameraBarcodeScanner
-                label={t("products.scanWithCamera")}
-                onScan={(code) => {
-                  if (barcodeRef.current) barcodeRef.current.value = code;
-                }}
-              />
-            )}
-          </div>
-          <div className="flex flex-col gap-3 rounded-lg border border-dashed border-brand bg-brand-soft p-3">
-            <p className="text-xs text-brand-text">Public catalog — shown on your shareable order link (More → Catalog link)</p>
-            <label className="flex items-center gap-2 text-sm text-foreground">
-              <input
-                type="checkbox"
-                name="showInCatalog"
-                defaultChecked={editingProduct?.showInCatalog ?? true}
-                className="h-4 w-4 rounded border-border"
-              />
-              Show this item in the public catalog
-            </label>
-            <label className="flex items-center gap-2 text-sm text-foreground">
-              <input
-                type="checkbox"
-                name="showInFastBilling"
-                defaultChecked={editingProduct?.showInFastBilling ?? false}
-                className="h-4 w-4 rounded border-border"
-              />
-              Show this item in Fast Billing (quick tap-to-add grid)
-            </label>
-            <div className="grid grid-cols-2 gap-3">
-              <Field
-                name="offerPrice"
-                label="Offer price (₹, optional)"
-                type="number"
-                min="0"
-                step="0.01"
-                placeholder="Leave blank for no offer"
-                defaultValue={editingProduct?.offerPrice != null ? String(editingProduct.offerPrice) : undefined}
-              />
-              <Field name="offerLabel" label="Offer badge (optional)" placeholder="e.g. Diwali Sale" defaultValue={editingProduct?.offerLabel ?? undefined} />
+            >
+              {orderedUnits.map((u) => (
+                <option key={u} value={u}>
+                  {u}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          {/* Everything below this line is genuinely occasional-use —
+              MRP, bulk pricing, barcode, the online-catalog/Fast
+              Billing toggles, HSN, and category. Collapsing them
+              behind one tap keeps a plain "add an item" moment from
+              looking like a wall of fields, while nothing here is
+              actually hidden away permanently — it's one tap, and
+              editing a product that already uses any of these opens
+              straight into it. */}
+          {showMoreOptions ? (
+            <div className="flex flex-col gap-3 rounded-lg border border-border p-3">
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-semibold text-muted">More options</p>
+                <button type="button" onClick={() => setShowMoreOptions(false)} className="text-xs font-medium text-muted">
+                  Hide
+                </button>
+              </div>
+
+              {showMrpField && (
+                <Field
+                  name="mrp"
+                  label="MRP (₹, optional — leave blank for loose/unpackaged items)"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  placeholder="e.g. 55"
+                  defaultValue={editingProduct?.mrp != null ? String(editingProduct.mrp) : undefined}
+                />
+              )}
+              {showBulkPricingField && (
+                <div className="grid grid-cols-2 gap-3">
+                  <Field
+                    name="bulkMinQty"
+                    label="Bulk qty (optional)"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    placeholder="e.g. 10"
+                    defaultValue={editingProduct?.bulkMinQty != null ? String(editingProduct.bulkMinQty) : undefined}
+                  />
+                  <Field
+                    name="bulkPrice"
+                    label="Bulk price/unit (₹)"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    placeholder="e.g. 45"
+                    defaultValue={editingProduct?.bulkPrice != null ? String(editingProduct.bulkPrice) : undefined}
+                  />
+                </div>
+              )}
+              <div className="flex flex-col gap-1.5 text-sm">
+                <span className="font-medium text-foreground">{t("products.barcode")}</span>
+                <input
+                  ref={barcodeRef}
+                  name="barcode"
+                  defaultValue={editingProduct?.barcode ?? ""}
+                  placeholder={t("products.barcodePlaceholder")}
+                  className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-brand"
+                />
+                {barcodeScanMode !== "hardware" && (
+                  <CameraBarcodeScanner
+                    label={t("products.scanWithCamera")}
+                    onScan={(code) => {
+                      if (barcodeRef.current) barcodeRef.current.value = code;
+                    }}
+                  />
+                )}
+              </div>
+              <div className="flex flex-col gap-3 rounded-lg border border-dashed border-brand bg-brand-soft p-3">
+                <p className="text-xs text-brand-text">Public catalog — shown on your shareable order link (More → Catalog link)</p>
+                <label className="flex items-center gap-2 text-sm text-foreground">
+                  <input
+                    type="checkbox"
+                    name="showInCatalog"
+                    defaultChecked={editingProduct?.showInCatalog ?? true}
+                    className="h-4 w-4 rounded border-border"
+                  />
+                  Show this item in the public catalog
+                </label>
+                <label className="flex items-center gap-2 text-sm text-foreground">
+                  <input
+                    type="checkbox"
+                    name="showInFastBilling"
+                    defaultChecked={editingProduct?.showInFastBilling ?? false}
+                    className="h-4 w-4 rounded border-border"
+                  />
+                  Show this item in Fast Billing (quick tap-to-add grid)
+                </label>
+                <div className="grid grid-cols-2 gap-3">
+                  <Field
+                    name="offerPrice"
+                    label="Offer price (₹, optional)"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    placeholder="Leave blank for no offer"
+                    defaultValue={editingProduct?.offerPrice != null ? String(editingProduct.offerPrice) : undefined}
+                  />
+                  <Field name="offerLabel" label="Offer badge (optional)" placeholder="e.g. Diwali Sale" defaultValue={editingProduct?.offerLabel ?? undefined} />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <Field name="hsnCode" label={t("products.hsnCode")} placeholder={t("products.hsnPlaceholder")} defaultValue={editingProduct?.hsnCode ?? undefined} />
+                {categories.length > 0 && (
+                  <label className="flex flex-col gap-1.5 text-sm">
+                    <span className="font-medium text-foreground">{t("products.category")}</span>
+                    <select
+                      name="categoryId"
+                      className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-brand"
+                      defaultValue={editingProduct?.categoryId ?? ""}
+                    >
+                      <option value="">{t("products.noCategory")}</option>
+                      {categories.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                )}
+              </div>
             </div>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <Field name="hsnCode" label={t("products.hsnCode")} placeholder={t("products.hsnPlaceholder")} defaultValue={editingProduct?.hsnCode ?? undefined} />
-            <label className="flex flex-col gap-1.5 text-sm">
-              <span className="font-medium text-foreground">{t("products.unit")}</span>
-              <select
-                name="unit"
-                defaultValue={editingProduct?.unit ?? "NOS"}
-                className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-brand"
-              >
-                {orderedUnits.map((u) => (
-                  <option key={u} value={u}>
-                    {u}
-                  </option>
-                ))}
-              </select>
-            </label>
-          </div>
-          {categories.length > 0 && (
-            <label className="flex flex-col gap-1.5 text-sm">
-              <span className="font-medium text-foreground">{t("products.category")}</span>
-              <select
-                name="categoryId"
-                className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-brand"
-                defaultValue={editingProduct?.categoryId ?? ""}
-              >
-                <option value="">{t("products.noCategory")}</option>
-                {categories.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
-            </label>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setShowMoreOptions(true)}
+              className="flex items-center justify-between rounded-lg border border-dashed border-border px-3.5 py-2.5 text-sm font-medium text-brand"
+            >
+              <span>+ More options</span>
+              <span className="text-xs font-normal text-muted">MRP, barcode, catalog, HSN…</span>
+            </button>
           )}
           <label className="flex items-center gap-2 text-sm text-foreground">
             <input
