@@ -234,3 +234,30 @@ export function buildReceiptEscPos(data: ReceiptData, charsWide: 32 | 48 = 32, f
   b.feedAndCut();
   return b.build();
 }
+
+export type KotData = {
+  title: string;
+  subtitle: string;
+  items: { name: string; qty: number; modifiers?: string[] }[];
+};
+
+/** Builds a plain kitchen order ticket — item names and quantities
+ * only, deliberately no prices/totals (the kitchen doesn't need
+ * money on this slip). Shared by every KOT print point in the app
+ * (restaurant table orders, online catalog orders) so the format only
+ * needs to be gotten right once. */
+export function buildKotEscPos(data: KotData, charsWide: 32 | 48 = 32): Uint8Array {
+  const b = new EscPosBuilder();
+  b.init().align("center").bold(true).sizeLevel(2).text(data.title).newline().sizeLevel(1).bold(false);
+  b.text(data.subtitle).newline().align("left").divider(charsWide);
+
+  for (const item of data.items) {
+    b.bold(true).text(`${item.qty} x ${item.name}`).newline().bold(false);
+    for (const mod of item.modifiers ?? []) {
+      b.text(`   - ${mod}`).newline();
+    }
+  }
+
+  b.divider(charsWide).feedAndCut();
+  return b.build();
+}

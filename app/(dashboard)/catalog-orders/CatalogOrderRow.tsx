@@ -6,6 +6,8 @@ import Link from "next/link";
 import { acceptCatalogOrderAction, rejectCatalogOrderAction, setDeliveryStatusAction } from "@/lib/actions/catalog";
 import { formatMoney } from "@/lib/format";
 import { buildWhatsAppLink } from "@/lib/whatsapp";
+import { BluetoothPrintButton } from "@/app/components/BluetoothPrintButton";
+import { buildKotEscPos } from "@/lib/escpos";
 import { MessageCircle, Package, Truck, CheckCircle2 } from "lucide-react";
 
 type Request = {
@@ -53,7 +55,6 @@ export function CatalogOrderRow({
         // right away so the kitchen has a paper copy, same as any
         // dine-in order.
         setKotItems(request.items.map((i) => ({ productName: i.productName, quantity: i.quantity })));
-        setTimeout(() => window.print(), 150);
       }
       router.refresh();
     });
@@ -203,14 +204,38 @@ export function CatalogOrderRow({
       )}
 
       {kotItems && (
-        <div id="kot-print" className="hidden-on-screen">
-          <p className="kot-title">KITCHEN ORDER — ONLINE</p>
-          <p className="kot-sub">{request.customerName} · {new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata", dateStyle: "medium", timeStyle: "short" })}</p>
-          <hr />
-          {kotItems.map((item, i) => (
-            <p key={i} className="kot-item">{item.quantity} × {item.productName}</p>
-          ))}
-        </div>
+        <>
+          <div className="no-print fixed inset-x-0 bottom-0 z-40 flex flex-col gap-2 border-t border-border bg-surface p-3">
+            <p className="text-xs font-medium text-muted">Send &quot;{kotItems.length} item{kotItems.length === 1 ? "" : "s"}&quot; to the kitchen</p>
+            <div className="flex gap-2">
+              <BluetoothPrintButton
+                getBytes={() =>
+                  buildKotEscPos({
+                    title: "KITCHEN ORDER — ONLINE",
+                    subtitle: `${request.customerName} · ${new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata", dateStyle: "medium", timeStyle: "short" })}`,
+                    items: kotItems.map((i) => ({ name: i.productName, qty: i.quantity })),
+                  })
+                }
+                label="Bluetooth print"
+                className="flex-1 flex items-center justify-center gap-1.5 rounded-lg border border-brand px-3 py-2.5 text-xs font-medium text-brand"
+              />
+              <button onClick={() => setTimeout(() => window.print(), 100)} className="flex-1 rounded-lg border border-border px-3 py-2.5 text-xs font-medium text-foreground">
+                Browser print
+              </button>
+              <button onClick={() => setKotItems(null)} className="rounded-lg border border-border px-3 py-2.5 text-xs font-medium text-muted">
+                Close
+              </button>
+            </div>
+          </div>
+          <div id="kot-print" className="hidden-on-screen">
+            <p className="kot-title">KITCHEN ORDER — ONLINE</p>
+            <p className="kot-sub">{request.customerName} · {new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata", dateStyle: "medium", timeStyle: "short" })}</p>
+            <hr />
+            {kotItems.map((item, i) => (
+              <p key={i} className="kot-item">{item.quantity} × {item.productName}</p>
+            ))}
+          </div>
+        </>
       )}
       <style jsx>{`
         @media screen {

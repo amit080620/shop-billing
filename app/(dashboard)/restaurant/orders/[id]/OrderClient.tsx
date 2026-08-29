@@ -25,6 +25,10 @@ import { formatMoney } from "@/lib/format";
 import { SearchableSelect } from "@/app/components/SearchableSelect";
 import { useTranslation } from "@/lib/i18n/useTranslation";
 import type { Lang } from "@/lib/i18n/dictionary";
+import { BluetoothPrintButton } from "@/app/components/BluetoothPrintButton";
+import { buildKotEscPos, buildReceiptEscPos, type ReceiptData } from "@/lib/escpos";
+import { getThermalPrintSettingsAction } from "@/lib/actions/settings";
+import { buildWhatsAppLink } from "@/lib/whatsapp";
 
 type Product = { id: string; name: string; price: number; category: string };
 type Combo = { id: string; name: string; price: number };
@@ -143,8 +147,11 @@ export function OrderClient({
         return;
       }
       setKotItems(result.items);
-      setTimeout(() => window.print(), 100);
     });
+  }
+
+  function printKotViaBrowser() {
+    setTimeout(() => window.print(), 100);
   }
 
   const isReadOnly = order.status !== "open";
@@ -418,21 +425,49 @@ export function OrderClient({
       )}
 
       {kotItems && (
-        <div id="kot-print" className="hidden-on-screen">
-          <p className="kot-title">KITCHEN ORDER — #{order.orderNumber}</p>
-          <p className="kot-sub">{order.tableName} · {new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata", dateStyle: "medium", timeStyle: "short" })}</p>
-          <hr />
-          {kotItems.map((item, i) => (
-            <div key={i}>
-              <p className="kot-item">{item.quantity} × {item.name}</p>
-              {item.modifiers.length > 0 && (
-                <p className="kot-modifier">
-                  {item.modifiers.map((m) => `— ${m.choice}`).join(", ")}
-                </p>
-              )}
+        <>
+          <div className="no-print fixed inset-x-0 bottom-0 z-40 flex flex-col gap-2 border-t border-border bg-surface p-3">
+            <p className="text-xs font-medium text-muted">Send &quot;{kotItems.length} new item{kotItems.length === 1 ? "" : "s"}&quot; to the kitchen</p>
+            <div className="flex gap-2">
+              <BluetoothPrintButton
+                getBytes={() =>
+                  buildKotEscPos({
+                    title: `KITCHEN ORDER — #${order.orderNumber}`,
+                    subtitle: `${order.tableName} · ${new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata", dateStyle: "medium", timeStyle: "short" })}`,
+                    items: kotItems.map((i) => ({
+                      name: i.name,
+                      qty: i.quantity,
+                      modifiers: i.modifiers.map((m) => m.choice),
+                    })),
+                  })
+                }
+                label="Bluetooth print"
+                className="flex-1 flex items-center justify-center gap-1.5 rounded-lg border border-brand px-3 py-2.5 text-xs font-medium text-brand"
+              />
+              <button onClick={printKotViaBrowser} className="flex-1 rounded-lg border border-border px-3 py-2.5 text-xs font-medium text-foreground">
+                Browser print
+              </button>
+              <button onClick={() => setKotItems(null)} className="rounded-lg border border-border px-3 py-2.5 text-xs font-medium text-muted">
+                {t("order.close")}
+              </button>
             </div>
-          ))}
-        </div>
+          </div>
+          <div id="kot-print" className="hidden-on-screen">
+            <p className="kot-title">KITCHEN ORDER — #{order.orderNumber}</p>
+            <p className="kot-sub">{order.tableName} · {new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata", dateStyle: "medium", timeStyle: "short" })}</p>
+            <hr />
+            {kotItems.map((item, i) => (
+              <div key={i}>
+                <p className="kot-item">{item.quantity} × {item.name}</p>
+                {item.modifiers.length > 0 && (
+                  <p className="kot-modifier">
+                    {item.modifiers.map((m) => `— ${m.choice}`).join(", ")}
+                  </p>
+                )}
+              </div>
+            ))}
+          </div>
+        </>
       )}
 
       {showBillPrint && (
@@ -678,6 +713,8 @@ function BillPrintView({
   const [upiLink, setUpiLink] = useState<string | null>(null);
   const [creditAmount, setCreditAmount] = useState(0);
   const [customerPhone, setCustomerPhone] = useState("");
+  const [paperWidth, setPaperWidth] = useState<32 | 48>(32);
+  const [showWhatsAppShare, setShowWhatsAppShare] = useState(false);
 
   useEffect(() => {
     getOrderUpiQrAction(order.id).then((result) => {
@@ -687,15 +724,99 @@ function BillPrintView({
     });
   }, [order.id]);
 
+  async function buildReceiptBytes() {
+    // Genuinely the shop's own saved formatting preferences for this
+    // paper width — same source of truth the main bill print page
+    // uses, so a restaurant-printed bill looks consistent with every
+    // other bill this shop prints.
+    const settings = await getThermalPrintSettingsAction();
+    const format =
+      paperWidth === 32
+        ? { shopNameBold: settings.t58ShopNameBold, shopNameItalic: settings.t58ShopNameItalic, shopNameSize: settings.t58ShopNameSize, shopNameAlign: settings.t58ShopNameAlign, itemsBold: settings.t58ItemsBold, totalBold: settings.t58TotalBold, totalItalic: settings.t58TotalItalic, totalSize: settings.t58TotalSize, totalAlign: settings.t58TotalAlign }
+        : { shopNameBold: settings.t80ShopNameBold, shopNameItalic: settings.t80ShopNameItalic, shopNameSize: settings.t80ShopNameSize, shopNameAlign: settings.t80ShopNameAlign, itemsBold: settings.t80ItemsBold, totalBold: settings.t80TotalBold, totalItalic: settings.t80TotalItalic, totalSize: settings.t80TotalSize, totalAlign: settings.t80TotalAlign };
+
+    const receipt: ReceiptData = {
+      shopName,
+      gstin: shopGstin,
+      invoiceNumber: `${order.orderNumber} · ${order.tableName}`,
+      dateText: new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata", dateStyle: "medium", timeStyle: "short" }),
+      items: items.map((i) => ({
+        name: i.selectedModifiers.length > 0 ? `${i.productName} (${i.selectedModifiers.map((m) => m.choice).join(", ")})` : i.productName,
+        qty: i.quantity,
+        price: i.unitPrice,
+        lineTotal: i.unitPrice * i.quantity,
+      })),
+      subtotal: order.subtotal,
+      discount: order.discountAmount,
+      taxTotal: order.cgstAmount + order.sgstAmount + order.igstAmount,
+      total: order.total,
+    };
+    return buildReceiptEscPos(receipt, paperWidth, format);
+  }
+
+  function shareOnWhatsApp() {
+    if (customerPhone.length !== 10) return;
+    const lines = [
+      `${shopName} — Order ${order.orderNumber} (${order.tableName})`,
+      ``,
+      ...items.map((i) => `${i.quantity} x ${i.productName} — ${formatMoney(i.unitPrice * i.quantity)}`),
+      ``,
+      `Total: ${formatMoney(order.total)}`,
+    ];
+    window.open(buildWhatsAppLink(customerPhone, lines.join("\n")), "_blank");
+  }
+
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-black/50" onClick={onClose}>
-      <div className="no-print flex justify-end gap-2 bg-surface p-3" onClick={(e) => e.stopPropagation()}>
-        <button onClick={() => window.print()} className="btn-primary-sm">
-          {t("order.printBill")}
+      <div className="no-print flex flex-col gap-2 bg-surface p-3" onClick={(e) => e.stopPropagation()}>
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          <div className="mr-auto flex gap-1">
+            {([32, 48] as const).map((w) => (
+              <button
+                key={w}
+                onClick={() => setPaperWidth(w)}
+                className={`rounded-full px-2.5 py-1 text-[11px] font-medium ${paperWidth === w ? "bg-brand text-white" : "border border-border text-muted"}`}
+              >
+                {w === 32 ? "58mm" : "80mm"}
+              </button>
+            ))}
+          </div>
+          <BluetoothPrintButton
+            getBytes={buildReceiptBytes}
+            label="Bluetooth print"
+            className="flex items-center justify-center gap-1.5 rounded-lg border border-brand px-3 py-1.5 text-xs font-medium text-brand"
+          />
+          <button onClick={() => window.print()} className="btn-primary-sm">
+            {t("order.printBill")}
+          </button>
+          <button onClick={onClose} className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-muted">
+            {t("order.close")}
+          </button>
+        </div>
+        <button onClick={() => setShowWhatsAppShare((v) => !v)} className="self-start text-xs font-medium text-brand">
+          {showWhatsAppShare ? "Hide WhatsApp share" : "Also send this bill on WhatsApp"}
         </button>
-        <button onClick={onClose} className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-muted">
-          {t("order.close")}
-        </button>
+        {showWhatsAppShare && (
+          <div className="flex gap-1.5">
+            <input
+              type="tel"
+              inputMode="numeric"
+              value={customerPhone}
+              onChange={(e) => setCustomerPhone(e.target.value.replace(/\D/g, "").slice(0, 10))}
+              placeholder="Customer's 10-digit number"
+              maxLength={10}
+              className="flex-1 rounded-lg border border-border px-2.5 py-1.5 text-xs outline-none focus:border-brand"
+            />
+            <button
+              type="button"
+              disabled={customerPhone.length !== 10}
+              onClick={shareOnWhatsApp}
+              className="shrink-0 rounded-lg bg-[#25D366] px-3 py-1.5 text-xs font-medium text-white disabled:opacity-40"
+            >
+              Send
+            </button>
+          </div>
+        )}
       </div>
       <div id="bill-print" className="animate-print-slip mx-auto w-full max-w-sm overflow-y-auto bg-white p-6 text-black" onClick={(e) => e.stopPropagation()}>
         <p className="text-center text-lg font-bold">{shopName}</p>
