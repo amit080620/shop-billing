@@ -69,6 +69,24 @@ export class EscPosBuilder {
    * Level 1 = normal size (Font A). Each step above that is one
    * multiplier larger in both width and height simultaneously. */
   sizeLevel(level: number) {
+    // Level 2 ("Large") is by far the most commonly selected step up
+    // from normal — routing it through the simple, universal
+    // doubleSize() on/off toggle instead of the raw multiplier-nibble
+    // encoding avoids a real compatibility problem: several cheap/
+    // generic thermal printers (common, low-cost Bluetooth models)
+    // don't fully implement GS! for arbitrary multiplier values and
+    // can echo the unrecognized parameter byte as literal printable
+    // text instead of applying it as a size command. doubleSize()
+    // uses only the well-established 0x00/0x11 values every ESC/POS
+    // printer genuinely supports.
+    if (level === 2) {
+      this.selectFont(false);
+      return this.doubleSize(true);
+    }
+    if (level === 1) {
+      this.selectFont(false);
+      return this.doubleSize(false);
+    }
     this.selectFont(level === 0);
     const n = level === 0 ? 0 : Math.max(0, Math.min(7, level - 1));
     return this.push([GS, 0x21, (n << 4) | n]);
@@ -215,7 +233,7 @@ export function buildReceiptEscPos(data: ReceiptData, charsWide: 32 | 48 = 32, f
   b.bold(format.totalBold).italic(format.totalItalic).sizeLevel(format.totalSize);
   if (format.totalAlign === "left") {
     b.align("left");
-    b.row("TOTAL", `Rs.${data.total.toFixed(2)}`, Math.floor(charsWide / format.totalSize));
+    b.row("TOTAL", `Rs.${data.total.toFixed(2)}`, charsWide);
   } else {
     b.align(format.totalAlign);
     b.text(`TOTAL Rs.${data.total.toFixed(2)}`).newline();
