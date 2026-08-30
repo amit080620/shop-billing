@@ -169,6 +169,23 @@ export function NewBillClient({
   }, [cart.length]);
   const [customerMode, setCustomerMode] = useState<"walkin" | "existing">("walkin");
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+  const [networkReliability, setNetworkReliability] = useState<{ shopsVisited: number; tier: "new" | "building" | "trusted" } | null>(null);
+
+  useEffect(() => {
+    if (!selectedCustomer?.phone) {
+      setNetworkReliability(null);
+      return;
+    }
+    let cancelled = false;
+    import("@/lib/actions/customerNetwork").then(({ getNetworkReliabilityAction }) =>
+      getNetworkReliabilityAction(selectedCustomer.phone).then((r) => {
+        if (!cancelled) setNetworkReliability(r);
+      }),
+    );
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedCustomer?.phone]);
   const [discountType, setDiscountType] = useState<"percent" | "flat">("flat");
   const [discountValue, setDiscountValue] = useState(0);
   const [redeemPoints, setRedeemPoints] = useState(false);
@@ -873,6 +890,15 @@ export function NewBillClient({
           <p className="text-xs font-medium text-brand-text">
             🎁 {selectedCustomer.name} has {selectedCustomer.loyalty_points ?? 0} loyalty point
             {(selectedCustomer.loyalty_points ?? 0) === 1 ? "" : "s"}
+          </p>
+        )}
+
+        {customerMode === "existing" && networkReliability && networkReliability.shopsVisited >= 2 && (
+          <p
+            className={`flex items-center gap-1 text-xs font-medium ${networkReliability.tier === "trusted" ? "text-success" : "text-muted"}`}
+          >
+            {networkReliability.tier === "trusted" ? "🌟" : "🔹"} Known at {networkReliability.shopsVisited} shops on The Ray
+            {networkReliability.tier === "trusted" ? " — reliably settles udhar" : ""}
           </p>
         )}
 
