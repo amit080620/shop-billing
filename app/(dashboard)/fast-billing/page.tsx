@@ -1,11 +1,13 @@
 import { redirect } from "next/navigation";
 import { requireSession } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { getLang } from "@/lib/i18n/server";
 import { FastBillingClient } from "./FastBillingClient";
 
 export default async function FastBillingPage() {
   const session = await requireSession();
   const admin = createSupabaseAdminClient();
+  const lang = await getLang();
 
   let fastBillingEnabled = false;
   let loyaltyRedemptionValue = 1;
@@ -48,6 +50,7 @@ export default async function FastBillingPage() {
       shopStateCode={session.shopStateCode}
       businessType={session.businessType}
       loyaltyRedemptionValue={loyaltyRedemptionValue}
+      lang={lang}
     />
   );
 }

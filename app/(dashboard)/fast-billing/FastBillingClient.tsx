@@ -1,12 +1,14 @@
 "use client";
 
-import { useMemo, useState, useActionState, useRef } from "react";
+import { useMemo, useState, useActionState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { X, Minus, Plus, Trash2, Search } from "lucide-react";
+import { X, Minus, Plus, Trash2, Search, Mic } from "lucide-react";
 import { formatMoney } from "@/lib/format";
 import { createBillAction, resolveFastBillingCustomerAction } from "@/lib/actions/bills";
 import { lookupCustomerForBillingAction } from "@/lib/actions/customers";
 import { useSyncCalculatorAmount } from "@/lib/calculatorAmount";
+import { parseVoiceOrderAction } from "@/lib/actions/voiceOrder";
+import { getSpeechRecognition, speechLocaleFor, type SpeechRecognitionLike } from "@/lib/speechRecognition";
 import { QuantityGrid } from "./QuantityGrid";
 
 export type FastProduct = {
@@ -35,11 +37,13 @@ export function FastBillingClient({
   shopStateCode,
   businessType,
   loyaltyRedemptionValue,
+  lang,
 }: {
   products: FastProduct[];
   shopStateCode: string | null;
   businessType: string;
   loyaltyRedemptionValue: number;
+  lang?: import("@/lib/i18n/dictionary").Lang;
 }) {
   const router = useRouter();
   const [cart, setCart] = useState<FastCartLine[]>([]);
@@ -47,6 +51,73 @@ export function FastBillingClient({
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [showBill, setShowBill] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+  const [voiceSupported, setVoiceSupported] = useState(false);
+  const [voiceStatus, setVoiceStatus] = useState<string | null>(null);
+  const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
+
+  useEffect(() => {
+    setVoiceSupported(getSpeechRecognition() !== null);
+  }, []);
+
+  /** "2 samosa, 1 chai" spoken → parsed by Groq → matched against
+   * this shop's real products (via the same fuzzy-match used
+   * elsewhere) → added straight to the cart. Genuinely fast: no
+   * screen change, no typing, items just appear while the person's
+   * hands stay free for whatever else is happening at the counter. */
+  function startVoiceOrder() {
+    const SpeechRecognitionCtor = getSpeechRecognition();
+    if (!SpeechRecognitionCtor) return;
+    setVoiceStatus(null);
+    const recognition = new SpeechRecognitionCtor();
+    recognition.lang = speechLocaleFor(lang);
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+    recognition.onresult = async (event) => {
+      const transcript = event.results[0]?.[0]?.transcript ?? "";
+      if (!transcript.trim()) return;
+      setVoiceStatus("Reading order…");
+      const result = await parseVoiceOrderAction(transcript);
+      if (result.error === "not_configured") {
+        setVoiceStatus("Voice billing needs the free Groq AI key set up first.");
+        return;
+      }
+      if (result.error || !result.items) {
+        setVoiceStatus(result.error ?? "Couldn't understand that — try again.");
+        return;
+      }
+      if (result.items.length === 0) {
+        setVoiceStatus("Didn't catch any items — try again.");
+        return;
+      }
+
+      const unmatched: string[] = [];
+      for (const item of result.items) {
+        if (!item.matchedProductId) {
+          unmatched.push(item.spokenName);
+          continue;
+        }
+        const product = products.find((p) => p.id === item.matchedProductId);
+        if (product) addToCart(product, item.quantity);
+        else unmatched.push(item.spokenName);
+      }
+
+      setVoiceStatus(
+        unmatched.length > 0
+          ? `Added ${result.items.length - unmatched.length} item(s). Couldn't find: ${unmatched.join(", ")} — add manually.`
+          : `Added ${result.items.length} item(s) ✓`,
+      );
+      setTimeout(() => setVoiceStatus(null), 4000);
+    };
+    recognition.onerror = () => {
+      setIsListening(false);
+      setVoiceStatus("Didn't catch that — try again.");
+    };
+    recognition.onend = () => setIsListening(false);
+    recognitionRef.current = recognition;
+    setIsListening(true);
+    recognition.start();
+  }
 
   const categories = useMemo(() => {
     const set = new Set<string>();
@@ -105,15 +176,29 @@ export function FastBillingClient({
     <div className="flex min-h-screen flex-col">
       {/* Header — search + category tabs, deliberately minimal */}
       <div className="sticky top-0 z-10 flex flex-col gap-2 border-b border-border bg-background px-3 py-2">
-        <div className="flex items-center gap-2 rounded-full bg-surface px-3 py-2">
-          <Search size={16} className="text-muted" />
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search products…"
-            className="flex-1 bg-transparent text-sm outline-none"
-          />
+        <div className="flex items-center gap-2">
+          <div className="flex flex-1 items-center gap-2 rounded-full bg-surface px-3 py-2">
+            <Search size={16} className="text-muted" />
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search products…"
+              className="flex-1 bg-transparent text-sm outline-none"
+            />
+          </div>
+          {voiceSupported && (
+            <button
+              type="button"
+              onClick={startVoiceOrder}
+              disabled={isListening}
+              aria-label="Speak your order"
+              className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${isListening ? "animate-pulse bg-danger text-white" : "bg-brand text-white"}`}
+            >
+              <Mic size={16} />
+            </button>
+          )}
         </div>
+        {voiceStatus && <p className="text-center text-xs font-medium text-brand-text">{voiceStatus}</p>}
         {categories.length > 0 && (
           <div className="flex gap-1.5 overflow-x-auto pb-0.5">
             <CategoryPill label="All" active={activeCategory === null} onClick={() => setActiveCategory(null)} />
