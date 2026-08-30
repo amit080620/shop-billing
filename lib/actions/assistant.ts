@@ -319,6 +319,33 @@ async function runTool(name: string, args: Record<string, unknown>, shopId: stri
   return { result: { error: `Unknown tool: ${name}` } };
 }
 
+export type AssistantStatus = "connected" | "not_configured" | "quota_exceeded" | "invalid_key" | "network_error";
+
+/** Cheap connectivity check for Groq — same reasoning as Gemini's
+ * checkAIScanStatusAction: a tiny "reply with one word" call, not a
+ * real question, so the badge costs nothing meaningful against the
+ * free tier even checked often. */
+export async function checkAssistantStatusAction(): Promise<{ status: AssistantStatus }> {
+  const apiKey = process.env.GROQ_API_KEY?.trim();
+  if (!apiKey) return { status: "not_configured" };
+
+  try {
+    const response = await fetch(GROQ_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
+      body: JSON.stringify({ model: GROQ_MODEL, messages: [{ role: "user", content: "Reply with just the word OK." }], max_tokens: 5 }),
+    });
+    if (response.ok) return { status: "connected" };
+    console.error("Assistant status check failed", response.status, await response.text().catch(() => "(no body)"));
+    if (response.status === 429) return { status: "quota_exceeded" };
+    if (response.status === 401 || response.status === 403) return { status: "invalid_key" };
+    return { status: "network_error" };
+  } catch (err) {
+    console.error("Assistant status check — request itself failed", err);
+    return { status: "network_error" };
+  }
+}
+
 export type ChatMessage = { role: "user" | "assistant"; text: string };
 
 type GroqMessage =

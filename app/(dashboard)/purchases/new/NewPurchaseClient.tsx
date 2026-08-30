@@ -16,7 +16,7 @@ import { rebuildLinesFromWords } from "@/lib/ocr/lineGrouping";
 import { parsePurchaseBillItems } from "@/lib/ocr/parser";
 import { scanImageWithAI } from "@/lib/actions/aiScan";
 import { fileToBase64 } from "@/lib/fileToBase64";
-import { AIStatusBadge } from "@/app/components/AIStatusBadge";
+import { AIStatusBadge, type AIStatusBadgeHandle } from "@/app/components/AIStatusBadge";
 import { getOcrCorrectionsAction, saveOcrCorrectionsAction } from "@/lib/actions/ocrCorrections";
 import { applyCorrections } from "@/lib/applyCorrections";
 import { Camera, Loader2, Image as ImageIcon } from "lucide-react";
@@ -136,7 +136,7 @@ export function NewPurchaseClient({
   const [usedAI, setUsedAI] = useState(false);
   const scanInputRef = useRef<HTMLInputElement>(null);
   const galleryInputRef = useRef<HTMLInputElement>(null);
-  const aiStatusRef = useRef<{ reportError: (type: import("@/lib/actions/aiScan").AIScanErrorType) => void }>(null);
+  const aiStatusRef = useRef<AIStatusBadgeHandle>(null);
 
   /** Photo of the vendor's paper bill -> item rows appended straight
    * into the same editable list below (addCustomLine's shape) — this

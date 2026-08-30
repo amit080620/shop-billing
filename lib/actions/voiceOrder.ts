@@ -17,6 +17,14 @@ export type VoiceOrderItem = {
   price: number | null;
 };
 
+export type VoiceOrderErrorType = "not_configured" | "quota_exceeded" | "invalid_key" | "network_error";
+
+function classifyStatus(httpStatus: number): VoiceOrderErrorType {
+  if (httpStatus === 429) return "quota_exceeded";
+  if (httpStatus === 401 || httpStatus === 403) return "invalid_key";
+  return "network_error";
+}
+
 /** Turns a spoken transcript ("2 samosa, 1 chai", or the Hindi-number
  * equivalent "do samosa, ek chai") into structured items matched
  * against this shop's real product catalog. Uses Groq (open-source
@@ -27,10 +35,10 @@ export type VoiceOrderItem = {
  * find the actual product, so a name Groq gets slightly wrong
  * ("samoja" instead of "samosa") still resolves correctly as long as
  * it's close enough. */
-export async function parseVoiceOrderAction(transcript: string): Promise<{ items?: VoiceOrderItem[]; error?: string }> {
+export async function parseVoiceOrderAction(transcript: string): Promise<{ items?: VoiceOrderItem[]; error?: string; errorType?: VoiceOrderErrorType }> {
   const session = await requireSession();
   const apiKey = process.env.GROQ_API_KEY?.trim();
-  if (!apiKey) return { error: "not_configured" };
+  if (!apiKey) return { error: "not_configured", errorType: "not_configured" };
   if (!transcript.trim()) return { items: [] };
 
   const admin = createSupabaseAdminClient();
@@ -56,7 +64,7 @@ export async function parseVoiceOrderAction(transcript: string): Promise<{ items
 
     if (!response.ok) {
       console.error("Voice order request failed", response.status, await response.text().catch(() => ""));
-      return { error: "Couldn't understand that — please try again." };
+      return { error: "Couldn't understand that — please try again.", errorType: classifyStatus(response.status) };
     }
 
     const data = await response.json();

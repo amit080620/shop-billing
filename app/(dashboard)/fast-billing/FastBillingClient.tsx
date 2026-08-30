@@ -8,7 +8,8 @@ import { createBillAction, resolveFastBillingCustomerAction } from "@/lib/action
 import { lookupCustomerForBillingAction } from "@/lib/actions/customers";
 import { useSyncCalculatorAmount } from "@/lib/calculatorAmount";
 import { parseVoiceOrderAction } from "@/lib/actions/voiceOrder";
-import { getSpeechRecognition, speechLocaleFor, type SpeechRecognitionLike } from "@/lib/speechRecognition";
+import { getSpeechRecognition, speechLocaleFor, voiceErrorMessages, type SpeechRecognitionLike } from "@/lib/speechRecognition";
+import { AIStatusBadge, type AIStatusBadgeHandle } from "@/app/components/AIStatusBadge";
 import { QuantityGrid } from "./QuantityGrid";
 
 export type FastProduct = {
@@ -55,6 +56,7 @@ export function FastBillingClient({
   const [voiceSupported, setVoiceSupported] = useState(false);
   const [voiceStatus, setVoiceStatus] = useState<string | null>(null);
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
+  const voiceStatusRef = useRef<AIStatusBadgeHandle>(null);
 
   useEffect(() => {
     setVoiceSupported(getSpeechRecognition() !== null);
@@ -78,6 +80,7 @@ export function FastBillingClient({
       if (!transcript.trim()) return;
       setVoiceStatus("Reading order…");
       const result = await parseVoiceOrderAction(transcript);
+      if (result.errorType) voiceStatusRef.current?.reportError(result.errorType);
       if (result.error === "not_configured") {
         setVoiceStatus("Voice billing needs the free Groq AI key set up first.");
         return;
@@ -109,9 +112,13 @@ export function FastBillingClient({
       );
       setTimeout(() => setVoiceStatus(null), 4000);
     };
-    recognition.onerror = () => {
+    recognition.onerror = (event) => {
       setIsListening(false);
-      setVoiceStatus("Didn't catch that — try again.");
+      const messages = voiceErrorMessages(lang);
+      if (event.error === "not-allowed" || event.error === "service-not-allowed") setVoiceStatus(messages.permission);
+      else if (event.error === "no-speech") setVoiceStatus(messages.noSpeech);
+      else if (event.error === "network") setVoiceStatus(messages.network);
+      else setVoiceStatus(messages.generic);
     };
     recognition.onend = () => setIsListening(false);
     recognitionRef.current = recognition;
@@ -198,6 +205,11 @@ export function FastBillingClient({
             </button>
           )}
         </div>
+        {voiceSupported && (
+          <div className="flex justify-center">
+            <AIStatusBadge ref={voiceStatusRef} provider="voice" />
+          </div>
+        )}
         {voiceStatus && <p className="text-center text-xs font-medium text-brand-text">{voiceStatus}</p>}
         {categories.length > 0 && (
           <div className="flex gap-1.5 overflow-x-auto pb-0.5">
