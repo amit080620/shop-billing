@@ -94,6 +94,15 @@ const TOOLS = [
   {
     type: "function",
     function: {
+      name: "get_business_overview",
+      description:
+        "General counts about the shop — total number of customers, total number of products, total number of bills ever, how many products track inventory. Use this for any plain 'how many X do I have' question that isn't specifically about sales, udhar, or stock levels.",
+      parameters: { type: "object", properties: {} },
+    },
+  },
+  {
+    type: "function",
+    function: {
       name: "find_customers",
       description:
         "Flexible customer search combining multiple conditions at once — e.g. 'customers with udhar over 500 who haven't bought anything in 60 days'. Use this for any compound question a single fixed tool doesn't cover; leave a filter out entirely if the question doesn't mention it.",
@@ -218,6 +227,23 @@ async function runTool(name: string, args: Record<string, unknown>, shopId: stri
     }
     const ranked = [...totals.values()].sort((a, b) => b.total - a.total).slice(0, limit);
     return { result: { period, customers: ranked.map((c) => ({ name: c.name, totalSpent: Math.round(c.total) })) } };
+  }
+
+  if (name === "get_business_overview") {
+    const [{ count: customerCount }, { count: productCount }, { count: trackedProductCount }, { count: billCount }] = await Promise.all([
+      admin.from("customers").select("id", { count: "exact", head: true }).eq("shop_id", shopId),
+      admin.from("products").select("id", { count: "exact", head: true }).eq("shop_id", shopId),
+      admin.from("products").select("id", { count: "exact", head: true }).eq("shop_id", shopId).eq("track_inventory", true),
+      admin.from("bills").select("id", { count: "exact", head: true }).eq("shop_id", shopId).eq("status", "active"),
+    ]);
+    return {
+      result: {
+        totalCustomers: customerCount ?? 0,
+        totalProducts: productCount ?? 0,
+        productsWithStockTracking: trackedProductCount ?? 0,
+        totalBillsEver: billCount ?? 0,
+      },
+    };
   }
 
   if (name === "find_customers") {
@@ -354,7 +380,7 @@ type GroqMessage =
   | { role: "tool"; tool_call_id: string; content: string };
 
 const SYSTEM_TEXT = (dateStr: string) =>
-  `You are a helpful shop assistant for an Indian small-business owner using "The Ray" billing app. Answer questions about THEIR shop's own sales, customers, and stock — nothing else. Reply in the same language/mix the person used (Hindi, English, or Hinglish). Keep answers short, direct, and genuinely useful — numbers first, no fluff. Money is in Indian Rupees (₹). If a tool call finds nothing relevant, say so plainly rather than guessing. When someone asks to remind/message/nudge a customer, use prepare_udhar_reminder — don't just describe their balance, actually prepare the reminder. For compound questions (multiple conditions combined), use find_customers with all the relevant filters at once rather than making several separate calls. Today's date is ${dateStr}.`;
+  `You are a helpful shop assistant for an Indian small-business owner using "The Ray" billing app. You have real, live access to THIS shop's own data — sales, customers, products, stock, and bills — through the tools provided. Never say you don't have access to the data; if a question is about the shop's own business, use the right tool. For any plain "how many customers/products/bills do I have" question, use get_business_overview. Answer questions about THEIR shop's own data — nothing outside it. Reply in the same language/mix the person used (Hindi, English, or Hinglish). Keep answers short, direct, and genuinely useful — numbers first, no fluff. Money is in Indian Rupees (₹). If a tool call finds nothing relevant, say so plainly rather than guessing. When someone asks to remind/message/nudge a customer, use prepare_udhar_reminder — don't just describe their balance, actually prepare the reminder. For compound questions (multiple conditions combined), use find_customers with all the relevant filters at once rather than making several separate calls. Today's date is ${dateStr}.`;
 
 async function converse(messages: GroqMessage[], apiKey: string, shopId: string): Promise<{ answer?: string; action?: ReminderAction; error?: string }> {
   let action: ReminderAction | undefined;

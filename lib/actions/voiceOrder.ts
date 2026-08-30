@@ -53,7 +53,7 @@ export async function parseVoiceOrderAction(transcript: string): Promise<{ items
         messages: [
           {
             role: "system",
-            content: `Extract items and quantities from spoken text for a shop bill. The person may speak Hindi, English, or a mix, and may use Hindi number words (ek=1, do=2, teen=3, char=4, paanch=5, chhe=6, saat=7, aath=8, nau=9, das=10). If no quantity is said for an item, default to 1. Return ONLY a JSON array, no other text, like: [{"name": "samosa", "quantity": 2}].`,
+            content: `Extract items and quantities from spoken text for a shop bill. The person may speak Hindi, English, or a mix, and may use Hindi number words (ek=1, do=2, teen=3, char=4, paanch=5, chhe=6, saat=7, aath=8, nau=9, das=10). If no quantity is said for an item, default to 1. Return ONLY a JSON object with an "items" array, no other text, like: {"items": [{"name": "samosa", "quantity": 2}]}.`,
           },
           { role: "user", content: transcript },
         ],

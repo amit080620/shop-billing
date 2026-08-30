@@ -212,7 +212,7 @@ export function FloatingAssistant({ enabled }: { enabled: boolean }) {
               <div className="flex flex-col gap-1.5 rounded-lg bg-background p-3 text-xs text-muted">
                 <p className="font-medium text-foreground">Try asking:</p>
                 <p>&quot;Aaj kitna business hua?&quot;</p>
-                <p>&quot;Udhar wale customers jo 60 din se nahi aaye&quot;</p>
+                <p>&quot;Kitne customers hain mere paas?&quot;</p>
                 <p>&quot;Ramesh ko udhar reminder bhejo&quot;</p>
                 <p>&quot;Kaunse items stock mein kam hain?&quot;</p>
               </div>
