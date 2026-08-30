@@ -1,11 +1,12 @@
 import type { Metadata, Viewport } from "next";
-import { getTheme, getCalculatorEnabled } from "@/lib/theme";
+import { getTheme, getCalculatorEnabled, getAssistantEnabled } from "@/lib/theme";
 import { getLang } from "@/lib/i18n/server";
 import { ServiceWorkerRegistration } from "./components/ServiceWorkerRegistration";
 import { ToastProvider } from "./components/Toast";
 import { AutoThemeApplier } from "./components/ThemeToggle";
 import { FocusScrollIntoView } from "./components/FocusScrollIntoView";
 import { FloatingCalculator } from "./components/FloatingCalculator";
+import { FloatingAssistant } from "./components/FloatingAssistant";
 import { CalculatorAmountProvider } from "@/lib/calculatorAmount";
 import "./globals.css";
 
@@ -48,6 +49,7 @@ export default async function RootLayout({
   const theme = await getTheme();
   const lang = await getLang();
   const calculatorEnabled = await getCalculatorEnabled();
+  const assistantEnabled = await getAssistantEnabled();
 
   return (
     <html lang={lang} className={theme === "dark" ? "dark" : undefined}>
@@ -67,6 +69,7 @@ export default async function RootLayout({
         <CalculatorAmountProvider>
           <ToastProvider>{children}</ToastProvider>
           <FloatingCalculator enabled={calculatorEnabled} />
+          <FloatingAssistant enabled={assistantEnabled} />
         </CalculatorAmountProvider>
       </body>
     </html>

@@ -1,7 +1,8 @@
 import Link from "next/link";
-import { getTheme, getCalculatorEnabled } from "@/lib/theme";
+import { getTheme, getCalculatorEnabled, getAssistantEnabled } from "@/lib/theme";
 import { ThemeToggle } from "@/app/components/ThemeToggle";
 import { CalculatorToggle } from "@/app/components/CalculatorToggle";
+import { AssistantToggle } from "@/app/components/AssistantToggle";
 import { LanguageToggle } from "@/lib/i18n/LanguageToggle";
 import { getTranslator } from "@/lib/i18n/server";
 import { PageHeader } from "@/app/components/PageHeader";
@@ -11,6 +12,7 @@ export default async function PreferencesPage() {
   const { lang, t } = await getTranslator();
   const theme = await getTheme();
   const calculatorEnabled = await getCalculatorEnabled();
+  const assistantEnabled = await getAssistantEnabled();
 
   return (
     <div className="flex flex-col gap-4 pb-6">
@@ -40,6 +42,13 @@ export default async function PreferencesPage() {
             <p className="text-xs text-muted">Auto-fills with the current bill total when open</p>
           </div>
           <CalculatorToggle enabled={calculatorEnabled} />
+        </div>
+        <div className="neu-card flex items-center justify-between px-4 py-3.5">
+          <div>
+            <p className="text-sm font-medium text-foreground">AI shop assistant</p>
+            <p className="text-xs text-muted">Ask about sales, udhar, or stock in plain Hindi/English</p>
+          </div>
+          <AssistantToggle enabled={assistantEnabled} />
         </div>
       </div>
     </div>

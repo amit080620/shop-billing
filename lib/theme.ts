@@ -16,3 +16,9 @@ export async function getCalculatorEnabled(): Promise<boolean> {
   const cookieStore = await cookies();
   return cookieStore.get("calc")?.value !== "off";
 }
+
+/** AI shop assistant — same default-on reasoning as the calculator. */
+export async function getAssistantEnabled(): Promise<boolean> {
+  const cookieStore = await cookies();
+  return cookieStore.get("assistant")?.value !== "off";
+}
