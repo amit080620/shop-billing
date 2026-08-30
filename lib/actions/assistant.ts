@@ -94,6 +94,37 @@ const TOOLS = [
   {
     type: "function",
     function: {
+      name: "get_inventory_value",
+      description: "Total value of all current stock (sum of stock quantity × price across every tracked product) — 'how much is my inventory worth'.",
+      parameters: { type: "object", properties: {} },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_product_details",
+      description: "Full details for a specific product by name — its price, GST rate, current stock, unit, and whether it has warranty/batch tracking.",
+      parameters: {
+        type: "object",
+        properties: { productName: { type: "string", description: "The product's name, or part of it." } },
+        required: ["productName"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_vendor_payable",
+      description: "Total amount owed to vendors/suppliers (unpaid purchases) — overall, or for a specific vendor by name.",
+      parameters: {
+        type: "object",
+        properties: { vendorName: { type: "string", description: "Optional — a specific vendor's name to check, or leave out for the total across all vendors." } },
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
       name: "get_business_overview",
       description:
         "General counts about the shop — total number of customers, total number of products, total number of bills ever, how many products track inventory. Use this for any plain 'how many X do I have' question that isn't specifically about sales, udhar, or stock levels.",
@@ -227,6 +258,71 @@ async function runTool(name: string, args: Record<string, unknown>, shopId: stri
     }
     const ranked = [...totals.values()].sort((a, b) => b.total - a.total).slice(0, limit);
     return { result: { period, customers: ranked.map((c) => ({ name: c.name, totalSpent: Math.round(c.total) })) } };
+  }
+
+  if (name === "get_inventory_value") {
+    const { data } = await admin.from("products").select("stock_quantity, price").eq("shop_id", shopId).eq("track_inventory", true);
+    const totalValue = (data ?? []).reduce((s, p) => s + Number(p.stock_quantity) * Number(p.price), 0);
+    return { result: { totalValue: Math.round(totalValue), productCount: (data ?? []).length } };
+  }
+
+  if (name === "get_product_details") {
+    const search = String(args.productName ?? "").trim();
+    if (!search) return { result: { error: "No product name given" } };
+    const { data: matches } = await admin
+      .from("products")
+      .select("name, price, gst_percent, stock_quantity, unit, has_warranty, warranty_months, is_pharma, track_inventory")
+      .eq("shop_id", shopId)
+      .ilike("name", `%${search}%`)
+      .limit(5);
+    if (!matches || matches.length === 0) return { result: { found: false, searchedFor: search } };
+    return {
+      result: {
+        found: true,
+        matches: matches.map((p) => ({
+          name: p.name,
+          price: Number(p.price),
+          gstPercent: Number(p.gst_percent),
+          stock: p.track_inventory ? `${p.stock_quantity} ${p.unit}` : "not tracked",
+          hasWarranty: p.has_warranty ? `${p.warranty_months} months` : "no",
+          batchTracked: p.is_pharma,
+        })),
+      },
+    };
+  }
+
+  if (name === "get_vendor_payable") {
+    const vendorName = args.vendorName ? String(args.vendorName).trim() : null;
+    let vendorFilter: string[] | null = null;
+    if (vendorName) {
+      const { data: vendors } = await admin.from("vendors").select("id, name").eq("shop_id", shopId).ilike("name", `%${vendorName}%`);
+      if (!vendors || vendors.length === 0) return { result: { found: false, searchedFor: vendorName } };
+      vendorFilter = vendors.map((v) => v.id);
+    }
+
+    let purchaseQuery = admin.from("purchases").select("vendor_id, payable_amount, vendors ( name )").eq("shop_id", shopId);
+    if (vendorFilter) purchaseQuery = purchaseQuery.in("vendor_id", vendorFilter);
+    const { data: purchases } = await purchaseQuery;
+
+    let paymentQuery = admin.from("purchase_payments").select("vendor_id, amount").eq("shop_id", shopId);
+    if (vendorFilter) paymentQuery = paymentQuery.in("vendor_id", vendorFilter);
+    const { data: payments } = await paymentQuery;
+
+    const payableByVendor = new Map<string, { name: string; payable: number }>();
+    for (const p of purchases ?? []) {
+      const vName = Array.isArray(p.vendors) ? p.vendors[0]?.name : (p.vendors as { name: string } | null)?.name;
+      const existing = payableByVendor.get(p.vendor_id) ?? { name: vName ?? "Unknown", payable: 0 };
+      existing.payable += Number(p.payable_amount);
+      payableByVendor.set(p.vendor_id, existing);
+    }
+    for (const pay of payments ?? []) {
+      const existing = payableByVendor.get(pay.vendor_id);
+      if (existing) existing.payable -= Number(pay.amount);
+    }
+
+    const results = [...payableByVendor.values()].map((v) => ({ vendor: v.name, outstanding: Math.round(Math.max(0, v.payable)) })).filter((v) => v.outstanding > 0);
+    const total = results.reduce((s, v) => s + v.outstanding, 0);
+    return { result: { totalPayable: total, byVendor: results } };
   }
 
   if (name === "get_business_overview") {
