@@ -12,7 +12,11 @@ import { formatMoney } from "../format";
 // scan features (aiScan.ts) stay on Gemini on purpose — Groq doesn't
 // read PDFs natively the way Gemini does, so switching THAT would be
 // a genuine downgrade. Right tool for each job, not a blanket swap.
-const GROQ_MODEL = "llama-3.3-70b-versatile";
+// Groq deprecated llama-3.3-70b-versatile on June 17, 2026 (confirmed
+// live) — openai/gpt-oss-120b is their own recommended replacement:
+// same OpenAI-compatible function-calling format, comparable quality,
+// still on the free tier.
+const GROQ_MODEL = "openai/gpt-oss-120b";
 const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
 
 /** Every "tool" the assistant can call — each one is a real,

@@ -72,6 +72,28 @@ export function FloatingAssistant({ enabled }: { enabled: boolean }) {
       return { x: clamp(current.x, 8, window.innerWidth - w - 8), y: clamp(current.y, 8, window.innerHeight - h - 8) };
     });
 
+    // The panel is `position: fixed` with its own pixel coordinates —
+    // scrolling the page (what the app's global keyboard-avoidance
+    // does for normal inputs) has zero effect on it. This listens to
+    // the keyboard's own resize event directly and pulls the panel
+    // up above it, so the chat input never ends up hidden behind the
+    // keyboard on a phone.
+    function keepAboveKeyboard() {
+      const viewportHeight = window.visualViewport?.height ?? window.innerHeight;
+      setPos((current) => {
+        if (!current) return current;
+        const { h } = getSize(true);
+        const maxY = viewportHeight - h - 8;
+        return current.y > maxY ? { ...current, y: Math.max(8, maxY) } : current;
+      });
+    }
+    window.visualViewport?.addEventListener("resize", keepAboveKeyboard);
+    return () => window.visualViewport?.removeEventListener("resize", keepAboveKeyboard);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
     // Proactive briefing — genuinely once a day, the first time the
     // chat is opened. An attentive employee glances at overdue udhar
     // and low stock without being asked; this is that, but capped so
@@ -86,7 +108,6 @@ export function FloatingAssistant({ enabled }: { enabled: boolean }) {
         }
       });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   useEffect(() => {

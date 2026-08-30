@@ -4,7 +4,9 @@ import { requireSession } from "../auth";
 import { createSupabaseAdminClient } from "../supabase/admin";
 import { findClosestMatch } from "../fuzzyMatch";
 
-const GROQ_MODEL = "llama-3.3-70b-versatile";
+// Groq deprecated llama-3.3-70b-versatile on June 17, 2026 — this is
+// their own recommended replacement, same free tier.
+const GROQ_MODEL = "openai/gpt-oss-120b";
 const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
 
 export type VoiceOrderItem = {
