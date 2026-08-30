@@ -94,6 +94,25 @@ const TOOLS = [
   {
     type: "function",
     function: {
+      name: "get_gst_summary",
+      description: "GST filing summary for a period — taxable value, CGST, SGST, IGST, and total GST collected. Use this for any GST/tax filing related question.",
+      parameters: {
+        type: "object",
+        properties: { period: { type: "string", enum: ["month", "quarter", "year"], description: "Which period to summarize, default month." } },
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_missing_hsn_bills",
+      description: "Products that have been billed without an HSN code — these can cause problems when actually filing GST returns.",
+      parameters: { type: "object", properties: {} },
+    },
+  },
+  {
+    type: "function",
+    function: {
       name: "get_inventory_value",
       description: "Total value of all current stock (sum of stock quantity × price across every tracked product) — 'how much is my inventory worth'.",
       parameters: { type: "object", properties: {} },
@@ -177,6 +196,8 @@ function periodStart(period: string): Date {
     d.setHours(0, 0, 0, 0);
   } else if (period === "week") d.setDate(d.getDate() - 7);
   else if (period === "month") d.setDate(d.getDate() - 30);
+  else if (period === "quarter") d.setDate(d.getDate() - 90);
+  else if (period === "year") d.setDate(d.getDate() - 365);
   else d.setFullYear(2000);
   return d;
 }
@@ -258,6 +279,44 @@ async function runTool(name: string, args: Record<string, unknown>, shopId: stri
     }
     const ranked = [...totals.values()].sort((a, b) => b.total - a.total).slice(0, limit);
     return { result: { period, customers: ranked.map((c) => ({ name: c.name, totalSpent: Math.round(c.total) })) } };
+  }
+
+  if (name === "get_gst_summary") {
+    const period = String(args.period ?? "month");
+    const start = periodStart(period);
+    const { data } = await admin
+      .from("bills")
+      .select("taxable_amount, cgst_amount, sgst_amount, igst_amount, gst_amount")
+      .eq("shop_id", shopId)
+      .eq("status", "active")
+      .gte("created_at", start.toISOString());
+    const totals = (data ?? []).reduce(
+      (acc, b) => ({
+        taxableValue: acc.taxableValue + Number(b.taxable_amount),
+        cgst: acc.cgst + Number(b.cgst_amount),
+        sgst: acc.sgst + Number(b.sgst_amount),
+        igst: acc.igst + Number(b.igst_amount),
+        totalGst: acc.totalGst + Number(b.gst_amount),
+      }),
+      { taxableValue: 0, cgst: 0, sgst: 0, igst: 0, totalGst: 0 },
+    );
+    return {
+      result: {
+        period,
+        billCount: (data ?? []).length,
+        taxableValue: Math.round(totals.taxableValue),
+        cgst: Math.round(totals.cgst),
+        sgst: Math.round(totals.sgst),
+        igst: Math.round(totals.igst),
+        totalGstCollected: Math.round(totals.totalGst),
+      },
+    };
+  }
+
+  if (name === "get_missing_hsn_bills") {
+    const { data: products } = await admin.from("products").select("id, name").eq("shop_id", shopId).is("hsn_code", null);
+    if (!products || products.length === 0) return { result: { count: 0, products: [] } };
+    return { result: { count: products.length, products: products.slice(0, 20).map((p) => p.name) } };
   }
 
   if (name === "get_inventory_value") {

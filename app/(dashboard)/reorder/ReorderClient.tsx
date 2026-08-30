@@ -118,11 +118,22 @@ export function ReorderClient({
               className="h-5 w-5 shrink-0 rounded border-border"
             />
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-medium text-foreground">{item.name}</p>
+              <p className="flex items-center gap-1.5 truncate text-sm font-medium text-foreground">
+                {item.name}
+                {item.predictiveOnly && (
+                  <span className="shrink-0 rounded-full bg-brand-soft px-1.5 py-0.5 text-[10px] font-medium text-brand-text">predicted soon</span>
+                )}
+              </p>
               <p className="text-xs text-credit">
                 {item.currentStock} {item.unit} left · alert at {item.lowStockThreshold}
                 {item.lastUnitPrice !== null && <> · last paid {formatMoney(item.lastUnitPrice)}</>}
               </p>
+              {item.daysUntilStockout !== null && (
+                <p className="text-xs font-medium text-brand-text">
+                  {item.dailyConsumption} {item.unit}/day selling ·{" "}
+                  {item.daysUntilStockout === 0 ? "may run out today" : `~${item.daysUntilStockout} day${item.daysUntilStockout === 1 ? "" : "s"} left`}
+                </p>
+              )}
             </div>
             <input
               type="number"

@@ -17,16 +17,21 @@ export type LowStockReorderItem = {
   lowStockThreshold: number;
   suggestedQuantity: number;
   lastUnitPrice: number | null;
+  dailyConsumption: number | null;
+  daysUntilStockout: number | null;
+  predictiveOnly: boolean;
 };
 
-/** Everything currently below its own low-stock threshold, with a
- * sensible reorder quantity (enough to get back to double the
- * threshold — a plain, predictable buffer, not a demand-forecast) and
- * the last price actually paid for it (if this shop has ever bought
- * it before), so a purchase created from this list starts pre-filled
- * instead of blank. Genuinely just two queries — no new tables, no
- * separate job. Shared by both reorder paths on /reorder: "send a
- * WhatsApp order to the vendor" and "create the purchase directly". */
+/** Everything either already below its low-stock threshold OR headed
+ * there soon — genuinely predictive, not just a static number
+ * comparison. Daily consumption is computed from actual sales over
+ * the last 30 days (bill_items), so "Rice sells ~5kg/day and you
+ * have 12kg left" catches a real problem 2-3 days before a plain
+ * threshold check ever would, while the item might still look
+ * perfectly fine on paper. Also includes a sensible reorder quantity
+ * (enough to get back to double the threshold) and the last price
+ * actually paid, so a purchase created from this list starts
+ * pre-filled instead of blank. */
 export async function getLowStockReorderItemsAction(): Promise<LowStockReorderItem[]> {
   const session = await requireSession();
   const admin = createSupabaseAdminClient();
@@ -38,16 +43,32 @@ export async function getLowStockReorderItemsAction(): Promise<LowStockReorderIt
     .eq("track_inventory", true)
     .order("name");
 
-  const lowStock = (products ?? []).filter((p) => Number(p.stock_quantity) <= Number(p.low_stock_threshold));
-  if (lowStock.length === 0) return [];
+  if (!products || products.length === 0) return [];
 
-  const productIds = lowStock.map((p) => p.id);
-  const { data: recentPurchases } = await admin
-    .from("purchase_items")
-    .select("product_id, unit_price, purchases!inner ( purchase_date, shop_id )")
-    .in("product_id", productIds)
-    .eq("purchases.shop_id", session.shopId)
-    .order("purchase_date", { foreignTable: "purchases", ascending: false });
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+  const [{ data: recentBills }, { data: recentPurchases }] = await Promise.all([
+    admin.from("bills").select("id").eq("shop_id", session.shopId).eq("status", "active").gte("created_at", thirtyDaysAgo.toISOString()),
+    admin
+      .from("purchase_items")
+      .select("product_id, unit_price, purchases!inner ( purchase_date, shop_id )")
+      .in(
+        "product_id",
+        products.map((p) => p.id),
+      )
+      .eq("purchases.shop_id", session.shopId)
+      .order("purchase_date", { foreignTable: "purchases", ascending: false }),
+  ]);
+
+  const billIds = (recentBills ?? []).map((b) => b.id);
+  const soldByProduct = new Map<string, number>();
+  if (billIds.length > 0) {
+    const { data: soldItems } = await admin.from("bill_items").select("product_id, quantity").in("bill_id", billIds);
+    for (const item of soldItems ?? []) {
+      if (!item.product_id) continue;
+      soldByProduct.set(item.product_id, (soldByProduct.get(item.product_id) ?? 0) + Number(item.quantity));
+    }
+  }
 
   // First row per product after the desc-ordered query above is its
   // most recent purchase — Map.set on an already-present key is a
@@ -59,9 +80,18 @@ export async function getLowStockReorderItemsAction(): Promise<LowStockReorderIt
     }
   }
 
-  return lowStock.map((p) => {
+  const withPrediction = products.map((p) => {
     const threshold = Number(p.low_stock_threshold);
     const current = Number(p.stock_quantity);
+    const soldLast30Days = soldByProduct.get(p.id) ?? 0;
+    const dailyConsumption = soldLast30Days > 0 ? soldLast30Days / 30 : null;
+    const daysUntilStockout = dailyConsumption && dailyConsumption > 0 ? current / dailyConsumption : null;
+    const belowThreshold = current <= threshold;
+    // "Predictive-only" catch: not below threshold YET, but genuinely
+    // on track to run out within a week at the current selling pace —
+    // worth surfacing before it becomes a real stockout.
+    const predictiveRisk = !belowThreshold && daysUntilStockout !== null && daysUntilStockout <= 7;
+
     return {
       productId: p.id,
       name: p.name,
@@ -71,8 +101,17 @@ export async function getLowStockReorderItemsAction(): Promise<LowStockReorderIt
       lowStockThreshold: threshold,
       suggestedQuantity: Math.max(1, Math.ceil(threshold * 1.5 - current)),
       lastUnitPrice: lastPriceByProduct.get(p.id) ?? null,
+      dailyConsumption: dailyConsumption ? Math.round(dailyConsumption * 10) / 10 : null,
+      daysUntilStockout: daysUntilStockout !== null ? Math.max(0, Math.round(daysUntilStockout)) : null,
+      predictiveOnly: predictiveRisk,
+      include: belowThreshold || predictiveRisk,
     };
   });
+
+  return withPrediction
+    .filter((p) => p.include)
+    .sort((a, b) => (a.daysUntilStockout ?? 999) - (b.daysUntilStockout ?? 999))
+    .map(({ include, ...rest }) => rest);
 }
 
 export async function createPurchaseAction(

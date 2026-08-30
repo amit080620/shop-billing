@@ -4,6 +4,7 @@ import { formatMoney } from "@/lib/format";
 import { buildUpiLink } from "@/lib/qr";
 import { CheckCircle2, IndianRupee } from "lucide-react";
 import { KhataHistoryBook, type KhataEntry } from "./KhataHistoryBook";
+import { KhataAssistantChat } from "./KhataAssistantChat";
 
 // Looked up by the customer's own UUID — unguessable, and the only
 // thing the customer has. Same trust model the catalog's public_token
@@ -183,6 +184,8 @@ export default async function KhataPage({ params }: { params: Promise<{ customer
           <IndianRupee size={15} /> Pay {formatMoney(outstanding)} now
         </a>
       )}
+
+      <KhataAssistantChat customerId={customerId} />
 
       <div className="neu-card p-4">
         <KhataHistoryBook entries={timeline} />
