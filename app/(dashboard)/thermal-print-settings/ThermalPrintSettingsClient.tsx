@@ -30,22 +30,50 @@ function Toggle({ label, checked, onChange }: { label: string; checked: boolean;
   );
 }
 
+// Maps a chosen pt value to the nearest hardware level this printer
+// command set can actually produce. Multiple adjacent pt values can
+// legitimately map to the same physical level — that's a genuine
+// hardware limit, not a bug — but every pt from 5-36 is offered so it
+// can be tried on the actual printer rather than pre-filtered by an
+// assumption about what it supports.
+const PT_ANCHORS = [6, 9, 18, 27, 36, 45, 54, 63]; // level 0..7
+function ptToLevel(pt: number): number {
+  let best = 0;
+  let bestDist = Infinity;
+  PT_ANCHORS.forEach((anchor, level) => {
+    const dist = Math.abs(pt - anchor);
+    if (dist < bestDist) {
+      bestDist = dist;
+      best = level;
+    }
+  });
+  return best;
+}
+function levelToPt(level: number): number {
+  return PT_ANCHORS[level] ?? PT_ANCHORS[0];
+}
+
 function SizeSelect({ value, onChange }: { value: number; onChange: (v: number) => void }) {
+  const allPt = Array.from({ length: 32 }, (_, i) => i + 5); // 5pt..36pt
   return (
-    <div className="flex items-center justify-between py-1">
-      <span className="text-sm text-foreground">Size</span>
-      <select
-        value={value}
-        onChange={(e) => onChange(Number(e.target.value))}
-        className="rounded-lg border border-border bg-background px-2.5 py-1.5 text-sm outline-none focus:border-brand"
-      >
-        <option value={0}>Small</option>
-        {[1, 2, 3, 4, 5, 6].map((n) => (
-          <option key={n} value={n}>
-            {n}× {n === 1 ? "(normal)" : ""}
-          </option>
-        ))}
-      </select>
+    <div className="flex flex-col gap-1 py-1">
+      <div className="flex items-center justify-between">
+        <span className="text-sm text-foreground">Font size</span>
+        <select
+          value={levelToPt(value)}
+          onChange={(e) => onChange(ptToLevel(Number(e.target.value)))}
+          className="rounded-lg border border-border bg-background px-2.5 py-1.5 text-sm outline-none focus:border-brand"
+        >
+          {allPt.map((pt) => (
+            <option key={pt} value={pt}>
+              {pt}pt
+            </option>
+          ))}
+        </select>
+      </div>
+      <p className="text-right text-[11px] text-muted">
+        Every printer&apos;s hardware is a bit different — some nearby sizes may print identically on yours. Try a few and keep what looks right.
+      </p>
     </div>
   );
 }

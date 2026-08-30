@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
-import { formatMoney, formatDateTime } from "@/lib/format";
+import { formatMoney } from "@/lib/format";
 import { buildUpiLink } from "@/lib/qr";
 import { CheckCircle2, IndianRupee } from "lucide-react";
 import { KhataHistoryBook, type KhataEntry } from "./KhataHistoryBook";
