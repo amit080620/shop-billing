@@ -94,6 +94,32 @@ const TOOLS = [
   {
     type: "function",
     function: {
+      name: "get_staff_activity",
+      description: "Per-staff-member activity for a period — bill count, total voids, total discount given. Use this for questions about staff behavior, unusual activity, or checking for possible misuse (excessive voids/discounts).",
+      parameters: {
+        type: "object",
+        properties: { period: { type: "string", enum: ["week", "month"], description: "Which period to check, default week." } },
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "generate_marketing_message",
+      description:
+        "Writes a ready-to-post WhatsApp Status / marketing message for the shop, based on its real best-selling items and slow-moving stock. Use this whenever the person asks for an offer message, promotional post, or marketing content.",
+      parameters: {
+        type: "object",
+        properties: {
+          occasion: { type: "string", description: "The occasion or theme, e.g. 'Diwali sale', 'weekend offer', 'clear old stock' — whatever the person mentioned." },
+          discountPercent: { type: "number", description: "Optional discount percentage to mention, if the person said one." },
+        },
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
       name: "get_gst_summary",
       description: "GST filing summary for a period — taxable value, CGST, SGST, IGST, and total GST collected. Use this for any GST/tax filing related question.",
       parameters: {
@@ -279,6 +305,68 @@ async function runTool(name: string, args: Record<string, unknown>, shopId: stri
     }
     const ranked = [...totals.values()].sort((a, b) => b.total - a.total).slice(0, limit);
     return { result: { period, customers: ranked.map((c) => ({ name: c.name, totalSpent: Math.round(c.total) })) } };
+  }
+
+  if (name === "get_staff_activity") {
+    const period = String(args.period ?? "week");
+    const start = periodStart(period);
+    const [{ data: bills }, { data: staff }] = await Promise.all([
+      admin.from("bills").select("staff_id, status, discount_amount, total").eq("shop_id", shopId).gte("created_at", start.toISOString()),
+      admin.from("staff").select("id, name").eq("shop_id", shopId),
+    ]);
+    const nameById = new Map((staff ?? []).map((s) => [s.id, s.name]));
+    const byStaff = new Map<string, { bills: number; voids: number; totalDiscount: number; totalSales: number }>();
+    for (const b of bills ?? []) {
+      const existing = byStaff.get(b.staff_id) ?? { bills: 0, voids: 0, totalDiscount: 0, totalSales: 0 };
+      existing.bills += 1;
+      if (b.status === "voided") existing.voids += 1;
+      existing.totalDiscount += Number(b.discount_amount);
+      if (b.status === "active") existing.totalSales += Number(b.total);
+      byStaff.set(b.staff_id, existing);
+    }
+    return {
+      result: {
+        period,
+        staff: [...byStaff.entries()].map(([id, s]) => ({
+          name: nameById.get(id) ?? "Unknown",
+          billCount: s.bills,
+          voidCount: s.voids,
+          totalDiscountGiven: Math.round(s.totalDiscount),
+          totalSales: Math.round(s.totalSales),
+        })),
+      },
+    };
+  }
+
+  if (name === "generate_marketing_message") {
+    // Genuinely grounded in this shop's real data — best-sellers and
+    // slow-movers over the last 30 days — rather than a generic
+    // template, so the message actually reflects what's true right
+    // now. The AI writing the final message (in converse()) sees this
+    // real data as the tool result and works it into the copy.
+    const start = new Date();
+    start.setDate(start.getDate() - 30);
+    const { data: bills } = await admin.from("bills").select("id").eq("shop_id", shopId).eq("status", "active").gte("created_at", start.toISOString());
+    const billIds = (bills ?? []).map((b) => b.id);
+    const soldTotals = new Map<string, number>();
+    if (billIds.length > 0) {
+      const { data: items } = await admin.from("bill_items").select("product_name, quantity").in("bill_id", billIds);
+      for (const item of items ?? []) soldTotals.set(item.product_name, (soldTotals.get(item.product_name) ?? 0) + Number(item.quantity));
+    }
+    const ranked = [...soldTotals.entries()].sort((a, b) => b[1] - a[1]);
+    const { data: allProducts } = await admin.from("products").select("name").eq("shop_id", shopId).limit(200);
+    const soldNames = new Set(ranked.map(([n]) => n));
+    const slowMoving = (allProducts ?? []).map((p) => p.name).filter((n) => !soldNames.has(n)).slice(0, 5);
+
+    return {
+      result: {
+        occasion: args.occasion ?? "general offer",
+        discountPercent: args.discountPercent ?? null,
+        topSellers: ranked.slice(0, 5).map(([n]) => n),
+        slowMovingStock: slowMoving,
+        instruction: "Write a short, catchy WhatsApp Status message (2-4 lines, use emojis naturally) promoting this shop's offer, mentioning the top sellers and/or slow-moving stock as relevant.",
+      },
+    };
   }
 
   if (name === "get_gst_summary") {
@@ -610,20 +698,26 @@ export async function askAssistantAction(question: string, history: ChatMessage[
  * (live fallback) and the cron route (the real overnight run) so
  * there's exactly one place this logic lives. */
 export async function computeBriefing(shopId: string, apiKey: string): Promise<{ message: string | null; overdueCount: number; lowStockCount: number }> {
-  const [{ result: overdue }, { result: lowStock }] = await Promise.all([
+  const [{ result: overdue }, { result: lowStock }, { result: staffActivity }] = await Promise.all([
     runTool("get_overdue_udhar", { minDays: 14 }, shopId),
     runTool("get_low_stock_items", {}, shopId),
+    runTool("get_staff_activity", { period: "week" }, shopId),
   ]);
 
   const overdueCount = (overdue as { count?: number })?.count ?? 0;
   const lowStockCount = (lowStock as { count?: number })?.count ?? 0;
-  if (overdueCount === 0 && lowStockCount === 0) return { message: null, overdueCount, lowStockCount };
+  // A genuinely simple anomaly signal — 3+ voids in a week is unusual
+  // for most small shops. Not a fraud accusation, just worth a glance.
+  const staffList = (staffActivity as { staff?: { name: string; voidCount: number }[] })?.staff ?? [];
+  const flaggedStaff = staffList.filter((s) => s.voidCount >= 3);
+
+  if (overdueCount === 0 && lowStockCount === 0 && flaggedStaff.length === 0) return { message: null, overdueCount, lowStockCount };
 
   const messages: GroqMessage[] = [
     { role: "system", content: SYSTEM_TEXT(new Date().toDateString()) },
     {
       role: "user",
-      content: `Genuinely proactively — no one asked, you're just glancing at today's numbers like a good employee would. Overdue udhar (14+ days): ${JSON.stringify(overdue)}. Low stock: ${JSON.stringify(lowStock)}. Write ONE short, friendly heads-up message (2-3 lines max) mentioning what's genuinely worth their attention. Skip anything with zero count. Don't say "I noticed" or similar filler — just state it plainly.`,
+      content: `Genuinely proactively — no one asked, you're just glancing at today's numbers like a good employee would. Overdue udhar (14+ days): ${JSON.stringify(overdue)}. Low stock: ${JSON.stringify(lowStock)}. Staff with unusually high voids this week (3+): ${JSON.stringify(flaggedStaff)}. Write ONE short, friendly heads-up message (2-4 lines max) mentioning what's genuinely worth their attention. Skip anything with zero/empty results. For the staff void flag, phrase it neutrally as worth checking, not an accusation. Don't say "I noticed" or similar filler — just state it plainly.`,
     },
   ];
   const result = await converse(messages, apiKey, shopId);

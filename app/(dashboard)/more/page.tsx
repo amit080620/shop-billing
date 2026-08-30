@@ -177,6 +177,7 @@ export default async function MorePage() {
 
       <MenuGroup title="People">
         <MenuLink href="/parties" label="Parties" sub={session.businessType === "clinic" ? "Patients & suppliers" : session.businessType === "gym" ? "Members & suppliers" : "Customers & suppliers, one place"} icon={PeopleIcon} />
+        <MenuLink href="/import-khata" label="Import old khata" sub="Photograph your paper ledger, AI digitizes it" icon={PeopleIcon} tone="secondary" />
         {session.role === "owner" && (
           <>
             <MenuLink href="/staff" label={t("more.staff")} sub={t("more.staff.sub")} icon={UsersIcon} tone="success" />

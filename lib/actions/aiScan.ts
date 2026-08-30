@@ -14,7 +14,7 @@
  * that already existed, so nothing breaks for anyone who hasn't set
  * up a key. */
 
-export type AIScanItem = { name: string; price?: number; quantity?: number; category?: string | null };
+export type AIScanItem = { name: string; price?: number; quantity?: number; category?: string | null; phone?: string | null };
 
 // Google retired gemini-2.5-flash-lite for new users (confirmed via
 // live 404 from the API itself) — gemini-3.5-flash-lite is their
@@ -24,6 +24,7 @@ const MODEL = "gemini-3.5-flash-lite";
 const PROMPTS = {
   products: `You are reading a photo of a shop's price list — this could be a restaurant menu, a vendor's rate card, a handwritten register page, or a printed catalog sheet. Extract every item that has both a name and a price. Return ONLY a JSON array, no other text, like: [{"name": "Item Name", "price": 120, "category": "optional section/category name or null"}]. Strip any currency symbols or "Rs"/"₹" from the price — return just the plain number. Ignore headers, page totals, and any line without both a clear name and a numeric price.`,
   purchase: `You are reading a photo of a vendor's purchase bill or invoice. Extract every line item with its description, quantity, and its PER-UNIT rate (not the line total for that row). Return ONLY a JSON array, no other text, like: [{"name": "Item description", "quantity": 5, "price": 45.50}]. Ignore the bill's own header, GSTIN/tax-registration lines, the grand total row, tax breakdown rows (CGST/SGST/IGST), and any signature/footer text.`,
+  khata: `You are reading a photo of a page from an Indian shopkeeper's handwritten paper account book (khata), where each customer has an entry showing their name and how much credit (udhar) they currently owe. Handwriting quality varies — do your best. For each customer entry, extract: their name, their phone number if one is written anywhere near their name (many entries won't have one — that's fine, leave it out), and their CURRENT outstanding balance (the latest running total they owe, not each individual old transaction — if multiple numbers are crossed out with a final one written, use the final one). Return ONLY a JSON array, no other text, like: [{"name": "Ramesh Kumar", "phone": "9876543210", "price": 850}]. Use the "price" field for the rupee amount owed. Skip any entry where the balance is clearly zero/settled (often marked paid/nil/✓). Ignore page headers, dates-only lines, and anything that isn't a customer's own entry.`,
 };
 
 export type AIScanErrorType = "not_configured" | "quota_exceeded" | "invalid_key" | "config_error" | "network_error";
@@ -79,7 +80,7 @@ export async function checkAIScanStatusAction(): Promise<{ status: "connected" |
 
 export async function scanImageWithAI(
   imageBase64: string,
-  mode: "products" | "purchase",
+  mode: "products" | "purchase" | "khata",
   mimeType: string = "image/jpeg",
 ): Promise<{ items?: AIScanItem[]; error?: string; errorType?: AIScanErrorType }> {
   const apiKey = process.env.GEMINI_API_KEY?.trim();
@@ -126,6 +127,7 @@ export async function scanImageWithAI(
           price: Number.isFinite(priceNum) && priceNum > 0 ? priceNum : undefined,
           quantity: qtyNum !== undefined && Number.isFinite(qtyNum) && qtyNum > 0 ? qtyNum : undefined,
           category: it.category ? String(it.category).trim() : null,
+          phone: it.phone ? String(it.phone).replace(/\D/g, "").slice(-10) || null : null,
         };
       })
       .filter((it) => it.name.length >= 2);
