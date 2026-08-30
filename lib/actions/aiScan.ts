@@ -80,6 +80,7 @@ export async function checkAIScanStatusAction(): Promise<{ status: "connected" |
 export async function scanImageWithAI(
   imageBase64: string,
   mode: "products" | "purchase",
+  mimeType: string = "image/jpeg",
 ): Promise<{ items?: AIScanItem[]; error?: string; errorType?: AIScanErrorType }> {
   const apiKey = process.env.GEMINI_API_KEY?.trim();
   if (!apiKey) return { error: "AI scan is not set up for this shop yet", errorType: "not_configured" };
@@ -91,7 +92,7 @@ export async function scanImageWithAI(
       body: JSON.stringify({
         contents: [
           {
-            parts: [{ text: PROMPTS[mode] }, { inlineData: { mimeType: "image/jpeg", data: imageBase64 } }],
+            parts: [{ text: PROMPTS[mode] }, { inlineData: { mimeType, data: imageBase64 } }],
           },
         ],
         generationConfig: { responseMimeType: "application/json", temperature: 0 },

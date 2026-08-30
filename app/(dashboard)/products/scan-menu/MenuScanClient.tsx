@@ -70,10 +70,12 @@ export function MenuScanClient() {
     if (!append) setItems([]);
     setBlurWarning(null);
 
-    // Genuinely check sharpness BEFORE spending time on OCR — a
-    // blurry photo would just waste the wait and produce garbage
-    // results, so this catches it at the cheapest possible point.
-    if (!skipBlurCheck) {
+    const isPdf = file.type === "application/pdf";
+
+    // Blur detection and the resize/deskew pipeline below both load
+    // the file as an IMAGE (via a canvas) — neither one applies to a
+    // PDF, so both are skipped for one.
+    if (!isPdf && !skipBlurCheck) {
       const { detectBlur } = await import("@/lib/ocr/blurDetection");
       const { isBlurry } = await detectBlur(file);
       if (isBlurry) {
@@ -83,13 +85,53 @@ export function MenuScanClient() {
       }
     }
 
-    setPreviewUrl(URL.createObjectURL(file));
+    if (!isPdf) setPreviewUrl(URL.createObjectURL(file));
     setIsScanning(true);
     setOcrProgress(0);
     setUsedAI(false);
 
     try {
       const [existing, corrections] = await Promise.all([listExistingProductNamesAction(), getOcrCorrectionsAction()]);
+
+      if (isPdf) {
+        // A price list PDF (a vendor's rate-card export, a WhatsApp-
+        // forwarded catalog) — Gemini genuinely reads PDFs natively,
+        // multi-page included, no conversion needed. The free
+        // Tesseract fallback can't read a PDF at all, so a PDF with
+        // no AI configured gets a clear message instead of silently
+        // producing nothing.
+        const base64 = await fileToBase64(file);
+        const aiResult = await scanImageWithAI(base64, "products", "application/pdf");
+        if (aiResult.errorType) aiStatusRef.current?.reportError(aiResult.errorType);
+        if (aiResult.items && aiResult.items.length > 0) {
+          setUsedAI(true);
+          setItems((prev) => [
+            ...prev,
+            ...aiResult.items!
+              .filter((it) => it.price !== undefined)
+              .map((it, i) => {
+                const correctedName = applyCorrections(it.name, corrections);
+                const match = findClosestMatch(correctedName, existing);
+                return {
+                  id: `${Date.now()}-${i}`,
+                  name: correctedName,
+                  rawScannedName: it.name,
+                  price: it.price!,
+                  categoryName: it.category ?? null,
+                  include: !match,
+                  matchedExistingName: match?.name ?? null,
+                };
+              }),
+          ]);
+        } else {
+          setError(
+            aiResult.errorType === "not_configured"
+              ? "Reading a PDF needs AI scan set up (Settings → it's free) — or export/screenshot it as an image instead."
+              : aiResult.error ?? "Couldn't read this PDF — try exporting it as an image instead.",
+          );
+        }
+        return;
+      }
 
       // Try the accurate AI path first — genuinely understands the
       // photo rather than just extracting raw text, so it handles
@@ -262,7 +304,7 @@ export function MenuScanClient() {
       <input
         ref={galleryInputRef}
         type="file"
-        accept="image/*"
+        accept="image/*,application/pdf"
         multiple
         className="hidden"
         onChange={(e) => {
@@ -289,7 +331,7 @@ export function MenuScanClient() {
         </button>
       </div>
       <p className="text-xs text-muted">
-        Gallery works for anything already saved on the phone — a photo forwarded on WhatsApp, or one taken
+        Gallery works for anything already saved on the phone — a photo or PDF forwarded on WhatsApp, or one taken
         earlier. Pick several at once for a multi-page price list.
       </p>
 

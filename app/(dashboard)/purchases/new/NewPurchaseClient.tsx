@@ -146,7 +146,52 @@ export function NewPurchaseClient({
     setScanError(null);
     setIsScanning(true);
     setScanProgress(0);
+    const isPdf = file.type === "application/pdf";
     try {
+      if (isPdf) {
+        // A vendor invoice PDF (emailed, or WhatsApp-forwarded) —
+        // Gemini reads PDFs natively, multi-page included, so this
+        // skips the image-only resize pipeline entirely and sends
+        // the file as-is. The free Tesseract fallback genuinely can't
+        // read a PDF, so a clear message instead of silent failure.
+        const base64 = await fileToBase64(file);
+        const [aiResult, corrections] = await Promise.all([
+          scanImageWithAI(base64, "purchase", "application/pdf"),
+          getOcrCorrectionsAction(),
+        ]);
+        if (aiResult.errorType) aiStatusRef.current?.reportError(aiResult.errorType);
+        if (aiResult.items && aiResult.items.length > 0) {
+          setUsedAI(true);
+          setLines((prev) => [
+            ...prev,
+            ...aiResult.items!
+              .filter((it) => it.price !== undefined && it.quantity !== undefined)
+              .map((item) => ({
+                key: crypto.randomUUID(),
+                productId: null,
+                description: applyCorrections(item.name, corrections),
+                rawScannedDescription: item.name,
+                hsnCode: "",
+                quantity: item.quantity!,
+                unitPrice: item.price!,
+                freeQuantity: 0,
+                gstPercent: 0,
+                isPharma: false,
+                batchNumber: "",
+                expiryDate: "",
+                mfgDate: "",
+              })),
+          ]);
+        } else {
+          setScanError(
+            aiResult.errorType === "not_configured"
+              ? "Reading a PDF needs AI scan set up (Settings → it's free) — or export/screenshot it as an image instead."
+              : (aiResult.error ?? "Couldn't read this PDF — try exporting it as an image instead."),
+          );
+        }
+        return;
+      }
+
       // Accurate AI path first — genuinely understands "this is a
       // description, this is a qty, this is a rate" rather than
       // guessing from raw text positions, so it handles a messy
@@ -418,7 +463,7 @@ export function NewPurchaseClient({
         <input
           ref={galleryInputRef}
           type="file"
-          accept="image/*"
+          accept="image/*,application/pdf"
           className="hidden"
           onChange={(e) => {
             const file = e.target.files?.[0];
@@ -446,7 +491,7 @@ export function NewPurchaseClient({
             From gallery
           </button>
         </div>
-        <p className="text-xs text-muted">Gallery works for a vendor bill forwarded on WhatsApp too.</p>
+        <p className="text-xs text-muted">Gallery works for a vendor bill forwarded on WhatsApp (photo or PDF) too.</p>
         {usedAI && !isScanning && (
           <p className="flex items-center gap-1 text-[11px] font-medium text-brand-text">
             <span className="rounded-full bg-brand-soft px-1.5 py-0.5">✨ AI-read</span> Review the quantities and rates below before submitting.
