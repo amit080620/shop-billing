@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Sparkles, Send, Loader2 } from "lucide-react";
+import { Sparkles, Send, Loader2, Mic } from "lucide-react";
 import { askCustomerAssistantAction, type CustomerChatMessage } from "@/lib/actions/customerAssistant";
+import { getSpeechRecognition, speechLocaleFor } from "@/lib/speechRecognition";
 
 /** "Poochho apna hisaab" — a customer-facing AI chat embedded right on
  * their own shared khata page. Nothing here needs the customer to
@@ -19,7 +20,30 @@ export function KhataAssistantChat({ customerId }: { customerId: string }) {
   const [input, setInput] = useState("");
   const [isThinking, setIsThinking] = useState(false);
   const [notConfigured, setNotConfigured] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+  const [voiceSupported, setVoiceSupported] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setVoiceSupported(getSpeechRecognition() !== null);
+  }, []);
+
+  function startVoice() {
+    const SpeechRecognitionCtor = getSpeechRecognition();
+    if (!SpeechRecognitionCtor) return;
+    const recognition = new SpeechRecognitionCtor();
+    recognition.lang = speechLocaleFor();
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+    recognition.onresult = (event) => {
+      const transcript = event.results[0]?.[0]?.transcript ?? "";
+      if (transcript.trim()) setInput(transcript);
+    };
+    recognition.onerror = () => setIsListening(false);
+    recognition.onend = () => setIsListening(false);
+    setIsListening(true);
+    recognition.start();
+  }
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
@@ -86,6 +110,17 @@ export function KhataAssistantChat({ customerId }: { customerId: string }) {
           disabled={isThinking}
           className="min-w-0 flex-1 rounded-full border border-border bg-background px-3.5 py-2 text-sm outline-none focus:border-brand"
         />
+        {voiceSupported && (
+          <button
+            type="button"
+            onClick={startVoice}
+            disabled={isListening}
+            aria-label="Speak your question"
+            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${isListening ? "animate-pulse bg-danger text-white" : "border border-brand text-brand"}`}
+          >
+            <Mic size={15} />
+          </button>
+        )}
         <button
           onClick={send}
           disabled={isThinking || !input.trim()}
