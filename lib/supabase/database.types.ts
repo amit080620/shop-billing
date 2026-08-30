@@ -277,6 +277,12 @@ export interface Database {
           { foreignKeyName: "products_category_id_fkey"; columns: ["category_id"]; isOneToOne: false; referencedRelation: "categories"; referencedColumns: ["id"] },
         ];
       };
+      daily_briefings: {
+        Row: { id: string; shop_id: string; briefing_date: string; message: string | null; overdue_count: number; low_stock_count: number; created_at: string };
+        Insert: { id?: string; shop_id: string; briefing_date: string; message?: string | null; overdue_count?: number; low_stock_count?: number; created_at?: string };
+        Update: { id?: string; shop_id?: string; briefing_date?: string; message?: string | null; overdue_count?: number; low_stock_count?: number; created_at?: string };
+        Relationships: [];
+      };
       customers: {
         Row: {
           id: string;

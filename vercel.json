@@ -1,4 +1,10 @@
 {
   "regions": ["bom1"],
-  "buildCommand": "next build"
+  "buildCommand": "next build",
+  "crons": [
+    {
+      "path": "/api/cron/daily-briefing",
+      "schedule": "0 18 * * *"
+    }
+  ]
 }

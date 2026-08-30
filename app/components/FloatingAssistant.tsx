@@ -182,7 +182,7 @@ export function FloatingAssistant({ enabled }: { enabled: boolean }) {
         <div className="flex flex-1 flex-col items-center justify-center gap-2 p-4 text-center">
           <Sparkles size={22} className="text-muted" />
           <p className="text-sm font-medium text-foreground">Assistant isn&apos;t set up yet</p>
-          <p className="text-xs text-muted">Uses the same free AI key as Scan price list / Scan vendor bill.</p>
+          <p className="text-xs text-muted">Needs a free Groq API key set up separately from the scan features.</p>
         </div>
       ) : (
         <>
