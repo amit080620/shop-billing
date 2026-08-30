@@ -15,12 +15,14 @@ import { useSyncCalculatorAmount } from "@/lib/calculatorAmount";
 import { SearchableSelect } from "@/app/components/SearchableSelect";
 import { InlineQuickAdd } from "@/app/components/InlineQuickAdd";
 import { Spinner } from "@/app/components/Spinner";
-import { Zap, Package, AlertTriangle, Pill, Truck, Gem, Recycle } from "lucide-react";
+import { Zap, Package, AlertTriangle, Pill, Truck, Gem, Recycle, Mic } from "lucide-react";
 import { BarcodeScanInput } from "@/app/components/BarcodeScanInput";
 import { CameraBarcodeScanner } from "@/app/components/CameraBarcodeScanner";
 import { useTranslation } from "@/lib/i18n/useTranslation";
 import { useOnlineStatus } from "@/lib/useOnlineStatus";
 import type { Lang } from "@/lib/i18n/dictionary";
+import { parseVoiceOrderAction } from "@/lib/actions/voiceOrder";
+import { getSpeechRecognition, speechLocaleFor, type SpeechRecognitionLike } from "@/lib/speechRecognition";
 
 type Product = {
   id: string;
@@ -278,6 +280,74 @@ export function NewBillClient({
     });
   }
 
+  const [isListening, setIsListening] = useState(false);
+  const [voiceSupported, setVoiceSupported] = useState(false);
+  const [voiceStatus, setVoiceStatus] = useState<string | null>(null);
+  const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
+
+  useEffect(() => {
+    setVoiceSupported(getSpeechRecognition() !== null);
+  }, []);
+
+  /** "2 samosa, 1 chai" spoken → parsed by Groq → matched against this
+   * shop's real products → each added to the cart via the SAME
+   * addProduct used everywhere else (called once per unit — it
+   * already knows how to bump an existing line's quantity), so
+   * bulk pricing, GST, and pack/loose logic all stay exactly
+   * consistent with adding items by hand. */
+  function startVoiceOrder() {
+    const SpeechRecognitionCtor = getSpeechRecognition();
+    if (!SpeechRecognitionCtor) return;
+    setVoiceStatus(null);
+    const recognition = new SpeechRecognitionCtor();
+    recognition.lang = speechLocaleFor(lang);
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+    recognition.onresult = async (event) => {
+      const transcript = event.results[0]?.[0]?.transcript ?? "";
+      if (!transcript.trim()) return;
+      setVoiceStatus("Reading order…");
+      const result = await parseVoiceOrderAction(transcript);
+      if (result.error === "not_configured") {
+        setVoiceStatus("Voice billing needs the free Groq AI key set up first.");
+        return;
+      }
+      if (result.error || !result.items) {
+        setVoiceStatus(result.error ?? "Couldn't understand that — try again.");
+        return;
+      }
+      if (result.items.length === 0) {
+        setVoiceStatus("Didn't catch any items — try again.");
+        return;
+      }
+
+      const unmatched: string[] = [];
+      for (const item of result.items) {
+        const product = item.matchedProductId ? products.find((p) => p.id === item.matchedProductId) : undefined;
+        if (!product) {
+          unmatched.push(item.spokenName);
+          continue;
+        }
+        for (let i = 0; i < item.quantity; i++) addProduct(product);
+      }
+
+      setVoiceStatus(
+        unmatched.length > 0
+          ? `Added ${result.items.length - unmatched.length} item(s). Couldn't find: ${unmatched.join(", ")} — add manually.`
+          : `Added ${result.items.length} item(s) ✓`,
+      );
+      setTimeout(() => setVoiceStatus(null), 4000);
+    };
+    recognition.onerror = () => {
+      setIsListening(false);
+      setVoiceStatus("Didn't catch that — try again.");
+    };
+    recognition.onend = () => setIsListening(false);
+    recognitionRef.current = recognition;
+    setIsListening(true);
+    recognition.start();
+  }
+
   function addTransportCharge(
     vehicleId: string,
     vehicleName: string,
@@ -490,6 +560,19 @@ export function NewBillClient({
             onSelect={addProduct}
             placeholder={t("bill.searchProducts")}
           />
+          {voiceSupported && (
+            <button
+              type="button"
+              onClick={startVoiceOrder}
+              disabled={isListening}
+              className={`flex items-center justify-center gap-2 rounded-lg border px-3 py-2 text-xs font-medium ${
+                isListening ? "animate-pulse border-danger bg-danger-soft text-danger" : "border-brand bg-brand-soft text-brand-text"
+              }`}
+            >
+              <Mic size={14} /> {isListening ? "Listening…" : "Speak items (e.g. \"2 samosa, 1 chai\")"}
+            </button>
+          )}
+          {voiceStatus && <p className="text-center text-xs font-medium text-brand-text">{voiceStatus}</p>}
           <InlineQuickAdd<Product>
             triggerLabel={t("bill.addNewProduct")}
             fields={[
