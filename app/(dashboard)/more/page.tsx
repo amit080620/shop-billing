@@ -178,7 +178,6 @@ export default async function MorePage() {
       <MenuGroup title="People">
         <MenuLink href="/parties" label="Parties" sub={session.businessType === "clinic" ? "Patients & suppliers" : session.businessType === "gym" ? "Members & suppliers" : "Customers & suppliers, one place"} icon={PeopleIcon} />
         <MenuLink href="/import-khata" label="Import old khata" sub="Photograph your paper ledger, AI digitizes it" icon={PeopleIcon} tone="secondary" />
-        <MenuLink href="/festival-poster" label="Festival poster" sub="AI writes the offer, get a ready-to-share design" icon={PeopleIcon} tone="secondary" />
         {session.role === "owner" && (
           <>
             <MenuLink href="/staff" label={t("more.staff")} sub={t("more.staff.sub")} icon={UsersIcon} tone="success" />
@@ -214,6 +213,7 @@ export default async function MorePage() {
           <MenuLink href="/offers" label={t("more.offers")} sub={t("more.offers.sub")} icon={MegaphoneIcon} tone="secondary" />
         )}
         <MenuLink href="/festivals" label="Festival planner" sub="Upcoming festivals & stock-up reminders" icon={FestivalIcon} tone="secondary" />
+        <MenuLink href="/festival-poster" label="Festival poster" sub="AI writes the offer, get a ready-to-share design" icon={FestivalIcon} tone="secondary" />
         <MenuLink href="/loyalty-settings" label="Loyalty program" sub="Reward regulars for coming back" icon={GiftIcon} tone="secondary" />
         <MenuLink href="/fast-billing-settings" label="Fast billing" sub="Tap-to-add counter for busy hours" icon={ZapIcon} tone="secondary" />
       </MenuGroup>
