@@ -14,7 +14,7 @@
  * that already existed, so nothing breaks for anyone who hasn't set
  * up a key. */
 
-export type AIScanItem = { name: string; price?: number; quantity?: number; category?: string | null; phone?: string | null };
+export type AIScanItem = { name: string; price?: number; quantity?: number; category?: string | null; phone?: string | null; date?: string | null };
 
 // Google retired gemini-2.5-flash-lite for new users (confirmed via
 // live 404 from the API itself) — gemini-3.5-flash-lite is their
@@ -25,6 +25,7 @@ const PROMPTS = {
   products: `You are reading a photo of a shop's price list — this could be a restaurant menu, a vendor's rate card, a handwritten register page, or a printed catalog sheet. Extract every item that has both a name and a price. Return ONLY a JSON array, no other text, like: [{"name": "Item Name", "price": 120, "category": "optional section/category name or null"}]. Strip any currency symbols or "Rs"/"₹" from the price — return just the plain number. Ignore headers, page totals, and any line without both a clear name and a numeric price.`,
   purchase: `You are reading a photo of a vendor's purchase bill or invoice. Extract every line item with its description, quantity, and its PER-UNIT rate (not the line total for that row). Return ONLY a JSON array, no other text, like: [{"name": "Item description", "quantity": 5, "price": 45.50}]. Ignore the bill's own header, GSTIN/tax-registration lines, the grand total row, tax breakdown rows (CGST/SGST/IGST), and any signature/footer text.`,
   khata: `You are reading a photo of a page from an Indian shopkeeper's handwritten paper account book (khata), where each customer has an entry showing their name and how much credit (udhar) they currently owe. Handwriting quality varies — do your best. For each customer entry, extract: their name, their phone number if one is written anywhere near their name (many entries won't have one — that's fine, leave it out), and their CURRENT outstanding balance (the latest running total they owe, not each individual old transaction — if multiple numbers are crossed out with a final one written, use the final one). Return ONLY a JSON array, no other text, like: [{"name": "Ramesh Kumar", "phone": "9876543210", "price": 850}]. Use the "price" field for the rupee amount owed. Skip any entry where the balance is clearly zero/settled (often marked paid/nil/✓). Ignore page headers, dates-only lines, and anything that isn't a customer's own entry.`,
+  sales_history: `You are reading a photo of a page from an Indian shopkeeper's handwritten sales register, where each ROW is one individual past sale/transaction — usually a date, a customer name, and an amount. Handwriting quality varies — do your best. For EACH transaction row (not each customer — the same customer may appear multiple times on different dates, and each is a separate entry), extract: the customer's name, the date (in whatever format is written — you may see DD/MM or DD-MM-YY etc, just pass through what's written), and the rupee amount of that sale. Return ONLY a JSON array, no other text, like: [{"name": "Ramesh Kumar", "date": "12/03/2026", "price": 250}]. If a date is genuinely missing for a row, use "price" and "name" still but leave date blank. Skip any row that's clearly a header, a running total, or a page subtotal rather than an individual transaction.`,
 };
 
 export type AIScanErrorType = "not_configured" | "quota_exceeded" | "invalid_key" | "config_error" | "network_error";
@@ -80,7 +81,7 @@ export async function checkAIScanStatusAction(): Promise<{ status: "connected" |
 
 export async function scanImageWithAI(
   imageBase64: string,
-  mode: "products" | "purchase" | "khata",
+  mode: "products" | "purchase" | "khata" | "sales_history",
   mimeType: string = "image/jpeg",
 ): Promise<{ items?: AIScanItem[]; error?: string; errorType?: AIScanErrorType }> {
   const apiKey = process.env.GEMINI_API_KEY?.trim();
@@ -128,6 +129,7 @@ export async function scanImageWithAI(
           quantity: qtyNum !== undefined && Number.isFinite(qtyNum) && qtyNum > 0 ? qtyNum : undefined,
           category: it.category ? String(it.category).trim() : null,
           phone: it.phone ? String(it.phone).replace(/\D/g, "").slice(-10) || null : null,
+          date: it.date ? String(it.date).trim() : null,
         };
       })
       .filter((it) => it.name.length >= 2);

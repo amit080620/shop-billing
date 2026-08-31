@@ -161,9 +161,42 @@ export async function createPurchaseAction(
     : { data: [] as { id: string; name: string; hsn_code: string | null; track_inventory: boolean; stock_quantity: number; is_pharma: boolean }[] };
   const productMap = new Map((dbProducts ?? []).map((p) => [p.id, p]));
 
+  // A purchase line with no matching product yet — a genuinely new item,
+  // whether typed by hand or read off a scanned/spoken vendor bill —
+  // becomes a real Product right here. Without this, buying something
+  // new only ever recorded a purchase-history line; it could never
+  // actually be sold, since the Sell screen only searches real
+  // products. The purchase RATE becomes its starting sale price (the
+  // shop almost always wants to mark it up before selling, but a
+  // sensible non-zero starting point beats a blank one) — genuinely
+  // editable afterwards from Products, same as any other item.
+  const resolvedItems = await Promise.all(
+    items.map(async (item) => {
+      if (item.productId && productMap.has(item.productId)) return item;
+      const { data: newProduct, error: newProductError } = await admin
+        .from("products")
+        .insert({
+          shop_id: session.shopId,
+          name: item.description.trim(),
+          price: item.unitPrice,
+          gst_percent: item.gstPercent,
+          hsn_code: item.hsnCode,
+          unit: "NOS",
+          track_inventory: true,
+          stock_quantity: 0,
+          low_stock_threshold: 0,
+        })
+        .select("id, name, hsn_code, track_inventory, stock_quantity, is_pharma")
+        .single();
+      if (newProductError || !newProduct) return item; // best-effort — falls back to the old purchase-only-line behavior if this genuinely fails
+      productMap.set(newProduct.id, newProduct);
+      return { ...item, productId: newProduct.id };
+    }),
+  );
+
   const supplyType = determineSupplyType(session.shopStateCode, vendor.state_code);
 
-  const lineInputs = items.map((item) => ({
+  const lineInputs = resolvedItems.map((item) => ({
     quantity: item.quantity,
     unitPrice: item.unitPrice,
     gstPercent: item.gstPercent,
@@ -204,7 +237,7 @@ export async function createPurchaseAction(
 
   if (purchaseError || !purchase) return { error: "Could not save purchase" };
 
-  const purchaseItemsRows = items.map((item, i) => {
+  const purchaseItemsRows = resolvedItems.map((item, i) => {
     const line = totals.lines[i];
     const product = item.productId ? productMap.get(item.productId) : undefined;
     return {
@@ -234,7 +267,7 @@ export async function createPurchaseAction(
   // Basic stock increment — only for products with tracking turned on.
   // Genuinely independent per item, so this runs concurrently.
   await Promise.all(
-    items.map(async (item) => {
+    resolvedItems.map(async (item) => {
       const product = item.productId ? productMap.get(item.productId) : undefined;
       if (!product?.track_inventory) return;
       const totalReceived = item.quantity + (item.freeQuantity ?? 0);
@@ -249,7 +282,7 @@ export async function createPurchaseAction(
   // record, it doesn't touch stock_quantity again. Genuinely
   // independent per item, so this runs concurrently.
   await Promise.all(
-    items.map(async (item) => {
+    resolvedItems.map(async (item) => {
       const product = item.productId ? productMap.get(item.productId) : undefined;
       if (!product?.is_pharma || !item.batchNumber || !item.expiryDate) return;
       const { error: batchError } = await admin.from("medicine_batches").insert({
