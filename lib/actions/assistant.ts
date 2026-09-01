@@ -35,13 +35,13 @@ const TOOLS = [
     type: "function",
     function: {
       name: "get_sales_summary",
-      description: "Total sales, number of bills, and outstanding udhar collected for a given period.",
+      description: "Total sales, number of transactions, and outstanding udhar for a period. Covers every sale, whether from the Sell screen, Fast Billing, or a settled restaurant table.",
       parameters: {
         type: "object",
         properties: {
-          period: { type: "string", enum: ["today", "yesterday", "week", "month"], description: "Which period to summarize." },
+          days: { type: "number", description: "How many days to look back from today. Convert ANY period the person mentions into this number — 'today'=1, 'yesterday'=2 (look back 2 days to be safe), 'this week'/'last week'/'last 7 days'=7, 'this month'/'last 30 days'=30, 'last 3 days'=3, 'last 45 days'=45, etc. Always a plain number, never a word." },
         },
-        required: ["period"],
+        required: ["days"],
       },
     },
   },
@@ -53,10 +53,10 @@ const TOOLS = [
       parameters: {
         type: "object",
         properties: {
-          period: { type: "string", enum: ["today", "week", "month"], description: "Which period to look at." },
+          days: { type: "number", description: "How many days to look back — convert any period phrase into a plain number of days (e.g. 'last week'=7, 'last 7 days'=7, 'this month'=30)." },
           limit: { type: "number", description: "How many top items to return, default 5." },
         },
-        required: ["period"],
+        required: ["days"],
       },
     },
   },
@@ -84,10 +84,10 @@ const TOOLS = [
       parameters: {
         type: "object",
         properties: {
-          period: { type: "string", enum: ["week", "month", "all_time"], description: "Which period to look at." },
+          days: { type: "number", description: "How many days to look back — convert any period phrase into a plain number of days. Use 0 for all-time (no date filter)." },
           limit: { type: "number", description: "How many to return, default 5." },
         },
-        required: ["period"],
+        required: ["days"],
       },
     },
   },
@@ -98,7 +98,7 @@ const TOOLS = [
       description: "Per-staff-member activity for a period — bill count, total voids, total discount given. Use this for questions about staff behavior, unusual activity, or checking for possible misuse (excessive voids/discounts).",
       parameters: {
         type: "object",
-        properties: { period: { type: "string", enum: ["week", "month"], description: "Which period to check, default week." } },
+        properties: { days: { type: "number", description: "How many days to look back, default 7 — convert any period phrase into a plain number of days." } },
       },
     },
   },
@@ -124,7 +124,7 @@ const TOOLS = [
       description: "GST filing summary for a period — taxable value, CGST, SGST, IGST, and total GST collected. Use this for any GST/tax filing related question.",
       parameters: {
         type: "object",
-        properties: { period: { type: "string", enum: ["month", "quarter", "year"], description: "Which period to summarize, default month." } },
+        properties: { days: { type: "number", description: "How many days to look back, default 30 — convert any period phrase (month/quarter/year/N days) into a plain number of days." } },
       },
     },
   },
@@ -214,18 +214,56 @@ const TOOLS = [
   },
 ];
 
-function periodStart(period: string): Date {
+/** Genuinely flexible — takes a plain number of days to look back
+ * instead of matching against a fixed list of words. This is what
+ * lets the model turn ANY period phrase ("last week", "last 7 days",
+ * "this month", "last 45 days", "past 3 days") into the SAME simple
+ * number, rather than needing to guess which of a few hardcoded
+ * strings a request maps to. The model is instructed (system prompt)
+ * to always convert the person's words into a day-count itself. */
+function daysAgo(days: number): Date {
   const d = new Date();
-  if (period === "today") d.setHours(0, 0, 0, 0);
-  else if (period === "yesterday") {
-    d.setDate(d.getDate() - 1);
-    d.setHours(0, 0, 0, 0);
-  } else if (period === "week") d.setDate(d.getDate() - 7);
-  else if (period === "month") d.setDate(d.getDate() - 30);
-  else if (period === "quarter") d.setDate(d.getDate() - 90);
-  else if (period === "year") d.setDate(d.getDate() - 365);
-  else d.setFullYear(2000);
+  d.setDate(d.getDate() - Math.max(0, days));
+  d.setHours(0, 0, 0, 0);
   return d;
+}
+
+type UnifiedSale = { total: number; creditAmount: number; customerId: string | null; id: string; source: "bill" | "restaurant_order" };
+
+/** THE actual fix for "restaurant shops get empty answers" — this
+ * shop's real sales live in ONE of two completely separate places
+ * depending on business type: `bills` for every non-restaurant flow
+ * (Sell screen, Fast Billing), or `restaurant_orders` for dine-in
+ * tables settled through the restaurant module. Every sales-related
+ * tool below was originally querying `bills` ONLY, which meant a
+ * restaurant shop's assistant could never see a single real rupee of
+ * their own business. Querying both and merging is the correct fix —
+ * not "detect business type and pick one", because a shop could
+ * genuinely have both (e.g. a restaurant that also does retail
+ * takeaway snacks sold through Fast Billing). */
+async function getUnifiedSales(admin: ReturnType<typeof createSupabaseAdminClient>, shopId: string, since: Date): Promise<UnifiedSale[]> {
+  const [{ data: bills }, { data: orders }] = await Promise.all([
+    admin.from("bills").select("id, total, credit_amount, customer_id").eq("shop_id", shopId).eq("status", "active").gte("created_at", since.toISOString()),
+    admin.from("restaurant_orders").select("id, total, credit_amount, customer_id").eq("shop_id", shopId).eq("status", "settled").gte("settled_at", since.toISOString()),
+  ]);
+  return [
+    ...(bills ?? []).map((b) => ({ id: b.id, total: Number(b.total), creditAmount: Number(b.credit_amount), customerId: b.customer_id, source: "bill" as const })),
+    ...(orders ?? []).map((o) => ({ id: o.id, total: Number(o.total), creditAmount: Number(o.credit_amount), customerId: o.customer_id, source: "restaurant_order" as const })),
+  ];
+}
+
+/** Same reasoning as getUnifiedSales, for line-item detail (top
+ * sellers, marketing copy) — bill_items and restaurant_order_items
+ * are structurally the same shape (product_name, quantity), just two
+ * different tables depending on where the sale happened. */
+async function getUnifiedItems(admin: ReturnType<typeof createSupabaseAdminClient>, sales: UnifiedSale[]): Promise<{ product_name: string; quantity: number }[]> {
+  const billIds = sales.filter((s) => s.source === "bill").map((s) => s.id);
+  const orderIds = sales.filter((s) => s.source === "restaurant_order").map((s) => s.id);
+  const [{ data: billItems }, { data: orderItems }] = await Promise.all([
+    billIds.length ? admin.from("bill_items").select("product_name, quantity").in("bill_id", billIds) : Promise.resolve({ data: [] }),
+    orderIds.length ? admin.from("restaurant_order_items").select("product_name, quantity").in("order_id", orderIds) : Promise.resolve({ data: [] }),
+  ]);
+  return [...(billItems ?? []), ...(orderItems ?? [])];
 }
 
 export type ReminderAction = { label: string; whatsappLink: string };
@@ -234,33 +272,23 @@ async function runTool(name: string, args: Record<string, unknown>, shopId: stri
   const admin = createSupabaseAdminClient();
 
   if (name === "get_sales_summary") {
-    const period = String(args.period ?? "today");
-    const start = periodStart(period);
-    let end: Date | undefined;
-    if (period === "yesterday") {
-      end = new Date(start);
-      end.setDate(end.getDate() + 1);
-    }
-    let query = admin.from("bills").select("total, credit_amount").eq("shop_id", shopId).eq("status", "active").gte("created_at", start.toISOString());
-    if (end) query = query.lt("created_at", end.toISOString());
-    const { data } = await query;
-    const totalSales = (data ?? []).reduce((s, b) => s + Number(b.total), 0);
-    const totalCredit = (data ?? []).reduce((s, b) => s + Number(b.credit_amount), 0);
-    return { result: { period, billCount: (data ?? []).length, totalSales: Math.round(totalSales), totalOnUdhar: Math.round(totalCredit) } };
+    const days = Number(args.days) || 1;
+    const sales = await getUnifiedSales(admin, shopId, daysAgo(days));
+    const totalSales = sales.reduce((s, b) => s + b.total, 0);
+    const totalCredit = sales.reduce((s, b) => s + b.creditAmount, 0);
+    return { result: { days, billCount: sales.length, totalSales: Math.round(totalSales), totalOnUdhar: Math.round(totalCredit) } };
   }
 
   if (name === "get_top_items") {
-    const period = String(args.period ?? "week");
+    const days = Number(args.days) || 7;
     const limit = Number(args.limit) || 5;
-    const start = periodStart(period);
-    const { data: bills } = await admin.from("bills").select("id").eq("shop_id", shopId).eq("status", "active").gte("created_at", start.toISOString());
-    const billIds = (bills ?? []).map((b) => b.id);
-    if (billIds.length === 0) return { result: { period, items: [] } };
-    const { data: items } = await admin.from("bill_items").select("product_name, quantity").in("bill_id", billIds);
+    const sales = await getUnifiedSales(admin, shopId, daysAgo(days));
+    if (sales.length === 0) return { result: { days, items: [] } };
+    const items = await getUnifiedItems(admin, sales);
     const totals = new Map<string, number>();
-    for (const item of items ?? []) totals.set(item.product_name, (totals.get(item.product_name) ?? 0) + Number(item.quantity));
+    for (const item of items) totals.set(item.product_name, (totals.get(item.product_name) ?? 0) + Number(item.quantity));
     const ranked = [...totals.entries()].sort((a, b) => b[1] - a[1]).slice(0, limit);
-    return { result: { period, items: ranked.map(([itemName, qty]) => ({ name: itemName, quantitySold: qty })) } };
+    return { result: { days, items: ranked.map(([itemName, qty]) => ({ name: itemName, quantitySold: qty })) } };
   }
 
   if (name === "get_customer_balance") {
@@ -271,11 +299,12 @@ async function runTool(name: string, args: Record<string, unknown>, shopId: stri
 
     const results = await Promise.all(
       customers.map(async (c) => {
-        const [{ data: bills }, { data: payments }] = await Promise.all([
+        const [{ data: bills }, { data: orders }, { data: payments }] = await Promise.all([
           admin.from("bills").select("credit_amount").eq("customer_id", c.id).eq("status", "active"),
+          admin.from("restaurant_orders").select("credit_amount").eq("customer_id", c.id).eq("status", "settled"),
           admin.from("payments").select("amount").eq("customer_id", c.id),
         ]);
-        const totalCredit = (bills ?? []).reduce((s, b) => s + Number(b.credit_amount), 0);
+        const totalCredit = (bills ?? []).reduce((s, b) => s + Number(b.credit_amount), 0) + (orders ?? []).reduce((s, o) => s + Number(o.credit_amount), 0);
         const totalPaid = (payments ?? []).reduce((s, p) => s + Number(p.amount), 0);
         return { name: c.name, phone: c.phone, outstandingUdhar: Math.round(Math.max(0, totalCredit - totalPaid)) };
       }),
@@ -290,43 +319,48 @@ async function runTool(name: string, args: Record<string, unknown>, shopId: stri
   }
 
   if (name === "get_top_customers") {
-    const period = String(args.period ?? "month");
+    const days = Number(args.days) || 0;
     const limit = Number(args.limit) || 5;
-    let query = admin.from("bills").select("customer_id, total, customers ( name )").eq("shop_id", shopId).eq("status", "active").not("customer_id", "is", null);
-    if (period !== "all_time") query = query.gte("created_at", periodStart(period).toISOString());
-    const { data } = await query;
+    const since = days > 0 ? daysAgo(days) : new Date(2000, 0, 1);
+    const sales = await getUnifiedSales(admin, shopId, since);
+    const withCustomer = sales.filter((s) => s.customerId);
+    if (withCustomer.length === 0) return { result: { days, customers: [] } };
+
+    const customerIds = [...new Set(withCustomer.map((s) => s.customerId!))];
+    const { data: customerRows } = await admin.from("customers").select("id, name").in("id", customerIds);
+    const nameById = new Map((customerRows ?? []).map((c) => [c.id, c.name]));
+
     const totals = new Map<string, { name: string; total: number }>();
-    for (const b of data ?? []) {
-      if (!b.customer_id) continue;
-      const custName = Array.isArray(b.customers) ? b.customers[0]?.name : (b.customers as { name: string } | null)?.name;
-      const existing = totals.get(b.customer_id) ?? { name: custName ?? "Unknown", total: 0 };
-      existing.total += Number(b.total);
-      totals.set(b.customer_id, existing);
+    for (const s of withCustomer) {
+      const existing = totals.get(s.customerId!) ?? { name: nameById.get(s.customerId!) ?? "Unknown", total: 0 };
+      existing.total += s.total;
+      totals.set(s.customerId!, existing);
     }
     const ranked = [...totals.values()].sort((a, b) => b.total - a.total).slice(0, limit);
-    return { result: { period, customers: ranked.map((c) => ({ name: c.name, totalSpent: Math.round(c.total) })) } };
+    return { result: { days, customers: ranked.map((c) => ({ name: c.name, totalSpent: Math.round(c.total) })) } };
   }
 
   if (name === "get_staff_activity") {
-    const period = String(args.period ?? "week");
-    const start = periodStart(period);
-    const [{ data: bills }, { data: staff }] = await Promise.all([
+    const days = Number(args.days) || 7;
+    const start = daysAgo(days);
+    const [{ data: bills }, { data: orders }, { data: staff }] = await Promise.all([
       admin.from("bills").select("staff_id, status, discount_amount, total").eq("shop_id", shopId).gte("created_at", start.toISOString()),
+      admin.from("restaurant_orders").select("staff_id, status, discount_amount, total").eq("shop_id", shopId).gte("created_at", start.toISOString()),
       admin.from("staff").select("id, name").eq("shop_id", shopId),
     ]);
     const nameById = new Map((staff ?? []).map((s) => [s.id, s.name]));
     const byStaff = new Map<string, { bills: number; voids: number; totalDiscount: number; totalSales: number }>();
-    for (const b of bills ?? []) {
+    for (const b of [...(bills ?? []), ...(orders ?? [])]) {
       const existing = byStaff.get(b.staff_id) ?? { bills: 0, voids: 0, totalDiscount: 0, totalSales: 0 };
       existing.bills += 1;
-      if (b.status === "voided") existing.voids += 1;
+      if (b.status === "voided" || b.status === "cancelled") existing.voids += 1;
       existing.totalDiscount += Number(b.discount_amount);
-      if (b.status === "active") existing.totalSales += Number(b.total);
+      if (b.status === "active" || b.status === "settled") existing.totalSales += Number(b.total);
       byStaff.set(b.staff_id, existing);
     }
     return {
       result: {
-        period,
+        days,
         staff: [...byStaff.entries()].map(([id, s]) => ({
           name: nameById.get(id) ?? "Unknown",
           billCount: s.bills,
@@ -339,20 +373,10 @@ async function runTool(name: string, args: Record<string, unknown>, shopId: stri
   }
 
   if (name === "generate_marketing_message") {
-    // Genuinely grounded in this shop's real data — best-sellers and
-    // slow-movers over the last 30 days — rather than a generic
-    // template, so the message actually reflects what's true right
-    // now. The AI writing the final message (in converse()) sees this
-    // real data as the tool result and works it into the copy.
-    const start = new Date();
-    start.setDate(start.getDate() - 30);
-    const { data: bills } = await admin.from("bills").select("id").eq("shop_id", shopId).eq("status", "active").gte("created_at", start.toISOString());
-    const billIds = (bills ?? []).map((b) => b.id);
+    const sales = await getUnifiedSales(admin, shopId, daysAgo(30));
+    const items = await getUnifiedItems(admin, sales);
     const soldTotals = new Map<string, number>();
-    if (billIds.length > 0) {
-      const { data: items } = await admin.from("bill_items").select("product_name, quantity").in("bill_id", billIds);
-      for (const item of items ?? []) soldTotals.set(item.product_name, (soldTotals.get(item.product_name) ?? 0) + Number(item.quantity));
-    }
+    for (const item of items) soldTotals.set(item.product_name, (soldTotals.get(item.product_name) ?? 0) + Number(item.quantity));
     const ranked = [...soldTotals.entries()].sort((a, b) => b[1] - a[1]);
     const { data: allProducts } = await admin.from("products").select("name").eq("shop_id", shopId).limit(200);
     const soldNames = new Set(ranked.map(([n]) => n));
@@ -370,28 +394,30 @@ async function runTool(name: string, args: Record<string, unknown>, shopId: stri
   }
 
   if (name === "get_gst_summary") {
-    const period = String(args.period ?? "month");
-    const start = periodStart(period);
-    const { data } = await admin
-      .from("bills")
-      .select("taxable_amount, cgst_amount, sgst_amount, igst_amount, gst_amount")
-      .eq("shop_id", shopId)
-      .eq("status", "active")
-      .gte("created_at", start.toISOString());
-    const totals = (data ?? []).reduce(
-      (acc, b) => ({
-        taxableValue: acc.taxableValue + Number(b.taxable_amount),
-        cgst: acc.cgst + Number(b.cgst_amount),
-        sgst: acc.sgst + Number(b.sgst_amount),
-        igst: acc.igst + Number(b.igst_amount),
-        totalGst: acc.totalGst + Number(b.gst_amount),
-      }),
+    const days = Number(args.days) || 30;
+    const start = daysAgo(days);
+    const [{ data: bills }, { data: orders }] = await Promise.all([
+      admin.from("bills").select("taxable_amount, cgst_amount, sgst_amount, igst_amount, gst_amount").eq("shop_id", shopId).eq("status", "active").gte("created_at", start.toISOString()),
+      admin.from("restaurant_orders").select("taxable_amount, cgst_amount, sgst_amount, igst_amount").eq("shop_id", shopId).eq("status", "settled").gte("settled_at", start.toISOString()),
+    ]);
+    const rows = [
+      ...(bills ?? []).map((b) => ({ taxable: Number(b.taxable_amount), cgst: Number(b.cgst_amount), sgst: Number(b.sgst_amount), igst: Number(b.igst_amount), gst: Number(b.gst_amount) })),
+      ...(orders ?? []).map((o) => ({
+        taxable: Number(o.taxable_amount),
+        cgst: Number(o.cgst_amount),
+        sgst: Number(o.sgst_amount),
+        igst: Number(o.igst_amount),
+        gst: Number(o.cgst_amount) + Number(o.sgst_amount) + Number(o.igst_amount),
+      })),
+    ];
+    const totals = rows.reduce(
+      (acc, b) => ({ taxableValue: acc.taxableValue + b.taxable, cgst: acc.cgst + b.cgst, sgst: acc.sgst + b.sgst, igst: acc.igst + b.igst, totalGst: acc.totalGst + b.gst }),
       { taxableValue: 0, cgst: 0, sgst: 0, igst: 0, totalGst: 0 },
     );
     return {
       result: {
-        period,
-        billCount: (data ?? []).length,
+        days,
+        billCount: rows.length,
         taxableValue: Math.round(totals.taxableValue),
         cgst: Math.round(totals.cgst),
         sgst: Math.round(totals.sgst),
@@ -473,18 +499,19 @@ async function runTool(name: string, args: Record<string, unknown>, shopId: stri
   }
 
   if (name === "get_business_overview") {
-    const [{ count: customerCount }, { count: productCount }, { count: trackedProductCount }, { count: billCount }] = await Promise.all([
+    const [{ count: customerCount }, { count: productCount }, { count: trackedProductCount }, { count: billCount }, { count: orderCount }] = await Promise.all([
       admin.from("customers").select("id", { count: "exact", head: true }).eq("shop_id", shopId),
       admin.from("products").select("id", { count: "exact", head: true }).eq("shop_id", shopId),
       admin.from("products").select("id", { count: "exact", head: true }).eq("shop_id", shopId).eq("track_inventory", true),
       admin.from("bills").select("id", { count: "exact", head: true }).eq("shop_id", shopId).eq("status", "active"),
+      admin.from("restaurant_orders").select("id", { count: "exact", head: true }).eq("shop_id", shopId).eq("status", "settled"),
     ]);
     return {
       result: {
         totalCustomers: customerCount ?? 0,
         totalProducts: productCount ?? 0,
         productsWithStockTracking: trackedProductCount ?? 0,
-        totalBillsEver: billCount ?? 0,
+        totalBillsEver: (billCount ?? 0) + (orderCount ?? 0),
       },
     };
   }
@@ -493,19 +520,20 @@ async function runTool(name: string, args: Record<string, unknown>, shopId: stri
     const minUdhar = args.minUdhar !== undefined ? Number(args.minUdhar) : undefined;
     const inactiveDays = args.inactiveDays !== undefined ? Number(args.inactiveDays) : undefined;
 
-    const [{ data: customers }, { data: allBills }, { data: allPayments }] = await Promise.all([
+    const [{ data: customers }, { data: allBills }, { data: allOrders }, { data: allPayments }] = await Promise.all([
       admin.from("customers").select("id, name, phone").eq("shop_id", shopId),
       admin.from("bills").select("id, customer_id, credit_amount, created_at").eq("shop_id", shopId).eq("status", "active"),
+      admin.from("restaurant_orders").select("id, customer_id, credit_amount, settled_at").eq("shop_id", shopId).eq("status", "settled"),
       admin.from("payments").select("customer_id, amount").eq("shop_id", shopId),
     ]);
 
     const cutoff = inactiveDays !== undefined ? new Date(Date.now() - inactiveDays * 86400000) : null;
     const lastPurchaseByCustomer = new Map<string, string>();
     const creditByCustomer = new Map<string, number>();
-    for (const b of allBills ?? []) {
+    for (const b of [...(allBills ?? []).map((b) => ({ customer_id: b.customer_id, credit_amount: b.credit_amount, at: b.created_at })), ...(allOrders ?? []).map((o) => ({ customer_id: o.customer_id, credit_amount: o.credit_amount, at: o.settled_at ?? "" }))]) {
       if (!b.customer_id) continue;
       const existing = lastPurchaseByCustomer.get(b.customer_id);
-      if (!existing || b.created_at > existing) lastPurchaseByCustomer.set(b.customer_id, b.created_at);
+      if (!existing || b.at > existing) lastPurchaseByCustomer.set(b.customer_id, b.at);
       creditByCustomer.set(b.customer_id, (creditByCustomer.get(b.customer_id) ?? 0) + Number(b.credit_amount));
     }
     const paidByCustomer = new Map<string, number>();
@@ -528,19 +556,23 @@ async function runTool(name: string, args: Record<string, unknown>, shopId: stri
   if (name === "get_overdue_udhar") {
     const minDays = Number(args.minDays) || 14;
     const cutoff = new Date(Date.now() - minDays * 86400000);
-    const [{ data: creditBills }, { data: payments }, { data: customers }] = await Promise.all([
+    const [{ data: creditBills }, { data: creditOrders }, { data: payments }, { data: customers }] = await Promise.all([
       admin.from("bills").select("customer_id, credit_amount, created_at").eq("shop_id", shopId).eq("status", "active").gt("credit_amount", 0),
+      admin.from("restaurant_orders").select("customer_id, credit_amount, settled_at").eq("shop_id", shopId).eq("status", "settled").gt("credit_amount", 0),
       admin.from("payments").select("customer_id, amount").eq("shop_id", shopId),
       admin.from("customers").select("id, name, phone").eq("shop_id", shopId),
     ]);
     const nameById = new Map((customers ?? []).map((c) => [c.id, { name: c.name, phone: c.phone }]));
     const creditByCustomer = new Map<string, number>();
     const oldestByCustomer = new Map<string, string>();
-    for (const b of creditBills ?? []) {
+    for (const b of [
+      ...(creditBills ?? []).map((b) => ({ customer_id: b.customer_id, credit_amount: b.credit_amount, at: b.created_at })),
+      ...(creditOrders ?? []).map((o) => ({ customer_id: o.customer_id, credit_amount: o.credit_amount, at: o.settled_at ?? "" })),
+    ]) {
       if (!b.customer_id) continue;
       creditByCustomer.set(b.customer_id, (creditByCustomer.get(b.customer_id) ?? 0) + Number(b.credit_amount));
       const existing = oldestByCustomer.get(b.customer_id);
-      if (!existing || b.created_at < existing) oldestByCustomer.set(b.customer_id, b.created_at);
+      if (!existing || b.at < existing) oldestByCustomer.set(b.customer_id, b.at);
     }
     const paidByCustomer = new Map<string, number>();
     for (const p of payments ?? []) {
@@ -623,7 +655,11 @@ type GroqMessage =
   | { role: "tool"; tool_call_id: string; content: string };
 
 const SYSTEM_TEXT = (dateStr: string) =>
-  `You are a helpful shop assistant for an Indian small-business owner using "The Ray" billing app. You have real, live access to THIS shop's own data — sales, customers, products, stock, and bills — through the tools provided. Never say you don't have access to the data; if a question is about the shop's own business, use the right tool. For any plain "how many customers/products/bills do I have" question, use get_business_overview. Answer questions about THEIR shop's own data — nothing outside it. Reply in the same language/mix the person used (Hindi, English, or Hinglish). Keep answers short, direct, and genuinely useful — numbers first, no fluff. Money is in Indian Rupees (₹). If a tool call finds nothing relevant, say so plainly rather than guessing. When someone asks to remind/message/nudge a customer, use prepare_udhar_reminder — don't just describe their balance, actually prepare the reminder. For compound questions (multiple conditions combined), use find_customers with all the relevant filters at once rather than making several separate calls. Today's date is ${dateStr}.`;
+  `You are a helpful shop assistant for an Indian small-business owner using "The Ray" billing app. You have real, live access to THIS shop's own data — sales, customers, products, stock, and transactions (including restaurant orders, if this is a restaurant) — through the tools provided. Never say you don't have access to the data; if a question is about the shop's own business, use the right tool. For any plain "how many customers/products/bills do I have" question, use get_business_overview. Answer questions about THEIR shop's own data — nothing outside it. Reply in the same language/mix the person used (Hindi, English, or Hinglish). Keep answers short, direct, and genuinely useful — numbers first, no fluff. Money is in Indian Rupees (₹). If a tool call finds nothing relevant, say so plainly rather than guessing.
+
+Time periods: several tools take a "days" parameter — a PLAIN NUMBER, never a word. Always convert whatever period the person mentions yourself: "today"→1, "yesterday"→2, "this week"/"last week"/"last 7 days"/"past week"→7, "this month"/"last month"/"last 30 days"→30, "last 3 days"→3, "last 45 days"→45, "this quarter"/"last 90 days"→90, "this year"/"last year"→365. If they give an exact number of days in any phrasing, use that exact number — never round it to the nearest word you know.
+
+When someone asks to remind/message/nudge a customer, use prepare_udhar_reminder — don't just describe their balance, actually prepare the reminder. For compound questions (multiple conditions combined), use find_customers with all the relevant filters at once rather than making several separate calls. Today's date is ${dateStr}.`;
 
 async function converse(messages: GroqMessage[], apiKey: string, shopId: string): Promise<{ answer?: string; action?: ReminderAction; error?: string }> {
   let action: ReminderAction | undefined;
@@ -701,7 +737,7 @@ export async function computeBriefing(shopId: string, apiKey: string): Promise<{
   const [{ result: overdue }, { result: lowStock }, { result: staffActivity }] = await Promise.all([
     runTool("get_overdue_udhar", { minDays: 14 }, shopId),
     runTool("get_low_stock_items", {}, shopId),
-    runTool("get_staff_activity", { period: "week" }, shopId),
+    runTool("get_staff_activity", { days: 7 }, shopId),
   ]);
 
   const overdueCount = (overdue as { count?: number })?.count ?? 0;
