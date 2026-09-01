@@ -41,7 +41,16 @@ export class EscPosBuilder {
 
   /** Double-height + double-width text, for totals/headers that need to stand out. */
   doubleSize(on: boolean) {
-    return this.push([GS, 0x21, on ? 0x11 : 0x00]); // GS ! n
+    // Genuinely a DIFFERENT command family from GS! (character size) —
+    // ESC ! (select print mode) is a single bitmask byte covering
+    // bold/double-height/double-width/underline together, and cheap
+    // Bluetooth thermal printers implement it far more reliably than
+    // GS!'s multiplier extension. Confirmed necessary: a printer that
+    // couldn't handle GS! at ALL (regardless of value) was still
+    // printing a stray literal character even when this used GS! with
+    // the "safe" 0x11 value — the whole GS! family was the problem,
+    // not a specific byte within it.
+    return this.push([ESC, 0x21, on ? 0x30 : 0x00]); // ESC ! n — bit4+5 = double-height + double-width
   }
 
   /** ESC M n — selects the printer's built-in alternate character
@@ -69,27 +78,21 @@ export class EscPosBuilder {
    * Level 1 = normal size (Font A). Each step above that is one
    * multiplier larger in both width and height simultaneously. */
   sizeLevel(level: number) {
-    // Level 2 ("Large") is by far the most commonly selected step up
-    // from normal — routing it through the simple, universal
-    // doubleSize() on/off toggle instead of the raw multiplier-nibble
-    // encoding avoids a real compatibility problem: several cheap/
-    // generic thermal printers (common, low-cost Bluetooth models)
-    // don't fully implement GS! for arbitrary multiplier values and
-    // can echo the unrecognized parameter byte as literal printable
-    // text instead of applying it as a size command. doubleSize()
-    // uses only the well-established 0x00/0x11 values every ESC/POS
-    // printer genuinely supports.
-    if (level === 2) {
+    // GS! (character size) is the entire problem — confirmed on a
+    // real printer that echoes a stray literal character for ANY
+    // GS! value, not just unusual multiplier levels. So every level
+    // above Normal routes through ESC! (doubleSize) instead, which
+    // this same printer handles correctly. This does mean every
+    // "bigger than normal" level (2 through 7) now visually renders
+    // the same single double-size step rather than distinct
+    // multiplier sizes — a real tradeoff, but a working receipt beats
+    // a broken one with more size options.
+    if (level >= 2) {
       this.selectFont(false);
       return this.doubleSize(true);
     }
-    if (level === 1) {
-      this.selectFont(false);
-      return this.doubleSize(false);
-    }
     this.selectFont(level === 0);
-    const n = level === 0 ? 0 : Math.max(0, Math.min(7, level - 1));
-    return this.push([GS, 0x21, (n << 4) | n]);
+    return this.doubleSize(false);
   }
 
   underline(on: boolean) {
