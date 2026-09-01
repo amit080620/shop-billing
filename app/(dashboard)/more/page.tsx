@@ -107,6 +107,8 @@ export default async function MorePage() {
 
       {session.businessType === "salon" && (
         <MenuGroup title="Salon">
+          <MenuLink href="/salon/appointments" label="Appointments" sub="Book & manage customer visits" icon={SalonIcon} tone="secondary" />
+          <MenuLink href="/salon/settings/booking" label="Online booking" sub="Working hours & shareable booking link" icon={SalonIcon} tone="secondary" />
           <MenuLink href="/salon" label="Staff-wise revenue" sub="Who's bringing in how much" icon={SalonIcon} tone="secondary" />
         </MenuGroup>
       )}
