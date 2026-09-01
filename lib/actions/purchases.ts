@@ -5,6 +5,7 @@ import { requireSession } from "../auth";
 import { createSupabaseAdminClient } from "../supabase/admin";
 import { purchaseSchema, calculateTransactionTotals } from "../validation/schemas";
 import { determineSupplyType, round2 } from "../gst";
+import { findDuplicateProductAI } from "./duplicateCheck";
 
 export type ActionState = { error?: string } | null;
 
@@ -157,7 +158,7 @@ export async function createPurchaseAction(
   // price/GST for a purchase come from the vendor's own bill, not our catalog.
   const productIds = [...new Set(items.map((i) => i.productId).filter(Boolean))] as string[];
   const { data: dbProducts } = productIds.length
-    ? await admin.from("products").select("id, name, hsn_code, track_inventory, stock_quantity, is_pharma").eq("shop_id", session.shopId).in("id", productIds)
+    ? await admin.from("products").select("id, name, hsn_code, track_inventory, stock_quantity, is_pharma, price").eq("shop_id", session.shopId).in("id", productIds)
     : { data: [] as { id: string; name: string; hsn_code: string | null; track_inventory: boolean; stock_quantity: number; is_pharma: boolean }[] };
   const productMap = new Map((dbProducts ?? []).map((p) => [p.id, p]));
 
@@ -170,9 +171,30 @@ export async function createPurchaseAction(
   // shop almost always wants to mark it up before selling, but a
   // sensible non-zero starting point beats a blank one) — genuinely
   // editable afterwards from Products, same as any other item.
+  // Every existing product name — checked against any new/unmatched
+  // line BEFORE creating a fresh product, so "Mobile iPhone" bought
+  // today doesn't become a duplicate of an "iPhone Mobile" already in
+  // the catalog just because the vendor's bill (or a scan/voice
+  // entry) worded it differently. This is the actual fix for the
+  // duplicate-product problem: catching it at the one moment a
+  // duplicate could be CREATED, not after the fact.
+  const { data: allProductNames } = await admin.from("products").select("id, name").eq("shop_id", session.shopId);
+
+  const duplicatesAvoided: { typedAs: string; matchedTo: string; viaAI: boolean }[] = [];
   const resolvedItems = await Promise.all(
     items.map(async (item) => {
       if (item.productId && productMap.has(item.productId)) return item;
+
+      const existingMatch = await findDuplicateProductAI(item.description, allProductNames ?? []);
+      if (existingMatch) {
+        const existingProduct = productMap.get(existingMatch.id) ?? (await admin.from("products").select("id, name, hsn_code, track_inventory, stock_quantity, is_pharma, price").eq("id", existingMatch.id).single()).data;
+        if (existingProduct) {
+          productMap.set(existingProduct.id, existingProduct);
+          duplicatesAvoided.push({ typedAs: item.description, matchedTo: existingMatch.name, viaAI: existingMatch.viaAI });
+          return { ...item, productId: existingProduct.id };
+        }
+      }
+
       const { data: newProduct, error: newProductError } = await admin
         .from("products")
         .insert({
@@ -186,13 +208,33 @@ export async function createPurchaseAction(
           stock_quantity: 0,
           low_stock_threshold: 0,
         })
-        .select("id, name, hsn_code, track_inventory, stock_quantity, is_pharma")
+        .select("id, name, hsn_code, track_inventory, stock_quantity, is_pharma, price")
         .single();
       if (newProductError || !newProduct) return item; // best-effort — falls back to the old purchase-only-line behavior if this genuinely fails
       productMap.set(newProduct.id, newProduct);
       return { ...item, productId: newProduct.id };
     }),
   );
+
+  // Loss-prevention, not silent merging: buying the SAME product at a
+  // higher rate than before is completely normal (prices rise), but
+  // silently adding the new stock into the old total without a word
+  // means the shop keeper can easily keep selling at the OLD price —
+  // on a cost basis that no longer exists — until they lose money on
+  // every one of the new units without realizing why. A margin under
+  // 5% or a genuine loss (new cost at or above the current sale
+  // price) gets flagged here; anything healthier is left alone, since
+  // most price changes don't actually need a prompt.
+  const priceAlerts: { productName: string; newCost: number; currentSalePrice: number }[] = [];
+  for (const item of resolvedItems) {
+    if (!item.productId) continue;
+    const product = productMap.get(item.productId);
+    if (!product || !("price" in product)) continue;
+    const currentSalePrice = Number((product as { price: number }).price);
+    if (currentSalePrice > 0 && item.unitPrice >= currentSalePrice * 0.95) {
+      priceAlerts.push({ productName: product.name, newCost: item.unitPrice, currentSalePrice });
+    }
+  }
 
   const supplyType = determineSupplyType(session.shopStateCode, vendor.state_code);
 
@@ -298,7 +340,15 @@ export async function createPurchaseAction(
     }),
   );
 
-  redirect(`/vendors/${vendorId}`);
+  if (duplicatesAvoided.length > 0) {
+    console.log("Purchase: matched to existing products instead of creating duplicates", duplicatesAvoided);
+  }
+
+  const redirectUrl = new URL(`/vendors/${vendorId}`, "https://placeholder.local");
+  if (priceAlerts.length > 0) {
+    redirectUrl.searchParams.set("priceAlerts", encodeURIComponent(JSON.stringify(priceAlerts)));
+  }
+  redirect(`${redirectUrl.pathname}${redirectUrl.search}`);
 }
 
 /** Genuinely a separate dataset from payments — purchase transactions,

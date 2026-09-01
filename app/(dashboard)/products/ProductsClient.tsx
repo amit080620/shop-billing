@@ -143,6 +143,8 @@ export function ProductsClient({
   const [showCategoryForm, setShowCategoryForm] = useState(false);
   const [filter, setFilter] = useState<string>("all");
   const [isPending, startTransition] = useTransition();
+  const [confirmDuplicate, setConfirmDuplicate] = useState(false);
+  const productFormRef = useRef<HTMLFormElement>(null);
 
   const { showToast } = useToast();
   const [productState, productAction] = useActionState(
@@ -194,6 +196,7 @@ export function ProductsClient({
     setRequiresPrescription(false);
     setHasWarranty(false);
     setShowMoreOptions(false);
+    setConfirmDuplicate(false);
     setShowForm(true);
   }
 
@@ -205,6 +208,7 @@ export function ProductsClient({
     setRequiresPrescription(p.requiresPrescription);
     setHasWarranty(p.hasWarranty);
     setShowMoreOptions(!!(p.barcode || p.mrp != null || p.bulkMinQty != null || p.hsnCode || p.categoryId));
+    setConfirmDuplicate(false);
     setShowForm(true);
   }
 
@@ -381,9 +385,11 @@ export function ProductsClient({
         <div className="ray-pop max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-t-2xl bg-surface p-4 shadow-lg sm:rounded-2xl" onClick={(e) => e.stopPropagation()}>
         <form
           key={editingProduct?.id ?? "new"}
+          ref={productFormRef}
           action={productAction}
           className="flex flex-col gap-3"
         >
+          <input type="hidden" name="confirmDuplicate" value={confirmDuplicate ? "true" : "false"} />
           {editingProduct && (
             <p className="text-xs font-medium text-brand">{t("products.editing", { name: editingProduct.name })}</p>
           )}
@@ -728,8 +734,25 @@ export function ProductsClient({
           )}
           </>
           )}
-          {productState?.error && (
-            <p className="text-sm text-credit">{productState.error}</p>
+          {productState?.error?.startsWith("DUPLICATE_WARNING:") ? (
+            <div className="flex flex-col gap-2 rounded-lg border border-dashed border-brand bg-brand-soft p-3">
+              <p className="text-sm text-brand-text">{productState.error.replace("DUPLICATE_WARNING: ", "")}</p>
+              <button
+                type="button"
+                onClick={() => {
+                  setConfirmDuplicate(true);
+                  // Wait a tick for the hidden field's new value to
+                  // actually render before submitting, since setState
+                  // itself is async.
+                  setTimeout(() => productFormRef.current?.requestSubmit(), 0);
+                }}
+                className="self-start rounded-lg border border-brand px-3 py-1.5 text-xs font-medium text-brand"
+              >
+                Add it anyway
+              </button>
+            </div>
+          ) : (
+            productState?.error && <p className="text-sm text-credit">{productState.error}</p>
           )}
           <div className="flex gap-2">
             <SubmitButton

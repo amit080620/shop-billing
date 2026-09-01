@@ -5,6 +5,7 @@ import { requireSession, requireOwner } from "../auth";
 import { createSupabaseAdminClient } from "../supabase/admin";
 import { productSchema, categorySchema } from "../validation/schemas";
 import { logAuditEvent } from "../audit";
+import { findDuplicateProductAI } from "./duplicateCheck";
 
 export type ActionState = { error?: string; productId?: string } | null;
 
@@ -58,6 +59,20 @@ export async function createProductAction(
   }
 
   const admin = createSupabaseAdminClient();
+
+  // Catch "Mobile iPhone" vs "iPhone Mobile" (same product, different
+  // word order/typing) before it becomes two separate catalog
+  // entries with split stock and pricing — the actual complaint this
+  // is fixing. A soft block, not a hard one: confirmDuplicate lets
+  // the person go ahead anyway for a genuinely different product that
+  // just happens to sound similar.
+  if (formData.get("confirmDuplicate") !== "true") {
+    const { data: existingProducts } = await admin.from("products").select("id, name").eq("shop_id", session.shopId);
+    const duplicate = await findDuplicateProductAI(parsed.data.name, existingProducts ?? []);
+    if (duplicate) {
+      return { error: `DUPLICATE_WARNING: A similar product "${duplicate.name}" already exists. Add anyway, or edit that one instead?` };
+    }
+  }
 
   // If a categoryId was supplied, verify it actually belongs to this shop
   // before trusting it (§3.12 — never trust a client-supplied id).

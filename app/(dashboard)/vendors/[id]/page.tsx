@@ -2,15 +2,28 @@ import { notFound } from "next/navigation";
 import { requireSession } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { VendorLedgerClient } from "./VendorLedgerClient";
+import { PriceAlertBanner, type PriceAlert } from "./PriceAlertBanner";
 
 export default async function VendorLedgerPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ priceAlerts?: string }>;
 }) {
   const { id } = await params;
+  const { priceAlerts: priceAlertsRaw } = await searchParams;
   const session = await requireSession();
   const admin = createSupabaseAdminClient();
+
+  let priceAlerts: PriceAlert[] = [];
+  if (priceAlertsRaw) {
+    try {
+      priceAlerts = JSON.parse(decodeURIComponent(priceAlertsRaw));
+    } catch {
+      // malformed/tampered query param — just skip the banner, not worth failing the page over
+    }
+  }
 
   const { data: vendor } = await admin
     .from("vendors")
@@ -41,7 +54,9 @@ export default async function VendorLedgerPage({
   const balance = Math.max(0, totalPayable - totalPaidBack);
 
   return (
-    <VendorLedgerClient
+    <>
+      <PriceAlertBanner alerts={priceAlerts} />
+      <VendorLedgerClient
       vendor={{
         id: vendor.id,
         name: vendor.name,
@@ -66,6 +81,7 @@ export default async function VendorLedgerPage({
         note: p.note,
         createdAt: p.created_at,
       }))}
-    />
+      />
+    </>
   );
 }

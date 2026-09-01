@@ -28,14 +28,31 @@ function levenshteinDistance(a: string, b: string): number {
   return prevRow[n];
 }
 
-/** 0 (completely different) to 1 (identical), case-insensitive. */
+/** 0 (completely different) to 1 (identical), case-insensitive. Takes
+ * the BETTER of two different signals:
+ *  - character-level edit distance — catches typos/OCR misreads
+ *    ("Tornato" vs "Tomato")
+ *  - word-set overlap, order-invariant — catches the SAME words typed
+ *    in a different order ("Mobile iPhone" vs "iPhone Mobile"), which
+ *    scores badly on pure character distance since almost every
+ *    character position ends up misaligned even though a person
+ *    would instantly recognize it as the same product. */
 export function similarity(a: string, b: string): number {
   const x = a.trim().toLowerCase();
   const y = b.trim().toLowerCase();
   if (x === y) return 1;
   const maxLen = Math.max(x.length, y.length);
-  if (maxLen === 0) return 1;
-  return 1 - levenshteinDistance(x, y) / maxLen;
+  const charScore = maxLen === 0 ? 1 : 1 - levenshteinDistance(x, y) / maxLen;
+
+  const wordsX = x.split(/\s+/).filter(Boolean);
+  const wordsY = y.split(/\s+/).filter(Boolean);
+  const setX = new Set(wordsX);
+  const setY = new Set(wordsY);
+  const intersection = [...setX].filter((w) => setY.has(w)).length;
+  const union = new Set([...setX, ...setY]).size;
+  const wordScore = union === 0 ? 0 : intersection / union; // Jaccard similarity — order genuinely doesn't matter here
+
+  return Math.max(charScore, wordScore);
 }
 
 /** Finds the closest match for a scanned/OCR'd name among a shop's own
