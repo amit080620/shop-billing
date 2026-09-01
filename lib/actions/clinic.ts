@@ -104,11 +104,22 @@ export async function saveBookingSettingsAction(settings: {
 }): Promise<{ error?: string }> {
   const session = await requireSession();
   const admin = createSupabaseAdminClient();
+
+  // Belt-and-braces: the public_token column has a database-level
+  // default, but an existing row from before that default existed
+  // (or any other edge case) could still end up without one — and a
+  // missing token means the shareable link silently can't be shown at
+  // all. Checking and filling it in here means that can never happen,
+  // regardless of the DB default's own history.
+  const { data: existing } = await admin.from("booking_settings").select("public_token").eq("shop_id", session.shopId).maybeSingle();
+  const publicToken = existing?.public_token || crypto.randomUUID();
+
   const { error } = await admin.from("booking_settings").upsert({
     shop_id: session.shopId,
     slot_duration_minutes: settings.slotDurationMinutes,
     working_hours: settings.workingHours,
     is_public_booking_enabled: settings.isPublicBookingEnabled,
+    public_token: publicToken,
     doctor_name: settings.doctorName || null,
     doctor_qualifications: settings.doctorQualifications || null,
     unavailable_dates: settings.unavailableDates ?? [],
