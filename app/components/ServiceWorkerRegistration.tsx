@@ -2,30 +2,31 @@
 
 import { useEffect } from "react";
 
+/** DIAGNOSTIC + likely permanent fix: after several rounds of
+ * service-worker cache versioning fixes that didn't fully resolve a
+ * persistent, mobile-data-only "Cannot read properties of undefined
+ * (reading 'call')" crash, this actively REMOVES any existing service
+ * worker and its caches instead of registering a new one. Two
+ * reasons this is the right call, not just a workaround:
+ *  1. It's the cleanest way to find out whether the SW was ever
+ *     really the cause, or whether something else entirely (a mobile
+ *     carrier's network-level compression/proxy corrupting JS in
+ *     transit, which several rounds of cache-version fixes couldn't
+ *     touch at all) was actually responsible.
+ *  2. A billing app needs live, accurate prices/stock/GST rules —
+ *     aggressively caching JS for offline use was never a great
+ *     tradeoff here to begin with. Removing it removes the whole
+ *     class of stale-cache bug, not just this specific symptom. */
 export function ServiceWorkerRegistration() {
   useEffect(() => {
     if (!("serviceWorker" in navigator)) return;
 
-    navigator.serviceWorker.register("/sw.js").catch(() => {
-      // Installability is a nice-to-have, not a requirement — fail silently.
+    navigator.serviceWorker.getRegistrations().then((registrations) => {
+      registrations.forEach((registration) => registration.unregister());
     });
-
-    // When a new deploy activates a new service worker, the OLD tab is
-    // still running the OLD JS runtime — reopening/resuming it can hit
-    // a version mismatch between the fresh HTML/RSC payload and the
-    // stale JS chunks already in memory, which is exactly what shows
-    // up as an unexplained "client-side exception" right after an
-    // update. Reloading once when control changes keeps the running
-    // app in sync with whatever was just deployed. `refreshing` guards
-    // against a reload loop if this fires more than once.
-    let refreshing = false;
-    const onControllerChange = () => {
-      if (refreshing) return;
-      refreshing = true;
-      window.location.reload();
-    };
-    navigator.serviceWorker.addEventListener("controllerchange", onControllerChange);
-    return () => navigator.serviceWorker.removeEventListener("controllerchange", onControllerChange);
+    if ("caches" in window) {
+      caches.keys().then((keys) => keys.forEach((key) => caches.delete(key)));
+    }
   }, []);
 
   return null;
