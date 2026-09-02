@@ -110,7 +110,7 @@ export function CustomersClient({
     <div className="flex flex-col gap-4">
       <PageHeader
         title={isClinic ? "Patients" : isGym ? "Members" : "Customers"}
-        // eslint-disable-next-line @next/next/no-img-element -- small branded SVG icon
+         
         icon={<Users size={17} strokeWidth={1.8} />}
         action={
           <button onClick={() => setShowForm((v) => !v)} className="btn-primary-sm">

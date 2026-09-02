@@ -263,7 +263,7 @@ export function ProductsClient({
     <div className="flex flex-col gap-4">
       <PageHeader
         title={terminology.productPlural}
-        // eslint-disable-next-line @next/next/no-img-element -- small branded SVG icon
+         
         icon={<Package size={17} strokeWidth={1.8} />}
         action={
           <div className="flex gap-1.5">

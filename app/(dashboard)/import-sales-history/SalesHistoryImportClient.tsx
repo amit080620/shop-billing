@@ -36,7 +36,7 @@ export function SalesHistoryImportClient() {
       const files = Array.from(fileList);
       const collected: DraftEntry[] = [];
       for (const file of files) {
-        // eslint-disable-next-line no-await-in-loop -- deliberately sequential, one page's AI pass at a time
+         
         const result = await scanOnePage(file);
         if (result.errorType) aiStatusRef.current?.reportError(result.errorType);
         if (result.error === "not_configured") {

@@ -227,7 +227,7 @@ export function MenuScanClient() {
     const files = Array.from(fileList);
     setItems([]);
     for (const file of files) {
-      // eslint-disable-next-line no-await-in-loop -- deliberately sequential, one photo's OCR/AI pass at a time
+       
       await handleFile(file, true, true);
     }
   }

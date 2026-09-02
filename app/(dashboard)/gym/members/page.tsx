@@ -71,7 +71,7 @@ export default async function GymMembersPage({
               className={`flex shrink-0 items-center gap-1 rounded-full border px-3 py-1.5 text-xs font-medium ${!showMineOnly ? "border-brand bg-brand-soft text-brand-text" : "border-border text-muted"}`}
               style={!showMineOnly ? { boxShadow: "-2px -2px 5px var(--neu-light), 2px 2px 5px var(--neu-dark)" } : undefined}
             >
-              {/* eslint-disable-next-line @next/next/no-img-element -- small branded SVG icon */}
+              { }
               <Filter size={11} strokeWidth={2} /> All members
             </Link>
             <Link

@@ -2,7 +2,6 @@
 
 import { requireSession } from "../auth";
 import { createSupabaseAdminClient } from "../supabase/admin";
-import { findOrCreateCustomerByPhone } from "./customers";
 import { financialYearFor } from "../gst";
 
 export type SalesHistoryEntry = { name: string; date: string; amount: number; fullyPaid: boolean };

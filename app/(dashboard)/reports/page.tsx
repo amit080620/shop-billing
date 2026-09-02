@@ -11,7 +11,7 @@ export default async function ReportsPage() {
     <div className="flex flex-col gap-3">
       <PageHeader
         title="Reports"
-        // eslint-disable-next-line @next/next/no-img-element -- small branded SVG icon
+         
         icon={<BarChart3 size={17} strokeWidth={1.8} />}
       />
 

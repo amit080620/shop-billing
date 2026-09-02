@@ -89,7 +89,7 @@ export function FloatingAssistant({ enabled }: { enabled: boolean }) {
     }
     window.visualViewport?.addEventListener("resize", keepAboveKeyboard);
     return () => window.visualViewport?.removeEventListener("resize", keepAboveKeyboard);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [open]);
 
   useEffect(() => {

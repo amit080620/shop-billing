@@ -24,7 +24,7 @@ import {
   Gem,
   Store,
   Stethoscope,
-  Palette,
+
   Wallet,
   Building2,
   Dumbbell,
@@ -224,7 +224,6 @@ export default async function MorePage() {
         <MenuLink href="/fast-billing-settings" label="Fast billing" sub="Tap-to-add counter for busy hours" icon={ZapIcon} tone="secondary" />
       </MenuGroup>
 
-
       <div className="neu-card px-4 py-3.5 text-sm text-muted">
         {t("more.loggedInAs")} {session.staffName} ({session.email})
       </div>
@@ -383,9 +382,6 @@ function ClinicIcon({ className }: { className?: string }) {
 }
 function MedicineLibraryIcon({ className }: { className?: string }) {
   return <Pill className={className} size={18} strokeWidth={1.8} />;
-}
-function InvoiceDesignIcon({ className }: { className?: string }) {
-  return <Palette className={className} size={18} strokeWidth={1.8} />;
 }
 function PettyCashIcon({ className }: { className?: string }) {
   return <Wallet className={className} size={18} strokeWidth={1.8} />;

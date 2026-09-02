@@ -25,7 +25,7 @@ export default async function StockAuditListPage() {
       <PageHeader
         title="Stock audit"
         subtitle="Count what's actually on the shelf, reconcile against the system."
-        // eslint-disable-next-line @next/next/no-img-element -- small branded SVG icon
+         
         icon={<ClipboardCheck size={17} strokeWidth={1.8} />}
       />
 

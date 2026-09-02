@@ -112,6 +112,7 @@ export async function getLowStockReorderItemsAction(): Promise<LowStockReorderIt
   return withPrediction
     .filter((p) => p.include)
     .sort((a, b) => (a.daysUntilStockout ?? 999) - (b.daysUntilStockout ?? 999))
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars -- destructuring `include` off deliberately: it's an internal filtering flag, not part of the returned shape
     .map(({ include, ...rest }) => rest);
 }
 

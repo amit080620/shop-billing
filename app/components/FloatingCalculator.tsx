@@ -114,7 +114,7 @@ export function FloatingCalculator({ enabled }: { enabled: boolean }) {
     }
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [open]);
 
   function onDragStart(clientX: number, clientY: number) {
@@ -180,7 +180,7 @@ export function FloatingCalculator({ enabled }: { enabled: boolean }) {
         };
       });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [open]);
 
   // Opening picks up whatever the active bill total is RIGHT NOW, and

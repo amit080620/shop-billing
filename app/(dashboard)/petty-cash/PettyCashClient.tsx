@@ -80,7 +80,7 @@ export function PettyCashClient({ entries }: { entries: Entry[] }) {
             + Expense
           </button>
         }
-        // eslint-disable-next-line @next/next/no-img-element -- small branded SVG icon
+         
         icon={<Wallet size={17} strokeWidth={1.8} />}
       />
 

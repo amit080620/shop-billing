@@ -57,7 +57,7 @@ export default async function CatalogOrdersPage({
     <div className="flex flex-col gap-4">
       <PageHeader
         title="Catalog orders"
-        // eslint-disable-next-line @next/next/no-img-element -- small branded SVG icon
+         
         icon={<ShoppingBag size={17} strokeWidth={1.8} />}
       />
       <Link href="/catalog-settings" className="text-sm text-muted">

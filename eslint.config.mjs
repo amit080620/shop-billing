@@ -20,6 +20,15 @@ const eslintConfig = [
       "next-env.d.ts",
     ],
   },
+  {
+    // Plain Node scripts run by npm hooks (prebuild), outside the
+    // Next.js bundler — CommonJS require() is genuinely correct here,
+    // not an oversight, so the ESM-import rule shouldn't apply.
+    files: ["scripts/**/*.js"],
+    rules: {
+      "@typescript-eslint/no-require-imports": "off",
+    },
+  },
 ];
 
 export default eslintConfig;

@@ -51,7 +51,7 @@ export function RemindersClient({
       <PageHeader
         title="Udhaar reminders"
         subtitle="Select customers (or Select all), then work through the list — you still hit Send in WhatsApp yourself for each one."
-        // eslint-disable-next-line @next/next/no-img-element -- small branded SVG icon
+         
         icon={<Bell size={17} strokeWidth={1.8} />}
       />
 

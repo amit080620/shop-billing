@@ -351,12 +351,29 @@ export function NewBillClient({
         for (let i = 0; i < item.quantity; i++) addProduct(product);
       }
 
+      // "Amit ke liye bill banao" — switch the bill to that customer
+      // automatically. Only when the spoken name genuinely matches an
+      // existing customer; an unrecognized name is reported back
+      // rather than silently creating a new customer record from a
+      // possibly-misheard name.
+      let customerNote = "";
+      if (result.customer) {
+        const matched = result.customer.matchedId ? customers.find((c) => c.id === result.customer!.matchedId) : undefined;
+        if (matched) {
+          setCustomerMode("existing");
+          setSelectedCustomer(matched);
+          customerNote = ` Bill ${matched.name} ke naam par hai.`;
+        } else {
+          customerNote = ` "${result.customer.spokenName}" naam ka customer nahi mila — haath se chunein.`;
+        }
+      }
+
       setVoiceStatus(
-        unmatched.length > 0
+        (unmatched.length > 0
           ? t("voice.addedSome", { added: result.items.length - unmatched.length, missing: unmatched.join(", ") })
-          : t("voice.addedAll", { count: result.items.length }),
+          : t("voice.addedAll", { count: result.items.length })) + customerNote,
       );
-      setTimeout(() => setVoiceStatus(null), 4000);
+      setTimeout(() => setVoiceStatus(null), 5000);
     };
     recognition.onerror = (event) => {
       setIsListening(false);
