@@ -1,7 +1,9 @@
 "use client";
 
-import { Cake, MessageCircle } from "lucide-react";
+import { useState } from "react";
+import { Cake, MessageCircle, Loader2 } from "lucide-react";
 import { buildWhatsAppLink } from "@/lib/whatsapp";
+import { generatePersonalizedBirthdayMessageAction } from "@/lib/actions/birthdayMessage";
 
 type BirthdayCustomer = {
   id: string;
@@ -20,10 +22,12 @@ export function BirthdayRow({
   shopName: string;
   isToday?: boolean;
 }) {
-  function greet() {
-    const message = isToday
-      ? `Happy birthday, ${customer.name}! 🎉 Wishing you a wonderful year ahead — from all of us at ${shopName}.`
-      : `Hi ${customer.name}, wishing you an early happy birthday from ${shopName}! 🎉`;
+  const [isSending, setIsSending] = useState(false);
+
+  async function greet() {
+    setIsSending(true);
+    const { message } = await generatePersonalizedBirthdayMessageAction(customer.id, shopName, isToday);
+    setIsSending(false);
     window.open(buildWhatsAppLink(customer.phone, message), "_blank");
   }
 
@@ -45,9 +49,10 @@ export function BirthdayRow({
       </div>
       <button
         onClick={greet}
-        className="flex shrink-0 items-center gap-1.5 rounded-lg bg-[#25D366] px-3 py-1.5 text-xs font-medium text-white"
+        disabled={isSending}
+        className="flex shrink-0 items-center gap-1.5 rounded-lg bg-[#25D366] px-3 py-1.5 text-xs font-medium text-white disabled:opacity-60"
       >
-        <MessageCircle size={13} /> Wish
+        {isSending ? <Loader2 size={13} className="animate-spin" /> : <MessageCircle size={13} />} Wish
       </button>
     </li>
   );

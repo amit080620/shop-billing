@@ -120,6 +120,14 @@ const TOOLS = [
   {
     type: "function",
     function: {
+      name: "get_data_health_check",
+      description: "Data-quality issues across the catalog and customer list — missing HSN codes, missing phone numbers, products with no price, products with zero stock threshold. Use this when asked to check for data problems, cleanup needed, or 'is my data okay'.",
+      parameters: { type: "object", properties: {} },
+    },
+  },
+  {
+    type: "function",
+    function: {
       name: "get_gst_summary",
       description: "GST filing summary for a period — taxable value, CGST, SGST, IGST, and total GST collected. Use this for any GST/tax filing related question.",
       parameters: {
@@ -389,6 +397,26 @@ async function runTool(name: string, args: Record<string, unknown>, shopId: stri
         topSellers: ranked.slice(0, 5).map(([n]) => n),
         slowMovingStock: slowMoving,
         instruction: "Write a short, catchy WhatsApp Status message (2-4 lines, use emojis naturally) promoting this shop's offer, mentioning the top sellers and/or slow-moving stock as relevant.",
+      },
+    };
+  }
+
+  if (name === "get_data_health_check") {
+    const [{ data: missingHsn }, { data: noPhone }, { data: zeroPrice }, { data: zeroThreshold }] = await Promise.all([
+      admin.from("products").select("name").eq("shop_id", shopId).is("hsn_code", null).limit(20),
+      admin.from("customers").select("name").eq("shop_id", shopId).eq("phone", "").limit(20),
+      admin.from("products").select("name").eq("shop_id", shopId).eq("price", 0).limit(20),
+      admin.from("products").select("name").eq("shop_id", shopId).eq("track_inventory", true).eq("low_stock_threshold", 0).limit(20),
+    ]);
+    return {
+      result: {
+        missingHsnCount: missingHsn?.length ?? 0,
+        missingHsnExamples: (missingHsn ?? []).slice(0, 5).map((p) => p.name),
+        customersWithoutPhoneCount: noPhone?.length ?? 0,
+        zeroPriceCount: zeroPrice?.length ?? 0,
+        zeroPriceExamples: (zeroPrice ?? []).slice(0, 5).map((p) => p.name),
+        noLowStockAlertCount: zeroThreshold?.length ?? 0,
+        noLowStockAlertExamples: (zeroThreshold ?? []).slice(0, 5).map((p) => p.name),
       },
     };
   }

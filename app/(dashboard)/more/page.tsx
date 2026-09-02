@@ -218,6 +218,7 @@ export default async function MorePage() {
         )}
         <MenuLink href="/festivals" label="Festival planner" sub="Upcoming festivals & stock-up reminders" icon={FestivalIcon} tone="secondary" />
         <MenuLink href="/festival-poster" label="Festival poster" sub="AI writes the offer, get a ready-to-share design" icon={FestivalIcon} tone="secondary" />
+        <MenuLink href="/profit-leak" label="Profit Leak Detector" sub="Aapka paisa kahan phansa hai — ek nazar mein" icon={FestivalIcon} tone="danger" />
         <MenuLink href="/loyalty-settings" label="Loyalty program" sub="Reward regulars for coming back" icon={GiftIcon} tone="secondary" />
         <MenuLink href="/fast-billing-settings" label="Fast billing" sub="Tap-to-add counter for busy hours" icon={ZapIcon} tone="secondary" />
       </MenuGroup>

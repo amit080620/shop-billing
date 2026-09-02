@@ -7,6 +7,7 @@ import { SalesTrendChartLazy as SalesTrendChart, MiniCalendarLazy as MiniCalenda
 import { getTranslator } from "@/lib/i18n/server";
 import { isModuleEnabled } from "@/lib/modules";
 import { FESTIVALS } from "@/lib/festivals";
+import { getProfitLeakAction } from "@/lib/actions/profitLeak";
 import {
   Plus,
   AlertTriangle,
@@ -220,9 +221,22 @@ async function RetailHome({
   const outstandingPayable = Math.max(0, totalPayable - totalVendorPaid);
 
   const trend = buildSevenDayTrend(weekBills.data ?? [], "created_at");
+  const profitLeak = await getProfitLeakAction();
 
   return (
     <>
+      {profitLeak.totalAtRisk > 0 && (
+        <Link
+          href="/profit-leak"
+          className="flex items-center justify-between gap-3 rounded-xl bg-gradient-to-r from-danger to-[#7c1d1d] p-4 text-white"
+        >
+          <div className="min-w-0">
+            <p className="text-xs font-medium opacity-90">⚠️ Aapka paisa risk mein hai</p>
+            <p className="text-xl font-extrabold">{formatMoney(profitLeak.totalAtRisk)}</p>
+          </div>
+          <span className="shrink-0 rounded-lg bg-white/20 px-3 py-1.5 text-xs font-semibold">Dekhein →</span>
+        </Link>
+      )}
       {expiringCount > 0 && (
         <Link
           href="/pharmacy/expiry"

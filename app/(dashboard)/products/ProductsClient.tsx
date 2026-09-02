@@ -16,7 +16,8 @@ import {
   generateBarcodeAction,
   uploadProductImageAction,
 } from "@/lib/actions/products";
-import { Package, Camera, Tag, ShieldCheck, Layers } from "lucide-react";
+import { Package, Camera, Tag, ShieldCheck, Layers, Sparkles, Loader2 } from "lucide-react";
+import { suggestProductPriceAction } from "@/lib/actions/priceSuggestion";
 import { formatMoney } from "@/lib/format";
 import { EmptyState } from "@/app/components/EmptyState";
 import { useToast } from "@/app/components/Toast";
@@ -144,6 +145,8 @@ export function ProductsClient({
   const [filter, setFilter] = useState<string>("all");
   const [isPending, startTransition] = useTransition();
   const [confirmDuplicate, setConfirmDuplicate] = useState(false);
+  const [isSuggestingPrice, setIsSuggestingPrice] = useState(false);
+  const [priceSuggestionNote, setPriceSuggestionNote] = useState<string | null>(null);
   const productFormRef = useRef<HTMLFormElement>(null);
 
   const { showToast } = useToast();
@@ -197,6 +200,7 @@ export function ProductsClient({
     setHasWarranty(false);
     setShowMoreOptions(false);
     setConfirmDuplicate(false);
+    setPriceSuggestionNote(null);
     setShowForm(true);
   }
 
@@ -209,6 +213,7 @@ export function ProductsClient({
     setHasWarranty(p.hasWarranty);
     setShowMoreOptions(!!(p.barcode || p.mrp != null || p.bulkMinQty != null || p.hsnCode || p.categoryId));
     setConfirmDuplicate(false);
+    setPriceSuggestionNote(null);
     setShowForm(true);
   }
 
@@ -394,6 +399,45 @@ export function ProductsClient({
             <p className="text-xs font-medium text-brand">{t("products.editing", { name: editingProduct.name })}</p>
           )}
           <Field id="product-name-input" name="name" label={t("products.name")} placeholder={t("products.namePlaceholder")} required defaultValue={editingProduct?.name} />
+          {!editingProduct && (
+            <div className="flex flex-col gap-1.5">
+              <button
+                type="button"
+                disabled={isSuggestingPrice}
+                onClick={async () => {
+                  const nameValue = (document.getElementById("product-name-input") as HTMLInputElement | null)?.value?.trim();
+                  if (!nameValue) return;
+                  setIsSuggestingPrice(true);
+                  setPriceSuggestionNote(null);
+                  const result = await suggestProductPriceAction(nameValue);
+                  setIsSuggestingPrice(false);
+                  if (result.error === "not_configured") {
+                    setPriceSuggestionNote("Free Groq AI key set up karni hogi (Settings).");
+                    return;
+                  }
+                  if (!result.suggestion) {
+                    setPriceSuggestionNote(result.error ?? "Suggest nahi kar paye.");
+                    return;
+                  }
+                  const { price, gstPercent, reasoning } = result.suggestion;
+                  if (price !== null) {
+                    const priceInput = document.getElementById("product-price-input") as HTMLInputElement | null;
+                    if (priceInput) priceInput.value = String(price);
+                  }
+                  if (gstPercent !== null) {
+                    const gstSelect = document.getElementById("product-gst-select") as HTMLSelectElement | null;
+                    if (gstSelect) gstSelect.value = String(gstPercent);
+                  }
+                  setPriceSuggestionNote(reasoning || (price === null ? "Similar product catalog mein nahi mila." : "Suggested — verify kar lein."));
+                }}
+                className="flex w-fit items-center gap-1.5 rounded-lg border border-dashed border-brand px-2.5 py-1.5 text-xs font-medium text-brand disabled:opacity-60"
+              >
+                {isSuggestingPrice ? <Loader2 size={13} className="animate-spin" /> : <Sparkles size={13} />}
+                {isSuggestingPrice ? "Dekh rahe hain…" : "Price/GST suggest karein (AI)"}
+              </button>
+              {priceSuggestionNote && <p className="text-[11px] text-muted">{priceSuggestionNote}</p>}
+            </div>
+          )}
           {["pharmacy", "clinic"].includes(businessType) && !editingProduct && (
             <div className="flex flex-col gap-1">
               <SearchableSelect
@@ -413,10 +457,11 @@ export function ProductsClient({
             </div>
           )}
           <div className="grid grid-cols-2 gap-3">
-            <Field name="price" label={t("products.price")} type="number" step="0.01" min="0" required defaultValue={editingProduct ? String(editingProduct.price) : undefined} />
+            <Field id="product-price-input" name="price" label={t("products.price")} type="number" step="0.01" min="0" required defaultValue={editingProduct ? String(editingProduct.price) : undefined} />
             <label className="flex flex-col gap-1.5 text-sm">
               <span className="font-medium text-foreground">{t("products.gstPercent")}</span>
               <select
+                id="product-gst-select"
                 name="gstPercent"
                 defaultValue={editingProduct ? String(editingProduct.gstPercent) : "0"}
                 className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-brand"
