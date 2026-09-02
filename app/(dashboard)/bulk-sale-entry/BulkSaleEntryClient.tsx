@@ -67,7 +67,7 @@ export function BulkSaleEntryClient() {
               <input
                 value={row.name}
                 onChange={(e) => updateRow(row.id, { name: e.target.value })}
-                placeholder="Customer name"
+                placeholder="Customer ka naam"
                 className="rounded-lg px-2.5 py-1.5 text-sm outline-none"
               />
               <div className="flex gap-1.5">
@@ -88,7 +88,7 @@ export function BulkSaleEntryClient() {
               </div>
               <label className="flex items-center gap-1.5 text-xs text-muted">
                 <input type="checkbox" checked={row.fullyPaid} onChange={(e) => updateRow(row.id, { fullyPaid: e.target.checked })} className="h-4 w-4 rounded border-border" />
-                Fully paid (uncheck for udhar)
+                Poora paid (udhar ke liye uncheck karein)
               </label>
             </div>
             <button onClick={() => removeRow(row.id)} disabled={rows.length === 1} aria-label="Remove row" className="shrink-0 p-1 text-muted disabled:opacity-30">
@@ -99,11 +99,11 @@ export function BulkSaleEntryClient() {
       </ul>
 
       <button onClick={addRow} className="flex items-center justify-center gap-1.5 rounded-lg border border-dashed border-border px-3 py-2.5 text-sm font-medium text-brand">
-        <Plus size={15} /> Add row
+        <Plus size={15} /> Row jodein
       </button>
 
       <button onClick={saveAll} disabled={isSaving} className="btn-primary disabled:opacity-60">
-        {isSaving ? "Saving…" : `Save ${rows.filter((r) => r.name.trim() && r.amount > 0).length} sale(s)`}
+        {isSaving ? "Save kar rahe hain…" : `${rows.filter((r) => r.name.trim() && r.amount > 0).length} sale save karein`}
       </button>
     </div>
   );

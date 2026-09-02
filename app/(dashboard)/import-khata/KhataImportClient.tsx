@@ -133,7 +133,7 @@ export function KhataImportClient() {
           className="btn-primary flex flex-1 items-center justify-center gap-2 disabled:opacity-60"
         >
           {isScanning ? <Loader2 size={16} className="animate-spin" /> : <Camera size={16} />}
-          {isScanning ? "Reading…" : "Take photos"}
+          {isScanning ? "Padh rahe hain…" : "Photo kheenchein"}
         </button>
         <button
           type="button"
@@ -142,7 +142,7 @@ export function KhataImportClient() {
           className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-brand px-3 py-2.5 text-sm font-medium text-brand disabled:opacity-60"
         >
           <ImageIcon size={16} />
-          From gallery
+          Gallery se chunein
         </button>
       </div>
       <div className="flex justify-center">
@@ -172,14 +172,14 @@ export function KhataImportClient() {
                   <input
                     value={entry.name}
                     onChange={(e) => updateEntry(entry.id, { name: e.target.value })}
-                    placeholder="Customer name"
+                    placeholder="Customer ka naam"
                     className="rounded-lg px-2.5 py-1.5 text-sm outline-none"
                   />
                   <div className="flex gap-1.5">
                     <input
                       value={entry.phone}
                       onChange={(e) => updateEntry(entry.id, { phone: e.target.value.replace(/\D/g, "").slice(0, 10) })}
-                      placeholder="Phone (optional)"
+                      placeholder="Phone (agar hai)"
                       inputMode="numeric"
                       className="flex-1 rounded-lg border border-border px-2.5 py-1.5 text-xs outline-none focus:border-brand"
                     />
@@ -187,7 +187,7 @@ export function KhataImportClient() {
                       type="number"
                       value={entry.amount || ""}
                       onChange={(e) => updateEntry(entry.id, { amount: Number(e.target.value) || 0 })}
-                      placeholder="Amount owed (₹)"
+                      placeholder="Kitna udhar hai (₹)"
                       className="w-32 rounded-lg border border-border px-2.5 py-1.5 text-xs outline-none focus:border-brand"
                     />
                   </div>
@@ -199,7 +199,7 @@ export function KhataImportClient() {
             ))}
           </ul>
           <button onClick={saveAll} disabled={isSaving} className="btn-primary disabled:opacity-60">
-            {isSaving ? "Saving…" : `Import ${entries.filter((e) => e.include).length} customer(s)`}
+            {isSaving ? "Save kar rahe hain…" : `${entries.filter((e) => e.include).length} customer import karein`}
           </button>
         </>
       )}

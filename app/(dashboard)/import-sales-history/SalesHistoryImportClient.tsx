@@ -134,7 +134,7 @@ export function SalesHistoryImportClient() {
           className="btn-primary flex flex-1 items-center justify-center gap-2 disabled:opacity-60"
         >
           {isScanning ? <Loader2 size={16} className="animate-spin" /> : <Camera size={16} />}
-          {isScanning ? "Reading…" : "Take photos"}
+          {isScanning ? "Padh rahe hain…" : "Photo kheenchein"}
         </button>
         <button
           type="button"
@@ -143,7 +143,7 @@ export function SalesHistoryImportClient() {
           className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-brand px-3 py-2.5 text-sm font-medium text-brand disabled:opacity-60"
         >
           <ImageIcon size={16} />
-          From gallery
+          Gallery se chunein
         </button>
       </div>
       <div className="flex justify-center">
@@ -173,7 +173,7 @@ export function SalesHistoryImportClient() {
                   <input
                     value={entry.name}
                     onChange={(e) => updateEntry(entry.id, { name: e.target.value })}
-                    placeholder="Customer name"
+                    placeholder="Customer ka naam"
                     className="rounded-lg px-2.5 py-1.5 text-sm outline-none"
                   />
                   <div className="flex gap-1.5">
@@ -194,7 +194,7 @@ export function SalesHistoryImportClient() {
                   </div>
                   <label className="flex items-center gap-1.5 text-xs text-muted">
                     <input type="checkbox" checked={entry.fullyPaid} onChange={(e) => updateEntry(entry.id, { fullyPaid: e.target.checked })} className="h-4 w-4 rounded border-border" />
-                    Fully paid at the time (uncheck if this was on udhar)
+                    Uss waqt poora paid tha (agar udhar tha to uncheck karein)
                   </label>
                 </div>
                 <button onClick={() => removeEntry(entry.id)} aria-label="Remove" className="shrink-0 p-1 text-muted">
@@ -204,7 +204,7 @@ export function SalesHistoryImportClient() {
             ))}
           </ul>
           <button onClick={saveAll} disabled={isSaving} className="btn-primary disabled:opacity-60">
-            {isSaving ? "Saving…" : `Import ${entries.filter((e) => e.include).length} sale(s)`}
+            {isSaving ? "Save kar rahe hain…" : `${entries.filter((e) => e.include).length} sale import karein`}
           </button>
         </>
       )}

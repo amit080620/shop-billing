@@ -325,11 +325,11 @@ export function NewBillClient({
     recognition.onresult = async (event) => {
       const transcript = event.results[0]?.[0]?.transcript ?? "";
       if (!transcript.trim()) return;
-      setVoiceStatus("Reading order…");
+      setVoiceStatus(t("voice.reading"));
       const result = await parseVoiceOrderAction(transcript);
       if (result.errorType) voiceStatusRef.current?.reportError(result.errorType);
       if (result.error === "not_configured") {
-        setVoiceStatus("Voice billing needs the free Groq AI key set up first.");
+        setVoiceStatus(t("voice.notConfigured"));
         return;
       }
       if (result.error || !result.items) {
@@ -337,7 +337,7 @@ export function NewBillClient({
         return;
       }
       if (result.items.length === 0) {
-        setVoiceStatus("Didn't catch any items — try again.");
+        setVoiceStatus(t("voice.noItems"));
         return;
       }
 
@@ -353,8 +353,8 @@ export function NewBillClient({
 
       setVoiceStatus(
         unmatched.length > 0
-          ? `Added ${result.items.length - unmatched.length} item(s). Couldn't find: ${unmatched.join(", ")} — add manually.`
-          : `Added ${result.items.length} item(s) ✓`,
+          ? t("voice.addedSome", { added: result.items.length - unmatched.length, missing: unmatched.join(", ") })
+          : t("voice.addedAll", { count: result.items.length }),
       );
       setTimeout(() => setVoiceStatus(null), 4000);
     };
@@ -593,7 +593,7 @@ export function NewBillClient({
                 isListening ? "animate-pulse border-danger bg-danger-soft text-danger" : "border-brand bg-brand-soft text-brand-text"
               }`}
             >
-              <Mic size={14} /> {isListening ? "Listening…" : "Speak items (e.g. \"2 samosa, 1 chai\")"}
+              <Mic size={14} /> {isListening ? t("voice.listening") : t("voice.speakItems")}
             </button>
           )}
           {voiceSupported && (

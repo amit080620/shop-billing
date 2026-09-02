@@ -61,7 +61,7 @@ export function KhataAssistantChat({ customerId }: { customerId: string }) {
       setNotConfigured(true);
       return;
     }
-    setMessages((prev) => [...prev, { role: "assistant", text: result.answer ?? result.error ?? "Something went wrong." }]);
+    setMessages((prev) => [...prev, { role: "assistant", text: result.answer ?? result.error ?? "Kuch gadbad ho gayi." }]);
   }
 
   if (notConfigured) return null; // no key set up — quietly omit rather than show a broken chat to a customer

@@ -35,6 +35,16 @@ export const translations: Record<Lang, Record<string, string>> = {
     "more.settings": "GST & shop profile",
     "more.settings.sub": "GSTIN, state, logo, invoice numbering",
     "more.language": "Language",
+
+    // Voice billing
+    "voice.reading": "Reading order…",
+    "voice.notConfigured": "Voice billing needs the free Groq AI key set up first.",
+    "voice.noItems": "Didn't catch any items — try again.",
+    "voice.addedSome": "Added {added} item(s). Couldn't find: {missing} — add manually.",
+    "voice.addedAll": "Added {count} item(s) ✓",
+    "voice.speakOrder": "Speak your order",
+    "voice.listening": "Listening…",
+    "voice.speakItems": "Speak items (e.g. \"2 samosa, 1 chai\")",
     "more.loggedInAs": "Logged in as",
     "more.logout": "Log out",
     "role.owner": "Owner",
@@ -536,6 +546,16 @@ export const translations: Record<Lang, Record<string, string>> = {
     "more.settings": "GST व दुकान प्रोफ़ाइल",
     "more.settings.sub": "GSTIN, राज्य, लोगो, बिल नंबरिंग",
     "more.language": "भाषा",
+
+    // Voice billing
+    "voice.reading": "ऑर्डर पढ़ रहे हैं…",
+    "voice.notConfigured": "Voice billing के लिए पहले free Groq AI key सेट करनी होगी।",
+    "voice.noItems": "कुछ समझ नहीं आया — दोबारा कोशिश करें।",
+    "voice.addedSome": "{added} आइटम जोड़े गए। नहीं मिला: {missing} — हाथ से जोड़ें।",
+    "voice.addedAll": "{count} आइटम जोड़े गए ✓",
+    "voice.speakOrder": "अपना ऑर्डर बोलें",
+    "voice.listening": "सुन रहे हैं…",
+    "voice.speakItems": "आइटम बोलें (जैसे \"2 समोसा, 1 चाय\")",
     "more.loggedInAs": "लॉग इन है",
     "more.logout": "लॉग आउट",
     "role.owner": "मालिक",

@@ -192,7 +192,7 @@ export function FloatingAssistant({ enabled }: { enabled: boolean }) {
         style={{ touchAction: "none", cursor: "grab" }}
       >
         <span className="flex items-center gap-1.5 text-sm font-semibold text-white">
-          <Sparkles size={14} /> Ask about your shop
+          <Sparkles size={14} /> Apni dukaan ke baare mein poochein
         </span>
         <button onPointerDown={(e) => e.stopPropagation()} onClick={() => setOpen(false)} aria-label="Close assistant" className="rounded-full p-1 text-white/80 hover:text-white">
           <X size={18} />
@@ -202,15 +202,15 @@ export function FloatingAssistant({ enabled }: { enabled: boolean }) {
       {notConfigured ? (
         <div className="flex flex-1 flex-col items-center justify-center gap-2 p-4 text-center">
           <Sparkles size={22} className="text-muted" />
-          <p className="text-sm font-medium text-foreground">Assistant isn&apos;t set up yet</p>
-          <p className="text-xs text-muted">Needs a free Groq API key set up separately from the scan features.</p>
+          <p className="text-sm font-medium text-foreground">Assistant abhi set up nahi hai</p>
+          <p className="text-xs text-muted">Free Groq API key set up karni hogi (scan features se alag).</p>
         </div>
       ) : (
         <>
           <div ref={scrollRef} className="flex flex-1 flex-col gap-2.5 overflow-y-auto p-3">
             {messages.length === 0 && (
               <div className="flex flex-col gap-1.5 rounded-lg bg-background p-3 text-xs text-muted">
-                <p className="font-medium text-foreground">Try asking:</p>
+                <p className="font-medium text-foreground">Ye poochh kar dekhein:</p>
                 <p>&quot;Aaj kitna business hua?&quot;</p>
                 <p>&quot;Kitne customers hain mere paas?&quot;</p>
                 <p>&quot;Ramesh ko udhar reminder bhejo&quot;</p>
@@ -241,7 +241,7 @@ export function FloatingAssistant({ enabled }: { enabled: boolean }) {
             ))}
             {isThinking && (
               <div className="flex items-center gap-1.5 self-start rounded-xl bg-background px-3 py-2 text-xs text-muted">
-                <Loader2 size={12} className="animate-spin" /> Checking your data…
+                <Loader2 size={12} className="animate-spin" /> Aapka data check kar rahe hain…
               </div>
             )}
           </div>

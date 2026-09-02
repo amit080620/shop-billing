@@ -10,6 +10,7 @@ import { useSyncCalculatorAmount } from "@/lib/calculatorAmount";
 import { parseVoiceOrderAction } from "@/lib/actions/voiceOrder";
 import { getSpeechRecognition, speechLocaleFor, voiceErrorMessages, type SpeechRecognitionLike } from "@/lib/speechRecognition";
 import { AIStatusBadge, type AIStatusBadgeHandle } from "@/app/components/AIStatusBadge";
+import { useTranslation } from "@/lib/i18n/useTranslation";
 import { QuantityGrid } from "./QuantityGrid";
 
 export type FastProduct = {
@@ -47,6 +48,7 @@ export function FastBillingClient({
   lang?: import("@/lib/i18n/dictionary").Lang;
 }) {
   const router = useRouter();
+  const { t } = useTranslation(lang ?? "en");
   const [cart, setCart] = useState<FastCartLine[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<FastProduct | null>(null);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
@@ -78,11 +80,11 @@ export function FastBillingClient({
     recognition.onresult = async (event) => {
       const transcript = event.results[0]?.[0]?.transcript ?? "";
       if (!transcript.trim()) return;
-      setVoiceStatus("Reading order…");
+      setVoiceStatus(t("voice.reading"));
       const result = await parseVoiceOrderAction(transcript);
       if (result.errorType) voiceStatusRef.current?.reportError(result.errorType);
       if (result.error === "not_configured") {
-        setVoiceStatus("Voice billing needs the free Groq AI key set up first.");
+        setVoiceStatus(t("voice.notConfigured"));
         return;
       }
       if (result.error || !result.items) {
@@ -90,7 +92,7 @@ export function FastBillingClient({
         return;
       }
       if (result.items.length === 0) {
-        setVoiceStatus("Didn't catch any items — try again.");
+        setVoiceStatus(t("voice.noItems"));
         return;
       }
 
@@ -107,8 +109,8 @@ export function FastBillingClient({
 
       setVoiceStatus(
         unmatched.length > 0
-          ? `Added ${result.items.length - unmatched.length} item(s). Couldn't find: ${unmatched.join(", ")} — add manually.`
-          : `Added ${result.items.length} item(s) ✓`,
+          ? t("voice.addedSome", { added: result.items.length - unmatched.length, missing: unmatched.join(", ") })
+          : t("voice.addedAll", { count: result.items.length }),
       );
       setTimeout(() => setVoiceStatus(null), 4000);
     };
@@ -198,7 +200,7 @@ export function FastBillingClient({
               type="button"
               onClick={startVoiceOrder}
               disabled={isListening}
-              aria-label="Speak your order"
+              aria-label={t("voice.speakOrder")}
               className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${isListening ? "animate-pulse bg-danger text-white" : "bg-brand text-white"}`}
             >
               <Mic size={16} />

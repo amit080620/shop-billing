@@ -93,7 +93,7 @@ export function PosterClient({ shopName }: { shopName: string }) {
     <div className="flex flex-col gap-4">
       <div className="neu-card flex flex-col gap-3 p-4">
         <label className="flex flex-col gap-1.5 text-sm">
-          <span className="font-medium text-foreground">Occasion / offer</span>
+          <span className="font-medium text-foreground">Occasion / Offer (jaise Diwali sale)</span>
           <input
             value={occasion}
             onChange={(e) => setOccasion(e.target.value)}
@@ -102,7 +102,7 @@ export function PosterClient({ shopName }: { shopName: string }) {
           />
         </label>
         <label className="flex flex-col gap-1.5 text-sm">
-          <span className="font-medium text-foreground">Discount % (optional)</span>
+          <span className="font-medium text-foreground">Discount % (agar hai)</span>
           <input
             type="number"
             value={discountPercent}
@@ -112,7 +112,7 @@ export function PosterClient({ shopName }: { shopName: string }) {
           />
         </label>
         <div className="flex flex-col gap-1.5">
-          <span className="text-sm font-medium text-foreground">Design</span>
+          <span className="text-sm font-medium text-foreground">Design chunein</span>
           <div className="flex gap-2">
             {THEMES.map((t, i) => (
               <button
@@ -127,7 +127,7 @@ export function PosterClient({ shopName }: { shopName: string }) {
         </div>
         <button onClick={generate} disabled={isGenerating} className="btn-primary flex items-center justify-center gap-2 disabled:opacity-60">
           {isGenerating ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
-          {isGenerating ? "Writing…" : text ? "Regenerate text" : "Generate poster"}
+          {isGenerating ? "Likh rahe hain…" : text ? "Dobara likhein" : "Poster banayein"}
         </button>
         {error && <p className="text-sm text-danger">{error}</p>}
       </div>
@@ -167,10 +167,10 @@ export function PosterClient({ shopName }: { shopName: string }) {
           </div>
           <div className="flex gap-2">
             <button onClick={download} className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-brand px-3 py-2.5 text-sm font-medium text-brand">
-              <Download size={16} /> Download
+              <Download size={16} /> Download karein
             </button>
             <button onClick={share} className="btn-primary flex flex-1 items-center justify-center gap-2">
-              <Share2 size={16} /> Share
+              <Share2 size={16} /> Share karein
             </button>
           </div>
         </>
