@@ -88,6 +88,23 @@ export default async function ProfilePage() {
       </Link>
 
       <Link
+        href="/fast-print-setup"
+        className="neu-card flex items-center gap-3 px-4 py-3.5 transition active:scale-[0.98]"
+      >
+        <span
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-soft text-brand-text"
+          style={{ boxShadow: "-3px -3px 7px var(--neu-light), 3px 3px 7px var(--neu-dark)" }}
+        >
+          <Printer size={18} strokeWidth={1.8} />
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-medium text-foreground">One-Click Print Setup</p>
+          <p className="truncate text-xs text-muted">Laptop se bina dialog ke seedha print</p>
+        </div>
+        <ChevronRight size={16} className="shrink-0 text-muted" />
+      </Link>
+
+      <Link
         href="/invoice-settings"
         className="neu-card flex items-center gap-3 px-4 py-3.5 transition active:scale-[0.98]"
       >
