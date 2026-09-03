@@ -59,6 +59,7 @@ export function FastBillingClient({
   const [voiceStatus, setVoiceStatus] = useState<string | null>(null);
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
   const voiceStatusRef = useRef<AIStatusBadgeHandle>(null);
+  const [voiceCustomer, setVoiceCustomer] = useState<{ id: string; name: string; phone: string | null; loyaltyPoints: number } | null>(null);
 
   useEffect(() => {
     setVoiceSupported(getSpeechRecognition() !== null);
@@ -118,10 +119,26 @@ export function FastBillingClient({
         }
       }
 
+      // "Amit ke bill kar do" — hands this off to FastBillSheet via
+      // the voiceCustomer prop, since customer state genuinely lives
+      // in that component (only mounted once the bill sheet opens),
+      // not here.
+      let customerNote = "";
+      if (result.customer) {
+        if (result.customer.matchedId) {
+          setVoiceCustomer({ id: result.customer.matchedId, name: result.customer.matchedName!, phone: result.customer.matchedPhone, loyaltyPoints: result.customer.matchedLoyaltyPoints });
+          customerNote = ` Bill ${result.customer.matchedName} ke naam par hai.`;
+        } else {
+          customerNote = ` "${result.customer.spokenName}" naam ka customer nahi mila — haath se chunein.`;
+        }
+      }
+
       setVoiceStatus(
         (unmatched.length > 0
           ? t("voice.addedSome", { added: result.items.length - unmatched.length, missing: unmatched.join(", ") })
-          : t("voice.addedAll", { count: result.items.length })) + (pricesOverridden.length > 0 ? ` Rate set: ${pricesOverridden.join(", ")}.` : ""),
+          : t("voice.addedAll", { count: result.items.length })) +
+          customerNote +
+          (pricesOverridden.length > 0 ? ` Rate set: ${pricesOverridden.join(", ")}.` : ""),
       );
       setTimeout(() => setVoiceStatus(null), 4000);
     };
@@ -315,6 +332,7 @@ export function FastBillingClient({
           shopStateCode={shopStateCode}
           businessType={businessType}
           loyaltyRedemptionValue={loyaltyRedemptionValue}
+          voiceCustomer={voiceCustomer}
         />
       )}
     </div>
@@ -342,6 +360,7 @@ function FastBillSheet({
   shopStateCode,
   businessType,
   loyaltyRedemptionValue,
+  voiceCustomer,
 }: {
   cart: FastCartLine[];
   onUpdateQty: (productId: string, qty: number) => void;
@@ -349,6 +368,7 @@ function FastBillSheet({
   shopStateCode: string | null;
   businessType: string;
   loyaltyRedemptionValue: number;
+  voiceCustomer: { id: string; name: string; phone: string | null; loyaltyPoints: number } | null;
 }) {
   const [editingQty, setEditingQty] = useState<FastCartLine | null>(null);
   const subtotal = cart.reduce((s, l) => s + l.qty * l.price, 0);
@@ -410,7 +430,7 @@ function FastBillSheet({
             <span className="text-muted">Subtotal</span>
             <span className="font-semibold text-foreground">{formatMoney(subtotal)}</span>
           </div>
-          <FastCheckoutButton cart={cart} shopStateCode={shopStateCode} businessType={businessType} loyaltyRedemptionValue={loyaltyRedemptionValue} />
+          <FastCheckoutButton cart={cart} shopStateCode={shopStateCode} businessType={businessType} loyaltyRedemptionValue={loyaltyRedemptionValue} voiceCustomer={voiceCustomer} />
         </div>
       )}
 
@@ -436,11 +456,13 @@ function FastBillSheet({
 function FastCheckoutButton({
   cart,
   loyaltyRedemptionValue,
+  voiceCustomer,
 }: {
   cart: FastCartLine[];
   shopStateCode: string | null;
   businessType: string;
   loyaltyRedemptionValue: number;
+  voiceCustomer: { id: string; name: string; phone: string | null; loyaltyPoints: number } | null;
 }) {
   const [discountType, setDiscountType] = useState<"percent" | "flat">("flat");
   const [discountValue, setDiscountValue] = useState(0);
@@ -453,6 +475,15 @@ function FastCheckoutButton({
   const [redeemPoints, setRedeemPoints] = useState(false);
   const [isResolvingCustomer, setIsResolvingCustomer] = useState(false);
   const [resolvedCustomerId, setResolvedCustomerId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!voiceCustomer) return;
+    setMatchedCustomer({ id: voiceCustomer.id, name: voiceCustomer.name, loyaltyPoints: voiceCustomer.loyaltyPoints });
+    setCustomerName(voiceCustomer.name);
+    setCustomerPhone(voiceCustomer.phone ?? "");
+    setResolvedCustomerId(voiceCustomer.id);
+     
+  }, [voiceCustomer]);
   const [state, formAction, isPending] = useActionState(createBillAction, null);
   const formRef = useRef<HTMLFormElement>(null);
 

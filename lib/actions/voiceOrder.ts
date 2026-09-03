@@ -42,7 +42,7 @@ function classifyStatus(httpStatus: number): VoiceOrderErrorType {
  * it's close enough. */
 export async function parseVoiceOrderAction(transcript: string): Promise<{
   items?: VoiceOrderItem[];
-  customer?: { spokenName: string; matchedId: string | null; matchedName: string | null };
+  customer?: { spokenName: string; matchedId: string | null; matchedName: string | null; matchedPhone: string | null; matchedLoyaltyPoints: number };
   error?: string;
   errorType?: VoiceOrderErrorType;
 }> {
@@ -54,7 +54,7 @@ export async function parseVoiceOrderAction(transcript: string): Promise<{
   const admin = createSupabaseAdminClient();
   const [{ data: products }, { data: customers }] = await Promise.all([
     admin.from("products").select("id, name, price").eq("shop_id", session.shopId),
-    admin.from("customers").select("id, name").eq("shop_id", session.shopId),
+    admin.from("customers").select("id, name, phone, loyalty_points").eq("shop_id", session.shopId),
   ]);
 
   try {
@@ -130,10 +130,17 @@ Return ONLY a JSON object like: {"customerName": "Amit", "items": [{"name": "lay
     // existing customer is still worth returning so the caller can
     // offer to create them rather than silently dropping it.
     const spokenCustomerName = typeof (parsed as Record<string, unknown>)?.customerName === "string" ? String((parsed as Record<string, unknown>).customerName).trim() : "";
-    let customer: { spokenName: string; matchedId: string | null; matchedName: string | null } | undefined;
+    let customer: { spokenName: string; matchedId: string | null; matchedName: string | null; matchedPhone: string | null; matchedLoyaltyPoints: number } | undefined;
     if (spokenCustomerName) {
       const match = findClosestMatch(spokenCustomerName, customers ?? [], 0.7);
-      customer = { spokenName: spokenCustomerName, matchedId: match?.id ?? null, matchedName: match?.name ?? null };
+      const fullMatch = match ? (customers ?? []).find((c) => c.id === match.id) : undefined;
+      customer = {
+        spokenName: spokenCustomerName,
+        matchedId: match?.id ?? null,
+        matchedName: match?.name ?? null,
+        matchedPhone: fullMatch?.phone ?? null,
+        matchedLoyaltyPoints: Number(fullMatch?.loyalty_points ?? 0),
+      };
     }
 
     return { items, customer };
