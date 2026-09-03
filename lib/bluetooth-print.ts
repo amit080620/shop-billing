@@ -1,3 +1,15 @@
+// TypeScript's bundled DOM lib doesn't yet include the newer Web
+// Bluetooth "persistent permissions" API (getDevices, device.id) —
+// it's real and shipped in Chrome, just not in the type definitions.
+declare global {
+  interface Bluetooth {
+    getDevices(): Promise<BluetoothDevice[]>;
+  }
+  interface BluetoothDevice {
+    id: string;
+  }
+}
+
 // Web Bluetooth printing — genuinely direct, no companion app needed,
 // but only works where the browser and printer both support it:
 //   - Browser: Chrome or Edge, on Android or Desktop. NOT Safari/iOS,
@@ -44,6 +56,38 @@ async function findWritableCharacteristic(
   return null;
 }
 
+const REMEMBERED_PRINTER_KEY = "ray-bluetooth-printer-id";
+
+/** After the FIRST successful pairing, the printer's device id is
+ * remembered — every print after that reconnects directly to it via
+ * navigator.bluetooth.getDevices() (Chrome's persistent-permission
+ * API for previously-granted Bluetooth devices), which does NOT show
+ * the device picker. requestDevice() — the one that always opens a
+ * picker — is only ever called again if no remembered printer exists,
+ * or reconnecting to it genuinely fails (printer swapped, permission
+ * revoked, etc). This is the entire fix for "select karna padta hai
+ * baar baar": after the one-time first pairing, printing is a single
+ * tap with no dialog in between. */
+async function getRememberedDevice(): Promise<BluetoothDevice | null> {
+  const rememberedId = typeof localStorage !== "undefined" ? localStorage.getItem(REMEMBERED_PRINTER_KEY) : null;
+  if (!rememberedId) return null;
+  if (!("getDevices" in navigator.bluetooth)) return null; // older Chrome without persistent-permission support — falls back to picker every time, nothing more we can do there
+  try {
+    const known = await navigator.bluetooth.getDevices();
+    return known.find((d) => d.id === rememberedId) ?? null;
+  } catch {
+    return null;
+  }
+}
+
+export function forgetRememberedPrinter() {
+  if (typeof localStorage !== "undefined") localStorage.removeItem(REMEMBERED_PRINTER_KEY);
+}
+
+export function hasRememberedPrinter(): boolean {
+  return typeof localStorage !== "undefined" && !!localStorage.getItem(REMEMBERED_PRINTER_KEY);
+}
+
 /** Opens the browser's device picker, connects, and sends the given
  * ESC/POS bytes. Returns an error message on any failure so the UI
  * can show a clear fallback suggestion rather than a silent failure. */
@@ -56,10 +100,14 @@ export async function printViaBluetooth(data: Uint8Array): Promise<BluetoothPrin
   }
 
   try {
-    const device = await navigator.bluetooth.requestDevice({
-      filters: COMMON_PRINTER_SERVICES.map((s) => ({ services: [s] })),
-      optionalServices: COMMON_PRINTER_SERVICES,
-    });
+    let device = await getRememberedDevice();
+    if (!device) {
+      device = await navigator.bluetooth.requestDevice({
+        filters: COMMON_PRINTER_SERVICES.map((s) => ({ services: [s] })),
+        optionalServices: COMMON_PRINTER_SERVICES,
+      });
+    }
+    if (typeof localStorage !== "undefined") localStorage.setItem(REMEMBERED_PRINTER_KEY, device.id);
 
     if (!device.gatt) return { error: "This device doesn't support the connection type needed." };
     const server = await device.gatt.connect();
@@ -93,8 +141,13 @@ export async function printViaBluetooth(data: Uint8Array): Promise<BluetoothPrin
     if (message.includes("cancelled") || message.includes("User cancelled")) {
       return { error: "Printer selection was cancelled." };
     }
+    // A remembered device that's genuinely gone (turned off, out of
+    // range, permission revoked) shouldn't keep silently failing
+    // forever — forget it so the NEXT attempt falls back to the
+    // picker instead of retrying a dead connection indefinitely.
+    forgetRememberedPrinter();
     return {
-      error: `Couldn't connect to the printer (${message}). If this keeps happening, use the regular Print button with a print-bridge app like RawBT instead.`,
+      error: `Couldn't connect to the printer (${message}). Trying again will show the printer picker.`,
     };
   }
 }

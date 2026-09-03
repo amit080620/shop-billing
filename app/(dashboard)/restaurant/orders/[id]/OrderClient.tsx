@@ -757,11 +757,15 @@ function BillPrintView({
   function shareOnWhatsApp() {
     if (customerPhone.length !== 10) return;
     const lines = [
-      `${shopName} — Order ${order.orderNumber} (${order.tableName})`,
-      ``,
-      ...items.map((i) => `${i.quantity} x ${i.productName} — ${formatMoney(i.unitPrice * i.quantity)}`),
-      ``,
-      `Total: ${formatMoney(order.total)}`,
+      `*${shopName}*`,
+      `Order ${order.orderNumber} (${order.tableName})`,
+      "",
+      "```",
+      ...items.map((i) => `${i.productName} x${i.quantity}...${formatMoney(i.unitPrice * i.quantity)}`),
+      "```",
+      `*Total: ${formatMoney(order.total)}*`,
+      "",
+      "_Thank you, visit again!_",
     ];
     window.open(buildWhatsAppLink(customerPhone, lines.join("\n")), "_blank");
   }

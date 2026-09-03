@@ -15,9 +15,14 @@ export type ThermalColumnWidths = {
  * each column. */
 export function computeColumnWidths(profile: ThermalPrinterProfile): ThermalColumnWidths {
   const total = usableWidth(profile);
-  const qty = 3;
-  const rate = 6;
-  const amount = 7;
+  // 58mm (32 chars) genuinely needs tighter numeric columns than 80mm
+  // (48 chars) — a small shop's line items rarely need more than
+  // 4-5 digits for rate/amount, and every character saved here goes
+  // straight to the item name, which is what actually needs the room.
+  const narrow = total <= 32;
+  const qty = narrow ? 2 : 3;
+  const rate = narrow ? 5 : 6;
+  const amount = narrow ? 6 : 7;
   const gaps = 3; // one space between each of the 4 columns
   const item = Math.max(6, total - qty - rate - amount - gaps);
   return { item, qty, rate, amount };

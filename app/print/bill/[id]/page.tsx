@@ -265,6 +265,7 @@ export default async function PrintBillPage({
             customerPhone={customer?.phone ?? null}
             shopName={session.shopName}
             invoiceNumber={bill.invoice_number}
+            items={(items ?? []).map((it) => ({ name: it.product_name, quantity: Number(it.quantity), unitPrice: Number(it.unit_price), lineTotal: Number(it.line_total) }))}
             total={Number(bill.total)}
             paidAmount={Number(bill.paid_amount)}
             creditAmount={Number(bill.credit_amount)}

@@ -97,20 +97,31 @@ export function FastBillingClient({
       }
 
       const unmatched: string[] = [];
+      const pricesOverridden: string[] = [];
       for (const item of result.items) {
         if (!item.matchedProductId) {
           unmatched.push(item.spokenName);
           continue;
         }
         const product = products.find((p) => p.id === item.matchedProductId);
-        if (product) addToCart(product, item.quantity);
-        else unmatched.push(item.spokenName);
+        if (!product) {
+          unmatched.push(item.spokenName);
+          continue;
+        }
+        addToCart(product, item.quantity);
+        // Same reasoning as the Sell screen: a rate said out loud is
+        // deliberate and should override the catalog price.
+        if (item.spokenUnitPrice !== null) {
+          const spokenRate = item.spokenUnitPrice;
+          setCart((prev) => prev.map((c) => (c.productId === product.id ? { ...c, price: spokenRate } : c)));
+          pricesOverridden.push(`${product.name} @ ₹${spokenRate}`);
+        }
       }
 
       setVoiceStatus(
-        unmatched.length > 0
+        (unmatched.length > 0
           ? t("voice.addedSome", { added: result.items.length - unmatched.length, missing: unmatched.join(", ") })
-          : t("voice.addedAll", { count: result.items.length }),
+          : t("voice.addedAll", { count: result.items.length })) + (pricesOverridden.length > 0 ? ` Rate set: ${pricesOverridden.join(", ")}.` : ""),
       );
       setTimeout(() => setVoiceStatus(null), 4000);
     };

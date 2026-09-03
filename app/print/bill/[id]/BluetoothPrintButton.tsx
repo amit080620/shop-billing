@@ -1,15 +1,20 @@
 "use client";
 
-import { useState } from "react";
-import { Bluetooth } from "lucide-react";
-import { printViaBluetooth, isWebBluetoothSupported } from "@/lib/bluetooth-print";
+import { useEffect, useState } from "react";
+import { Bluetooth, RotateCcw } from "lucide-react";
+import { printViaBluetooth, isWebBluetoothSupported, hasRememberedPrinter, forgetRememberedPrinter } from "@/lib/bluetooth-print";
 import { buildReceiptEscPos, type ReceiptData } from "@/lib/escpos";
 import { getThermalPrintSettingsAction } from "@/lib/actions/settings";
 
 export function BluetoothPrintButton({ receipt, paperWidth }: { receipt: ReceiptData; paperWidth: 32 | 48 }) {
   const [status, setStatus] = useState<"idle" | "connecting" | "done" | "error">("idle");
   const [error, setError] = useState<string | null>(null);
+  const [remembered, setRemembered] = useState(false);
   const supported = isWebBluetoothSupported();
+
+  useEffect(() => {
+    setRemembered(hasRememberedPrinter());
+  }, [status]);
 
   async function handlePrint() {
     setStatus("connecting");
@@ -35,21 +40,41 @@ export function BluetoothPrintButton({ receipt, paperWidth }: { receipt: Receipt
 
   return (
     <div className="flex flex-col gap-1">
-      <button
-        onClick={handlePrint}
-        disabled={status === "connecting"}
-        className={`flex items-center justify-center gap-1.5 rounded-full border border-brand px-3 py-1.5 text-xs font-medium text-brand disabled:opacity-60 ${
-          status === "done" ? "animate-save-success" : ""
-        }`}
-        style={{ boxShadow: "-2px -2px 4px rgba(255,255,255,0.9), 2px 2px 4px rgba(0,0,0,0.08)" }}
-      >
-        <Bluetooth size={13} />
-        {status === "connecting" ? "Connecting…" : status === "done" ? "Printed ✓" : "Bluetooth print"}
-      </button>
+      <div className="flex items-center gap-1.5">
+        <button
+          onClick={handlePrint}
+          disabled={status === "connecting"}
+          className={`flex items-center justify-center gap-1.5 rounded-full border border-brand px-3 py-1.5 text-xs font-medium text-brand disabled:opacity-60 ${
+            status === "done" ? "animate-save-success" : ""
+          }`}
+          style={{ boxShadow: "-2px -2px 4px rgba(255,255,255,0.9), 2px 2px 4px rgba(0,0,0,0.08)" }}
+        >
+          <Bluetooth size={13} />
+          {status === "connecting" ? "Printing…" : status === "done" ? "Printed ✓" : remembered ? "Print (Bluetooth)" : "Bluetooth print"}
+        </button>
+        {remembered && status !== "connecting" && (
+          <button
+            onClick={() => {
+              forgetRememberedPrinter();
+              setRemembered(false);
+            }}
+            aria-label="Change printer"
+            title="Change printer"
+            className="rounded-full p-1.5 text-gray-400"
+          >
+            <RotateCcw size={12} />
+          </button>
+        )}
+      </div>
       {!supported && (
         <p className="max-w-[220px] whitespace-normal break-words text-[11px] text-gray-500">
           Needs Chrome or Edge (Android/desktop). On iPhone or Firefox, use the regular Print button with a
           print-bridge app like RawBT instead.
+        </p>
+      )}
+      {supported && !remembered && (
+        <p className="max-w-[220px] whitespace-normal break-words text-[11px] text-gray-500">
+          First print will ask you to select the printer once — after that, printing is one tap.
         </p>
       )}
       {error && <p className="max-w-[220px] whitespace-normal break-words text-[11px] text-red-600">{error}</p>}

@@ -5,11 +5,14 @@ import { useTranslation } from "@/lib/i18n/useTranslation";
 import type { Lang } from "@/lib/i18n/dictionary";
 import { buildWhatsAppLink } from "@/lib/whatsapp";
 
+type BillItem = { name: string; quantity: number; unitPrice: number; lineTotal: number };
+
 export function WhatsAppSendButton({
   customerName,
   customerPhone,
   shopName,
   invoiceNumber,
+  items,
   total,
   paidAmount,
   creditAmount,
@@ -20,6 +23,7 @@ export function WhatsAppSendButton({
   customerPhone: string | null;
   shopName: string;
   invoiceNumber: string;
+  items: BillItem[];
   total: number;
   paidAmount: number;
   creditAmount: number;
@@ -36,14 +40,33 @@ export function WhatsAppSendButton({
     );
   }
 
+  // WhatsApp text messages genuinely can't carry any color at all —
+  // not for any sender, in any app, ever; it's a platform-wide
+  // limitation with no code workaround. *Bold*, _italic_, and a
+  // monospace block (```…```, which keeps the item columns from
+  // WhatsApp's proportional font from turning ragged) are the actual
+  // formatting WhatsApp supports, and are what make this look
+  // deliberately put-together rather than a plain data dump.
+  const itemLines = items.map((it) => {
+    const namePart = it.quantity === 1 ? it.name : `${it.name} x${it.quantity}`;
+    const pricePart = it.quantity === 1 ? formatMoney(it.lineTotal) : `${formatMoney(it.unitPrice)} → ${formatMoney(it.lineTotal)}`;
+    const dots = ".".repeat(Math.max(1, 28 - namePart.length - pricePart.length));
+    return `${namePart}${dots}${pricePart}`;
+  });
+
   const lines = [
+    `*${shopName}*`,
     t("wa.billGreeting", { name: customerName ?? "there", shop: shopName }),
+    "",
     t("wa.billInvoiceNo", { number: invoiceNumber }),
-    t("wa.billTotal", { amount: formatMoney(total) }),
+    "```",
+    ...itemLines,
+    "```",
+    `*${t("wa.billTotalLabel")}: ${formatMoney(total)}*`,
     t("wa.billPaid", { amount: formatMoney(paidAmount) }),
   ];
   if (creditAmount > 0) {
-    lines.push(t("wa.billBalanceDue", { amount: formatMoney(creditAmount) }));
+    lines.push(`*${t("wa.billBalanceDue", { amount: formatMoney(creditAmount) })}*`);
     if (upiLink) {
       // Plain-text URI — WhatsApp auto-links recognized schemes, so this
       // renders tappable on most phones and opens whichever UPI app the
@@ -51,7 +74,7 @@ export function WhatsAppSendButton({
       lines.push(t("wa.billPayNow", { link: upiLink }));
     }
   }
-  lines.push(t("wa.billThanks"));
+  lines.push("", `_${t("wa.billThanks")}_`);
 
   const href = buildWhatsAppLink(customerPhone, lines.join("\n"));
 

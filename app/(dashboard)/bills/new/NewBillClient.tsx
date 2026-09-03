@@ -342,6 +342,7 @@ export function NewBillClient({
       }
 
       const unmatched: string[] = [];
+      const pricesOverridden: string[] = [];
       for (const item of result.items) {
         const product = item.matchedProductId ? products.find((p) => p.id === item.matchedProductId) : undefined;
         if (!product) {
@@ -349,6 +350,15 @@ export function NewBillClient({
           continue;
         }
         for (let i = 0; i < item.quantity; i++) addProduct(product);
+
+        // A rate said out loud is a deliberate instruction ("lays 10
+        // packet, 10 rupees each") and should win over the catalog
+        // price — that's the whole reason someone would say it.
+        if (item.spokenUnitPrice !== null) {
+          const spokenRate = item.spokenUnitPrice;
+          setCart((prev) => prev.map((c) => (c.productId === product.id ? { ...c, price: spokenRate, regularPrice: spokenRate, packPrice: spokenRate } : c)));
+          pricesOverridden.push(`${product.name} @ ₹${spokenRate}`);
+        }
       }
 
       // "Amit ke liye bill banao" — switch the bill to that customer
@@ -371,7 +381,9 @@ export function NewBillClient({
       setVoiceStatus(
         (unmatched.length > 0
           ? t("voice.addedSome", { added: result.items.length - unmatched.length, missing: unmatched.join(", ") })
-          : t("voice.addedAll", { count: result.items.length })) + customerNote,
+          : t("voice.addedAll", { count: result.items.length })) +
+          customerNote +
+          (pricesOverridden.length > 0 ? ` Rate set: ${pricesOverridden.join(", ")}.` : ""),
       );
       setTimeout(() => setVoiceStatus(null), 5000);
     };

@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import { Bluetooth } from "lucide-react";
-import { printViaBluetooth, isWebBluetoothSupported } from "@/lib/bluetooth-print";
+import { useEffect, useState } from "react";
+import { Bluetooth, RotateCcw } from "lucide-react";
+import { printViaBluetooth, isWebBluetoothSupported, hasRememberedPrinter, forgetRememberedPrinter } from "@/lib/bluetooth-print";
 
 /** Generic version of the Bluetooth print button used on the main
  * bill print page (app/print/bill/[id]/BluetoothPrintButton.tsx),
@@ -11,7 +11,10 @@ import { printViaBluetooth, isWebBluetoothSupported } from "@/lib/bluetooth-prin
  * Takes a `getBytes` callback instead so the caller builds whatever
  * ESC/POS payload it needs (buildReceiptEscPos, buildKotEscPos, or
  * anything else in lib/escpos.ts) and this component only owns the
- * connect/status/error UI, once. */
+ * connect/status/error UI, once. Shares printViaBluetooth's
+ * remembered-printer logic, so KOT printing gets the same one-tap
+ * behavior (device picker only on the very first print) as regular
+ * bills, automatically. */
 export function BluetoothPrintButton({
   getBytes,
   label = "Bluetooth print",
@@ -23,7 +26,12 @@ export function BluetoothPrintButton({
 }) {
   const [status, setStatus] = useState<"idle" | "connecting" | "done" | "error">("idle");
   const [error, setError] = useState<string | null>(null);
+  const [remembered, setRemembered] = useState(false);
   const supported = isWebBluetoothSupported();
+
+  useEffect(() => {
+    setRemembered(hasRememberedPrinter());
+  }, [status]);
 
   async function handlePrint() {
     setStatus("connecting");
@@ -46,19 +54,34 @@ export function BluetoothPrintButton({
 
   return (
     <div className="flex flex-col gap-1">
-      <button
-        onClick={handlePrint}
-        disabled={status === "connecting"}
-        className={
-          className ??
-          `flex items-center justify-center gap-1.5 rounded-lg border border-brand px-3 py-2.5 text-xs font-medium text-brand disabled:opacity-60 ${
-            status === "done" ? "animate-save-success" : ""
-          }`
-        }
-      >
-        <Bluetooth size={14} />
-        {status === "connecting" ? "Connecting…" : status === "done" ? "Printed ✓" : label}
-      </button>
+      <div className="flex items-center gap-1.5">
+        <button
+          onClick={handlePrint}
+          disabled={status === "connecting"}
+          className={
+            className ??
+            `flex items-center justify-center gap-1.5 rounded-lg border border-brand px-3 py-2.5 text-xs font-medium text-brand disabled:opacity-60 ${
+              status === "done" ? "animate-save-success" : ""
+            }`
+          }
+        >
+          <Bluetooth size={14} />
+          {status === "connecting" ? "Printing…" : status === "done" ? "Printed ✓" : label}
+        </button>
+        {remembered && status !== "connecting" && (
+          <button
+            onClick={() => {
+              forgetRememberedPrinter();
+              setRemembered(false);
+            }}
+            aria-label="Change printer"
+            title="Change printer"
+            className="rounded-full p-1.5 text-muted"
+          >
+            <RotateCcw size={12} />
+          </button>
+        )}
+      </div>
       {!supported && (
         <p className="max-w-[240px] whitespace-normal break-words text-[11px] text-muted">
           Needs Chrome or Edge (Android/desktop). On iPhone or Firefox, use the regular print button instead.

@@ -15,6 +15,11 @@ export type VoiceOrderItem = {
   matchedProductId: string | null;
   matchedProductName: string | null;
   price: number | null;
+  /** The per-unit rate the person SAID out loud, if any — deliberately
+   * separate from `price` (the catalog price) so a caller can tell the
+   * difference between "they told me ₹10 each" and "I looked it up".
+   * Purchase rates change constantly, so a spoken rate should win. */
+  spokenUnitPrice: number | null;
 };
 
 export type VoiceOrderErrorType = "not_configured" | "quota_exceeded" | "invalid_key" | "network_error";
@@ -61,7 +66,13 @@ export async function parseVoiceOrderAction(transcript: string): Promise<{
         messages: [
           {
             role: "system",
-            content: `Extract items, quantities, and (if mentioned) the CUSTOMER'S NAME from spoken text for a shop bill. The person may speak Hindi, English, or a mix, and may use Hindi number words (ek=1, do=2, teen=3, char=4, paanch=5, chhe=6, saat=7, aath=8, nau=9, das=10). Quantity may come BEFORE or AFTER the item name ("do samosa" and "samosa do" both mean 2 samosa). If no quantity is said for an item, default to 1. If they say something like "Amit ke liye bill banao" or "bill for Amit" or "Amit ka bill", the customer name is "Amit" — put it in customerName. A customer name is a PERSON's name, never an item. If no customer is mentioned, omit customerName entirely. Return ONLY a JSON object like: {"customerName": "Amit", "items": [{"name": "samosa", "quantity": 2}]}.`,
+            content: `Extract items, quantities, per-unit rates, and (if mentioned) the CUSTOMER'S NAME from spoken text for a shop bill or purchase entry. The person may speak Hindi, English, or a mix, and may use Hindi number words (ek=1, do=2, teen=3, char=4, paanch=5, chhe=6, saat=7, aath=8, nau=9, das=10). Quantity may come BEFORE or AFTER the item name ("do samosa" and "samosa do" both mean 2 samosa). If no quantity is said, default to 1.
+
+RATES: if they state a per-unit rate ("10 rupees each", "10 rs per packet", "das rupaye ka ek"), put that number in unitPrice. If they only state a TOTAL for that line ("10 packets 400 rupees total"), divide it yourself: unitPrice = total / quantity (so 400/10 = 40). If they state BOTH a total and a per-unit rate and they disagree, trust the per-unit rate. If no price is mentioned at all for an item, omit unitPrice for it.
+
+CUSTOMER: if they say something like "Amit ke liye bill banao" or "bill for Amit" or "Amit ka bill", the customer name is "Amit" — put it in customerName. A customer name is a PERSON's name, never an item. If no customer is mentioned, omit customerName entirely.
+
+Return ONLY a JSON object like: {"customerName": "Amit", "items": [{"name": "lays", "quantity": 10, "unitPrice": 10}]}.`,
           },
           { role: "user", content: transcript },
         ],
@@ -86,10 +97,10 @@ export async function parseVoiceOrderAction(transcript: string): Promise<{
     // Groq's JSON mode wraps the array in an object sometimes
     // ({"items": [...]}) depending on how it interprets the schema —
     // handle both shapes rather than assuming one.
-    const list: { name?: string; quantity?: number }[] = Array.isArray(parsed)
+    const list: { name?: string; quantity?: number; unitPrice?: number }[] = Array.isArray(parsed)
       ? parsed
       : Array.isArray((parsed as Record<string, unknown>)?.items)
-        ? ((parsed as Record<string, unknown>).items as { name?: string; quantity?: number }[])
+        ? ((parsed as Record<string, unknown>).items as { name?: string; quantity?: number; unitPrice?: number }[])
         : [];
 
     const items: VoiceOrderItem[] = list
@@ -102,12 +113,14 @@ export async function parseVoiceOrderAction(transcript: string): Promise<{
         // different products.
         const match = findClosestMatch(spokenName, products ?? [], 0.55);
         const product = match ? (products ?? []).find((pr) => pr.id === match.id) : null;
+        const spokenPrice = Number(p.unitPrice);
         return {
           spokenName,
           quantity: Math.max(1, Math.round(Number(p.quantity)) || 1),
           matchedProductId: product?.id ?? null,
           matchedProductName: product?.name ?? null,
           price: product ? Number(product.price) : null,
+          spokenUnitPrice: Number.isFinite(spokenPrice) && spokenPrice > 0 ? spokenPrice : null,
         };
       });
 
