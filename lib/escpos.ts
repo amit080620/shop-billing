@@ -78,21 +78,15 @@ export class EscPosBuilder {
    * Level 1 = normal size (Font A). Each step above that is one
    * multiplier larger in both width and height simultaneously. */
   sizeLevel(level: number) {
-    // GS! (character size) is the entire problem — confirmed on a
-    // real printer that echoes a stray literal character for ANY
-    // GS! value, not just unusual multiplier levels. So every level
-    // above Normal routes through ESC! (doubleSize) instead, which
-    // this same printer handles correctly. This does mean every
-    // "bigger than normal" level (2 through 7) now visually renders
-    // the same single double-size step rather than distinct
-    // multiplier sizes — a real tradeoff, but a working receipt beats
-    // a broken one with more size options.
-    if (level >= 2) {
-      this.selectFont(false);
-      return this.doubleSize(true);
-    }
-    this.selectFont(level === 0);
-    return this.doubleSize(false);
+    // BOTH GS! and ESC! (the two standard ways to change character
+    // size) are now confirmed broken on this specific printer — it
+    // echoes a stray literal character for either one, regardless of
+    // value. This stops trying to change character SIZE via any
+    // escape command at all. The actual emphasis for levels above
+    // Normal is applied by the caller combining this with bold()
+    // (see buildReceiptEscPos) — kept separate here so the two never
+    // silently overwrite each other in sequence.
+    return this.selectFont(level === 0);
   }
 
   underline(on: boolean) {
@@ -209,7 +203,7 @@ export function buildReceiptEscPos(data: ReceiptData, charsWide: 32 | 48 = 32, f
   const b = new EscPosBuilder();
   b.init();
 
-  b.align(format.shopNameAlign).sizeLevel(format.shopNameSize).bold(format.shopNameBold).italic(format.shopNameItalic).text(data.shopName).newline();
+  b.align(format.shopNameAlign).sizeLevel(format.shopNameSize).bold(format.shopNameBold || format.shopNameSize >= 2).italic(format.shopNameItalic).text(data.shopName).newline();
   b.sizeLevel(1).bold(false).italic(false);
   if (data.gstin) b.text(`GSTIN: ${data.gstin}`).newline();
   b.newline();
@@ -233,7 +227,7 @@ export function buildReceiptEscPos(data: ReceiptData, charsWide: 32 | 48 = 32, f
   if (data.discount) b.row("Discount", `-Rs.${data.discount.toFixed(2)}`, charsWide);
   if (data.taxTotal) b.row("Tax", `Rs.${data.taxTotal.toFixed(2)}`, charsWide);
 
-  b.bold(format.totalBold).italic(format.totalItalic).sizeLevel(format.totalSize);
+  b.bold(format.totalBold || format.totalSize >= 2).italic(format.totalItalic).sizeLevel(format.totalSize);
   if (format.totalAlign === "left") {
     b.align("left");
     b.row("TOTAL", `Rs.${data.total.toFixed(2)}`, charsWide);
