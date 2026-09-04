@@ -1,0 +1,8 @@
+[{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "in.theray.billing",
+    "sha256_cert_fingerprints": ["11:5D:ED:D2:CB:03:F4:52:08:86:93:6D:01:0D:E6:8D:55:35:F2:F8:30:70:B1:A8:E4:35:F3:E5:0D:49:7F:F8"]
+  }
+}]
