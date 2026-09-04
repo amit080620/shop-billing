@@ -216,12 +216,9 @@ export function CatalogOrderRow({
                     items: kotItems.map((i) => ({ name: i.productName, qty: i.quantity })),
                   })
                 }
-                label="Bluetooth print"
+                onFallbackPrint={() => setTimeout(() => window.print(), 100)}
                 className="flex-1 flex items-center justify-center gap-1.5 rounded-lg border border-brand px-3 py-2.5 text-xs font-medium text-brand"
               />
-              <button onClick={() => setTimeout(() => window.print(), 100)} className="flex-1 rounded-lg border border-border px-3 py-2.5 text-xs font-medium text-foreground">
-                Browser print
-              </button>
               <button onClick={() => setKotItems(null)} className="rounded-lg border border-border px-3 py-2.5 text-xs font-medium text-muted">
                 Close
               </button>

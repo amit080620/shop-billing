@@ -441,12 +441,9 @@ export function OrderClient({
                     })),
                   })
                 }
-                label="Bluetooth print"
+                onFallbackPrint={printKotViaBrowser}
                 className="flex-1 flex items-center justify-center gap-1.5 rounded-lg border border-brand px-3 py-2.5 text-xs font-medium text-brand"
               />
-              <button onClick={printKotViaBrowser} className="flex-1 rounded-lg border border-border px-3 py-2.5 text-xs font-medium text-foreground">
-                Browser print
-              </button>
               <button onClick={() => setKotItems(null)} className="rounded-lg border border-border px-3 py-2.5 text-xs font-medium text-muted">
                 {t("order.close")}
               </button>
@@ -787,12 +784,8 @@ function BillPrintView({
           </div>
           <BluetoothPrintButton
             getBytes={buildReceiptBytes}
-            label="Bluetooth print"
             className="flex items-center justify-center gap-1.5 rounded-lg border border-brand px-3 py-1.5 text-xs font-medium text-brand"
           />
-          <button onClick={() => window.print()} className="btn-primary-sm">
-            {t("order.printBill")}
-          </button>
           <button onClick={onClose} className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-muted">
             {t("order.close")}
           </button>

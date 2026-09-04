@@ -14,26 +14,39 @@ import { printViaBluetooth, isWebBluetoothSupported, hasRememberedPrinter, forge
  * connect/status/error UI, once. Shares printViaBluetooth's
  * remembered-printer logic, so KOT printing gets the same one-tap
  * behavior (device picker only on the very first print) as regular
- * bills, automatically. */
+ * bills, automatically.
+ *
+ * Just ONE button, always labeled "Print" — where Web Bluetooth
+ * isn't available at all (iPhone Safari), it falls back to the
+ * browser's own print automatically rather than showing a second,
+ * separate print button for the person to figure out. */
 export function BluetoothPrintButton({
   getBytes,
-  label = "Bluetooth print",
+  onFallbackPrint,
+  label = "Print",
   className,
 }: {
   getBytes: () => Promise<Uint8Array> | Uint8Array;
+  /** Called instead, when this device genuinely has no Web Bluetooth
+   * support at all — defaults to the browser's own print dialog. */
+  onFallbackPrint?: () => void;
   label?: string;
   className?: string;
 }) {
   const [status, setStatus] = useState<"idle" | "connecting" | "done" | "error">("idle");
   const [error, setError] = useState<string | null>(null);
   const [remembered, setRemembered] = useState(false);
-  const supported = isWebBluetoothSupported();
+  const bluetoothSupported = isWebBluetoothSupported();
 
   useEffect(() => {
     setRemembered(hasRememberedPrinter());
   }, [status]);
 
   async function handlePrint() {
+    if (!bluetoothSupported) {
+      (onFallbackPrint ?? (() => window.print()))();
+      return;
+    }
     setStatus("connecting");
     setError(null);
     try {
@@ -68,7 +81,7 @@ export function BluetoothPrintButton({
           <Bluetooth size={14} />
           {status === "connecting" ? "Printing…" : status === "done" ? "Printed ✓" : label}
         </button>
-        {remembered && status !== "connecting" && (
+        {bluetoothSupported && remembered && status !== "connecting" && (
           <button
             onClick={() => {
               forgetRememberedPrinter();
@@ -82,11 +95,6 @@ export function BluetoothPrintButton({
           </button>
         )}
       </div>
-      {!supported && (
-        <p className="max-w-[240px] whitespace-normal break-words text-[11px] text-muted">
-          Needs Chrome or Edge (Android/desktop). On iPhone or Firefox, use the regular print button instead.
-        </p>
-      )}
       {error && <p className="max-w-[240px] whitespace-normal break-words text-[11px] text-danger">{error}</p>}
     </div>
   );

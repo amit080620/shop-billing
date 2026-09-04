@@ -1,22 +1,39 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Bluetooth, RotateCcw } from "lucide-react";
+import { Printer, RotateCcw } from "lucide-react";
 import { printViaBluetooth, isWebBluetoothSupported, hasRememberedPrinter, forgetRememberedPrinter } from "@/lib/bluetooth-print";
 import { buildReceiptEscPos, type ReceiptData } from "@/lib/escpos";
 import { getThermalPrintSettingsAction } from "@/lib/actions/settings";
 
+/** THE print button — one, simple, always labeled just "Print". No
+ * separate "Bluetooth print" vs regular "Print" for the person to
+ * puzzle over choosing between; this decides internally. Where Web
+ * Bluetooth works (Android Chrome/Edge), it prints straight to the
+ * thermal printer — the device picker only ever shows up on the very
+ * first print, or again automatically if the remembered printer
+ * genuinely can't be reached (turned off, out of range, unpaired) —
+ * never something the person has to think about or configure. Where
+ * Web Bluetooth genuinely isn't available at all (iPhone Safari has
+ * no Web Bluetooth support, full stop), the exact same button falls
+ * back to the browser's own print dialog instead — the person never
+ * sees two different buttons for two different situations. */
 export function BluetoothPrintButton({ receipt, paperWidth }: { receipt: ReceiptData; paperWidth: 32 | 48 }) {
   const [status, setStatus] = useState<"idle" | "connecting" | "done" | "error">("idle");
   const [error, setError] = useState<string | null>(null);
   const [remembered, setRemembered] = useState(false);
-  const supported = isWebBluetoothSupported();
+  const bluetoothSupported = isWebBluetoothSupported();
 
   useEffect(() => {
     setRemembered(hasRememberedPrinter());
   }, [status]);
 
   async function handlePrint() {
+    if (!bluetoothSupported) {
+      window.print();
+      return;
+    }
+
     setStatus("connecting");
     setError(null);
     // Genuinely fetch the owner's own formatting preferences for
@@ -49,10 +66,10 @@ export function BluetoothPrintButton({ receipt, paperWidth }: { receipt: Receipt
           }`}
           style={{ boxShadow: "-2px -2px 4px rgba(255,255,255,0.9), 2px 2px 4px rgba(0,0,0,0.08)" }}
         >
-          <Bluetooth size={13} />
-          {status === "connecting" ? "Printing…" : status === "done" ? "Printed ✓" : remembered ? "Print (Bluetooth)" : "Bluetooth print"}
+          <Printer size={13} />
+          {status === "connecting" ? "Printing…" : status === "done" ? "Printed ✓" : "Print"}
         </button>
-        {remembered && status !== "connecting" && (
+        {bluetoothSupported && remembered && status !== "connecting" && (
           <button
             onClick={() => {
               forgetRememberedPrinter();
@@ -66,13 +83,7 @@ export function BluetoothPrintButton({ receipt, paperWidth }: { receipt: Receipt
           </button>
         )}
       </div>
-      {!supported && (
-        <p className="max-w-[220px] whitespace-normal break-words text-[11px] text-gray-500">
-          Needs Chrome or Edge (Android/desktop). On iPhone or Firefox, use the regular Print button with a
-          print-bridge app like RawBT instead.
-        </p>
-      )}
-      {supported && !remembered && (
+      {bluetoothSupported && !remembered && (
         <p className="max-w-[220px] whitespace-normal break-words text-[11px] text-gray-500">
           First print will ask you to select the printer once — after that, printing is one tap.
         </p>

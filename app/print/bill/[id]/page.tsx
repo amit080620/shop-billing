@@ -280,8 +280,7 @@ export default async function PrintBillPage({
           <FormatPill href={`/print/bill/${id}?format=thermal58`} label="58mm" active={is58mm} />
           <FormatPill href={`/print/bill/${id}?format=thermal`} label="80mm" active={isThermal && !is58mm} />
           <DownloadImageButton invoiceNumber={bill.invoice_number} upiLink={upiLink} isThermal={isThermal} />
-          <PrintButton />
-          <BluetoothPrintButton receipt={receiptData} paperWidth={is58mm ? 32 : 48} />
+          {isThermal ? <BluetoothPrintButton receipt={receiptData} paperWidth={is58mm ? 32 : 48} /> : <PrintButton />}
           {bill.status === "active" && hasPermission(session, "process_returns") && (
             <Link
               href={`/returns/new?billId=${bill.id}`}
