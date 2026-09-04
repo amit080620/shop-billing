@@ -35,8 +35,21 @@ export class EscPosBuilder {
    * standard Epson ESC/POS command set. Support varies by printer
    * model (less universal than bold/underline), but it's a genuine,
    * real command, not a fabricated one. */
-  italic(on: boolean) {
-    return this.push([ESC, on ? 0x34 : 0x35]);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- kept in the signature so every existing .italic(true/false) call site still compiles; the parameter is genuinely unused now that this is a no-op
+  italic(_on: boolean) {
+    // THE actual root cause of a persistent, previously-mysterious
+    // stray "5" printing before shop name, TOTAL, and Paid: this used
+    // to send [ESC, 0x35] for italic-off — and 0x35 is ALSO the ASCII
+    // byte for the character '5'. ESC 4 / ESC 5 for italic isn't part
+    // of the universal core ESC/POS command set (unlike bold or
+    // align), so a printer that doesn't implement it can fall back to
+    // printing the unrecognized second byte as literal text — which
+    // is exactly what a byte that happens to equal '5' would look
+    // like. Every "5" reported traced back to a line immediately
+    // preceded by an italic(false) call. Made a no-op rather than
+    // finding yet another command byte to gamble on — italic is
+    // cosmetic, not worth reintroducing this entire class of risk for.
+    return this;
   }
 
   /** Double-height + double-width text, for totals/headers that need to stand out. */
@@ -77,16 +90,18 @@ export class EscPosBuilder {
    * concept of a fractional multiplier.
    * Level 1 = normal size (Font A). Each step above that is one
    * multiplier larger in both width and height simultaneously. */
-  sizeLevel(level: number) {
-    // BOTH GS! and ESC! (the two standard ways to change character
-    // size) are now confirmed broken on this specific printer — it
-    // echoes a stray literal character for either one, regardless of
-    // value. This stops trying to change character SIZE via any
-    // escape command at all. The actual emphasis for levels above
-    // Normal is applied by the caller combining this with bold()
-    // (see buildReceiptEscPos) — kept separate here so the two never
-    // silently overwrite each other in sequence.
-    return this.selectFont(level === 0);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- kept in the signature so every existing .sizeLevel(n) call site still compiles; the parameter is genuinely unused now that this is a no-op
+  sizeLevel(_level: number) {
+    // Deliberately does NOTHING now. GS! (character size) and ESC!
+    // (double-size) were both already ruled out as the cause of a
+    // persistent "5" printing before certain lines — and this printer
+    // STILL showed it after both were removed. ESC M (selectFont,
+    // previously called here unconditionally) is the last remaining
+    // font/size-related command in this path, so it's out too now.
+    // Visual emphasis for shop name/total is bold() alone — see
+    // buildReceiptEscPos, which already combines size-level with
+    // bold rather than relying on this function for anything.
+    return this;
   }
 
   underline(on: boolean) {

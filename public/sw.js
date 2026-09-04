@@ -1,5 +1,5 @@
-const SHELL_CACHE = "shop-billing-shell-v1788495253092";
-const ASSET_CACHE = "shop-billing-assets-v1788495253092";
+const SHELL_CACHE = "shop-billing-shell-v1788498760101";
+const ASSET_CACHE = "shop-billing-assets-v1788498760101";
 const OFFLINE_URL = "/offline.html";
 const OFFLINE_BILL_URL = "/offline-bill";
 
