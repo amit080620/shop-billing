@@ -41,6 +41,21 @@ export function isWebBluetoothSupported(): boolean {
   return typeof navigator !== "undefined" && "bluetooth" in navigator;
 }
 
+/** Desktop Chrome/Edge ALSO reports Web Bluetooth support — but a
+ * laptop's actual printer is almost always a normal USB/network
+ * printer (often set up specifically for the kiosk-printing flow),
+ * never a Bluetooth thermal printer. Blindly trusting
+ * isWebBluetoothSupported() alone would pop the Bluetooth device
+ * picker on a laptop instead of silently using the browser's own
+ * print — genuinely the opposite of what a desktop kiosk-printing
+ * setup is for. This checks the actual device type so the "just
+ * Print" button defaults correctly on both. */
+export function shouldDefaultToBluetooth(): boolean {
+  if (!isWebBluetoothSupported()) return false;
+  if (typeof navigator === "undefined") return false;
+  return /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+}
+
 async function findWritableCharacteristic(
   server: BluetoothRemoteGATTServer,
 ): Promise<BluetoothRemoteGATTCharacteristic | null> {

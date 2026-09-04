@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Printer, RotateCcw } from "lucide-react";
-import { printViaBluetooth, isWebBluetoothSupported, hasRememberedPrinter, forgetRememberedPrinter } from "@/lib/bluetooth-print";
+import { printViaBluetooth, shouldDefaultToBluetooth, hasRememberedPrinter, forgetRememberedPrinter } from "@/lib/bluetooth-print";
 import { buildReceiptEscPos, type ReceiptData } from "@/lib/escpos";
 import { getThermalPrintSettingsAction } from "@/lib/actions/settings";
 
@@ -22,7 +22,7 @@ export function BluetoothPrintButton({ receipt, paperWidth }: { receipt: Receipt
   const [status, setStatus] = useState<"idle" | "connecting" | "done" | "error">("idle");
   const [error, setError] = useState<string | null>(null);
   const [remembered, setRemembered] = useState(false);
-  const bluetoothSupported = isWebBluetoothSupported();
+  const bluetoothSupported = shouldDefaultToBluetooth();
 
   useEffect(() => {
     setRemembered(hasRememberedPrinter());

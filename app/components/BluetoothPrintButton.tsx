@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Bluetooth, RotateCcw } from "lucide-react";
-import { printViaBluetooth, isWebBluetoothSupported, hasRememberedPrinter, forgetRememberedPrinter } from "@/lib/bluetooth-print";
+import { printViaBluetooth, shouldDefaultToBluetooth, hasRememberedPrinter, forgetRememberedPrinter } from "@/lib/bluetooth-print";
 
 /** Generic version of the Bluetooth print button used on the main
  * bill print page (app/print/bill/[id]/BluetoothPrintButton.tsx),
@@ -36,7 +36,7 @@ export function BluetoothPrintButton({
   const [status, setStatus] = useState<"idle" | "connecting" | "done" | "error">("idle");
   const [error, setError] = useState<string | null>(null);
   const [remembered, setRemembered] = useState(false);
-  const bluetoothSupported = isWebBluetoothSupported();
+  const bluetoothSupported = shouldDefaultToBluetooth();
 
   useEffect(() => {
     setRemembered(hasRememberedPrinter());
