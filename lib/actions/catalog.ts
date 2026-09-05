@@ -5,7 +5,7 @@ import { requireSession } from "../auth";
 import { createSupabaseAdminClient } from "../supabase/admin";
 import { round2 } from "../gst";
 import { logError } from "../audit";
-import { checkRateLimit } from "../rateLimit";
+import { checkRateLimitAsync } from "../rateLimit";
 import { findOrCreateCustomerByPhone } from "./customers";
 
 export async function saveCatalogSettingsAction(settings: {
@@ -58,7 +58,7 @@ export async function submitCatalogOrderAction(
 
   // Genuine best-effort abuse deterrence — this is a public,
   // unauthenticated endpoint anyone with the shop's link can hit.
-  if (!checkRateLimit(`catalog-order:${publicToken}:${digitsOnly}`, 5, 10 * 60 * 1000)) {
+  if (!(await checkRateLimitAsync(`catalog-order:${publicToken}:${digitsOnly}`, 5, 10 * 60 * 1000))) {
     return { error: "Too many orders submitted recently — please wait a few minutes and try again." };
   }
 

@@ -4,6 +4,7 @@ import { requireSession } from "../auth";
 import { createSupabaseAdminClient } from "../supabase/admin";
 import { buildWhatsAppLink } from "../whatsapp";
 import { formatMoney } from "../format";
+import { checkAiQuota } from "../aiQuota";
 
 // Groq hosts genuinely open-source models (Meta's Llama) — this is a
 // deliberate choice over Gemini for the assistant specifically: this
@@ -740,6 +741,9 @@ export async function askAssistantAction(question: string, history: ChatMessage[
   const session = await requireSession();
   const apiKey = process.env.GROQ_API_KEY?.trim();
   if (!apiKey) return { error: "not_configured" };
+
+  const quota = await checkAiQuota(session.shopId, "assistant");
+  if (!quota.allowed) return { error: "Aaj ke liye assistant ki daily limit khatam ho gayi — kal phir try karein." };
 
   const messages: GroqMessage[] = [
     { role: "system", content: SYSTEM_TEXT(new Date().toDateString()) },

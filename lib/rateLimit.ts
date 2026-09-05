@@ -1,22 +1,20 @@
-/** Genuine best-effort rate limiting for public, unauthenticated
- * endpoints (catalog orders, bookings) — these can be hit by anyone
- * with the shop's public link, with no login required, so some
+/** Best-effort rate limiting for public, unauthenticated endpoints
+ * (catalog orders, bookings) — these can be hit by anyone with the
+ * shop's public link, with no login required, so some
  * abuse-deterrence is genuinely worth having even if imperfect.
  *
- * Honest limitation: this is in-memory, so on serverless (Vercel) it
- * only protects within a single warm function instance, not globally
- * across every instance handling requests for this shop. A genuinely
- * complete, cross-instance solution would need a shared store (Redis/
- * Upstash) — not set up here. This still deters basic scripted abuse
- * hitting the same warm instance repeatedly, which is genuinely the
- * most common real-world case. */
+ * Uses Upstash Redis when it's configured (UPSTASH_REDIS_REST_URL/
+ * TOKEN) for a genuinely global, cross-instance limit — the correct
+ * fix for the honest gap this file used to call out (in-memory alone
+ * only protects a single warm serverless instance, not the shop as a
+ * whole). Falls back to the original in-memory behavior when Redis
+ * isn't set up, so this keeps working with zero config either way. */
+
+import { getRedis } from "./redis";
 
 const attempts = new Map<string, number[]>();
 
-/** Returns true if this key is genuinely within its allowed rate,
- * false if it should be rejected. Automatically forgets attempts
- * older than the window so the map doesn't grow unbounded. */
-export function checkRateLimit(key: string, maxAttempts: number, windowMs: number): boolean {
+function checkInMemory(key: string, maxAttempts: number, windowMs: number): boolean {
   const now = Date.now();
   const existing = attempts.get(key) ?? [];
   const withinWindow = existing.filter((t) => now - t < windowMs);
@@ -38,4 +36,32 @@ export function checkRateLimit(key: string, maxAttempts: number, windowMs: numbe
   }
 
   return true;
+}
+
+/** Returns true if this key is genuinely within its allowed rate,
+ * false if it should be rejected. Synchronous in-memory fallback is
+ * kept for callers that can't await (rare) — see checkRateLimitAsync
+ * for the Redis-backed version every real caller should prefer. */
+export function checkRateLimit(key: string, maxAttempts: number, windowMs: number): boolean {
+  return checkInMemory(key, maxAttempts, windowMs);
+}
+
+/** The genuinely cross-instance version — uses Redis's own atomic
+ * INCR + EXPIRE when available, which is what makes this actually
+ * global across every serverless instance instead of per-warm-lambda.
+ * Fails open to the in-memory check if Redis isn't configured or the
+ * call itself errors, so an optional infra piece being down never
+ * blocks a real public endpoint. */
+export async function checkRateLimitAsync(key: string, maxAttempts: number, windowMs: number): Promise<boolean> {
+  const redis = getRedis();
+  if (!redis) return checkInMemory(key, maxAttempts, windowMs);
+  try {
+    const redisKey = `ray:pubratelimit:${key}`;
+    const count = await redis.incr(redisKey);
+    if (count === 1) await redis.pexpire(redisKey, windowMs);
+    return count <= maxAttempts;
+  } catch (err) {
+    console.error("Redis rate limit check failed, falling back to in-memory", err);
+    return checkInMemory(key, maxAttempts, windowMs);
+  }
 }

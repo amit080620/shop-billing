@@ -19,6 +19,9 @@ export type AIScanItem = { name: string; price?: number; quantity?: number; cate
 // Google retired gemini-2.5-flash-lite for new users (confirmed via
 // live 404 from the API itself) — gemini-3.5-flash-lite is their
 // current recommended free-tier replacement.
+import { requireSession } from "../auth";
+import { checkAiQuota } from "../aiQuota";
+
 const MODEL = "gemini-3.5-flash-lite";
 
 const PROMPTS = {
@@ -86,6 +89,10 @@ export async function scanImageWithAI(
 ): Promise<{ items?: AIScanItem[]; error?: string; errorType?: AIScanErrorType }> {
   const apiKey = process.env.GEMINI_API_KEY?.trim();
   if (!apiKey) return { error: "AI scan is not set up for this shop yet", errorType: "not_configured" };
+
+  const session = await requireSession();
+  const quota = await checkAiQuota(session.shopId, "scan");
+  if (!quota.allowed) return { error: "Aaj ke liye scan ki daily limit khatam ho gayi.", errorType: "quota_exceeded" };
 
   try {
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`, {

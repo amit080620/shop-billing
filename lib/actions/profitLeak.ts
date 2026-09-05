@@ -2,6 +2,7 @@
 
 import { requireSession } from "../auth";
 import { createSupabaseAdminClient } from "../supabase/admin";
+import { getRedis } from "../redis";
 
 export type ProfitLeak = {
   totalAtRisk: number;
@@ -15,14 +16,49 @@ export type ProfitLeak = {
   belowCostItems: { name: string; cost: number; salePrice: number }[];
 };
 
+const CACHE_TTL_SECONDS = 10 * 60; // 10 minutes — long enough that a dashboard visited a few times in a row is instant, short enough that a real change (a payment recorded, a sale made) shows up again soon without anyone needing to think about it
+
 /** Four genuinely different ways money quietly leaks out of a small
  * shop, none of which show up as a single alarming number anywhere
  * else in the app — each sits buried in its own report where it's
  * easy to never look at. Adding them into ONE total is the entire
  * point: ₹34,000 sitting across four separate, ignorable screens
- * doesn't feel real. ₹34,000 on one screen, today, does. */
+ * doesn't feel real. ₹34,000 on one screen, today, does.
+ *
+ * Cached in Redis per shop when Upstash is configured — this runs
+ * four real aggregate queries against bills/products/purchases every
+ * time, which is genuinely too heavy to redo on every single
+ * dashboard load. Falls back to computing fresh every time when
+ * Redis isn't set up, so nothing breaks without it — just a bit
+ * slower on repeat visits. */
 export async function getProfitLeakAction(): Promise<ProfitLeak> {
   const session = await requireSession();
+  const redis = getRedis();
+  const cacheKey = `ray:cache:profitleak:${session.shopId}`;
+
+  if (redis) {
+    try {
+      const cached = await redis.get<ProfitLeak>(cacheKey);
+      if (cached) return cached;
+    } catch (err) {
+      console.error("Profit leak cache read failed, computing fresh", err);
+    }
+  }
+
+  const fresh = await computeProfitLeak(session.shopId);
+
+  if (redis) {
+    try {
+      await redis.set(cacheKey, fresh, { ex: CACHE_TTL_SECONDS });
+    } catch (err) {
+      console.error("Profit leak cache write failed", err);
+    }
+  }
+
+  return fresh;
+}
+
+async function computeProfitLeak(shopId: string): Promise<ProfitLeak> {
   const admin = createSupabaseAdminClient();
 
   const in30Days = new Date();
@@ -33,11 +69,11 @@ export async function getProfitLeakAction(): Promise<ProfitLeak> {
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
   const [{ data: expiringBatches }, { data: allProducts }, { data: recentBills }, { data: creditBills }, { data: payments }] = await Promise.all([
-    admin.from("medicine_batches").select("quantity, purchase_price").eq("shop_id", session.shopId).lte("expiry_date", in30Days.toISOString().slice(0, 10)).gt("quantity", 0),
-    admin.from("products").select("id, name, price, stock_quantity, track_inventory").eq("shop_id", session.shopId).eq("track_inventory", true),
-    admin.from("bills").select("id").eq("shop_id", session.shopId).eq("status", "active").gte("created_at", ninetyDaysAgo.toISOString()),
-    admin.from("bills").select("customer_id, credit_amount, created_at").eq("shop_id", session.shopId).eq("status", "active").gt("credit_amount", 0).lte("created_at", thirtyDaysAgo.toISOString()),
-    admin.from("payments").select("customer_id, amount").eq("shop_id", session.shopId),
+    admin.from("medicine_batches").select("quantity, purchase_price").eq("shop_id", shopId).lte("expiry_date", in30Days.toISOString().slice(0, 10)).gt("quantity", 0),
+    admin.from("products").select("id, name, price, stock_quantity, track_inventory").eq("shop_id", shopId).eq("track_inventory", true),
+    admin.from("bills").select("id").eq("shop_id", shopId).eq("status", "active").gte("created_at", ninetyDaysAgo.toISOString()),
+    admin.from("bills").select("customer_id, credit_amount, created_at").eq("shop_id", shopId).eq("status", "active").gt("credit_amount", 0).lte("created_at", thirtyDaysAgo.toISOString()),
+    admin.from("payments").select("customer_id, amount").eq("shop_id", shopId),
   ]);
 
   const expiringStockValue = (expiringBatches ?? []).reduce((s, b) => s + Number(b.quantity) * Number(b.purchase_price ?? 0), 0);
@@ -76,7 +112,7 @@ export async function getProfitLeakAction(): Promise<ProfitLeak> {
   const { data: recentPurchases } = await admin
     .from("purchase_items")
     .select("product_id, unit_price, purchases!inner ( purchase_date, shop_id )")
-    .eq("purchases.shop_id", session.shopId)
+    .eq("purchases.shop_id", shopId)
     .order("purchase_date", { foreignTable: "purchases", ascending: false });
   const lastCostByProduct = new Map<string, number>();
   for (const row of recentPurchases ?? []) {

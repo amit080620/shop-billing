@@ -3,6 +3,7 @@
 import { requireSession } from "../auth";
 import { createSupabaseAdminClient } from "../supabase/admin";
 import { findClosestMatch } from "../fuzzyMatch";
+import { checkAiQuota } from "../aiQuota";
 
 // Groq deprecated llama-3.3-70b-versatile on June 17, 2026 — this is
 // their own recommended replacement, same free tier.
@@ -50,6 +51,9 @@ export async function parseVoiceOrderAction(transcript: string): Promise<{
   const apiKey = process.env.GROQ_API_KEY?.trim();
   if (!apiKey) return { error: "not_configured", errorType: "not_configured" };
   if (!transcript.trim()) return { items: [] };
+
+  const quota = await checkAiQuota(session.shopId, "voice");
+  if (!quota.allowed) return { error: "Aaj ke liye voice billing ki daily limit khatam ho gayi.", errorType: "quota_exceeded" };
 
   const admin = createSupabaseAdminClient();
   const [{ data: products }, { data: customers }] = await Promise.all([
