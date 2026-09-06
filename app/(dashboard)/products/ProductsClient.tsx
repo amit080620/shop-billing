@@ -118,7 +118,7 @@ export function ProductsClient({
   businessType: string;
   isOwner: boolean;
   bulkImportExportEnabled: boolean;
-  barcodeScanMode?: "camera" | "hardware" | "both";
+  barcodeScanMode?: "camera" | "hardware" | "both" | "off";
 }) {
   const { t } = useTranslation(lang);
   const orderedUnits = getUnitsForBusinessType(businessType, UNITS);
@@ -298,7 +298,7 @@ export function ProductsClient({
           placeholder={t("products.searchPlaceholder")}
           className="neu-card px-3.5 py-2.5 text-sm outline-none focus:border-brand"
         />
-        {barcodeScanMode !== "camera" && (
+        {barcodeScanMode !== "camera" && barcodeScanMode !== "off" && (
           <BarcodeScanInput
             placeholder={t("products.scanPlaceholder")}
             onScan={handleInventoryScan}
@@ -306,7 +306,7 @@ export function ProductsClient({
         )}
         {scanNotice && <p className="text-xs text-credit">{scanNotice}</p>}
         <div className="flex flex-wrap gap-2">
-          {barcodeScanMode !== "hardware" && <CameraBarcodeScanner onScan={handleInventoryScan} compact />}
+          {barcodeScanMode !== "hardware" && barcodeScanMode !== "off" && <CameraBarcodeScanner onScan={handleInventoryScan} compact />}
           {bulkImportExportEnabled && (
             <BulkImportExport
               businessType={businessType}
@@ -550,7 +550,7 @@ export function ProductsClient({
                   placeholder={t("products.barcodePlaceholder")}
                   className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-brand"
                 />
-                {barcodeScanMode !== "hardware" && (
+                {barcodeScanMode !== "hardware" && barcodeScanMode !== "off" && (
                   <CameraBarcodeScanner
                     label={t("products.scanWithCamera")}
                     onScan={(code) => {

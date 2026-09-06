@@ -362,14 +362,14 @@ export async function saveThermalPrintSettingsAction(settings: ThermalPrintSetti
   return {};
 }
 
-export async function getBarcodeScanModeAction(): Promise<"camera" | "hardware" | "both"> {
+export async function getBarcodeScanModeAction(): Promise<"camera" | "hardware" | "both" | "off"> {
   const session = await requireSession();
   const admin = createSupabaseAdminClient();
   const { data } = await admin.from("shops").select("barcode_scan_mode").eq("id", session.shopId).single();
-  return (data?.barcode_scan_mode as "camera" | "hardware" | "both") ?? "both";
+  return (data?.barcode_scan_mode as "camera" | "hardware" | "both" | "off") ?? "both";
 }
 
-export async function saveBarcodeScanModeAction(mode: "camera" | "hardware" | "both"): Promise<{ error?: string }> {
+export async function saveBarcodeScanModeAction(mode: "camera" | "hardware" | "both" | "off"): Promise<{ error?: string }> {
   const session = await requireOwner();
   const admin = createSupabaseAdminClient();
   const { error } = await admin.from("shops").update({ barcode_scan_mode: mode }).eq("id", session.shopId);

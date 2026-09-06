@@ -2,19 +2,20 @@
 
 import { useState, useTransition } from "react";
 import { saveBarcodeScanModeAction } from "@/lib/actions/settings";
-import { Camera, Keyboard, Layers } from "lucide-react";
+import { Camera, Keyboard, Layers, X } from "lucide-react";
 
 const OPTIONS = [
+  { value: "off" as const, label: "Off", icon: X, sub: "Turn off barcode scanning entirely — hides camera & scan option everywhere" },
   { value: "both" as const, label: "Both", icon: Layers, sub: "Show both — camera and type-to-scan" },
   { value: "camera" as const, label: "Camera only", icon: Camera, sub: "Scan visually with your phone's camera" },
   { value: "hardware" as const, label: "Hardware scanner only", icon: Keyboard, sub: "A laser scanner types the code and presses Enter" },
 ];
 
-export function BarcodeScanModeToggle({ initial }: { initial: "camera" | "hardware" | "both" }) {
+export function BarcodeScanModeToggle({ initial }: { initial: "camera" | "hardware" | "both" | "off" }) {
   const [mode, setMode] = useState(initial);
   const [isPending, startTransition] = useTransition();
 
-  function select(next: "camera" | "hardware" | "both") {
+  function select(next: "camera" | "hardware" | "both" | "off") {
     setMode(next);
     startTransition(async () => {
       await saveBarcodeScanModeAction(next);
