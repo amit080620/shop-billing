@@ -1009,6 +1009,24 @@ textarea:focus {
     inset 6px 6px 14px var(--neu-dark);
 }
 
+/* Lite Mode (opt-in, Preferences) — trades the neumorphic look for
+ * flat, simply-bordered cards and no decorative transitions. Genuinely
+ * cheaper to paint: a single 1px border costs far less than two large
+ * blurred shadows per card, which matters most on a long list
+ * (Products, Customers) rendering many cards on screen simultaneously
+ * on an older/budget phone's weaker GPU. */
+html.lite-mode .neu-card,
+html.lite-mode .neu-tray {
+  box-shadow: none !important;
+  border: 1px solid var(--border) !important;
+}
+html.lite-mode *,
+html.lite-mode *::before,
+html.lite-mode *::after {
+  transition-duration: 0ms !important;
+  animation-duration: 0ms !important;
+}
+
 /* Pressed/inset surface — for a "carved in" look, e.g. an avatar
    frame or an active/selected state. */
 .neu-inset {

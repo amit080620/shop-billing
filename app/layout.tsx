@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Plus_Jakarta_Sans, Noto_Sans_Devanagari } from "next/font/google";
-import { getTheme, getCalculatorEnabled, getAssistantEnabled } from "@/lib/theme";
+import { getTheme, getCalculatorEnabled, getAssistantEnabled, getLiteMode } from "@/lib/theme";
 import { getLang } from "@/lib/i18n/server";
 import { ServiceWorkerRegistration } from "./components/ServiceWorkerRegistration";
 import { ToastProvider } from "./components/Toast";
@@ -63,12 +63,13 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const theme = await getTheme();
+  const liteMode = await getLiteMode();
   const lang = await getLang();
   const calculatorEnabled = await getCalculatorEnabled();
   const assistantEnabled = await getAssistantEnabled();
 
   return (
-    <html lang={lang} className={`${plusJakartaSans.variable} ${notoSansDevanagari.variable} ${theme === "dark" ? "dark" : ""}`}>
+    <html lang={lang} className={`${plusJakartaSans.variable} ${notoSansDevanagari.variable} ${theme === "dark" ? "dark" : ""} ${liteMode ? "lite-mode" : ""}`}>
       <head>
         {/* Genuinely the earliest point any code runs on this page —
             before React, before the app's own bundles, before even

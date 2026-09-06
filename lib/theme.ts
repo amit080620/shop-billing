@@ -22,3 +22,15 @@ export async function getAssistantEnabled(): Promise<boolean> {
   const cookieStore = await cookies();
   return cookieStore.get("assistant")?.value !== "off";
 }
+
+/** Lite Mode — swaps the app's neumorphic shadows/gradients (visually
+ * premium, but genuinely more expensive to paint — many layered
+ * shadows per card) for flat, simple-bordered cards, and removes
+ * decorative transitions. Defaults OFF (the app looks how it's
+ * designed to look) — this is an opt-in for anyone on an older/budget
+ * phone who'd rather trade the neumorphic look for snappier scrolling
+ * on long lists (Products, Customers, etc). */
+export async function getLiteMode(): Promise<boolean> {
+  const cookieStore = await cookies();
+  return cookieStore.get("lite_mode")?.value === "on";
+}
