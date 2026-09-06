@@ -7,6 +7,7 @@ import { ToastProvider } from "./components/Toast";
 import { AutoThemeApplier } from "./components/ThemeToggle";
 import { FocusScrollIntoView } from "./components/FocusScrollIntoView";
 import { LazyFloatingWidgets } from "./components/LazyFloatingWidgets";
+import { VersionWatcher } from "./components/VersionWatcher";
 import { CalculatorAmountProvider } from "@/lib/calculatorAmount";
 import "./globals.css";
 
@@ -125,6 +126,7 @@ export default async function RootLayout({
         <AutoThemeApplier theme={theme} />
         <ServiceWorkerRegistration />
         <FocusScrollIntoView />
+        <VersionWatcher />
         <CalculatorAmountProvider>
           <ToastProvider>{children}</ToastProvider>
           <LazyFloatingWidgets calculatorEnabled={calculatorEnabled} assistantEnabled={assistantEnabled} />

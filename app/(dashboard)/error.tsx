@@ -35,11 +35,12 @@ export default function DashboardError({
 
     // A large share of these crashes right after reopening the app are
     // a stale JS chunk left over from BEFORE the latest deploy — see
-    // ServiceWorkerRegistration's controllerchange handler for the
-    // other half of this fix. That's transient — a single reload
-    // fetches the current build and clears it. Guarded by
-    // sessionStorage so a genuinely repeating error still falls
-    // through to this screen instead of reload-looping.
+    // VersionWatcher (proactively detects a new deploy and refreshes
+    // smoothly before this ever has to happen) for the preventive half
+    // of this fix. This auto-reload is the reactive fallback for
+    // whatever still slips through. Guarded by sessionStorage so a
+    // genuinely repeating error still falls through to this screen
+    // instead of reload-looping.
     if (typeof window !== "undefined" && !window.sessionStorage.getItem("ray-crash-auto-retried")) {
       window.sessionStorage.setItem("ray-crash-auto-retried", "1");
       setAutoRetried(true);
