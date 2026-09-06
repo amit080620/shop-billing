@@ -88,7 +88,7 @@ export async function signupAction(
     return { error: "Account created — please log in." };
   }
 
-  revalidateStaffCache();
+  await revalidateStaffCache(authData.user.id);
   redirect("/");
 }
 
@@ -153,15 +153,15 @@ export async function loginAction(
   }
 
   if (permissions.includes("kitchen_only")) {
-    revalidateStaffCache();
+    await revalidateStaffCache(authData.user.id);
     redirect("/restaurant-kds");
   }
   if (staffRow && staffRow.role !== "owner" && shop?.business_type === "restaurant") {
-    revalidateStaffCache();
+    await revalidateStaffCache(authData.user.id);
     redirect("/restaurant");
   }
 
-  revalidateStaffCache();
+  await revalidateStaffCache(authData.user.id);
   redirect("/");
 }
 

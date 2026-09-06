@@ -5,6 +5,8 @@ import { unstable_cache, revalidateTag } from "next/cache";
 import { getAuthenticatedUser } from "./supabase/server";
 import { createSupabaseAdminClient } from "./supabase/admin";
 import type { PermissionKey } from "./permissions";
+import { getRedis } from "./redis";
+import { invalidateCache } from "./cache";
 
 export type SessionContext = {
   userId: string;
@@ -54,7 +56,44 @@ async function fetchStaffAndShop(userId: string) {
   return { staff, error };
 }
 
-const getCachedStaffAndShop = unstable_cache(
+/** Redis-backed instead of Next.js's own unstable_cache — the latter
+ * is only ever shared within a SINGLE warm serverless instance, not
+ * across the many concurrent Lambda instances Vercel spins up under
+ * real traffic. Since this exact function runs on every single page
+ * load and every server action across the whole app (via
+ * requireSession), making it genuinely globally cached is the
+ * single biggest available speed lever. Falls back to the
+ * unstable_cache version automatically when Redis isn't configured,
+ * so this degrades gracefully rather than losing caching entirely. */
+async function getCachedStaffAndShop(userId: string) {
+  const redis = getRedis();
+  if (!redis) return getCachedStaffAndShopFallback(userId);
+
+  const cacheKey = `ray:cache:staff-and-shop:${userId}`;
+  try {
+    const hit = await redis.get<{ staff: unknown; error: unknown }>(cacheKey);
+    if (hit) return hit as Awaited<ReturnType<typeof fetchStaffAndShop>>;
+  } catch (err) {
+    console.error("Staff-and-shop Redis cache read failed, fetching fresh", err);
+  }
+
+  const fresh = await fetchStaffAndShop(userId);
+  try {
+    // Only cache genuine hits — a negative result is never trusted
+    // from cache anyway (see getStaffAndShop below), so there's no
+    // point spending a write on it.
+    if (fresh.staff) await redis.set(cacheKey, fresh, { ex: 10 });
+  } catch (err) {
+    console.error("Staff-and-shop Redis cache write failed", err);
+  }
+  return fresh;
+}
+
+/** The exact same unstable_cache this replaced, kept as the
+ * automatic fallback for when Redis genuinely isn't configured —
+ * this app should never lose caching entirely just because an
+ * optional piece of infrastructure isn't set up. */
+const getCachedStaffAndShopFallback = unstable_cache(
   async (userId: string) => {
     try {
       return await fetchStaffAndShop(userId);
@@ -85,9 +124,13 @@ async function getStaffAndShop(userId: string) {
 /** Genuinely called by loginAction right before redirect — clears any
  * stale cached null from before this login so the first page load
  * after sign-in always does a fresh DB lookup, never hits a cached
- * "not found" result from the previous logged-out state. */
-export function revalidateStaffCache() {
+ * "not found" result from the previous logged-out state. Clears both
+ * the Redis cache (the primary path now) and the unstable_cache
+ * fallback (in case Redis wasn't configured when the stale entry was
+ * written). */
+export async function revalidateStaffCache(userId?: string) {
   revalidateTag("staff-and-shop");
+  if (userId) await invalidateCache(`ray:cache:staff-and-shop:${userId}`);
 }
 
 export async function requireSession(): Promise<SessionContext> {
