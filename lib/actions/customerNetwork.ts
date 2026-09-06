@@ -2,6 +2,7 @@
 
 import { createSupabaseAdminClient } from "../supabase/admin";
 import { normalizePhone } from "../phone";
+import { getRedis } from "../redis";
 
 export type NetworkReliability = { shopsVisited: number; tier: "new" | "building" | "trusted" };
 
@@ -43,22 +44,53 @@ async function computeReliability(phone: string): Promise<NetworkReliability> {
 
 /** Looked up whenever a shop is about to extend credit to a
  * (possibly new-to-them) customer — cached for a day per phone so
- * this doesn't re-scan every shop's bills on every keystroke. */
+ * this doesn't re-scan every shop's bills on every keystroke.
+ * Redis is checked first (genuinely much faster than a Postgres
+ * round-trip) with the customer_network_profiles table as the
+ * durable fallback — this matters because customer selection during
+ * billing happens constantly, and this used to mean a real database
+ * read on every single one even on a "cache hit". */
 export async function getNetworkReliabilityAction(rawPhone: string): Promise<NetworkReliability | null> {
   const phone = normalizePhone(rawPhone);
   if (!phone) return null;
+
+  const redisKey = `ray:cache:network-reliability:${phone}`;
+  const redis = getRedis();
+  if (redis) {
+    try {
+      const hit = await redis.get<NetworkReliability>(redisKey);
+      if (hit) return hit;
+    } catch (err) {
+      console.error("Network-reliability Redis read failed, falling back to Postgres", err);
+    }
+  }
 
   const admin = createSupabaseAdminClient();
   const { data: cached } = await admin.from("customer_network_profiles").select("*").eq("phone", phone).maybeSingle();
 
   if (cached && Date.now() - new Date(cached.last_computed_at).getTime() < CACHE_TTL_MS) {
-    return { shopsVisited: cached.shops_visited_count, tier: cached.reliability_tier };
+    const result = { shopsVisited: cached.shops_visited_count, tier: cached.reliability_tier as NetworkReliability["tier"] };
+    if (redis) {
+      try {
+        await redis.set(redisKey, result, { ex: 24 * 60 * 60 });
+      } catch (err) {
+        console.error("Network-reliability Redis write failed", err);
+      }
+    }
+    return result;
   }
 
   const fresh = await computeReliability(phone);
   await admin
     .from("customer_network_profiles")
     .upsert({ phone, shops_visited_count: fresh.shopsVisited, reliability_tier: fresh.tier, last_computed_at: new Date().toISOString() });
+  if (redis) {
+    try {
+      await redis.set(redisKey, fresh, { ex: 24 * 60 * 60 });
+    } catch (err) {
+      console.error("Network-reliability Redis write failed", err);
+    }
+  }
 
   return fresh;
 }
