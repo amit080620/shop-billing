@@ -243,13 +243,13 @@ export function TablesClient({ tables, lang }: { tables: Table[]; lang: Lang }) 
         icon={<LayoutGrid size={18} strokeWidth={1.8} />}
       />
 
-      <div className="flex gap-2.5 overflow-x-auto pb-1">
+      <div className="flex gap-2 overflow-x-auto pb-1">
         <Link
           href="/restaurant/reports"
           className="shrink-0 rounded-2xl px-3 py-1.5 text-xs font-semibold text-foreground transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97]"
           style={{
             background: "linear-gradient(155deg, var(--surface) 0%, var(--background) 100%)",
-            boxShadow: "-5px -5px 12px var(--neu-light), 5px 5px 14px var(--neu-dark), inset 0 1px 0 rgba(255,255,255,0.4)",
+            boxShadow: "-4px -4px 10px var(--neu-light), 4px 4px 12px var(--neu-dark), inset 0 1px 0 rgba(255,255,255,0.35)",
             border: "1px solid var(--border)",
           }}
         >
@@ -260,7 +260,7 @@ export function TablesClient({ tables, lang }: { tables: Table[]; lang: Lang }) 
           className="flex shrink-0 items-center gap-1.5 rounded-2xl px-3 py-1.5 text-xs font-semibold text-foreground transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97]"
           style={{
             background: "linear-gradient(155deg, var(--surface) 0%, var(--background) 100%)",
-            boxShadow: "-5px -5px 12px var(--neu-light), 5px 5px 14px var(--neu-dark), inset 0 1px 0 rgba(255,255,255,0.4)",
+            boxShadow: "-4px -4px 10px var(--neu-light), 4px 4px 12px var(--neu-dark), inset 0 1px 0 rgba(255,255,255,0.35)",
             border: "1px solid var(--border)",
           }}
         >
@@ -271,7 +271,7 @@ export function TablesClient({ tables, lang }: { tables: Table[]; lang: Lang }) 
           className="flex shrink-0 items-center gap-1.5 rounded-2xl px-3 py-1.5 text-xs font-semibold text-foreground transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97]"
           style={{
             background: "linear-gradient(155deg, var(--surface) 0%, var(--background) 100%)",
-            boxShadow: "-5px -5px 12px var(--neu-light), 5px 5px 14px var(--neu-dark), inset 0 1px 0 rgba(255,255,255,0.4)",
+            boxShadow: "-4px -4px 10px var(--neu-light), 4px 4px 12px var(--neu-dark), inset 0 1px 0 rgba(255,255,255,0.35)",
             border: "1px solid var(--border)",
           }}
         >
