@@ -5,8 +5,7 @@ import { ServiceWorkerRegistration } from "./components/ServiceWorkerRegistratio
 import { ToastProvider } from "./components/Toast";
 import { AutoThemeApplier } from "./components/ThemeToggle";
 import { FocusScrollIntoView } from "./components/FocusScrollIntoView";
-import { FloatingCalculator } from "./components/FloatingCalculator";
-import { FloatingAssistant } from "./components/FloatingAssistant";
+import { LazyFloatingWidgets } from "./components/LazyFloatingWidgets";
 import { CalculatorAmountProvider } from "@/lib/calculatorAmount";
 import "./globals.css";
 
@@ -119,8 +118,7 @@ export default async function RootLayout({
         <FocusScrollIntoView />
         <CalculatorAmountProvider>
           <ToastProvider>{children}</ToastProvider>
-          <FloatingCalculator enabled={calculatorEnabled} />
-          <FloatingAssistant enabled={assistantEnabled} />
+          <LazyFloatingWidgets calculatorEnabled={calculatorEnabled} assistantEnabled={assistantEnabled} />
         </CalculatorAmountProvider>
       </body>
     </html>
