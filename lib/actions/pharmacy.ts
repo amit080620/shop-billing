@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { requireSession } from "../auth";
 import { createSupabaseAdminClient } from "../supabase/admin";
+import { invalidateCache } from "../cache";
 
 export type ActionState = { error?: string } | null;
 
@@ -95,6 +96,7 @@ export async function deleteBatchAction(batchId: string, productId: string): Pro
 
   if (product) {
     await admin.rpc("decrement_stock", { p_product_id: productId, p_quantity: Number(batch.quantity) });
+    await invalidateCache(`ray:cache:products:${session.shopId}`);
   }
 
   revalidatePath(`/pharmacy/batches/${productId}`);
@@ -164,6 +166,7 @@ export async function writeOffBatchAction(
     .update({ quantity: round2(Number(batch.quantity) - quantity) })
     .eq("id", batchId);
   await admin.rpc("decrement_stock", { p_product_id: productId, p_quantity: quantity });
+  await invalidateCache(`ray:cache:products:${session.shopId}`);
 
   revalidatePath(`/pharmacy/batches/${productId}`);
   revalidatePath("/products");

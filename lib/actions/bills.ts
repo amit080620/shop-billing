@@ -8,6 +8,7 @@ import { billSchema, calculateTransactionTotals, type BillInput } from "../valid
 import { determineSupplyType, financialYearFor, round2 } from "../gst";
 import { logAuditEvent } from "../audit";
 import { findOrCreateCustomerByPhone, awardLoyaltyPoints } from "./customers";
+import { invalidateCache } from "../cache";
 
 export type ActionState = { error?: string } | null;
 
@@ -276,6 +277,7 @@ export async function createBillCore(
       if (stockError) console.error("Could not update stock for product", product.id, stockError);
     }),
   );
+  await invalidateCache(`ray:cache:products:${session.shopId}`);
 
   // Loyalty points — best-effort, same non-blocking pattern as the
   // stock decrement above.
@@ -415,6 +417,7 @@ export async function voidBillAction(
         await admin.rpc("increment_stock", { p_product_id: item.product_id, p_quantity: Number(item.quantity) });
       }),
     );
+    await invalidateCache(`ray:cache:products:${session.shopId}`);
   }
 
   const { error } = await admin
@@ -505,6 +508,7 @@ export async function editBillQuantitiesAction(
       }
     }),
   );
+  await invalidateCache(`ray:cache:products:${session.shopId}`);
 
   const updatedItems = items.map((item) => ({
     ...item,

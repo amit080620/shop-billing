@@ -6,6 +6,7 @@ import { createSupabaseAdminClient } from "../supabase/admin";
 import { productSchema, categorySchema } from "../validation/schemas";
 import { logAuditEvent } from "../audit";
 import { findDuplicateProductAI } from "./duplicateCheck";
+import { invalidateCache } from "../cache";
 
 export type ActionState = { error?: string; productId?: string } | null;
 
@@ -136,6 +137,7 @@ export async function createProductAction(
   }
 
   revalidatePath("/products");
+  await invalidateCache(`ray:cache:products:${session.shopId}`);
   return { productId: inserted?.id };
 }
 
@@ -243,6 +245,7 @@ export async function updateProductAction(
     return { error: "Could not update product" };
   }
   revalidatePath("/products");
+  await invalidateCache(`ray:cache:products:${session.shopId}`);
   return null;
 }
 
@@ -269,6 +272,7 @@ export async function deleteProductAction(productId: string): Promise<{ error?: 
     return { error: "Could not delete item" };
   }
   revalidatePath("/products");
+  await invalidateCache(`ray:cache:products:${session.shopId}`);
   return {};
 }
 
@@ -314,6 +318,7 @@ export async function forceDeleteProductAction(productId: string): Promise<{ err
   });
 
   revalidatePath("/products");
+  await invalidateCache(`ray:cache:products:${session.shopId}`);
   return {};
 }
 
@@ -334,6 +339,7 @@ export async function createCategoryAction(
   if (error) return { error: "That category already exists" };
 
   revalidatePath("/products");
+  await invalidateCache(`ray:cache:products:${session.shopId}`);
   return null;
 }
 
@@ -353,6 +359,7 @@ export async function renameCategoryAction(categoryId: string, newName: string):
     return { error: "Could not rename category" };
   }
   revalidatePath("/products");
+  await invalidateCache(`ray:cache:products:${session.shopId}`);
   return {};
 }
 
@@ -368,6 +375,7 @@ export async function deleteCategoryAction(categoryId: string): Promise<{ error?
     return { error: "Could not delete category" };
   }
   revalidatePath("/products");
+  await invalidateCache(`ray:cache:products:${session.shopId}`);
   return {};
 }
 
@@ -410,6 +418,7 @@ export async function quickCreateProductAction(
   }
 
   revalidatePath("/products");
+  await invalidateCache(`ray:cache:products:${session.shopId}`);
   return {
     product: {
       id: data.id,
@@ -460,6 +469,7 @@ export async function generateBarcodeAction(
       return { error: "Could not save barcode" };
     }
     revalidatePath("/products");
+  await invalidateCache(`ray:cache:products:${session.shopId}`);
     return { barcode: candidate };
   }
 
@@ -520,5 +530,6 @@ export async function uploadProductImageAction(productId: string, formData: Form
   }
 
   revalidatePath("/products");
+  await invalidateCache(`ray:cache:products:${session.shopId}`);
   return { imageUrl };
 }

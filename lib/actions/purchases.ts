@@ -6,6 +6,7 @@ import { createSupabaseAdminClient } from "../supabase/admin";
 import { purchaseSchema, calculateTransactionTotals } from "../validation/schemas";
 import { determineSupplyType, round2 } from "../gst";
 import { findDuplicateProductAI } from "./duplicateCheck";
+import { invalidateCache } from "../cache";
 
 export type ActionState = { error?: string } | null;
 
@@ -213,6 +214,7 @@ export async function createPurchaseAction(
         .single();
       if (newProductError || !newProduct) return item; // best-effort — falls back to the old purchase-only-line behavior if this genuinely fails
       productMap.set(newProduct.id, newProduct);
+      await invalidateCache(`ray:cache:products:${session.shopId}`);
       return { ...item, productId: newProduct.id };
     }),
   );

@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { requireSession, requireOwner } from "../auth";
 import { createSupabaseAdminClient } from "../supabase/admin";
 import { determineSupplyType, financialYearFor, round2, splitTax, splitTaxInclusive } from "../gst";
+import { invalidateCache } from "../cache";
 import { findOrCreateCustomerByPhone, awardLoyaltyPoints } from "./customers";
 
 export type ActionState = { error?: string } | null;
@@ -627,6 +628,7 @@ export async function settleOrderAction(
       await admin.rpc("decrement_stock", { p_product_id: product.id, p_quantity: Number(item.quantity) });
     }),
   );
+  await invalidateCache(`ray:cache:products:${session.shopId}`);
 
   revalidatePath("/restaurant");
   revalidatePath(`/restaurant/orders/${orderId}`);
