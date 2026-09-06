@@ -5,6 +5,7 @@ import { getTranslator } from "@/lib/i18n/server";
 import { ProductsClient } from "./ProductsClient";
 import { isModuleEnabled } from "@/lib/modules";
 import { getBarcodeScanModeAction } from "@/lib/actions/settings";
+import { cached } from "@/lib/cache";
 
 export default async function ProductsPage() {
   const session = await requireSession();
@@ -13,20 +14,22 @@ export default async function ProductsPage() {
   const terminology = getTerminology(session.businessType);
   const barcodeScanMode = await getBarcodeScanModeAction();
 
-  const [{ data: products }, { data: categories }] = await Promise.all([
-    admin
-      .from("products")
-      .select(
-        "id, name, price, gst_percent, hsn_code, barcode, unit, category_id, track_inventory, stock_quantity, low_stock_threshold, is_rentable, rental_rate_hourly, rental_rate_daily, rental_rate_weekly, rental_rate_monthly, security_deposit, is_pharma, requires_prescription, salt_composition, rack_location, drug_schedule, units_per_pack, loose_unit_name, has_warranty, warranty_months, mrp, metal_type, purity, making_charge_type, making_charge_value, wastage_percent, bulk_min_qty, bulk_price, hallmark_number, image_url, offer_price, offer_label, show_in_catalog, show_in_fast_billing, categories ( name )",
-      )
-      .eq("shop_id", session.shopId)
-      .order("name"),
-    admin
-      .from("categories")
-      .select("id, name")
-      .eq("shop_id", session.shopId)
-      .order("name"),
-  ]);
+  const [{ data: products }, { data: categories }] = await cached(`ray:cache:products:${session.shopId}`, 30, () =>
+    Promise.all([
+      admin
+        .from("products")
+        .select(
+          "id, name, price, gst_percent, hsn_code, barcode, unit, category_id, track_inventory, stock_quantity, low_stock_threshold, is_rentable, rental_rate_hourly, rental_rate_daily, rental_rate_weekly, rental_rate_monthly, security_deposit, is_pharma, requires_prescription, salt_composition, rack_location, drug_schedule, units_per_pack, loose_unit_name, has_warranty, warranty_months, mrp, metal_type, purity, making_charge_type, making_charge_value, wastage_percent, bulk_min_qty, bulk_price, hallmark_number, image_url, offer_price, offer_label, show_in_catalog, show_in_fast_billing, categories ( name )",
+        )
+        .eq("shop_id", session.shopId)
+        .order("name"),
+      admin
+        .from("categories")
+        .select("id, name")
+        .eq("shop_id", session.shopId)
+        .order("name"),
+    ]),
+  );
 
   return (
     <ProductsClient
