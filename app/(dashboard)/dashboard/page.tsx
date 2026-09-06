@@ -188,7 +188,7 @@ async function RetailHome({
   const expiryCutoff = new Date();
   expiryCutoff.setDate(expiryCutoff.getDate() + 30);
 
-  const [todayBills, weekBills, allBillsCredit, allPayments, recentBills, allPayables, allVendorPayments, { data: expiringBatches }] =
+  const [todayBills, weekBills, allBillsCredit, allPayments, recentBills, allPayables, allVendorPayments, { data: expiringBatches }, profitLeak] =
     await Promise.all([
       admin.from("bills").select("total").eq("shop_id", session.shopId).eq("status", "active").gte("created_at", startOfToday.toISOString()),
       admin.from("bills").select("total, created_at").eq("shop_id", session.shopId).eq("status", "active").gte("created_at", startOfWeek.toISOString()),
@@ -207,6 +207,7 @@ async function RetailHome({
       // expiry date" on a product, not just pharmacies, so this
       // shouldn't only live on the pharmacy-specific dashboard.
       admin.from("medicine_batches").select("id, quantity").eq("shop_id", session.shopId).lte("expiry_date", expiryCutoff.toISOString().slice(0, 10)).gt("quantity", 0),
+      getProfitLeakAction(),
     ]);
 
   const expiringCount = expiringBatches?.length ?? 0;
@@ -221,7 +222,6 @@ async function RetailHome({
   const outstandingPayable = Math.max(0, totalPayable - totalVendorPaid);
 
   const trend = buildSevenDayTrend(weekBills.data ?? [], "created_at");
-  const profitLeak = await getProfitLeakAction();
 
   return (
     <>
