@@ -219,6 +219,17 @@ select option {
  * neumorphic design (inputs read as a genuine carved-in dent, not a
  * flat bordered box). Applies everywhere at once rather than needing
  * every input across the app touched individually. */
+input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"]),
+textarea,
+select {
+  /* Border/outline suppression applies to EVERY input, including
+   * bg-transparent ones — otherwise excluding them from the rule
+   * below (so they don't get the neumorphic look) also strips this,
+   * letting the browser's own default border/focus-ring show through
+   * as an ugly rectangle inside an already-styled pill container. */
+  border: none !important;
+  outline: none !important;
+}
 input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"]):not(.bg-transparent),
 textarea:not(.bg-transparent),
 select {
@@ -228,7 +239,6 @@ select {
    * panel, a dark modal) fields rendered near-white text on a light
    * background and became unreadable. */
   color: var(--foreground);
-  border: none !important;
   border-radius: var(--radius) !important;
   box-shadow:
     inset 3px 3px 7px var(--neu-dark),
@@ -237,11 +247,19 @@ select {
 input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"]):not(.bg-transparent):focus,
 textarea:not(.bg-transparent):focus,
 select:focus {
-  outline: none !important;
   box-shadow:
     inset 3px 3px 7px var(--neu-dark-strong),
     inset -3px -3px 7px var(--neu-light),
     0 0 0 2px var(--brand-soft) !important;
+}
+/* Search bars and other flat/transparent inputs (sitting inside their
+ * own already-styled pill container) get a genuinely subtle glow on
+ * focus instead — no box, no border, just a soft light bloom around
+ * the whole pill, matching how a flat search bar should look focused. */
+input.bg-transparent:focus,
+textarea.bg-transparent:focus {
+  box-shadow: 0 0 10px 2px var(--brand-soft) !important;
+  border-radius: inherit;
 }
 
 /* Global tactile feedback — every button/link gets a smooth, snappy
