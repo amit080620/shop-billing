@@ -5,7 +5,8 @@ import { PageHeader } from "@/app/components/PageHeader";
 import { FESTIVALS } from "@/lib/festivals";
 import { AddToCalendarButton } from "./AddToCalendarButton";
 import { FestivalNoteBox } from "./FestivalNoteBox";
-import { PartyPopper } from "lucide-react";
+import { PartyPopper, Sparkles } from "lucide-react";
+import Link from "next/link";
 
 const TRENDABLE_WINDOW_DAYS = 45; // only bother checking last-year sales for festivals coming up reasonably soon
 
@@ -48,42 +49,44 @@ export default async function FestivalsPage() {
   // For near-term festivals, check whether the same window last year shows
   // a real sales pattern — turns generic hints into "this actually sold for
   // you" data once the shop has at least a year of history.
+  const trendable = upcoming.filter((f) => f.daysUntil <= TRENDABLE_WINDOW_DAYS && f.daysUntil >= -1);
+  const trendResults = await Promise.all(
+    trendable.map(async (f) => {
+      const lastYear = new Date(f.dateObj);
+      lastYear.setFullYear(lastYear.getFullYear() - 1);
+      const windowStart = new Date(lastYear);
+      windowStart.setDate(windowStart.getDate() - 15);
+      const windowEnd = new Date(lastYear);
+      windowEnd.setDate(windowEnd.getDate() + 5);
+
+      const { data: bills } = await admin
+        .from("bills")
+        .select("id")
+        .eq("shop_id", session.shopId)
+        .eq("status", "active")
+        .gte("created_at", windowStart.toISOString())
+        .lte("created_at", windowEnd.toISOString());
+
+      const billIds = (bills ?? []).map((b) => b.id);
+      if (billIds.length === 0) return { key: f.name + f.date, top: [] };
+
+      const { data: items } = await admin.from("bill_items").select("product_name, quantity").in("bill_id", billIds);
+
+      const byProduct = new Map<string, number>();
+      for (const item of items ?? []) {
+        byProduct.set(item.product_name, (byProduct.get(item.product_name) ?? 0) + Number(item.quantity));
+      }
+      const top = [...byProduct.entries()]
+        .map(([name, qty]) => ({ name, qty, unit: catalog.find((p) => p.name === name)?.unit ?? "" }))
+        .sort((a, b) => b.qty - a.qty)
+        .slice(0, 5);
+      return { key: f.name + f.date, top };
+    }),
+  );
+
   const trendByFestival = new Map<string, { name: string; qty: number; unit: string }[]>();
-  for (const f of upcoming) {
-    if (f.daysUntil > TRENDABLE_WINDOW_DAYS || f.daysUntil < -1) continue;
-
-    const lastYear = new Date(f.dateObj);
-    lastYear.setFullYear(lastYear.getFullYear() - 1);
-    const windowStart = new Date(lastYear);
-    windowStart.setDate(windowStart.getDate() - 15);
-    const windowEnd = new Date(lastYear);
-    windowEnd.setDate(windowEnd.getDate() + 5);
-
-    const { data: bills } = await admin
-      .from("bills")
-      .select("id")
-      .eq("shop_id", session.shopId)
-      .eq("status", "active")
-      .gte("created_at", windowStart.toISOString())
-      .lte("created_at", windowEnd.toISOString());
-
-    const billIds = (bills ?? []).map((b) => b.id);
-    if (billIds.length === 0) continue;
-
-    const { data: items } = await admin
-      .from("bill_items")
-      .select("product_name, quantity")
-      .in("bill_id", billIds);
-
-    const byProduct = new Map<string, number>();
-    for (const item of items ?? []) {
-      byProduct.set(item.product_name, (byProduct.get(item.product_name) ?? 0) + Number(item.quantity));
-    }
-    const top = [...byProduct.entries()]
-      .map(([name, qty]) => ({ name, qty, unit: catalog.find((p) => p.name === name)?.unit ?? "" }))
-      .sort((a, b) => b.qty - a.qty)
-      .slice(0, 5);
-    if (top.length > 0) trendByFestival.set(f.name + f.date, top);
+  for (const { key, top } of trendResults) {
+    if (top.length > 0) trendByFestival.set(key, top);
   }
 
   return (
@@ -183,7 +186,15 @@ export default async function FestivalsPage() {
                 )}
               </div>
 
-              <AddToCalendarButton festivalName={f.name} festivalDateIso={f.date} prepHints={f.prepHints} />
+              <div className="flex flex-wrap gap-2">
+                <AddToCalendarButton festivalName={f.name} festivalDateIso={f.date} prepHints={f.prepHints} />
+                <Link
+                  href={`/festival-poster?occasion=${encodeURIComponent(f.name)}`}
+                  className="flex items-center gap-1.5 rounded-lg border border-brand px-3 py-1.5 text-xs font-medium text-brand"
+                >
+                  <Sparkles size={13} /> Poster banayein
+                </Link>
+              </div>
               <FestivalNoteBox slug={f.slug} initialNote={notesBySlug.get(f.slug) ?? ""} />
             </li>
           );

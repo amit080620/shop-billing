@@ -11,8 +11,8 @@ const THEMES = [
   { name: "Simple sale", bg: ["#1f2937", "#374151"], accent: "#fde68a" },
 ];
 
-export function PosterClient({ shopName }: { shopName: string }) {
-  const [occasion, setOccasion] = useState("");
+export function PosterClient({ shopName, initialOccasion }: { shopName: string; initialOccasion?: string }) {
+  const [occasion, setOccasion] = useState(initialOccasion ?? "");
   const [discountPercent, setDiscountPercent] = useState("");
   const [themeIndex, setThemeIndex] = useState(0);
   const [text, setText] = useState<PosterText | null>(null);

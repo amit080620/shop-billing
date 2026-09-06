@@ -15,6 +15,7 @@ import {
   Megaphone,
   PartyPopper,
   WifiOff,
+  Printer,
   CalendarClock,
   ChefHat,
   BookOpen,
@@ -202,8 +203,9 @@ export default async function MorePage() {
         )}
       </MenuGroup>
 
-      <MenuGroup title="No internet?">
+      <MenuGroup title="Help & Guides">
         <MenuLink href="/offline-bill" label="Offline billing" sub="Keep billing with no connection — syncs automatically once you're back online" icon={OfflineIcon} tone="info" />
+        <MenuLink href="/fast-print-setup" label="One-Click Print Setup" sub="Laptop se bina dialog ke seedha print" icon={PrinterGuideIcon} tone="secondary" />
       </MenuGroup>
 
       <MenuGroup title="Grow your business">
@@ -216,11 +218,9 @@ export default async function MorePage() {
         {isModuleEnabled(session.enabledModules, "offers") && (
           <MenuLink href="/offers" label={t("more.offers")} sub={t("more.offers.sub")} icon={MegaphoneIcon} tone="secondary" />
         )}
-        <MenuLink href="/festivals" label="Festival planner" sub="Upcoming festivals & stock-up reminders" icon={FestivalIcon} tone="secondary" />
-        <MenuLink href="/festival-poster" label="Festival poster" sub="AI writes the offer, get a ready-to-share design" icon={FestivalIcon} tone="secondary" />
+        <MenuLink href="/festivals" label="Festival planner" sub="Upcoming festivals, stock-up hints & poster in one place" icon={FestivalIcon} tone="secondary" />
         <MenuLink href="/profit-leak" label="Profit Leak Detector" sub="Aapka paisa kahan phansa hai — ek nazar mein" icon={FestivalIcon} tone="danger" />
         <MenuLink href="/shelf-watch" label="Ankhon se Inventory" sub="Shelf ki photo se stock-kami turant pata chale" icon={FestivalIcon} tone="secondary" />
-        <MenuLink href="/redis-status" label="Redis Connection Test" sub="Upstash connect hai ya nahi, turant check karein" icon={FestivalIcon} tone="secondary" />
         <MenuLink href="/loyalty-settings" label="Loyalty program" sub="Reward regulars for coming back" icon={GiftIcon} tone="secondary" />
         <MenuLink href="/fast-billing-settings" label="Fast billing" sub="Tap-to-add counter for busy hours" icon={ZapIcon} tone="secondary" />
       </MenuGroup>
@@ -353,6 +353,9 @@ function ZapIcon({ className }: { className?: string }) {
 }
 function OfflineIcon({ className }: { className?: string }) {
   return <WifiOff className={className} size={18} strokeWidth={1.8} />;
+}
+function PrinterGuideIcon({ className }: { className?: string }) {
+  return <Printer className={className} size={18} strokeWidth={1.8} />;
 }
 function ExpiryIcon({ className }: { className?: string }) {
   return <CalendarClock className={className} size={18} strokeWidth={1.8} />;
