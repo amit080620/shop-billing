@@ -246,7 +246,7 @@ export function TablesClient({ tables, lang }: { tables: Table[]; lang: Lang }) 
       <div className="flex gap-2.5 overflow-x-auto pb-1">
         <Link
           href="/restaurant/reports"
-          className="shrink-0 rounded-2xl px-4 py-2.5 text-xs font-semibold text-foreground transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97]"
+          className="shrink-0 rounded-2xl px-3 py-1.5 text-xs font-semibold text-foreground transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97]"
           style={{
             background: "linear-gradient(155deg, var(--surface) 0%, var(--background) 100%)",
             boxShadow: "-5px -5px 12px var(--neu-light), 5px 5px 14px var(--neu-dark), inset 0 1px 0 rgba(255,255,255,0.4)",
@@ -257,7 +257,7 @@ export function TablesClient({ tables, lang }: { tables: Table[]; lang: Lang }) 
         </Link>
         <Link
           href="/restaurant/combos"
-          className="flex shrink-0 items-center gap-1.5 rounded-2xl px-4 py-2.5 text-xs font-semibold text-foreground transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97]"
+          className="flex shrink-0 items-center gap-1.5 rounded-2xl px-3 py-1.5 text-xs font-semibold text-foreground transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97]"
           style={{
             background: "linear-gradient(155deg, var(--surface) 0%, var(--background) 100%)",
             boxShadow: "-5px -5px 12px var(--neu-light), 5px 5px 14px var(--neu-dark), inset 0 1px 0 rgba(255,255,255,0.4)",
@@ -268,7 +268,7 @@ export function TablesClient({ tables, lang }: { tables: Table[]; lang: Lang }) 
         </Link>
         <Link
           href="/restaurant/reservations"
-          className="flex shrink-0 items-center gap-1.5 rounded-2xl px-4 py-2.5 text-xs font-semibold text-foreground transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97]"
+          className="flex shrink-0 items-center gap-1.5 rounded-2xl px-3 py-1.5 text-xs font-semibold text-foreground transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97]"
           style={{
             background: "linear-gradient(155deg, var(--surface) 0%, var(--background) 100%)",
             boxShadow: "-5px -5px 12px var(--neu-light), 5px 5px 14px var(--neu-dark), inset 0 1px 0 rgba(255,255,255,0.4)",
@@ -282,17 +282,17 @@ export function TablesClient({ tables, lang }: { tables: Table[]; lang: Lang }) 
       {/* Genuine legend — explains exactly what each table color means, with a
           colored dot per state, matching the real data (Free / Reserved / Occupied). */}
       {tables.length > 0 && (
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 px-1 pb-1 text-[11px] text-muted">
-          <span className="flex items-center gap-1.5">
-            <span className="h-2.5 w-2.5 rounded-full" style={{ background: "linear-gradient(135deg, #34d399, #059669)", boxShadow: "0 0 0 2px var(--background), 0 1px 2px rgba(0,0,0,0.3)" }} />
+        <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1.5 px-1 pb-1 text-[10px] text-muted">
+          <span className="flex items-center gap-1">
+            <span className="h-2 w-2 rounded-full" style={{ background: "linear-gradient(135deg, #34d399, #059669)", boxShadow: "0 0 0 2px var(--background), 0 1px 2px rgba(0,0,0,0.3)" }} />
             Free
           </span>
-          <span className="flex items-center gap-1.5">
-            <span className="h-2.5 w-2.5 rounded-full" style={{ background: "linear-gradient(135deg, #fbbf24, #d97706)", boxShadow: "0 0 0 2px var(--background), 0 1px 2px rgba(0,0,0,0.3)" }} />
+          <span className="flex items-center gap-1">
+            <span className="h-2 w-2 rounded-full" style={{ background: "linear-gradient(135deg, #fbbf24, #d97706)", boxShadow: "0 0 0 2px var(--background), 0 1px 2px rgba(0,0,0,0.3)" }} />
             Reserved
           </span>
-          <span className="flex items-center gap-1.5">
-            <span className="h-2.5 w-2.5 rounded-full" style={{ background: "linear-gradient(135deg, #f87171, #dc2626)", boxShadow: "0 0 0 2px var(--background), 0 1px 2px rgba(0,0,0,0.3)" }} />
+          <span className="flex items-center gap-1">
+            <span className="h-2 w-2 rounded-full" style={{ background: "linear-gradient(135deg, #f87171, #dc2626)", boxShadow: "0 0 0 2px var(--background), 0 1px 2px rgba(0,0,0,0.3)" }} />
             <span className="hidden sm:inline">Occupied — tap to bill</span>
             <span className="sm:hidden">Occupied</span>
           </span>
@@ -363,7 +363,7 @@ export function TablesClient({ tables, lang }: { tables: Table[]; lang: Lang }) 
               key={s}
               type="button"
               onClick={() => setSectionFilter(s)}
-              className={`shrink-0 rounded-2xl px-4 py-2 text-xs font-semibold transition-all duration-200 active:scale-[0.97] ${
+              className={`shrink-0 rounded-2xl px-3 py-1.5 text-xs font-semibold transition-all duration-200 active:scale-[0.97] ${
                 sectionFilter === s ? "text-brand-text" : "text-muted hover:-translate-y-0.5"
               }`}
               style={
