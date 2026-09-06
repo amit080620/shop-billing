@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { Plus_Jakarta_Sans, Noto_Sans_Devanagari } from "next/font/google";
 import { getTheme, getCalculatorEnabled, getAssistantEnabled } from "@/lib/theme";
 import { getLang } from "@/lib/i18n/server";
 import { ServiceWorkerRegistration } from "./components/ServiceWorkerRegistration";
@@ -8,6 +9,21 @@ import { FocusScrollIntoView } from "./components/FocusScrollIntoView";
 import { LazyFloatingWidgets } from "./components/LazyFloatingWidgets";
 import { CalculatorAmountProvider } from "@/lib/calculatorAmount";
 import "./globals.css";
+
+const plusJakartaSans = Plus_Jakarta_Sans({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800"],
+  style: ["normal", "italic"],
+  variable: "--font-plus-jakarta",
+  display: "swap",
+});
+
+const notoSansDevanagari = Noto_Sans_Devanagari({
+  subsets: ["devanagari"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-noto-devanagari",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "The Ray - Shop Billing",
@@ -51,15 +67,8 @@ export default async function RootLayout({
   const assistantEnabled = await getAssistantEnabled();
 
   return (
-    <html lang={lang} className={theme === "dark" ? "dark" : undefined}>
+    <html lang={lang} className={`${plusJakartaSans.variable} ${notoSansDevanagari.variable} ${theme === "dark" ? "dark" : ""}`}>
       <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        {/* eslint-disable-next-line @next/next/no-page-custom-font -- root layout is the correct place for this in the App Router */}
-        <link
-          href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,500&family=Noto+Sans+Devanagari:wght@400;500;600;700&display=swap"
-          rel="stylesheet"
-        />
         {/* Genuinely the earliest point any code runs on this page —
             before React, before the app's own bundles, before even
             global-error.tsx exists. A crash this early (webpack module
