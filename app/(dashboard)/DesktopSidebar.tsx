@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useTranslation } from "@/lib/i18n/useTranslation";
 import { tabsFor } from "./BottomNav";
@@ -36,8 +37,7 @@ export function DesktopSidebar({
       <div className="flex items-center gap-3 border-b border-border px-4 py-5">
         <Link href="/profile" aria-label="Profile & settings">
           {shopLogoUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element -- shop logo, small
-            <img src={shopLogoUrl} alt="" className="h-10 w-10 shrink-0 rounded-full object-contain ring-2 ring-brand-soft" />
+            <Image src={shopLogoUrl} alt="" width={40} height={40} className="h-10 w-10 shrink-0 rounded-full object-contain ring-2 ring-brand-soft" />
           ) : (
             <div
               className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-base font-semibold text-white shadow-sm"

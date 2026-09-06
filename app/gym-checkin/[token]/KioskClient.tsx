@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
+import Image from "next/image";
 import { publicKioskCheckInAction } from "@/lib/actions/gym";
 import { Hand, CheckCircle2 } from "lucide-react";
 
@@ -52,8 +53,7 @@ export function KioskClient({ token, shopName, shopLogoUrl }: { token: string; s
     <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-background px-6 py-10">
       <div className="flex flex-col items-center gap-2">
         {shopLogoUrl && (
-          // eslint-disable-next-line @next/next/no-img-element -- public kiosk, shop logo
-          <img src={shopLogoUrl} alt="" className="h-16 w-16 rounded-full object-cover" />
+          <Image src={shopLogoUrl} alt="" width={64} height={64} className="h-16 w-16 rounded-full object-cover" />
         )}
         <p className="text-xl font-bold text-foreground">{shopName}</p>
         <p className="text-sm text-muted">Enter your phone number to check in</p>

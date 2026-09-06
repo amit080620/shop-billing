@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import Image from "next/image";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { PublicStorefrontClient } from "./PublicStorefrontClient";
 
@@ -31,8 +32,7 @@ export default async function PublicStorefrontPage({
     return (
       <div className="mx-auto flex min-h-screen max-w-md flex-col items-center justify-center gap-3 px-6 text-center">
         {shop.logo_url && (
-          // eslint-disable-next-line @next/next/no-img-element -- shop logo, small
-          <img src={shop.logo_url} alt="" className="mb-2 h-16 w-16 rounded-full object-contain" />
+          <Image src={shop.logo_url} alt="" width={64} height={64} className="mb-2 h-16 w-16 rounded-full object-contain" />
         )}
         <h1 className="text-xl font-bold text-foreground">{shop.name}</h1>
         <div className="rounded-2xl border border-dashed border-danger bg-danger-soft px-5 py-4">

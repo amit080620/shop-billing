@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, useTransition } from "react";
+import Image from "next/image";
 import { submitCatalogOrderAction, lookupCatalogCustomerAction } from "@/lib/actions/catalog";
 import { formatMoney } from "@/lib/format";
 import { CheckCircle2, Package, ShoppingCart, Search, X, RotateCcw, MessageCircle } from "lucide-react";
@@ -215,8 +216,7 @@ export function PublicStorefrontClient({
     <div className="mx-auto flex min-h-screen max-w-md flex-col gap-4 px-4 py-6 pb-28">
       <div className="flex items-center gap-3">
         {shopLogoUrl && (
-          // eslint-disable-next-line @next/next/no-img-element -- public page, shop-uploaded logo
-          <img src={shopLogoUrl} alt="" className="h-12 w-12 rounded-full object-cover" />
+          <Image src={shopLogoUrl} alt="" width={48} height={48} className="h-12 w-12 rounded-full object-cover" />
         )}
         <div>
           <p className="text-lg font-semibold text-foreground">{shopName}</p>
@@ -304,10 +304,9 @@ export function PublicStorefrontClient({
             const effectivePrice = p.offerPrice ?? p.price;
             return (
               <div key={p.id} className="flex flex-col overflow-hidden neu-card">
-                <div className="flex h-28 items-center justify-center bg-background text-2xl text-muted">
+                <div className="relative flex h-28 items-center justify-center bg-background text-2xl text-muted">
                   {p.imageUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element -- storefront thumbnail
-                    <img src={p.imageUrl} alt={p.name} className="h-full w-full object-cover" />
+                    <Image src={p.imageUrl} alt={p.name} fill sizes="200px" className="object-cover" />
                   ) : (
                     <Package size={20} className="text-muted" />
                   )}

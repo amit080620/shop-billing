@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import Image from "next/image";
 import { Plus, Camera, Loader2, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { createShelfWatchAction, checkShelfPhotoAction, type ShelfWatch, type ShelfChange } from "@/lib/actions/shelfWatch";
 import { fileToBase64 } from "@/lib/fileToBase64";
@@ -85,8 +86,7 @@ export function ShelfWatchClient({ initialShelves }: { initialShelves: ShelfWatc
             <li key={shelf.id} className="neu-card flex flex-col gap-2.5 p-3.5">
               <div className="flex items-center gap-3">
                 {shelf.photoUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element -- external Supabase storage URL, not a local/optimizable asset
-                  <img src={shelf.photoUrl} alt={shelf.name} className="h-14 w-14 shrink-0 rounded-lg object-cover" />
+                  <Image src={shelf.photoUrl} alt={shelf.name} width={56} height={56} className="h-14 w-14 shrink-0 rounded-lg object-cover" />
                 ) : (
                   <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-surface text-muted">
                     <Camera size={18} />

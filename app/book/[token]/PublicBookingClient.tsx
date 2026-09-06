@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import Image from "next/image";
 import { createPublicBookingAction } from "@/lib/actions/clinic";
 import { CheckCircle2 } from "lucide-react";
 import { PhoneInput } from "@/app/components/PhoneInput";
@@ -81,8 +82,7 @@ export function PublicBookingClient({
     <div className="mx-auto flex min-h-screen max-w-md flex-col gap-4 px-4 py-6">
       <div className="flex items-center gap-3">
         {(doctorPhotoUrl || shopLogoUrl) && (
-          // eslint-disable-next-line @next/next/no-img-element -- public page, shop/doctor-uploaded photo
-          <img src={doctorPhotoUrl ?? shopLogoUrl ?? undefined} alt="" className="h-14 w-14 rounded-full object-cover" />
+          <Image src={doctorPhotoUrl ?? shopLogoUrl ?? ""} alt="" width={56} height={56} className="h-14 w-14 rounded-full object-cover" />
         )}
         <div>
           {doctorName ? (

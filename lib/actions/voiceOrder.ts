@@ -57,8 +57,8 @@ export async function parseVoiceOrderAction(transcript: string): Promise<{
 
   const admin = createSupabaseAdminClient();
   const [{ data: products }, { data: customers }] = await Promise.all([
-    admin.from("products").select("id, name, price").eq("shop_id", session.shopId),
-    admin.from("customers").select("id, name, phone, loyalty_points").eq("shop_id", session.shopId),
+    admin.from("products").select("id, name, price").eq("shop_id", session.shopId).limit(2000), // safety cap against unbounded growth on a very large catalog
+    admin.from("customers").select("id, name, phone, loyalty_points").eq("shop_id", session.shopId).limit(2000), // safety cap against unbounded growth on a very large customer base
   ]);
 
   try {

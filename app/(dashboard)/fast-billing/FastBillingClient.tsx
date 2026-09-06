@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState, useActionState, useRef, useEffect } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { X, Minus, Plus, Trash2, Search, Mic } from "lucide-react";
 import { formatMoney } from "@/lib/format";
@@ -286,10 +287,9 @@ export function FastBillingClient({
                   {inCart.qty}
                 </span>
               )}
-              <div className="flex aspect-square w-full items-center justify-center bg-background">
+              <div className="relative flex aspect-square w-full items-center justify-center bg-background">
                 {product.imageUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element -- small product tile thumbnail
-                  <img src={product.imageUrl} alt="" className="h-full w-full object-cover" />
+                  <Image src={product.imageUrl} alt="" fill sizes="120px" className="object-cover" />
                 ) : (
                   <span className="px-2 text-center text-xs text-muted">{product.name}</span>
                 )}

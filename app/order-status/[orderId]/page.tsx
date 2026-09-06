@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import Image from "next/image";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { formatMoney, formatDateTime } from "@/lib/format";
 import { CheckCircle2, Clock, XCircle } from "lucide-react";
@@ -54,8 +55,7 @@ export default async function OrderStatusPage({ params }: { params: Promise<{ or
     <div className="mx-auto flex min-h-screen max-w-md flex-col gap-4 px-4 py-6">
       <div className="flex flex-col items-center gap-2 text-center">
         {shop?.logo_url && (
-          // eslint-disable-next-line @next/next/no-img-element -- small shop logo
-          <img src={shop.logo_url} alt="" className="h-14 w-14 rounded-full object-contain" />
+          <Image src={shop.logo_url} alt="" width={56} height={56} className="h-14 w-14 rounded-full object-contain" />
         )}
         <h1 className="text-lg font-bold text-foreground">{shop?.name}</h1>
         <p className="text-xs text-muted">Order placed {formatDateTime(order.created_at)}</p>

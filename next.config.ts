@@ -15,6 +15,14 @@ const nextConfig: NextConfig = {
   // Genuinely enables gzip/brotli compression for all responses —
   // measurably reduces transfer size for JS, CSS, and HTML.
   compress: true,
+  images: {
+    remotePatterns: [
+      // Wildcard covers any Supabase project's storage domain
+      // (product photos, logos, shelf-watch photos, etc.) without
+      // hardcoding one specific project ref.
+      { protocol: "https", hostname: "*.supabase.co", pathname: "/storage/v1/object/public/**" },
+    ],
+  },
 };
 
 export default nextConfig;

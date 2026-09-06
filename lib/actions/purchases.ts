@@ -179,7 +179,7 @@ export async function createPurchaseAction(
   // entry) worded it differently. This is the actual fix for the
   // duplicate-product problem: catching it at the one moment a
   // duplicate could be CREATED, not after the fact.
-  const { data: allProductNames } = await admin.from("products").select("id, name").eq("shop_id", session.shopId);
+  const { data: allProductNames } = await admin.from("products").select("id, name").eq("shop_id", session.shopId).limit(2000); // safety cap, same reasoning as products.ts
 
   const duplicatesAvoided: { typedAs: string; matchedTo: string; viaAI: boolean }[] = [];
   const resolvedItems = await Promise.all(

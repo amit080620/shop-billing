@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
+import Image from "next/image";
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import { useRouter } from "next/navigation";
@@ -861,8 +862,7 @@ export function ProductsClient({
               >
                 <label className="relative flex h-12 w-12 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-lg border border-dashed border-border bg-background text-[10px] text-muted">
                   {p.imageUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element -- small user-uploaded thumbnail, next/image adds no value here
-                    <img src={p.imageUrl} alt="" className="h-full w-full object-cover" />
+                    <Image src={p.imageUrl} alt="" fill sizes="48px" className="object-cover" />
                   ) : uploadingImageFor === p.id ? (
                     "…"
                   ) : (

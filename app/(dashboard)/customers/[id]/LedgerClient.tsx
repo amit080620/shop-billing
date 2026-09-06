@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import Link from "next/link";
@@ -582,8 +583,9 @@ function PatientPhotos({
         <div className="grid grid-cols-3 gap-2">
           {photos.map((p) => (
             <div key={p.id} className={`relative flex flex-col gap-1 ${deletingPhotoId === p.id ? "animate-delete" : ""}`}>
-              {/* eslint-disable-next-line @next/next/no-img-element -- patient-uploaded photo */}
-              <img src={p.photoUrl} alt={p.label} className="aspect-square w-full rounded-lg object-cover" />
+              <div className="relative aspect-square w-full overflow-hidden rounded-lg">
+                <Image src={p.photoUrl} alt={p.label} fill sizes="150px" className="object-cover" />
+              </div>
               <span className="rounded-full bg-background px-1.5 py-0.5 text-center text-[9px] font-medium capitalize text-muted">{p.label}</span>
               <button
                 onClick={() => {

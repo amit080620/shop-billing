@@ -67,7 +67,7 @@ export async function createProductAction(
   // the person go ahead anyway for a genuinely different product that
   // just happens to sound similar.
   if (formData.get("confirmDuplicate") !== "true") {
-    const { data: existingProducts } = await admin.from("products").select("id, name").eq("shop_id", session.shopId);
+    const { data: existingProducts } = await admin.from("products").select("id, name").eq("shop_id", session.shopId).limit(2000); // safety cap — duplicate-check genuinely needs every product, but an unbounded fetch on a very large catalog shouldn't be able to slow this down without limit
     const duplicate = await findDuplicateProductAI(parsed.data.name, existingProducts ?? []);
     if (duplicate) {
       return { error: `DUPLICATE_WARNING: A similar product "${duplicate.name}" already exists. Add anyway, or edit that one instead?` };
