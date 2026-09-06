@@ -4,6 +4,7 @@ import { requireSession } from "../auth";
 import { createSupabaseAdminClient } from "../supabase/admin";
 import { findClosestMatch } from "../fuzzyMatch";
 import { checkAiQuota } from "../aiQuota";
+import { cached } from "../cache";
 
 // Groq deprecated llama-3.3-70b-versatile on June 17, 2026 — this is
 // their own recommended replacement, same free tier.
@@ -56,9 +57,15 @@ export async function parseVoiceOrderAction(transcript: string): Promise<{
   if (!quota.allowed) return { error: "Aaj ke liye voice billing ki daily limit khatam ho gayi.", errorType: "quota_exceeded" };
 
   const admin = createSupabaseAdminClient();
-  const [{ data: products }, { data: customers }] = await Promise.all([
-    admin.from("products").select("id, name, price").eq("shop_id", session.shopId).limit(2000), // safety cap against unbounded growth on a very large catalog
-    admin.from("customers").select("id, name, phone, loyalty_points").eq("shop_id", session.shopId).limit(2000), // safety cap against unbounded growth on a very large customer base
+  const [products, customers] = await Promise.all([
+    cached(`ray:cache:voice-products:${session.shopId}`, 30, async () => {
+      const { data } = await admin.from("products").select("id, name, price").eq("shop_id", session.shopId).limit(2000); // safety cap against unbounded growth on a very large catalog
+      return data ?? [];
+    }),
+    cached(`ray:cache:voice-customers:${session.shopId}`, 30, async () => {
+      const { data } = await admin.from("customers").select("id, name, phone, loyalty_points").eq("shop_id", session.shopId).limit(2000); // safety cap against unbounded growth on a very large customer base
+      return data ?? [];
+    }),
   ]);
 
   try {

@@ -5,8 +5,14 @@ import type { Lang } from "@/lib/i18n/dictionary";
 export interface SpeechRecognitionResultLike {
   transcript: string;
 }
+export interface SpeechRecognitionResultListLike {
+  readonly length: number;
+  isFinal: boolean;
+  [index: number]: SpeechRecognitionResultLike;
+}
 export interface SpeechRecognitionEventLike extends Event {
-  results: { [index: number]: { [index: number]: SpeechRecognitionResultLike } };
+  resultIndex: number;
+  results: { readonly length: number; [index: number]: SpeechRecognitionResultListLike };
 }
 export interface SpeechRecognitionErrorLike extends Event {
   error: string;
@@ -14,6 +20,7 @@ export interface SpeechRecognitionErrorLike extends Event {
 export interface SpeechRecognitionLike extends EventTarget {
   lang: string;
   interimResults: boolean;
+  continuous: boolean;
   maxAlternatives: number;
   start: () => void;
   stop: () => void;

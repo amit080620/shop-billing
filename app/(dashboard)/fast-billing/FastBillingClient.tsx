@@ -77,23 +77,41 @@ export function FastBillingClient({
     setVoiceStatus(null);
     const recognition = new SpeechRecognitionCtor();
     recognition.lang = speechLocaleFor(lang);
-    recognition.interimResults = false;
-    recognition.maxAlternatives = 1;
-    recognition.onresult = async (event) => {
-      const transcript = event.results[0]?.[0]?.transcript ?? "";
-      if (!transcript.trim()) return;
-      setVoiceStatus(t("voice.reading"));
+    // Interim results ON — this is the actual fix for "recording feels
+    // slow": the old code showed nothing but "Listening..." until the
+    // person went completely silent, which felt broken even though it
+    // was working the whole time. Live partial text proves instantly
+    // that the mic is picking up speech.
+    recognition.interimResults = true;
+    // Multiple alternatives — in a genuinely noisy shop, the top guess
+    // is sometimes wrong; trying the next-best alternative before
+    // giving up entirely is real, meaningful noise robustness rather
+    // than failing on the first mis-hearing.
+    recognition.maxAlternatives = 3;
+
+    async function tryParseAlternatives(alternatives: string[], attemptIndex = 0): Promise<void> {
+      const transcript = alternatives[attemptIndex];
+      if (!transcript?.trim()) {
+        setVoiceStatus(t("voice.noItems"));
+        return;
+      }
       const result = await parseVoiceOrderAction(transcript);
       if (result.errorType) voiceStatusRef.current?.reportError(result.errorType);
       if (result.error === "not_configured") {
         setVoiceStatus(t("voice.notConfigured"));
         return;
       }
-      if (result.error || !result.items) {
-        setVoiceStatus(result.error ?? "Couldn't understand that — try again.");
+      if (result.error) {
+        setVoiceStatus(result.error);
         return;
       }
-      if (result.items.length === 0) {
+      // Nothing recognizable from this alternative — genuinely try the
+      // next-best guess before giving up, rather than assuming the
+      // person said nothing useful.
+      if (!result.items || result.items.length === 0) {
+        if (attemptIndex + 1 < alternatives.length) {
+          return tryParseAlternatives(alternatives, attemptIndex + 1);
+        }
         setVoiceStatus(t("voice.noItems"));
         return;
       }
@@ -142,6 +160,28 @@ export function FastBillingClient({
           (pricesOverridden.length > 0 ? ` Rate set: ${pricesOverridden.join(", ")}.` : ""),
       );
       setTimeout(() => setVoiceStatus(null), 4000);
+    }
+
+    recognition.onresult = async (event) => {
+      const latest = event.results[event.results.length - 1];
+      if (!latest) return;
+
+      // Live preview — shown the moment ANY partial speech comes in,
+      // well before the person stops talking.
+      const liveText = latest[0]?.transcript ?? "";
+      if (!latest.isFinal) {
+        if (liveText.trim()) setVoiceStatus(`"${liveText.trim()}"`);
+        return;
+      }
+
+      if (!liveText.trim()) return;
+      setVoiceStatus(t("voice.reading"));
+      const alternatives: string[] = [];
+      for (let i = 0; i < latest.length; i++) {
+        const alt = latest[i]?.transcript;
+        if (alt) alternatives.push(alt);
+      }
+      await tryParseAlternatives(alternatives);
     };
     recognition.onerror = (event) => {
       setIsListening(false);

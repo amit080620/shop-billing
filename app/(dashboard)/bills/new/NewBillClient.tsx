@@ -321,23 +321,29 @@ export function NewBillClient({
     setVoiceStatus(null);
     const recognition = new SpeechRecognitionCtor();
     recognition.lang = speechLocaleFor(lang);
-    recognition.interimResults = false;
-    recognition.maxAlternatives = 1;
-    recognition.onresult = async (event) => {
-      const transcript = event.results[0]?.[0]?.transcript ?? "";
-      if (!transcript.trim()) return;
-      setVoiceStatus(t("voice.reading"));
+    recognition.interimResults = true;
+    recognition.maxAlternatives = 3;
+
+    async function tryParseAlternatives(alternatives: string[], attemptIndex = 0): Promise<void> {
+      const transcript = alternatives[attemptIndex];
+      if (!transcript?.trim()) {
+        setVoiceStatus(t("voice.noItems"));
+        return;
+      }
       const result = await parseVoiceOrderAction(transcript);
       if (result.errorType) voiceStatusRef.current?.reportError(result.errorType);
       if (result.error === "not_configured") {
         setVoiceStatus(t("voice.notConfigured"));
         return;
       }
-      if (result.error || !result.items) {
-        setVoiceStatus(result.error ?? "Couldn't understand that — try again.");
+      if (result.error) {
+        setVoiceStatus(result.error);
         return;
       }
-      if (result.items.length === 0) {
+      if (!result.items || result.items.length === 0) {
+        if (attemptIndex + 1 < alternatives.length) {
+          return tryParseAlternatives(alternatives, attemptIndex + 1);
+        }
         setVoiceStatus(t("voice.noItems"));
         return;
       }
@@ -387,6 +393,26 @@ export function NewBillClient({
           (pricesOverridden.length > 0 ? ` Rate set: ${pricesOverridden.join(", ")}.` : ""),
       );
       setTimeout(() => setVoiceStatus(null), 5000);
+    }
+
+    recognition.onresult = async (event) => {
+      const latest = event.results[event.results.length - 1];
+      if (!latest) return;
+
+      const liveText = latest[0]?.transcript ?? "";
+      if (!latest.isFinal) {
+        if (liveText.trim()) setVoiceStatus(`"${liveText.trim()}"`);
+        return;
+      }
+
+      if (!liveText.trim()) return;
+      setVoiceStatus(t("voice.reading"));
+      const alternatives: string[] = [];
+      for (let i = 0; i < latest.length; i++) {
+        const alt = latest[i]?.transcript;
+        if (alt) alternatives.push(alt);
+      }
+      await tryParseAlternatives(alternatives);
     };
     recognition.onerror = (event) => {
       setIsListening(false);
