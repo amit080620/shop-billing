@@ -19,8 +19,14 @@ export function MoreDrawerShell({ children }: { children: React.ReactNode }) {
     setOpen(false);
     // Genuinely wait for the slide-out animation before actually
     // navigating away, so the close feels like a real drawer closing
-    // rather than an abrupt page-swap.
-    setTimeout(() => router.back(), 200);
+    // rather than an abrupt page-swap. Falls back to an explicit
+    // destination when there's no real history to go back to (see
+    // HamburgerToggle.tsx for the full reasoning — router.back() alone
+    // silently does nothing in that case).
+    setTimeout(() => {
+      if (window.history.length > 1) router.back();
+      else router.push("/dashboard");
+    }, 200);
   }
 
   return (

@@ -219,8 +219,8 @@ select option {
  * neumorphic design (inputs read as a genuine carved-in dent, not a
  * flat bordered box). Applies everywhere at once rather than needing
  * every input across the app touched individually. */
-input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"]),
-textarea,
+input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"]):not(.bg-transparent),
+textarea:not(.bg-transparent),
 select {
   background: var(--background) !important;
   /* Set explicitly: the rule above forces a light background, but the
@@ -234,8 +234,8 @@ select {
     inset 3px 3px 7px var(--neu-dark),
     inset -3px -3px 7px var(--neu-light) !important;
 }
-input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"]):focus,
-textarea:focus,
+input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"]):not(.bg-transparent):focus,
+textarea:not(.bg-transparent):focus,
 select:focus {
   outline: none !important;
   box-shadow:

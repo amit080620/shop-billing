@@ -282,7 +282,7 @@ export function TablesClient({ tables, lang }: { tables: Table[]; lang: Lang }) 
       {/* Genuine legend — explains exactly what each table color means, with a
           colored dot per state, matching the real data (Free / Reserved / Occupied). */}
       {tables.length > 0 && (
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 px-1 text-[11px] text-muted">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 px-1 pb-1 text-[11px] text-muted">
           <span className="flex items-center gap-1.5">
             <span className="h-2.5 w-2.5 rounded-full" style={{ background: "linear-gradient(135deg, #34d399, #059669)", boxShadow: "0 0 0 2px var(--background), 0 1px 2px rgba(0,0,0,0.3)" }} />
             Free
@@ -293,7 +293,8 @@ export function TablesClient({ tables, lang }: { tables: Table[]; lang: Lang }) 
           </span>
           <span className="flex items-center gap-1.5">
             <span className="h-2.5 w-2.5 rounded-full" style={{ background: "linear-gradient(135deg, #f87171, #dc2626)", boxShadow: "0 0 0 2px var(--background), 0 1px 2px rgba(0,0,0,0.3)" }} />
-            Occupied — tap to bill
+            <span className="hidden sm:inline">Occupied — tap to bill</span>
+            <span className="sm:hidden">Occupied</span>
           </span>
         </div>
       )}
