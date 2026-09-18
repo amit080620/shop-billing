@@ -37,7 +37,7 @@ export default async function ReturnDetailPage({
       </Link>
 
       <div>
-        <h1 className="text-lg font-semibold text-foreground">Return #{ret.return_number}</h1>
+        <h1 className="text-lg font-bold tracking-tight text-foreground md:text-2xl">Return #{ret.return_number}</h1>
         <p className="text-xs text-muted">
           Against invoice #{bill?.invoice_number} · {formatDateTime(ret.created_at)}
         </p>

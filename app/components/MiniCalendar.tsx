@@ -49,8 +49,8 @@ export function MiniCalendar() {
               }`}
               style={
                 isToday
-                  ? { boxShadow: "-2px -2px 4px var(--neu-light), 2px 2px 4px var(--neu-dark)" }
-                  : { boxShadow: "-1px -1px 2px var(--neu-light), 1px 1px 2px var(--neu-dark)" }
+                  ? { boxShadow: "var(--elev-xs)" }
+                  : { boxShadow: "var(--elev-xs)" }
               }
             >
               {day}

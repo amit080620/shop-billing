@@ -3,7 +3,7 @@
 import { usePathname, useRouter } from "next/navigation";
 import { Menu } from "lucide-react";
 
-export function HamburgerToggle({ className, style }: { className?: string; style?: React.CSSProperties }) {
+export function HamburgerToggle({ className, style, label }: { className?: string; style?: React.CSSProperties; label?: string }) {
   const pathname = usePathname();
   const router = useRouter();
   const isOpen = pathname === "/more" || pathname.startsWith("/more/");
@@ -31,9 +31,18 @@ export function HamburgerToggle({ className, style }: { className?: string; styl
       }}
       className={className}
       style={style}
-      aria-label={isOpen ? "Close menu" : "Menu"}
+      aria-label={label ? undefined : isOpen ? "Close menu" : "Menu"}
     >
-      <Menu size={17} />
+      {label ? (
+        <>
+          <span className="flex h-5 w-5 shrink-0 items-center justify-center">
+            <Menu size={18} strokeWidth={1.8} />
+          </span>
+          {label}
+        </>
+      ) : (
+        <Menu size={19} />
+      )}
     </button>
   );
 }

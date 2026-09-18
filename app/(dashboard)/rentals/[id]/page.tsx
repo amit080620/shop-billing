@@ -62,7 +62,7 @@ export default async function RentalDetailPage({
       )}
 
       <div>
-        <h1 className="text-lg font-semibold text-foreground">#{rental.rental_number}</h1>
+        <h1 className="text-lg font-bold tracking-tight text-foreground md:text-2xl">#{rental.rental_number}</h1>
         <p className="text-sm text-muted">
           {customer?.name ?? t("rentalsPage.walkIn")} {customer?.phone ? `· ${customer.phone}` : ""}
         </p>

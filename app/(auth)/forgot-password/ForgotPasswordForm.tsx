@@ -11,7 +11,7 @@ function SubmitButton() {
       type="submit"
       disabled={pending}
       className="w-full rounded-xl px-4 py-3.5 font-semibold text-white shadow-md disabled:opacity-60"
-      style={{ background: "linear-gradient(135deg, var(--brand-light), var(--brand-dark))" }}
+      style={{ background: "var(--brand)" }}
     >
       {pending ? "Sending…" : "Send reset link"}
     </button>

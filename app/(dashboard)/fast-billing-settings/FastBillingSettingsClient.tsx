@@ -36,7 +36,7 @@ export function FastBillingSettingsClient({ enabled, productCount }: { enabled: 
           aria-checked={isOn}
           className="relative h-8 w-14 shrink-0 rounded-full p-1"
           style={{
-            boxShadow: "inset 4px 4px 8px var(--neu-dark), inset -4px -4px 8px var(--neu-light)",
+            boxShadow: "var(--elev-inset)",
           }}
         >
           <span
@@ -44,7 +44,7 @@ export function FastBillingSettingsClient({ enabled, productCount }: { enabled: 
             style={{
               boxShadow: isOn
                 ? "-2px -2px 5px rgba(255,255,255,0.35), 2px 2px 5px rgba(0,0,0,0.25)"
-                : "-2px -2px 5px var(--neu-light), 2px 2px 5px var(--neu-dark)",
+                : "var(--elev-xs)",
             }}
           />
         </button>

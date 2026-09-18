@@ -82,7 +82,7 @@ export function ReturnClient({
 
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-lg font-semibold text-foreground">Return / Exchange</h1>
+          <h1 className="text-lg font-bold tracking-tight text-foreground md:text-2xl">Return / Exchange</h1>
           <p className="text-xs text-muted">Invoice #{invoiceNumber} · {customerName ?? (businessType === "clinic" ? "Walk-in patient" : "Walk-in")}</p>
         </div>
         <Link href={`/print/bill/${billId}`} className="text-sm text-brand">
@@ -145,7 +145,7 @@ export function ReturnClient({
               }`}
               style={
                 refundMethod === m
-                  ? { boxShadow: "-2px -2px 5px var(--neu-light), 2px 2px 5px var(--neu-dark)" }
+                  ? { boxShadow: "var(--elev-xs)" }
                   : undefined
               }
             >

@@ -12,14 +12,14 @@ export default async function ProfilePage() {
 
   return (
     <div className="flex flex-col gap-5">
-      <h1 className="text-lg font-semibold text-foreground">Profile</h1>
+      <h1 className="text-lg font-bold tracking-tight text-foreground md:text-2xl">Profile</h1>
 
       {/* Genuine business-identity card — who's logged in and where. */}
       <div
         className="flex items-center gap-3.5 rounded-2xl p-4"
         style={{
-          background: "linear-gradient(155deg, var(--surface) 0%, var(--background) 100%)",
-          boxShadow: "-5px -5px 12px var(--neu-light), 5px 5px 14px var(--neu-dark), inset 0 1px 0 rgba(255,255,255,0.35)",
+          background: "var(--surface)",
+          boxShadow: "var(--elev-sm)",
         }}
       >
         {session.shopLogoUrl ? (
@@ -28,15 +28,15 @@ export default async function ProfilePage() {
             src={session.shopLogoUrl}
             alt=""
             className="h-14 w-14 shrink-0 rounded-2xl object-cover"
-            style={{ boxShadow: "-3px -3px 7px var(--neu-light), 3px 3px 7px var(--neu-dark)" }}
+            style={{ boxShadow: "var(--elev-xs)" }}
           />
         ) : (
           <span
             className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl text-lg font-bold"
             style={{
-              background: "linear-gradient(135deg, var(--brand-light), var(--brand-dark))",
+              background: "var(--brand)",
               color: "white",
-              boxShadow: "-3px -3px 7px var(--neu-light), 3px 3px 7px var(--neu-dark)",
+              boxShadow: "var(--elev-xs)",
             }}
           >
             {session.shopName.charAt(0).toUpperCase()}
@@ -59,7 +59,7 @@ export default async function ProfilePage() {
       >
         <span
           className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-soft text-brand-text"
-          style={{ boxShadow: "-3px -3px 7px var(--neu-light), 3px 3px 7px var(--neu-dark)" }}
+          style={{ boxShadow: "var(--elev-xs)" }}
         >
           <Settings size={18} strokeWidth={1.8} />
         </span>
@@ -76,7 +76,7 @@ export default async function ProfilePage() {
       >
         <span
           className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-soft text-brand-text"
-          style={{ boxShadow: "-3px -3px 7px var(--neu-light), 3px 3px 7px var(--neu-dark)" }}
+          style={{ boxShadow: "var(--elev-xs)" }}
         >
           <Printer size={18} strokeWidth={1.8} />
         </span>
@@ -93,7 +93,7 @@ export default async function ProfilePage() {
       >
         <span
           className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-soft text-brand-text"
-          style={{ boxShadow: "-3px -3px 7px var(--neu-light), 3px 3px 7px var(--neu-dark)" }}
+          style={{ boxShadow: "var(--elev-xs)" }}
         >
           <Palette size={18} strokeWidth={1.8} />
         </span>
@@ -110,7 +110,7 @@ export default async function ProfilePage() {
       >
         <span
           className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-soft text-brand-text"
-          style={{ boxShadow: "-3px -3px 7px var(--neu-light), 3px 3px 7px var(--neu-dark)" }}
+          style={{ boxShadow: "var(--elev-xs)" }}
         >
           <SlidersHorizontal size={18} strokeWidth={1.8} />
         </span>
@@ -128,7 +128,7 @@ export default async function ProfilePage() {
         >
           <span
             className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-soft text-brand-text"
-            style={{ boxShadow: "-3px -3px 7px var(--neu-light), 3px 3px 7px var(--neu-dark)" }}
+            style={{ boxShadow: "var(--elev-xs)" }}
           >
             <ScanLine size={18} strokeWidth={1.8} />
           </span>
@@ -146,7 +146,7 @@ export default async function ProfilePage() {
       >
         <span
           className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-soft text-brand-text"
-          style={{ boxShadow: "-3px -3px 7px var(--neu-light), 3px 3px 7px var(--neu-dark)" }}
+          style={{ boxShadow: "var(--elev-xs)" }}
         >
           <HelpCircle size={18} strokeWidth={1.8} />
         </span>

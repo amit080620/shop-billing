@@ -92,14 +92,14 @@ export function InstallAppButton() {
         <button
           onClick={handleClick}
           className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-brand bg-brand-soft px-4 py-3 text-sm font-semibold text-brand-text"
-          style={{ boxShadow: "-4px -4px 10px var(--neu-light), 4px 4px 10px var(--neu-dark)" }}
+          style={{ boxShadow: "var(--elev-sm)" }}
         >
           Install app on this device
         </button>
         <button
           onClick={handleDismiss}
           className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-muted"
-          style={{ boxShadow: "-3px -3px 7px var(--neu-light), 3px 3px 7px var(--neu-dark)" }}
+          style={{ boxShadow: "var(--elev-xs)" }}
           aria-label="Not now"
         >
           <X size={16} />

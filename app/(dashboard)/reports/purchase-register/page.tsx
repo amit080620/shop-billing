@@ -64,7 +64,7 @@ export default async function PurchaseRegisterPage({
         ← Reports
       </Link>
       <div className="flex items-center justify-between">
-        <h1 className="text-lg font-semibold text-foreground">Purchase register</h1>
+        <h1 className="text-lg font-bold tracking-tight text-foreground md:text-2xl">Purchase register</h1>
         <PeriodPicker year={year} month={month} />
       </div>
       <p className="text-sm text-muted">{MONTHS[month - 1]} {year} · Input GST / ITC</p>

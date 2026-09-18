@@ -18,14 +18,14 @@ export function AssistantToggle({ enabled: initial }: { enabled: boolean }) {
       <button
         onClick={() => switchTo(true)}
         className={`rounded-md px-2.5 py-1 text-xs font-medium ${enabled ? "bg-brand-soft text-brand-text" : "text-muted"}`}
-        style={enabled ? { boxShadow: "-2px -2px 5px var(--neu-light), 2px 2px 5px var(--neu-dark)" } : undefined}
+        style={enabled ? { boxShadow: "var(--elev-xs)" } : undefined}
       >
         On
       </button>
       <button
         onClick={() => switchTo(false)}
         className={`rounded-md px-2.5 py-1 text-xs font-medium ${!enabled ? "bg-brand-soft text-brand-text" : "text-muted"}`}
-        style={!enabled ? { boxShadow: "-2px -2px 5px var(--neu-light), 2px 2px 5px var(--neu-dark)" } : undefined}
+        style={!enabled ? { boxShadow: "var(--elev-xs)" } : undefined}
       >
         Off
       </button>

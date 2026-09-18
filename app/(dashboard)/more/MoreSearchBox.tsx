@@ -48,7 +48,7 @@ export function MoreSearchBox() {
 
   return (
     <div ref={containerRef} className="sticky top-0 z-10 -mx-4 bg-background px-4 pb-2 pt-1">
-      <div className="flex items-center gap-2 rounded-full bg-surface px-3.5 py-2.5" style={{ boxShadow: "inset 2px 2px 5px var(--neu-dark), inset -2px -2px 5px var(--neu-light)" }}>
+      <div className="flex items-center gap-2 rounded-full bg-surface px-3.5 py-2.5" style={{ boxShadow: "var(--elev-inset)" }}>
         <Search size={16} className="shrink-0 text-muted" />
         <input
           value={query}

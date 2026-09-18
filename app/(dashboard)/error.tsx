@@ -54,7 +54,7 @@ export default function DashboardError({
     <div className="flex min-h-[70vh] flex-col items-center justify-center gap-4 px-6 text-center">
       <div
         className="flex h-16 w-16 items-center justify-center rounded-full text-danger"
-        style={{ boxShadow: "-4px -4px 10px var(--neu-light), 4px 4px 10px var(--neu-dark)" }}
+        style={{ boxShadow: "var(--elev-sm)" }}
       >
         <AlertTriangle size={28} />
       </div>

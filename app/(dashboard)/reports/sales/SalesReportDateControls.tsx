@@ -15,7 +15,7 @@ export function SalesReportDateControls({ from, to }: { from: string; to: string
   }
 
   const pillClass = "shrink-0 rounded-full bg-background px-3 py-1.5 text-xs font-medium text-muted";
-  const activeStyle = { boxShadow: "-2px -2px 5px var(--neu-light), 2px 2px 5px var(--neu-dark)" };
+  const activeStyle = { boxShadow: "var(--elev-xs)" };
 
   return (
     <div className="flex flex-col gap-2">

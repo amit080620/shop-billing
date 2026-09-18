@@ -82,7 +82,7 @@ export async function SubscriptionCard() {
       target="_blank"
       rel="noopener noreferrer"
       className="flex items-center justify-between gap-3 rounded-2xl px-4 py-3 transition active:scale-[0.98]"
-      style={{ background: tone.gradient, boxShadow: "-4px -4px 10px var(--neu-light), 4px 4px 10px var(--neu-dark)" }}
+      style={{ background: tone.gradient, boxShadow: "var(--elev-sm)" }}
     >
       <div className="min-w-0">
         <p className="truncate text-sm font-semibold text-white/95">{t("subscription.title")}</p>

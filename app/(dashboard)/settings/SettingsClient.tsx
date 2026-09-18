@@ -61,7 +61,7 @@ export function SettingsClient({ shop }: { shop: ShopSettings }) {
         ← More
       </Link>
       <div>
-        <h1 className="text-lg font-semibold text-foreground">GST & shop profile</h1>
+        <h1 className="text-lg font-bold tracking-tight text-foreground md:text-2xl">GST & shop profile</h1>
         <p className="text-sm text-muted">
           Drives invoice numbering, CGST/SGST vs IGST, and every GST report.
         </p>

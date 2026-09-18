@@ -131,7 +131,7 @@ export function ToothChart({ chart, onChange }: { chart: ToothChartData; onChang
             <div className="fixed inset-0 z-40" onClick={() => setOpenTooth(null)} />
             <div
               className="absolute left-1/2 top-full z-50 mt-1.5 w-48 -translate-x-1/2 rounded-xl border border-border bg-surface p-1.5"
-              style={{ boxShadow: "-4px -4px 10px var(--neu-light), 4px 4px 12px var(--neu-dark)" }}
+              style={{ boxShadow: "var(--elev-sm)" }}
             >
               <p className="px-2 py-1 text-[10px] font-semibold text-muted">Tooth {tooth} — tap all that apply</p>
               {TOOTH_CONDITIONS.map((c) => {

@@ -21,12 +21,12 @@ export default async function SubscriptionExpiredPage() {
     <div className="flex min-h-screen flex-col items-center justify-center gap-4 px-6 text-center">
       <div
         className="flex h-14 w-14 items-center justify-center rounded-2xl text-2xl font-bold text-white"
-        style={{ background: "linear-gradient(135deg, var(--brand-light), var(--brand-dark))" }}
+        style={{ background: "var(--brand)" }}
       >
         ₹
       </div>
       <div>
-        <h1 className="text-lg font-semibold text-foreground">Subscription expired</h1>
+        <h1 className="text-lg font-bold tracking-tight text-foreground md:text-2xl">Subscription expired</h1>
         <p className="mx-auto mt-2 max-w-xs text-sm text-muted">
           {shopName}&apos;s access to billing has paused — your data is safe and untouched.
           Contact whoever manages your subscription to renew it.

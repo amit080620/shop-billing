@@ -84,7 +84,7 @@ export function CaExportClient() {
             className="flex-1 rounded-lg bg-background px-3 py-2 text-xs font-medium"
             style={
               from === thisFY.from && to === thisFY.to
-                ? { boxShadow: "-2px -2px 5px var(--neu-light), 2px 2px 5px var(--neu-dark)" }
+                ? { boxShadow: "var(--elev-xs)" }
                 : undefined
             }
           >
@@ -99,7 +99,7 @@ export function CaExportClient() {
             className="flex-1 rounded-lg bg-background px-3 py-2 text-xs font-medium"
             style={
               from === lastFY.from && to === lastFY.to
-                ? { boxShadow: "-2px -2px 5px var(--neu-light), 2px 2px 5px var(--neu-dark)" }
+                ? { boxShadow: "var(--elev-xs)" }
                 : undefined
             }
           >

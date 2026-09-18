@@ -15,7 +15,7 @@ export function ServiceReportControls({ from, to }: { from: string; to: string }
   }
 
   const pillClass = "shrink-0 rounded-full bg-background px-3 py-1.5 text-xs font-medium";
-  const activePillStyle = { boxShadow: "-2px -2px 5px var(--neu-light), 2px 2px 5px var(--neu-dark)" };
+  const activePillStyle = { boxShadow: "var(--elev-xs)" };
 
   const isToday = from === todayIso() && to === todayIso();
   const isThisWeek = from === isoDaysAgo(7) && to === todayIso();

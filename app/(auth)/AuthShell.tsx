@@ -18,36 +18,29 @@ export function AuthShell({
   footer: React.ReactNode;
 }) {
   return (
-    <div
-      className="flex flex-col items-center justify-center px-6 py-12 md:min-h-screen"
-      style={{
-        background:
-          "radial-gradient(1200px 600px at 50% -10%, var(--brand-soft), var(--background) 60%)",
-      }}
-    >
-      <div className="page-enter mx-auto w-full max-w-sm">
-        <div className="mb-4 flex justify-center gap-1.5 rounded-lg border border-border p-1">
+    <div className="flex min-h-screen flex-col px-5 py-6 md:px-10">
+      {/* Language + theme sit in a corner and wrap if the screen is narrow,
+          instead of forcing one wide row that ran off a phone's edge. */}
+      <div className="flex flex-wrap items-center justify-end gap-2">
+        <div className="flex items-center rounded-lg border border-border bg-surface p-0.5">
           <LanguageToggle lang={lang} compact />
-          <div className="w-px bg-border" />
+        </div>
+        <div className="flex items-center rounded-lg border border-border bg-surface p-0.5">
           <ThemeToggle theme={theme} compact />
         </div>
-        <div className="mb-6 flex flex-col items-center gap-3 text-center">
-          <div
-            className="flex h-32 w-32 items-center justify-center rounded-full bg-background p-4"
-            style={{ boxShadow: "-10px -10px 22px var(--neu-light), 10px 10px 22px var(--neu-dark)" }}
-          >
-            {/* eslint-disable-next-line @next/next/no-img-element -- small static brand asset, next/image adds no value here */}
-            <img src="/brand-logo.png" alt="The Ray" className="h-full w-auto" />
-          </div>
+      </div>
+
+      <div className="page-enter mx-auto flex w-full max-w-sm flex-1 flex-col justify-center py-8">
+        <div className="mb-7 flex flex-col items-center gap-4 text-center">
+          {/* eslint-disable-next-line @next/next/no-img-element -- small static brand asset, next/image adds no value here */}
+          <img src="/brand-logo.png" alt="The Ray" className="h-16 w-auto md:h-20" />
           <div>
-            <h1 className="text-2xl font-bold text-foreground neu-text">{title}</h1>
-            <p className="mt-1 text-sm text-muted">{subtitle}</p>
+            <h1 className="text-2xl font-bold tracking-tight text-foreground">{title}</h1>
+            <p className="mt-1.5 text-sm text-muted">{subtitle}</p>
           </div>
         </div>
 
-        <div className="neu-card p-6">
-          {children}
-        </div>
+        <div className="rounded-2xl border border-border bg-surface p-6 shadow-[var(--elevation-2)]">{children}</div>
 
         <div className="mt-6 text-center text-sm text-muted">{footer}</div>
       </div>

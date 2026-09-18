@@ -13,7 +13,7 @@ export function LogoutButton({ logoutLabel, thisDeviceLabel, allDevicesLabel }: 
       <button
         onClick={() => setOpen(true)}
         className="w-full rounded-lg px-4 py-3 text-sm font-medium text-danger transition active:scale-[0.98]"
-        style={{ boxShadow: "-3px -3px 8px var(--neu-light), 3px 3px 8px var(--neu-dark)" }}
+        style={{ boxShadow: "var(--elev-xs)" }}
       >
         {logoutLabel}
       </button>
@@ -31,7 +31,7 @@ export function LogoutButton({ logoutLabel, thisDeviceLabel, allDevicesLabel }: 
                 disabled={isPending}
                 onClick={() => startTransition(() => logoutThisDeviceAction())}
                 className="flex flex-col items-start gap-0.5 rounded-lg bg-background px-4 py-2.5 text-left text-sm text-foreground disabled:opacity-60"
-                style={{ boxShadow: "-2px -2px 6px var(--neu-light), 2px 2px 6px var(--neu-dark)" }}
+                style={{ boxShadow: "var(--elev-xs)" }}
               >
                 <span className="flex items-center gap-1.5">
                   <Smartphone size={14} /> {thisDeviceLabel}
@@ -42,7 +42,7 @@ export function LogoutButton({ logoutLabel, thisDeviceLabel, allDevicesLabel }: 
                 disabled={isPending}
                 onClick={() => startTransition(() => logoutAllDevicesAction())}
                 className="flex flex-col items-start gap-0.5 rounded-lg bg-background px-4 py-2.5 text-left text-sm text-danger disabled:opacity-60"
-                style={{ boxShadow: "-2px -2px 6px var(--neu-light), 2px 2px 6px var(--neu-dark)" }}
+                style={{ boxShadow: "var(--elev-xs)" }}
               >
                 <span className="flex items-center gap-1.5">
                   <Globe size={14} /> {allDevicesLabel}
@@ -53,7 +53,7 @@ export function LogoutButton({ logoutLabel, thisDeviceLabel, allDevicesLabel }: 
             <button
               onClick={() => setOpen(false)}
               className="mt-3 w-full rounded-lg px-4 py-2 text-sm font-medium text-muted"
-              style={{ boxShadow: "-2px -2px 6px var(--neu-light), 2px 2px 6px var(--neu-dark)" }}
+              style={{ boxShadow: "var(--elev-xs)" }}
             >
               Cancel
             </button>

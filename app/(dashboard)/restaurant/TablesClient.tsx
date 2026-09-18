@@ -248,8 +248,8 @@ export function TablesClient({ tables, lang }: { tables: Table[]; lang: Lang }) 
           href="/restaurant/reports"
           className="shrink-0 rounded-2xl px-3 py-1.5 text-xs font-semibold text-foreground transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97]"
           style={{
-            background: "linear-gradient(155deg, var(--surface) 0%, var(--background) 100%)",
-            boxShadow: "-4px -4px 10px var(--neu-light), 4px 4px 12px var(--neu-dark), inset 0 1px 0 rgba(255,255,255,0.35)",
+            background: "var(--surface)",
+            boxShadow: "var(--elev-sm)",
             border: "1px solid var(--border)",
           }}
         >
@@ -259,8 +259,8 @@ export function TablesClient({ tables, lang }: { tables: Table[]; lang: Lang }) 
           href="/restaurant/combos"
           className="flex shrink-0 items-center gap-1.5 rounded-2xl px-3 py-1.5 text-xs font-semibold text-foreground transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97]"
           style={{
-            background: "linear-gradient(155deg, var(--surface) 0%, var(--background) 100%)",
-            boxShadow: "-4px -4px 10px var(--neu-light), 4px 4px 12px var(--neu-dark), inset 0 1px 0 rgba(255,255,255,0.35)",
+            background: "var(--surface)",
+            boxShadow: "var(--elev-sm)",
             border: "1px solid var(--border)",
           }}
         >
@@ -270,8 +270,8 @@ export function TablesClient({ tables, lang }: { tables: Table[]; lang: Lang }) 
           href="/restaurant/reservations"
           className="flex shrink-0 items-center gap-1.5 rounded-2xl px-3 py-1.5 text-xs font-semibold text-foreground transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97]"
           style={{
-            background: "linear-gradient(155deg, var(--surface) 0%, var(--background) 100%)",
-            boxShadow: "-4px -4px 10px var(--neu-light), 4px 4px 12px var(--neu-dark), inset 0 1px 0 rgba(255,255,255,0.35)",
+            background: "var(--surface)",
+            boxShadow: "var(--elev-sm)",
             border: "1px solid var(--border)",
           }}
         >
@@ -369,12 +369,12 @@ export function TablesClient({ tables, lang }: { tables: Table[]; lang: Lang }) 
               style={
                 sectionFilter === s
                   ? {
-                      background: "linear-gradient(155deg, var(--brand-soft) 0%, var(--background) 100%)",
-                      boxShadow: "inset -3px -3px 7px rgba(255,255,255,0.5), inset 3px 3px 7px var(--neu-dark), 0 0 0 1.5px var(--brand-light)",
+                      background: "var(--brand-soft)",
+                      boxShadow: "var(--elev-inset), 0 0 0 1.5px var(--brand-light)",
                     }
                   : {
-                      background: "linear-gradient(155deg, var(--surface) 0%, var(--background) 100%)",
-                      boxShadow: "-4px -4px 10px var(--neu-light), 4px 4px 12px var(--neu-dark), inset 0 1px 0 rgba(255,255,255,0.35)",
+                      background: "var(--surface)",
+                      boxShadow: "var(--elev-sm)",
                       border: "1px solid var(--border)",
                     }
               }
@@ -406,10 +406,10 @@ export function TablesClient({ tables, lang }: { tables: Table[]; lang: Lang }) 
                       : "linear-gradient(155deg, #f0fdf4 0%, #dcfce7 100%)",
                 boxShadow:
                   table.status === "occupied"
-                    ? "-6px -6px 14px var(--neu-light), 6px 6px 16px var(--neu-dark), inset 0 1.5px 0 rgba(255,255,255,0.6), 0 0 0 1.5px rgba(220,38,38,0.25)"
+                    ? "var(--elev-sm), 0 0 0 1.5px rgba(220,38,38,0.25)"
                     : table.reservation
-                      ? "-6px -6px 14px var(--neu-light), 6px 6px 16px var(--neu-dark), inset 0 1.5px 0 rgba(255,255,255,0.6), 0 0 0 1.5px rgba(217,119,6,0.25)"
-                      : "-6px -6px 14px var(--neu-light), 6px 6px 16px var(--neu-dark), inset 0 1.5px 0 rgba(255,255,255,0.6), 0 0 0 1.5px rgba(5,150,105,0.25)",
+                      ? "var(--elev-sm), 0 0 0 1.5px rgba(217,119,6,0.25)"
+                      : "var(--elev-sm), 0 0 0 1.5px rgba(5,150,105,0.25)",
               }}
               className={`hover-lift relative flex flex-col items-center justify-center gap-1 rounded-2xl p-4 transition-all duration-200 hover:-translate-y-1 active:translate-y-0 active:scale-[0.97] md:gap-1.5 md:p-6 ${
                 isPending ? "opacity-60" : ""
@@ -537,7 +537,7 @@ export function TablesClient({ tables, lang }: { tables: Table[]; lang: Lang }) 
           <div
             className="w-full max-w-sm rounded-t-2xl bg-surface p-5 md:rounded-2xl"
             onClick={(e) => e.stopPropagation()}
-            style={{ boxShadow: "-6px -6px 16px var(--neu-light), 6px 6px 18px var(--neu-dark)" }}
+            style={{ boxShadow: "var(--elev-sm)" }}
           >
             <p className="text-base font-semibold text-foreground">Table {bookingTable.name}</p>
             <p className="mt-1 text-xs text-muted">

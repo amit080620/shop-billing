@@ -21,7 +21,7 @@ export function AccentToggle({ accent: initial }: { accent: "blue" | "saffron" |
         className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium ${
           accent === "blue" ? "bg-brand-soft text-brand-text" : "text-muted"
         }`}
-        style={accent === "blue" ? { boxShadow: "-2px -2px 5px var(--neu-light), 2px 2px 5px var(--neu-dark)" } : undefined}
+        style={accent === "blue" ? { boxShadow: "var(--elev-xs)" } : undefined}
       >
         <span className="h-3 w-3 rounded-full" style={{ background: "#0427f3" }} />
         Blue
@@ -31,7 +31,7 @@ export function AccentToggle({ accent: initial }: { accent: "blue" | "saffron" |
         className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium ${
           accent === "saffron" ? "bg-brand-soft text-brand-text" : "text-muted"
         }`}
-        style={accent === "saffron" ? { boxShadow: "-2px -2px 5px var(--neu-light), 2px 2px 5px var(--neu-dark)" } : undefined}
+        style={accent === "saffron" ? { boxShadow: "var(--elev-xs)" } : undefined}
       >
         <span className="h-3 w-3 rounded-full" style={{ background: "#e8720e" }} />
         Saffron
@@ -41,7 +41,7 @@ export function AccentToggle({ accent: initial }: { accent: "blue" | "saffron" |
         className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium ${
           accent === "gray" ? "bg-brand-soft text-brand-text" : "text-muted"
         }`}
-        style={accent === "gray" ? { boxShadow: "-2px -2px 5px var(--neu-light), 2px 2px 5px var(--neu-dark)" } : undefined}
+        style={accent === "gray" ? { boxShadow: "var(--elev-xs)" } : undefined}
       >
         <span className="h-3 w-3 rounded-full" style={{ background: "#475569" }} />
         Gray

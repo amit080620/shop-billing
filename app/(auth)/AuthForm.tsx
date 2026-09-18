@@ -49,8 +49,7 @@ function SubmitButton({ label, pleaseWaitLabel }: { label: string; pleaseWaitLab
     <button
       type="submit"
       disabled={pending}
-      className="w-full rounded-xl px-4 py-3.5 font-semibold text-white shadow-md disabled:opacity-60"
-      style={{ background: "linear-gradient(135deg, var(--brand-light), var(--brand-dark))" }}
+      className="btn-primary w-full disabled:opacity-60"
     >
       {pending ? pleaseWaitLabel : label}
     </button>
@@ -100,28 +99,21 @@ export function AuthForm({
                     key={opt.value}
                     type="button"
                     onClick={() => setGridSelections((prev) => ({ ...prev, [f.name]: opt.value }))}
-                    className={`flex flex-col items-center gap-1.5 rounded-2xl border-2 p-3 text-center transition-transform ${
-                      selected ? "border-foreground scale-[1.05]" : "border-transparent"
+                    aria-pressed={selected}
+                    className={`flex flex-col items-center gap-2 rounded-xl border bg-surface p-3 text-center transition-colors ${
+                      selected ? "border-brand bg-brand-soft ring-1 ring-brand" : "border-border hover:border-border-strong"
                     }`}
-                    style={{
-                      background: `linear-gradient(135deg, ${opt.colors[0]}, ${opt.colors[1]})`,
-                      boxShadow: selected
-                        ? "-5px -5px 12px var(--neu-light), 5px 5px 12px var(--neu-dark-strong)"
-                        : "-4px -4px 10px var(--neu-light), 4px 4px 10px var(--neu-dark)",
-                    }}
                   >
-                    {(() => {
-                      const Icon = BUSINESS_ICON_MAP[opt.icon];
-                      return Icon ? (
-                        <Icon size={22} className="text-white" style={{ filter: "drop-shadow(1px 1px 1px rgba(0,0,0,0.35))" }} strokeWidth={1.8} />
-                      ) : null;
-                    })()}
                     <span
-                      className="text-[11px] font-semibold leading-tight text-white"
-                      style={{ textShadow: "1px 1.5px 1px rgba(255,255,255,0.35), -1px -1px 1.5px rgba(0,0,0,0.4)" }}
+                      className="flex h-9 w-9 items-center justify-center rounded-lg"
+                      style={{ background: `linear-gradient(135deg, ${opt.colors[0]}, ${opt.colors[1]})` }}
                     >
-                      {opt.label}
+                      {(() => {
+                        const Icon = BUSINESS_ICON_MAP[opt.icon];
+                        return Icon ? <Icon size={18} className="text-white" strokeWidth={2} /> : null;
+                      })()}
                     </span>
+                    <span className={`text-[11px] font-semibold leading-tight ${selected ? "text-brand-text" : "text-foreground"}`}>{opt.label}</span>
                   </button>
                 );
               })}
@@ -131,7 +123,7 @@ export function AuthForm({
               name={f.name}
               required
               defaultValue=""
-              className="neu-card px-4 py-3 text-base outline-none focus:border-brand focus:ring-4 focus:ring-brand-soft"
+              className="px-3.5 py-3 text-base"
             >
               <option value="" disabled>
                 {f.placeholder ?? "Choose one"}
@@ -149,7 +141,7 @@ export function AuthForm({
                 type={visibleFields[f.name] ? "text" : "password"}
                 placeholder={f.placeholder}
                 required
-                className="w-full neu-card px-4 py-3 pr-11 text-base outline-none focus:border-brand focus:ring-4 focus:ring-brand-soft"
+                className="w-full px-3.5 py-3 pr-11 text-base"
               />
               <button
                 type="button"
@@ -166,13 +158,13 @@ export function AuthForm({
               type={f.type}
               placeholder={f.placeholder}
               required
-              className="neu-card px-4 py-3 text-base outline-none focus:border-brand focus:ring-4 focus:ring-brand-soft"
+              className="px-3.5 py-3 text-base"
             />
           )}
         </label>
       ))}
       {state?.error && (
-        <p className="rounded-lg bg-credit-soft px-3 py-2 text-sm text-credit">
+        <p role="alert" className="rounded-lg border border-danger/20 bg-danger-soft px-3 py-2 text-sm text-danger">
           {state.error}
         </p>
       )}

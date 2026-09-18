@@ -69,7 +69,7 @@ export function AuditClient({
       </Link>
 
       <div className="flex items-center justify-between">
-        <h1 className="text-lg font-semibold text-foreground">
+        <h1 className="text-lg font-bold tracking-tight text-foreground md:text-2xl">
           {isDraft ? "Counting in progress" : "Count completed"}
         </h1>
         <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${isDraft ? "bg-credit-soft text-credit" : "bg-brand-soft text-brand-text"}`}>

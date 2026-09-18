@@ -37,7 +37,7 @@ export default async function RestaurantBillDetailPage({
       </Link>
 
       <div>
-        <h1 className="text-lg font-semibold text-foreground">{table?.name} · #{order.order_number}</h1>
+        <h1 className="text-lg font-bold tracking-tight text-foreground md:text-2xl">{table?.name} · #{order.order_number}</h1>
         <p className="text-xs text-muted">
           {order.settled_at && new Date(order.settled_at).toLocaleString("en-IN", { timeZone: "Asia/Kolkata", dateStyle: "medium", timeStyle: "short" })}
         </p>

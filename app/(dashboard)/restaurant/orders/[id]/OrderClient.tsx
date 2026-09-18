@@ -161,7 +161,7 @@ export function OrderClient({
     <div className="flex flex-col gap-4 pb-24">
       <div className="no-print flex items-center justify-between">
         <div>
-          <h1 className="text-lg font-semibold text-foreground">{order.tableName}</h1>
+          <h1 className="text-lg font-bold tracking-tight text-foreground md:text-2xl">{order.tableName}</h1>
           <p className="text-xs text-muted">#{order.orderNumber} · {order.status}</p>
         </div>
         <Link href="/restaurant" className="text-sm text-brand">
@@ -394,7 +394,7 @@ export function OrderClient({
           <button
             onClick={() => setCartOpen(true)}
             className="flex w-full items-center justify-between px-4 py-2.5 text-sm font-semibold text-white"
-            style={{ background: "linear-gradient(135deg, var(--brand-light), var(--brand-dark))" }}
+            style={{ background: "var(--brand)" }}
           >
             <span className="flex items-center gap-1">
               <ShoppingCart size={14} /> {initialItems.reduce((s, i) => s + i.quantity, 0)} item{initialItems.reduce((s, i) => s + i.quantity, 0) === 1 ? "" : "s"}

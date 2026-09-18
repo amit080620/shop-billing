@@ -119,7 +119,7 @@ export function JobDetailClient({
       </Link>
 
       <div>
-        <h1 className="text-lg font-semibold text-foreground">{job.itemDescription}</h1>
+        <h1 className="text-lg font-bold tracking-tight text-foreground md:text-2xl">{job.itemDescription}</h1>
         <p className="text-sm text-muted">{job.customerName} · {job.customerPhone} · #{job.jobNumber}</p>
         <span className="mt-1 inline-block rounded-full bg-brand-soft px-2.5 py-0.5 text-xs font-medium text-brand-text">
           {STATUS_LABELS[job.status]}

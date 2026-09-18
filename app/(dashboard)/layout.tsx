@@ -12,6 +12,8 @@ import { UniversalSearch } from "@/app/components/UniversalSearch";
 import { CatalogOrderAlert } from "@/app/components/CatalogOrderAlert";
 import { isModuleEnabled } from "@/lib/modules";
 import { HamburgerToggle } from "./HamburgerToggle";
+import { LazyFloatingWidgets } from "@/app/components/LazyFloatingWidgets";
+import { getCalculatorEnabled, getAssistantEnabled } from "@/lib/theme";
 
 export default async function DashboardLayout({
   children,
@@ -28,6 +30,8 @@ export default async function DashboardLayout({
     console.error("Could not check fast_billing_enabled in layout", err);
   }
   const lang = await getLang();
+  const calculatorEnabled = await getCalculatorEnabled();
+  const assistantEnabled = await getAssistantEnabled();
   const roleLabel = session.role === "owner" ? translate(lang, "role.owner") : translate(lang, "role.staff");
 
   return (
@@ -43,68 +47,58 @@ export default async function DashboardLayout({
         fastBillingEnabled={fastBillingEnabled}
       />
 
-      <header
-        className="no-print sticky top-0 z-10 border-b border-border bg-surface/90 px-4 py-3 backdrop-blur-md md:hidden"
-        style={{ boxShadow: "var(--shadow-sm)" }}
-      >
-        <div className="mx-auto flex max-w-lg items-center gap-3">
-          <HamburgerToggle
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-muted"
-            style={{ boxShadow: "-2px -2px 5px var(--neu-light), 2px 2px 5px var(--neu-dark)" }}
-          />
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-semibold text-foreground">
-              {session.shopName}
-            </p>
-            <p className="text-xs text-muted">
-              {session.staffName} · {roleLabel}
-            </p>
-          </div>
-          <Link
-            href="/dashboard"
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-muted"
-            style={{ boxShadow: "-2px -2px 5px var(--neu-light), 2px 2px 5px var(--neu-dark)" }}
-            aria-label="Dashboard"
-          >
-            <LayoutDashboard size={17} />
-          </Link>
-          <Link href="/profile" aria-label="Profile & settings">
+      {/* One sticky top bar for both breakpoints. On mobile it carries the
+          shop identity row plus search; on desktop the identity lives in
+          the sidebar, so the bar is just search. Keeping both rows in a
+          single sticky element stops them stacking on top of each other
+          while scrolling. There's exactly one UniversalSearch instance,
+          so one Ctrl+K listener. */}
+      <header className="no-print sticky top-0 z-20 border-b border-border bg-surface/95 backdrop-blur-md">
+        <div className="mx-auto flex max-w-lg items-center gap-2.5 px-4 pb-2 pt-3 md:hidden">
+          <HamburgerToggle className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-foreground hover:bg-surface-2" />
+          <Link href="/profile" aria-label="Profile & settings" className="flex min-w-0 flex-1 items-center gap-2.5">
             {session.shopLogoUrl ? (
               <Image
                 src={session.shopLogoUrl}
                 alt=""
-                width={36}
-                height={36}
+                width={32}
+                height={32}
                 unoptimized
-                className="h-9 w-9 shrink-0 rounded-full object-contain ring-2 ring-brand-soft"
+                className="h-8 w-8 shrink-0 rounded-lg border border-border bg-surface object-contain"
               />
             ) : (
-              <div
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-semibold text-white shadow-sm"
-                style={{ background: "linear-gradient(135deg, var(--brand-light), var(--brand-dark))" }}
-              >
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand text-sm font-bold text-white">
                 {session.shopName.charAt(0).toUpperCase()}
-              </div>
+              </span>
             )}
+            <span className="min-w-0">
+              <span className="block truncate text-sm font-semibold leading-tight text-foreground">{session.shopName}</span>
+              <span className="block truncate text-xs leading-tight text-muted">
+                {session.staffName} · {roleLabel}
+              </span>
+            </span>
+          </Link>
+          <Link
+            href="/dashboard"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-foreground hover:bg-surface-2"
+            aria-label="Dashboard"
+          >
+            <LayoutDashboard size={19} />
           </Link>
         </div>
-      </header>
-
-      {/* Single UniversalSearch instance — deliberately outside both the
-          mobile-only header (md:hidden) and the desktop sidebar, so there's
-          exactly one mounted instance, one Ctrl+K listener, and the modal
-          is never rendered inside a CSS-hidden parent at either breakpoint. */}
-      <div className="no-print sticky top-0 z-10 border-b border-border bg-surface/90 px-4 py-2.5 backdrop-blur-md md:left-60 md:px-8">
-        <div className="mx-auto max-w-lg md:max-w-none">
+        <div className="mx-auto max-w-lg px-4 pb-2.5 md:flex md:max-w-5xl md:items-center md:justify-end md:px-8 md:py-3 xl:max-w-6xl">
           <UniversalSearch />
         </div>
-      </div>
+      </header>
 
       <main className="page-enter mx-auto max-w-lg px-4 py-4 pb-24 md:max-w-5xl md:px-8 md:py-8 md:pb-8 xl:max-w-6xl">{children}</main>
 
       <BottomNav lang={lang} businessType={session.businessType} permissions={session.permissions} fastBillingEnabled={fastBillingEnabled} />
       <WelcomeTour storageKey={`tour-seen-${session.shopId}`} businessType={session.businessType} />
       {isModuleEnabled(session.enabledModules, "public_catalog") && <CatalogOrderAlert />}
+      {/* Shop-owner tools only — never on login, public storefront,
+          booking or print pages, which live outside this layout. */}
+      <LazyFloatingWidgets calculatorEnabled={calculatorEnabled} assistantEnabled={assistantEnabled} />
     </div>
   );
 }

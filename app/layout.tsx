@@ -1,12 +1,11 @@
 import type { Metadata, Viewport } from "next";
 import { Plus_Jakarta_Sans, Noto_Sans_Devanagari } from "next/font/google";
-import { getTheme, getCalculatorEnabled, getAssistantEnabled, getLiteMode } from "@/lib/theme";
+import { getTheme, getLiteMode } from "@/lib/theme";
 import { getLang } from "@/lib/i18n/server";
 import { ServiceWorkerRegistration } from "./components/ServiceWorkerRegistration";
 import { ToastProvider } from "./components/Toast";
 import { AutoThemeApplier } from "./components/ThemeToggle";
 import { FocusScrollIntoView } from "./components/FocusScrollIntoView";
-import { LazyFloatingWidgets } from "./components/LazyFloatingWidgets";
 import { VersionWatcher } from "./components/VersionWatcher";
 import { CalculatorAmountProvider } from "@/lib/calculatorAmount";
 import "./globals.css";
@@ -65,8 +64,6 @@ export default async function RootLayout({
   const theme = await getTheme();
   const liteMode = await getLiteMode();
   const lang = await getLang();
-  const calculatorEnabled = await getCalculatorEnabled();
-  const assistantEnabled = await getAssistantEnabled();
 
   return (
     <html lang={lang} className={`${plusJakartaSans.variable} ${notoSansDevanagari.variable} ${theme === "dark" ? "dark" : ""} ${liteMode ? "lite-mode" : ""}`}>
@@ -130,7 +127,6 @@ export default async function RootLayout({
         <VersionWatcher />
         <CalculatorAmountProvider>
           <ToastProvider>{children}</ToastProvider>
-          <LazyFloatingWidgets calculatorEnabled={calculatorEnabled} assistantEnabled={assistantEnabled} />
         </CalculatorAmountProvider>
       </body>
     </html>

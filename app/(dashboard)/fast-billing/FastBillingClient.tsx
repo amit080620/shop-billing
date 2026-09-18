@@ -309,7 +309,7 @@ export function FastBillingClient({
               }}
               disabled={outOfStock}
               className="relative flex flex-col overflow-hidden rounded-xl bg-surface text-left disabled:opacity-40"
-              style={{ boxShadow: "-3px -3px 8px var(--neu-light), 3px 3px 8px var(--neu-dark)" }}
+              style={{ boxShadow: "var(--elev-xs)" }}
             >
               {inCart && (
                 <span
@@ -437,7 +437,7 @@ function FastBillSheet({
                   <button
                     onClick={() => onUpdateQty(line.productId, line.qty - 1)}
                     className="flex h-7 w-7 items-center justify-center rounded-full bg-background"
-                    style={{ boxShadow: "-2px -2px 5px var(--neu-light), 2px 2px 5px var(--neu-dark)" }}
+                    style={{ boxShadow: "var(--elev-xs)" }}
                     aria-label="Decrease"
                   >
                     <Minus size={13} />
@@ -448,7 +448,7 @@ function FastBillSheet({
                   <button
                     onClick={() => onUpdateQty(line.productId, line.qty + 1)}
                     className="flex h-7 w-7 items-center justify-center rounded-full bg-background"
-                    style={{ boxShadow: "-2px -2px 5px var(--neu-light), 2px 2px 5px var(--neu-dark)" }}
+                    style={{ boxShadow: "var(--elev-xs)" }}
                     aria-label="Increase"
                   >
                     <Plus size={13} />

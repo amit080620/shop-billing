@@ -15,14 +15,14 @@ function Toggle({ label, checked, onChange }: { label: string; checked: boolean;
         role="switch"
         aria-checked={checked}
         className="relative h-7 w-12 shrink-0 rounded-full p-1"
-        style={{ boxShadow: "inset 3px 3px 6px var(--neu-dark), inset -3px -3px 6px var(--neu-light)" }}
+        style={{ boxShadow: "var(--elev-inset)" }}
       >
         <span
           className={`absolute top-1 flex h-5 w-5 items-center justify-center rounded-full transition-transform ${checked ? "translate-x-5 bg-brand" : "translate-x-0 bg-background"}`}
           style={{
             boxShadow: checked
               ? "-2px -2px 4px rgba(255,255,255,0.35), 2px 2px 4px rgba(0,0,0,0.25)"
-              : "-2px -2px 4px var(--neu-light), 2px 2px 4px var(--neu-dark)",
+              : "var(--elev-xs)",
           }}
         />
       </button>

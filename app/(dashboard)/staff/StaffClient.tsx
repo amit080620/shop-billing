@@ -57,7 +57,7 @@ export function StaffClient({
       </Link>
 
       <div className="flex items-center justify-between">
-        <h1 className="text-lg font-semibold text-foreground">Staff</h1>
+        <h1 className="text-lg font-bold tracking-tight text-foreground md:text-2xl">Staff</h1>
         <button
           onClick={() => setShowForm((v) => !v)}
           className="btn-primary-sm"

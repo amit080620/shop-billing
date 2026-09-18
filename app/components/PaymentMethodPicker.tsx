@@ -24,7 +24,7 @@ export function PaymentMethodPicker({ name = "paymentMethod", defaultValue = "ca
             }`}
             style={
               selected === m
-                ? { boxShadow: "-2px -2px 5px var(--neu-light), 2px 2px 5px var(--neu-dark)" }
+                ? { boxShadow: "var(--elev-xs)" }
                 : undefined
             }
           >

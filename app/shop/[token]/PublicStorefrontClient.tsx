@@ -175,7 +175,7 @@ export function PublicStorefrontClient({
   if (confirmed) {
     return (
       <div className="mx-auto flex min-h-screen max-w-md flex-col items-center justify-center gap-3 px-6 text-center">
-        <span className="flex h-16 w-16 items-center justify-center rounded-full" style={{ background: "linear-gradient(135deg, var(--brand-light), var(--brand-dark))" }}>
+        <span className="flex h-16 w-16 items-center justify-center rounded-full" style={{ background: "var(--brand)" }}>
           <CheckCircle2 size={32} className="text-white" />
         </span>
         <p className="text-lg font-semibold text-foreground">Order sent</p>
@@ -353,7 +353,7 @@ export function PublicStorefrontClient({
         <button
           onClick={() => setShowCheckout(true)}
           className="fixed inset-x-4 bottom-4 z-40 mx-auto flex max-w-md items-center justify-between rounded-xl px-4 py-3.5 font-semibold text-white shadow-lg"
-          style={{ background: "linear-gradient(135deg, var(--brand-light), var(--brand-dark))" }}
+          style={{ background: "var(--brand)" }}
         >
           <span className="flex items-center gap-1.5"><ShoppingCart size={15} /> {cartCount} item(s)</span>
           <span>{formatMoney(cartTotal)} · Checkout →</span>

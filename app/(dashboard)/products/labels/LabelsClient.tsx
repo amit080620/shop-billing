@@ -50,7 +50,7 @@ export function LabelsClient({ shopName, products: initialProducts }: { shopName
     <div className="flex flex-col gap-4">
       <div className="no-print flex items-center justify-between">
         <div>
-          <h1 className="text-lg font-semibold text-foreground">Print barcode labels</h1>
+          <h1 className="text-lg font-bold tracking-tight text-foreground md:text-2xl">Print barcode labels</h1>
           <p className="text-sm text-muted">Tap + on each item you need stickers for, then Print.</p>
         </div>
         <Link href="/products" className="text-sm text-brand">
@@ -77,7 +77,7 @@ export function LabelsClient({ shopName, products: initialProducts }: { shopName
               }`}
               style={
                 labelSize === size
-                  ? { boxShadow: "-2px -2px 5px var(--neu-light), 2px 2px 5px var(--neu-dark)" }
+                  ? { boxShadow: "var(--elev-xs)" }
                   : undefined
               }
             >

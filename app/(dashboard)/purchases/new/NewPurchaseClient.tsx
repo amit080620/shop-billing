@@ -372,7 +372,7 @@ export function NewPurchaseClient({
     >
       <input type="hidden" name="payload" value={payload} />
       <div className="flex items-center gap-2">
-        <h1 className="text-lg font-semibold text-foreground">Record purchase</h1>
+        <h1 className="text-lg font-bold tracking-tight text-foreground md:text-2xl">Record purchase</h1>
         <InfoTooltip message="Enter what's on the vendor's bill — this is your input GST / ITC record." />
       </div>
 

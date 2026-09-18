@@ -176,7 +176,7 @@ export function MedicineLibraryClient({ medicines: initial }: { medicines: Medic
       <Link
         href="/clinic/settings"
         className="flex items-center justify-between rounded-xl border border-border bg-surface px-4 py-3 text-sm font-medium text-foreground"
-        style={{ boxShadow: "-3px -3px 8px var(--neu-light), 3px 3px 8px var(--neu-dark)" }}
+        style={{ boxShadow: "var(--elev-xs)" }}
       >
         <span className="flex items-center gap-2">
           <Settings2 size={15} className="text-brand-text" /> Control which fields print on the Rx

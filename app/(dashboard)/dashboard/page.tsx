@@ -126,7 +126,7 @@ export default async function DashboardPage() {
         <Link
           href="/festivals"
           className="rounded-xl border border-dashed border-brand bg-brand-soft p-4"
-          style={{ boxShadow: "-6px -6px 16px var(--neu-light), 6px 6px 16px var(--neu-dark-strong)" }}
+          style={{ boxShadow: "var(--elev-sm)" }}
         >
           <div className="flex items-center justify-between gap-3">
             <div>
@@ -298,7 +298,7 @@ async function RetailHome({
       <Link
         href="/bills/new"
         className="hover-lift flex items-center justify-center gap-2 rounded-xl px-4 py-4 text-center font-semibold text-white shadow-md"
-        style={{ background: "linear-gradient(135deg, var(--brand-light), var(--brand-dark))" }}
+        style={{ background: "var(--brand)" }}
       >
         <PlusIcon />
         {t("home.newBill")}
@@ -431,7 +431,7 @@ async function LabHome({
         <Link
           href="/lab/orders/new"
           className="flex flex-col items-center justify-center gap-1 rounded-xl px-4 py-4 text-center font-semibold text-white shadow-md"
-          style={{ background: "linear-gradient(135deg, var(--brand-light), var(--brand-dark))" }}
+          style={{ background: "var(--brand)" }}
         >
           <FlaskConical size={20} />
           New order
@@ -589,7 +589,7 @@ async function GymHome({
         <Link
           href="/gym/members/new"
           className="flex flex-col items-center justify-center gap-1 rounded-xl px-4 py-4 text-center font-semibold text-white shadow-md"
-          style={{ background: "linear-gradient(135deg, var(--brand-light), var(--brand-dark))" }}
+          style={{ background: "var(--brand)" }}
         >
           <Dumbbell size={20} />
           Sell membership
@@ -713,7 +713,7 @@ async function ClinicHome({
         <Link
           href="/clinic/prescriptions/new"
           className="flex flex-col items-center justify-center gap-1 rounded-xl px-4 py-4 text-center font-semibold text-white shadow-md"
-          style={{ background: "linear-gradient(135deg, var(--brand-light), var(--brand-dark))" }}
+          style={{ background: "var(--brand)" }}
         >
           <PenLine size={20} />
           New prescription
@@ -878,7 +878,7 @@ async function JewelleryHome({
       <Link
         href="/bills/new"
         className="hover-lift flex items-center justify-center gap-2 rounded-xl px-4 py-4 text-center font-semibold text-white shadow-md"
-        style={{ background: "linear-gradient(135deg, var(--brand-light), var(--brand-dark))" }}
+        style={{ background: "var(--brand)" }}
       >
         <PlusIcon />
         {t("home.newBill")}
@@ -1024,7 +1024,7 @@ async function SalonHome({
       <Link
         href="/bills/new"
         className="hover-lift flex items-center justify-center gap-2 rounded-xl px-4 py-4 text-center font-semibold text-white shadow-md"
-        style={{ background: "linear-gradient(135deg, var(--brand-light), var(--brand-dark))" }}
+        style={{ background: "var(--brand)" }}
       >
         <PlusIcon />
         {t("home.newBill")}
@@ -1215,7 +1215,7 @@ async function ServiceHome({
         <Link
           href="/bills/new"
           className="hover-lift flex items-center justify-center gap-2 rounded-xl px-4 py-4 text-center font-semibold text-white shadow-md"
-          style={{ background: "linear-gradient(135deg, var(--brand-light), var(--brand-dark))" }}
+          style={{ background: "var(--brand)" }}
         >
           <PlusIcon />
           Sell
@@ -1223,7 +1223,7 @@ async function ServiceHome({
         <Link
           href="/service/new"
           className="hover-lift flex items-center justify-center gap-2 rounded-xl px-4 py-4 text-center font-semibold text-white shadow-md"
-          style={{ background: "linear-gradient(135deg, var(--brand-light), var(--brand-dark))" }}
+          style={{ background: "var(--brand)" }}
         >
           <PlusIcon />
           New job
@@ -1364,7 +1364,7 @@ async function TransportHome({
       <Link
         href="/bills/new"
         className="hover-lift flex items-center justify-center gap-2 rounded-xl px-4 py-4 text-center font-semibold text-white shadow-md"
-        style={{ background: "linear-gradient(135deg, var(--brand-light), var(--brand-dark))" }}
+        style={{ background: "var(--brand)" }}
       >
         <PlusIcon />
         {t("home.newBill")}
@@ -1508,7 +1508,7 @@ async function PharmacyHome({
       <Link
         href="/bills/new"
         className="hover-lift flex items-center justify-center gap-2 rounded-xl px-4 py-4 text-center font-semibold text-white shadow-md"
-        style={{ background: "linear-gradient(135deg, var(--brand-light), var(--brand-dark))" }}
+        style={{ background: "var(--brand)" }}
       >
         <PlusIcon />
         {t("home.newBill")}
@@ -1638,8 +1638,8 @@ async function RestaurantHome({ shopId }: { shopId: string }) {
         href="/restaurant"
         className="hover-lift flex items-center justify-center gap-2 rounded-xl px-4 py-4 text-center font-semibold text-white"
         style={{
-          background: "linear-gradient(135deg, var(--brand-light), var(--brand-dark))",
-          boxShadow: "-6px -6px 14px var(--neu-light), 6px 6px 14px var(--neu-dark)",
+          background: "var(--brand)",
+          boxShadow: "var(--elev-sm)",
         }}
       >
         <PlusIcon />
@@ -1759,7 +1759,7 @@ async function RentalHome({ shopId }: { shopId: string }) {
       <Link
         href="/rentals/new"
         className="hover-lift flex items-center justify-center gap-2 rounded-xl px-4 py-4 text-center font-semibold text-white shadow-md"
-        style={{ background: "linear-gradient(135deg, var(--brand-light), var(--brand-dark))" }}
+        style={{ background: "var(--brand)" }}
       >
         <PlusIcon />
         New rental
@@ -1823,7 +1823,7 @@ function StatCard({
   } ${className}`;
   const cardStyle =
     tone === "credit"
-      ? { boxShadow: "-5px -5px 12px var(--neu-light), 5px 5px 12px var(--neu-dark)" }
+      ? { boxShadow: "var(--elev-sm)" }
       : undefined;
   const content = (
     <>
@@ -1834,7 +1834,7 @@ function StatCard({
             className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${
               tone === "credit" ? "bg-surface text-credit" : "bg-brand-soft text-brand-text"
             }`}
-            style={{ boxShadow: "-2px -2px 5px var(--neu-light), 2px 2px 5px var(--neu-dark)" }}
+            style={{ boxShadow: "var(--elev-xs)" }}
           >
             <Icon size={17} strokeWidth={2} />
           </span>

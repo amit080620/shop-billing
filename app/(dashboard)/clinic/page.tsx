@@ -25,7 +25,7 @@ export default function ClinicHubPage() {
           >
             <span
               className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-soft text-brand-text"
-              style={{ boxShadow: "-3px -3px 7px var(--neu-light), 3px 3px 7px var(--neu-dark)" }}
+              style={{ boxShadow: "var(--elev-xs)" }}
             >
               <l.icon size={18} strokeWidth={1.8} />
             </span>

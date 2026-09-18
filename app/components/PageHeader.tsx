@@ -15,11 +15,11 @@ export function PageHeader({
   bareIcon?: boolean;
 }) {
   return (
-    <div className="flex items-center justify-between gap-2">
-      <div className="flex items-center gap-2.5">
+    <div className="flex items-center justify-between gap-3">
+      <div className="flex min-w-0 items-center gap-3">
         <PageIcon bare={bareIcon}>{icon}</PageIcon>
-        <div className="flex items-center gap-1.5">
-          <h1 className="text-base font-semibold text-foreground md:text-xl">{title}</h1>
+        <div className="flex min-w-0 items-center gap-1.5">
+          <h1 className="truncate text-lg font-bold tracking-tight text-foreground md:text-2xl">{title}</h1>
           {subtitle && <InfoTooltip message={subtitle} />}
         </div>
       </div>

@@ -40,7 +40,7 @@ export function KioskClient({ token, shopName, shopLogoUrl }: { token: string; s
   if (result && !result.error) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-gradient-to-br from-brand-soft to-background px-6 text-center">
-        <span className="flex h-24 w-24 items-center justify-center rounded-full text-white" style={{ background: "linear-gradient(135deg, var(--brand-light), var(--brand-dark))" }}>
+        <span className="flex h-24 w-24 items-center justify-center rounded-full text-white" style={{ background: "var(--brand)" }}>
           {result.alreadyIn ? <Hand size={48} /> : <CheckCircle2 size={48} />}
         </span>
         <p className="text-3xl font-bold text-foreground">{result.alreadyIn ? `Welcome back, ${result.memberName}!` : `Checked in, ${result.memberName}!`}</p>
@@ -99,7 +99,7 @@ export function KioskClient({ token, shopName, shopLogoUrl }: { token: string; s
         onClick={submit}
         disabled={phone.length < 10 || isPending}
         className="w-full max-w-xs rounded-2xl py-4 text-lg font-bold text-white shadow-md disabled:opacity-40"
-        style={{ background: "linear-gradient(135deg, var(--brand-light), var(--brand-dark))" }}
+        style={{ background: "var(--brand)" }}
       >
         {isPending ? "Checking in…" : "Check In"}
       </button>

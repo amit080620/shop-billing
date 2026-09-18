@@ -98,21 +98,19 @@ export function UniversalSearch({ ownsGlobalShortcut = true }: { ownsGlobalShort
   const isFocused = showPanel;
 
   return (
-    <div ref={wrapperRef} className="relative w-full md:w-64">
+    <div ref={wrapperRef} className="relative w-full md:w-80">
       <div className="relative">
-        <span
-          className="pointer-events-none absolute left-1.5 top-1/2 z-10 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full bg-background"
-          style={{ boxShadow: "-2px -2px 5px var(--neu-light), 2px 2px 5px var(--neu-dark)" }}
-        >
-          <Search size={14} className={isFocused ? "text-brand" : "text-muted"} />
-        </span>
+        <Search
+          size={16}
+          className={`pointer-events-none absolute left-3 top-1/2 z-10 -translate-y-1/2 ${isFocused ? "text-brand" : "text-muted"}`}
+        />
         <input
           ref={inputRef}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onFocus={() => setShowPanel(true)}
-          placeholder="Search…"
-          className="w-full rounded-full py-2 pl-10 pr-9 text-sm text-foreground placeholder:text-muted"
+          placeholder="Search products, customers, bills…"
+          className="w-full py-2 pl-9 pr-9 text-sm text-foreground"
         />
         {query ? (
           <button
@@ -161,12 +159,9 @@ export function UniversalSearch({ ownsGlobalShortcut = true }: { ownsGlobalShort
                   <button
                     key={`${r.group}-${r.id}`}
                     onClick={() => goTo(r.href)}
-                    className="flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-left transition-colors hover:bg-brand-soft"
+                    className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left transition-colors hover:bg-surface-2"
                   >
-                    <span
-                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-background text-brand-text"
-                      style={{ boxShadow: "-2px -2px 4px var(--neu-light), 2px 2px 4px var(--neu-dark)" }}
-                    >
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-soft text-brand-text">
                       <GroupIcon size={14} />
                     </span>
                     <span className="min-w-0 flex-1">

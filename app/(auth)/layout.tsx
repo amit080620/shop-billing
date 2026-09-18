@@ -2,22 +2,33 @@ import { AuthIllustrationLazy as AuthIllustration } from "./AuthIllustrationLazy
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen md:flex">
-      {/* Branded panel — full illustration + tagline on desktop/tablet;
-          a compact version stays visible on mobile too (just shorter),
-          so the branded moment is never simply invisible on a phone. */}
+    <div className="min-h-screen bg-background md:flex">
+      {/* Branded panel — desktop/tablet only. On a phone the form comes
+          first; a tall illustration above it pushed the login button
+          below the fold. The brand logo still leads the form itself. */}
       <div
-        className="relative flex flex-col items-center justify-center overflow-hidden px-6 py-4 md:w-[45%] md:p-12 lg:w-1/2"
-        style={{ background: "linear-gradient(160deg, var(--brand-dark), var(--brand))" }}
+        className="relative hidden flex-col justify-between overflow-hidden p-12 md:flex md:w-[45%] lg:w-1/2"
+        style={{ background: "linear-gradient(160deg, #1e1b4b 0%, #312e81 45%, #4338ca 100%)" }}
       >
-        <div className="w-full max-w-[220px] md:max-w-sm">
+        <div
+          className="pointer-events-none absolute -right-32 -top-32 h-96 w-96 rounded-full opacity-40 blur-3xl"
+          style={{ background: "radial-gradient(circle, #c026d3, transparent 70%)" }}
+          aria-hidden="true"
+        />
+        <p className="relative text-sm font-semibold tracking-wide text-white/80">THE RAY · Billing</p>
+        <div className="relative mx-auto w-full max-w-sm">
           <AuthIllustration />
         </div>
-        <div className="mt-4 max-w-sm text-center md:mt-8">
-          <h2 className="text-lg font-bold text-white md:text-2xl">Billing that keeps up with your shop</h2>
-          <p className="mt-1.5 text-xs text-white/80 md:mt-2 md:text-sm">
-            GST invoices, inventory, and udhaar tracking — built for the way small shops actually work.
+        <div className="relative max-w-md">
+          <h2 className="text-3xl font-bold leading-tight tracking-tight text-white">Billing that keeps up with your shop</h2>
+          <p className="mt-3 text-base leading-relaxed text-white/75">
+            GST invoices, inventory, and udhaar tracking — built for the way Indian businesses actually work.
           </p>
+          <ul className="mt-6 flex flex-wrap gap-2 text-xs font-medium text-white/85">
+            <li className="rounded-full border border-white/20 bg-white/10 px-3 py-1">GST-ready invoices</li>
+            <li className="rounded-full border border-white/20 bg-white/10 px-3 py-1">Works offline</li>
+            <li className="rounded-full border border-white/20 bg-white/10 px-3 py-1">हिंदी · मराठी</li>
+          </ul>
         </div>
       </div>
 

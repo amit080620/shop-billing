@@ -164,7 +164,7 @@ export function NewRentalClient({
     <form action={formAction} className="flex flex-col gap-4">
       <input type="hidden" name="payload" value={payload} />
       <div className="flex items-center justify-between">
-        <h1 className="text-lg font-semibold text-foreground">{t("rental.title")}</h1>
+        <h1 className="text-lg font-bold tracking-tight text-foreground md:text-2xl">{t("rental.title")}</h1>
         <Link href="/rentals" className="text-sm text-brand">
           {t("rental.backToRentals")}
         </Link>

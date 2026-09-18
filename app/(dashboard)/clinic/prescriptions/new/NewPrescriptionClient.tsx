@@ -359,7 +359,7 @@ export function NewPrescriptionClient({
         <Link
           href={`/clinic/treatment-plans/new?patientId=${selectedPatient?.id ?? ""}&patientName=${encodeURIComponent(patientName)}&patientPhone=${encodeURIComponent(patientPhone)}&doctorName=${encodeURIComponent(doctorName)}`}
           className="flex items-center justify-between rounded-xl border border-brand bg-brand-soft px-4 py-3 text-sm font-medium text-brand-text"
-          style={{ boxShadow: "-3px -3px 8px var(--neu-light), 3px 3px 8px var(--neu-dark)" }}
+          style={{ boxShadow: "var(--elev-xs)" }}
         >
           <span>+ Give {patientName} a treatment plan / quotation</span>
           <span>→</span>

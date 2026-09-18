@@ -1,20 +1,20 @@
 @import "tailwindcss";
 
 :root {
-  /* Base surfaces — exact values from The Ray Bill brand spec */
-  --background: #e4e8ef;
+  /* Base surfaces — The Ray design standard v3. A near-white canvas
+     with pure-white cards separated by hairline borders, not by heavy
+     shadows. This is the visual language of Stripe, Razorpay, Linear:
+     depth is quiet, content is loud. */
+  --background: #f5f6f8;
   --surface: #ffffff;
-  --surface-2: #f2f4f9;
+  --surface-2: #f8f9fb;
   /* Overlay — the true top layer: modals, dropdowns, popovers. */
   --overlay: #ffffff;
-  /* The top-edge highlight — a 1px inset line that catches light on
-     the top edge of a raised surface. Combined with the surface-shift
-     and a soft shadow, this is what actually reads as "3D" rather
-     than "flat card with a shadow under it". */
   --edge-highlight: rgba(255, 255, 255, 0.6);
-  --foreground: #373435;
-  --muted: #737078;
-  --border: #e3e6ef;
+  --foreground: #16181d;
+  --muted: #5f6673;
+  --border: #e5e7eb;
+  --border-strong: #d4d7dd;
 
   /* Brand — a single, deliberate professional indigo. Billing/finance
      apps lean on blue-family colors because they read as trustworthy
@@ -28,7 +28,7 @@
   --brand-light: #6366f1;
   --brand-soft: #eef2ff;
   --brand-text: #4338ca;
-  --ray-gradient: linear-gradient(135deg, #6366f1 0%, #4f46e5 55%, #4338ca 100%);
+  --ray-gradient: linear-gradient(120deg, #2b4ea2 0%, #7a3e98 55%, #d0187b 100%);
 
   --secondary: #6366f1;
   --secondary-soft: #eef2ff;
@@ -50,19 +50,29 @@
   --credit-soft: #fef8ef;
 
   --radius-xs: 6px;
-  --radius-sm: 10px;
-  --radius: 14px;
-  --radius-lg: 18px;
-  --radius-2xl: 32px;
+  --radius-sm: 8px;
+  --radius: 12px;
+  --radius-lg: 16px;
+  --radius-2xl: 28px;
 
   /* Elevation — exact Design OS scale. Most cards use Level 1;
      interactive/elevated surfaces use Level 2. Reserve 3-4 for things
      that genuinely float above everything else (modals, popovers). */
   --elevation-0: none;
-  --elevation-1: 0 2px 8px rgba(55, 52, 53, 0.06);
-  --elevation-2: 0 8px 24px rgba(55, 52, 53, 0.09);
-  --elevation-3: 0 16px 40px rgba(55, 52, 53, 0.12);
-  --elevation-4: 0 24px 64px rgba(55, 52, 53, 0.16);
+  --elevation-1: 0 1px 2px rgba(16, 24, 40, 0.05);
+  --elevation-2: 0 4px 12px rgba(16, 24, 40, 0.07);
+  --elevation-3: 0 12px 32px rgba(16, 24, 40, 0.1);
+  --elevation-4: 0 24px 56px rgba(16, 24, 40, 0.14);
+
+  /* Component elevation tokens — what every inline boxShadow in the app
+     points at. Each one pairs a hairline ring (reads as a border, so an
+     icon chip with no background still has a crisp edge) with a very
+     soft drop shadow. */
+  --elev-xs: 0 0 0 1px var(--border), 0 1px 2px rgba(16, 24, 40, 0.05);
+  --elev-sm: 0 0 0 1px var(--border), 0 1px 3px rgba(16, 24, 40, 0.06), 0 1px 2px rgba(16, 24, 40, 0.04);
+  --elev-md: 0 0 0 1px var(--border), 0 4px 12px rgba(16, 24, 40, 0.07);
+  --elev-inset: inset 0 0 0 1px var(--border), inset 0 1px 2px rgba(16, 24, 40, 0.05);
+  --focus-ring: 0 0 0 3px color-mix(in srgb, var(--brand) 22%, transparent);
 
   /* Z-index — exact Design OS hierarchy. Existing code mostly uses
      Tailwind's arbitrary z-10/20/50 classes; these tokens give new and
@@ -85,14 +95,15 @@
      (were close approximations before; now exact, including the
      translucent-white border which reads better than a solid tone on
      genuinely varying dark backgrounds). */
-  --background: #101014;
-  --surface: #18171c;
-  --surface-2: #211f26;
-  --overlay: #211f26;
+  --background: #0c0d11;
+  --surface: #15171d;
+  --surface-2: #1c1f26;
+  --overlay: #1c1f26;
   --edge-highlight: rgba(255, 255, 255, 0.06);
-  --foreground: #f7f5f7;
-  --muted: #7f7883;
-  --border: rgba(255, 255, 255, 0.09);
+  --foreground: #f4f5f7;
+  --muted: #9aa1ad;
+  --border: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.14);
 
   /* Brand — same indigo family, shifted lighter to stay visible on a
      near-black background while keeping ~4.5:1 contrast for the
@@ -121,10 +132,15 @@
   --credit: #d68f2e;
   --credit-soft: #2c2010;
 
-  --elevation-1: 0 2px 10px rgba(0, 0, 0, 0.24);
-  --elevation-2: 0 8px 26px rgba(0, 0, 0, 0.32);
-  --elevation-3: 0 18px 44px rgba(0, 0, 0, 0.4);
+  --elevation-1: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --elevation-2: 0 6px 18px rgba(0, 0, 0, 0.36);
+  --elevation-3: 0 16px 40px rgba(0, 0, 0, 0.44);
   --elevation-4: 0 28px 72px rgba(0, 0, 0, 0.5);
+
+  --elev-xs: 0 0 0 1px var(--border), 0 1px 2px rgba(0, 0, 0, 0.3);
+  --elev-sm: 0 0 0 1px var(--border), 0 2px 6px rgba(0, 0, 0, 0.32);
+  --elev-md: 0 0 0 1px var(--border), 0 6px 18px rgba(0, 0, 0, 0.36);
+  --elev-inset: inset 0 0 0 1px var(--border), inset 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 @theme inline {
@@ -136,6 +152,7 @@
   --color-foreground: var(--foreground);
   --color-muted: var(--muted);
   --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
   --color-brand: var(--brand);
   --color-brand-dark: var(--brand-dark);
   --color-brand-text: var(--brand-text);
@@ -215,10 +232,10 @@ select option {
   color: var(--foreground);
 }
 
-/* Global "pressed in" look for form fields — matches the reference
- * neumorphic design (inputs read as a genuine carved-in dent, not a
- * flat bordered box). Applies everywhere at once rather than needing
- * every input across the app touched individually. */
+/* Global form-field standard — a white field with a hairline border
+ * (drawn as an inset ring so it never changes the field's box size) and
+ * a brand-coloured ring on focus. Applies everywhere at once rather
+ * than needing every input across the app touched individually. */
 input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"]),
 textarea,
 select {
@@ -233,45 +250,66 @@ select {
 input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"]):not(.bg-transparent),
 textarea:not(.bg-transparent),
 select {
-  background: var(--background) !important;
-  /* Set explicitly: the rule above forces a light background, but the
+  background: var(--surface) !important;
+  /* Set explicitly: the rule above forces the field background, but the
    * text colour was left to inherit — so on any dark surface (the admin
    * panel, a dark modal) fields rendered near-white text on a light
    * background and became unreadable. */
   color: var(--foreground);
-  border-radius: var(--radius) !important;
-  box-shadow:
-    inset 3px 3px 7px var(--neu-dark),
-    inset -3px -3px 7px var(--neu-light) !important;
+  border-radius: var(--radius-sm) !important;
+  box-shadow: inset 0 0 0 1px var(--border-strong), 0 1px 2px rgba(16, 24, 40, 0.04) !important;
+}
+input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"]):not(.bg-transparent):hover,
+textarea:not(.bg-transparent):hover,
+select:hover {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--border-strong) 60%, var(--foreground) 12%) !important;
 }
 input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"]):not(.bg-transparent):focus,
 textarea:not(.bg-transparent):focus,
 select:focus {
-  box-shadow:
-    inset 3px 3px 7px var(--neu-dark-strong),
-    inset -3px -3px 7px var(--neu-light),
-    0 0 0 2px var(--brand-soft) !important;
+  box-shadow: inset 0 0 0 1.5px var(--brand), var(--focus-ring) !important;
 }
-/* Search bars and other flat/transparent inputs (sitting inside their
- * own already-styled pill container) get a genuinely subtle glow on
- * focus instead — no box, no border, just a soft light bloom around
- * the whole pill, matching how a flat search bar should look focused. */
+input::placeholder,
+textarea::placeholder {
+  color: color-mix(in srgb, var(--muted) 75%, transparent);
+}
+input:disabled,
+textarea:disabled,
+select:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+/* Search bars and other flat/transparent inputs sit inside their own
+ * already-styled pill container — the container carries the border, so
+ * the input itself shows nothing extra on focus. */
 input.bg-transparent:focus,
 textarea.bg-transparent:focus {
-  box-shadow: 0 0 10px 2px var(--brand-soft) !important;
-  border-radius: inherit;
+  box-shadow: none !important;
+}
+/* Checkboxes and radios pick up the brand colour instead of the
+ * browser's default blue. */
+input[type="checkbox"],
+input[type="radio"] {
+  accent-color: var(--brand);
 }
 
-/* Global tactile feedback — every button/link gets a smooth, snappy
- * press-down feel for free, without touching every component's classes. */
+/* Global tactile feedback — buttons get a small press-down. Links do
+ * not: a whole list row or nav item shrinking under the finger reads as
+ * wobbly rather than solid. */
 button,
 a {
   transition: transform 120ms ease, background-color 150ms ease, border-color 150ms ease,
     color 150ms ease, box-shadow 150ms ease, opacity 150ms ease;
 }
-button:not(:disabled):active,
-a:active {
-  transform: scale(0.97);
+button:not(:disabled):active {
+  transform: scale(0.98);
+}
+:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+::selection {
+  background: color-mix(in srgb, var(--brand) 20%, transparent);
 }
 
 input,
@@ -307,75 +345,27 @@ textarea {
   animation: fade-in-up var(--duration-standard) var(--ease-signature);
 }
 
-/* ── Global motion system ──────────────────────────────────────────
- * Applies to every dashboard screen at once (the layout already wraps
- * all of them in .page-enter), rather than needing each of the 14
- * business types' pages touched individually.
- *
- * 1. Staggered entrance — cards and list rows rise in sequence rather
- *    than the whole page appearing at once. Capped at 10 steps: past
- *    that the delay would be long enough to feel like lag, and a long
- *    list's later rows are below the fold anyway.
- */
-@keyframes card-rise {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
+/* Interactive cards (links/buttons styled as cards) — a border tint on
+ * hover and a quiet background shift when pressed. No staggered
+ * per-card entrance animation: content should simply be there, which
+ * is what makes an app feel fast. */
+a.neu-card,
+button.neu-card,
+label.neu-card {
+  transition: border-color 150ms ease, background-color 150ms ease, box-shadow 150ms ease;
+}
+@media (hover: hover) {
+  a.neu-card:hover,
+  button.neu-card:hover,
+  label.neu-card:hover {
+    border-color: var(--border-strong);
+    box-shadow: var(--elevation-2);
   }
 }
-
-@media (prefers-reduced-motion: no-preference) {
-  .page-enter .neu-card,
-  .page-enter section > ul > li,
-  .page-enter section > div > ul > li {
-    animation: card-rise 0.4s var(--ease-signature) both;
-  }
-  .page-enter .neu-card:nth-child(1),
-  .page-enter ul > li:nth-child(1) { animation-delay: 0.02s; }
-  .page-enter .neu-card:nth-child(2),
-  .page-enter ul > li:nth-child(2) { animation-delay: 0.06s; }
-  .page-enter .neu-card:nth-child(3),
-  .page-enter ul > li:nth-child(3) { animation-delay: 0.1s; }
-  .page-enter .neu-card:nth-child(4),
-  .page-enter ul > li:nth-child(4) { animation-delay: 0.14s; }
-  .page-enter .neu-card:nth-child(5),
-  .page-enter ul > li:nth-child(5) { animation-delay: 0.18s; }
-  .page-enter .neu-card:nth-child(6),
-  .page-enter ul > li:nth-child(6) { animation-delay: 0.22s; }
-  .page-enter .neu-card:nth-child(7),
-  .page-enter ul > li:nth-child(7) { animation-delay: 0.26s; }
-  .page-enter .neu-card:nth-child(8),
-  .page-enter ul > li:nth-child(8) { animation-delay: 0.3s; }
-  .page-enter .neu-card:nth-child(9),
-  .page-enter ul > li:nth-child(9) { animation-delay: 0.34s; }
-  .page-enter .neu-card:nth-child(n + 10),
-  .page-enter ul > li:nth-child(n + 10) { animation-delay: 0.38s; }
-}
-
-/* 2. Genuine 3D press — a raised card's shadow collapses inward while
- *    held, the way a real neumorphic surface depresses under a finger.
- *    This is what makes taps feel physical rather than flat. Applies
- *    only to actually-interactive cards (links/buttons), never to
- *    static display cards, so nothing "presses" that can't be pressed.
- */
 a.neu-card:active,
 button.neu-card:active,
 label.neu-card:active {
-  box-shadow:
-    inset 3px 3px 7px var(--neu-dark),
-    inset -3px -3px 7px var(--neu-light);
-  transform: scale(0.985);
-}
-
-/* 3. Smooth state changes — shadows and transforms never snap between
- *    states (hover, focus, selection), across every card in the app.
- */
-.neu-card {
-  transition: box-shadow 180ms var(--ease-signature), transform 180ms var(--ease-signature);
+  background: var(--surface-2);
 }
 
 @media print {
@@ -415,17 +405,17 @@ label.neu-card:active {
     border-color: var(--brand);
   }
   .btn-primary {
-    border-radius: var(--radius);
-    padding: 0.875rem 1.25rem;
+    border-radius: var(--radius-sm);
+    padding: 0.8125rem 1.25rem;
     font-weight: 600;
+    letter-spacing: -0.005em;
     color: white;
-    box-shadow: var(--shadow-md);
-    background: linear-gradient(135deg, var(--brand-light), var(--brand-dark));
-    transition: box-shadow 0.15s ease, transform 0.1s ease, filter 0.15s ease;
+    background: var(--brand);
+    box-shadow: 0 1px 2px rgba(16, 24, 40, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.14);
+    transition: box-shadow 0.15s ease, transform 0.1s ease, background-color 0.15s ease;
   }
   .btn-primary:hover:not(:disabled) {
-    filter: brightness(1.05);
-    box-shadow: var(--shadow-lg);
+    background: var(--brand-dark);
   }
   .btn-primary:focus-visible {
     outline: 2px solid var(--brand-light);
@@ -440,16 +430,16 @@ label.neu-card:active {
   }
   .btn-primary-sm {
     border-radius: var(--radius-sm);
-    padding: 0.375rem 0.875rem;
+    padding: 0.4375rem 0.875rem;
     font-size: 0.875rem;
-    font-weight: 500;
+    font-weight: 600;
     color: white;
-    box-shadow: var(--shadow-sm);
-    background: linear-gradient(135deg, var(--brand-light), var(--brand-dark));
-    transition: box-shadow 0.15s ease, filter 0.15s ease;
+    background: var(--brand);
+    box-shadow: 0 1px 2px rgba(16, 24, 40, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.14);
+    transition: box-shadow 0.15s ease, background-color 0.15s ease;
   }
   .btn-primary-sm:hover:not(:disabled) {
-    filter: brightness(1.05);
+    background: var(--brand-dark);
   }
   .btn-primary-sm:focus-visible {
     outline: 2px solid var(--brand-light);
@@ -462,17 +452,17 @@ label.neu-card:active {
   /* Secondary — a real button, just not the loudest one on the
      screen. Solid border, surface background, brand-colored text. */
   .btn-secondary {
-    border-radius: var(--radius);
-    padding: 0.875rem 1.25rem;
+    border-radius: var(--radius-sm);
+    padding: 0.8125rem 1.25rem;
     font-weight: 600;
-    color: var(--brand-dark);
+    color: var(--foreground);
     background: var(--surface);
-    border: 1.5px solid var(--border);
+    border: 1px solid var(--border-strong);
+    box-shadow: 0 1px 2px rgba(16, 24, 40, 0.05);
     transition: border-color 0.15s ease, background-color 0.15s ease;
   }
   .btn-secondary:hover:not(:disabled) {
-    border-color: var(--brand-light);
-    background: var(--brand-soft);
+    background: var(--surface-2);
   }
   .btn-secondary:active:not(:disabled) {
     transform: scale(0.98);
@@ -643,16 +633,6 @@ label.neu-card:active {
   animation: save-success-pulse 650ms var(--ease-signature);
 }
 
-/* A subtle, consistent "the app noticed your tap" press-feedback on
-   every button — small, but this is a large part of what makes an
-   interface feel alive instead of static. */
-button:not(:disabled):active {
-  transform: scale(0.97);
-}
-button {
-  transition: transform 0.1s ease, opacity 0.15s ease, background-color 0.15s ease;
-}
-
 /* Cards/rows that respond to touch — a light press-down instead of
    nothing happening until the next screen paints. */
 .tap-feedback:active {
@@ -684,9 +664,8 @@ button {
     transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
   }
   .hover-lift:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-md);
-    border-color: var(--brand-light);
+    box-shadow: var(--elevation-2);
+    border-color: var(--border-strong);
   }
 }
 
@@ -699,15 +678,6 @@ button {
   background: var(--surface-2);
   box-shadow: var(--shadow-lg), inset 0 1px 0 var(--edge-highlight);
   border-radius: var(--radius-lg);
-}
-
-/* A slightly more noticeable focus state on inputs — the existing
-   border-color transition was subtle to the point of being easy to
-   miss; a soft glow makes "you're typing here" unambiguous. */
-input:focus,
-select:focus,
-textarea:focus {
-  box-shadow: 0 0 0 3px var(--brand-soft);
 }
 
 /* Accessibility: prefers-reduced-motion — every animated moment above
@@ -959,124 +929,81 @@ textarea:focus {
 }
 
 /* ============================================================
-   Neumorphic system — soft-UI depth built from the app's own
-   background color, tinted with the brand hue instead of generic
-   gray, so it reads as "this app's" style rather than a stock
-   effect. Text inside these elements ALWAYS uses --foreground/
-   --muted (not the shadow) for legibility — neumorphism's own
-   known weakness is low contrast, so depth stays decorative here,
-   never load-bearing for readability.
+   Surface system — The Ray design standard v3.
+   The class names (.neu-*) are kept so the 100+ screens that use them
+   pick up the new look without being touched, but the neumorphic
+   double-shadow is gone: every surface is now a white card with a
+   hairline border and, at most, a very soft shadow.
    ============================================================ */
 :root {
-  --neu-light: rgba(255, 255, 255, 1);
-  /* Genuinely derived from the background's own hue (218°, the same
-     cool undertone as --background: #e4e8ef), desaturated toward
-     neutral gray (~40% of the background's saturation) for a
-     genuinely soothing, non-garish depth effect, with lightness
-     dropped to a level that reads clearly as "shadow" without ever
-     feeling harsh. This is a principled surface-shadow relationship —
-     the shadow is genuinely the same material as the surface, just
-     curved away from the light — not an arbitrary color choice. */
-  --neu-dark: rgba(122, 132, 148, 0.5);
-  --neu-dark-strong: rgba(102, 111, 127, 0.62);
+  /* Legacy tokens — still referenced by a few SVG/chart filters. */
+  --neu-light: transparent;
+  --neu-dark: rgba(16, 24, 40, 0.08);
+  --neu-dark-strong: rgba(16, 24, 40, 0.14);
 }
 .dark {
-  --neu-light: rgba(255, 255, 255, 0.14);
-  --neu-dark: rgba(0, 0, 0, 0.7);
-  --neu-dark-strong: rgba(0, 0, 0, 0.85);
+  --neu-light: transparent;
+  --neu-dark: rgba(0, 0, 0, 0.45);
+  --neu-dark-strong: rgba(0, 0, 0, 0.6);
 }
 
-/* Raised surface — the default neumorphic card, "pushed out" of
-   the background. Use for containers that sit directly on
-   --background (not on --surface — a card-on-card double-shadow
-   looks muddy). */
+/* Card — the default container for grouped content. */
 .neu-card {
-  background: var(--background);
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: var(--radius-lg);
-  box-shadow:
-    -10px -10px 22px var(--neu-light),
-    10px 10px 22px var(--neu-dark);
+  box-shadow: var(--elevation-1);
 }
 
-/* A "carved in" tray — the exact inverse of .neu-card's shadow
-   direction, so a group of individually-raised .neu-card rows still
-   reads as one visual unit: the tray sinks in, its contents rise out. */
+/* Tray — a recessed group background that holds a set of cards/rows. */
 .neu-tray {
-  background: var(--background);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
   border-radius: var(--radius-lg);
-  box-shadow:
-    inset -6px -6px 14px var(--neu-light),
-    inset 6px 6px 14px var(--neu-dark);
 }
 
-/* Lite Mode (opt-in, Preferences) — trades the neumorphic look for
- * flat, simply-bordered cards and no decorative transitions. Genuinely
- * cheaper to paint: a single 1px border costs far less than two large
- * blurred shadows per card, which matters most on a long list
- * (Products, Customers) rendering many cards on screen simultaneously
- * on an older/budget phone's weaker GPU. */
+/* Inset — a quiet well, e.g. an avatar frame or a selected state. */
+.neu-inset {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+}
+
+/* Circular icon badge. */
+.neu-icon {
+  background: var(--surface);
+  border-radius: 9999px;
+  box-shadow: var(--elev-xs);
+}
+
+/* Interactive surface button. */
+.neu-button {
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.05);
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+.neu-button:active {
+  background: var(--surface-2);
+}
+
+/* Formerly an embossed text-shadow; headings now stay crisp. */
+.neu-text {
+  text-shadow: none;
+}
+
+/* Lite Mode (opt-in, Preferences) — drops the remaining soft shadows
+ * and decorative transitions for older/budget phones. */
 html.lite-mode .neu-card,
 html.lite-mode .neu-tray {
   box-shadow: none !important;
-  border: 1px solid var(--border) !important;
 }
 html.lite-mode *,
 html.lite-mode *::before,
 html.lite-mode *::after {
   transition-duration: 0ms !important;
   animation-duration: 0ms !important;
-}
-
-/* Pressed/inset surface — for a "carved in" look, e.g. an avatar
-   frame or an active/selected state. */
-.neu-inset {
-  background: var(--background);
-  border-radius: var(--radius-lg);
-  box-shadow:
-    inset 6px 6px 12px var(--neu-dark),
-    inset -6px -6px 12px var(--neu-light);
-}
-
-/* Circular icon badge, raised — for icon-in-a-soft-bump patterns. */
-.neu-icon {
-  background: var(--background);
-  border-radius: 9999px;
-  box-shadow:
-    -6px -6px 12px var(--neu-light),
-    6px 6px 12px var(--neu-dark);
-}
-
-/* Interactive button — raised at rest, presses inward on tap so
-   the depth cue matches the actual physical metaphor. */
-.neu-button {
-  background: var(--background);
-  border: none;
-  border-radius: var(--radius);
-  box-shadow:
-    -8px -8px 16px var(--neu-light),
-    8px 8px 16px var(--neu-dark);
-  transition: box-shadow 0.15s ease;
-}
-.neu-button:active {
-  box-shadow:
-    inset 3px 3px 6px var(--neu-dark-strong),
-    inset -3px -3px 6px var(--neu-light);
-}
-
-/* Embossed/raised text — for headings and KPI numbers inside
-   neumorphic cards. Kept subtle relative to font size (large
-   offsets on text-shadow just look blurry, not "3D"), but visibly
-   carved/raised at typical heading and number sizes. */
-.neu-text {
-  text-shadow:
-    1px 1.5px 1px var(--neu-light),
-    -1px -1.5px 1.5px var(--neu-dark);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .neu-button {
-    transition: none;
-  }
 }
 
 /* ─── Platform admin panel ────────────────────────────────────────────

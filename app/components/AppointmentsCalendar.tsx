@@ -63,10 +63,10 @@ export function AppointmentsCalendar({ basePath, selectedDate }: { basePath: str
               }`}
               style={
                 isSelected
-                  ? { background: "linear-gradient(135deg, var(--brand-light), var(--brand-dark))" }
+                  ? { background: "var(--brand)" }
                   : isToday
-                    ? { boxShadow: "-2px -2px 4px var(--neu-light), 2px 2px 4px var(--neu-dark)" }
-                    : { boxShadow: "-1px -1px 2px var(--neu-light), 1px 1px 2px var(--neu-dark)" }
+                    ? { boxShadow: "var(--elev-xs)" }
+                    : { boxShadow: "var(--elev-xs)" }
               }
             >
               {day}

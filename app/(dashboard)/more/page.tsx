@@ -48,7 +48,7 @@ export default async function MorePage() {
   return (
     <MoreDrawerShell>
     <div className="flex flex-col gap-5">
-      <h1 className="text-lg font-semibold text-foreground">{t("more.title")}</h1>
+      <h1 className="text-lg font-bold tracking-tight text-foreground md:text-2xl">{t("more.title")}</h1>
 
       {/* "Expiry alerts" and "Write-off history" are genuinely
           generic — any shop that tracks batch/expiry on a product
@@ -296,7 +296,7 @@ function MenuLink({
     >
       <span
         className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${TONE_CLASSES[tone]}`}
-        style={{ boxShadow: "-3px -3px 7px var(--neu-light), 3px 3px 7px var(--neu-dark)" }}
+        style={{ boxShadow: "var(--elev-xs)" }}
       >
         <Icon className="h-[18px] w-[18px]" />
       </span>

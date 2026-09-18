@@ -75,7 +75,7 @@ export function DateRangeControls({
   }
 
   const pillClass = "shrink-0 rounded-full bg-background px-3 py-1.5 text-xs font-medium text-muted";
-  const pillStyle = { boxShadow: "-2px -2px 5px var(--neu-light), 2px 2px 5px var(--neu-dark)" };
+  const pillStyle = { boxShadow: "var(--elev-xs)" };
 
   return (
     <div className="flex flex-col gap-2">

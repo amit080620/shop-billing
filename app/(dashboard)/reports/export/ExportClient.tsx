@@ -130,7 +130,7 @@ export function ExportClient({ businessType }: { businessType: string }) {
               }`}
               style={
                 dataType === d.value
-                  ? { boxShadow: "-2px -2px 5px var(--neu-light), 2px 2px 5px var(--neu-dark)" }
+                  ? { boxShadow: "var(--elev-xs)" }
                   : undefined
               }
             >
@@ -143,16 +143,16 @@ export function ExportClient({ businessType }: { businessType: string }) {
       <div className="neu-card flex flex-col gap-3 p-4">
         <p className="text-xs font-medium text-muted">Date range</p>
         <div className="flex gap-2 overflow-x-auto pb-0.5">
-          <button onClick={() => preset("today")} className="shrink-0 rounded-full bg-background px-3 py-1.5 text-xs font-medium text-muted" style={{ boxShadow: "-2px -2px 5px var(--neu-light), 2px 2px 5px var(--neu-dark)" }}>
+          <button onClick={() => preset("today")} className="shrink-0 rounded-full bg-background px-3 py-1.5 text-xs font-medium text-muted" style={{ boxShadow: "var(--elev-xs)" }}>
             Today
           </button>
-          <button onClick={() => preset("week")} className="shrink-0 rounded-full bg-background px-3 py-1.5 text-xs font-medium text-muted" style={{ boxShadow: "-2px -2px 5px var(--neu-light), 2px 2px 5px var(--neu-dark)" }}>
+          <button onClick={() => preset("week")} className="shrink-0 rounded-full bg-background px-3 py-1.5 text-xs font-medium text-muted" style={{ boxShadow: "var(--elev-xs)" }}>
             This week
           </button>
-          <button onClick={() => preset("month")} className="shrink-0 rounded-full bg-background px-3 py-1.5 text-xs font-medium text-muted" style={{ boxShadow: "-2px -2px 5px var(--neu-light), 2px 2px 5px var(--neu-dark)" }}>
+          <button onClick={() => preset("month")} className="shrink-0 rounded-full bg-background px-3 py-1.5 text-xs font-medium text-muted" style={{ boxShadow: "var(--elev-xs)" }}>
             This month
           </button>
-          <button onClick={() => preset("quarter")} className="shrink-0 rounded-full bg-background px-3 py-1.5 text-xs font-medium text-muted" style={{ boxShadow: "-2px -2px 5px var(--neu-light), 2px 2px 5px var(--neu-dark)" }}>
+          <button onClick={() => preset("quarter")} className="shrink-0 rounded-full bg-background px-3 py-1.5 text-xs font-medium text-muted" style={{ boxShadow: "var(--elev-xs)" }}>
             This quarter
           </button>
         </div>

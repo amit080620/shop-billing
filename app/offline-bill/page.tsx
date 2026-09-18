@@ -209,7 +209,7 @@ export default function OfflineBillPage() {
     <div className="mx-auto flex max-w-md flex-col gap-4 p-4 pb-24">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-lg font-semibold text-foreground">Offline billing</h1>
+          <h1 className="text-lg font-bold tracking-tight text-foreground md:text-2xl">Offline billing</h1>
           <p className="text-xs text-muted">{shop.shopName}</p>
         </div>
         <span

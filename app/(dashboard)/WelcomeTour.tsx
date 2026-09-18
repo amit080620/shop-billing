@@ -430,7 +430,7 @@ export function WelcomeTour({ storageKey, businessType }: { storageKey: string; 
         <div className="mt-5 flex flex-col items-center gap-3 text-center">
           <span
             className="flex h-16 w-16 items-center justify-center rounded-2xl text-white shadow-sm"
-            style={{ background: "linear-gradient(135deg, var(--brand-light), var(--brand-dark))" }}
+            style={{ background: "var(--brand)" }}
           >
             <slide.icon size={30} strokeWidth={1.7} />
           </span>

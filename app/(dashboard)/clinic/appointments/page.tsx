@@ -42,7 +42,7 @@ export default async function ClinicAppointmentsPage({
       <Link
         href="/clinic/settings/booking"
         className="flex items-center justify-between rounded-xl border border-border bg-surface px-4 py-3 text-sm font-medium text-foreground"
-        style={{ boxShadow: "-3px -3px 8px var(--neu-light), 3px 3px 8px var(--neu-dark)" }}
+        style={{ boxShadow: "var(--elev-xs)" }}
       >
         <span className="flex items-center gap-2">
           <Calendar size={15} className="text-brand-text" /> Calendar management — working hours & slot gap

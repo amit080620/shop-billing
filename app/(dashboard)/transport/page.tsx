@@ -16,7 +16,7 @@ export default function TransportHubPage() {
           <Link key={l.href} href={l.href} className="neu-card flex items-center gap-3 p-3.5">
             <span
               className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-soft text-brand-text"
-              style={{ boxShadow: "-3px -3px 7px var(--neu-light), 3px 3px 7px var(--neu-dark)" }}
+              style={{ boxShadow: "var(--elev-xs)" }}
             >
               <l.icon size={18} strokeWidth={1.8} />
             </span>

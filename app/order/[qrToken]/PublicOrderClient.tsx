@@ -73,7 +73,7 @@ export function PublicOrderClient({ qrToken }: { qrToken: string }) {
   if (sent) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-3 px-6 text-center">
-        <span className="flex h-16 w-16 items-center justify-center rounded-full" style={{ background: "linear-gradient(135deg, var(--brand-light), var(--brand-dark))" }}>
+        <span className="flex h-16 w-16 items-center justify-center rounded-full" style={{ background: "var(--brand)" }}>
           <CheckCircle2 size={32} className="text-white" />
         </span>
         <p className="text-lg font-semibold text-gray-900">Sent to the counter!</p>

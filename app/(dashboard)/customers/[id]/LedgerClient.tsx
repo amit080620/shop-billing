@@ -113,7 +113,7 @@ export function LedgerClient({
       <div className="neu-card p-4">
         <div className="flex items-start justify-between gap-2">
           <div>
-            <h1 className="text-lg font-semibold text-foreground">{customer.name}</h1>
+            <h1 className="text-lg font-bold tracking-tight text-foreground md:text-2xl">{customer.name}</h1>
             <p className="text-sm text-muted">{customer.phone}</p>
           </div>
           <div className="flex flex-col items-end gap-2">

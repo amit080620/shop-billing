@@ -36,7 +36,7 @@ export function BirthdayRow({
       <div className="flex min-w-0 flex-1 items-center gap-2.5">
         <span
           className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-soft text-brand-text"
-          style={{ boxShadow: "-2px -2px 5px var(--neu-light), 2px 2px 5px var(--neu-dark)" }}
+          style={{ boxShadow: "var(--elev-xs)" }}
         >
           <Cake size={16} />
         </span>

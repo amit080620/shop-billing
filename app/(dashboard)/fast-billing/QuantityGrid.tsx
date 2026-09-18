@@ -69,7 +69,7 @@ export function QuantityGrid({
                   key={n}
                   onClick={() => onSelect(n)}
                   className="flex aspect-square items-center justify-center rounded-xl bg-background text-base font-semibold text-foreground"
-                  style={{ boxShadow: "-3px -3px 7px var(--neu-light), 3px 3px 7px var(--neu-dark)" }}
+                  style={{ boxShadow: "var(--elev-xs)" }}
                 >
                   {n}
                 </button>

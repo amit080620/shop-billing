@@ -130,34 +130,28 @@ export function BottomNav({ lang, businessType, permissions = [], fastBillingEna
   const tabs = tabsFor(businessType, t, permissions, fastBillingEnabled);
 
   return (
-    <nav
-      className="no-print fixed inset-x-0 bottom-0 z-20 bg-background pb-[env(safe-area-inset-bottom)] md:hidden"
-      style={{ boxShadow: "0 -6px 16px var(--neu-dark), 0 -1px 0 var(--neu-light)" }}
-    >
-      <ul className="mx-auto flex max-w-lg items-stretch justify-between px-1">
+    <nav className="no-print fixed inset-x-0 bottom-0 z-20 border-t border-border bg-surface/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-md md:hidden">
+      <ul className="mx-auto flex max-w-lg items-stretch justify-between px-2">
         {tabs.map((tab) => {
-          const active =
-            pathname.startsWith(tab.href);
+          const active = pathname.startsWith(tab.href);
           const Icon = tab.icon;
           return (
-            <li key={tab.href} className="flex-1 py-1.5">
+            <li key={tab.href} className="flex-1">
               <Link
                 href={tab.href}
-                className={`mx-auto flex flex-col items-center gap-1 rounded-xl px-2 py-1.5 text-[11px] font-medium transition-colors ${
-                  active ? "bg-brand-soft text-brand-text" : "text-muted"
+                aria-current={active ? "page" : undefined}
+                className={`flex flex-col items-center gap-1 pb-2 pt-2 text-[11px] font-semibold transition-colors ${
+                  active ? "text-brand-text" : "text-muted"
                 }`}
               >
                 <span
-                  className="flex h-8 w-8 items-center justify-center rounded-full"
-                  style={{
-                    boxShadow: active
-                      ? "-3px -3px 7px var(--neu-light), 3px 3px 7px var(--neu-dark)"
-                      : "-2px -2px 5px var(--neu-light), 2px 2px 5px var(--neu-dark)",
-                  }}
+                  className={`flex h-8 w-14 items-center justify-center rounded-full transition-colors ${
+                    active ? "bg-brand-soft" : ""
+                  }`}
                 >
                   <Icon active={active} />
                 </span>
-                <span className={active ? "neu-text" : ""}>{tab.label}</span>
+                <span className="max-w-full truncate px-1">{tab.label}</span>
               </Link>
             </li>
           );

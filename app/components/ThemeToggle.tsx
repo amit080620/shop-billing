@@ -31,7 +31,7 @@ export function AutoThemeApplier({ theme }: { theme: "light" | "dark" | "auto" }
   return null;
 }
 
-export function ThemeToggle({ theme: initial, compact = false }: { theme: "light" | "dark" | "auto"; compact?: boolean }) {
+export function ThemeToggle({ theme: initial }: { theme: "light" | "dark" | "auto"; /** Kept for call-site compatibility; the control has one look now. */ compact?: boolean }) {
   const router = useRouter();
   const [theme, setTheme] = useState(initial);
 
@@ -44,13 +44,12 @@ export function ThemeToggle({ theme: initial, compact = false }: { theme: "light
   }
 
   return (
-    <div className={`flex gap-1.5 ${compact ? "" : "rounded-lg border border-border p-1"}`}>
+    <div className="flex flex-wrap gap-0.5 rounded-lg border border-border bg-surface p-0.5">
       <button
         onClick={() => switchTo("light")}
         className={`rounded-md px-2.5 py-1 text-xs font-medium ${
           theme === "light" ? "bg-brand-soft text-brand-text" : "text-muted"
         }`}
-        style={theme === "light" ? { boxShadow: "-2px -2px 5px var(--neu-light), 2px 2px 5px var(--neu-dark)" } : undefined}
       >
         <Sun size={12} className="inline" /> Light
       </button>
@@ -59,7 +58,6 @@ export function ThemeToggle({ theme: initial, compact = false }: { theme: "light
         className={`rounded-md px-2.5 py-1 text-xs font-medium ${
           theme === "dark" ? "bg-brand-soft text-brand-text" : "text-muted"
         }`}
-        style={theme === "dark" ? { boxShadow: "-2px -2px 5px var(--neu-light), 2px 2px 5px var(--neu-dark)" } : undefined}
       >
         <Moon size={12} className="inline" /> Dark
       </button>
@@ -68,7 +66,6 @@ export function ThemeToggle({ theme: initial, compact = false }: { theme: "light
         className={`rounded-md px-2.5 py-1 text-xs font-medium ${
           theme === "auto" ? "bg-brand-soft text-brand-text" : "text-muted"
         }`}
-        style={theme === "auto" ? { boxShadow: "-2px -2px 5px var(--neu-light), 2px 2px 5px var(--neu-dark)" } : undefined}
         title="Switches with day and night automatically"
       >
         <SunMoon size={12} className="inline" /> Auto
