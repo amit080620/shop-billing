@@ -5,9 +5,9 @@ import { Clapperboard } from "lucide-react";
 export function WatchTourButton({ shopId, label = "Watch tour again" }: { shopId: string; label?: string }) {
   function replay() {
     try {
-      localStorage.removeItem(`tour-seen-${shopId}`);
+      localStorage.setItem(`tour-seen-${shopId}`, "replay");
     } catch {
-      // localStorage unavailable — nothing to clear, the button just won't do anything useful
+      // localStorage unavailable — the tour can't be flagged, so the button won't do anything useful
     }
     // A full navigation (not client-side routing) so the layout — and the
     // tour inside it — actually remounts and re-checks the flag.

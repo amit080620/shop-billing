@@ -14,6 +14,7 @@ import { isModuleEnabled } from "@/lib/modules";
 import { HamburgerToggle } from "./HamburgerToggle";
 import { LazyFloatingWidgets } from "@/app/components/LazyFloatingWidgets";
 import { getCalculatorEnabled, getAssistantEnabled } from "@/lib/theme";
+import { HeaderTools } from "@/app/components/HeaderTools";
 
 export default async function DashboardLayout({
   children,
@@ -78,6 +79,7 @@ export default async function DashboardLayout({
               </span>
             </span>
           </Link>
+          <HeaderTools calculator={calculatorEnabled} assistant={assistantEnabled} />
           <Link
             href="/dashboard"
             className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-foreground hover:bg-surface-2"
@@ -86,8 +88,11 @@ export default async function DashboardLayout({
             <LayoutDashboard size={19} />
           </Link>
         </div>
-        <div className="mx-auto max-w-lg px-4 pb-2.5 md:flex md:max-w-5xl md:items-center md:justify-end md:px-8 md:py-3 xl:max-w-6xl">
+        <div className="mx-auto max-w-lg px-4 pb-2.5 md:flex md:max-w-5xl md:items-center md:justify-end md:gap-1 md:px-8 md:py-3 xl:max-w-6xl">
           <UniversalSearch />
+          <div className="hidden md:ml-2 md:flex md:gap-1">
+            <HeaderTools calculator={calculatorEnabled} assistant={assistantEnabled} />
+          </div>
         </div>
       </header>
 

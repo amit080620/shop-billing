@@ -5,6 +5,7 @@ import { AuthShell } from "../AuthShell";
 import { getTranslator } from "@/lib/i18n/server";
 import { getTheme } from "@/lib/theme";
 import { BUSINESS_TYPES } from "@/lib/businessType";
+import { INDIAN_STATES } from "@/lib/constants/states";
 
 export default async function SignupPage() {
   const { lang, t } = await getTranslator();
@@ -36,6 +37,13 @@ export default async function SignupPage() {
             label: "What kind of business is this?",
             type: "grid",
             gridOptions: BUSINESS_TYPES.map((b) => ({ value: b.value, label: b.label.split(" / ")[0], icon: b.value, colors: b.colors })),
+          },
+          {
+            name: "stateCode",
+            label: "State",
+            type: "select",
+            placeholder: "Choose your state",
+            options: INDIAN_STATES.map((s) => ({ value: s.code, label: s.name })),
           },
           { name: "ownerName", label: t("signup.ownerName"), type: "text", placeholder: "Rakesh Sharma" },
           { name: "email", label: t("auth.email"), type: "email", placeholder: "you@example.com" },

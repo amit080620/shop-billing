@@ -1,6 +1,7 @@
 "use server";
 
 import { getRedis } from "../redis";
+import { requireOwner } from "../auth";
 
 export type RedisTestResult = {
   envVarsFound: boolean;
@@ -18,6 +19,7 @@ export type RedisTestResult = {
  * anything else and the exact failure point (missing vars vs a real
  * connection error) is shown plainly rather than left ambiguous. */
 export async function testRedisConnectionAction(): Promise<RedisTestResult> {
+  await requireOwner();
   const url = process.env.UPSTASH_REDIS_REST_URL;
   const token = process.env.UPSTASH_REDIS_REST_TOKEN;
 

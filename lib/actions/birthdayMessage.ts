@@ -1,6 +1,7 @@
 "use server";
 
 import { createSupabaseAdminClient } from "../supabase/admin";
+import { requireSession } from "../auth";
 
 const GROQ_MODEL = "openai/gpt-oss-120b";
 const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
@@ -15,8 +16,10 @@ export async function generatePersonalizedBirthdayMessageAction(
   shopName: string,
   isToday: boolean,
 ): Promise<{ message: string }> {
+  const session = await requireSession();
   const admin = createSupabaseAdminClient();
-  const { data: customerNameRow } = await admin.from("customers").select("name").eq("id", customerId).maybeSingle();
+  const { data: customerNameRow } = await admin.from("customers").select("name").eq("id", customerId).eq("shop_id", session.shopId).maybeSingle();
+  if (!customerNameRow) return { message: "" };
   const customerName = customerNameRow?.name ?? "there";
 
   const fallback = isToday
@@ -27,7 +30,7 @@ export async function generatePersonalizedBirthdayMessageAction(
   if (!apiKey) return { message: fallback };
 
   try {
-    const { data: bills } = await admin.from("bills").select("id").eq("customer_id", customerId).eq("status", "active").limit(50);
+    const { data: bills } = await admin.from("bills").select("id").eq("customer_id", customerId).eq("shop_id", session.shopId).eq("status", "active").limit(50);
     const billIds = (bills ?? []).map((b) => b.id);
     let topItem: string | null = null;
     if (billIds.length > 0) {

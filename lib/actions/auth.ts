@@ -16,6 +16,7 @@ export async function signupAction(
   const parsed = signupSchema.safeParse({
     shopName: formData.get("shopName"),
     businessType: formData.get("businessType") || "general",
+    stateCode: formData.get("stateCode"),
     ownerName: formData.get("ownerName"),
     email: formData.get("email"),
     password: formData.get("password"),
@@ -23,7 +24,7 @@ export async function signupAction(
   if (!parsed.success) {
     return { error: parsed.error.issues[0].message };
   }
-  const { shopName, businessType, ownerName, email, password } = parsed.data;
+  const { shopName, businessType, stateCode, ownerName, email, password } = parsed.data;
 
   const admin = createSupabaseAdminClient();
 
@@ -60,7 +61,7 @@ export async function signupAction(
 
   const { data: shop, error: shopError } = await admin
     .from("shops")
-    .insert({ name: shopName, business_type: businessType, business_type_locked: true, subscription_valid_until: trialEnds.toISOString().slice(0, 10) })
+    .insert({ name: shopName, business_type: businessType, state_code: stateCode, business_type_locked: true, subscription_valid_until: trialEnds.toISOString().slice(0, 10) })
     .select("id")
     .single();
   if (shopError || !shop) {

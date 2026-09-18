@@ -1,6 +1,7 @@
 "use server";
 
 import { createSupabaseAdminClient } from "../supabase/admin";
+import { checkRateLimitAsync } from "../rateLimit";
 
 const GROQ_MODEL = "openai/gpt-oss-120b";
 const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
@@ -94,6 +95,10 @@ export async function askCustomerAssistantAction(
 ): Promise<{ answer?: string; error?: string }> {
   const apiKey = process.env.GROQ_API_KEY?.trim();
   if (!apiKey) return { error: "not_configured" };
+  // Public link, paid AI call — cap how often one khata link can ask.
+  if (!(await checkRateLimitAsync(`khata-ai:${customerId}`, 20, 60 * 60 * 1000))) {
+    return { error: "Too many questions for now — please try again in a while." };
+  }
 
   // Confirm this customer genuinely exists before doing anything else
   // — a bad/tampered ID should fail closed, not silently query with

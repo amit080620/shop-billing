@@ -3,10 +3,11 @@
 import { useEffect, useRef, useState } from "react";
 import { Sparkles, X, Send, Loader2 } from "lucide-react";
 import { askAssistantAction, getProactiveBriefingAction, type ChatMessage, type ReminderAction } from "@/lib/actions/assistant";
+import { useToolLauncher, panelAnchor } from "@/lib/toolLauncher";
 
-const BUBBLE_SIZE = 44;
 const PANEL_WIDTH = 300;
 const PANEL_HEIGHT = 420;
+const PANEL = { w: PANEL_WIDTH, h: PANEL_HEIGHT };
 const BRIEFING_KEY = "ray-assistant-briefed-on";
 
 function clamp(value: number, min: number, max: number): number {
@@ -15,8 +16,8 @@ function clamp(value: number, min: number, max: number): number {
 
 type DisplayMessage = ChatMessage & { action?: ReminderAction; proactive?: boolean };
 
-/** A floating chat bubble, same drag-to-reposition / auto-dim
- * behavior as the floating calculator (see FloatingCalculator.tsx),
+/** A floating chat panel opened from the assistant button in the app
+ * header, draggable like the calculator panel (see FloatingCalculator.tsx),
  * kept as a genuinely separate component rather than merged into it
  * — different job, different data, and combining them into one
  * "everything bubble" would make each harder to use at speed, which
@@ -39,36 +40,16 @@ export function FloatingAssistant({ enabled }: { enabled: boolean }) {
     originX: 0,
     originY: 0,
   });
-  const [dimmed, setDimmed] = useState(false);
-  const idleTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
-    const isMobile = window.innerWidth < 768;
-    setPos({ x: 16, y: window.innerHeight - BUBBLE_SIZE - (isMobile ? 176 : 88) });
-  }, []);
-
-  function getSize(isOpen: boolean) {
-    return isOpen ? { w: PANEL_WIDTH, h: PANEL_HEIGHT } : { w: BUBBLE_SIZE, h: BUBBLE_SIZE };
-  }
-
-  function resetIdleTimer() {
-    setDimmed(false);
-    if (idleTimer.current) clearTimeout(idleTimer.current);
-    if (!open) idleTimer.current = setTimeout(() => setDimmed(true), 3500);
-  }
-  useEffect(() => {
-    resetIdleTimer();
-    return () => {
-      if (idleTimer.current) clearTimeout(idleTimer.current);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open]);
+  useToolLauncher("assistant", () => {
+    setPos(panelAnchor(PANEL_WIDTH));
+    setOpen(true);
+  });
 
   useEffect(() => {
     if (!open) return;
     setPos((current) => {
       if (!current) return current;
-      const { w, h } = getSize(true);
+      const { w, h } = PANEL;
       return { x: clamp(current.x, 8, window.innerWidth - w - 8), y: clamp(current.y, 8, window.innerHeight - h - 8) };
     });
 
@@ -82,7 +63,7 @@ export function FloatingAssistant({ enabled }: { enabled: boolean }) {
       const viewportHeight = window.visualViewport?.height ?? window.innerHeight;
       setPos((current) => {
         if (!current) return current;
-        const { h } = getSize(true);
+        const { h } = PANEL;
         const maxY = viewportHeight - h - 8;
         return current.y > maxY ? { ...current, y: Math.max(8, maxY) } : current;
       });
@@ -117,14 +98,13 @@ export function FloatingAssistant({ enabled }: { enabled: boolean }) {
   function onDragStart(clientX: number, clientY: number) {
     if (!pos) return;
     dragState.current = { dragging: true, moved: false, startX: clientX, startY: clientY, originX: pos.x, originY: pos.y };
-    setDimmed(false);
   }
   function onDragMove(clientX: number, clientY: number) {
     if (!dragState.current.dragging) return;
     const dx = clientX - dragState.current.startX;
     const dy = clientY - dragState.current.startY;
     if (Math.abs(dx) > 4 || Math.abs(dy) > 4) dragState.current.moved = true;
-    const { w, h } = getSize(open);
+    const { w, h } = PANEL;
     setPos({
       x: clamp(dragState.current.originX + dx, 8, window.innerWidth - w - 8),
       y: clamp(dragState.current.originY + dy, 8, window.innerHeight - h - 8),
@@ -154,27 +134,7 @@ export function FloatingAssistant({ enabled }: { enabled: boolean }) {
 
   if (!enabled || !pos) return null;
 
-  if (!open) {
-    return (
-      <button
-        onPointerDown={(e) => {
-          e.currentTarget.setPointerCapture(e.pointerId);
-          onDragStart(e.clientX, e.clientY);
-        }}
-        onPointerMove={(e) => onDragMove(e.clientX, e.clientY)}
-        onPointerUp={() => {
-          onDragEnd();
-          resetIdleTimer();
-          if (!dragState.current.moved) setOpen(true);
-        }}
-        aria-label="Ask the assistant"
-        className="fixed z-40 flex items-center justify-center rounded-full bg-gradient-to-br from-brand to-brand-dark text-white transition-opacity duration-500"
-        style={{ left: pos.x, top: pos.y, width: BUBBLE_SIZE, height: BUBBLE_SIZE, boxShadow: "0 8px 20px rgba(0,0,0,0.25)", opacity: dimmed ? 0.4 : 1, touchAction: "none" }}
-      >
-        <Sparkles size={17} />
-      </button>
-    );
-  }
+  if (!open) return null;
 
   return (
     <div

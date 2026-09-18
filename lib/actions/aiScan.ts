@@ -45,43 +45,6 @@ function classifyStatus(httpStatus: number): AIScanErrorType {
   return "network_error";
 }
 
-/** A single, cheap connectivity check ("reply with one word") — used
- * to show a live status badge on the scan screens without spending
- * quota on an actual image scan just to find out if the key works.
- * One call per page visit is negligible against the free tier's
- * hundreds-per-day allowance. */
-export async function checkAIScanStatusAction(): Promise<{ status: "connected" | AIScanErrorType }> {
-  // Genuinely the #1 real-world cause of a mysterious 400 here: a
-  // trailing space or newline left over from copy-pasting the key
-  // into Vercel's environment variable field. Trimming costs nothing
-  // and silently fixes that entire class of "why is this broken"
-  // reports before they even happen.
-  const apiKey = process.env.GEMINI_API_KEY?.trim();
-  if (!apiKey) return { status: "not_configured" };
-
-  try {
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: "Reply with just the word OK." }] }],
-        generationConfig: { maxOutputTokens: 5 },
-      }),
-    });
-    if (response.ok) return { status: "connected" };
-    // Genuinely logged now — this was silently swallowed before,
-    // which is exactly why the badge could only ever say a vague
-    // "unreachable" with no way to tell what actually went wrong.
-    // Check Vercel's function logs for this exact line to see the
-    // real HTTP status and Google's own error message.
-    console.error("AI status check failed", response.status, await response.text().catch(() => "(no body)"));
-    return { status: classifyStatus(response.status) };
-  } catch (err) {
-    console.error("AI status check — request itself failed (genuine network/DNS issue)", err);
-    return { status: "network_error" };
-  }
-}
-
 export async function scanImageWithAI(
   imageBase64: string,
   mode: "products" | "purchase" | "khata" | "sales_history",

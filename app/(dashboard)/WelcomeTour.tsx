@@ -391,7 +391,9 @@ export function WelcomeTour({ storageKey, businessType }: { storageKey: string; 
 
   useEffect(() => {
     try {
-      if (!localStorage.getItem(storageKey)) {
+      // Opt-in only (Help → Watch tour). Auto-opening a 6-slide tour on a
+      // brand-new account put a wall between signup and the first bill.
+      if (localStorage.getItem(storageKey) === "replay") {
         setVisible(true);
       }
     } catch {

@@ -1,19 +1,16 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Calculator as CalculatorIcon, X, Delete, ArrowLeftRight } from "lucide-react";
+import { X, Delete, ArrowLeftRight } from "lucide-react";
 import { useCalculatorAmount } from "@/lib/calculatorAmount";
 import { formatMoney } from "@/lib/format";
+import { useToolLauncher, panelAnchor } from "@/lib/toolLauncher";
 
-const POSITION_KEY = "ray-calc-position";
-const BUBBLE_SIZE = 40;
 const EXPANDED_WIDTH = 280;
 const EXPANDED_HEIGHT = 420;
-const IDLE_DIM_MS = 3500;
 
-function getSize(isOpen: boolean): { w: number; h: number } {
-  return isOpen ? { w: EXPANDED_WIDTH, h: EXPANDED_HEIGHT } : { w: BUBBLE_SIZE, h: BUBBLE_SIZE };
-}
+// The panel only exists while open, so its size is fixed.
+const PANEL = { w: EXPANDED_WIDTH, h: EXPANDED_HEIGHT };
 
 function round(n: number): number {
   return Math.round(n * 1e8) / 1e8;
@@ -38,13 +35,11 @@ function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
 }
 
-/** A genuinely floating, draggable calculator — like iPhone's
- * AssistiveTouch: drag it anywhere on screen, it stays there (even
- * across app restarts), and dims itself out of the way after a few
- * seconds of not being touched so it never permanently blocks
- * content. Tap it any time to bring it back to full opacity and
- * open it. Mounted once at the root, so it's available on every
- * screen (toggleable off in Preferences).
+/** A floating, draggable calculator panel, opened from the calculator
+ * button in the app header (see HeaderTools). It no longer leaves a
+ * bubble on screen when closed — a bubble always ended up covering
+ * some screen's main button. Mounted once in the dashboard layout
+ * (toggleable off in Preferences).
  *
  * Opens in a dedicated "Change due" mode whenever a billing screen
  * has an active bill total — enter what the customer physically
@@ -76,36 +71,16 @@ export function FloatingCalculator({ enabled }: { enabled: boolean }) {
     originY: 0,
   });
 
-  useEffect(() => {
-    try {
-      const saved = window.localStorage.getItem(POSITION_KEY);
-      if (saved) {
-        const parsed = JSON.parse(saved) as { x: number; y: number };
-        setPos({
-          x: clamp(parsed.x, 8, window.innerWidth - BUBBLE_SIZE - 8),
-          y: clamp(parsed.y, 8, window.innerHeight - BUBBLE_SIZE - 8),
-        });
-        return;
-      }
-    } catch {
-      // fall through to default position below
-    }
-    // The bottom-nav-clearance offset only makes sense on mobile —
-    // this app's bottom nav is hidden at the md breakpoint (768px) on
-    // desktop, so applying that same offset there was needless and
-    // could push the bubble further than intended.
-    const isMobile = window.innerWidth < 768;
-    setPos({
-      x: window.innerWidth - BUBBLE_SIZE - 16,
-      y: window.innerHeight - BUBBLE_SIZE - (isMobile ? 112 : 24),
-    });
-  }, []);
+  useToolLauncher("calculator", () => {
+    setPos(panelAnchor(EXPANDED_WIDTH));
+    setOpen(true);
+  });
 
   useEffect(() => {
     function onResize() {
       setPos((current) => {
         if (!current) return current;
-        const { w, h } = getSize(open);
+        const { w, h } = PANEL;
         return {
           x: clamp(current.x, 8, window.innerWidth - w - 8),
           y: clamp(current.y, 8, window.innerHeight - h - 8),
@@ -120,14 +95,13 @@ export function FloatingCalculator({ enabled }: { enabled: boolean }) {
   function onDragStart(clientX: number, clientY: number) {
     if (!pos) return;
     dragState.current = { dragging: true, moved: false, startX: clientX, startY: clientY, originX: pos.x, originY: pos.y };
-    setDimmed(false);
   }
   function onDragMove(clientX: number, clientY: number) {
     if (!dragState.current.dragging) return;
     const dx = clientX - dragState.current.startX;
     const dy = clientY - dragState.current.startY;
     if (Math.abs(dx) > 4 || Math.abs(dy) > 4) dragState.current.moved = true;
-    const { w, h } = getSize(open);
+    const { w, h } = PANEL;
     setPos({
       x: clamp(dragState.current.originX + dx, 8, window.innerWidth - w - 8),
       y: clamp(dragState.current.originY + dy, 8, window.innerHeight - h - 8),
@@ -136,33 +110,7 @@ export function FloatingCalculator({ enabled }: { enabled: boolean }) {
   function onDragEnd() {
     if (!dragState.current.dragging) return;
     dragState.current.dragging = false;
-    setPos((current) => {
-      if (current) {
-        try {
-          window.localStorage.setItem(POSITION_KEY, JSON.stringify(current));
-        } catch {
-          // best-effort persistence only
-        }
-      }
-      return current;
-    });
   }
-
-  // ---------- Auto-dim when idle (collapsed bubble only) ----------
-  const [dimmed, setDimmed] = useState(false);
-  const idleTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  function resetIdleTimer() {
-    setDimmed(false);
-    if (idleTimer.current) clearTimeout(idleTimer.current);
-    if (!open) idleTimer.current = setTimeout(() => setDimmed(true), IDLE_DIM_MS);
-  }
-  useEffect(() => {
-    resetIdleTimer();
-    return () => {
-      if (idleTimer.current) clearTimeout(idleTimer.current);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open]);
 
   // The actual fix for "opens off-screen": the collapsed bubble (52px)
   // can legally sit much closer to an edge than the expanded panel
@@ -173,7 +121,7 @@ export function FloatingCalculator({ enabled }: { enabled: boolean }) {
     if (open) {
       setPos((current) => {
         if (!current) return current;
-        const { w, h } = getSize(true);
+        const { w, h } = PANEL;
         return {
           x: clamp(current.x, 8, window.innerWidth - w - 8),
           y: clamp(current.y, 8, window.innerHeight - h - 8),
@@ -281,35 +229,7 @@ export function FloatingCalculator({ enabled }: { enabled: boolean }) {
   const bill = billAmount ?? 0;
   const changeDue = round(received - bill);
 
-  if (!open) {
-    return (
-      <button
-        onPointerDown={(e) => {
-          e.currentTarget.setPointerCapture(e.pointerId);
-          onDragStart(e.clientX, e.clientY);
-        }}
-        onPointerMove={(e) => onDragMove(e.clientX, e.clientY)}
-        onPointerUp={() => {
-          onDragEnd();
-          resetIdleTimer();
-          if (!dragState.current.moved) setOpen(true);
-        }}
-        aria-label="Open calculator"
-        className="fixed z-40 flex items-center justify-center rounded-full bg-brand text-white transition-opacity duration-500"
-        style={{
-          left: pos.x,
-          top: pos.y,
-          width: BUBBLE_SIZE,
-          height: BUBBLE_SIZE,
-          boxShadow: "0 8px 20px rgba(0,0,0,0.25)",
-          opacity: dimmed ? 0.4 : 1,
-          touchAction: "none",
-        }}
-      >
-        <CalculatorIcon size={17} />
-      </button>
-    );
-  }
+  if (!open) return null;
 
   return (
     <div

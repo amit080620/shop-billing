@@ -3,6 +3,7 @@
 import { createSupabaseAdminClient } from "../supabase/admin";
 import { normalizePhone } from "../phone";
 import { getRedis } from "../redis";
+import { requireSession } from "../auth";
 
 export type NetworkReliability = { shopsVisited: number; tier: "new" | "building" | "trusted" };
 
@@ -51,6 +52,8 @@ async function computeReliability(phone: string): Promise<NetworkReliability> {
  * billing happens constantly, and this used to mean a real database
  * read on every single one even on a "cache hit". */
 export async function getNetworkReliabilityAction(rawPhone: string): Promise<NetworkReliability | null> {
+  // Cross-shop signal — only for a logged-in shop, never an anonymous caller.
+  await requireSession();
   const phone = normalizePhone(rawPhone);
   if (!phone) return null;
 
