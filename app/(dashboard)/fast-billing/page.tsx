@@ -47,9 +47,8 @@ export default async function FastBillingPage() {
   return (
     <FastBillingClient
       products={items}
-      shopStateCode={session.shopStateCode}
-      businessType={session.businessType}
       loyaltyRedemptionValue={loyaltyRedemptionValue}
+      priceIncludesGst={session.priceIncludesGst}
       lang={lang}
     />
   );

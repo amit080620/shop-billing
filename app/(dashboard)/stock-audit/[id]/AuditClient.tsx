@@ -116,7 +116,7 @@ export function AuditClient({
       {error && <p className="text-sm text-danger">{error}</p>}
 
       {isDraft && (
-        <div className="fixed inset-x-0 bottom-16 flex gap-2 border-t border-border bg-surface p-3">
+        <div className="fixed inset-x-0 bottom-[calc(var(--bottom-nav-h)+env(safe-area-inset-bottom))] z-20 flex gap-2 border-t border-border bg-surface p-3 md:bottom-0 md:left-72">
           <button onClick={handleDiscard} disabled={isPending} className="rounded-lg border border-danger px-4 py-2.5 text-sm font-medium text-danger disabled:opacity-60">
             Discard
           </button>

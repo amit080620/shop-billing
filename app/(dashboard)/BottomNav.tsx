@@ -140,7 +140,7 @@ export function BottomNav({ lang, businessType, permissions = [], fastBillingEna
               <Link
                 href={tab.href}
                 aria-current={active ? "page" : undefined}
-                className={`flex flex-col items-center gap-1 pb-2 pt-2 text-[11px] font-semibold transition-colors ${
+                className={`flex h-[var(--bottom-nav-h)] flex-col items-center justify-center gap-0.5 text-[11px] font-semibold transition-colors ${
                   active ? "text-brand-text" : "text-muted"
                 }`}
               >

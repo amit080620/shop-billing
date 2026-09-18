@@ -268,26 +268,12 @@ export function ProductsClient({
          
         icon={<Package size={17} strokeWidth={1.8} />}
         action={
-          <div className="flex gap-1.5">
-            <Link
-              href="/products/scan-menu"
-              className="rounded-lg border border-border px-2.5 py-1 text-xs font-medium text-muted"
-            >
-              Scan price list
-            </Link>
-            <button
-              onClick={() => setShowCategoryForm((v) => !v)}
-              className="rounded-lg border border-border px-2.5 py-1 text-xs font-medium text-muted"
-            >
-              + Category
-            </button>
-            <button
-              onClick={() => (showForm && !editingProduct ? setShowForm(false) : openNewProductForm())}
-              className="btn-primary-sm text-xs"
-            >
-              + {terminology.productSingular}
-            </button>
-          </div>
+          <button
+            onClick={() => (showForm && !editingProduct ? setShowForm(false) : openNewProductForm())}
+            className="btn-primary-sm shrink-0"
+          >
+            + {terminology.productSingular}
+          </button>
         }
       />
 
@@ -296,7 +282,7 @@ export function ProductsClient({
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder={t("products.searchPlaceholder")}
-          className="neu-card px-3.5 py-2.5 text-sm outline-none focus:border-brand"
+          className="px-3.5 py-2.5 text-sm"
         />
         {barcodeScanMode !== "camera" && barcodeScanMode !== "off" && (
           <BarcodeScanInput
@@ -305,8 +291,22 @@ export function ProductsClient({
           />
         )}
         {scanNotice && <p className="text-xs text-credit">{scanNotice}</p>}
-        <div className="flex flex-wrap gap-2">
-          {barcodeScanMode !== "hardware" && barcodeScanMode !== "off" && <CameraBarcodeScanner onScan={handleInventoryScan} compact />}
+        {/* Secondary catalog tools — one scrollable row of pills. */}
+        <div className="-mx-4 flex items-center gap-2 overflow-x-auto whitespace-nowrap px-4 pb-1 md:mx-0 md:flex-wrap md:px-0">
+          {barcodeScanMode !== "hardware" && barcodeScanMode !== "off" && (
+            <div className="shrink-0 has-[.bg-black]:basis-full">
+              <CameraBarcodeScanner onScan={handleInventoryScan} compact />
+            </div>
+          )}
+          <Link href="/products/scan-menu" className="flex shrink-0 items-center gap-1.5 rounded-full border border-border bg-surface px-3 py-1.5 text-xs font-medium text-foreground hover:bg-surface-2">
+            Scan price list
+          </Link>
+          <button type="button" onClick={() => setShowCategoryForm((v) => !v)} className="flex shrink-0 items-center gap-1.5 rounded-full border border-border bg-surface px-3 py-1.5 text-xs font-medium text-foreground hover:bg-surface-2">
+            Categories
+          </button>
+          <Link href="/products/labels" className="flex shrink-0 items-center gap-1.5 rounded-full border border-border bg-surface px-3 py-1.5 text-xs font-medium text-foreground hover:bg-surface-2">
+            {t("products.printLabels")}
+          </Link>
           {bulkImportExportEnabled && (
             <BulkImportExport
               businessType={businessType}
@@ -347,13 +347,6 @@ export function ProductsClient({
           </div>
         </div>
       )}
-
-      <Link
-        href="/products/labels"
-        className="flex w-fit items-center gap-1 rounded-full border border-border px-3 py-1.5 text-xs font-medium text-muted"
-      >
-        {t("products.printLabels")} <span>›</span>
-      </Link>
 
       {showCategoryForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setShowCategoryForm(false)}>
@@ -840,7 +833,9 @@ export function ProductsClient({
 
       {deleteError && <p className="rounded-lg bg-credit-soft px-3.5 py-2.5 text-sm text-credit">{deleteError}</p>}
       {imageError && <p className="rounded-lg bg-credit-soft px-3.5 py-2.5 text-sm text-credit">{imageError}</p>}
-      <p className="flex items-center gap-1 text-xs text-muted"><Camera size={12} /> Tap photo icon to add — any size, auto-cropped square.</p>
+      {filtered.length > 0 && (
+        <p className="flex items-center gap-1 text-xs text-muted"><Camera size={12} /> Tap a photo icon to add a picture — any size, auto-cropped square.</p>
+      )}
 
       {filtered.length === 0 ? (
         <EmptyState

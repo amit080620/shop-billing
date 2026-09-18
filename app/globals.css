@@ -88,6 +88,10 @@
   --z-toast: 500;
   --z-tooltip: 600;
   --z-command: 700;
+
+  /* Mobile bottom nav height — fixed action bars (billing total, order
+     actions) sit exactly on top of it using this value. */
+  --bottom-nav-h: 4rem;
 }
 
 .dark {

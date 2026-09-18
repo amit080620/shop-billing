@@ -360,10 +360,24 @@ export async function editRentalQuantitiesAction(
     priceMode: rental.price_includes_gst ? "inclusive" : "exclusive",
   });
 
+  // Line amounts move with quantity — keep them in step so the rental
+  // printout and GSTR-1 don't read the old figures.
   await Promise.all(
-    updatedItems
-      .filter((i) => updateByItemId.get(i.id) !== undefined)
-      .map((i) => admin.from("rental_items").update({ quantity: i.quantity }).eq("id", i.id)),
+    updatedItems.map((i, idx) => {
+      if (updateByItemId.get(i.id) === undefined) return;
+      const line = totals.lines[idx];
+      return admin
+        .from("rental_items")
+        .update({
+          quantity: i.quantity,
+          line_subtotal: line.lineSubtotal,
+          cgst_amount: line.cgst,
+          sgst_amount: line.sgst,
+          igst_amount: line.igst,
+          line_total: round2(line.lineSubtotal + line.lineGst),
+        })
+        .eq("id", i.id);
+    }),
   );
 
   const { error } = await admin

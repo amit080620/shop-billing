@@ -13,6 +13,7 @@ import { getSpeechRecognition, speechLocaleFor, voiceErrorMessages, type SpeechR
 import { AIStatusBadge, type AIStatusBadgeHandle } from "@/app/components/AIStatusBadge";
 import { useTranslation } from "@/lib/i18n/useTranslation";
 import { QuantityGrid } from "./QuantityGrid";
+import { calculateTransactionTotals } from "@/lib/validation/schemas";
 
 export type FastProduct = {
   id: string;
@@ -37,15 +38,13 @@ export type FastCartLine = {
 
 export function FastBillingClient({
   products,
-  shopStateCode,
-  businessType,
   loyaltyRedemptionValue,
+  priceIncludesGst,
   lang,
 }: {
   products: FastProduct[];
-  shopStateCode: string | null;
-  businessType: string;
   loyaltyRedemptionValue: number;
+  priceIncludesGst: boolean;
   lang?: import("@/lib/i18n/dictionary").Lang;
 }) {
   const router = useRouter();
@@ -346,7 +345,7 @@ export function FastBillingClient({
 
       {/* Persistent bottom bar — always know item count + total */}
       {itemCount > 0 && (
-        <div className="fixed inset-x-0 bottom-24 z-20 border-t border-border bg-background px-3 py-2.5 shadow-lg md:bottom-0 md:shadow-none">
+        <div className="fixed inset-x-0 bottom-[calc(var(--bottom-nav-h)+env(safe-area-inset-bottom))] z-20 border-t border-border bg-surface/95 px-3 py-2.5 backdrop-blur-md md:bottom-0 md:left-72">
           <button onClick={() => setShowBill(true)} className="btn-primary flex w-full items-center justify-between px-4">
             <span>
               {itemCount} item{itemCount === 1 ? "" : "s"}
@@ -369,9 +368,8 @@ export function FastBillingClient({
           cart={cart}
           onUpdateQty={updateQty}
           onClose={() => setShowBill(false)}
-          shopStateCode={shopStateCode}
-          businessType={businessType}
           loyaltyRedemptionValue={loyaltyRedemptionValue}
+          priceIncludesGst={priceIncludesGst}
           voiceCustomer={voiceCustomer}
         />
       )}
@@ -397,16 +395,14 @@ function FastBillSheet({
   cart,
   onUpdateQty,
   onClose,
-  shopStateCode,
-  businessType,
   loyaltyRedemptionValue,
+  priceIncludesGst,
   voiceCustomer,
 }: {
+  priceIncludesGst: boolean;
   cart: FastCartLine[];
   onUpdateQty: (productId: string, qty: number) => void;
   onClose: () => void;
-  shopStateCode: string | null;
-  businessType: string;
   loyaltyRedemptionValue: number;
   voiceCustomer: { id: string; name: string; phone: string | null; loyaltyPoints: number } | null;
 }) {
@@ -470,7 +466,7 @@ function FastBillSheet({
             <span className="text-muted">Subtotal</span>
             <span className="font-semibold text-foreground">{formatMoney(subtotal)}</span>
           </div>
-          <FastCheckoutButton cart={cart} shopStateCode={shopStateCode} businessType={businessType} loyaltyRedemptionValue={loyaltyRedemptionValue} voiceCustomer={voiceCustomer} />
+          <FastCheckoutButton cart={cart} loyaltyRedemptionValue={loyaltyRedemptionValue} priceIncludesGst={priceIncludesGst} voiceCustomer={voiceCustomer} />
         </div>
       )}
 
@@ -496,12 +492,12 @@ function FastBillSheet({
 function FastCheckoutButton({
   cart,
   loyaltyRedemptionValue,
+  priceIncludesGst,
   voiceCustomer,
 }: {
   cart: FastCartLine[];
-  shopStateCode: string | null;
-  businessType: string;
   loyaltyRedemptionValue: number;
+  priceIncludesGst: boolean;
   voiceCustomer: { id: string; name: string; phone: string | null; loyaltyPoints: number } | null;
 }) {
   const [discountType, setDiscountType] = useState<"percent" | "flat">("flat");
@@ -545,6 +541,17 @@ function FastCheckoutButton({
       ? Math.min(Math.min(matchedCustomer.loyaltyPoints, 1_000_000) * loyaltyRedemptionValue, subtotal)
       : 0;
   const redeemedPointsCount = redemptionValue > 0 && loyaltyRedemptionValue > 0 ? Math.ceil(redemptionValue / loyaltyRedemptionValue) : 0;
+  // The amount on the checkout button comes from the same engine the
+  // server uses, so it includes GST (when prices exclude it), discount
+  // and round-off — exactly what the invoice will say.
+  const payable = calculateTransactionTotals({
+    items: cart.map((l) => ({ quantity: l.qty, unitPrice: l.price, gstPercent: l.gstPercent })),
+    discountType,
+    discountValue: discountType === "flat" ? discountValue + redemptionValue : discountValue,
+    paidAmount: 0,
+    supplyType: "intra",
+    priceMode: priceIncludesGst ? "inclusive" : "exclusive",
+  }).total;
 
   function handlePhoneChange(value: string) {
     const digits = value.replace(/\D/g, "").slice(0, 10);
@@ -754,8 +761,8 @@ function FastCheckoutButton({
             : isResolvingCustomer
               ? "Saving customer…"
               : isUdhar
-                ? `Book as udhar · ${formatMoney(subtotal - redemptionValue)}`
-                : `Checkout · ${formatMoney(subtotal - redemptionValue)}`}
+                ? `Book as udhar · ${formatMoney(payable)}`
+                : `Checkout · ${formatMoney(payable)}`}
         </button>
       </form>
     </div>

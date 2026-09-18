@@ -117,6 +117,9 @@ export function NewBillClient({
     staffId: string;
     staffName: string;
     invoicePrefix: string;
+    /** Shop setting: prices already include GST. Must match what the
+     * server uses, or the checkout total differs from the invoice. */
+    priceIncludesGst: boolean;
   };
 }) {
   const { t } = useTranslation(lang);
@@ -238,8 +241,9 @@ export function NewBillClient({
         discountValue: discountType === "flat" ? discountValue + redemptionValue : discountValue,
         paidAmount: typeof paidAmount === "number" ? paidAmount : 0,
         supplyType,
+        priceMode: shopContext.priceIncludesGst ? "inclusive" : "exclusive",
       }),
-    [cart, discountType, discountValue, redemptionValue, paidAmount, supplyType],
+    [cart, discountType, discountValue, redemptionValue, paidAmount, supplyType, shopContext.priceIncludesGst],
   );
 
   const [state, formAction] = useActionState(createBillAction, null);
@@ -534,26 +538,26 @@ export function NewBillClient({
 
         <section className="flex flex-col gap-2">
           <p className="text-xs font-semibold text-muted">{t("bill.customer")}</p>
-          <div className="flex gap-2">
+          <div className="grid grid-cols-2 gap-1 rounded-xl border border-border bg-surface-2 p-1" role="group">
             <button
+              type="button"
+              aria-pressed={customerMode === "walkin"}
               onClick={() => {
                 setCustomerMode("walkin");
                 setSelectedCustomer(null);
               }}
-              className={`flex-1 rounded-xl py-2.5 text-sm font-semibold ${
-                customerMode === "walkin"
-                  ? "bg-brand text-white"
-                  : "border border-border text-muted"
+              className={`rounded-lg py-2 text-sm font-semibold transition-colors ${
+                customerMode === "walkin" ? "bg-surface text-foreground shadow-[var(--elev-xs)]" : "text-muted"
               }`}
             >
               {t("bill.walkin")}
             </button>
             <button
+              type="button"
+              aria-pressed={customerMode === "existing"}
               onClick={() => setCustomerMode("existing")}
-              className={`flex-1 rounded-xl py-2.5 text-sm font-semibold ${
-                customerMode === "existing"
-                  ? "bg-brand text-white"
-                  : "border border-border text-muted"
+              className={`rounded-lg py-2 text-sm font-semibold transition-colors ${
+                customerMode === "existing" ? "bg-surface text-foreground shadow-[var(--elev-xs)]" : "text-muted"
               }`}
             >
               {t("bill.existingCustomer")}
@@ -627,7 +631,6 @@ export function NewBillClient({
               onScan={handleBarcodeScan}
             />
           )}
-          {barcodeScanMode !== "hardware" && barcodeScanMode !== "off" && <CameraBarcodeScanner onScan={handleBarcodeScan} />}
           {scanError && <p className="text-xs text-credit">{scanError}</p>}
           <SearchableSelect
             lang={lang}
@@ -640,23 +643,28 @@ export function NewBillClient({
             onSelect={addProduct}
             placeholder={t("bill.searchProducts")}
           />
-          {voiceSupported && (
-            <button
-              type="button"
-              onClick={startVoiceOrder}
-              disabled={isListening}
-              className={`flex items-center justify-center gap-2 rounded-lg border px-3 py-2 text-xs font-medium ${
-                isListening ? "animate-pulse border-danger bg-danger-soft text-danger" : "border-brand bg-brand-soft text-brand-text"
-              }`}
-            >
-              <Mic size={14} /> {isListening ? t("voice.listening") : t("voice.speakItems")}
-            </button>
-          )}
-          {voiceSupported && (
-            <div className="flex justify-center">
-              <AIStatusBadge ref={voiceStatusRef} provider="voice" />
-            </div>
-          )}
+          {/* Secondary ways to add items — one compact row instead of a
+              stack of full-width controls under the search box. */}
+          <div className="flex flex-wrap items-center gap-2">
+            {barcodeScanMode !== "hardware" && barcodeScanMode !== "off" && (
+              <div className="has-[.bg-black]:basis-full">
+                <CameraBarcodeScanner compact onScan={handleBarcodeScan} />
+              </div>
+            )}
+            {voiceSupported && (
+              <button
+                type="button"
+                onClick={startVoiceOrder}
+                disabled={isListening}
+                className={`flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium ${
+                  isListening ? "animate-pulse border-danger bg-danger-soft text-danger" : "border-border bg-surface text-brand-text"
+                }`}
+              >
+                <Mic size={13} /> {isListening ? t("voice.listening") : t("voice.speakItems")}
+              </button>
+            )}
+            {voiceSupported && <AIStatusBadge ref={voiceStatusRef} provider="voice" />}
+          </div>
           {voiceStatus && <p className="text-center text-xs font-medium text-brand-text">{voiceStatus}</p>}
           <InlineQuickAdd<Product>
             triggerLabel={t("bill.addNewProduct")}
@@ -698,7 +706,7 @@ export function NewBillClient({
 
         {cart.length > 0 && (
           <section className="flex flex-col gap-2">
-            <p className="text-sm font-medium text-foreground">{t("bill.cart")}</p>
+            <p className="text-xs font-semibold text-muted">{t("bill.cart")} · {cart.length}</p>
             <ul className="flex flex-col gap-2">
               {cart.map((line) => (
                 <li
@@ -811,7 +819,7 @@ export function NewBillClient({
           </section>
         )}
 
-        <div className="fixed inset-x-0 bottom-24 z-20 border-t border-border bg-background px-4 py-3 shadow-lg md:bottom-0 md:shadow-none">
+        <div className="fixed inset-x-0 bottom-[calc(var(--bottom-nav-h)+env(safe-area-inset-bottom))] z-20 border-t border-border bg-surface/95 px-4 py-3 backdrop-blur-md md:bottom-0 md:left-72">
           <div className="mx-auto flex max-w-lg items-center justify-between gap-3 md:max-w-5xl xl:max-w-6xl">
             <div className="min-w-0">
               <p className="text-xs text-muted">{t("bill.subtotal")}</p>

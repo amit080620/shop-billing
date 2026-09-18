@@ -119,6 +119,29 @@ describe("calculateTransactionTotals — the genuine core of every bill in this 
     expect(result.cgstAmount + result.sgstAmount).toBe(18);
   });
 
+  it("keeps each inclusive line's subtotal as its taxable base, so subtotal + GST equals the quoted price", () => {
+    // Regression: inclusive lines used to report the GST-inclusive amount as
+    // lineSubtotal, so line_total (subtotal + GST) counted the tax twice on
+    // printed invoices (₹62 butter printed as ₹64.95) and GSTR-1 overstated
+    // taxable value.
+    const result = calculateTransactionTotals({
+      items: [
+        { quantity: 1, unitPrice: 62, gstPercent: 5 },
+        { quantity: 1, unitPrice: 28, gstPercent: 5 },
+      ],
+      discountType: "flat",
+      discountValue: 0,
+      paidAmount: 90,
+      supplyType: "intra",
+      priceMode: "inclusive",
+    });
+    expect(result.total).toBe(90);
+    const lineTotals = result.lines.map((l) => Math.round((l.lineSubtotal + l.lineGst) * 100) / 100);
+    expect(lineTotals).toEqual([62, 28]);
+    const lineTaxable = result.lines.reduce((s, l) => s + l.lineSubtotal, 0);
+    expect(Math.round(lineTaxable * 100) / 100).toBe(result.taxableAmount);
+  });
+
   it("genuinely clamps an overpayment down to the actual total (never lets paidAmount exceed total)", () => {
     const result = calculateTransactionTotals({
       items: [{ quantity: 1, unitPrice: 100, gstPercent: 0 }],

@@ -524,10 +524,25 @@ export async function editBillQuantitiesAction(
     priceMode: bill.price_includes_gst ? "inclusive" : "exclusive",
   });
 
+  // Rewrite every line, not just the edited ones: the bill-level discount
+  // is spread across all lines, so one quantity change moves every line's
+  // taxable value and GST — which the printed invoice and GSTR-1 read.
   await Promise.all(
-    updatedItems
-      .filter((i) => updateByItemId.get(i.id) !== undefined)
-      .map((i) => admin.from("bill_items").update({ quantity: i.quantity }).eq("id", i.id)),
+    updatedItems.map((i, idx) => {
+      const line = totals.lines[idx];
+      return admin
+        .from("bill_items")
+        .update({
+          quantity: i.quantity,
+          line_subtotal: line.lineSubtotal,
+          cgst_amount: line.cgst,
+          sgst_amount: line.sgst,
+          igst_amount: line.igst,
+          line_gst: line.lineGst,
+          line_total: round2(line.lineSubtotal + line.lineGst),
+        })
+        .eq("id", i.id);
+    }),
   );
 
   const { error } = await admin

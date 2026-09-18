@@ -2,27 +2,31 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { X } from "lucide-react";
 
-export function MoreDrawerShell({ children }: { children: React.ReactNode }) {
+export function MoreDrawerShell({ title, children }: { title: string; children: React.ReactNode }) {
   const router = useRouter();
-  // Genuinely starts closed and slides open on mount — this is what
-  // gives the actual "slide in" animation the first instant this
-  // route renders, rather than just appearing already-open.
+  // Starts closed and slides open on mount, so the route change reads as a
+  // drawer opening rather than an abrupt page swap.
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
     const id = requestAnimationFrame(() => setOpen(true));
-    return () => cancelAnimationFrame(id);
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") close();
+    }
+    window.addEventListener("keydown", onKey);
+    return () => {
+      cancelAnimationFrame(id);
+      window.removeEventListener("keydown", onKey);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   function close() {
     setOpen(false);
-    // Genuinely wait for the slide-out animation before actually
-    // navigating away, so the close feels like a real drawer closing
-    // rather than an abrupt page-swap. Falls back to an explicit
-    // destination when there's no real history to go back to (see
-    // HamburgerToggle.tsx for the full reasoning — router.back() alone
-    // silently does nothing in that case).
+    // Wait for the slide-out before navigating. router.back() does nothing
+    // without real history (deep link, fresh launch), hence the fallback.
     setTimeout(() => {
       if (window.history.length > 1) router.back();
       else router.push("/dashboard");
@@ -30,17 +34,20 @@ export function MoreDrawerShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="fixed inset-x-0 bottom-0 top-16 z-40 md:top-0">
+    <div className="fixed inset-0 z-40 md:left-72" role="dialog" aria-modal="true" aria-label={title}>
+      <div onClick={close} className={`absolute inset-0 bg-black/40 transition-opacity duration-200 ${open ? "opacity-100" : "opacity-0"}`} />
       <div
-        onClick={close}
-        className={`absolute inset-0 bg-black/40 transition-opacity duration-200 ${open ? "opacity-100" : "opacity-0"}`}
-      />
-      <div
-        className={`absolute inset-y-0 left-0 flex w-[85%] max-w-sm flex-col overflow-y-auto bg-background p-4 pb-8 shadow-2xl transition-transform duration-200 md:left-[72px] ${
+        className={`absolute inset-y-0 left-0 flex w-[88%] max-w-sm flex-col bg-background shadow-2xl transition-transform duration-200 ${
           open ? "translate-x-0" : "-translate-x-full"
         }`}
       >
-        {children}
+        <div className="flex items-center justify-between border-b border-border bg-surface px-4 py-3">
+          <h1 className="text-lg font-bold tracking-tight text-foreground">{title}</h1>
+          <button type="button" onClick={close} aria-label="Close menu" className="flex h-9 w-9 items-center justify-center rounded-lg text-muted hover:bg-surface-2">
+            <X size={20} />
+          </button>
+        </div>
+        <div className="flex-1 overflow-y-auto p-4 pb-10">{children}</div>
       </div>
     </div>
   );

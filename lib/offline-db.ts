@@ -25,6 +25,8 @@ export type ShopContext = {
   staffId: string;
   staffName: string;
   invoicePrefix: string;
+  /** Missing on caches written before this field existed. */
+  priceIncludesGst?: boolean;
   cachedAt: string;
 };
 

@@ -129,7 +129,7 @@ export function CameraBarcodeScanner({
           }}
           className={
             compact
-              ? "flex shrink-0 items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-xs font-medium text-brand-text"
+              ? "flex shrink-0 items-center gap-1.5 rounded-full border border-border bg-surface px-3 py-1.5 text-xs font-medium text-foreground hover:bg-surface-2"
               : "flex items-center gap-1.5 self-start text-sm font-medium text-brand"
           }
         >

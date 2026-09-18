@@ -256,7 +256,9 @@ export function calculateTransactionTotals(input: {
       cgstAmount = round2(cgstAmount + split.cgst);
       sgstAmount = round2(sgstAmount + split.sgst);
       igstAmount = round2(igstAmount + split.igst);
-      return { lineSubtotal: lineAmount, cgst: split.cgst, sgst: split.sgst, igst: split.igst, lineGst: round2(split.cgst + split.sgst + split.igst) };
+      // lineSubtotal is always the taxable base — here the GST-backed-out
+      // part — so lineSubtotal + lineGst is the price the customer pays.
+      return { lineSubtotal: split.taxableAmount, cgst: split.cgst, sgst: split.sgst, igst: split.igst, lineGst: round2(split.cgst + split.sgst + split.igst) };
     }
     const { cgst, sgst, igst } = splitTax(lineAmount, item.gstPercent, input.supplyType);
     taxableAmount = round2(taxableAmount + lineAmount);
@@ -393,7 +395,9 @@ export function calculateRentalTotals(input: {
       cgstAmount = round2(cgstAmount + split.cgst);
       sgstAmount = round2(sgstAmount + split.sgst);
       igstAmount = round2(igstAmount + split.igst);
-      return { lineSubtotal: lineAmount, cgst: split.cgst, sgst: split.sgst, igst: split.igst, lineGst: round2(split.cgst + split.sgst + split.igst) };
+      // lineSubtotal is always the taxable base — here the GST-backed-out
+      // part — so lineSubtotal + lineGst is the price the customer pays.
+      return { lineSubtotal: split.taxableAmount, cgst: split.cgst, sgst: split.sgst, igst: split.igst, lineGst: round2(split.cgst + split.sgst + split.igst) };
     }
     const { cgst, sgst, igst } = splitTax(lineAmount, item.gstPercent, input.supplyType);
     cgstAmount = round2(cgstAmount + cgst);

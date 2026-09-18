@@ -76,8 +76,11 @@ export default function OfflineBillPage() {
         discountValue: 0,
         paidAmount: typeof paidAmount === "number" ? paidAmount : 0,
         supplyType,
+        // Caches written before this field existed fall back to the
+        // database default (prices include GST).
+        priceMode: shop?.priceIncludesGst === false ? "exclusive" : "inclusive",
       }),
-    [cart, paidAmount, supplyType],
+    [cart, paidAmount, supplyType, shop?.priceIncludesGst],
   );
 
   const filteredProducts = search.trim()

@@ -390,7 +390,7 @@ export function OrderClient({
       {error && <p className="no-print text-sm text-danger">{error}</p>}
 
       {initialItems.length > 0 && !cartOpen && (
-        <div className="no-print fixed inset-x-0 bottom-16 z-30 flex flex-col border-t border-border bg-surface shadow-lg">
+        <div className="no-print fixed inset-x-0 bottom-[calc(var(--bottom-nav-h)+env(safe-area-inset-bottom))] z-30 flex flex-col border-t border-border bg-surface shadow-lg md:bottom-0 md:left-72">
           <button
             onClick={() => setCartOpen(true)}
             className="flex w-full items-center justify-between px-4 py-2.5 text-sm font-semibold text-white"

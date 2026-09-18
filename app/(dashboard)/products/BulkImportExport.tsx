@@ -139,11 +139,11 @@ export function BulkImportExport({ products, onImported, businessType }: { produ
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="self-start text-sm font-medium text-brand"
+        className="flex shrink-0 items-center rounded-full border border-border bg-surface px-3 py-1.5 text-xs font-medium text-foreground hover:bg-surface-2"
       >
         <span className="flex items-center gap-1">
           {/* eslint-disable-next-line @next/next/no-img-element -- small branded SVG icon */}
-          <img src="/assets/ray-icons/download.svg" alt="" className="h-3.5 w-3.5" /> Bulk import / export
+          <img src="/assets/ray-icons/download.svg" alt="" className="h-3.5 w-3.5" /> Import / export
         </span>
       </button>
     );

@@ -100,6 +100,7 @@ export default async function NewBillPage() {
         staffId: session.userId,
         staffName: session.staffName,
         invoicePrefix: shop?.invoice_prefix ?? "INV",
+        priceIncludesGst: session.priceIncludesGst,
       }}
       products={(products ?? []).map((p) => ({
         id: p.id,
