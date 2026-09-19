@@ -6,7 +6,7 @@ import { useFormStatus } from "react-dom";
 import { createPurchaseAction } from "@/lib/actions/purchases";
 import { quickCreateVendorAction } from "@/lib/actions/vendors";
 import { calculateTransactionTotals } from "@/lib/validation/schemas";
-import { formatMoney } from "@/lib/format";
+import { formatMoney, paymentMethodLabel } from "@/lib/format";
 import { COMMON_GST_RATES } from "@/lib/constants/states";
 import type { Lang } from "@/lib/i18n/dictionary";
 import { SearchableSelect } from "@/app/components/SearchableSelect";
@@ -652,7 +652,7 @@ export function NewPurchaseClient({
                   setPaymentMethod(m);
                   if (m === "udhar") setPaidAmount(0);
                 }}
-                className={`rounded-full border px-3 py-1.5 text-xs font-medium capitalize ${
+                className={`rounded-full border px-3 py-1.5 text-xs font-medium ${
                   m === "udhar"
                     ? paymentMethod === m
                       ? "border-danger bg-danger text-white"
@@ -662,7 +662,7 @@ export function NewPurchaseClient({
                       : "border-border text-muted"
                 }`}
               >
-                {m}
+                {paymentMethodLabel(m)}
               </button>
             ))}
           </div>

@@ -1,5 +1,6 @@
 "use client";
 
+import { paymentMethodLabel } from "@/lib/format";
 import { useState } from "react";
 
 const METHODS = ["cash", "card", "upi", "online", "other"] as const;
@@ -17,7 +18,7 @@ export function PaymentMethodPicker({ name = "paymentMethod", defaultValue = "ca
             key={m}
             type="button"
             onClick={() => setSelected(m)}
-            className={`rounded-full border px-3 py-1.5 text-xs font-medium capitalize ${
+            className={`rounded-full border px-3 py-1.5 text-xs font-medium ${
               selected === m
                 ? "border-brand bg-brand-soft text-brand-text"
                 : "border-border text-muted"
@@ -28,7 +29,7 @@ export function PaymentMethodPicker({ name = "paymentMethod", defaultValue = "ca
                 : undefined
             }
           >
-            {m}
+            {paymentMethodLabel(m)}
           </button>
         ))}
       </div>

@@ -273,6 +273,14 @@ textarea:not(.bg-transparent):focus,
 select:focus {
   box-shadow: inset 0 0 0 1.5px var(--brand), var(--focus-ring) !important;
 }
+/* Fields never force their row wider than the screen — a flex item's
+ * default min-width is its intrinsic size, which pushed half-width
+ * inputs (e.g. phone numbers) off the right edge on phones. */
+input:not([type="checkbox"]):not([type="radio"]),
+select,
+textarea {
+  min-width: 0;
+}
 input::placeholder,
 textarea::placeholder {
   color: color-mix(in srgb, var(--muted) 75%, transparent);

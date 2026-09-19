@@ -51,12 +51,12 @@ export function PhoneInput(
   }
 
   return (
-    <div className={`flex gap-1.5 ${className ?? ""}`}>
+    // One field with a fixed +91 prefix, the way payment apps show it.
+    <div
+      className={`flex min-w-0 items-center rounded-lg bg-surface shadow-[inset_0_0_0_1px_var(--border-strong)] focus-within:shadow-[inset_0_0_0_1.5px_var(--brand),var(--focus-ring)] ${className ?? ""}`}
+    >
       {props.mode === "form" && <input type="hidden" name={props.name} value={digits ? `+91${digits}` : ""} />}
-      <span
-        className="flex shrink-0 items-center rounded-lg border border-border bg-background px-3 py-2 text-sm text-muted"
-        aria-hidden="true"
-      >
+      <span className="shrink-0 border-r border-border py-1 pl-3 pr-2.5 text-sm font-medium text-muted" aria-hidden="true">
         +91
       </span>
       <input
@@ -68,7 +68,7 @@ export function PhoneInput(
         onChange={(e) => handleChange(e.target.value)}
         placeholder={placeholder}
         maxLength={10}
-        className="flex-1 rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-brand"
+        className="min-w-0 flex-1 bg-transparent px-2.5 py-2 text-sm"
       />
     </div>
   );

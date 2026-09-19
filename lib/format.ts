@@ -14,3 +14,11 @@ export function formatDateTime(iso: string) {
     minute: "2-digit",
   });
 }
+
+const PAYMENT_LABELS: Record<string, string> = { upi: "UPI", udhar: "Udhar", cash: "Cash", card: "Card", online: "Online", other: "Other" };
+
+/** Display name for a stored payment method ("upi" → "UPI"). CSS
+ * capitalize turned it into "Upi". */
+export function paymentMethodLabel(method: string): string {
+  return PAYMENT_LABELS[method] ?? method.charAt(0).toUpperCase() + method.slice(1);
+}

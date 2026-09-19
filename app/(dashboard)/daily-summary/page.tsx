@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { requireSession } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
-import { formatMoney } from "@/lib/format";
+import { formatMoney, paymentMethodLabel } from "@/lib/format";
 import { PageHeader } from "@/app/components/PageHeader";
 import { Users, Receipt, Calculator } from "lucide-react";
 import { DatePicker } from "./DatePicker";
@@ -217,7 +217,7 @@ export default async function DailySummaryPage({
         <div className="flex flex-col gap-1.5 text-sm">
           {METHODS.map((m) => (
             <div key={m} className="flex justify-between">
-              <span className="capitalize text-muted">{m}</span>
+              <span className="text-muted">{paymentMethodLabel(m)}</span>
               <span className={`font-medium ${net[m] < 0 ? "text-danger" : "text-foreground"}`}>
                 {formatMoney(net[m])}
               </span>
@@ -238,7 +238,7 @@ function BreakdownTable({ title, byMethod }: { title: string; byMethod: Record<M
       <div className="mt-1 grid grid-cols-5 gap-1 text-center text-xs">
         {METHODS.map((m) => (
           <div key={m} className={byMethod[m] > 0 ? "" : "opacity-40"}>
-            <p className="capitalize text-muted">{m}</p>
+            <p className="text-muted">{paymentMethodLabel(m)}</p>
             <p className="font-semibold text-foreground">{formatMoney(byMethod[m])}</p>
           </div>
         ))}

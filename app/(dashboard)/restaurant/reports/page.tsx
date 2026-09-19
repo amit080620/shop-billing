@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { requireSession } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
-import { formatMoney } from "@/lib/format";
+import { formatMoney, paymentMethodLabel } from "@/lib/format";
 import { getTranslator } from "@/lib/i18n/server";
 import { PageHeader } from "@/app/components/PageHeader";
 import { EmptyState } from "@/app/components/EmptyState";
@@ -72,7 +72,7 @@ export default async function RestaurantReportsPage({
           <div className="flex flex-col gap-1.5">
             {methodRows.map(([method, amount]) => (
               <div key={method} className="flex items-center justify-between text-sm">
-                <span className="capitalize text-foreground">{method}</span>
+                <span className="text-foreground">{paymentMethodLabel(method)}</span>
                 <span className="font-medium text-foreground">{formatMoney(amount)}</span>
               </div>
             ))}
