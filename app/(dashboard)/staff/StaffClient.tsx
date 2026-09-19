@@ -56,7 +56,7 @@ export function StaffClient({
   return (
     <div className="flex flex-col gap-4">
       <Link href="/more" className="text-sm text-muted">
-        ← More
+        {t("← More")}
       </Link>
 
       <div className="flex items-center justify-between">

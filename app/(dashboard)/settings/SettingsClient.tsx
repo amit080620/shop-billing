@@ -61,10 +61,10 @@ export function SettingsClient({ shop }: { shop: ShopSettings }) {
   return (
     <div className="flex flex-col gap-4">
       <Link href="/more" className="text-sm text-muted">
-        ← More
+        {t("← More")}
       </Link>
       <div>
-        <h1 className="text-lg font-bold tracking-tight text-foreground md:text-2xl">GST & shop profile</h1>
+        <h1 className="text-lg font-bold tracking-tight text-foreground md:text-2xl">{t("GST & shop profile")}</h1>
         <p className="text-sm text-muted">
           {t("Drives invoice numbering, CGST/SGST vs IGST, and every GST report.")}
         </p>
@@ -80,7 +80,7 @@ export function SettingsClient({ shop }: { shop: ShopSettings }) {
       <LogoUploadSection currentLogoUrl={shop.logoUrl} />
 
       <form action={formAction} className="flex flex-col gap-4">
-        <Section title="Business">
+        <Section title={t("Business")}>
           <Field name="name" label={t("Display name")} defaultValue={shop.name} required />
           <label className="flex flex-col gap-1.5 text-sm">
             <span className="font-medium text-foreground">{t("Business type")}</span>

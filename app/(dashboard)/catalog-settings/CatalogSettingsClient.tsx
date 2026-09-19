@@ -75,7 +75,7 @@ export function CatalogSettingsClient({
         icon={<Store size={18} strokeWidth={1.8} />}
       />
       <Link href="/more" className="text-sm text-muted">
-        ← More
+        {t("← More")}
       </Link>
 
       <label className="flex items-center justify-between rounded-xl border border-border bg-surface px-4 py-3.5 shadow-sm">

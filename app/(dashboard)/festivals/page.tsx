@@ -129,7 +129,7 @@ export default async function FestivalsPage() {
                     f.daysUntil <= 20 ? "bg-credit-soft text-credit" : "bg-brand-soft text-brand-text"
                   }`}
                 >
-                  {f.daysUntil <= 0 ? "Today/passed" : `${f.daysUntil}d away`}
+                  {f.daysUntil <= 0 ? t("Today/passed") : t("festival.daysAway", { days: f.daysUntil })}
                 </span>
               </div>
 

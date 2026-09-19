@@ -37,7 +37,7 @@ export function FestivalNoteBox({ slug, initialNote }: { slug: string; initialNo
         value={value}
         onChange={(e) => setValue(e.target.value)}
         rows={2}
-        placeholder="e.g. Kaju katli and dry-fruit boxes sold out fast last year — order double this time. Customer X always wants 2kg extra ghee."
+        placeholder={t("e.g. Kaju katli and dry-fruit boxes sold out fast last year — order double this time. Customer X always wants 2kg extra ghee.")}
         className="rounded-lg border border-border bg-background px-3 py-2 text-xs outline-none focus:border-brand"
       />
       <div className="flex items-center gap-2">

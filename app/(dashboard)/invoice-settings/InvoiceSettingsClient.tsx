@@ -91,7 +91,7 @@ export function InvoiceSettingsClient({
         bareIcon
       />
       <Link href="/more" className="text-sm text-muted">
-        ← More
+        {t("← More")}
       </Link>
 
       <label className="flex flex-col gap-1.5 text-sm">

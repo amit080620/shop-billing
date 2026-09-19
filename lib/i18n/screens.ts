@@ -38,6 +38,8 @@ export const SCREEN_STRINGS: Record<string, [en: string, hi: string, mr: string]
     "₹500 च्या बिलावर {points} पॉइंट मिळतील, जे पुढच्या वेळी {value} इतके असतील.",
   ],
 
+  "festival.daysAway": ["{days}d away", "{days} दिन बाकी", "{days} दिवस बाकी"],
+
   // Date range chips
   "range.today": ["Today", "आज", "आज"],
   "range.last7": ["Last 7 days", "पिछले 7 दिन", "मागील 7 दिवस"],

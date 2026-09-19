@@ -64,7 +64,7 @@ export function BranchesClient({ branches, staff }: { branches: Branch[]; staff:
         icon={<Building2 size={18} strokeWidth={1.8} />}
       />
       <Link href="/more" className="text-sm text-muted">
-        ← More
+        {t("← More")}
       </Link>
 
       {showForm && (

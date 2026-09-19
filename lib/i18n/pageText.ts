@@ -284,6 +284,11 @@ export const PAGE_TEXT: Record<string, [hi: string, mr: string]> = {
   "Tap the + button next to an item above to add it here — the print button appears once you've picked at least one.": ["ऊपर सामान के पास + दबाकर यहाँ जोड़ें — कम से कम एक चुनने पर प्रिंट बटन दिखेगा।", "वर वस्तूजवळ + दाबून येथे जोडा — किमान एक निवडल्यावर प्रिंट बटण दिसेल."],
 
   "Saving purchase…": ["खरीद सेव हो रही है…", "खरेदी सेव्ह होत आहे…"],
+  "← More": ["← और", "← अधिक"],
+  "GST & shop profile": ["GST और दुकान प्रोफ़ाइल", "GST व दुकान प्रोफाइल"],
+  "Business": ["बिज़नेस", "व्यवसाय"],
+  "Today/passed": ["आज/बीत गया", "आज/होऊन गेला"],
+  "e.g. Kaju katli and dry-fruit boxes sold out fast last year — order double this time. Customer X always wants 2kg extra ghee.": ["जैसे: पिछले साल काजू कतली और ड्राई-फ्रूट डिब्बे जल्दी बिक गए — इस बार दोगुना मंगाना। ग्राहक X को हमेशा 2kg घी और चाहिए।", "उदा. मागच्या वर्षी काजू कतली व सुक्या मेव्याचे डबे लवकर संपले — या वेळी दुप्पट मागवा. ग्राहक X ला नेहमी 2kg जास्त तूप लागते."],
   "Saving…": ["सेव हो रहा है…", "सेव्ह होत आहे…"],
   "Saved ✓": ["सेव हुआ ✓", "सेव्ह झाले ✓"],
   "Preparing…": ["तैयार हो रहा है…", "तयार होत आहे…"],
