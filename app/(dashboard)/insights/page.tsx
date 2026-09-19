@@ -19,7 +19,7 @@ export default async function InsightsPage({
   const admin = createSupabaseAdminClient();
 
   const { from: fromParam, to: toParam } = await searchParams;
-  const fromDate = fromParam || isoDaysAgo(7);
+  const fromDate = fromParam || isoDaysAgo(6);
   const toDate = toParam || todayIso();
 
   const rangeStart = new Date(`${fromDate}T00:00:00+05:30`);

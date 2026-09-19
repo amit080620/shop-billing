@@ -16,7 +16,7 @@ export default async function ProfitPage({
   const admin = createSupabaseAdminClient();
 
   const { from: fromParam, to: toParam } = await searchParams;
-  const fromDate = fromParam || isoDaysAgo(30);
+  const fromDate = fromParam || isoDaysAgo(29);
   const toDate = toParam || todayIso();
 
   const { data: bills } = await admin

@@ -4,7 +4,7 @@ import { formatMoney } from "@/lib/format";
 import { PageHeader } from "@/app/components/PageHeader";
 import { EmptyState } from "@/app/components/EmptyState";
 import { Wrench } from "lucide-react";
-import { ServiceReportControls } from "./ServiceReportControls";
+import { DateRangeControls } from "@/app/components/DateRangeControls";
 import { todayIso, isoDaysAgo } from "@/lib/dateHelpers";
 
 const STATUS_LABELS: Record<string, string> = {
@@ -24,7 +24,7 @@ export default async function ServiceReportsPage({
   const admin = createSupabaseAdminClient();
 
   const { from: fromParam, to: toParam } = await searchParams;
-  const fromDate = fromParam || isoDaysAgo(30);
+  const fromDate = fromParam || isoDaysAgo(29);
   const toDate = toParam || todayIso();
 
   const { data: jobs } = await admin
@@ -70,7 +70,7 @@ export default async function ServiceReportsPage({
         icon={<Wrench size={18} strokeWidth={1.8} />}
       />
 
-      <ServiceReportControls from={fromDate} to={toDate} />
+      <DateRangeControls from={fromDate} to={toDate} basePath="/service/reports" />
 
       <section className="grid grid-cols-2 gap-3">
         <div className="neu-card p-4">
