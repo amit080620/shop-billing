@@ -2,6 +2,7 @@
 
 import { createSupabaseAdminClient } from "../supabase/admin";
 import { checkRateLimitAsync } from "../rateLimit";
+import { getCustomerBalances } from "../moneyBalances";
 
 const GROQ_MODEL = "openai/gpt-oss-120b";
 const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
@@ -42,13 +43,11 @@ async function runCustomerTool(name: string, args: Record<string, unknown>, cust
   const admin = createSupabaseAdminClient();
 
   if (name === "get_my_balance") {
-    const [{ data: bills }, { data: payments }] = await Promise.all([
-      admin.from("bills").select("credit_amount").eq("customer_id", customerId).eq("status", "active"),
-      admin.from("payments").select("amount").eq("customer_id", customerId),
-    ]);
-    const totalCredit = (bills ?? []).reduce((s, b) => s + Number(b.credit_amount), 0);
-    const totalPaid = (payments ?? []).reduce((s, p) => s + Number(p.amount), 0);
-    return { outstandingUdhar: Math.round(Math.max(0, totalCredit - totalPaid)) };
+    // Same balance the khata page shows (bills + table orders + rentals − payments).
+    const { data: customer } = await admin.from("customers").select("shop_id").eq("id", customerId).single();
+    if (!customer) return { outstandingUdhar: 0 };
+    const balances = await getCustomerBalances(admin, customer.shop_id, [customerId]);
+    return { outstandingUdhar: Math.round(Math.max(0, balances.get(customerId) ?? 0)) };
   }
 
   if (name === "get_my_purchase_history") {

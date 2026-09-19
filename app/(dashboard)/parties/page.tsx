@@ -1,5 +1,6 @@
 import { requireSession } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { getCustomerBalances, getVendorBalances } from "@/lib/moneyBalances";
 import { CustomersClient } from "../customers/CustomersClient";
 import { VendorsClient } from "../vendors/VendorsClient";
 import { isModuleEnabled } from "@/lib/modules";
@@ -37,21 +38,8 @@ async function CustomersSection({
   const { data: customers, count } = await query;
   const customerIds = (customers ?? []).map((c) => c.id);
 
-  const [{ data: bills }, { data: payments }] = customerIds.length
-    ? await Promise.all([
-        admin.from("bills").select("customer_id, credit_amount").eq("shop_id", session.shopId).eq("status", "active").in("customer_id", customerIds),
-        admin.from("payments").select("customer_id, amount").eq("shop_id", session.shopId).in("customer_id", customerIds),
-      ])
-    : [{ data: [] }, { data: [] }];
-
-  const balances = new Map<string, number>();
-  for (const b of bills ?? []) {
-    if (!b.customer_id) continue;
-    balances.set(b.customer_id, (balances.get(b.customer_id) ?? 0) + Number(b.credit_amount));
-  }
-  for (const p of payments ?? []) {
-    balances.set(p.customer_id, (balances.get(p.customer_id) ?? 0) - Number(p.amount));
-  }
+  // Includes restaurant-order and rental udhaar, not just bills.
+  const balances = await getCustomerBalances(admin, session.shopId, customerIds);
 
   const withBalance = (customers ?? []).map((c) => ({
     id: c.id,
@@ -92,19 +80,10 @@ async function SuppliersSection({
   session: Awaited<ReturnType<typeof requireSession>>;
   admin: ReturnType<typeof createSupabaseAdminClient>;
 }) {
-  const [{ data: vendors }, { data: purchases }, { data: vendorPayments }] = await Promise.all([
+  const [{ data: vendors }, balances] = await Promise.all([
     admin.from("vendors").select("id, name, phone, gstin").eq("shop_id", session.shopId).order("name"),
-    admin.from("purchases").select("vendor_id, payable_amount").eq("shop_id", session.shopId),
-    admin.from("purchase_payments").select("vendor_id, amount").eq("shop_id", session.shopId),
+    getVendorBalances(admin, session.shopId),
   ]);
-
-  const balances = new Map<string, number>();
-  for (const p of purchases ?? []) {
-    balances.set(p.vendor_id, (balances.get(p.vendor_id) ?? 0) + Number(p.payable_amount));
-  }
-  for (const p of vendorPayments ?? []) {
-    balances.set(p.vendor_id, (balances.get(p.vendor_id) ?? 0) - Number(p.amount));
-  }
 
   const withBalance = (vendors ?? []).map((v) => ({
     id: v.id,

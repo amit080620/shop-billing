@@ -2435,6 +2435,18 @@ export interface Database {
     };
     Views: Record<string, never>;
     Functions: {
+      customer_balances: {
+        Args: { p_shop_id: string; p_customer_ids?: string[] | null };
+        Returns: { customer_id: string; balance: number }[];
+      };
+      vendor_balances: {
+        Args: { p_shop_id: string; p_vendor_ids?: string[] | null };
+        Returns: { vendor_id: string; balance: number }[];
+      };
+      shop_money_summary: {
+        Args: { p_shop_id: string };
+        Returns: { customer_outstanding: number; customers_with_dues: number; vendor_payable: number }[];
+      };
       next_invoice_number: {
         Args: { p_shop_id: string; p_financial_year: string };
         Returns: number;

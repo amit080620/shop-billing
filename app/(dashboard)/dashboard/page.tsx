@@ -1,4 +1,4 @@
-import { istDayStart, todayIso } from "@/lib/dateHelpers";
+import { istDayStart, todayIso, isoDaysAgo } from "@/lib/dateHelpers";
 import Link from "next/link";
 import { requireSession } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
@@ -10,6 +10,7 @@ import { isModuleEnabled } from "@/lib/modules";
 import { FESTIVALS } from "@/lib/festivals";
 import { getProfitLeakAction } from "@/lib/actions/profitLeak";
 import { getTerminology, customerNounFor } from "@/lib/businessType";
+import { getShopMoneySummary } from "@/lib/moneyBalances";
 import {
   Plus,
   AlertTriangle,
@@ -224,12 +225,12 @@ async function RetailHome({
   const expiryCutoff = new Date();
   expiryCutoff.setDate(expiryCutoff.getDate() + 30);
 
-  const [todayBills, weekBills, allBillsCredit, allPayments, recentBills, allPayables, allVendorPayments, { data: expiringBatches }, profitLeak] =
+  const [todayBills, weekBills, money, recentBills, { data: expiringBatches }, profitLeak] =
     await Promise.all([
       admin.from("bills").select("total").eq("shop_id", session.shopId).eq("status", "active").gte("created_at", startOfToday.toISOString()),
       admin.from("bills").select("total, created_at").eq("shop_id", session.shopId).eq("status", "active").gte("created_at", startOfWeek.toISOString()),
-      admin.from("bills").select("credit_amount").eq("shop_id", session.shopId).eq("status", "active"),
-      admin.from("payments").select("amount").eq("shop_id", session.shopId),
+      // Balances are summed in Postgres, not by downloading every bill.
+      getShopMoneySummary(admin, session.shopId),
       admin
         .from("bills")
         .select("id, total, credit_amount, created_at, customers ( name )")
@@ -237,8 +238,6 @@ async function RetailHome({
         .eq("status", "active")
         .order("created_at", { ascending: false })
         .limit(5),
-      admin.from("purchases").select("payable_amount").eq("shop_id", session.shopId),
-      admin.from("purchase_payments").select("amount").eq("shop_id", session.shopId),
       // Genuinely generic — any shop can tick "Track with batch &
       // expiry date" on a product, not just pharmacies, so this
       // shouldn't only live on the pharmacy-specific dashboard.
@@ -249,12 +248,8 @@ async function RetailHome({
   const expiringCount = expiringBatches?.length ?? 0;
 
   const todayTotal = sum(todayBills.data?.map((b) => b.total));
-  const totalCredit = sum(allBillsCredit.data?.map((b) => b.credit_amount));
-  const totalPaidBack = sum(allPayments.data?.map((p) => p.amount));
-  const outstanding = Math.max(0, totalCredit - totalPaidBack);
-  const totalPayable = sum(allPayables.data?.map((p) => p.payable_amount));
-  const totalVendorPaid = sum(allVendorPayments.data?.map((p) => p.amount));
-  const outstandingPayable = Math.max(0, totalPayable - totalVendorPaid);
+  const outstanding = money.customerOutstanding;
+  const outstandingPayable = money.vendorPayable;
 
   const trend = buildSevenDayTrend(weekBills.data ?? [], "created_at");
 
@@ -435,9 +430,7 @@ async function GymHome({
   const admin = createSupabaseAdminClient();
   const startOfToday = istDayStart();
   const startOfWeek = istDayStart(6);
-  const in7Days = new Date();
-  in7Days.setDate(in7Days.getDate() + 7);
-  const in7DaysIso = `${in7Days.getFullYear()}-${String(in7Days.getMonth() + 1).padStart(2, "0")}-${String(in7Days.getDate()).padStart(2, "0")}`;
+  const in7DaysIso = isoDaysAgo(-7);
 
   const [todayBills, weekBills, { data: todayAttendance }, { data: expiringMemberships }, { data: allActiveMemberships }] = await Promise.all([
     admin.from("bills").select("total").eq("shop_id", session.shopId).eq("status", "active").gte("created_at", startOfToday.toISOString()),
@@ -539,7 +532,7 @@ async function ClinicHome({
   const startOfToday = istDayStart();
   const startOfWeek = istDayStart(6);
 
-  const todayIso = `${startOfToday.getFullYear()}-${String(startOfToday.getMonth() + 1).padStart(2, "0")}-${String(startOfToday.getDate()).padStart(2, "0")}`;
+  const today = todayIso();
 
   const [todayBills, weekBills, recentPrescriptions, { data: todayAppointments }, { data: overdueFollowUps }] = await Promise.all([
     admin.from("bills").select("total").eq("shop_id", session.shopId).eq("status", "active").gte("created_at", startOfToday.toISOString()),
@@ -554,14 +547,14 @@ async function ClinicHome({
       .from("clinic_appointments")
       .select("id, patient_name, reason_for_visit, appointment_time, status")
       .eq("shop_id", session.shopId)
-      .eq("appointment_date", todayIso)
+      .eq("appointment_date", today)
       .in("status", ["booked", "confirmed", "arrived", "in_consultation"])
       .order("appointment_time", { ascending: true }),
     admin
       .from("prescriptions")
       .select("id, patient_name, patient_phone, follow_up_date")
       .eq("shop_id", session.shopId)
-      .lt("follow_up_date", todayIso)
+      .lt("follow_up_date", today)
       .not("follow_up_date", "is", null)
       .order("follow_up_date", { ascending: false })
       .limit(10),
@@ -767,7 +760,7 @@ async function SalonHome({
   const startOfToday = istDayStart();
   const startOfWeek = istDayStart(6);
 
-  const todayIso = `${startOfToday.getFullYear()}-${String(startOfToday.getMonth() + 1).padStart(2, "0")}-${String(startOfToday.getDate()).padStart(2, "0")}`;
+  const today = todayIso();
 
   const [todayBills, weekBills, recentBills, { data: todayAppointments }] = await Promise.all([
     admin.from("bills").select("total, service_provider_name").eq("shop_id", session.shopId).eq("status", "active").gte("created_at", startOfToday.toISOString()),
@@ -783,7 +776,7 @@ async function SalonHome({
       .from("appointments")
       .select("id, customer_name, service_name, appointment_time, status")
       .eq("shop_id", session.shopId)
-      .eq("appointment_date", todayIso)
+      .eq("appointment_date", today)
       .in("status", ["booked", "confirmed", "arrived"])
       .order("appointment_time", { ascending: true }),
   ]);
@@ -884,8 +877,7 @@ async function ServiceHome({
     { data: readyJobs },
     { data: overdueJobs },
     { data: stockProducts },
-    { data: allPayables },
-    { data: allVendorPayments },
+    money,
   ] = await Promise.all([
     admin.from("bills").select("total").eq("shop_id", session.shopId).eq("status", "active").gte("created_at", startOfToday.toISOString()),
     admin.from("bills").select("total, created_at").eq("shop_id", session.shopId).eq("status", "active").gte("created_at", startOfWeek.toISOString()),
@@ -896,15 +888,14 @@ async function ServiceHome({
       .select("id, job_number, customer_name, item_description, expected_date")
       .eq("shop_id", session.shopId)
       .in("status", ["received", "in_progress", "ready"])
-      .lt("expected_date", `${startOfToday.getFullYear()}-${String(startOfToday.getMonth() + 1).padStart(2, "0")}-${String(startOfToday.getDate()).padStart(2, "0")}`)
+      .lt("expected_date", todayIso())
       .not("expected_date", "is", null),
     admin
       .from("products")
       .select("id, stock_quantity, low_stock_threshold")
       .eq("shop_id", session.shopId)
       .eq("track_inventory", true),
-    admin.from("purchases").select("payable_amount").eq("shop_id", session.shopId),
-    admin.from("purchase_payments").select("amount").eq("shop_id", session.shopId),
+    getShopMoneySummary(admin, session.shopId),
   ]);
 
   const { data: recentJobs } = await admin
@@ -918,10 +909,7 @@ async function ServiceHome({
   const lowStockCount = (stockProducts ?? []).filter(
     (p) => Number(p.stock_quantity) <= Number(p.low_stock_threshold),
   ).length;
-  const outstandingPayable = Math.max(
-    0,
-    sum(allPayables?.map((p) => p.payable_amount)) - sum(allVendorPayments?.map((p) => p.amount)),
-  );
+  const outstandingPayable = money.vendorPayable;
   const trend = buildSevenDayTrend(weekBills.data ?? [], "created_at");
 
   const STATUS_LABELS: Record<string, string> = {

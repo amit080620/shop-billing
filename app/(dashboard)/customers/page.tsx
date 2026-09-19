@@ -1,5 +1,6 @@
 import { requireSession } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { getCustomerBalances } from "@/lib/moneyBalances";
 import { CustomersClient } from "./CustomersClient";
 import { isModuleEnabled } from "@/lib/modules";
 
@@ -31,24 +32,8 @@ export default async function CustomersPage({
   // old version pulled every bill and payment for the whole shop's
   // history on every page load, which got slower as history grew even
   // though the page only ever showed 50 names at a time.
-  const [{ data: bills }, { data: payments }] = customerIds.length
-    ? await Promise.all([
-        admin.from("bills").select("customer_id, credit_amount").eq("shop_id", session.shopId).eq("status", "active").in("customer_id", customerIds),
-        admin.from("payments").select("customer_id, amount").eq("shop_id", session.shopId).in("customer_id", customerIds),
-      ])
-    : [{ data: [] }, { data: [] }];
-
-  const balances = new Map<string, number>();
-  for (const b of bills ?? []) {
-    if (!b.customer_id) continue;
-    balances.set(
-      b.customer_id,
-      (balances.get(b.customer_id) ?? 0) + Number(b.credit_amount),
-    );
-  }
-  for (const p of payments ?? []) {
-    balances.set(p.customer_id, (balances.get(p.customer_id) ?? 0) - Number(p.amount));
-  }
+  // Includes restaurant-order and rental udhaar, not just bills.
+  const balances = await getCustomerBalances(admin, session.shopId, customerIds);
 
   const withBalance = (customers ?? []).map((c) => ({
     id: c.id,

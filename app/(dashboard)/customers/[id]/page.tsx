@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { requireSession } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { getCustomerBalances } from "@/lib/moneyBalances";
 import { getTranslator } from "@/lib/i18n/server";
 import { LedgerClient } from "./LedgerClient";
 
@@ -37,7 +38,7 @@ export default async function CustomerLedgerPage({
       : Promise.resolve({ data: [] }),
   ]);
 
-  const [{ data: bills }, { data: payments }, { data: returns }] = await Promise.all([
+  const [{ data: bills }, { data: payments }, { data: returns }, { data: tableOrders }, { data: rentals }, balances] = await Promise.all([
     admin
       .from("bills")
       .select("id, invoice_number, total, paid_amount, credit_amount, payment_method, status, created_at")
@@ -56,6 +57,21 @@ export default async function CustomerLedgerPage({
       .eq("customer_id", id)
       .eq("shop_id", session.shopId)
       .order("created_at", { ascending: false }),
+    // Restaurant table orders and rentals carry udhaar too — listed here so
+    // the ledger explains the whole balance, not just bills.
+    admin
+      .from("restaurant_orders")
+      .select("id, order_number, total, paid_amount, credit_amount, created_at")
+      .eq("customer_id", id)
+      .eq("shop_id", session.shopId)
+      .eq("status", "settled"),
+    admin
+      .from("rentals")
+      .select("id, rental_number, total, paid_amount, credit_amount, created_at")
+      .eq("customer_id", id)
+      .eq("shop_id", session.shopId)
+      .neq("status", "cancelled"),
+    getCustomerBalances(admin, session.shopId, [id]),
   ]);
 
   const billIds = (bills ?? []).map((b) => b.id);
@@ -78,10 +94,7 @@ export default async function CustomerLedgerPage({
     itemsByBill.set(item.bill_id, list);
   }
 
-  const activeBills = (bills ?? []).filter((b) => b.status === "active");
-  const totalCredit = activeBills.reduce((s, b) => s + Number(b.credit_amount), 0);
-  const totalPaidBack = (payments ?? []).reduce((s, p) => s + Number(p.amount), 0);
-  const balance = Math.max(0, totalCredit - totalPaidBack);
+  const balance = Math.max(0, balances.get(id) ?? 0);
 
   return (
     <LedgerClient
@@ -108,17 +121,43 @@ export default async function CustomerLedgerPage({
       }}
       shopName={session.shopName}
       balance={balance}
-      bills={(bills ?? []).map((b) => ({
-        id: b.id,
-        invoiceNumber: b.invoice_number,
-        total: Number(b.total),
-        paidAmount: Number(b.paid_amount),
-        creditAmount: Number(b.credit_amount),
-        paymentMethod: b.payment_method,
-        status: b.status,
-        createdAt: b.created_at,
-        items: itemsByBill.get(b.id) ?? [],
-      }))}
+      bills={[
+        ...(bills ?? []).map((b) => ({
+          id: b.id,
+          invoiceNumber: b.invoice_number,
+          total: Number(b.total),
+          paidAmount: Number(b.paid_amount),
+          creditAmount: Number(b.credit_amount),
+          paymentMethod: b.payment_method,
+          status: b.status,
+          createdAt: b.created_at,
+          items: itemsByBill.get(b.id) ?? [],
+        })),
+        ...(tableOrders ?? []).map((o) => ({
+          id: o.id,
+          invoiceNumber: `Table order ${o.order_number}`,
+          total: Number(o.total),
+          paidAmount: Number(o.paid_amount),
+          creditAmount: Number(o.credit_amount),
+          paymentMethod: "other",
+          status: "active" as const,
+          createdAt: o.created_at,
+          items: [],
+          href: `/restaurant/orders/${o.id}`,
+        })),
+        ...(rentals ?? []).map((r) => ({
+          id: r.id,
+          invoiceNumber: `Rental ${r.rental_number}`,
+          total: Number(r.total),
+          paidAmount: Number(r.paid_amount),
+          creditAmount: Number(r.credit_amount),
+          paymentMethod: "other",
+          status: "active" as const,
+          createdAt: r.created_at,
+          items: [],
+          href: `/print/rental/${r.id}`,
+        })),
+      ].sort((a, b) => b.createdAt.localeCompare(a.createdAt))}
       payments={(payments ?? []).map((p) => ({
         id: p.id,
         amount: Number(p.amount),

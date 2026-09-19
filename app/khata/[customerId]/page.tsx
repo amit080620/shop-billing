@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { getCustomerBalances } from "@/lib/moneyBalances";
 import { formatMoney } from "@/lib/format";
 import { buildUpiLink } from "@/lib/qr";
 import { CheckCircle2, IndianRupee } from "lucide-react";
@@ -24,7 +25,8 @@ export default async function KhataPage({ params }: { params: Promise<{ customer
 
   if (!customer) notFound();
 
-  const [{ data: shop }, { data: bills }, { data: payments }] = await Promise.all([
+  const WINDOW = 30;
+  const [{ data: shop }, { data: billRows }, { data: payments }, { data: tableOrders }, { data: rentals }, balances] = await Promise.all([
     admin.from("shops").select("name, logo_url, upi_id, loyalty_redemption_value").eq("id", customer.shop_id).single(),
     admin
       .from("bills")
@@ -32,19 +34,53 @@ export default async function KhataPage({ params }: { params: Promise<{ customer
       .eq("customer_id", customerId)
       .eq("status", "active")
       .order("created_at", { ascending: false })
-      .limit(30),
+      .limit(WINDOW),
     admin
       .from("payments")
       .select("id, amount, payment_method, note, created_at")
       .eq("customer_id", customerId)
       .order("created_at", { ascending: false })
-      .limit(30),
+      .limit(WINDOW),
+    // Restaurant table orders and rentals carry udhaar too.
+    admin
+      .from("restaurant_orders")
+      .select("id, order_number, total, paid_amount, credit_amount, created_at")
+      .eq("customer_id", customerId)
+      .eq("status", "settled")
+      .order("created_at", { ascending: false })
+      .limit(WINDOW),
+    admin
+      .from("rentals")
+      .select("id, rental_number, total, paid_amount, credit_amount, created_at")
+      .eq("customer_id", customerId)
+      .neq("status", "cancelled")
+      .order("created_at", { ascending: false })
+      .limit(WINDOW),
+    getCustomerBalances(admin, customer.shop_id, [customerId]),
   ]);
+
+  // Only complete history is shown: when any list hit the WINDOW cap, older
+  // entries of that kind are missing, so the timeline stops at the newest
+  // point where every list is still complete.
+  const lists = [billRows, payments, tableOrders, rentals];
+  const cutoff = lists
+    .filter((l) => (l?.length ?? 0) === WINDOW)
+    .map((l) => l![l!.length - 1].created_at)
+    .sort()
+    .pop();
+  const inWindow = <T extends { created_at: string }>(rows: T[] | null) => (rows ?? []).filter((r) => !cutoff || r.created_at >= cutoff);
+
+  const bills = [
+    ...inWindow(billRows),
+    ...inWindow(tableOrders).map((o) => ({ ...o, invoice_number: `Table order ${o.order_number}`, payment_method: "other", status: "active" as const })),
+    ...inWindow(rentals).map((r) => ({ ...r, invoice_number: `Rental ${r.rental_number}`, payment_method: "other", status: "active" as const })),
+  ];
+  const shownPayments = inWindow(payments);
 
   // Item-level detail per bill — "what did I actually buy that day",
   // not just a total. One query for every bill's items at once,
   // grouped in memory, rather than N queries (one per bill).
-  const billIds = (bills ?? []).map((b) => b.id);
+  const billIds = inWindow(billRows).map((b) => b.id);
   const { data: allItems } = billIds.length
     ? await admin.from("bill_items").select("bill_id, product_name, quantity, unit_price, line_total").in("bill_id", billIds)
     : { data: [] as never[] };
@@ -55,43 +91,33 @@ export default async function KhataPage({ params }: { params: Promise<{ customer
     itemsByBill.set(item.bill_id, list);
   }
 
-  const totalCredit = (bills ?? []).reduce((s, b) => s + Number(b.credit_amount), 0);
-  const totalPaidBack = (payments ?? []).reduce((s, p) => s + Number(p.amount), 0);
-  const outstanding = Math.max(0, totalCredit - totalPaidBack);
+  // The real balance over the customer's whole history (it used to be
+  // summed from only the last 30 bills and payments — wrong for any
+  // regular customer, including the amount on the UPI payment link).
+  const trueBalance = balances.get(customerId) ?? 0;
+  const outstanding = Math.max(0, trueBalance);
 
-  // At-a-glance summary — without this, "am I settled?" required
-  // manually adding up every line in the history below. Total
-  // business = every bill's full value (what was bought, regardless
-  // of how it was paid). Total paid = paid at billing time + every
-  // udhar payment made since, combined.
-  const totalBusiness = (bills ?? []).reduce((s, b) => s + Number(b.total), 0);
-  const totalPaidAtBilling = (bills ?? []).reduce((s, b) => s + Number(b.paid_amount), 0);
-  const totalPaid = totalPaidAtBilling + totalPaidBack;
+  // At-a-glance summary for the entries shown below.
+  const totalBusiness = bills.reduce((s, b) => s + Number(b.total), 0);
+  const totalPaidAtBilling = bills.reduce((s, b) => s + Number(b.paid_amount), 0);
+  const totalPaid = totalPaidAtBilling + shownPayments.reduce((s, p) => s + Number(p.amount), 0);
 
-  // A full, honest ledger — not just "what's currently owed". Every
-  // bill (cash, UPI, card, or part-udhar) AND every payment made
-  // against past udhar, merged in one timeline. Previously this page
-  // only ever listed bills — the moment a customer's udhar was fully
-  // paid off, there was no record left of the payment itself, which
-  // is exactly backwards for something called a khata (account book).
-  //
-  // Running balance — the one thing every real paper khata book has
-  // that a plain list doesn't: "balance after this entry". Computed
-  // walking OLDEST-first (so each step is "yesterday's balance + this
-  // entry"), then the whole thing is reversed for newest-first
-  // display, carrying the already-computed balance along with it.
-  const chronological = [
-    ...(bills ?? []).map((b) => ({ kind: "bill" as const, at: b.created_at, data: b })),
-    ...(payments ?? []).map((p) => ({ kind: "payment" as const, at: p.created_at, data: p })),
-  ].sort((a, b) => new Date(a.at).getTime() - new Date(b.at).getTime());
+  // Every bill and payment in one timeline with the balance after each
+  // entry, like a paper khata. Walked newest → oldest from the true
+  // current balance, so the figures are right even though only recent
+  // history is listed.
+  const newestFirst = [
+    ...bills.map((b) => ({ kind: "bill" as const, at: b.created_at, data: b })),
+    ...shownPayments.map((p) => ({ kind: "payment" as const, at: p.created_at, data: p })),
+  ].sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime());
 
-  let running = 0;
-  const withBalance = chronological.map((entry) => {
-    if (entry.kind === "bill" && entry.data.status === "active") running += Number(entry.data.credit_amount);
-    if (entry.kind === "payment") running -= Number(entry.data.amount);
-    return { ...entry, balanceAfter: Math.max(0, running) };
+  let after = trueBalance;
+  const withBalance = newestFirst.map((entry) => {
+    const row = { ...entry, balanceAfter: Math.max(0, after) };
+    after -= entry.kind === "bill" ? Number(entry.data.credit_amount) : -Number(entry.data.amount);
+    return row;
   });
-  const timeline: KhataEntry[] = [...withBalance].reverse().map((entry) =>
+  const timeline: KhataEntry[] = withBalance.map((entry) =>
     entry.kind === "bill"
       ? {
           kind: "bill",

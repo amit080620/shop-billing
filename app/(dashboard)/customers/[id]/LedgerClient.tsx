@@ -34,6 +34,9 @@ type Bill = {
   status: "active" | "voided";
   createdAt: string;
   items: BillItem[];
+  /** Where "View full invoice" goes — restaurant orders and rentals have
+   * their own pages. Defaults to the bill print page. */
+  href?: string;
 };
 type Payment = { id: string; amount: number; paymentMethod: string; note: string | null; createdAt: string };
 type Return = { id: string; returnNumber: string; total: number; createdAt: string; invoiceNumber: string };
@@ -333,7 +336,7 @@ export function LedgerClient({
                         ))}
                       </ul>
                       <Link
-                        href={`/print/bill/${entry.data.id}`}
+                        href={entry.data.href ?? `/print/bill/${entry.data.id}`}
                         className="mt-2 inline-block text-xs font-medium text-brand"
                       >
                         View full invoice →

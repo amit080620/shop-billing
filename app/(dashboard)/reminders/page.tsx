@@ -1,5 +1,6 @@
 import { requireSession } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { getCreditEntries } from "@/lib/moneyBalances";
 import { getTranslator } from "@/lib/i18n/server";
 import { RemindersClient } from "./RemindersClient";
 import { isModuleEnabled } from "@/lib/modules";
@@ -11,15 +12,11 @@ export default async function RemindersPage() {
   const { lang } = await getTranslator();
   const admin = createSupabaseAdminClient();
 
-  const [{ data: customers }, { data: bills }, { data: payments }] = await Promise.all([
+  const [{ data: customers }, credits, { data: payments }] = await Promise.all([
     admin.from("customers").select("id, name, phone").eq("shop_id", session.shopId),
-    admin
-      .from("bills")
-      .select("customer_id, credit_amount, created_at")
-      .eq("shop_id", session.shopId)
-      .eq("status", "active")
-      .not("customer_id", "is", null)
-      .order("created_at", { ascending: true }), // oldest first — needed for FIFO aging below
+    // Oldest first (needed for FIFO aging below); includes restaurant-order
+    // and rental udhaar, not just bills.
+    getCreditEntries(admin, session.shopId),
     admin.from("payments").select("customer_id, amount").eq("shop_id", session.shopId),
   ]);
 
@@ -29,11 +26,10 @@ export default async function RemindersPage() {
   }
 
   const billsByCustomer = new Map<string, { credit: number; createdAt: string }[]>();
-  for (const b of bills ?? []) {
-    if (!b.customer_id) continue;
-    const list = billsByCustomer.get(b.customer_id) ?? [];
-    list.push({ credit: Number(b.credit_amount), createdAt: b.created_at });
-    billsByCustomer.set(b.customer_id, list);
+  for (const c of credits) {
+    const list = billsByCustomer.get(c.customerId) ?? [];
+    list.push({ credit: c.credit, createdAt: c.createdAt });
+    billsByCustomer.set(c.customerId, list);
   }
 
   const now = Date.now();

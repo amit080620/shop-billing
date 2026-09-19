@@ -1,5 +1,6 @@
 import { requireSession } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { getCreditEntries } from "@/lib/moneyBalances";
 import { formatMoney } from "@/lib/format";
 import { PageHeader } from "@/app/components/PageHeader";
 import { EmptyState } from "@/app/components/EmptyState";
@@ -10,18 +11,13 @@ export default async function CreditAgingPage() {
   const session = await requireSession();
   const admin = createSupabaseAdminClient();
 
-  const [{ data: bills }, { data: payments }, { data: customers }] = await Promise.all([
-    admin
-      .from("bills")
-      .select("customer_id, credit_amount, created_at")
-      .eq("shop_id", session.shopId)
-      .eq("status", "active")
-      .gt("credit_amount", 0)
-      .not("customer_id", "is", null)
-      .order("created_at", { ascending: true }),
+  const [credits, { data: payments }, { data: customers }] = await Promise.all([
+    // Oldest first; bills plus restaurant-order and rental udhaar.
+    getCreditEntries(admin, session.shopId),
     admin.from("payments").select("customer_id, amount").eq("shop_id", session.shopId),
     admin.from("customers").select("id, name, phone").eq("shop_id", session.shopId),
   ]);
+  const bills = credits.map((c) => ({ customer_id: c.customerId, credit_amount: c.credit, created_at: c.createdAt }));
 
   const customerById = new Map((customers ?? []).map((c) => [c.id, c]));
   const paidByCustomer = new Map<string, number>();
