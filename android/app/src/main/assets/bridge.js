@@ -141,16 +141,23 @@
   }
 
   // ---- Status bar colour follows the app header (light and dark theme).
+  // Colours come back in any CSS syntax (Tailwind v4 uses oklab, often
+  // translucent), so a 1px canvas turns them into the colour actually seen.
   let lastColor = "";
-  const hex = (c) => {
-    const m = /rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?/.exec(c || "");
-    if (!m || (m[4] !== undefined && Number(m[4]) === 0)) return null;
-    return "#" + [m[1], m[2], m[3]].map((n) => Number(n).toString(16).padStart(2, "0")).join("");
+  const probe = document.createElement("canvas").getContext("2d", { willReadFrequently: true });
+  const seen = (...layers) => {
+    probe.fillStyle = "#ffffff";
+    probe.fillRect(0, 0, 1, 1);
+    for (const c of layers) { probe.fillStyle = c; probe.fillRect(0, 0, 1, 1); }
+    const [r, g, b] = probe.getImageData(0, 0, 1, 1).data;
+    return "#" + [r, g, b].map((n) => n.toString(16).padStart(2, "0")).join("");
   };
   const syncBars = () => {
     if (!document.body) return;
     const header = document.querySelector("header");
-    const color = (header && hex(getComputedStyle(header).backgroundColor)) || hex(getComputedStyle(document.body).backgroundColor) || "#ffffff";
+    const layers = [getComputedStyle(document.body).backgroundColor];
+    if (header) layers.push(getComputedStyle(header).backgroundColor);
+    const color = seen(...layers);
     if (color !== lastColor) { lastColor = color; call("ui.bars", { color }).catch(() => {}); }
   };
   setInterval(syncBars, 1200);

@@ -258,7 +258,7 @@ class MainActivity : Activity() {
     fun printPage(title: String) {
         val name = title.ifBlank { "The Ray" }
         val printManager = getSystemService(PRINT_SERVICE) as PrintManager
-        printManager.print(name, webView.createPrintDocumentAdapter(name), PrintAttributes.Builder().build())
+        printManager.print(name, webView.createPrintDocumentAdapter(name), PrintAttributes.Builder().setMediaSize(PrintAttributes.MediaSize.ISO_A4).build())
     }
 
     // ------------------------------------------------------ Window and bars

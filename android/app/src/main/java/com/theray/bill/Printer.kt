@@ -26,6 +26,8 @@ import android.provider.Settings
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ArrayAdapter
+import android.widget.LinearLayout
+import android.widget.ListView
 import android.widget.TextView
 import java.io.IOException
 import java.io.OutputStream
@@ -112,8 +114,16 @@ class Printer(private val activity: MainActivity) {
         val adapter = adapter ?: return done(null)
         val found = mutableListOf<Found>()
         var chosen: BluetoothDevice? = null
+        var searching = true
 
-        val list = object : ArrayAdapter<Found>(activity, android.R.layout.simple_list_item_2, android.R.id.text1, found) {
+        val builder = AlertDialog.Builder(activity)
+        val ctx = builder.context
+        val pad = (24 * ctx.resources.displayMetrics.density).toInt()
+        val status = TextView(ctx).apply {
+            setTextAppearance(android.R.style.TextAppearance_DeviceDefault_Small)
+            setPadding(pad, pad / 3, pad, pad / 3)
+        }
+        val list = object : ArrayAdapter<Found>(ctx, android.R.layout.simple_list_item_2, android.R.id.text1, found) {
             override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
                 val view = super.getView(position, convertView, parent)
                 val item = getItem(position)!!
@@ -121,6 +131,21 @@ class Printer(private val activity: MainActivity) {
                 view.findViewById<TextView>(android.R.id.text2).text =
                     if (item.device.bondState == BluetoothDevice.BOND_BONDED) "Paired · ${item.device.address}" else "New · tap to pair · ${item.device.address}"
                 return view
+            }
+        }
+        val listView = ListView(ctx).apply { this.adapter = list }
+        val content = LinearLayout(ctx).apply {
+            orientation = LinearLayout.VERTICAL
+            addView(status)
+            addView(listView, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
+        }
+
+        fun showStatus() {
+            status.text = when {
+                found.isNotEmpty() && searching -> "Tap your printer. Still looking for more…"
+                found.isNotEmpty() -> "Tap your printer."
+                searching -> "Looking for printers… Turn the printer ON and keep it near the phone."
+                else -> "No printer found. Turn the printer ON, then pair it in Bluetooth settings (PIN is usually 0000 or 1234)."
             }
         }
 
@@ -132,47 +157,59 @@ class Printer(private val activity: MainActivity) {
             if (existing >= 0) found[existing] = Found(device, name) else found += Found(device, name)
             found.sortWith(compareByDescending<Found> { looksLikePrinter(it) }.thenByDescending { it.device.bondState == BluetoothDevice.BOND_BONDED })
             list.notifyDataSetChanged()
+            showStatus()
         }
-        adapter.bondedDevices.orEmpty().forEach { add(it) }
 
-        val dialog = AlertDialog.Builder(activity)
-            .setTitle("Select printer · searching…")
-            .setAdapter(list) { _, which -> chosen = found[which].device }
+        val dialog = builder
+            .setTitle("Select printer")
+            .setView(content)
             .setNeutralButton("Bluetooth settings", null)
             .setNegativeButton("Cancel", null)
             .create()
-
-        val receiver = object : BroadcastReceiver() {
-            override fun onReceive(context: Context, intent: Intent) {
-                when (intent.action) {
-                    BluetoothDevice.ACTION_FOUND, BluetoothDevice.ACTION_BOND_STATE_CHANGED -> add(intent.device())
-                    BluetoothAdapter.ACTION_DISCOVERY_FINISHED -> dialog.setTitle(if (found.isEmpty()) "No printer found — turn it on, then tap Bluetooth settings" else "Select printer")
-                }
-            }
+        listView.setOnItemClickListener { _, _, which, _ ->
+            chosen = found[which].device
+            dialog.dismiss()
         }
+
         val scanCallback = object : ScanCallback() {
             override fun onScanResult(callbackType: Int, result: ScanResult) {
                 main.post { add(result.device, result.scanRecord?.deviceName) }
             }
         }
-        val filter = IntentFilter().apply {
+        val stopSearching = Runnable {
+            searching = false
+            runCatching { adapter.cancelDiscovery() }
+            runCatching { adapter.bluetoothLeScanner?.stopScan(scanCallback) }
+            showStatus()
+        }
+        val receiver = object : BroadcastReceiver() {
+            override fun onReceive(context: Context, intent: Intent) {
+                when (intent.action) {
+                    BluetoothDevice.ACTION_FOUND, BluetoothDevice.ACTION_BOND_STATE_CHANGED -> add(intent.device())
+                    BluetoothAdapter.ACTION_DISCOVERY_FINISHED -> { searching = false; showStatus() }
+                }
+            }
+        }
+        register(receiver, IntentFilter().apply {
             addAction(BluetoothDevice.ACTION_FOUND)
             addAction(BluetoothDevice.ACTION_BOND_STATE_CHANGED)
             addAction(BluetoothAdapter.ACTION_DISCOVERY_FINISHED)
-        }
-        register(receiver, filter)
+        })
+
+        adapter.bondedDevices.orEmpty().forEach { add(it) }
         val canScan = Build.VERSION.SDK_INT >= 31 || activity.hasPermission(Manifest.permission.ACCESS_FINE_LOCATION)
         if (canScan) {
             runCatching { adapter.startDiscovery() }
             runCatching { adapter.bluetoothLeScanner?.startScan(scanCallback) }
-            main.postDelayed({ runCatching { adapter.bluetoothLeScanner?.stopScan(scanCallback) } }, 12_000)
+            main.postDelayed(stopSearching, 13_000)
         } else {
-            dialog.setTitle("Select printer")
+            searching = false
         }
+        showStatus()
 
         dialog.setOnDismissListener {
-            runCatching { adapter.cancelDiscovery() }
-            runCatching { adapter.bluetoothLeScanner?.stopScan(scanCallback) }
+            main.removeCallbacks(stopSearching)
+            stopSearching.run()
             runCatching { activity.unregisterReceiver(receiver) }
             done(chosen)
         }
