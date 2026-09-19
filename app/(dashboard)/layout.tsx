@@ -3,6 +3,7 @@ import Link from "next/link";
 import { LayoutDashboard } from "lucide-react";
 import { requireSession } from "@/lib/auth";
 import { getLang } from "@/lib/i18n/server";
+import { LangProvider } from "@/lib/i18n/LangContext";
 import { translate } from "@/lib/i18n/dictionary";
 import { BottomNav } from "./BottomNav";
 import { DesktopSidebar } from "./DesktopSidebar";
@@ -89,7 +90,9 @@ export default async function DashboardLayout({
         </div>
       </header>
 
-      <main className="page-enter mx-auto max-w-lg px-4 py-4 pb-24 md:max-w-5xl md:px-8 md:py-8 md:pb-8 xl:max-w-6xl">{children}</main>
+      <main className="page-enter mx-auto max-w-lg px-4 py-4 pb-24 md:max-w-5xl md:px-8 md:py-8 md:pb-8 xl:max-w-6xl">
+        <LangProvider lang={lang}>{children}</LangProvider>
+      </main>
 
       <BottomNav lang={lang} businessType={session.businessType} permissions={session.permissions} fastBillingEnabled={fastBillingEnabled} />
       <WelcomeTour storageKey={`tour-seen-${session.shopId}`} businessType={session.businessType} />

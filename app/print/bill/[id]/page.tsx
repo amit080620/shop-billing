@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { requireSession, hasPermission } from "@/lib/auth";
 import { getTranslator } from "@/lib/i18n/server";
+import { LangProvider } from "@/lib/i18n/LangContext";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { formatMoney, formatDateTime } from "@/lib/format";
 import { buildUpiLink, generateQrDataUrl } from "@/lib/qr";
@@ -29,7 +30,7 @@ export default async function PrintBillPage({
   const { format: formatParam } = await searchParams;
 
   const session = await requireSession();
-  const { lang } = await getTranslator();
+  const { lang, t } = await getTranslator();
   const admin = createSupabaseAdminClient();
 
   // Genuinely fall back to the shop's own default print format only
@@ -224,7 +225,7 @@ export default async function PrintBillPage({
     bill.customer_id && loyaltyRate > 0 ? Math.floor((Number(bill.paid_amount) / 100) * loyaltyRate) : 0;
 
   return (
-    <>
+    <LangProvider lang={lang}>
       <BillSuccessSound />
       <Suspense fallback={null}>
         <BillCreatedConfirmation amount={formatMoney(bill.total)} pointsEarned={pointsEarned} />
@@ -272,7 +273,7 @@ export default async function PrintBillPage({
         <section className="flex flex-col gap-3 rounded-2xl border border-gray-200 bg-gray-50/70 p-3.5">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <p className="truncate text-sm font-semibold text-gray-900">{customer?.name ?? "Walk-in customer"}</p>
+            <p className="truncate text-sm font-semibold text-gray-900">{customer?.name ?? t("common.walkinCustomer")}</p>
             <p className="text-xs text-gray-500">
               {bill.invoice_number} · {formatDateTime(bill.created_at)}
             </p>
@@ -280,9 +281,9 @@ export default async function PrintBillPage({
           <div className="shrink-0 text-right">
             <p className="text-lg font-bold leading-tight text-gray-900">{formatMoney(bill.total)}</p>
             {Number(bill.credit_amount) > 0 ? (
-              <p className="text-xs font-medium text-amber-700">{formatMoney(bill.credit_amount)} due</p>
+              <p className="text-xs font-medium text-amber-700">{t("common.due", { amount: formatMoney(bill.credit_amount) })}</p>
             ) : (
-              <p className="text-xs font-medium text-emerald-700">Paid</p>
+              <p className="text-xs font-medium text-emerald-700">{t("common.paid")}</p>
             )}
           </div>
         </div>
@@ -309,8 +310,8 @@ export default async function PrintBillPage({
         </div>
 
         <div className="flex items-center justify-between gap-2">
-          <span className="text-xs font-medium text-gray-500">Paper size</span>
-          <div role="group" aria-label="Paper size" className="flex rounded-full border border-gray-200 bg-white p-0.5">
+          <span className="text-xs font-medium text-gray-500">{t("billPage.paperSize")}</span>
+          <div role="group" aria-label={t("billPage.paperSize")} className="flex rounded-full border border-gray-200 bg-white p-0.5">
             <FormatPill href={`/print/bill/${id}?format=full`} label="A4" active={!isThermal} />
             <FormatPill href={`/print/bill/${id}?format=thermal58`} label="58mm" active={is58mm} />
             <FormatPill href={`/print/bill/${id}?format=thermal`} label="80mm" active={isThermal && !is58mm} />
@@ -370,7 +371,7 @@ export default async function PrintBillPage({
       )}
       </div>
     </div>
-    </>
+    </LangProvider>
   );
 }
 

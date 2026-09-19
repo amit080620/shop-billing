@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { FileDown } from "lucide-react";
+import { useT } from "@/lib/i18n/LangContext";
 
 // 1 CSS px = 0.264583mm at the standard 96dpi reference used by browsers.
 const PX_TO_MM = 0.264583;
@@ -16,6 +17,7 @@ export function DownloadImageButton({
   isThermal: boolean;
 }) {
   const [isGenerating, setIsGenerating] = useState(false);
+  const { t } = useT();
   const [error, setError] = useState<string | null>(null);
 
   async function handleDownload() {
@@ -91,7 +93,7 @@ export function DownloadImageButton({
     <div className="flex w-full flex-col gap-1">
       <button onClick={handleDownload} disabled={isGenerating} className="bill-action">
         <FileDown size={15} />
-        {isGenerating ? "Preparing…" : "Save PDF"}
+        {isGenerating ? t("billPage.preparing") : t("billPage.savePdf")}
       </button>
       {error && <p className="text-xs text-credit">{error}</p>}
     </div>

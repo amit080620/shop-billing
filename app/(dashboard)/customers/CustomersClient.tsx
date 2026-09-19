@@ -1,6 +1,7 @@
 "use client";
 import { keepValuesOnError } from "@/lib/keepValuesOnError";
 import { Users, SearchX } from "lucide-react";
+import { useT } from "@/lib/i18n/LangContext";
 
 import { useRef, useState, useEffect } from "react";
 import { PhoneInput } from "@/app/components/PhoneInput";
@@ -71,6 +72,7 @@ export function CustomersClient({
   const nameRef = useRef<HTMLInputElement>(null);
   const [phone, setPhone] = useState("");
   const [search, setSearch] = useState(initialSearch);
+  const { t } = useT();
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
 
   const { showToast } = useToast();
@@ -196,15 +198,15 @@ export function CustomersClient({
 
       {filtered.length === 0 ? (
         search.trim() ? (
-          <EmptyState icon={SearchX} text={`No one matches "${search.trim()}". Check the spelling or search by phone.`} />
+          <EmptyState icon={SearchX} text={t("customers.noMatch", { q: search.trim() })} />
         ) : (
           <EmptyState
             icon={Users}
-            title="No customers yet"
-            text="Add your regular customers to keep their udhaar and send WhatsApp reminders."
+            title={t("customers.emptyTitle")}
+            text={t("customers.emptyText")}
             action={
               <button onClick={() => setShowForm(true)} className="btn-primary-sm">
-                + Add customer
+                {t("customers.add")}
               </button>
             }
           />

@@ -126,9 +126,9 @@ export function LedgerClient({
         </div>
         <div className="mt-3 flex items-end justify-between">
           <div>
-            <p className="text-xs text-muted">{balance > 0 ? "To collect" : "Balance"}</p>
+            <p className="text-xs text-muted">{balance > 0 ? t("ledger.toCollect") : t("ledger.balance")}</p>
             <p className={`text-3xl font-bold tracking-tight ${balance > 0 ? "text-credit" : "text-success"}`}>
-              {balance > 0 ? formatMoney(balance) : "Settled ✓"}
+              {balance > 0 ? formatMoney(balance) : t("ledger.settled")}
             </p>
             {customer.loyaltyPoints > 0 && (
               <p className="mt-1 text-xs font-medium text-brand-text">
@@ -141,18 +141,18 @@ export function LedgerClient({
         {activeBills.length > 0 && (
           <div className="mt-3 grid grid-cols-2 gap-2 border-t border-border/60 pt-3 text-center">
             <div>
-              <p className="text-[11px] text-muted">Total business</p>
+              <p className="text-[11px] text-muted">{t("ledger.totalBusiness")}</p>
               <p className="text-sm font-semibold text-foreground">{formatMoney(totalBusiness)}</p>
             </div>
             <div className="border-l border-border/60">
-              <p className="text-[11px] text-muted">Total paid</p>
+              <p className="text-[11px] text-muted">{t("ledger.totalPaid")}</p>
               <p className="text-sm font-semibold text-success">{formatMoney(totalPaid)}</p>
             </div>
           </div>
         )}
         <div className="mt-4 flex gap-2">
           <button onClick={() => setShowPaymentForm(true)} className="btn-primary flex-1 !py-3 text-sm">
-            + Payment received
+            {t("ledger.paymentReceived")}
           </button>
           {balance > 0 && (
             <a
@@ -162,13 +162,13 @@ export function LedgerClient({
               className="flex items-center justify-center gap-1.5 rounded-[var(--radius)] bg-[#25D366] px-4 py-3 text-sm font-semibold text-white"
             >
               <WhatsAppIcon />
-              Remind
+              {t("ledger.remind")}
             </a>
           )}
         </div>
         <div className="mt-2 flex flex-wrap items-center justify-center gap-x-1 gap-y-1 text-xs">
             <Link href={`/khata/${customer.id}`} target="_blank" className="rounded-md px-2.5 py-1.5 font-medium text-brand-text">
-              View khata
+              {t("ledger.viewKhata")}
             </Link>
             <button
               onClick={() => {
@@ -183,12 +183,12 @@ export function LedgerClient({
               }}
               className="rounded-md px-2.5 py-1.5 font-medium text-brand-text"
             >
-              Share khata
+              {t("ledger.shareKhata")}
             </button>
             <DownloadStatementButton customer={customer} shopName={shopName} balance={balance} bills={bills} payments={payments} />
             {hasWarranty && (
               <Link href={`/warranty-card/${customer.id}`} target="_blank" className="rounded-md px-2.5 py-1.5 font-medium text-brand-text">
-                Warranty card
+                {t("ledger.warrantyCard")}
               </Link>
             )}
             {hasWarranty && <button
@@ -204,7 +204,7 @@ export function LedgerClient({
               }}
               className="rounded-md px-2.5 py-1.5 font-medium text-brand-text"
             >
-              Share warranty
+              {t("ledger.shareWarranty")}
             </button>}
         </div>
       </div>
@@ -214,14 +214,14 @@ export function LedgerClient({
 
 
       {showPaymentForm && (
-        <Popup open={showPaymentForm} onClose={() => setShowPaymentForm(false)} title="Payment received">
+        <Popup open={showPaymentForm} onClose={() => setShowPaymentForm(false)} title={t("ledger.paymentReceivedTitle")}>
         <form
           action={formAction}
           className="flex flex-col gap-3"
         >
           <input type="hidden" name="customerId" value={customer.id} />
           <label className="flex flex-col gap-1.5 text-sm">
-            <span className="font-medium text-foreground">Amount received (₹)</span>
+            <span className="font-medium text-foreground">{t("ledger.amountReceived")}</span>
             <input
               name="amount"
               type="number"
@@ -233,10 +233,10 @@ export function LedgerClient({
           </label>
           <PaymentMethodPicker />
           <label className="flex flex-col gap-1.5 text-sm">
-            <span className="font-medium text-foreground">Note (optional)</span>
+            <span className="font-medium text-foreground">{t("ledger.noteOptional")}</span>
             <input
               name="note"
-              placeholder="e.g. Paid in cash"
+              placeholder={t("ledger.notePlaceholder")}
               className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-brand"
             />
           </label>
@@ -247,9 +247,9 @@ export function LedgerClient({
       )}
 
       <section>
-        <h2 className="mb-2 text-sm font-semibold text-foreground">History</h2>
+        <h2 className="mb-2 text-sm font-semibold text-foreground">{t("ledger.history")}</h2>
         {timeline.length === 0 ? (
-          <EmptyState icon={TrendingUp} text="Their bills and payments will show up here." />
+          <EmptyState icon={TrendingUp} text={t("ledger.empty")} />
         ) : (
           <ul className="flex flex-col gap-2">
             {timeline.map((entry) =>
@@ -280,7 +280,7 @@ export function LedgerClient({
                         {formatDateTime(entry.data.createdAt)}
                         {entry.data.paidAmount > 0 &&
                           (entry.data.creditAmount > 0
-                            ? ` · ${formatMoney(entry.data.paidAmount)} paid by ${paymentMethodLabel(entry.data.paymentMethod)}`
+                            ? ` · ${t("ledger.paidBy", { amount: formatMoney(entry.data.paidAmount), method: paymentMethodLabel(entry.data.paymentMethod) })}`
                             : ` · Paid via ${entry.data.paymentMethod.toUpperCase()}`)}
                       </p>
                     </div>

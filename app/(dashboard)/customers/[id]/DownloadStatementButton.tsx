@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useT } from "@/lib/i18n/LangContext";
 import { formatMoney, formatDateTime } from "@/lib/format";
 
 type BillItem = { name: string; quantity: number; unitPrice: number; lineTotal: number };
@@ -30,6 +31,7 @@ export function DownloadStatementButton({
   payments: Payment[];
 }) {
   const [isGenerating, setIsGenerating] = useState(false);
+  const { t } = useT();
   const [error, setError] = useState<string | null>(null);
 
   async function handleDownload() {
@@ -141,7 +143,7 @@ export function DownloadStatementButton({
         disabled={isGenerating || bills.length === 0}
         className="rounded-md px-2.5 py-1.5 text-xs font-medium text-brand-text disabled:opacity-50"
       >
-        {isGenerating ? "Preparing…" : "Statement PDF"}
+        {isGenerating ? t("billPage.preparing") : t("ledger.statementPdf")}
       </button>
       {error && <p className="text-xs text-credit">{error}</p>}
     </div>

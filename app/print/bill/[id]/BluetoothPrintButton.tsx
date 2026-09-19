@@ -5,6 +5,7 @@ import { Printer, RotateCcw } from "lucide-react";
 import { printViaBluetooth, shouldDefaultToBluetooth, hasRememberedPrinter, forgetRememberedPrinter } from "@/lib/bluetooth-print";
 import { buildReceiptEscPos, type ReceiptData } from "@/lib/escpos";
 import { getThermalPrintSettingsAction } from "@/lib/actions/settings";
+import { useT } from "@/lib/i18n/LangContext";
 
 /** THE print button — one, simple, always labeled just "Print". No
  * separate "Bluetooth print" vs regular "Print" for the person to
@@ -23,6 +24,7 @@ export function BluetoothPrintButton({ receipt, paperWidth }: { receipt: Receipt
   const [error, setError] = useState<string | null>(null);
   const [remembered, setRemembered] = useState(false);
   const bluetoothSupported = shouldDefaultToBluetooth();
+  const { t } = useT();
 
   useEffect(() => {
     setRemembered(hasRememberedPrinter());
@@ -64,7 +66,7 @@ export function BluetoothPrintButton({ receipt, paperWidth }: { receipt: Receipt
           className={`bill-action flex-1 !border-brand !text-brand ${status === "done" ? "animate-save-success" : ""}`}
         >
           <Printer size={15} />
-          {status === "connecting" ? "Printing…" : status === "done" ? "Printed ✓" : "Print"}
+          {status === "connecting" ? t("billPage.printing") : status === "done" ? t("billPage.printed") : t("billPage.print")}
         </button>
         {bluetoothSupported && remembered && status !== "connecting" && (
           <button
@@ -72,8 +74,8 @@ export function BluetoothPrintButton({ receipt, paperWidth }: { receipt: Receipt
               forgetRememberedPrinter();
               setRemembered(false);
             }}
-            aria-label="Change printer"
-            title="Change printer"
+            aria-label={t("billPage.changePrinter")}
+            title={t("billPage.changePrinter")}
             className="rounded-full p-1.5 text-gray-400"
           >
             <RotateCcw size={12} />
@@ -82,7 +84,7 @@ export function BluetoothPrintButton({ receipt, paperWidth }: { receipt: Receipt
       </div>
       {bluetoothSupported && !remembered && (
         <p className="max-w-[220px] whitespace-normal break-words text-[11px] text-gray-500">
-          First print will ask you to select the printer once — after that, printing is one tap.
+          {t("billPage.firstPrintHint")}
         </p>
       )}
       {error && <p className="max-w-[220px] whitespace-normal break-words text-[11px] text-red-600">{error}</p>}

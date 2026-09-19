@@ -7,6 +7,7 @@ import { formatMoney, formatDateTime } from "@/lib/format";
 import { Receipt, Search } from "lucide-react";
 import Link from "next/link";
 import { todayIso } from "@/lib/dateHelpers";
+import { getTranslator } from "@/lib/i18n/server";
 
 export default async function AllBillsPage({
   searchParams,
@@ -14,6 +15,7 @@ export default async function AllBillsPage({
   searchParams: Promise<{ from?: string; to?: string; customer?: string }>;
 }) {
   const session = await requireSession();
+  const { t } = await getTranslator();
   const { from: fromParam, to: toParam, customer: customerFilter } = await searchParams;
   const today = todayIso();
   const from = fromParam || today;
@@ -39,7 +41,7 @@ export default async function AllBillsPage({
 
   return (
     <div className="flex flex-col gap-4">
-      <PageHeader icon={<Receipt size={20} />} title="All bills" subtitle="Browse and reprint any past bill" />
+      <PageHeader icon={<Receipt size={20} />} title={t("bills.title")} subtitle={t("bills.subtitle")} />
 
       <DateRangeControls from={from} to={to} basePath="/bills/all" />
 
@@ -52,27 +54,27 @@ export default async function AllBillsPage({
             type="search"
             name="customer"
             defaultValue={customerFilter ?? ""}
-            placeholder="Search by customer name"
+            placeholder={t("bills.searchCustomer")}
             className="w-full rounded-lg py-2.5 pl-9 pr-3 text-sm outline-none"
           />
         </label>
         <button type="submit" className="btn-primary-sm shrink-0">
-          Search
+          {t("common.search")}
         </button>
       </form>
 
       {active.length > 0 && (
         <div className="grid grid-cols-3 gap-2 rounded-xl border border-border bg-surface p-3 text-center">
           <div>
-            <p className="text-[11px] text-muted">Bills</p>
+            <p className="text-[11px] text-muted">{t("bills.count")}</p>
             <p className="text-sm font-semibold text-foreground">{active.length}</p>
           </div>
           <div className="border-x border-border">
-            <p className="text-[11px] text-muted">Total</p>
+            <p className="text-[11px] text-muted">{t("bills.total")}</p>
             <p className="text-sm font-semibold text-foreground">{formatMoney(total)}</p>
           </div>
           <div>
-            <p className="text-[11px] text-muted">On udhaar</p>
+            <p className="text-[11px] text-muted">{t("bills.onUdhaar")}</p>
             <p className={`text-sm font-semibold ${due > 0 ? "text-credit" : "text-foreground"}`}>{formatMoney(due)}</p>
           </div>
         </div>
@@ -81,11 +83,11 @@ export default async function AllBillsPage({
       {filtered.length === 0 ? (
         <EmptyState
           icon={Receipt}
-          title="No bills here"
-          text="Nothing was billed in this range. Try Last 7 days or Last 30 days."
+          title={t("bills.emptyTitle")}
+          text={t("bills.emptyText")}
           action={
             <Link href="/bills/new" className="btn-primary-sm">
-              + New bill
+              {t("common.newBillPlus")}
             </Link>
           }
         />
@@ -98,7 +100,7 @@ export default async function AllBillsPage({
               <li key={b.id}>
                 <Link href={`/print/bill/${b.id}`} className={`neu-card flex items-center justify-between gap-3 px-3.5 py-3 ${voided ? "opacity-60" : ""}`}>
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium text-foreground">{b.customerName ?? "Walk-in customer"}</p>
+                    <p className="truncate text-sm font-medium text-foreground">{b.customerName ?? t("common.walkinCustomer")}</p>
                     <p className="truncate text-xs text-muted">
                       {b.invoice_number} · {formatDateTime(b.created_at)}
                     </p>
@@ -106,11 +108,11 @@ export default async function AllBillsPage({
                   <div className="shrink-0 text-right">
                     <p className={`text-sm font-semibold text-foreground ${voided ? "line-through" : ""}`}>{formatMoney(b.total)}</p>
                     {voided ? (
-                      <span className="text-[11px] font-medium text-danger">Voided</span>
+                      <span className="text-[11px] font-medium text-danger">{t("common.voided")}</span>
                     ) : credit > 0 ? (
-                      <span className="text-[11px] font-medium text-credit">{formatMoney(credit)} due</span>
+                      <span className="text-[11px] font-medium text-credit">{t("common.due", { amount: formatMoney(credit) })}</span>
                     ) : (
-                      <span className="text-[11px] font-medium text-success">Paid</span>
+                      <span className="text-[11px] font-medium text-success">{t("common.paid")}</span>
                     )}
                   </div>
                 </Link>

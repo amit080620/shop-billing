@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { todayIso, isoDaysAgo, formatIsoDate } from "@/lib/dateHelpers";
+import { useT } from "@/lib/i18n/LangContext";
 
 /** Today / Last 7 days / Last 30 days presets plus a custom range, shared by
  * the Sales, Profit, Staff Performance, Insights and Service report pages.
@@ -12,6 +13,7 @@ export function DateRangeControls({ from, to, basePath }: { from: string; to: st
   const [customFrom, setCustomFrom] = useState(from);
   const [customTo, setCustomTo] = useState(to);
   const [showCustom, setShowCustom] = useState(false);
+  const { t } = useT();
 
   function go(newFrom: string, newTo: string) {
     router.push(`${basePath}?from=${newFrom}&to=${newTo}`);
@@ -19,9 +21,9 @@ export function DateRangeControls({ from, to, basePath }: { from: string; to: st
 
   const today = todayIso();
   const presets = [
-    { label: "Today", from: today },
-    { label: "Last 7 days", from: isoDaysAgo(6) },
-    { label: "Last 30 days", from: isoDaysAgo(29) },
+    { label: t("range.today"), from: today },
+    { label: t("range.last7"), from: isoDaysAgo(6) },
+    { label: t("range.last30"), from: isoDaysAgo(29) },
   ];
   const pill = (active: boolean) =>
     `shrink-0 rounded-full bg-background px-3 py-1.5 text-xs font-medium ${active ? "text-brand-text" : "text-muted"}`;
@@ -39,22 +41,22 @@ export function DateRangeControls({ from, to, basePath }: { from: string; to: st
           );
         })}
         <button onClick={() => setShowCustom((v) => !v)} className={pill(showCustom)} style={showCustom ? activeStyle : undefined}>
-          Custom range
+          {t("range.custom")}
         </button>
       </div>
 
       {showCustom && (
         <div className="neu-card flex items-end gap-2 p-3">
           <label className="flex flex-1 flex-col gap-1">
-            <span className="text-xs text-muted">From</span>
+            <span className="text-xs text-muted">{t("range.from")}</span>
             <input type="date" value={customFrom} max={customTo} onChange={(e) => setCustomFrom(e.target.value)} className="rounded-lg px-3 py-2 text-sm outline-none" />
           </label>
           <label className="flex flex-1 flex-col gap-1">
-            <span className="text-xs text-muted">To</span>
+            <span className="text-xs text-muted">{t("range.to")}</span>
             <input type="date" value={customTo} min={customFrom} max={today} onChange={(e) => setCustomTo(e.target.value)} className="rounded-lg px-3 py-2 text-sm outline-none" />
           </label>
           <button onClick={() => go(customFrom, customTo)} disabled={!customFrom || !customTo || customFrom > customTo} className="btn-primary-sm shrink-0 disabled:opacity-50">
-            Apply
+            {t("range.apply")}
           </button>
         </div>
       )}

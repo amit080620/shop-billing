@@ -15,6 +15,7 @@ import { ContactPickerButton } from "@/app/components/ContactPickerButton";
 import { PhoneInput } from "@/app/components/PhoneInput";
 import { INDIAN_STATES } from "@/lib/constants/states";
 import { Building2 } from "lucide-react";
+import { useT } from "@/lib/i18n/LangContext";
 
 type Vendor = { id: string; name: string; phone: string | null; gstin: string | null; balance: number };
 
@@ -36,6 +37,7 @@ export function VendorsClient({ initialVendors }: { initialVendors: Vendor[] }) 
   const nameRef = useRef<HTMLInputElement>(null);
   const [phone, setPhone] = useState("");
   const [search, setSearch] = useState("");
+  const { t } = useT();
 
   const { showToast } = useToast();
   const [state, formAction] = useActionState(
@@ -149,7 +151,7 @@ export function VendorsClient({ initialVendors }: { initialVendors: Vendor[] }) 
       )}
 
       {filtered.length === 0 ? (
-        <EmptyState icon={Building2} title="No suppliers yet" text="Add the wholesalers you buy from to log purchases and track what you owe them." />
+        <EmptyState icon={Building2} title={t("vendors.emptyTitle")} text={t("vendors.emptyText")} />
       ) : (
         <ul className="flex flex-col gap-2 md:grid md:grid-cols-2 md:gap-3">
           {filtered.map((v) => (

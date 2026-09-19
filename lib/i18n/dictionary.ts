@@ -1,3 +1,5 @@
+import { SCREEN_STRINGS } from "./screens";
+
 export type Lang = "en" | "hi" | "mr";
 
 export const translations: Record<Lang, Record<string, string>> = {
@@ -1534,6 +1536,13 @@ export const translations: Record<Lang, Record<string, string>> = {
     "rental.notesOptional": "Notes (ऐच्छिक)",
   },
 };
+
+// Newer screen text lives in ./screens.ts, one line per key in all three languages.
+for (const [key, [en, hi, mr]] of Object.entries(SCREEN_STRINGS)) {
+  translations.en[key] ??= en;
+  translations.hi[key] ??= hi;
+  translations.mr[key] ??= mr;
+}
 
 /** Replaces {placeholder} tokens in a translated string with real values. */
 export function interpolate(template: string, values: Record<string, string | number>) {

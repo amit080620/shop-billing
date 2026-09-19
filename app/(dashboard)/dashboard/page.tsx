@@ -181,7 +181,7 @@ export default async function DashboardPage() {
         </Link>
       )}
 
-      <QuickLinks businessType={session.businessType} />
+      <QuickLinks businessType={session.businessType} t={t} />
     </div>
   );
 }
@@ -189,11 +189,11 @@ export default async function DashboardPage() {
 // Festival prompts are about stocking up — irrelevant to a clinic or gym.
 const STOCK_BUSINESSES = new Set(["grocery", "mart", "hardware", "general", "pharmacy", "jewellery", "restaurant"]);
 
-function QuickLinks({ businessType }: { businessType: string }) {
+function QuickLinks({ businessType, t }: { businessType: string; t: (key: string) => string }) {
   const links = [
     { href: "/products", label: getTerminology(businessType).productPlural, icon: Package },
-    { href: "/bills/all", label: "All bills", icon: Receipt },
-    { href: "/daily-summary", label: "Day summary", icon: Wallet },
+    { href: "/bills/all", label: t("home.allBills"), icon: Receipt },
+    { href: "/daily-summary", label: t("home.daySummary"), icon: Wallet },
   ];
   return (
     <nav aria-label="Shortcuts" className="grid grid-cols-3 gap-2">
@@ -260,10 +260,10 @@ async function RetailHome({
             <AlertTriangle size={18} />
           </span>
           <span className="min-w-0 flex-1">
-            <span className="block text-xs font-medium text-warning">Money at risk</span>
+            <span className="block text-xs font-medium text-warning">{t("home.moneyAtRisk")}</span>
             <span className="block text-lg font-bold tracking-tight text-foreground">{formatMoney(profitLeak.totalAtRisk)}</span>
           </span>
-          <span className="shrink-0 text-xs font-semibold text-warning">See where →</span>
+          <span className="shrink-0 text-xs font-semibold text-warning">{t("home.seeWhere")}</span>
         </Link>
       )}
       {expiringCount > 0 && (

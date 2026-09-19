@@ -6,11 +6,13 @@ import { formatMoney } from "@/lib/format";
 import { PageHeader } from "@/app/components/PageHeader";
 import { EmptyState } from "@/app/components/EmptyState";
 import { ShoppingCart, Wallet, Plus, ArrowRight, RefreshCw } from "lucide-react";
+import { useT } from "@/lib/i18n/LangContext";
 
 type Purchase = { id: string; vendorName: string; purchaseDate: string; billNumber: string; total: number; paidAmount: number; outstanding: number; paymentMethod: string };
 type Payment = { id: string; vendorName: string; amount: number; paymentMethod: string; note: string | null; createdAt: string };
 
 export function PurchaseHubClient({ purchases, payments }: { purchases: Purchase[]; payments: Payment[] }) {
+  const { t } = useT();
   const [topContext, setTopContext] = useState<"purchase" | "history">("purchase");
   const [historyTab, setHistoryTab] = useState<"purchase" | "payments">("purchase");
   const [purchaseTab, setPurchaseTab] = useState<"add" | "payment">("add");
@@ -124,11 +126,11 @@ export function PurchaseHubClient({ purchases, payments }: { purchases: Purchase
             purchases.length === 0 ? (
               <EmptyState
                 icon={ShoppingCart}
-                title="No purchases yet"
-                text="Log what you buy from suppliers to track stock, cost and GST input credit."
+                title={t("purchases.emptyTitle")}
+                text={t("purchases.emptyText")}
                 action={
                   <Link href="/purchases/new" className="btn-primary-sm">
-                    + Add purchase
+                    {t("purchases.add")}
                   </Link>
                 }
               />
@@ -155,7 +157,7 @@ export function PurchaseHubClient({ purchases, payments }: { purchases: Purchase
               </ul>
             )
           ) : payments.length === 0 ? (
-            <EmptyState icon={Wallet} text="No supplier payments yet — they appear here once you record one." />
+            <EmptyState icon={Wallet} text={t("purchases.noPayments")} />
           ) : (
             <ul className="flex flex-col gap-2">
               {payments.map((p) => (
