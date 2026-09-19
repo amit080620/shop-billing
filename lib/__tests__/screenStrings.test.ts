@@ -32,3 +32,18 @@ describe("menu text", () => {
     expect(translate("hi", "Daily summary")).toBe("दैनिक हिसाब");
   });
 });
+
+describe("page text", () => {
+  it("has Hindi and Marathi for every entry and no key clashes with menu text", async () => {
+    const { PAGE_TEXT } = await import("../i18n/pageText");
+    const { MENU_TEXT } = await import("../i18n/menuText");
+    for (const [english, [hi, mr]] of Object.entries(PAGE_TEXT)) {
+      expect(hi.trim(), `${english} hi`).not.toBe("");
+      expect(mr.trim(), `${english} mr`).not.toBe("");
+      expect(translate("en", english)).toBe(english);
+    }
+    const clashes = Object.keys(PAGE_TEXT).filter((k) => k in MENU_TEXT && MENU_TEXT[k][0] !== PAGE_TEXT[k][0]);
+    expect(clashes).toEqual([]);
+    expect(translate("mr", "Save purchase")).toBe("खरेदी सेव्ह करा");
+  });
+});

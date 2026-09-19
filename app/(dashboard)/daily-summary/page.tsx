@@ -6,6 +6,7 @@ import { PageHeader } from "@/app/components/PageHeader";
 import { Users, Receipt, Calculator } from "lucide-react";
 import { DatePicker } from "./DatePicker";
 import { todayIso } from "@/lib/dateHelpers";
+import { getTranslator } from "@/lib/i18n/server";
 
 const METHODS = ["cash", "card", "upi", "online", "other"] as const;
 type Method = (typeof METHODS)[number];
@@ -19,6 +20,7 @@ export default async function DailySummaryPage({
 }: {
   searchParams: Promise<{ date?: string; branch?: string }>;
 }) {
+  const { t } = await getTranslator();
   const { date: dateParam, branch: branchFilter } = await searchParams;
   const date = dateParam || todayIso();
   const session = await requireSession();
@@ -136,7 +138,7 @@ export default async function DailySummaryPage({
   return (
     <div className="flex flex-col gap-4">
       <PageHeader
-        title="Daily summary"
+        title={t("Daily summary")}
         icon={<Calculator size={18} strokeWidth={1.8} />}
         action={<DatePicker date={date} />}
       />
@@ -167,13 +169,12 @@ export default async function DailySummaryPage({
         </form>
       )}
       <p className="text-xs text-muted">
-        Use this at closing time to match your cash drawer — everything below is broken down by
-        how it was paid.
+        {t("Use this at closing time to match your cash drawer — everything below is broken down by how it was paid.")}
       </p>
 
       {session.role === "owner" && (
         <Link href={`/daily-summary/by-staff?date=${date}`} className="flex items-center gap-1.5 rounded-lg border border-border bg-surface px-3.5 py-3 text-sm font-medium text-brand-text">
-          <Users size={14} /> Staff-wise breakdown →
+          <Users size={14} /> {t("Staff-wise breakdown →")}
         </Link>
       )}
 
@@ -183,16 +184,16 @@ export default async function DailySummaryPage({
         </p>
         <p className="mt-1 text-2xl font-bold text-white">{formatMoney(net.cash)}</p>
         <p className="mt-1 text-xs text-white/70">
-          Cash sales + cash udhaar collected − cash paid for purchases − cash paid to vendors
+          {t("Cash sales + cash udhaar collected − cash paid for purchases − cash paid to vendors")}
         </p>
       </section>
 
       <section className="neu-card flex flex-col gap-2 p-4">
         <h2 className="flex items-center gap-1.5 text-sm font-semibold text-foreground">
           {/* eslint-disable-next-line @next/next/no-img-element -- small branded SVG icon */}
-          <img src="/assets/ray-icons/payment.svg" alt="" className="h-3.5 w-3.5" /> Money in — {formatMoney(grandTotalIn)}
+          <img src="/assets/ray-icons/payment.svg" alt="" className="h-3.5 w-3.5" /> {t("daily.moneyIn", { amount: formatMoney(grandTotalIn) })}
         </h2>
-        <BreakdownTable title="Sales collected today" byMethod={salesByMethod} />
+        <BreakdownTable title={t("Sales collected today")} byMethod={salesByMethod} />
         <BreakdownTable title="Old udhaar collected today" byMethod={oldCreditCollected} />
         {newCreditGiven > 0 && (
           <p className="text-xs text-credit">
@@ -202,7 +203,7 @@ export default async function DailySummaryPage({
       </section>
 
       <section className="neu-card flex flex-col gap-2 p-4">
-        <h2 className="flex items-center gap-1.5 text-sm font-semibold text-foreground"><Receipt size={14} /> Money out — {formatMoney(grandTotalOut)}</h2>
+        <h2 className="flex items-center gap-1.5 text-sm font-semibold text-foreground"><Receipt size={14} /> {t("daily.moneyOut", { amount: formatMoney(grandTotalOut) })}</h2>
         <BreakdownTable title="Purchases paid today" byMethod={purchasesPaidByMethod} />
         <BreakdownTable title="Vendor payments made today" byMethod={vendorPaymentsByMethod} />
         {newPayableCreated > 0 && (
@@ -213,7 +214,7 @@ export default async function DailySummaryPage({
       </section>
 
       <section className="neu-card p-4">
-        <h2 className="mb-2 text-sm font-semibold text-foreground">Net by payment method</h2>
+        <h2 className="mb-2 text-sm font-semibold text-foreground">{t("Net by payment method")}</h2>
         <div className="flex flex-col gap-1.5 text-sm">
           {METHODS.map((m) => (
             <div key={m} className="flex justify-between">

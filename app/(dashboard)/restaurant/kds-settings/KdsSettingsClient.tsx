@@ -6,8 +6,10 @@ import Link from "next/link";
 import { saveKdsSettingsAction } from "@/lib/actions/restaurant";
 import { PageHeader } from "@/app/components/PageHeader";
 import { Monitor, Check } from "lucide-react";
+import { useT } from "@/lib/i18n/LangContext";
 
 export function KdsSettingsClient({ columns: initialColumns, fontScale: initialFontScale }: { columns: number; fontScale: "normal" | "large" | "extra_large" }) {
+  const { t } = useT();
   const router = useRouter();
   const [columns, setColumns] = useState(initialColumns);
   const [fontScale, setFontScale] = useState<"normal" | "large" | "extra_large">(initialFontScale);
@@ -31,7 +33,7 @@ export function KdsSettingsClient({ columns: initialColumns, fontScale: initialF
   return (
     <div className="flex flex-col gap-3">
       <PageHeader
-        title="Kitchen display settings"
+        title={t("Kitchen display settings")}
         subtitle="How tickets show on the KDS TV/screen — bigger, bolder text helps if it's mounted far from the line."
         icon={<Monitor size={18} strokeWidth={1.8} />}
       />

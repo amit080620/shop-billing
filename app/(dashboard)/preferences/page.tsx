@@ -27,28 +27,28 @@ export default async function PreferencesPage() {
         <div className="neu-card flex items-center justify-between gap-3 px-4 py-3.5">
           <div className="min-w-0 flex-1">
             <p className="text-sm font-medium text-foreground">{t("more.language")}</p>
-            <p className="text-xs text-muted">Applies to this device only</p>
+            <p className="text-xs text-muted">{t("Applies to this device only")}</p>
           </div>
           <LanguageToggle lang={lang} compact />
         </div>
         <div className="neu-card flex items-center justify-between gap-3 px-4 py-3.5">
           <div className="min-w-0 flex-1">
             <p className="text-sm font-medium text-foreground">Theme</p>
-            <p className="text-xs text-muted">Applies to this device only</p>
+            <p className="text-xs text-muted">{t("Applies to this device only")}</p>
           </div>
           <ThemeToggle theme={theme} compact />
         </div>
         <div className="neu-card flex items-center justify-between gap-3 px-4 py-3.5">
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-medium text-foreground">Floating calculator</p>
-            <p className="text-xs text-muted">Auto-fills with the current bill total when open</p>
+            <p className="text-sm font-medium text-foreground">{t("Floating calculator")}</p>
+            <p className="text-xs text-muted">{t("Auto-fills with the current bill total when open")}</p>
           </div>
           <CalculatorToggle enabled={calculatorEnabled} />
         </div>
         <div className="neu-card flex items-center justify-between gap-3 px-4 py-3.5">
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-medium text-foreground">AI shop assistant</p>
-            <p className="text-xs text-muted">Ask about sales, udhar, or stock in plain Hindi/English</p>
+            <p className="text-sm font-medium text-foreground">{t("AI shop assistant")}</p>
+            <p className="text-xs text-muted">{t("Ask about sales, udhar, or stock in plain Hindi/English")}</p>
           </div>
           <AssistantToggle enabled={assistantEnabled} />
         </div>

@@ -4,8 +4,10 @@ import { PageHeader } from "@/app/components/PageHeader";
 import { EmptyState } from "@/app/components/EmptyState";
 import { UserX } from "lucide-react";
 import { WinBackRow } from "./WinBackRow";
+import { getTranslator } from "@/lib/i18n/server";
 
 export default async function WinBackPage() {
+  const { t } = await getTranslator();
   const session = await requireSession();
   const admin = createSupabaseAdminClient();
 
@@ -68,18 +70,17 @@ export default async function WinBackPage() {
   return (
     <div className="flex flex-col gap-4">
       <PageHeader
-        title="Win them back"
-        subtitle="Regulars who've gone quiet — worth a nudge"
+        title={t("Win them back")}
+        subtitle={t("Regulars who've gone quiet — worth a nudge")}
         icon={<UserX size={18} strokeWidth={1.8} />}
       />
 
       <p className="neu-card px-3.5 py-3 text-xs text-muted">
-        Compares each customer against their own usual visiting pattern — someone who used to come every few days
-        and hasn&apos;t shown up in two weeks shows up here; an occasional shopper on a normal gap doesn&apos;t.
+        {t("Compares each customer against their own usual visiting pattern — someone who used to come every few days and hasn't shown up in two weeks shows up here; an occasional shopper on a normal gap doesn't.")}
       </p>
 
       {entries.length === 0 ? (
-        <EmptyState text="Nobody's overdue for a visit right now — your regulars are all still coming back." />
+        <EmptyState text={t("Nobody's overdue for a visit right now — your regulars are all still coming back.")} />
       ) : (
         <ul className="flex flex-col gap-2">
           {entries.map((e) => {

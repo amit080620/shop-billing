@@ -22,6 +22,7 @@ export default async function GymMembersPage({
 }: {
   searchParams: Promise<{ mine?: string }>;
 }) {
+  const { t } = await getTranslator();
   const session = await requireSession();
   const { lang } = await getTranslator();
   const { mine } = await searchParams;
@@ -55,7 +56,7 @@ export default async function GymMembersPage({
   return (
     <div className="flex flex-col gap-3">
       <PageHeader
-        title="Members"
+        title={t("Members")}
         action={
           <Link href="/gym/members/new" className="btn-primary-sm">
             + Sell membership
@@ -95,7 +96,7 @@ export default async function GymMembersPage({
           className="flex shrink-0 items-center gap-1 rounded-full border border-border px-3 py-1.5 text-xs font-medium text-muted"
           style={{ boxShadow: "var(--elev-xs)" }}
         >
-          <CheckCircle2 size={12} /> Attendance
+          <CheckCircle2 size={12} /> {t("Attendance")}
         </Link>
       </div>
 

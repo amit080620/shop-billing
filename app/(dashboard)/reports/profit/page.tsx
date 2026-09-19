@@ -6,12 +6,14 @@ import { EmptyState } from "@/app/components/EmptyState";
 import { TrendingUp } from "lucide-react";
 import { DateRangeControls } from "@/app/components/DateRangeControls";
 import { todayIso, isoDaysAgo } from "@/lib/dateHelpers";
+import { getTranslator } from "@/lib/i18n/server";
 
 export default async function ProfitPage({
   searchParams,
 }: {
   searchParams: Promise<{ from?: string; to?: string }>;
 }) {
+  const { t } = await getTranslator();
   const session = await requireSession();
   const admin = createSupabaseAdminClient();
 
@@ -130,7 +132,7 @@ export default async function ProfitPage({
   return (
     <div className="flex flex-col gap-4">
       <PageHeader
-        title="Profit"
+        title={t("Profit")}
         subtitle="What you actually earned — sales minus what the stock cost you"
         icon={<TrendingUp size={18} strokeWidth={1.8} />}
       />
@@ -139,11 +141,11 @@ export default async function ProfitPage({
 
       <section className="grid grid-cols-2 gap-3">
         <div className="neu-card p-4">
-          <p className="text-xs text-muted">Sales</p>
+          <p className="text-xs text-muted">{t("Sales")}</p>
           <p className="mt-1 text-2xl font-bold text-foreground neu-text">{formatMoney(totalRevenue)}</p>
         </div>
         <div className="neu-card p-4">
-          <p className="text-xs text-muted">Stock cost</p>
+          <p className="text-xs text-muted">{t("Stock cost")}</p>
           <p className="mt-1 text-2xl font-bold text-foreground neu-text">{formatMoney(totalCost)}</p>
         </div>
         <div className="neu-card col-span-2 p-4">
@@ -164,7 +166,7 @@ export default async function ProfitPage({
       <section className="flex flex-col gap-2">
         <h2 className="px-1 text-xs font-semibold uppercase tracking-wide text-muted">Most profitable items</h2>
         {known.length === 0 ? (
-          <EmptyState text="No costed sales in this period yet — record purchases so profit can be worked out." />
+          <EmptyState text={t("No costed sales in this period yet — record purchases so profit can be worked out.")} />
         ) : (
           <ul className="flex flex-col gap-2">
             {known.slice(0, 20).map((r, i) => (

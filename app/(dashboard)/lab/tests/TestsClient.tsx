@@ -12,6 +12,7 @@ import { formatMoney } from "@/lib/format";
 import { PageHeader } from "@/app/components/PageHeader";
 import { EmptyState } from "@/app/components/EmptyState";
 import { TestTube } from "lucide-react";
+import { useT } from "@/lib/i18n/LangContext";
 
 type Test = { id: string; name: string; category: string | null; sampleType: string; price: number; gstPercent: number; turnaroundHours: number; referenceRange: string | null; unit: string | null; isActive: boolean };
 type Package = { id: string; name: string; price: number; isActive: boolean; testNames: string[] };
@@ -26,6 +27,7 @@ function SubmitButton({ label }: { label: string }) {
 }
 
 export function TestsClient({ tests, packages }: { tests: Test[]; packages: Package[] }) {
+  const { t } = useT();
   const router = useRouter();
   const [tab, setTab] = useState<"tests" | "packages">("tests");
   const [showTestForm, setShowTestForm] = useState(false);
@@ -103,7 +105,7 @@ export function TestsClient({ tests, packages }: { tests: Test[]; packages: Pack
                 <input name="turnaroundHours" type="number" min="1" defaultValue={24} placeholder="TAT (hours)" className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand" />
               </div>
               <div className="grid grid-cols-2 gap-2">
-                <input name="price" type="number" min="0" step="0.01" placeholder="Price (₹)" required className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand" />
+                <input name="price" type="number" min="0" step="0.01" placeholder={t("Price (₹)")} required className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand" />
                 <input name="gstPercent" type="number" min="0" step="0.01" placeholder="GST %" className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand" />
               </div>
               <div className="grid grid-cols-2 gap-2">

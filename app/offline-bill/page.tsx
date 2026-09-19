@@ -20,6 +20,7 @@ import { calculateTransactionTotals } from "@/lib/validation/schemas";
 import { determineSupplyType } from "@/lib/gst";
 import { useOnlineStatus } from "@/lib/useOnlineStatus";
 import { syncOfflineBillAction } from "@/lib/actions/bills";
+import { useT } from "@/lib/i18n/LangContext";
 
 function formatMoney(n: number) {
   return `₹${n.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -28,6 +29,7 @@ function formatMoney(n: number) {
 type CartLine = PendingBillItem & { productId: string };
 
 export default function OfflineBillPage() {
+  const { t } = useT();
   const isOnline = useOnlineStatus();
   const [shop, setShop] = useState<ShopContext | null>(null);
   const [products, setProducts] = useState<CachedProduct[]>([]);
@@ -212,7 +214,7 @@ export default function OfflineBillPage() {
     <div className="mx-auto flex max-w-md flex-col gap-4 p-4 pb-24">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-lg font-bold tracking-tight text-foreground md:text-2xl">Offline billing</h1>
+          <h1 className="text-lg font-bold tracking-tight text-foreground md:text-2xl">{t("Offline billing")}</h1>
           <p className="text-xs text-muted">{shop.shopName}</p>
         </div>
         <span
@@ -352,7 +354,7 @@ export default function OfflineBillPage() {
           </div>
 
           <label className="flex flex-col gap-1.5 text-sm">
-            <span className="font-medium text-foreground">Amount paid now (₹)</span>
+            <span className="font-medium text-foreground">{t("Amount paid now (₹)")}</span>
             <input
               type="number"
               value={paidAmount}

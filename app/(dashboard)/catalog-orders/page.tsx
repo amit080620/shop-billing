@@ -7,12 +7,14 @@ import { EmptyState } from "@/app/components/EmptyState";
 import { CatalogOrderRow } from "./CatalogOrderRow";
 import { isModuleEnabled } from "@/lib/modules";
 import { ModuleBlocked } from "@/app/components/ModuleBlocked";
+import { getTranslator } from "@/lib/i18n/server";
 
 export default async function CatalogOrdersPage({
   searchParams,
 }: {
   searchParams: Promise<{ status?: string; deliveryView?: string }>;
 }) {
+  const { t } = await getTranslator();
   const session = await requireSession();
   if (!isModuleEnabled(session.enabledModules, "public_catalog")) return <ModuleBlocked moduleKey="public_catalog" />;
   const { status, deliveryView } = await searchParams;
@@ -56,7 +58,7 @@ export default async function CatalogOrdersPage({
   return (
     <div className="flex flex-col gap-4">
       <PageHeader
-        title="Catalog orders"
+        title={t("Catalog orders")}
          
         icon={<ShoppingBag size={17} strokeWidth={1.8} />}
       />

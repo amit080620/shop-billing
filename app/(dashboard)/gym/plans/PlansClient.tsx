@@ -13,6 +13,7 @@ import { PageHeader } from "@/app/components/PageHeader";
 import { EmptyState } from "@/app/components/EmptyState";
 import { Popup } from "@/app/components/Popup";
 import { ListChecks } from "lucide-react";
+import { useT } from "@/lib/i18n/LangContext";
 
 type Plan = { id: string; name: string; durationDays: number; price: number; ptSessionsIncluded: number; isActive: boolean };
 
@@ -33,6 +34,7 @@ const PRESET_DURATIONS = [
 ];
 
 export function PlansClient({ plans }: { plans: Plan[] }) {
+  const { t } = useT();
   const router = useRouter();
   const [showForm, setShowForm] = useState(false);
   const [durationDays, setDurationDays] = useState(30);
@@ -56,7 +58,7 @@ export function PlansClient({ plans }: { plans: Plan[] }) {
   return (
     <div className="flex flex-col gap-3">
       <PageHeader
-        title="Membership plans"
+        title={t("Membership plans")}
         action={
           <button onClick={() => setShowForm((v) => !v)} className="btn-primary-sm">
             + Plan
@@ -93,7 +95,7 @@ export function PlansClient({ plans }: { plans: Plan[] }) {
             required
             className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand"
           />
-          <input name="price" type="number" min="0" step="0.01" placeholder="Price (₹)" required className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand" />
+          <input name="price" type="number" min="0" step="0.01" placeholder={t("Price (₹)")} required className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand" />
           <input name="ptSessionsIncluded" type="number" min="0" step="1" placeholder="PT sessions included (0 if none)" className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand" />
           {state?.error && <p className="text-sm text-danger">{state.error}</p>}
           <div className="flex gap-2">

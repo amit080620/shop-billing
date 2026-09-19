@@ -4,12 +4,14 @@ import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { PageHeader } from "@/app/components/PageHeader";
 import { EmptyState } from "@/app/components/EmptyState";
 import { ShieldCheck } from "lucide-react";
+import { getTranslator } from "@/lib/i18n/server";
 
 export default async function WarrantyLookupPage({
   searchParams,
 }: {
   searchParams: Promise<{ q?: string }>;
 }) {
+  const { t } = await getTranslator();
   const session = await requireSession();
   const { q } = await searchParams;
   const query = (q ?? "").trim();
@@ -96,7 +98,7 @@ export default async function WarrantyLookupPage({
   return (
     <div className="flex flex-col gap-4">
       <PageHeader
-        title="Warranty lookup"
+        title={t("Warranty lookup")}
         subtitle="Search by customer phone or invoice number to check warranty status."
         icon={<ShieldCheck size={18} strokeWidth={1.8} />}
       />

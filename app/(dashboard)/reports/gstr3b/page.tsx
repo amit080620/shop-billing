@@ -5,12 +5,14 @@ import { formatMoney } from "@/lib/format";
 import { istMonthRange, istYearMonth, MONTHS } from "@/lib/dateHelpers";
 import { PeriodPicker } from "../PeriodPicker";
 import { ExportCsvButton } from "@/app/components/ExportCsvButton";
+import { getTranslator } from "@/lib/i18n/server";
 
 export default async function Gstr3bPage({
   searchParams,
 }: {
   searchParams: Promise<{ year?: string; month?: string }>;
 }) {
+  const { t } = await getTranslator();
   const { year: yearParam, month: monthParam } = await searchParams;
   const now = istYearMonth();
   const year = Number(yearParam) || now.year;
@@ -78,16 +80,13 @@ export default async function Gstr3bPage({
         ← Reports
       </Link>
       <div className="flex items-center justify-between">
-        <h1 className="text-lg font-bold tracking-tight text-foreground md:text-2xl">GSTR-3B</h1>
+        <h1 className="text-lg font-bold tracking-tight text-foreground md:text-2xl">{t("GSTR-3B")}</h1>
         <PeriodPicker year={year} month={month} />
       </div>
-      <p className="text-sm text-muted">{MONTHS[month - 1]} {year} · Summary return</p>
+      <p className="text-sm text-muted">{MONTHS[month - 1]} {year} · {t("Summary return")}</p>
 
       <p className="rounded-lg bg-credit-soft px-3 py-2 text-xs text-credit">
-        Simplified same-head calculation shown below (Output − Input per head). GST law allows
-        cross-utilisation between heads (e.g. IGST credit can offset CGST/SGST liability) in a
-        specific order — for the exact cash payable, verify with your CA or let the GST portal
-        auto-compute it from your filed GSTR-1 + ITC ledger.
+        {t("Simplified same-head calculation shown below (Output − Input per head). GST law allows cross-utilisation between heads (e.g. IGST credit can offset CGST/SGST liability) in a specific order — for the exact cash payable, verify with your CA or let the GST portal auto-compute it from your filed GSTR-1 + ITC ledger.")}
       </p>
 
       <section className="neu-card p-4">
@@ -115,7 +114,7 @@ export default async function Gstr3bPage({
         </p>
         <TotalsGrid taxable={rcm.taxable} cgst={rcm.cgst} sgst={rcm.sgst} igst={rcm.igst} />
         <p className="mt-2 text-xs text-muted">
-          You remit this tax directly to the government rather than paying it to the vendor.
+          {t("You remit this tax directly to the government rather than paying it to the vendor.")}
         </p>
       </section>
 
@@ -123,13 +122,12 @@ export default async function Gstr3bPage({
         <p className="mb-3 text-sm font-semibold text-foreground">4. ITC available</p>
         <TotalsGrid taxable={itc.taxable} cgst={itc.cgst} sgst={itc.sgst} igst={itc.igst} />
         <p className="mt-2 text-xs text-muted">
-          From purchases marked &quot;ITC eligible&quot; this period — this app&apos;s own
-          purchase register, not a GSTN-verified GSTR-2B match.
+          {t("From purchases marked \"ITC eligible\" this period — this app's own purchase register, not a GSTN-verified GSTR-2B match.")}
         </p>
       </section>
 
       <section className="rounded-xl border border-border bg-brand-soft p-4">
-        <p className="mb-3 text-sm font-semibold text-brand-text">Net tax payable (estimate)</p>
+        <p className="mb-3 text-sm font-semibold text-brand-text">{t("Net tax payable (estimate)")}</p>
         <div className="grid grid-cols-3 gap-3 text-center">
           <NetCell label="CGST" value={netCgst} />
           <NetCell label="SGST" value={netSgst} />

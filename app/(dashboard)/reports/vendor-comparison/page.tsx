@@ -4,8 +4,10 @@ import { formatMoney } from "@/lib/format";
 import { PageHeader } from "@/app/components/PageHeader";
 import { EmptyState } from "@/app/components/EmptyState";
 import { GitCompareArrows } from "lucide-react";
+import { getTranslator } from "@/lib/i18n/server";
 
 export default async function VendorComparisonPage() {
+  const { t } = await getTranslator();
   const session = await requireSession();
   const admin = createSupabaseAdminClient();
 
@@ -61,13 +63,13 @@ export default async function VendorComparisonPage() {
   return (
     <div className="flex flex-col gap-4">
       <PageHeader
-        title="Vendor price comparison"
+        title={t("Vendor price comparison")}
         subtitle="Same item, different vendors — who's actually cheapest"
         icon={<GitCompareArrows size={18} strokeWidth={1.8} />}
       />
 
       {comparisons.length === 0 ? (
-        <EmptyState text="No product has been bought from more than one vendor yet — nothing to compare." />
+        <EmptyState text={t("No product has been bought from more than one vendor yet — nothing to compare.")} />
       ) : (
         <ul className="flex flex-col gap-2">
           {comparisons.map((c, i) => (

@@ -13,6 +13,7 @@ import { EmptyState } from "@/app/components/EmptyState";
 import { SearchableSelect } from "@/app/components/SearchableSelect";
 import type { Lang } from "@/lib/i18n/dictionary";
 import { CalendarDays, X } from "lucide-react";
+import { useT } from "@/lib/i18n/LangContext";
 
 type ClassBooking = { id: string; memberId: string; memberName: string };
 type GymClass = {
@@ -63,6 +64,7 @@ export function ClassesClient({
   members: { id: string; name: string; phone: string }[];
   classes: GymClass[];
 }) {
+  const { t } = useT();
   const router = useRouter();
   const [showForm, setShowForm] = useState(false);
   const [dayOfWeek, setDayOfWeek] = useState(1);
@@ -85,7 +87,7 @@ export function ClassesClient({
   return (
     <div className="flex flex-col gap-3">
       <PageHeader
-        title="Classes"
+        title={t("Classes")}
         subtitle="Weekly schedule — a lightweight roster, not a live capacity/waitlist system."
         action={
           isOwner ? (

@@ -5,8 +5,10 @@ import { AlertTriangle, Clock, Package, IndianRupee, TrendingDown, Loader2 } fro
 import { getProfitLeakAction, type ProfitLeak } from "@/lib/actions/profitLeak";
 import { formatMoney } from "@/lib/format";
 import Link from "next/link";
+import { useT } from "@/lib/i18n/LangContext";
 
 export function ProfitLeakClient() {
+  const { t } = useT();
   const [data, setData] = useState<ProfitLeak | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -63,15 +65,15 @@ export function ProfitLeakClient() {
     <div className="flex flex-col gap-4">
       <div className="flex flex-col items-center gap-1.5 rounded-2xl bg-gradient-to-br from-danger to-[#7c1d1d] p-6 text-center text-white">
         <div className="flex items-center gap-1.5 text-xs font-medium opacity-90">
-          <AlertTriangle size={13} /> AT RISK NOW
+          <AlertTriangle size={13} /> {t("AT RISK NOW")}
         </div>
         <p className="text-4xl font-extrabold">{formatMoney(data.totalAtRisk)}</p>
-        <p className="text-xs opacity-80">You could lose this money if nothing is done</p>
+        <p className="text-xs opacity-80">{t("You could lose this money if nothing is done")}</p>
       </div>
 
       {categories.length === 0 ? (
         <div className="neu-card p-6 text-center">
-          <p className="text-sm font-medium text-success">🎉 No leaks found — your business is in good shape!</p>
+          <p className="text-sm font-medium text-success">{t("🎉 No leaks found — your business is in good shape!")}</p>
         </div>
       ) : (
         <ul className="flex flex-col gap-2.5">

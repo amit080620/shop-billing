@@ -8,8 +8,10 @@ import { saveKioskSettingsAction } from "@/lib/actions/gym";
 import { useToast } from "@/app/components/Toast";
 import { PageHeader } from "@/app/components/PageHeader";
 import { Tablet, MessageCircle } from "lucide-react";
+import { useT } from "@/lib/i18n/LangContext";
 
 export function KioskSettingsClient({ isEnabled: initialEnabled, publicToken }: { isEnabled: boolean; publicToken: string | null }) {
+  const { t } = useT();
   const router = useRouter();
   const { showToast } = useToast();
   const [isEnabled, setIsEnabled] = useState(initialEnabled);
@@ -36,7 +38,7 @@ export function KioskSettingsClient({ isEnabled: initialEnabled, publicToken }: 
   return (
     <div className="flex flex-col gap-3">
       <PageHeader
-        title="Self check-in kiosk"
+        title={t("Self check-in kiosk")}
         subtitle="Leave this link open on a tablet or old phone at the entrance — members check themselves in by typing their phone number. No staff needed per member."
         icon={<Tablet size={18} strokeWidth={1.8} />}
       />

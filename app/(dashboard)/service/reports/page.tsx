@@ -6,6 +6,7 @@ import { EmptyState } from "@/app/components/EmptyState";
 import { Wrench } from "lucide-react";
 import { DateRangeControls } from "@/app/components/DateRangeControls";
 import { todayIso, isoDaysAgo } from "@/lib/dateHelpers";
+import { getTranslator } from "@/lib/i18n/server";
 
 const STATUS_LABELS: Record<string, string> = {
   received: "Received",
@@ -20,6 +21,7 @@ export default async function ServiceReportsPage({
 }: {
   searchParams: Promise<{ from?: string; to?: string }>;
 }) {
+  const { t } = await getTranslator();
   const session = await requireSession();
   const admin = createSupabaseAdminClient();
 
@@ -65,7 +67,7 @@ export default async function ServiceReportsPage({
   return (
     <div className="flex flex-col gap-4">
       <PageHeader
-        title="Job report"
+        title={t("Job report")}
         subtitle="Repairs taken in, completed and earned over a period"
         icon={<Wrench size={18} strokeWidth={1.8} />}
       />

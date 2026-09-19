@@ -12,6 +12,7 @@ import { AIStatusBadge, type AIStatusBadgeHandle } from "@/app/components/AIStat
 import { getOcrCorrectionsAction, saveOcrCorrectionsAction } from "@/lib/actions/ocrCorrections";
 import { applyCorrections } from "@/lib/applyCorrections";
 import { Camera, ScanLine, Trash2, Loader2, CheckCircle2, Image as ImageIcon, Sparkles } from "lucide-react";
+import { useT } from "@/lib/i18n/LangContext";
 
 type DraftItem = ScannedMenuItem & { id: string; include: boolean; matchedExistingName: string | null; rawScannedName: string };
 
@@ -52,6 +53,7 @@ function parseMenuText(rawLines: string[]): ScannedMenuItem[] {
 }
 
 export function MenuScanClient() {
+  const { t } = useT();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const galleryInputRef = useRef<HTMLInputElement>(null);
   const aiStatusRef = useRef<AIStatusBadgeHandle>(null);
@@ -327,7 +329,7 @@ export function MenuScanClient() {
           className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-brand px-3 py-2.5 text-sm font-medium text-brand disabled:opacity-60"
         >
           <ImageIcon size={16} />
-          Choose from gallery
+          {t("Choose from gallery")}
         </button>
       </div>
       <p className="text-xs text-muted">

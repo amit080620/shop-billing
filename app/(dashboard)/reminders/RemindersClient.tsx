@@ -49,19 +49,19 @@ export function RemindersClient({
   return (
     <div className="flex flex-col gap-4">
       <PageHeader
-        title="Udhaar reminders"
+        title={t("Udhaar reminders")}
         subtitle="Select customers (or Select all), then work through the list — you still hit Send in WhatsApp yourself for each one."
          
         icon={<Bell size={17} strokeWidth={1.8} />}
       />
 
       <div className="rounded-xl border border-border bg-credit-soft p-4">
-        <p className="text-xs text-credit">Total outstanding</p>
+        <p className="text-xs text-credit">{t("Total outstanding")}</p>
         <p className="mt-1 text-xl font-semibold text-credit">{formatMoney(totalOutstanding)}</p>
       </div>
 
       {customers.length === 0 ? (
-        <EmptyState text="Nothing pending — every customer is settled up right now." />
+        <EmptyState text={t("Nothing pending — every customer is settled up right now.")} />
       ) : (
         <>
           <label className="flex items-center gap-2 text-sm font-medium text-foreground">
@@ -142,8 +142,7 @@ export function RemindersClient({
       )}
 
       <p className="text-center text-xs text-muted">
-        True automatic sending (no tap needed) requires WhatsApp&apos;s paid Business API —
-        select who you need and work through them monthly, one tap each.
+        {t("True automatic sending (no tap needed) requires WhatsApp's paid Business API — select who you need and work through them monthly, one tap each.")}
       </p>
     </div>
   );

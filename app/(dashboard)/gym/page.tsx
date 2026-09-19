@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Dumbbell, Users, CalendarClock, ClipboardList, Layers, Monitor } from "lucide-react";
 import { PageHeader } from "@/app/components/PageHeader";
+import { getTranslator } from "@/lib/i18n/server";
 
 const LINKS = [
   { href: "/gym/members", label: "Members", sub: "Memberships & check-ins", icon: Users },
@@ -12,10 +13,11 @@ const LINKS = [
   { href: "/gym/kiosk-settings", label: "Check-in kiosk", sub: "Self check-in screen setup", icon: Monitor },
 ];
 
-export default function GymHubPage() {
+export default async function GymHubPage() {
+  const { t } = await getTranslator();
   return (
     <div className="flex flex-col gap-3">
-      <PageHeader title="Gym" icon={<Dumbbell size={18} strokeWidth={1.8} />} />
+      <PageHeader title={t("Gym")} icon={<Dumbbell size={18} strokeWidth={1.8} />} />
       <div className="flex flex-col gap-2">
         {LINKS.map((l) => (
           <Link key={l.href} href={l.href} className="neu-card flex items-center gap-3 p-3.5">

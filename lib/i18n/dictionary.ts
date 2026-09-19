@@ -1,5 +1,6 @@
 import { SCREEN_STRINGS } from "./screens";
 import { MENU_TEXT } from "./menuText";
+import { PAGE_TEXT } from "./pageText";
 
 export type Lang = "en" | "hi" | "mr";
 
@@ -1545,7 +1546,7 @@ for (const [key, [en, hi, mr]] of Object.entries(SCREEN_STRINGS)) {
   translations.mr[key] ??= mr;
 }
 // Menu/report text is keyed by its English wording (English falls back to the key).
-for (const [english, [hi, mr]] of Object.entries(MENU_TEXT)) {
+for (const [english, [hi, mr]] of [...Object.entries(MENU_TEXT), ...Object.entries(PAGE_TEXT)]) {
   translations.hi[english] ??= hi;
   translations.mr[english] ??= mr;
 }

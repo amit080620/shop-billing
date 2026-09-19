@@ -99,7 +99,7 @@ export function DateRangeControls({
           {t("rreports.lastMonth")}
         </button>
         <button onClick={setThisQuarter} className={pillClass} style={pillStyle}>
-          This quarter
+          {t("This quarter")}
         </button>
         <button onClick={setLastQuarter} className={pillClass} style={pillStyle}>
           Last quarter

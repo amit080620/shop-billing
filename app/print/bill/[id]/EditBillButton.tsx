@@ -3,10 +3,12 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { editBillQuantitiesAction } from "@/lib/actions/bills";
+import { useT } from "@/lib/i18n/LangContext";
 
 type Item = { id: string; productName: string; quantity: number };
 
 export function EditBillButton({ billId, invoiceNumber, items }: { billId: string; invoiceNumber: string; items: Item[] }) {
+  const { t } = useT();
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [quantities, setQuantities] = useState<Record<string, number>>(Object.fromEntries(items.map((i) => [i.id, i.quantity])));
@@ -44,7 +46,7 @@ export function EditBillButton({ billId, invoiceNumber, items }: { billId: strin
       >
         <span className="flex items-center gap-1">
           {/* eslint-disable-next-line @next/next/no-img-element -- small branded SVG icon */}
-          <img src="/assets/ray-icons/edit.svg" alt="" className="h-3.5 w-3.5" /> Edit bill
+          <img src="/assets/ray-icons/edit.svg" alt="" className="h-3.5 w-3.5" /> {t("Edit bill")}
         </span>
       </button>
 

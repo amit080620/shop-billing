@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { Sparkles, Download, Share2, Loader2 } from "lucide-react";
 import { generatePosterTextAction, type PosterText } from "@/lib/actions/poster";
+import { useT } from "@/lib/i18n/LangContext";
 
 const THEMES = [
   { name: "Diwali gold", bg: ["#7c1d1d", "#c9962c"], accent: "#fff4d6" },
@@ -12,6 +13,7 @@ const THEMES = [
 ];
 
 export function PosterClient({ shopName, initialOccasion }: { shopName: string; initialOccasion?: string }) {
+  const { t } = useT();
   const [occasion, setOccasion] = useState(initialOccasion ?? "");
   const [discountPercent, setDiscountPercent] = useState("");
   const [themeIndex, setThemeIndex] = useState(0);
@@ -93,7 +95,7 @@ export function PosterClient({ shopName, initialOccasion }: { shopName: string; 
     <div className="flex flex-col gap-4">
       <div className="neu-card flex flex-col gap-3 p-4">
         <label className="flex flex-col gap-1.5 text-sm">
-          <span className="font-medium text-foreground">Occasion / Offer (jaise Diwali sale)</span>
+          <span className="font-medium text-foreground">{t("Occasion / offer (e.g. Diwali sale)")}</span>
           <input
             value={occasion}
             onChange={(e) => setOccasion(e.target.value)}

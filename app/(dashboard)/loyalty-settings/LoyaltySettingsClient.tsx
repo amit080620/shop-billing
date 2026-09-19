@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { saveLoyaltySettingsAction } from "@/lib/actions/settings";
 import { formatMoney } from "@/lib/format";
+import { useT } from "@/lib/i18n/LangContext";
 
 export function LoyaltySettingsClient({
   pointsPer100,
@@ -11,6 +12,7 @@ export function LoyaltySettingsClient({
   pointsPer100: number;
   redemptionValue: number;
 }) {
+  const { t } = useT();
   const [rate, setRate] = useState(pointsPer100);
   const [value, setValue] = useState(redemptionValue);
   const [isSaving, setIsSaving] = useState(false);
@@ -38,9 +40,9 @@ export function LoyaltySettingsClient({
     <div className="flex flex-col gap-4">
       <div className="neu-card flex flex-col gap-3 p-4">
         <label className="flex flex-col gap-1">
-          <span className="text-sm font-medium text-foreground">Points earned per ₹100 spent</span>
+          <span className="text-sm font-medium text-foreground">{t("Points earned per ₹100 spent")}</span>
           <span className="text-xs text-muted">
-            Set to 0 to keep the loyalty program off — nothing changes for your customers until you set this above 0.
+            {t("Set to 0 to keep the loyalty program off — nothing changes for your customers until you set this above 0.")}
           </span>
           <input
             type="number"
@@ -53,7 +55,7 @@ export function LoyaltySettingsClient({
         </label>
 
         <label className="flex flex-col gap-1">
-          <span className="text-sm font-medium text-foreground">Value of 1 point when redeemed</span>
+          <span className="text-sm font-medium text-foreground">{t("Value of 1 point when redeemed")}</span>
           <input
             type="number"
             min={0}
@@ -87,7 +89,7 @@ export function LoyaltySettingsClient({
       </button>
 
       <p className="text-center text-xs text-muted">
-        Points are earned on the paid amount only — never on the udhaar (credit) part of a bill.
+        {t("Points are earned on the paid amount only — never on the udhaar (credit) part of a bill.")}
       </p>
     </div>
   );

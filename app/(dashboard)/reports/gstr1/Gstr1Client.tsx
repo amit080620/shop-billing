@@ -2,6 +2,7 @@
 
 import { formatMoney } from "@/lib/format";
 import { ExportCsvButton } from "@/app/components/ExportCsvButton";
+import { useT } from "@/lib/i18n/LangContext";
 
 type B2B = {
   gstin: string;
@@ -40,11 +41,12 @@ export function Gstr1Client({
   hsnSummary: HsnRow[];
   invoiceNumbers: string[];
 }) {
+  const { t } = useT();
   return (
     <div className="flex flex-col gap-5">
       <Section
         title="Table 4 — B2B invoices"
-        sub="Registered customers (GSTIN on file)"
+        sub={t("Registered customers (GSTIN on file)")}
         action={
           <ExportCsvButton
             filename={`gstr1-b2b-${period}.csv`}
@@ -57,7 +59,7 @@ export function Gstr1Client({
         }
       >
         {b2b.length === 0 ? (
-          <Empty text="No B2B invoices this period." />
+          <Empty text={t("No B2B invoices this period.")} />
         ) : (
           <Table
             headers={["GSTIN", "Invoice #", "Taxable", "CGST", "SGST", "IGST", "Total"]}
@@ -76,7 +78,7 @@ export function Gstr1Client({
 
       <Section
         title="Table 5 — B2C Large"
-        sub="Unregistered, inter-state, invoice value over ₹2.5 lakh"
+        sub={t("Unregistered, inter-state, invoice value over ₹2.5 lakh")}
         action={
           <ExportCsvButton
             filename={`gstr1-b2cl-${period}.csv`}
@@ -86,7 +88,7 @@ export function Gstr1Client({
         }
       >
         {b2cLarge.length === 0 ? (
-          <Empty text="No B2C large invoices this period." />
+          <Empty text={t("No B2C large invoices this period.")} />
         ) : (
           <Table
             headers={["Invoice #", "State", "Taxable", "IGST", "Total"]}
@@ -97,7 +99,7 @@ export function Gstr1Client({
 
       <Section
         title="Table 7 — B2C Small (consolidated)"
-        sub="All other B2C sales, grouped by state + rate"
+        sub={t("All other B2C sales, grouped by state + rate")}
         action={
           <ExportCsvButton
             filename={`gstr1-b2cs-${period}.csv`}
@@ -118,7 +120,7 @@ export function Gstr1Client({
 
       <Section
         title="Table 12 — HSN summary"
-        sub="Required for every GSTR-1 filing"
+        sub={t("Required for every GSTR-1 filing")}
         action={
           <ExportCsvButton
             filename={`gstr1-hsn-${period}.csv`}
@@ -139,7 +141,7 @@ export function Gstr1Client({
         )}
       </Section>
 
-      <Section title="Table 13 — Documents issued" sub="Invoice number range for this period">
+      <Section title="Table 13 — Documents issued" sub={t("Invoice number range for this period")}>
         <p className="text-sm text-foreground">
           {invoiceNumbers.length} invoice{invoiceNumbers.length === 1 ? "" : "s"} issued
           {invoiceNumbers.length > 0 && (
@@ -147,7 +149,7 @@ export function Gstr1Client({
           )}
         </p>
         <p className="mt-1 text-xs text-muted">
-          Cancelled invoices aren&apos;t tracked separately in this app yet — review for gaps before filing.
+          {t("Cancelled invoices aren't tracked separately in this app yet — review for gaps before filing.")}
         </p>
       </Section>
     </div>

@@ -395,7 +395,7 @@ async function LabHome({
           style={{ background: "var(--brand)" }}
         >
           <FlaskConical size={20} />
-          New order
+          {t("New order")}
         </Link>
         <Link
           href="/lab/orders"
@@ -512,7 +512,7 @@ async function GymHome({
           style={{ background: "var(--brand)" }}
         >
           <Dumbbell size={20} />
-          Sell membership
+          {t("Sell membership")}
         </Link>
         <Link
           href="/gym/attendance"
@@ -597,7 +597,7 @@ async function ClinicHome({
           style={{ background: "var(--brand)" }}
         >
           <PenLine size={20} />
-          New prescription
+          {t("New prescription")}
         </Link>
         <Link
           href="/clinic/appointments/new"
@@ -999,7 +999,7 @@ async function ServiceHome({
           style={{ background: "var(--brand)" }}
         >
           <PlusIcon />
-          New job
+          {t("New job")}
         </Link>
       </div>
 

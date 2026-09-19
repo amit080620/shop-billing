@@ -3,8 +3,10 @@
 import { useState } from "react";
 import Link from "next/link";
 import { toggleFastBillingAction } from "@/lib/actions/settings";
+import { useT } from "@/lib/i18n/LangContext";
 
 export function FastBillingSettingsClient({ enabled, productCount }: { enabled: boolean; productCount: number }) {
+  const { t } = useT();
   const [isOn, setIsOn] = useState(enabled);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -27,7 +29,7 @@ export function FastBillingSettingsClient({ enabled, productCount }: { enabled: 
       <div className="neu-card flex items-center justify-between p-4">
         <div>
           <p className="text-sm font-medium text-foreground">Fast Billing</p>
-          <p className="text-xs text-muted">A tap-to-add product grid — built for quick counters (chai, snacks, quick food).</p>
+          <p className="text-xs text-muted">{t("A tap-to-add product grid — built for quick counters (chai, snacks, quick food).")}</p>
         </div>
         <button
           onClick={toggle}
@@ -76,8 +78,7 @@ export function FastBillingSettingsClient({ enabled, productCount }: { enabled: 
       )}
 
       <p className="text-center text-xs text-muted">
-        Fast Billing uses the exact same pricing, GST, discount, inventory and printing as normal billing — it&apos;s just a
-        quicker way to reach them.
+        {t("Fast Billing uses the exact same pricing, GST, discount, inventory and printing as normal billing — it's just a quicker way to reach them.")}
       </p>
     </div>
   );

@@ -11,6 +11,7 @@ import { PageHeader } from "@/app/components/PageHeader";
 import { SearchableSelect } from "@/app/components/SearchableSelect";
 import type { Lang } from "@/lib/i18n/dictionary";
 import { UserPlus } from "lucide-react";
+import { useT } from "@/lib/i18n/LangContext";
 
 type Plan = { id: string; name: string; durationDays: number; price: number; ptSessionsIncluded: number };
 type Member = { id: string; name: string; phone: string };
@@ -30,6 +31,7 @@ export function SellMembershipClient({
   prefillMemberName: string;
   prefillMemberPhone: string;
 }) {
+  const { t } = useT();
   const router = useRouter();
   const [selectedMember, setSelectedMember] = useState<Member | null>(prefillMemberId ? { id: prefillMemberId, name: prefillMemberName, phone: prefillMemberPhone } : null);
   const [memberName, setMemberName] = useState(prefillMemberName);
@@ -71,7 +73,7 @@ export function SellMembershipClient({
   return (
     <div className="flex flex-col gap-3 pb-6">
       <PageHeader
-        title="Sell membership"
+        title={t("Sell membership")}
         icon={<UserPlus size={18} strokeWidth={1.8} />}
       />
       <Link href="/gym/members" className="text-sm text-muted">

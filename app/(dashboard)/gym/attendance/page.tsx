@@ -10,6 +10,7 @@ import { CheckInForm } from "./CheckInForm";
 import { ClipboardCheck, Smartphone } from "lucide-react";
 
 export default async function GymAttendancePage() {
+  const { t } = await getTranslator();
   const session = await requireSession();
   const { lang } = await getTranslator();
   const admin = createSupabaseAdminClient();
@@ -42,7 +43,7 @@ export default async function GymAttendancePage() {
   return (
     <div className="flex flex-col gap-3">
       <PageHeader
-        title="Attendance"
+        title={t("Attendance")}
         icon={<ClipboardCheck size={18} strokeWidth={1.8} />}
       />
       <Link href="/gym/members" className="text-sm text-muted">

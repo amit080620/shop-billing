@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Calendar, FileText, ClipboardList, Pill, Settings, CalendarClock } from "lucide-react";
 import { PageHeader } from "@/app/components/PageHeader";
+import { getTranslator } from "@/lib/i18n/server";
 
 const LINKS = [
   { href: "/clinic/appointments", label: "Appointments", sub: "Book & manage patient visits", icon: Calendar },
@@ -11,10 +12,11 @@ const LINKS = [
   { href: "/clinic/settings", label: "Prescription pad settings", sub: "Letterhead, header/footer, Rx fields", icon: Settings },
 ];
 
-export default function ClinicHubPage() {
+export default async function ClinicHubPage() {
+  const { t } = await getTranslator();
   return (
     <div className="flex flex-col gap-3">
-      <PageHeader title="Clinic" icon={<Calendar size={18} strokeWidth={1.8} />} />
+      <PageHeader title={t("Clinic")} icon={<Calendar size={18} strokeWidth={1.8} />} />
 
       <div className="flex flex-col gap-2">
         {LINKS.map((l) => (

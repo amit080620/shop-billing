@@ -1,16 +1,18 @@
 import Link from "next/link";
 import { Gem, Repeat } from "lucide-react";
 import { PageHeader } from "@/app/components/PageHeader";
+import { getTranslator } from "@/lib/i18n/server";
 
 const LINKS = [
   { href: "/jewellery/rates", label: "Today's rates", sub: "Gold & silver rate per gram", icon: Gem },
   { href: "/jewellery/exchanges", label: "Old jewellery exchange", sub: "Exchange value tracking", icon: Repeat },
 ];
 
-export default function JewelleryHubPage() {
+export default async function JewelleryHubPage() {
+  const { t } = await getTranslator();
   return (
     <div className="flex flex-col gap-3">
-      <PageHeader title="Jewellery" icon={<Gem size={18} strokeWidth={1.8} />} />
+      <PageHeader title={t("Jewellery")} icon={<Gem size={18} strokeWidth={1.8} />} />
       <div className="flex flex-col gap-2">
         {LINKS.map((l) => (
           <Link key={l.href} href={l.href} className="neu-card flex items-center gap-3 p-3.5">

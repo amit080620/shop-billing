@@ -8,6 +8,7 @@ import Image from "next/image";
 import { updateShopSettingsAction, uploadLogoAction, removeLogoAction } from "@/lib/actions/settings";
 import { INDIAN_STATES } from "@/lib/constants/states";
 import { BUSINESS_TYPES } from "@/lib/businessType";
+import { useT } from "@/lib/i18n/LangContext";
 
 type ShopSettings = {
   name: string;
@@ -54,6 +55,7 @@ function SubmitButton({ hasError }: { hasError: boolean }) {
 }
 
 export function SettingsClient({ shop }: { shop: ShopSettings }) {
+  const { t } = useT();
   const [state, formAction] = useActionState(keepValuesOnError(updateShopSettingsAction), null);
 
   return (
@@ -64,7 +66,7 @@ export function SettingsClient({ shop }: { shop: ShopSettings }) {
       <div>
         <h1 className="text-lg font-bold tracking-tight text-foreground md:text-2xl">GST & shop profile</h1>
         <p className="text-sm text-muted">
-          Drives invoice numbering, CGST/SGST vs IGST, and every GST report.
+          {t("Drives invoice numbering, CGST/SGST vs IGST, and every GST report.")}
         </p>
       </div>
 
@@ -79,9 +81,9 @@ export function SettingsClient({ shop }: { shop: ShopSettings }) {
 
       <form action={formAction} className="flex flex-col gap-4">
         <Section title="Business">
-          <Field name="name" label="Display name" defaultValue={shop.name} required />
+          <Field name="name" label={t("Display name")} defaultValue={shop.name} required />
           <label className="flex flex-col gap-1.5 text-sm">
-            <span className="font-medium text-foreground">Business type</span>
+            <span className="font-medium text-foreground">{t("Business type")}</span>
             {shop.businessTypeLocked ? (
               <>
                 <div className="flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground">
@@ -92,9 +94,7 @@ export function SettingsClient({ shop }: { shop: ShopSettings }) {
                   {BUSINESS_TYPES.find((b) => b.value === shop.businessType)?.label ?? shop.businessType}
                 </div>
                 <span className="text-xs text-muted">
-                  Locked after signup — switching verticals on a live shop tends to mix up data
-                  between them. If this genuinely needs to change, contact whoever manages your
-                  subscription.
+                  {t("Locked after signup — switching verticals on a live shop tends to mix up data between them. If this genuinely needs to change, contact whoever manages your subscription.")}
                 </span>
               </>
             ) : (
@@ -119,7 +119,7 @@ export function SettingsClient({ shop }: { shop: ShopSettings }) {
           </label>
           <Field
             name="legalName"
-            label="Legal / registered name (optional)"
+            label={t("Legal / registered name (optional)")}
             defaultValue={shop.legalName}
           />
           <label className="flex flex-col gap-1.5 text-sm">
@@ -129,8 +129,8 @@ export function SettingsClient({ shop }: { shop: ShopSettings }) {
               defaultValue={shop.gstScheme}
               className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-brand"
             >
-              <option value="regular">Regular — files GSTR-1 & GSTR-3B, can claim ITC</option>
-              <option value="composition">Composition — fixed low rate, no ITC, no GSTR-1/3B</option>
+              <option value="regular">{t("Regular — files GSTR-1 & GSTR-3B, can claim ITC")}</option>
+              <option value="composition">{t("Composition — fixed low rate, no ITC, no GSTR-1/3B")}</option>
             </select>
             {shop.gstScheme === "composition" && (
               <span className="text-xs text-credit">
@@ -140,17 +140,17 @@ export function SettingsClient({ shop }: { shop: ShopSettings }) {
             )}
           </label>
           <label className="flex flex-col gap-1.5 text-sm">
-            <span className="font-medium text-foreground">How do you price items?</span>
+            <span className="font-medium text-foreground">{t("How do you price items?")}</span>
             <select
               name="priceIncludesGst"
               defaultValue={shop.priceIncludesGst ? "inclusive" : "exclusive"}
               className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-brand"
             >
-              <option value="inclusive">Price is the final amount — e.g. Thali ₹100 bills at exactly ₹100, GST is included</option>
-              <option value="exclusive">Price is before GST — e.g. Thali ₹100 + 5% GST bills at ₹105</option>
+              <option value="inclusive">{t("Price is the final amount — e.g. Thali ₹100 bills at exactly ₹100, GST is included")}</option>
+              <option value="exclusive">{t("Price is before GST — e.g. Thali ₹100 + 5% GST bills at ₹105")}</option>
             </select>
             <span className="text-xs text-muted">
-              Applies to new bills/orders going forward — past ones keep whichever way they were made.
+              {t("Applies to new bills/orders going forward — past ones keep whichever way they were made.")}
             </span>
           </label>
           <Field
@@ -162,9 +162,9 @@ export function SettingsClient({ shop }: { shop: ShopSettings }) {
           />
         </Section>
 
-        <Section title="Address (appears on invoices)">
-          <Field name="addressLine1" label="Address line 1" defaultValue={shop.addressLine1} />
-          <Field name="addressLine2" label="Address line 2" defaultValue={shop.addressLine2} />
+        <Section title={t("Address (appears on invoices)")}>
+          <Field name="addressLine1" label={t("Address line 1")} defaultValue={shop.addressLine1} />
+          <Field name="addressLine2" label={t("Address line 2")} defaultValue={shop.addressLine2} />
           <div className="grid grid-cols-2 gap-3">
             <Field name="city" label="City" defaultValue={shop.city} />
             <Field name="pincode" label="Pincode" defaultValue={shop.pincode} />
@@ -178,7 +178,7 @@ export function SettingsClient({ shop }: { shop: ShopSettings }) {
               className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-brand"
             >
               <option value="" disabled>
-                Select state
+                {t("Select state")}
               </option>
               {INDIAN_STATES.map((s) => (
                 <option key={s.code} value={s.code}>
@@ -192,7 +192,7 @@ export function SettingsClient({ shop }: { shop: ShopSettings }) {
         <Section title="Invoicing">
           <Field
             name="invoicePrefix"
-            label="Invoice number prefix"
+            label={t("Invoice number prefix")}
             defaultValue={shop.invoicePrefix}
           />
           <p className="text-xs text-muted">
@@ -209,23 +209,20 @@ export function SettingsClient({ shop }: { shop: ShopSettings }) {
             placeholder="yourshop@okhdfcbank"
           />
           <p className="text-xs text-muted">
-            When set, a scannable UPI QR code appears on invoices with an outstanding balance —
-            customers can pay the amount due straight from the printed bill.
+            {t("When set, a scannable UPI QR code appears on invoices with an outstanding balance — customers can pay the amount due straight from the printed bill.")}
           </p>
         </Section>
 
-        <Section title="Manager PIN">
+        <Section title={t("Manager PIN")}>
           <Field
             name="managerPin"
-            label="Manager PIN"
+            label={t("Manager PIN")}
             type="password"
             defaultValue={shop.managerPin}
             placeholder="e.g. 1947"
           />
           <p className="text-xs text-muted">
-            Used to protect sensitive actions like cancelling a restaurant order or processing a
-            return — deliberately separate from your login password, so staff never need your
-            real account credentials. Leave blank to disable this protection entirely.
+            {t("Used to protect sensitive actions like cancelling a restaurant order or processing a return — deliberately separate from your login password, so staff never need your real account credentials. Leave blank to disable this protection entirely.")}
           </p>
         </Section>
 
@@ -285,6 +282,7 @@ function Field({
 }
 
 function LogoUploadSection({ currentLogoUrl }: { currentLogoUrl: string | null }) {
+  const { t } = useT();
   const [preview, setPreview] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const [isRemovingLogo, setIsRemovingLogo] = useState(false);
@@ -304,7 +302,7 @@ function LogoUploadSection({ currentLogoUrl }: { currentLogoUrl: string | null }
 
   return (
     <section className="flex flex-col gap-3 neu-card p-4">
-      <p className="text-sm font-semibold text-foreground">Shop logo</p>
+      <p className="text-sm font-semibold text-foreground">{t("Shop logo")}</p>
       <div className="flex items-center gap-4">
         <div
           className={`flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-background transition-opacity duration-300 ${isRemovingLogo ? "scale-90 opacity-0" : ""}`}
@@ -312,7 +310,7 @@ function LogoUploadSection({ currentLogoUrl }: { currentLogoUrl: string | null }
           {displayUrl ? (
             <Image src={displayUrl} alt="Shop logo" width={64} height={64} className="h-full w-full object-contain" unoptimized />
           ) : (
-            <span className="text-xs text-muted">No logo</span>
+            <span className="text-xs text-muted">{t("No logo")}</span>
           )}
         </div>
         <div className="flex flex-col gap-2">
@@ -341,7 +339,7 @@ function LogoUploadSection({ currentLogoUrl }: { currentLogoUrl: string | null }
           )}
         </div>
       </div>
-      <p className="text-xs text-muted">Best size: a square image, about 400×400px — PNG, JPG, WEBP or SVG, under 2MB. Appears on invoices and the dashboard.</p>
+      <p className="text-xs text-muted">{t("Best size: a square image, about 400×400px — PNG, JPG, WEBP or SVG, under 2MB. Appears on invoices and the dashboard.")}</p>
       {state?.error && <p className="text-sm text-credit">{state.error}</p>}
     </section>
   );

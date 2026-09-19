@@ -4,6 +4,7 @@ import { todayIso } from "@/lib/dateHelpers";
 import { useState } from "react";
 import { Plus, Trash2, CheckCircle2 } from "lucide-react";
 import { createHistoricalSalesAction } from "@/lib/actions/salesHistoryImport";
+import { useT } from "@/lib/i18n/LangContext";
 
 type Row = { id: string; name: string; date: string; amount: number; fullyPaid: boolean };
 
@@ -19,6 +20,7 @@ function newRow(): Row {
  * operation (one dated bill per row) is identical, just filled in by
  * hand here instead of by a photo. */
 export function BulkSaleEntryClient() {
+  const { t } = useT();
   const [rows, setRows] = useState<Row[]>([newRow(), newRow(), newRow()]);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -89,7 +91,7 @@ export function BulkSaleEntryClient() {
               </div>
               <label className="flex items-center gap-1.5 text-xs text-muted">
                 <input type="checkbox" checked={row.fullyPaid} onChange={(e) => updateRow(row.id, { fullyPaid: e.target.checked })} className="h-4 w-4 rounded border-border" />
-                Poora paid (udhar ke liye uncheck karein)
+                {t("Fully paid (untick for udhaar)")}
               </label>
             </div>
             <button onClick={() => removeRow(row.id)} disabled={rows.length === 1} aria-label="Remove row" className="shrink-0 p-1 text-muted disabled:opacity-30">
@@ -100,7 +102,7 @@ export function BulkSaleEntryClient() {
       </ul>
 
       <button onClick={addRow} className="flex items-center justify-center gap-1.5 rounded-lg border border-dashed border-border px-3 py-2.5 text-sm font-medium text-brand">
-        <Plus size={15} /> Row jodein
+        <Plus size={15} /> {t("Add row")}
       </button>
 
       <button onClick={saveAll} disabled={isSaving} className="btn-primary disabled:opacity-60">

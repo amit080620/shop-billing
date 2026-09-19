@@ -5,6 +5,7 @@ import { PageHeader } from "@/app/components/PageHeader";
 import { exportReportAction, type ExportDataType } from "@/lib/actions/export";
 import { Download, FileSpreadsheet, FileText } from "lucide-react";
 import { todayIso, isoDaysAgo, isoMonthsAgo } from "@/lib/dateHelpers";
+import { useT } from "@/lib/i18n/LangContext";
 
 const DATA_TYPES: { value: ExportDataType; label: string; onlyFor?: string }[] = [
   { value: "bills", label: "Sales / Bills" },
@@ -16,6 +17,7 @@ const DATA_TYPES: { value: ExportDataType; label: string; onlyFor?: string }[] =
 ];
 
 export function ExportClient({ businessType }: { businessType: string }) {
+  const { t } = useT();
   // A restaurant's sales live in restaurant_orders, not bills — but that
   // option is meaningless noise for every other business type.
   const dataTypes = DATA_TYPES.filter((d) => !d.onlyFor || d.onlyFor === businessType);
@@ -116,10 +118,10 @@ export function ExportClient({ businessType }: { businessType: string }) {
 
   return (
     <div className="flex flex-col gap-4">
-      <PageHeader icon={<FileSpreadsheet size={20} />} title="Export data" subtitle="Download any report as an Excel-ready file" />
+      <PageHeader icon={<FileSpreadsheet size={20} />} title={t("Export data")} subtitle="Download any report as an Excel-ready file" />
 
       <div className="neu-card flex flex-col gap-3 p-4">
-        <p className="text-xs font-medium text-muted">What to export</p>
+        <p className="text-xs font-medium text-muted">{t("What to export")}</p>
         <div className="flex flex-col gap-1.5">
           {dataTypes.map((d) => (
             <button
@@ -141,19 +143,19 @@ export function ExportClient({ businessType }: { businessType: string }) {
       </div>
 
       <div className="neu-card flex flex-col gap-3 p-4">
-        <p className="text-xs font-medium text-muted">Date range</p>
+        <p className="text-xs font-medium text-muted">{t("Date range")}</p>
         <div className="flex gap-2 overflow-x-auto pb-0.5">
           <button onClick={() => preset("today")} className="shrink-0 rounded-full bg-background px-3 py-1.5 text-xs font-medium text-muted" style={{ boxShadow: "var(--elev-xs)" }}>
             Today
           </button>
           <button onClick={() => preset("week")} className="shrink-0 rounded-full bg-background px-3 py-1.5 text-xs font-medium text-muted" style={{ boxShadow: "var(--elev-xs)" }}>
-            This week
+            {t("This week")}
           </button>
           <button onClick={() => preset("month")} className="shrink-0 rounded-full bg-background px-3 py-1.5 text-xs font-medium text-muted" style={{ boxShadow: "var(--elev-xs)" }}>
-            This month
+            {t("This month")}
           </button>
           <button onClick={() => preset("quarter")} className="shrink-0 rounded-full bg-background px-3 py-1.5 text-xs font-medium text-muted" style={{ boxShadow: "var(--elev-xs)" }}>
-            This quarter
+            {t("This quarter")}
           </button>
         </div>
         <div className="grid grid-cols-2 gap-2">
@@ -187,7 +189,7 @@ export function ExportClient({ businessType }: { businessType: string }) {
         {isPending ? "Preparing…" : "Download as PDF"}
       </button>
       <p className="text-center text-xs text-muted">
-        Excel opens in any spreadsheet app; PDF is ready to print or share as-is.
+        {t("Excel opens in any spreadsheet app; PDF is ready to print or share as-is.")}
       </p>
     </div>
   );

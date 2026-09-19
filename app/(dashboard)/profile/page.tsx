@@ -81,8 +81,8 @@ export default async function ProfilePage() {
           <Printer size={18} strokeWidth={1.8} />
         </span>
         <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-medium text-foreground">Thermal print settings</p>
-          <p className="truncate text-xs text-muted">Bold & size for 58mm and 80mm receipts</p>
+          <p className="truncate text-sm font-medium text-foreground">{t("Thermal print settings")}</p>
+          <p className="truncate text-xs text-muted">{t("Bold & size for 58mm and 80mm receipts")}</p>
         </div>
         <ChevronRight size={16} className="shrink-0 text-muted" />
       </Link>
@@ -98,8 +98,8 @@ export default async function ProfilePage() {
           <Palette size={18} strokeWidth={1.8} />
         </span>
         <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-medium text-foreground">Invoice design</p>
-          <p className="truncate text-xs text-muted">Tagline, footer, terms, accent colour</p>
+          <p className="truncate text-sm font-medium text-foreground">{t("Invoice design")}</p>
+          <p className="truncate text-xs text-muted">{t("Tagline, footer, terms, accent colour")}</p>
         </div>
         <ChevronRight size={16} className="shrink-0 text-muted" />
       </Link>
@@ -116,7 +116,7 @@ export default async function ProfilePage() {
         </span>
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-medium text-foreground">Preferences</p>
-          <p className="truncate text-xs text-muted">Language, theme, accent, text colour</p>
+          <p className="truncate text-xs text-muted">{t("Language, theme, accent, text colour")}</p>
         </div>
         <ChevronRight size={16} className="shrink-0 text-muted" />
       </Link>
@@ -133,8 +133,8 @@ export default async function ProfilePage() {
             <ScanLine size={18} strokeWidth={1.8} />
           </span>
           <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-medium text-foreground">Barcode scanning</p>
-            <p className="truncate text-xs text-muted">Camera, hardware scanner, or both</p>
+            <p className="truncate text-sm font-medium text-foreground">{t("Barcode scanning")}</p>
+            <p className="truncate text-xs text-muted">{t("Camera, hardware scanner, or both")}</p>
           </div>
           <ChevronRight size={16} className="shrink-0 text-muted" />
         </Link>
@@ -152,7 +152,7 @@ export default async function ProfilePage() {
         </span>
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-medium text-foreground">Help & guide</p>
-          <p className="truncate text-xs text-muted">How every screen and button works</p>
+          <p className="truncate text-xs text-muted">{t("How every screen and button works")}</p>
         </div>
         <ChevronRight size={16} className="shrink-0 text-muted" />
       </Link>

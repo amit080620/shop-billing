@@ -13,6 +13,7 @@ export default async function AppointmentsPage({
 }: {
   searchParams: Promise<{ date?: string }>;
 }) {
+  const { t } = await getTranslator();
   const session = await requireSession();
   const { lang } = await getTranslator();
   const { date } = await searchParams;
@@ -29,7 +30,7 @@ export default async function AppointmentsPage({
   return (
     <div className="flex flex-col gap-3">
       <PageHeader
-        title="Appointments"
+        title={t("Appointments")}
         action={
           <Link href="/salon/appointments/new" className="btn-primary-sm">
             + Book

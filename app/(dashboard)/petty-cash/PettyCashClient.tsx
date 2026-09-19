@@ -14,6 +14,7 @@ import { Popup } from "@/app/components/Popup";
 import { PageHeader } from "@/app/components/PageHeader";
 import { Camera, X, Wallet} from "lucide-react";
 import { ScanBillModal } from "./ScanBillModal";
+import { useT } from "@/lib/i18n/LangContext";
 
 type Entry = { id: string; description: string; amount: number; category: string | null; expenseType: "business" | "owner"; createdAt: string };
 
@@ -30,6 +31,7 @@ function SubmitButton() {
 }
 
 export function PettyCashClient({ entries }: { entries: Entry[] }) {
+  const { t } = useT();
   const router = useRouter();
   const [showForm, setShowForm] = useState(false);
   const [showScan, setShowScan] = useState(false);
@@ -107,7 +109,7 @@ export function PettyCashClient({ entries }: { entries: Entry[] }) {
           <p className="mt-0.5 text-base font-semibold text-foreground neu-text">{formatMoney(todayTotal)}</p>
         </div>
         <div className="neu-card p-3 text-center">
-          <p className="text-xs text-muted">This month</p>
+          <p className="text-xs text-muted">{t("This month")}</p>
           <p className="mt-0.5 text-base font-semibold text-foreground neu-text">{formatMoney(monthTotal)}</p>
         </div>
       </div>

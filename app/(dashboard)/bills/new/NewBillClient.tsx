@@ -843,7 +843,7 @@ export function NewBillClient({
               </span>
             </div>
             <div className="flex justify-between gap-2">
-              <span className="text-muted">Items</span>
+              <span className="text-muted">{t("Items")}</span>
               <span className="font-medium text-foreground">{cart.length}</span>
             </div>
           </div>

@@ -23,6 +23,7 @@ import { getOcrCorrectionsAction, saveOcrCorrectionsAction } from "@/lib/actions
 import { applyCorrections } from "@/lib/applyCorrections";
 import { Camera, Loader2, Image as ImageIcon } from "lucide-react";
 import { REORDER_HANDOFF_KEY, type ReorderHandoff } from "@/lib/reorderHandoff";
+import { useT } from "@/lib/i18n/LangContext";
 
 type Vendor = { id: string; name: string; gstin: string | null; phone: string | null };
 type Product = { id: string; name: string; hsnCode: string | null; isPharma: boolean };
@@ -44,13 +45,14 @@ type Line = {
 
 function SubmitButton({ disabled }: { disabled: boolean }) {
   const { pending } = useFormStatus();
+  const { t } = useT();
   return (
     <button
       type="submit"
       disabled={pending || disabled}
       className="btn-primary w-full text-center disabled:opacity-50"
     >
-      {pending ? "Saving purchase…" : "Save purchase"}
+      {pending ? t("Saving purchase…") : t("Save purchase")}
     </button>
   );
 }
@@ -66,6 +68,7 @@ export function NewPurchaseClient({
   preselectedVendorId: string | null;
   lang: Lang;
 }) {
+  const { t } = useT();
   const [vendor, setVendor] = useState<Vendor | null>(
     vendors.find((v) => v.id === preselectedVendorId) ?? null,
   );
@@ -377,7 +380,7 @@ export function NewPurchaseClient({
     >
       <input type="hidden" name="payload" value={payload} />
       <div className="flex items-center gap-2">
-        <h1 className="text-lg font-bold tracking-tight text-foreground md:text-2xl">Record purchase</h1>
+        <h1 className="text-lg font-bold tracking-tight text-foreground md:text-2xl">{t("Record purchase")}</h1>
         <InfoTooltip message="Enter what's on the vendor's bill — this is your input GST / ITC record." />
       </div>
 
@@ -405,12 +408,12 @@ export function NewPurchaseClient({
           />
         ) : (
           <p className="rounded-lg border border-dashed border-border px-3.5 py-2.5 text-sm text-muted">
-            No vendors yet — add one below.
+            {t("No vendors yet — add one below.")}
           </p>
         )}
         {!vendor && (
           <InlineQuickAdd<{ id: string; name: string; gstin: string | null; phone: string | null }>
-            triggerLabel="+ Add new vendor"
+            triggerLabel={t("+ Add new vendor")}
             fields={[
               { name: "name", label: "Vendor name", required: true },
               { name: "phone", label: "Phone (optional)", type: "tel" },
@@ -436,7 +439,7 @@ export function NewPurchaseClient({
           />
         </label>
         <label className="flex flex-col gap-1.5 text-sm">
-          <span className="font-medium text-foreground">Purchase date</span>
+          <span className="font-medium text-foreground">{t("Purchase date")}</span>
           <input
             type="date"
             value={purchaseDate}
@@ -449,7 +452,7 @@ export function NewPurchaseClient({
 
       <section className="flex flex-col gap-3">
         <div className="flex items-center justify-between">
-          <p className="text-sm font-medium text-foreground">Items</p>
+          <p className="text-sm font-medium text-foreground">{t("Items")}</p>
           <AIStatusBadge ref={aiStatusRef} />
         </div>
 
@@ -493,10 +496,10 @@ export function NewPurchaseClient({
             className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-brand px-3.5 py-2.5 text-sm font-medium text-brand disabled:opacity-60"
           >
             <ImageIcon size={16} />
-            From gallery
+            {t("From gallery")}
           </button>
         </div>
-        <p className="text-xs text-muted">Gallery works for a vendor bill forwarded on WhatsApp (photo or PDF) too.</p>
+        <p className="text-xs text-muted">{t("Gallery works for a vendor bill forwarded on WhatsApp (photo or PDF) too.")}</p>
         {usedAI && !isScanning && (
           <p className="flex items-center gap-1 text-[11px] font-medium text-brand-text">
             <span className="rounded-full bg-brand-soft px-1.5 py-0.5">✨ AI-read</span> Review the quantities and rates below before submitting.
@@ -520,7 +523,7 @@ export function NewPurchaseClient({
           onClick={addCustomLine}
           className="self-start text-sm font-medium text-brand"
         >
-          + Add item not in catalog
+          {t("+ Add item not in catalog")}
         </button>
 
         {lines.length > 0 && (
@@ -617,7 +620,7 @@ export function NewPurchaseClient({
 
       {lines.length > 0 && (
         <section className="neu-card flex flex-col gap-2 p-4 text-sm">
-          <Row label="Taxable value" value={formatMoney(totals.taxableAmount)} />
+          <Row label={t("Taxable value")} value={formatMoney(totals.taxableAmount)} />
           <Row
             label="GST (exact CGST/SGST/IGST split saved after vendor state is checked)"
             value={`+ ${formatMoney(totals.gstAmount)}`}
@@ -629,7 +632,7 @@ export function NewPurchaseClient({
 
       <section className="flex flex-col gap-3 neu-card p-4">
         <label className="flex flex-col gap-1.5 text-sm">
-          <span className="font-medium text-foreground">Amount paid now (₹)</span>
+          <span className="font-medium text-foreground">{t("Amount paid now (₹)")}</span>
           <input
             type="number"
             min="0"
@@ -647,7 +650,7 @@ export function NewPurchaseClient({
           )}
         </label>
         <div className="flex flex-col gap-1.5 text-sm">
-          <span className="font-medium text-foreground">Paid via</span>
+          <span className="font-medium text-foreground">{t("Paid via")}</span>
           <div className="flex flex-wrap gap-2">
             {(["cash", "card", "upi", "online", "other", "udhar"] as const).map((m) => (
               <button
@@ -679,7 +682,7 @@ export function NewPurchaseClient({
             onChange={(e) => setItcEligible(e.target.checked)}
             className="h-4 w-4 rounded border-border"
           />
-          Eligible for Input Tax Credit (ITC)
+          {t("Eligible for Input Tax Credit (ITC)")}
         </label>
         <label className="flex items-center gap-2 text-sm text-foreground">
           <input
@@ -688,7 +691,7 @@ export function NewPurchaseClient({
             onChange={(e) => setReverseCharge(e.target.checked)}
             className="h-4 w-4 rounded border-border"
           />
-          Reverse charge (you pay this GST directly, not the vendor)
+          {t("Reverse charge (you pay this GST directly, not the vendor)")}
         </label>
       </section>
 
@@ -699,7 +702,7 @@ export function NewPurchaseClient({
       <SubmitButton disabled={!canSubmit} />
       {!canSubmit && (
         <p className="text-center text-xs text-muted">
-          Add a vendor, invoice number, and at least one item with its cost to save.
+          {t("Add a vendor, invoice number, and at least one item with its cost to save.")}
         </p>
       )}
     </form>

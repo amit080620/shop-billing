@@ -7,8 +7,10 @@ import { EmptyState } from "@/app/components/EmptyState";
 import { StartAuditButton } from "./StartAuditButton";
 import { isModuleEnabled } from "@/lib/modules";
 import { ModuleBlocked } from "@/app/components/ModuleBlocked";
+import { getTranslator } from "@/lib/i18n/server";
 
 export default async function StockAuditListPage() {
+  const { t } = await getTranslator();
   const session = await requireSession();
   if (!isModuleEnabled(session.enabledModules, "stock_audit")) return <ModuleBlocked moduleKey="stock_audit" />;
   const admin = createSupabaseAdminClient();
@@ -23,7 +25,7 @@ export default async function StockAuditListPage() {
   return (
     <div className="flex flex-col gap-4">
       <PageHeader
-        title="Stock audit"
+        title={t("Stock audit")}
         subtitle="Count what's actually on the shelf, reconcile against the system."
          
         icon={<ClipboardCheck size={17} strokeWidth={1.8} />}
@@ -32,7 +34,7 @@ export default async function StockAuditListPage() {
       <StartAuditButton />
 
       {(!audits || audits.length === 0) ? (
-        <EmptyState text="No counts done yet." />
+        <EmptyState text={t("No counts done yet.")} />
       ) : (
         <ul className="flex flex-col gap-2">
           {audits.map((a) => (

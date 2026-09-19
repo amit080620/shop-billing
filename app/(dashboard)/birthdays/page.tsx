@@ -4,8 +4,10 @@ import { PageHeader } from "@/app/components/PageHeader";
 import { EmptyState } from "@/app/components/EmptyState";
 import { Cake } from "lucide-react";
 import { BirthdayRow } from "./BirthdayRow";
+import { getTranslator } from "@/lib/i18n/server";
 
 export default async function BirthdaysPage() {
+  const { t } = await getTranslator();
   const session = await requireSession();
   const admin = createSupabaseAdminClient();
 
@@ -54,7 +56,7 @@ export default async function BirthdaysPage() {
   return (
     <div className="flex flex-col gap-4">
       <PageHeader
-        title="Birthdays"
+        title={t("Birthdays")}
         subtitle="A quick greeting is the cheapest way to bring a customer back"
         icon={<Cake size={18} strokeWidth={1.8} />}
       />
@@ -62,7 +64,7 @@ export default async function BirthdaysPage() {
       <section className="flex flex-col gap-2">
         <h2 className="px-1 text-xs font-semibold uppercase tracking-wide text-muted">Today</h2>
         {todays.length === 0 ? (
-          <EmptyState text="No birthdays today." />
+          <EmptyState text={t("No birthdays today.")} />
         ) : (
           <ul className="flex flex-col gap-2">
             {todays.map((c) => (
@@ -75,7 +77,7 @@ export default async function BirthdaysPage() {
       <section className="flex flex-col gap-2">
         <h2 className="px-1 text-xs font-semibold uppercase tracking-wide text-muted">Next 30 days</h2>
         {upcoming.length === 0 ? (
-          <EmptyState text="Nothing coming up in the next month." />
+          <EmptyState text={t("Nothing coming up in the next month.")} />
         ) : (
           <ul className="flex flex-col gap-2">
             {upcoming.map((c) => (
@@ -87,8 +89,7 @@ export default async function BirthdaysPage() {
 
       {withDates.length === 0 && (
         <p className="neu-card px-3.5 py-3 text-xs text-muted">
-          No customer has a birth date saved yet. Add one while creating or editing a customer, and they&apos;ll show
-          up here automatically.
+          {t("No customer has a birth date saved yet. Add one while creating or editing a customer, and they'll show up here automatically.")}
         </p>
       )}
     </div>

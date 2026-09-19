@@ -3,13 +3,15 @@ import { listMedicineLibraryAction } from "@/lib/actions/clinic";
 import { PageHeader } from "@/app/components/PageHeader";
 import { Pill } from "lucide-react";
 import { MedicineLibraryClient } from "./MedicineLibraryClient";
+import { getTranslator } from "@/lib/i18n/server";
 
 export default async function MedicineLibraryPage() {
+  const { t } = await getTranslator();
   const medicines = await listMedicineLibraryAction();
 
   return (
     <div className="flex flex-col gap-3">
-      <PageHeader title="Medicine library" icon={<Pill size={18} strokeWidth={1.8} />} />
+      <PageHeader title={t("Medicine library")} icon={<Pill size={18} strokeWidth={1.8} />} />
       <Link href="/clinic" className="text-sm text-muted">
         ← Clinic
       </Link>

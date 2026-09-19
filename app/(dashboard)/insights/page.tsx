@@ -8,12 +8,14 @@ import { ModuleBlocked } from "@/app/components/ModuleBlocked";
 import { TrendingUp, Flame, TrendingDown } from "lucide-react";
 import { DateRangeControls } from "@/app/components/DateRangeControls";
 import { todayIso, isoDaysAgo } from "@/lib/dateHelpers";
+import { getTranslator } from "@/lib/i18n/server";
 
 export default async function InsightsPage({
   searchParams,
 }: {
   searchParams: Promise<{ from?: string; to?: string }>;
 }) {
+  const { t } = await getTranslator();
   const session = await requireSession();
   if (!isModuleEnabled(session.enabledModules, "advanced_reports")) return <ModuleBlocked moduleKey="advanced_reports" />;
   const admin = createSupabaseAdminClient();
@@ -208,22 +210,20 @@ export default async function InsightsPage({
   return (
     <div className="flex flex-col gap-4">
       <PageHeader
-        title="Inventory insights"
+        title={t("Inventory insights")}
         subtitle="Based on your own sales data — no external AI involved."
         icon={<TrendingUp size={18} strokeWidth={1.8} />}
       />
 
       <p className="neu-card px-3.5 py-3 text-xs text-muted">
-        These are statistics from your actual bills — fast/slow movers and stock sitting idle.
-        Deeper forecasting (festival demand, seasonal trends) would need an external AI service
-        with its own API key and running cost, which isn&apos;t wired up here.
+        {t("These are statistics from your actual bills — fast/slow movers and stock sitting idle. Deeper forecasting (festival demand, seasonal trends) would need an external AI service with its own API key and running cost, which isn't wired up here.")}
       </p>
 
       <DateRangeControls from={fromDate} to={toDate} basePath="/insights" />
 
       <section className="flex flex-col gap-2">
         <div className="flex items-center justify-between">
-          <h2 className="flex items-center gap-1.5 text-sm font-semibold text-foreground"><Flame size={14} /> Fast movers</h2>
+          <h2 className="flex items-center gap-1.5 text-sm font-semibold text-foreground"><Flame size={14} /> {t("Fast movers")}</h2>
           {overallChangePercent !== null && (
             <span className={`text-xs font-medium ${overallChangePercent >= 0 ? "text-success" : "text-danger"}`}>
               {overallChangePercent >= 0 ? "▲" : "▼"} {Math.abs(overallChangePercent)}% vs previous period
@@ -264,13 +264,13 @@ export default async function InsightsPage({
 
       <section className="flex flex-col gap-2">
         <div className="flex items-center justify-between">
-          <h2 className="flex items-center gap-1.5 text-sm font-semibold text-foreground"><TrendingDown size={14} /> Dead stock (no sale in 30+ days)</h2>
+          <h2 className="flex items-center gap-1.5 text-sm font-semibold text-foreground"><TrendingDown size={14} /> {t("Dead stock (no sale in 30+ days)")}</h2>
           {totalDeadValue > 0 && (
             <span className="text-xs text-credit">{formatMoney(totalDeadValue)} tied up</span>
           )}
         </div>
         {deadStock.length === 0 ? (
-          <EmptyState text="Nothing gathering dust — your stock is moving well." />
+          <EmptyState text={t("Nothing gathering dust — your stock is moving well.")} />
         ) : (
           <ul className="flex flex-col gap-2">
             {deadStock.map((p) => (

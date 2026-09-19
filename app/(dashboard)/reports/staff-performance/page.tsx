@@ -6,12 +6,14 @@ import { EmptyState } from "@/app/components/EmptyState";
 import { Users } from "lucide-react";
 import { DateRangeControls } from "@/app/components/DateRangeControls";
 import { todayIso, isoDaysAgo } from "@/lib/dateHelpers";
+import { getTranslator } from "@/lib/i18n/server";
 
 export default async function StaffPerformancePage({
   searchParams,
 }: {
   searchParams: Promise<{ from?: string; to?: string }>;
 }) {
+  const { t } = await getTranslator();
   const session = await requireSession();
   const admin = createSupabaseAdminClient();
 
@@ -62,7 +64,7 @@ export default async function StaffPerformancePage({
 
   return (
     <div className="flex flex-col gap-4">
-      <PageHeader title="Staff performance" subtitle="Who's selling, who's collecting" icon={<Users size={18} strokeWidth={1.8} />} />
+      <PageHeader title={t("Staff performance")} subtitle={t("Who's selling, who's collecting")} icon={<Users size={18} strokeWidth={1.8} />} />
 
       <DateRangeControls from={fromDate} to={toDate} basePath="/reports/staff-performance" />
 

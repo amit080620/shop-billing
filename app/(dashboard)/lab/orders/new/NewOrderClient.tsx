@@ -10,6 +10,7 @@ import { PageHeader } from "@/app/components/PageHeader";
 import { SearchableSelect } from "@/app/components/SearchableSelect";
 import type { Lang } from "@/lib/i18n/dictionary";
 import { FlaskConical, Footprints, Home } from "lucide-react";
+import { useT } from "@/lib/i18n/LangContext";
 
 type Test = { id: string; name: string; price: number; sampleType: string };
 type Package = { id: string; name: string; price: number };
@@ -28,6 +29,7 @@ export function NewOrderClient({
   patients: Patient[];
   staff: { id: string; name: string }[];
 }) {
+  const { t } = useT();
   const router = useRouter();
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [patientName, setPatientName] = useState("");
@@ -82,7 +84,7 @@ export function NewOrderClient({
   return (
     <div className="flex flex-col gap-3 pb-6">
       <PageHeader
-        title="New order"
+        title={t("New order")}
         icon={<FlaskConical size={18} strokeWidth={1.8} />}
       />
       <Link href="/lab/orders" className="text-sm text-muted">

@@ -8,10 +8,12 @@ import { AddToCalendarButton } from "./AddToCalendarButton";
 import { FestivalNoteBox } from "./FestivalNoteBox";
 import { PartyPopper, Sparkles } from "lucide-react";
 import Link from "next/link";
+import { getTranslator } from "@/lib/i18n/server";
 
 const TRENDABLE_WINDOW_DAYS = 45; // only bother checking last-year sales for festivals coming up reasonably soon
 
 export default async function FestivalsPage() {
+  const { t } = await getTranslator();
   const session = await requireSession();
   const admin = createSupabaseAdminClient();
 
@@ -92,15 +94,13 @@ export default async function FestivalsPage() {
   return (
     <div className="flex flex-col gap-4">
       <PageHeader
-        title="Festival planner"
+        title={t("Festival planner")}
         subtitle="Plan stock 15–20 days ahead of India's major festivals."
         icon={<PartyPopper size={18} strokeWidth={1.8} />}
       />
 
       <p className="neu-card px-3.5 py-3 text-xs text-muted">
-        &quot;Sold well last year&quot; only appears once you have a year of sales history for that
-        window — until then, you&apos;ll see catalog matches based on the festival&apos;s usual
-        categories. Lunar-calendar festivals (marked ~) can shift by a day or two closer to the date.
+        {t("\"Sold well last year\" only appears once you have a year of sales history for that window — until then, you'll see catalog matches based on the festival's usual categories. Lunar-calendar festivals (marked ~) can shift by a day or two closer to the date.")}
       </p>
 
       <ul className="flex flex-col gap-3">
@@ -118,7 +118,7 @@ export default async function FestivalsPage() {
                 <div>
                   <p className="text-sm font-semibold text-foreground">
                     {f.approximate ? "~ " : ""}
-                    {f.name}
+                    {t(f.name)}
                   </p>
                   <p className="text-xs text-muted">
                     {f.dateObj.toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata", weekday: "short", day: "numeric", month: "long", year: "numeric" })}
@@ -149,7 +149,7 @@ export default async function FestivalsPage() {
 
               <div className="mt-3">
                 <p className="text-xs font-medium text-muted">
-                  {matched.length > 0 ? "Your products that usually fit this festival" : "Suggested categories (none in your catalog yet)"}
+                  {matched.length > 0 ? t("Your products that usually fit this festival") : t("Suggested categories (none in your catalog yet)")}
                 </p>
                 {matched.length > 0 ? (
                   <ul className="mt-1.5 flex flex-col gap-1">
@@ -179,7 +179,7 @@ export default async function FestivalsPage() {
                   <div className="mt-1.5 flex flex-wrap gap-1.5">
                     {f.prepHints.map((hint) => (
                       <span key={hint} className="rounded-full bg-background px-2.5 py-1 text-xs text-muted">
-                        {hint}
+                        {t(hint)}
                       </span>
                     ))}
                   </div>
@@ -192,7 +192,7 @@ export default async function FestivalsPage() {
                   href={`/festival-poster?occasion=${encodeURIComponent(f.name)}`}
                   className="flex items-center gap-1.5 rounded-lg border border-brand px-3 py-1.5 text-xs font-medium text-brand"
                 >
-                  <Sparkles size={13} /> Poster banayein
+                  <Sparkles size={13} /> {t("Create poster")}
                 </Link>
               </div>
               <FestivalNoteBox slug={f.slug} initialNote={notesBySlug.get(f.slug) ?? ""} />

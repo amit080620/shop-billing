@@ -23,7 +23,7 @@ export function PurchaseHubClient({ purchases, payments }: { purchases: Purchase
 
   return (
     <div className="flex flex-col gap-4">
-      <PageHeader title="Purchase" icon={<ShoppingCart size={18} strokeWidth={1.8} />} />
+      <PageHeader title={t("Purchase")} icon={<ShoppingCart size={18} strokeWidth={1.8} />} />
 
       <div className="flex gap-2">
         {(["purchase", "history"] as const).map((ctx) => (

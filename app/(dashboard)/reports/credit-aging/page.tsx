@@ -6,8 +6,10 @@ import { PageHeader } from "@/app/components/PageHeader";
 import { EmptyState } from "@/app/components/EmptyState";
 import { AlertTriangle } from "lucide-react";
 import { AgingRow } from "./AgingRow";
+import { getTranslator } from "@/lib/i18n/server";
 
 export default async function CreditAgingPage() {
+  const { t } = await getTranslator();
   const session = await requireSession();
   const admin = createSupabaseAdminClient();
 
@@ -86,18 +88,18 @@ export default async function CreditAgingPage() {
   return (
     <div className="flex flex-col gap-4">
       <PageHeader
-        title="Udhaar aging"
-        subtitle="Who's owed the longest — chase the oldest first"
+        title={t("Udhaar aging")}
+        subtitle={t("Who's owed the longest — chase the oldest first")}
         icon={<AlertTriangle size={18} strokeWidth={1.8} />}
       />
 
       <div className="neu-card p-4 text-center">
-        <p className="text-xs text-muted">Total outstanding</p>
+        <p className="text-xs text-muted">{t("Total outstanding")}</p>
         <p className="mt-1 text-3xl font-bold text-credit neu-text">{formatMoney(totalOutstanding)}</p>
       </div>
 
       {entries.length === 0 ? (
-        <EmptyState text="No outstanding udhaar right now." />
+        <EmptyState text={t("No outstanding udhaar right now.")} />
       ) : (
         sections.map(
           (section) =>

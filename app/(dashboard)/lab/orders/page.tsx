@@ -5,6 +5,7 @@ import { PageHeader } from "@/app/components/PageHeader";
 import { EmptyState } from "@/app/components/EmptyState";
 import { formatDateTime } from "@/lib/format";
 import { FlaskConical, ClipboardList } from "lucide-react";
+import { getTranslator } from "@/lib/i18n/server";
 
 const STATUS_LABELS: Record<string, string> = {
   booked: "Booked",
@@ -30,6 +31,7 @@ export default async function LabOrdersPage({
 }: {
   searchParams: Promise<{ status?: string }>;
 }) {
+  const { t } = await getTranslator();
   const session = await requireSession();
   const { status } = await searchParams;
   const admin = createSupabaseAdminClient();
@@ -55,7 +57,7 @@ export default async function LabOrdersPage({
         icon={<FlaskConical size={18} strokeWidth={1.8} />}
       />
       <Link href="/lab/tests" className="flex items-center gap-1 text-sm text-muted">
-        <ClipboardList size={14} /> Test catalog & packages
+        <ClipboardList size={14} /> {t("Test catalog & packages")}
       </Link>
 
       <div className="flex gap-2 overflow-x-auto pb-1">

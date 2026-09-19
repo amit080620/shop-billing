@@ -8,10 +8,12 @@ import { fileToBase64 } from "@/lib/fileToBase64";
 import { createHistoricalSalesAction } from "@/lib/actions/salesHistoryImport";
 import { parseLenientDate } from "@/lib/parseLenientDate";
 import { AIStatusBadge, type AIStatusBadgeHandle } from "@/app/components/AIStatusBadge";
+import { useT } from "@/lib/i18n/LangContext";
 
 type DraftEntry = { id: string; name: string; date: string; amount: number; fullyPaid: boolean; include: boolean };
 
 export function SalesHistoryImportClient() {
+  const { t } = useT();
   const [entries, setEntries] = useState<DraftEntry[]>([]);
   const [isScanning, setIsScanning] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -135,7 +137,7 @@ export function SalesHistoryImportClient() {
           className="btn-primary flex flex-1 items-center justify-center gap-2 disabled:opacity-60"
         >
           {isScanning ? <Loader2 size={16} className="animate-spin" /> : <Camera size={16} />}
-          {isScanning ? "Padh rahe hain…" : "Photo kheenchein"}
+          {isScanning ? "Reading…" : "Take photo"}
         </button>
         <button
           type="button"
@@ -144,7 +146,7 @@ export function SalesHistoryImportClient() {
           className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-brand px-3 py-2.5 text-sm font-medium text-brand disabled:opacity-60"
         >
           <ImageIcon size={16} />
-          Gallery se chunein
+          {t("Choose from gallery")}
         </button>
       </div>
       <div className="flex justify-center">

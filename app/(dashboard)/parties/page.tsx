@@ -7,6 +7,7 @@ import { isModuleEnabled } from "@/lib/modules";
 import { PageHeader } from "@/app/components/PageHeader";
 import { Users } from "lucide-react";
 import Link from "next/link";
+import { getTranslator } from "@/lib/i18n/server";
 
 const PAGE_SIZE = 50;
 
@@ -101,6 +102,7 @@ export default async function PartiesPage({
 }: {
   searchParams: Promise<{ context?: string; page?: string; q?: string }>;
 }) {
+  const { t } = await getTranslator();
   const session = await requireSession();
   const { context, page: pageParam, q } = await searchParams;
   const activeContext = context === "suppliers" ? "suppliers" : "customers";
@@ -108,7 +110,7 @@ export default async function PartiesPage({
 
   return (
     <div className="flex flex-col gap-3">
-      <PageHeader title="Parties" icon={<Users size={18} strokeWidth={1.8} />} />
+      <PageHeader title={t("Parties")} icon={<Users size={18} strokeWidth={1.8} />} />
 
       {/* Top-level context switch — Customers vs Suppliers, genuinely
           one screen instead of two separate menu entries, matching

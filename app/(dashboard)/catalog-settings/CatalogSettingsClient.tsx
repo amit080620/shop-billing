@@ -7,6 +7,7 @@ import Link from "next/link";
 import { saveCatalogSettingsAction } from "@/lib/actions/catalog";
 import { PageHeader } from "@/app/components/PageHeader";
 import { Store, Inbox } from "lucide-react";
+import { useT } from "@/lib/i18n/LangContext";
 
 export function CatalogSettingsClient({
   isEnabled: initialEnabled,
@@ -27,6 +28,7 @@ export function CatalogSettingsClient({
   closedFrom: string | null;
   closedUntil: string | null;
 }) {
+  const { t } = useT();
   const router = useRouter();
   const [enabled, setEnabled] = useState(initialEnabled);
   const [bannerText, setBannerText] = useState(initialBanner);
@@ -68,7 +70,7 @@ export function CatalogSettingsClient({
   return (
     <div className="flex flex-col gap-4 pb-6">
       <PageHeader
-        title="Catalog link"
+        title={t("Catalog link")}
         subtitle="Share one link where anyone can browse your items with photos and order — no app, no login for them."
         icon={<Store size={18} strokeWidth={1.8} />}
       />
@@ -77,13 +79,13 @@ export function CatalogSettingsClient({
       </Link>
 
       <label className="flex items-center justify-between rounded-xl border border-border bg-surface px-4 py-3.5 shadow-sm">
-        <span className="text-sm font-medium text-foreground">Enable public catalog link</span>
+        <span className="text-sm font-medium text-foreground">{t("Enable public catalog link")}</span>
         <input type="checkbox" checked={enabled} onChange={(e) => setEnabled(e.target.checked)} className="h-5 w-5 rounded border-border" />
       </label>
 
       <div className="flex flex-col gap-2.5 rounded-xl border border-border bg-surface px-4 py-3.5 shadow-sm">
         <label className="flex items-center justify-between">
-          <span className="text-sm font-medium text-foreground">Offer delivery</span>
+          <span className="text-sm font-medium text-foreground">{t("Offer delivery")}</span>
           <input
             type="checkbox"
             checked={deliveryEnabled}
@@ -109,8 +111,8 @@ export function CatalogSettingsClient({
       <div className="flex flex-col gap-2.5 rounded-xl border border-danger/40 bg-danger-soft px-4 py-3.5">
         <label className="flex items-center justify-between">
           <div>
-            <span className="text-sm font-medium text-foreground">Temporarily closed</span>
-            <p className="text-xs text-muted">Customers see a closed message instead of the menu — no new orders come in.</p>
+            <span className="text-sm font-medium text-foreground">{t("Temporarily closed")}</span>
+            <p className="text-xs text-muted">{t("Customers see a closed message instead of the menu — no new orders come in.")}</p>
           </div>
           <input
             type="checkbox"
@@ -145,8 +147,8 @@ export function CatalogSettingsClient({
 
       <Link href="/catalog-settings/menu-pdf" className="neu-card flex items-center justify-between px-4 py-3.5">
         <div>
-          <p className="text-sm font-medium text-foreground">Menu PDF</p>
-          <p className="text-xs text-muted">Downloadable menu with clickable items that link to ordering</p>
+          <p className="text-sm font-medium text-foreground">{t("Menu PDF")}</p>
+          <p className="text-xs text-muted">{t("Downloadable menu with clickable items that link to ordering")}</p>
         </div>
         <span className="text-muted">›</span>
       </Link>
@@ -176,7 +178,7 @@ export function CatalogSettingsClient({
       )}
 
       <label className="flex flex-col gap-1.5 text-sm">
-        <span className="font-medium text-foreground">Banner message (optional)</span>
+        <span className="font-medium text-foreground">{t("Banner message (optional)")}</span>
         <input
           value={bannerText}
           onChange={(e) => setBannerText(e.target.value)}
@@ -186,7 +188,7 @@ export function CatalogSettingsClient({
       </label>
 
       <p className="text-xs text-muted">
-        Which items show up, and any offer price/badge on them, is controlled per-item in Products — look for &quot;Show this item in the public catalog&quot; on each item.
+        {t("Which items show up, and any offer price/badge on them, is controlled per-item in Products — look for \"Show this item in the public catalog\" on each item.")}
       </p>
 
       {error && <p className="text-sm text-danger">{error}</p>}
@@ -199,7 +201,7 @@ export function CatalogSettingsClient({
       </button>
 
       <Link href="/catalog-orders" className="flex items-center justify-center gap-1.5 rounded-xl border border-border bg-surface px-4 py-3.5 text-center text-sm font-medium text-brand shadow-sm">
-        <Inbox size={14} /> View incoming orders
+        <Inbox size={14} /> {t("View incoming orders")}
       </Link>
     </div>
   );

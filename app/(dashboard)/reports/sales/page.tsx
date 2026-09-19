@@ -7,12 +7,14 @@ import { EmptyState } from "@/app/components/EmptyState";
 import { DateRangeControls } from "@/app/components/DateRangeControls";
 import { BarChart3 } from "lucide-react";
 import { todayIso, isoDaysAgo } from "@/lib/dateHelpers";
+import { getTranslator } from "@/lib/i18n/server";
 
 export default async function SalesReportPage({
   searchParams,
 }: {
   searchParams: Promise<{ from?: string; to?: string }>;
 }) {
+  const { t } = await getTranslator();
   const session = await requireSession();
   const { from: fromParam, to: toParam } = await searchParams;
   const fromDate = fromParam || isoDaysAgo(6);
@@ -37,13 +39,13 @@ export default async function SalesReportPage({
 
   return (
     <div className="flex flex-col gap-4">
-      <PageHeader title="Sales report" subtitle="Every bill in the period, at a glance" icon={<BarChart3 size={18} strokeWidth={1.8} />} />
+      <PageHeader title={t("Sales report")} subtitle="Every bill in the period, at a glance" icon={<BarChart3 size={18} strokeWidth={1.8} />} />
 
       <DateRangeControls from={fromDate} to={toDate} basePath="/reports/sales" />
 
       <section className="grid grid-cols-2 gap-3">
         <div className="neu-card p-4">
-          <p className="text-xs text-muted">Total sales</p>
+          <p className="text-xs text-muted">{t("Total sales")}</p>
           <p className="mt-1 text-2xl font-bold text-foreground neu-text">{formatMoney(totalSales)}</p>
         </div>
         <div className="neu-card p-4">

@@ -263,7 +263,7 @@ export default async function PrintBillPage({
             business type. */}
         <div className="flex items-center justify-between gap-3">
           <Link href="/bills/all" className="text-sm font-medium text-gray-500 hover:text-gray-900">
-            ← All bills
+            {t("← All bills")}
           </Link>
           <Link href="/" className="btn-primary-sm">
             + New bill
@@ -326,7 +326,7 @@ export default async function PrintBillPage({
                 href={`/returns/new?billId=${bill.id}`}
                 className="inline-flex items-center gap-1 rounded-full border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50"
               >
-                ↩ Return
+                {t("↩ Return")}
               </Link>
             )}
             {hasPermission(session, "edit_bills") && (

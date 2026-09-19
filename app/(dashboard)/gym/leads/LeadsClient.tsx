@@ -14,6 +14,7 @@ import { PageHeader } from "@/app/components/PageHeader";
 import { EmptyState } from "@/app/components/EmptyState";
 import { Popup } from "@/app/components/Popup";
 import { UserPlus } from "lucide-react";
+import { useT } from "@/lib/i18n/LangContext";
 
 type Lead = {
   id: string;
@@ -47,6 +48,7 @@ function SubmitButton() {
 }
 
 export function LeadsClient({ leads }: { leads: Lead[] }) {
+  const { t } = useT();
   const router = useRouter();
   const [showForm, setShowForm] = useState(false);
   const [source, setSource] = useState("");
@@ -72,7 +74,7 @@ export function LeadsClient({ leads }: { leads: Lead[] }) {
   return (
     <div className="flex flex-col gap-3">
       <PageHeader
-        title="Leads"
+        title={t("Leads")}
         subtitle="Trial enquiries and walk-ins — track who to follow up with."
         action={
           <button onClick={() => setShowForm((v) => !v)} className="btn-primary-sm">
@@ -183,7 +185,7 @@ export function LeadsClient({ leads }: { leads: Lead[] }) {
                     href={`/gym/members/new?memberName=${encodeURIComponent(lead.name)}&memberPhone=${encodeURIComponent(lead.phone)}`}
                     className="flex items-center gap-1 rounded-lg border border-brand bg-brand px-2.5 py-1 text-xs font-medium text-white"
                   >
-                    <Dumbbell size={12} /> Sell membership
+                    <Dumbbell size={12} /> {t("Sell membership")}
                   </Link>
                 )}
                 <button

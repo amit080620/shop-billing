@@ -23,6 +23,7 @@ import type { Lang } from "@/lib/i18n/dictionary";
 import { FileText, ClipboardList } from "lucide-react";
 import { ToothChart, type ToothChartData } from "@/app/components/ToothChart";
 import { todayIso } from "@/lib/dateHelpers";
+import { useT } from "@/lib/i18n/LangContext";
 
 type Patient = { id: string; name: string; phone: string; dateOfBirth: string | null; gender: string | null };
 type MedicineRow = PrescriptionItemInput & {
@@ -73,6 +74,7 @@ export function NewPrescriptionClient({
   lang: Lang;
   specialty: string;
 }) {
+  const { t } = useT();
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -266,7 +268,7 @@ export function NewPrescriptionClient({
   return (
     <div className="flex flex-col gap-3 pb-6">
       <PageHeader
-        title="New prescription"
+        title={t("New prescription")}
         icon={<FileText size={18} strokeWidth={1.8} />}
       />
       <Link href="/clinic" className="text-sm text-muted">

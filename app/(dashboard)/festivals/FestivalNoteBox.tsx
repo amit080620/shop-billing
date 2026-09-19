@@ -5,6 +5,7 @@ import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { saveFestivalNoteAction } from "@/lib/actions/festival-notes";
 import { PenLine, Check } from "lucide-react";
+import { useT } from "@/lib/i18n/LangContext";
 
 function SaveButton() {
   const { pending } = useFormStatus();
@@ -20,6 +21,7 @@ function SaveButton() {
 }
 
 export function FestivalNoteBox({ slug, initialNote }: { slug: string; initialNote: string }) {
+  const { t } = useT();
   const [state, formAction] = useActionState(keepValuesOnError(saveFestivalNoteAction), null);
   const [value, setValue] = useState(initialNote);
 
@@ -27,7 +29,7 @@ export function FestivalNoteBox({ slug, initialNote }: { slug: string; initialNo
     <form action={formAction} className="mt-3 flex flex-col gap-1.5 border-t border-border pt-3">
       <input type="hidden" name="slug" value={slug} />
       <label className="flex items-center gap-1 text-xs font-medium text-foreground">
-        <PenLine size={11} /> Your notes for this festival — what worked, what to remember for next time
+        <PenLine size={11} /> {t("Your notes for this festival — what worked, what to remember for next time")}
       </label>
       <textarea
         name="note"

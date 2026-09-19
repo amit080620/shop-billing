@@ -4,6 +4,7 @@ import { useState } from "react";
 import { PageHeader } from "@/app/components/PageHeader";
 import { exportReportAction } from "@/lib/actions/export";
 import { Download, FileArchive } from "lucide-react";
+import { useT } from "@/lib/i18n/LangContext";
 
 function currentFinancialYearRange() {
   const now = new Date();
@@ -17,6 +18,7 @@ function lastFinancialYearRange() {
 }
 
 export function CaExportClient() {
+  const { t } = useT();
   const thisFY = currentFinancialYearRange();
   const lastFY = lastFinancialYearRange();
   const [from, setFrom] = useState(thisFY.from);
@@ -64,11 +66,11 @@ export function CaExportClient() {
 
   return (
     <div className="flex flex-col gap-4">
-      <PageHeader icon={<FileArchive size={20} />} title="CA export pack" subtitle="Everything your accountant needs, in two files" />
+      <PageHeader icon={<FileArchive size={20} />} title={t("CA export pack")} subtitle="Everything your accountant needs, in two files" />
 
       <div className="neu-card flex flex-col gap-2 p-4">
         <p className="text-sm text-foreground">
-          Downloads your full <b>Sales</b> and <b>Purchases</b> for the period as two Excel-ready files —
+          Downloads your full <b>{t("Sales")}</b> and <b>Purchases</b> for the period as two Excel-ready files —
           exactly what a CA needs to reconcile your books at year-end or for GST filing.
         </p>
       </div>
@@ -88,7 +90,7 @@ export function CaExportClient() {
                 : undefined
             }
           >
-            This financial year
+            {t("This financial year")}
             <span className="block text-[10px] text-muted">{thisFY.from} → {thisFY.to}</span>
           </button>
           <button
@@ -103,7 +105,7 @@ export function CaExportClient() {
                 : undefined
             }
           >
-            Last financial year
+            {t("Last financial year")}
             <span className="block text-[10px] text-muted">{lastFY.from} → {lastFY.to}</span>
           </button>
         </div>
@@ -130,7 +132,7 @@ export function CaExportClient() {
         {isPending ? "Preparing…" : justDone ? "Downloaded ✓" : "Download sales + purchases"}
       </button>
       <p className="text-center text-xs text-muted">
-        Two files will download — forward both to your accountant as-is.
+        {t("Two files will download — forward both to your accountant as-is.")}
       </p>
     </div>
   );

@@ -5,10 +5,12 @@ import Link from "next/link";
 import { formatMoney } from "@/lib/format";
 import { generateBarcodeAction } from "@/lib/actions/products";
 import { Printer } from "lucide-react";
+import { useT } from "@/lib/i18n/LangContext";
 
 type Product = { id: string; name: string; price: number; unit: string; barcode: string | null };
 
 export function LabelsClient({ shopName, products: initialProducts }: { shopName: string; products: Product[] }) {
+  const { t } = useT();
   const [products, setProducts] = useState(initialProducts);
   const [search, setSearch] = useState("");
   const [quantities, setQuantities] = useState<Record<string, number>>({});
@@ -50,8 +52,8 @@ export function LabelsClient({ shopName, products: initialProducts }: { shopName
     <div className="flex flex-col gap-4">
       <div className="no-print flex items-center justify-between">
         <div>
-          <h1 className="text-lg font-bold tracking-tight text-foreground md:text-2xl">Print barcode labels</h1>
-          <p className="text-sm text-muted">Tap + on each item you need stickers for, then Print.</p>
+          <h1 className="text-lg font-bold tracking-tight text-foreground md:text-2xl">{t("Print barcode labels")}</h1>
+          <p className="text-sm text-muted">{t("Tap + on each item you need stickers for, then Print.")}</p>
         </div>
         <Link href="/products" className="text-sm text-brand">
           ← Inventory
@@ -67,7 +69,7 @@ export function LabelsClient({ shopName, products: initialProducts }: { shopName
         />
 
         <div className="flex items-center gap-2">
-          <span className="text-xs font-medium text-muted">Label size:</span>
+          <span className="text-xs font-medium text-muted">{t("Label size:")}</span>
           {(["thermal", "a4"] as const).map((size) => (
             <button
               key={size}
@@ -95,7 +97,7 @@ export function LabelsClient({ shopName, products: initialProducts }: { shopName
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium text-foreground">{p.name}</p>
                 <p className="text-xs text-muted">
-                  {formatMoney(p.price)} · {p.barcode ? p.barcode : "No barcode yet"}
+                  {formatMoney(p.price)} · {p.barcode ? p.barcode : t("No barcode yet")}
                 </p>
               </div>
               {p.barcode ? (

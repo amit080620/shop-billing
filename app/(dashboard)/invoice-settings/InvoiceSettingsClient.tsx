@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { saveInvoiceSettingsAction, uploadSettingsImageAction } from "@/lib/actions/settings";
 import { PageHeader } from "@/app/components/PageHeader";
+import { useT } from "@/lib/i18n/LangContext";
 
 const PRESET_COLORS = ["#0f6b5c", "#B45309", "#1D4ED8", "#B91C1C", "#7C3AED", "#0E7490"];
 
@@ -27,6 +28,7 @@ export function InvoiceSettingsClient({
   headerImageUrl: string | null;
   footerImageUrl: string | null;
 }) {
+  const { t } = useT();
   const router = useRouter();
   const [tagline, setTagline] = useState(initialTagline);
   const [footerText, setFooterText] = useState(initialFooter);
@@ -54,7 +56,7 @@ export function InvoiceSettingsClient({
     return (
       <div className="flex flex-col gap-3">
         <PageHeader
-          title="Invoice design"
+          title={t("Invoice design")}
           // eslint-disable-next-line @next/next/no-img-element -- small branded SVG icon
           icon={<img src="/assets/ray-icons/invoice.svg" alt="" className="h-9 w-9 md:h-11 md:w-11" />}
           bareIcon
@@ -82,7 +84,7 @@ export function InvoiceSettingsClient({
   return (
     <div className="flex flex-col gap-4 pb-6">
       <PageHeader
-        title="Invoice design"
+        title={t("Invoice design")}
         subtitle="Your shop's branding on invoices and prescriptions — the line items, tax breakup, and totals stay fixed for GST accuracy; these are the parts you control."
         // eslint-disable-next-line @next/next/no-img-element -- small branded SVG icon
         icon={<img src="/assets/ray-icons/invoice.svg" alt="" className="h-9 w-9 md:h-11 md:w-11" />}
@@ -93,7 +95,7 @@ export function InvoiceSettingsClient({
       </Link>
 
       <label className="flex flex-col gap-1.5 text-sm">
-        <span className="font-medium text-foreground">Tagline (optional, shown under your shop name)</span>
+        <span className="font-medium text-foreground">{t("Tagline (optional, shown under your shop name)")}</span>
         <input
           value={tagline}
           onChange={(e) => setTagline(e.target.value)}
@@ -103,7 +105,7 @@ export function InvoiceSettingsClient({
       </label>
 
       <label className="flex flex-col gap-1.5 text-sm">
-        <span className="font-medium text-foreground">Footer message</span>
+        <span className="font-medium text-foreground">{t("Footer message")}</span>
         <input
           value={footerText}
           onChange={(e) => setFooterText(e.target.value)}
@@ -124,7 +126,7 @@ export function InvoiceSettingsClient({
       </label>
 
       <label className="flex flex-col gap-1.5 text-sm">
-        <span className="font-medium text-foreground">Bank details for transfer (optional)</span>
+        <span className="font-medium text-foreground">{t("Bank details for transfer (optional)")}</span>
         <textarea
           value={bankDetails}
           onChange={(e) => setBankDetails(e.target.value)}
@@ -136,7 +138,7 @@ export function InvoiceSettingsClient({
 
       <div className="grid grid-cols-2 gap-3">
         <div className="flex flex-col gap-1.5 text-sm">
-          <span className="font-medium text-foreground">Header image (optional)</span>
+          <span className="font-medium text-foreground">{t("Header image (optional)")}</span>
           <label className="relative flex h-20 cursor-pointer items-center justify-center overflow-hidden rounded-lg border border-dashed border-border bg-surface text-xs text-muted">
             {headerImageUrl ? (
               // eslint-disable-next-line @next/next/no-img-element -- small settings preview
@@ -159,7 +161,7 @@ export function InvoiceSettingsClient({
           </label>
         </div>
         <div className="flex flex-col gap-1.5 text-sm">
-          <span className="font-medium text-foreground">Footer image (optional)</span>
+          <span className="font-medium text-foreground">{t("Footer image (optional)")}</span>
           <label className="relative flex h-20 cursor-pointer items-center justify-center overflow-hidden rounded-lg border border-dashed border-border bg-surface text-xs text-muted">
             {footerImageUrl ? (
               // eslint-disable-next-line @next/next/no-img-element -- small settings preview
@@ -184,13 +186,13 @@ export function InvoiceSettingsClient({
       </div>
       {imageError && <p className="text-sm text-danger">{imageError}</p>}
       <p className="-mt-2 text-xs text-muted">
-        Best size: about 800×200px for the header banner, 800×150px for the footer (wide, short strips work best on an A4 print) — PNG/JPG/WEBP, under 2MB.
+        {t("Best size: about 800×200px for the header banner, 800×150px for the footer (wide, short strips work best on an A4 print) — PNG/JPG/WEBP, under 2MB.")}
       </p>
-      <p className="-mt-2 text-xs text-muted">A header image (e.g. a printed letterhead banner) shows above your shop name; a footer image (e.g. a stamp or signature) shows at the bottom.</p>
+      <p className="-mt-2 text-xs text-muted">{t("A header image (e.g. a printed letterhead banner) shows above your shop name; a footer image (e.g. a stamp or signature) shows at the bottom.")}</p>
 
       <div className="flex flex-col gap-2">
-        <span className="text-sm font-medium text-foreground">Accent colour</span>
-        <p className="text-xs text-muted">Used on invoice and prescription headers — pick one that matches your shop&apos;s look.</p>
+        <span className="text-sm font-medium text-foreground">{t("Accent colour")}</span>
+        <p className="text-xs text-muted">{t("Used on invoice and prescription headers — pick one that matches your shop's look.")}</p>
         <div className="flex flex-wrap gap-2">
           {PRESET_COLORS.map((c) => (
             <button
@@ -209,7 +211,7 @@ export function InvoiceSettingsClient({
         <div className="mt-1 flex items-center gap-2 rounded-lg border border-border bg-surface p-3">
           <div className="h-8 w-1.5 rounded-full" style={{ backgroundColor: accentColor }} />
           <p className="text-sm font-semibold" style={{ color: accentColor }}>
-            Preview — Tax Invoice
+            {t("Preview — Tax Invoice")}
           </p>
         </div>
       </div>

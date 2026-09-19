@@ -10,6 +10,7 @@ import { uploadSettingsImageAction } from "@/lib/actions/settings";
 import { PageHeader } from "@/app/components/PageHeader";
 import { CalendarClock } from "lucide-react";
 import { todayIso } from "@/lib/dateHelpers";
+import { useT } from "@/lib/i18n/LangContext";
 
 const DAYS: { key: string; label: string }[] = [
   { key: "mon", label: "Monday" },
@@ -42,6 +43,7 @@ export function BookingSettingsClient({
   doctorPhotoUrl: string | null;
   unavailableDates: string[];
 }) {
+  const { t } = useT();
   const router = useRouter();
   const [slotDuration, setSlotDuration] = useState(String(initialSlotDuration));
   const [enabled, setEnabled] = useState(initialEnabled);
@@ -133,7 +135,7 @@ export function BookingSettingsClient({
   return (
     <div className="flex flex-col gap-3 pb-6">
       <PageHeader
-        title="Online booking"
+        title={t("Online booking")}
         subtitle={`Let ${noun}s book their own slot from a link you share — no login needed for them.`}
         icon={<CalendarClock size={18} strokeWidth={1.8} />}
       />

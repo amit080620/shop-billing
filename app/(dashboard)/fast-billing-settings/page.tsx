@@ -3,8 +3,10 @@ import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { PageHeader } from "@/app/components/PageHeader";
 import { Zap } from "lucide-react";
 import { FastBillingSettingsClient } from "./FastBillingSettingsClient";
+import { getTranslator } from "@/lib/i18n/server";
 
 export default async function FastBillingSettingsPage() {
+  const { t } = await getTranslator();
   const session = await requireOwner();
   const admin = createSupabaseAdminClient();
 
@@ -18,7 +20,7 @@ export default async function FastBillingSettingsPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <PageHeader title="Fast billing" subtitle="A quick tap-to-add counter for busy hours" icon={<Zap size={18} strokeWidth={1.8} />} />
+      <PageHeader title={t("Fast billing")} subtitle="A quick tap-to-add counter for busy hours" icon={<Zap size={18} strokeWidth={1.8} />} />
       <FastBillingSettingsClient enabled={shop?.fast_billing_enabled ?? false} productCount={fastBillingProductCount ?? 0} />
     </div>
   );

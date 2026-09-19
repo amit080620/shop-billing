@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Pill, Stethoscope, ShieldCheck, AlertTriangle, PackageMinus } from "lucide-react";
 import { PageHeader } from "@/app/components/PageHeader";
+import { getTranslator } from "@/lib/i18n/server";
 
 const LINKS = [
   { href: "/pharmacy/expiry", label: "Medicine expiry", sub: "Batches expiring soon", icon: AlertTriangle },
@@ -9,10 +10,11 @@ const LINKS = [
   { href: "/pharmacy/schedule-x-register", label: "Schedule X register", sub: "Controlled substance register", icon: ShieldCheck },
 ];
 
-export default function PharmacyHubPage() {
+export default async function PharmacyHubPage() {
+  const { t } = await getTranslator();
   return (
     <div className="flex flex-col gap-3">
-      <PageHeader title="Pharmacy" icon={<Pill size={18} strokeWidth={1.8} />} />
+      <PageHeader title={t("Pharmacy")} icon={<Pill size={18} strokeWidth={1.8} />} />
       <div className="flex flex-col gap-2">
         {LINKS.map((l) => (
           <Link key={l.href} href={l.href} className="neu-card flex items-center gap-3 p-3.5">

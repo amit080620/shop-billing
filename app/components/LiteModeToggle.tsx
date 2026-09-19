@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Zap, Sparkles } from "lucide-react";
+import { useT } from "@/lib/i18n/LangContext";
 
 /** Applies the lite-mode class to <html> on first load, matching
  * whatever was saved in the cookie — mirrors AutoThemeApplier's
@@ -15,6 +16,7 @@ export function LiteModeApplier({ enabled }: { enabled: boolean }) {
 }
 
 export function LiteModeToggle({ enabled: initial }: { enabled: boolean }) {
+  const { t } = useT();
   const router = useRouter();
   const [enabled, setEnabled] = useState(initial);
 
@@ -37,9 +39,9 @@ export function LiteModeToggle({ enabled: initial }: { enabled: boolean }) {
         {enabled ? <Zap size={16} strokeWidth={1.8} /> : <Sparkles size={16} strokeWidth={1.8} />}
       </span>
       <div className="min-w-0 flex-1">
-        <p className={`text-sm font-medium ${enabled ? "text-brand-text" : "text-foreground"}`}>{enabled ? "Lite Mode: ON" : "Lite Mode: OFF"}</p>
+        <p className={`text-sm font-medium ${enabled ? "text-brand-text" : "text-foreground"}`}>{enabled ? t("Lite Mode: ON") : t("Lite Mode: OFF")}</p>
         <p className="text-xs text-muted">
-          {enabled ? "Flat, simple cards — faster on older phones" : "Premium look — tap to switch to a faster, simpler look"}
+          {enabled ? t("Flat, simple cards — faster on older phones") : t("Premium look — tap to switch to a faster, simpler look")}
         </p>
       </div>
     </button>

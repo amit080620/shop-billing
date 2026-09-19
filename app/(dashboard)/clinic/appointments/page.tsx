@@ -6,12 +6,14 @@ import { EmptyState } from "@/app/components/EmptyState";
 import { ClinicAppointmentRow } from "./ClinicAppointmentRow";
 import { Calendar } from "lucide-react";
 import { todayIso } from "@/lib/dateHelpers";
+import { getTranslator } from "@/lib/i18n/server";
 
 export default async function ClinicAppointmentsPage({
   searchParams,
 }: {
   searchParams: Promise<{ date?: string }>;
 }) {
+  const { t } = await getTranslator();
   const session = await requireSession();
   const { date } = await searchParams;
   const selectedDate = date || todayIso();
@@ -27,7 +29,7 @@ export default async function ClinicAppointmentsPage({
   return (
     <div className="flex flex-col gap-3">
       <PageHeader
-        title="Appointments"
+        title={t("Appointments")}
         action={
           <Link href="/clinic/appointments/new" className="btn-primary-sm">
             + Book

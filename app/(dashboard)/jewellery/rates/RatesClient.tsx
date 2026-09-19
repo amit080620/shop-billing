@@ -9,6 +9,7 @@ import { formatMoney } from "@/lib/format";
 import { PageHeader } from "@/app/components/PageHeader";
 import { EmptyState } from "@/app/components/EmptyState";
 import { Coins } from "lucide-react";
+import { useT } from "@/lib/i18n/LangContext";
 
 type HistoryRow = { metalType: string; rate: number; date: string };
 
@@ -21,6 +22,7 @@ export function RatesClient({
   todaySilver: number | null;
   history: HistoryRow[];
 }) {
+  const { t } = useT();
   const router = useRouter();
   const [gold, setGold] = useState<number | "">(todayGold ?? "");
   const [silver, setSilver] = useState<number | "">(todaySilver ?? "");
@@ -46,7 +48,7 @@ export function RatesClient({
   return (
     <div className="flex flex-col gap-3">
       <PageHeader
-        title="Today's rate"
+        title={t("Today's rate")}
         subtitle="Set the per-gram rate each morning — it applies to every gold/silver item billed today."
         icon={<Coins size={18} strokeWidth={1.8} />}
       />

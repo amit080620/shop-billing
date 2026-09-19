@@ -5,6 +5,7 @@ import Link from "next/link";
 import { saveThermalPrintSettingsAction, saveDefaultPrintFormatAction, type ThermalPrintSettings } from "@/lib/actions/settings";
 import { PageHeader } from "@/app/components/PageHeader";
 import { Printer } from "lucide-react";
+import { useT } from "@/lib/i18n/LangContext";
 
 function Toggle({ label, checked, onChange }: { label: string; checked: boolean; onChange: (v: boolean) => void }) {
   return (
@@ -54,11 +55,12 @@ function levelToPt(level: number): number {
 }
 
 function SizeSelect({ value, onChange }: { value: number; onChange: (v: number) => void }) {
+  const { t } = useT();
   const allPt = Array.from({ length: 32 }, (_, i) => i + 5); // 5pt..36pt
   return (
     <div className="flex flex-col gap-1 py-1">
       <div className="flex items-center justify-between">
-        <span className="text-sm text-foreground">Font size</span>
+        <span className="text-sm text-foreground">{t("Font size")}</span>
         <select
           value={levelToPt(value)}
           onChange={(e) => onChange(ptToLevel(Number(e.target.value)))}
@@ -72,7 +74,7 @@ function SizeSelect({ value, onChange }: { value: number; onChange: (v: number) 
         </select>
       </div>
       <p className="text-right text-[11px] text-muted">
-        Every printer&apos;s hardware is a bit different — some nearby sizes may print identically on yours. Try a few and keep what looks right.
+        {t("Every printer's hardware is a bit different — some nearby sizes may print identically on yours. Try a few and keep what looks right.")}
       </p>
     </div>
   );
@@ -138,20 +140,21 @@ function PaperSizeSection({
   totalAlign: "left" | "center" | "right";
   setTotalAlign: (v: "left" | "center" | "right") => void;
 }) {
+  const { t } = useT();
   return (
     <div className="flex flex-col gap-1 rounded-xl border border-border bg-surface p-3.5">
       <p className="mb-1 text-sm font-semibold text-foreground">{title}</p>
 
-      <p className="mt-1 text-xs font-medium text-muted">Shop name line</p>
+      <p className="mt-1 text-xs font-medium text-muted">{t("Shop name line")}</p>
       <Toggle label="Bold" checked={shopNameBold} onChange={setShopNameBold} />
       <Toggle label="Italic" checked={shopNameItalic} onChange={setShopNameItalic} />
       <SizeSelect value={shopNameSize} onChange={setShopNameSize} />
       <AlignSelect value={shopNameAlign} onChange={setShopNameAlign} />
 
-      <p className="mt-2 text-xs font-medium text-muted">Item table</p>
+      <p className="mt-2 text-xs font-medium text-muted">{t("Item table")}</p>
       <Toggle label="Bold" checked={itemsBold} onChange={setItemsBold} />
 
-      <p className="mt-2 text-xs font-medium text-muted">Total line</p>
+      <p className="mt-2 text-xs font-medium text-muted">{t("Total line")}</p>
       <Toggle label="Bold" checked={totalBold} onChange={setTotalBold} />
       <Toggle label="Italic" checked={totalItalic} onChange={setTotalItalic} />
       <SizeSelect value={totalSize} onChange={setTotalSize} />
@@ -161,6 +164,7 @@ function PaperSizeSection({
 }
 
 export function ThermalPrintSettingsClient({ initial, initialDefaultFormat }: { initial: ThermalPrintSettings; initialDefaultFormat: "full" | "thermal58" | "thermal" }) {
+  const { t } = useT();
   const [settings, setSettings] = useState(initial);
   const [defaultFormat, setDefaultFormat] = useState(initialDefaultFormat);
   const [isPending, startTransition] = useTransition();
@@ -182,16 +186,15 @@ export function ThermalPrintSettingsClient({ initial, initialDefaultFormat }: { 
 
   return (
     <div className="flex flex-col gap-4 pb-6">
-      <PageHeader title="Thermal print settings" icon={<Printer size={18} strokeWidth={1.8} />} />
+      <PageHeader title={t("Thermal print settings")} icon={<Printer size={18} strokeWidth={1.8} />} />
       <Link href="/profile" className="text-sm text-muted">
         ← Profile
       </Link>
 
       <div className="rounded-xl border border-border bg-surface p-3.5">
-        <p className="mb-2 text-sm font-semibold text-foreground">Default print format</p>
+        <p className="mb-2 text-sm font-semibold text-foreground">{t("Default print format")}</p>
         <p className="mb-2 text-xs text-muted">
-          A bill genuinely opens straight in this format — tapping a different format on the print screen itself
-          always still works for that one bill.
+          {t("A bill genuinely opens straight in this format — tapping a different format on the print screen itself always still works for that one bill.")}
         </p>
         <div className="flex gap-1.5">
           {([
@@ -213,14 +216,11 @@ export function ThermalPrintSettingsClient({ initial, initialDefaultFormat }: { 
       </div>
 
       <p className="text-xs text-muted">
-        A Bluetooth thermal printer renders its own fixed characters — size is a genuine multiplier of the
-        base font (1× is normal, 2× is double, and so on), not a point-size like a word processor. Italic uses
-        the standard printer command, though support varies a little by printer model. 58mm and 80mm paper are
-        configured separately since receipts on each often want different emphasis.
+        {t("A Bluetooth thermal printer renders its own fixed characters — size is a genuine multiplier of the base font (1× is normal, 2× is double, and so on), not a point-size like a word processor. Italic uses the standard printer command, though support varies a little by printer model. 58mm and 80mm paper are configured separately since receipts on each often want different emphasis.")}
       </p>
 
       <PaperSizeSection
-        title="58mm paper"
+        title={t("58mm paper")}
         shopNameBold={settings.t58ShopNameBold}
         setShopNameBold={(v) => update("t58ShopNameBold", v)}
         shopNameItalic={settings.t58ShopNameItalic}
@@ -242,7 +242,7 @@ export function ThermalPrintSettingsClient({ initial, initialDefaultFormat }: { 
       />
 
       <PaperSizeSection
-        title="80mm paper"
+        title={t("80mm paper")}
         shopNameBold={settings.t80ShopNameBold}
         setShopNameBold={(v) => update("t80ShopNameBold", v)}
         shopNameItalic={settings.t80ShopNameItalic}

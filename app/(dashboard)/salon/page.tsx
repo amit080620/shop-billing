@@ -6,6 +6,7 @@ import { PageHeader } from "@/app/components/PageHeader";
 import { EmptyState } from "@/app/components/EmptyState";
 import { Scissors } from "lucide-react";
 import { todayIso } from "@/lib/dateHelpers";
+import { getTranslator } from "@/lib/i18n/server";
 
 function startOfMonthIso() {
   const d = new Date();
@@ -17,6 +18,7 @@ export default async function SalonStaffReportPage({
 }: {
   searchParams: Promise<{ from?: string; to?: string }>;
 }) {
+  const { t } = await getTranslator();
   const session = await requireSession();
   const { from, to } = await searchParams;
   const fromDate = from || startOfMonthIso();
@@ -53,7 +55,7 @@ export default async function SalonStaffReportPage({
   return (
     <div className="flex flex-col gap-3">
       <PageHeader
-        title="Staff-wise revenue"
+        title={t("Staff-wise revenue")}
         subtitle="Who's bringing in how much — handy for commission."
         icon={<Scissors size={18} strokeWidth={1.8} />}
       />

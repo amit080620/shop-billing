@@ -6,6 +6,7 @@ import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import { voidBillAction } from "@/lib/actions/bills";
 import { useToast } from "@/app/components/Toast";
+import { useT } from "@/lib/i18n/LangContext";
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -21,6 +22,7 @@ function SubmitButton() {
 }
 
 export function VoidBillButton({ billId, invoiceNumber }: { billId: string; invoiceNumber: string }) {
+  const { t } = useT();
   const [open, setOpen] = useState(false);
   const { showToast } = useToast();
   const [state, formAction] = useActionState(
@@ -38,7 +40,7 @@ export function VoidBillButton({ billId, invoiceNumber }: { billId: string; invo
         onClick={() => setOpen(true)}
         className="no-print rounded-full border border-red-200 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50"
       >
-        Void invoice
+        {t("Void invoice")}
       </button>
     );
   }

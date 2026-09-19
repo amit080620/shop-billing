@@ -7,6 +7,7 @@ import { Trash2, Pencil, UserPlus, UserMinus, KeyRound, Activity } from "lucide-
 import { isModuleEnabled } from "@/lib/modules";
 import { ModuleBlocked } from "@/app/components/ModuleBlocked";
 import { History } from "lucide-react";
+import { getTranslator } from "@/lib/i18n/server";
 
 const ACTION_INFO: Record<string, { icon: typeof Trash2; label: string; tone: string }> = {
   bill_voided: { icon: Trash2, label: "Bill voided", tone: "text-danger" },
@@ -31,6 +32,7 @@ function describeDetails(action: string, details: Record<string, unknown> | null
 }
 
 export default async function AuditLogPage() {
+  const { t } = await getTranslator();
   const session = await requireOwner();
   if (!isModuleEnabled(session.enabledModules, "audit_log")) return <ModuleBlocked moduleKey="audit_log" />;
   const admin = createSupabaseAdminClient();
@@ -45,7 +47,7 @@ export default async function AuditLogPage() {
   return (
     <div className="flex flex-col gap-4">
       <PageHeader
-        title="Audit log"
+        title={t("Audit log")}
         subtitle="A record of sensitive actions — who did what, and when."
         icon={<History size={18} strokeWidth={1.8} />}
       />

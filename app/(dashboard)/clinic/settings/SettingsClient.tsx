@@ -7,6 +7,7 @@ import { savePrescriptionSettingsAction } from "@/lib/actions/clinic";
 import { uploadSettingsImageAction } from "@/lib/actions/settings";
 import { PageHeader } from "@/app/components/PageHeader";
 import { Stethoscope } from "lucide-react";
+import { useT } from "@/lib/i18n/LangContext";
 
 export function SettingsClient({
   headerText: initialHeaderText,
@@ -39,6 +40,7 @@ export function SettingsClient({
   rxShowDrugInteractions: boolean;
   rxShowDescription: boolean;
 }) {
+  const { t } = useT();
   const router = useRouter();
   const [headerText, setHeaderText] = useState(initialHeaderText);
   const [footerText, setFooterText] = useState(initialFooterText);
@@ -110,7 +112,7 @@ export function SettingsClient({
   return (
     <div className="flex flex-col gap-3 pb-6">
       <PageHeader
-        title="Prescription pad settings"
+        title={t("Prescription pad settings")}
         subtitle="Set your letterhead once — every prescription you print uses this."
         icon={<Stethoscope size={18} strokeWidth={1.8} />}
       />

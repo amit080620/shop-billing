@@ -5,12 +5,14 @@ import { formatMoney } from "@/lib/format";
 import { istMonthRange, istYearMonth, MONTHS } from "@/lib/dateHelpers";
 import { PeriodPicker } from "../PeriodPicker";
 import { Gstr1Client } from "./Gstr1Client";
+import { getTranslator } from "@/lib/i18n/server";
 
 export default async function Gstr1Page({
   searchParams,
 }: {
   searchParams: Promise<{ year?: string; month?: string }>;
 }) {
+  const { t } = await getTranslator();
   const { year: yearParam, month: monthParam } = await searchParams;
   const now = istYearMonth();
   const year = Number(yearParam) || now.year;
@@ -225,16 +227,16 @@ export default async function Gstr1Page({
         ← Reports
       </Link>
       <div className="flex items-center justify-between">
-        <h1 className="text-lg font-bold tracking-tight text-foreground md:text-2xl">GSTR-1</h1>
+        <h1 className="text-lg font-bold tracking-tight text-foreground md:text-2xl">{t("GSTR-1")}</h1>
         <PeriodPicker year={year} month={month} />
       </div>
       <p className="text-sm text-muted">
-        {MONTHS[month - 1]} {year} · Outward supplies
+        {MONTHS[month - 1]} {year} · {t("Outward supplies")}
       </p>
 
       <div className="grid grid-cols-2 gap-3">
-        <SummaryCard label="Taxable value" value={formatMoney(totalTaxable)} />
-        <SummaryCard label="Total tax" value={formatMoney(totalTax)} />
+        <SummaryCard label={t("Taxable value")} value={formatMoney(totalTaxable)} />
+        <SummaryCard label={t("Total tax")} value={formatMoney(totalTax)} />
       </div>
 
       {normalizedBills.length === 0 && (restaurantOrders ?? []).length === 0 && normalizedRentals.length === 0 ? (

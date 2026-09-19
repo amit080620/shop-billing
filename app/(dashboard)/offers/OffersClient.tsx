@@ -66,14 +66,14 @@ export function OffersClient({
   return (
     <div className="flex flex-col gap-4">
       <PageHeader
-        title="Send an offer"
+        title={t("Send an offer")}
         subtitle="Write it once, select who to send it to (or Select all), then work through them — WhatsApp only lets a real person hit Send, so this can't be fully automatic."
         icon={<Tag size={18} strokeWidth={1.8} />}
       />
 
       <section className="flex flex-col gap-2 rounded-xl border border-border bg-surface p-4 shadow-sm">
         <label className="flex flex-col gap-1.5 text-sm">
-          <span className="font-medium text-foreground">Your message</span>
+          <span className="font-medium text-foreground">{t("Your message")}</span>
           <textarea
             value={message}
             onChange={(e) => setMessage(e.target.value)}
@@ -101,7 +101,7 @@ export function OffersClient({
       )}
 
       {customers.length === 0 ? (
-        <EmptyState text="No customers yet — add a few from the Customers page, then come back here." />
+        <EmptyState text={t("No customers yet — add a few from the Customers page, then come back here.")} />
       ) : filtered.length === 0 ? (
         <EmptyState text="No customers match that search." />
       ) : (

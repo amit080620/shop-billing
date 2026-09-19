@@ -24,6 +24,9 @@ export const SCREEN_STRINGS: Record<string, [en: string, hi: string, mr: string]
   "home.festivalTomorrow": ["{name} tomorrow", "{name} कल", "{name} उद्या"],
   "bill.loyaltyHas": ["🎁 {name} has {points} loyalty points", "🎁 {name} के {points} लॉयल्टी पॉइंट", "🎁 {name} यांचे {points} लॉयल्टी पॉइंट"],
 
+  "daily.moneyIn": ["Money in — {amount}", "आया पैसा — {amount}", "आलेले पैसे — {amount}"],
+  "daily.moneyOut": ["Money out — {amount}", "गया पैसा — {amount}", "गेलेले पैसे — {amount}"],
+
   // Date range chips
   "range.today": ["Today", "आज", "आज"],
   "range.last7": ["Last 7 days", "पिछले 7 दिन", "मागील 7 दिवस"],

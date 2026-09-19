@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { X } from "lucide-react";
 import { isNativeApp } from "@/lib/nativeApp";
+import { useT } from "@/lib/i18n/LangContext";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -39,6 +40,7 @@ const DISMISS_DAYS = 14;
  * screen space, better offline behaviour) — the fix for a naggy
  * prompt is to make it respectful, not to remove the value entirely. */
 export function InstallAppButton() {
+  const { t } = useT();
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [installed, setInstalled] = useState(false);
   const [platform, setPlatform] = useState<Platform>("desktop");
@@ -96,7 +98,7 @@ export function InstallAppButton() {
           className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-brand bg-brand-soft px-4 py-3 text-sm font-semibold text-brand-text"
           style={{ boxShadow: "var(--elev-sm)" }}
         >
-          Install app on this device
+          {t("Install app on this device")}
         </button>
         <button
           onClick={handleDismiss}

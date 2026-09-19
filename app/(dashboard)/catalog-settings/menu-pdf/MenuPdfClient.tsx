@@ -4,8 +4,10 @@ import { useState } from "react";
 import { PageHeader } from "@/app/components/PageHeader";
 import { getMenuForPdfAction } from "@/lib/actions/menu-pdf";
 import { FileText, Download } from "lucide-react";
+import { useT } from "@/lib/i18n/LangContext";
 
 export function MenuPdfClient() {
+  const { t } = useT();
   const [isPending, setIsPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [justDone, setJustDone] = useState(false);
@@ -98,7 +100,7 @@ export function MenuPdfClient() {
 
   return (
     <div className="flex flex-col gap-4">
-      <PageHeader icon={<FileText size={20} />} title="Menu PDF" subtitle="A shareable menu with clickable items that link to online ordering" />
+      <PageHeader icon={<FileText size={20} />} title={t("Menu PDF")} subtitle="A shareable menu with clickable items that link to online ordering" />
 
       <div className="neu-card flex flex-col gap-2 p-4">
         <p className="text-sm text-foreground">

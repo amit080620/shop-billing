@@ -1,16 +1,18 @@
 import Link from "next/link";
 import { Truck, BarChart3 } from "lucide-react";
 import { PageHeader } from "@/app/components/PageHeader";
+import { getTranslator } from "@/lib/i18n/server";
 
 const LINKS = [
   { href: "/transport/vehicles", label: "Vehicles", sub: "Fleet & document expiry", icon: Truck },
   { href: "/transport/reports", label: "Transport reports", sub: "Rounds, km covered", icon: BarChart3 },
 ];
 
-export default function TransportHubPage() {
+export default async function TransportHubPage() {
+  const { t } = await getTranslator();
   return (
     <div className="flex flex-col gap-3">
-      <PageHeader title="Transport" icon={<Truck size={18} strokeWidth={1.8} />} />
+      <PageHeader title={t("Transport")} icon={<Truck size={18} strokeWidth={1.8} />} />
       <div className="flex flex-col gap-2">
         {LINKS.map((l) => (
           <Link key={l.href} href={l.href} className="neu-card flex items-center gap-3 p-3.5">

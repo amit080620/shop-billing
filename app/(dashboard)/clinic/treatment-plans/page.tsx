@@ -3,6 +3,7 @@ import { listTreatmentPlansAction } from "@/lib/actions/treatmentPlans";
 import { PageHeader } from "@/app/components/PageHeader";
 import { EmptyState } from "@/app/components/EmptyState";
 import { ClipboardList } from "lucide-react";
+import { getTranslator } from "@/lib/i18n/server";
 
 const STATUS_STYLE: Record<string, string> = {
   draft: "bg-gray-100 text-gray-600",
@@ -11,12 +12,13 @@ const STATUS_STYLE: Record<string, string> = {
 };
 
 export default async function TreatmentPlansPage() {
+  const { t } = await getTranslator();
   const plans = await listTreatmentPlansAction();
 
   return (
     <div className="flex flex-col gap-3">
       <PageHeader
-        title="Treatment plans"
+        title={t("Treatment plans")}
         action={
           <Link href="/clinic/treatment-plans/new" className="btn-primary-sm">
             + New plan

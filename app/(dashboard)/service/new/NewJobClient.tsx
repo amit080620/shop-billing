@@ -13,6 +13,7 @@ import { SearchableSelect } from "@/app/components/SearchableSelect";
 import { modelsFor, type DeviceModel } from "@/lib/deviceLibrary";
 import type { Lang } from "@/lib/i18n/dictionary";
 import { Wrench } from "lucide-react";
+import { useT } from "@/lib/i18n/LangContext";
 
 type Customer = { id: string; name: string; phone: string };
 type JobItem = { name: string; quantity: number; notes: string };
@@ -38,6 +39,7 @@ function SubmitButton() {
 }
 
 export function NewJobClient({ customers, lang }: { customers: Customer[]; lang: Lang }) {
+  const { t } = useT();
   const router = useRouter();
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [customerName, setCustomerName] = useState("");
@@ -87,7 +89,7 @@ export function NewJobClient({ customers, lang }: { customers: Customer[]; lang:
   return (
     <div className="flex flex-col gap-4">
       <PageHeader
-        title="New job"
+        title={t("New job")}
         icon={<Wrench size={18} strokeWidth={1.8} />}
       />
       <Link href="/service" className="text-sm text-muted">

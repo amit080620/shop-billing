@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Trash2, Upload, Download, ChevronDown, Settings2 } from "lucide-react";
 import { deleteMedicineFromLibraryAction, bulkDeleteMedicinesFromLibraryAction, importMedicineLibraryRowsAction, exportMedicineLibraryCsvAction } from "@/lib/actions/clinic";
 import { useToast } from "@/app/components/Toast";
+import { useT } from "@/lib/i18n/LangContext";
 
 type Medicine = {
   id: string;
@@ -64,6 +65,7 @@ function parseCsvClientSide(text: string): string[][] {
 }
 
 export function MedicineLibraryClient({ medicines: initial }: { medicines: Medicine[] }) {
+  const { t } = useT();
   const [medicines, setMedicines] = useState(initial);
   const [isPending, startTransition] = useTransition();
   const [isImporting, setIsImporting] = useState(false);
@@ -197,7 +199,7 @@ export function MedicineLibraryClient({ medicines: initial }: { medicines: Medic
           onClick={handleExport}
           className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-border bg-surface px-3 py-2 text-xs font-medium text-foreground"
         >
-          <Download size={14} /> Export CSV
+          <Download size={14} /> {t("Export CSV")}
         </button>
       </div>
       <p className="text-[11px] text-muted">

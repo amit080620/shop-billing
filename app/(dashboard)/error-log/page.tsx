@@ -6,8 +6,10 @@ import { formatDateTime } from "@/lib/format";
 import { isModuleEnabled } from "@/lib/modules";
 import { ModuleBlocked } from "@/app/components/ModuleBlocked";
 import { AlertTriangle } from "lucide-react";
+import { getTranslator } from "@/lib/i18n/server";
 
 export default async function ErrorLogPage() {
+  const { t } = await getTranslator();
   const session = await requireOwner();
   if (!isModuleEnabled(session.enabledModules, "audit_log")) return <ModuleBlocked moduleKey="audit_log" />;
   const admin = createSupabaseAdminClient();
@@ -22,7 +24,7 @@ export default async function ErrorLogPage() {
   return (
     <div className="flex flex-col gap-4">
       <PageHeader
-        title="Error log"
+        title={t("Error log")}
         subtitle="Unexpected failures the app caught automatically — mostly useful if something needs investigating."
         icon={<AlertTriangle size={18} strokeWidth={1.8} />}
       />

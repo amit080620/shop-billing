@@ -10,6 +10,7 @@ import { useToast } from "@/app/components/Toast";
 import { Popup } from "@/app/components/Popup";
 import { EditStaffButton } from "./EditStaffButton";
 import { PermissionsButton } from "./PermissionsButton";
+import { useT } from "@/lib/i18n/LangContext";
 
 type StaffMember = { id: string; name: string; role: "owner" | "manager" | "staff"; permissions: string[]; email: string | null };
 
@@ -33,6 +34,7 @@ export function StaffClient({
   currentUserId: string;
   initialStaff: StaffMember[];
 }) {
+  const { t } = useT();
   const [showForm, setShowForm] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -63,7 +65,7 @@ export function StaffClient({
           onClick={() => setShowForm((v) => !v)}
           className="btn-primary-sm"
         >
-          + Add staff
+          {t("+ Add staff")}
         </button>
       </div>
 

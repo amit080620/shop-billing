@@ -17,6 +17,7 @@ import { Building2 } from "lucide-react";
 import { PageHeader } from "@/app/components/PageHeader";
 import { EmptyState } from "@/app/components/EmptyState";
 import { Popup } from "@/app/components/Popup";
+import { useT } from "@/lib/i18n/LangContext";
 
 type Branch = { id: string; name: string; address: string | null; isActive: boolean };
 type Staff = { id: string; name: string; role: "owner" | "manager" | "staff"; branchId: string | null };
@@ -31,6 +32,7 @@ function SubmitButton() {
 }
 
 export function BranchesClient({ branches, staff }: { branches: Branch[]; staff: Staff[] }) {
+  const { t } = useT();
   const router = useRouter();
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -52,7 +54,7 @@ export function BranchesClient({ branches, staff }: { branches: Branch[]; staff:
   return (
     <div className="flex flex-col gap-4">
       <PageHeader
-        title="Branches"
+        title={t("Branches")}
         subtitle="Track which branch each sale and staff member belongs to — one account, multiple locations."
         action={
           <button onClick={() => setShowForm((v) => !v)} className="btn-primary-sm">

@@ -5,8 +5,10 @@ import Image from "next/image";
 import { Plus, Camera, Loader2, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { createShelfWatchAction, checkShelfPhotoAction, type ShelfWatch, type ShelfChange } from "@/lib/actions/shelfWatch";
 import { fileToBase64 } from "@/lib/fileToBase64";
+import { useT } from "@/lib/i18n/LangContext";
 
 export function ShelfWatchClient({ initialShelves }: { initialShelves: ShelfWatch[] }) {
+  const { t } = useT();
   const [shelves, setShelves] = useState(initialShelves);
   const [newName, setNewName] = useState("");
   const [isCreating, setIsCreating] = useState(false);
@@ -59,8 +61,7 @@ export function ShelfWatchClient({ initialShelves }: { initialShelves: ShelfWatc
     <div className="flex flex-col gap-4">
       <div className="neu-card flex flex-col gap-2 p-4">
         <p className="text-sm text-foreground">
-          Har shelf/section ka ek naam dein (jaise &quot;Grocery Rack 1&quot;). Har baar jab uski photo lenge, AI pichli photo se compare karke batayega
-          kya kam dikh raha hai — bina kuch type kiye.
+          {t("Give each shelf or section a name (like \"Grocery Rack 1\"). Each time you take its photo, AI compares it with the last one and tells you what looks low — no typing needed.")}
         </p>
       </div>
 
@@ -146,7 +147,7 @@ export function ShelfWatchClient({ initialShelves }: { initialShelves: ShelfWatc
         })}
       </ul>
 
-      {shelves.length === 0 && <p className="py-6 text-center text-sm text-muted">No shelves yet — type a name above to start.</p>}
+      {shelves.length === 0 && <p className="py-6 text-center text-sm text-muted">{t("No shelves yet — type a name above to start.")}</p>}
     </div>
   );
 }

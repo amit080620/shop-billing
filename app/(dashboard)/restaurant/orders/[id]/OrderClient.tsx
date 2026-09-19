@@ -849,7 +849,7 @@ function BillPrintView({
         <hr className="my-2 border-dashed" />
         <div className="flex justify-between text-xs"><span>{t("order.subtotal")}</span><span>{formatMoney(order.subtotal)}</span></div>
         {order.discountAmount > 0 && <div className="flex justify-between text-xs"><span>{t("order.discount")}</span><span>− {formatMoney(order.discountAmount)}</span></div>}
-        <div className="flex justify-between text-xs"><span>Taxable value</span><span>{formatMoney(order.taxableAmount)}</span></div>
+        <div className="flex justify-between text-xs"><span>{t("Taxable value")}</span><span>{formatMoney(order.taxableAmount)}</span></div>
         {order.cgstAmount > 0 && <div className="flex justify-between text-xs"><span>CGST</span><span>{formatMoney(order.cgstAmount)}</span></div>}
         {order.sgstAmount > 0 && <div className="flex justify-between text-xs"><span>SGST</span><span>{formatMoney(order.sgstAmount)}</span></div>}
         {order.igstAmount > 0 && <div className="flex justify-between text-xs"><span>IGST</span><span>{formatMoney(order.igstAmount)}</span></div>}

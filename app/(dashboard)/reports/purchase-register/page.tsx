@@ -7,12 +7,14 @@ import { PeriodPicker } from "../PeriodPicker";
 import { Check } from "lucide-react";
 import { ExportCsvButton } from "@/app/components/ExportCsvButton";
 import { EmptyState } from "@/app/components/EmptyState";
+import { getTranslator } from "@/lib/i18n/server";
 
 export default async function PurchaseRegisterPage({
   searchParams,
 }: {
   searchParams: Promise<{ year?: string; month?: string }>;
 }) {
+  const { t } = await getTranslator();
   const { year: yearParam, month: monthParam } = await searchParams;
   const now = istYearMonth();
   const year = Number(yearParam) || now.year;
@@ -65,10 +67,10 @@ export default async function PurchaseRegisterPage({
         ← Reports
       </Link>
       <div className="flex items-center justify-between">
-        <h1 className="text-lg font-bold tracking-tight text-foreground md:text-2xl">Purchase register</h1>
+        <h1 className="text-lg font-bold tracking-tight text-foreground md:text-2xl">{t("Purchase register")}</h1>
         <PeriodPicker year={year} month={month} />
       </div>
-      <p className="text-sm text-muted">{MONTHS[month - 1]} {year} · Input GST / ITC</p>
+      <p className="text-sm text-muted">{MONTHS[month - 1]} {year} · {t("Input GST / ITC")}</p>
 
       <div className="grid grid-cols-3 gap-2">
         <SummaryCard label="ITC CGST" value={formatMoney(totalItcCgst)} />
@@ -77,7 +79,7 @@ export default async function PurchaseRegisterPage({
       </div>
 
       {rows.length === 0 ? (
-        <EmptyState text="Nothing logged for this period yet." />
+        <EmptyState text={t("Nothing logged for this period yet.")} />
       ) : (
         <>
           <div className="flex justify-end">

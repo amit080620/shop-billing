@@ -6,10 +6,12 @@ import { scanImageWithAI } from "@/lib/actions/aiScan";
 import { fileToBase64 } from "@/lib/fileToBase64";
 import { createOpeningBalanceEntriesAction } from "@/lib/actions/khataImport";
 import { AIStatusBadge, type AIStatusBadgeHandle } from "@/app/components/AIStatusBadge";
+import { useT } from "@/lib/i18n/LangContext";
 
 type DraftEntry = { id: string; name: string; phone: string; amount: number; include: boolean };
 
 export function KhataImportClient() {
+  const { t } = useT();
   const [entries, setEntries] = useState<DraftEntry[]>([]);
   const [isScanning, setIsScanning] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -96,10 +98,9 @@ export function KhataImportClient() {
     <div className="flex flex-col gap-4">
       <div className="neu-card flex flex-col gap-2 p-4">
         <p className="text-sm text-foreground">
-          Photograph each page of your old paper khata register. AI reads every customer&apos;s name and current
-          balance and turns it into a real, editable ledger entry here — review everything before it&apos;s saved.
+          {t("Photograph each page of your old paper khata register. AI reads every customer's name and current balance and turns it into a real, editable ledger entry here — review everything before it's saved.")}
         </p>
-        <p className="text-xs text-muted">Only the current outstanding amount is imported, not every old transaction — that becomes each customer&apos;s starting balance going forward.</p>
+        <p className="text-xs text-muted">{t("Only the current outstanding amount is imported, not every old transaction — that becomes each customer's starting balance going forward.")}</p>
       </div>
 
       <input
@@ -133,7 +134,7 @@ export function KhataImportClient() {
           className="btn-primary flex flex-1 items-center justify-center gap-2 disabled:opacity-60"
         >
           {isScanning ? <Loader2 size={16} className="animate-spin" /> : <Camera size={16} />}
-          {isScanning ? "Padh rahe hain…" : "Photo kheenchein"}
+          {isScanning ? "Reading…" : "Take photo"}
         </button>
         <button
           type="button"
@@ -142,7 +143,7 @@ export function KhataImportClient() {
           className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-brand px-3 py-2.5 text-sm font-medium text-brand disabled:opacity-60"
         >
           <ImageIcon size={16} />
-          Gallery se chunein
+          {t("Choose from gallery")}
         </button>
       </div>
       <div className="flex justify-center">

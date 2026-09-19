@@ -6,8 +6,10 @@ import { PageHeader } from "@/app/components/PageHeader";
 import { Circle } from "lucide-react";
 import { EmptyState } from "@/app/components/EmptyState";
 import { Repeat } from "lucide-react";
+import { getTranslator } from "@/lib/i18n/server";
 
 export default async function JewelleryExchangesPage() {
+  const { t } = await getTranslator();
   const session = await requireSession();
   const admin = createSupabaseAdminClient();
 
@@ -25,7 +27,7 @@ export default async function JewelleryExchangesPage() {
   return (
     <div className="flex flex-col gap-3">
       <PageHeader
-        title="Exchange history"
+        title={t("Exchange history")}
         subtitle="Old gold/silver taken in — for your melting & refining records."
         icon={<Repeat size={18} strokeWidth={1.8} />}
       />
