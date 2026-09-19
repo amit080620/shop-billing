@@ -16,8 +16,8 @@ import { useSyncCalculatorAmount } from "@/lib/calculatorAmount";
 import { SearchableSelect } from "@/app/components/SearchableSelect";
 import { InlineQuickAdd } from "@/app/components/InlineQuickAdd";
 import { Spinner } from "@/app/components/Spinner";
-import { Zap, Package, AlertTriangle, Pill, Truck, Gem, Recycle, Mic } from "lucide-react";
-import { BarcodeScanInput } from "@/app/components/BarcodeScanInput";
+import { Zap, Package, AlertTriangle, Pill, Truck, Gem, Recycle, Mic, ScanBarcode } from "lucide-react";
+import { barcodeFromQuery } from "@/lib/barcodeQuery";
 import dynamic from "next/dynamic";
 const CameraBarcodeScanner = dynamic(() => import("@/app/components/CameraBarcodeScanner").then((m) => m.CameraBarcodeScanner), { ssr: false });
 import { useTranslation } from "@/lib/i18n/useTranslation";
@@ -634,24 +634,28 @@ export function NewBillClient({
               ))}
             </div>
           )}
-          {barcodeScanMode !== "camera" && barcodeScanMode !== "off" && (
-            <BarcodeScanInput
-              placeholder={t("bill.scanPlaceholder")}
-              onScan={handleBarcodeScan}
-            />
-          )}
-          {scanError && <p className="text-xs text-credit">{scanError}</p>}
           <SearchableSelect
             lang={lang}
             items={products}
             getKey={(p) => p.id}
             getLabel={(p) => p.name}
+            getKeywords={(p) => p.barcode ?? ""}
+            leadingIcon={<ScanBarcode size={17} />}
+            onEnter={(text) => {
+              const code = barcodeScanMode === "off" ? null : barcodeFromQuery(text, products);
+              if (code) handleBarcodeScan(code);
+              return !!code;
+            }}
             getSubLabel={(p) =>
               p.trackInventory ? `${formatMoney(p.price)} · ${p.stockQuantity} ${unitLabel(p.unit)} left` : formatMoney(p.price)
             }
-            onSelect={addProduct}
-            placeholder={t("bill.searchProducts")}
+            onSelect={(p) => {
+              setScanError(null);
+              addProduct(p);
+            }}
+            placeholder={barcodeScanMode === "off" ? t("bill.searchProducts") : t("bill.searchOrScan")}
           />
+          {scanError && <p className="text-xs text-credit">{scanError}</p>}
           {/* Secondary ways to add items — one compact row instead of a
               stack of full-width controls under the search box. */}
           <div className="flex flex-wrap items-center gap-2">

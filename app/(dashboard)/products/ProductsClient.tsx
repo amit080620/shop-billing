@@ -18,7 +18,7 @@ import {
   generateBarcodeAction,
   uploadProductImageAction,
 } from "@/lib/actions/products";
-import { Package, Camera, Tag, ShieldCheck, Layers, Sparkles, Loader2, Pencil, Trash2 } from "lucide-react";
+import { Package, Camera, Tag, ShieldCheck, Layers, Sparkles, Loader2, Pencil, Trash2, ScanBarcode } from "lucide-react";
 import { suggestProductPriceAction } from "@/lib/actions/priceSuggestion";
 import { formatMoney, unitLabel } from "@/lib/format";
 import { EmptyState } from "@/app/components/EmptyState";
@@ -26,7 +26,7 @@ import { useToast } from "@/app/components/Toast";
 import { PageHeader } from "@/app/components/PageHeader";
 import dynamic from "next/dynamic";
 const CameraBarcodeScanner = dynamic(() => import("@/app/components/CameraBarcodeScanner").then((m) => m.CameraBarcodeScanner), { ssr: false });
-import { BarcodeScanInput } from "@/app/components/BarcodeScanInput";
+import { barcodeFromQuery } from "@/lib/barcodeQuery";
 import { BulkImportExport } from "./BulkImportExport";
 import { COMMON_GST_RATES, UNITS } from "@/lib/constants/states";
 import { COMMON_MEDICINE_NAMES } from "@/lib/constants/commonMedicines";
@@ -280,18 +280,24 @@ export function ProductsClient({
       />
 
       <div className="flex flex-col gap-2">
-        <input
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder={t("products.searchPlaceholder")}
-          className="px-3.5 py-2.5 text-sm"
-        />
-        {barcodeScanMode !== "camera" && barcodeScanMode !== "off" && (
-          <BarcodeScanInput
-            placeholder={t("products.scanPlaceholder")}
-            onScan={handleInventoryScan}
+        <label className="relative">
+          <ScanBarcode size={17} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
+          <input
+            value={search}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setScanNotice(null);
+            }}
+            onKeyDown={(e) => {
+              if (e.key !== "Enter") return;
+              const code = barcodeFromQuery(search, initialProducts);
+              if (code) handleInventoryScan(code);
+            }}
+            placeholder={t("products.searchPlaceholder")}
+            enterKeyHint="search"
+            className="w-full py-2.5 pl-10 pr-3.5 text-sm"
           />
-        )}
+        </label>
         {scanNotice && <p className="text-xs text-credit">{scanNotice}</p>}
         {/* Secondary catalog tools — one scrollable row of pills. */}
         <div className="-mx-4 flex items-center gap-2 overflow-x-auto whitespace-nowrap px-4 pb-1 md:mx-0 md:flex-wrap md:px-0">
@@ -848,6 +854,7 @@ export function ProductsClient({
 
       {filtered.length === 0 ? (
         <EmptyState
+          icon={Package}
           text={t("products.emptyShelf")}
           action={
             <button onClick={openNewProductForm} className="btn-primary-sm">

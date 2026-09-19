@@ -1,6 +1,6 @@
 "use client";
 import { keepValuesOnError } from "@/lib/keepValuesOnError";
-import { Users } from "lucide-react";
+import { Users, SearchX } from "lucide-react";
 
 import { useRef, useState, useEffect } from "react";
 import { PhoneInput } from "@/app/components/PhoneInput";
@@ -195,7 +195,20 @@ export function CustomersClient({
       )}
 
       {filtered.length === 0 ? (
-        <EmptyState text="No customers yet — add your first one to start tracking sales and credit." />
+        search.trim() ? (
+          <EmptyState icon={SearchX} text={`No one matches "${search.trim()}". Check the spelling or search by phone.`} />
+        ) : (
+          <EmptyState
+            icon={Users}
+            title="No customers yet"
+            text="Add your regular customers to keep their udhaar and send WhatsApp reminders."
+            action={
+              <button onClick={() => setShowForm(true)} className="btn-primary-sm">
+                + Add customer
+              </button>
+            }
+          />
+        )
       ) : (
         <ul className="flex flex-col gap-2 md:grid md:grid-cols-2 md:gap-3">
           {filtered.map((c) => (

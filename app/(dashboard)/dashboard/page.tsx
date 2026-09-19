@@ -299,7 +299,15 @@ async function RetailHome({
       <section>
         <h2 className="mb-2 text-sm font-semibold text-foreground">{t("home.recentBills")}</h2>
         {!recentBills.data || recentBills.data.length === 0 ? (
-          <EmptyState text={t("home.noBillsYet")} />
+          <EmptyState
+            icon={Receipt}
+            text={t("home.noBillsYet")}
+            action={
+              <Link href="/bills/new" className="btn-primary-sm">
+                {t("home.newBill")}
+              </Link>
+            }
+          />
         ) : (
           <ul className="flex flex-col gap-2">
             {recentBills.data.map((bill) => {
@@ -719,7 +727,15 @@ async function JewelleryHome({
       <section>
         <h2 className="mb-2 text-sm font-semibold text-foreground">{t("home.recentBills")}</h2>
         {!recentBills.data || recentBills.data.length === 0 ? (
-          <EmptyState text={t("home.noBillsYet")} />
+          <EmptyState
+            icon={Receipt}
+            text={t("home.noBillsYet")}
+            action={
+              <Link href="/bills/new" className="btn-primary-sm">
+                {t("home.newBill")}
+              </Link>
+            }
+          />
         ) : (
           <ul className="flex flex-col gap-2">
             {recentBills.data.map((bill) => {
@@ -826,7 +842,15 @@ async function SalonHome({
       <section>
         <h2 className="mb-2 text-sm font-semibold text-foreground">{t("home.recentBills")}</h2>
         {!recentBills.data || recentBills.data.length === 0 ? (
-          <EmptyState text={t("home.noBillsYet")} />
+          <EmptyState
+            icon={Receipt}
+            text={t("home.noBillsYet")}
+            action={
+              <Link href="/bills/new" className="btn-primary-sm">
+                {t("home.newBill")}
+              </Link>
+            }
+          />
         ) : (
           <ul className="flex flex-col gap-2">
             {recentBills.data.map((bill) => {
@@ -1083,7 +1107,15 @@ async function TransportHome({
       <section>
         <h2 className="mb-2 text-sm font-semibold text-foreground">{t("home.recentBills")}</h2>
         {!recentBills.data || recentBills.data.length === 0 ? (
-          <EmptyState text={t("home.noBillsYet")} />
+          <EmptyState
+            icon={Receipt}
+            text={t("home.noBillsYet")}
+            action={
+              <Link href="/bills/new" className="btn-primary-sm">
+                {t("home.newBill")}
+              </Link>
+            }
+          />
         ) : (
           <ul className="flex flex-col gap-2">
             {recentBills.data.map((bill) => {
@@ -1188,7 +1220,15 @@ async function PharmacyHome({
       <section>
         <h2 className="mb-2 text-sm font-semibold text-foreground">{t("home.recentBills")}</h2>
         {!recentBills.data || recentBills.data.length === 0 ? (
-          <EmptyState text={t("home.noBillsYet")} />
+          <EmptyState
+            icon={Receipt}
+            text={t("home.noBillsYet")}
+            action={
+              <Link href="/bills/new" className="btn-primary-sm">
+                {t("home.newBill")}
+              </Link>
+            }
+          />
         ) : (
           <ul className="flex flex-col gap-2">
             {recentBills.data.map((bill) => {

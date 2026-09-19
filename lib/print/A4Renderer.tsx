@@ -1,3 +1,5 @@
+import { amountInWords } from "@/lib/amountInWords";
+
 export type A4InvoiceItem = {
   name: string;
   hsnCode: string | null;
@@ -69,6 +71,9 @@ const A4_FONT_STACK =
 
 export function A4Renderer({ data }: { data: A4InvoiceData }) {
   const accent = data.accentColor || "#1a1a1a";
+  // A light wash of the accent for the table header and total band (valid
+  // for the #RRGGBB colours invoice settings allow).
+  const tint = /^#[0-9a-f]{6}$/i.test(accent) ? `${accent}12` : "#f5f5f5";
 
   return (
     <div
@@ -85,6 +90,8 @@ export function A4Renderer({ data }: { data: A4InvoiceData }) {
         }
       `}</style>
 
+      <div className="mb-8 h-1.5 rounded-full" style={{ background: accent }} />
+
       {data.voidedReason && (
         <div className="mb-6 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
           This invoice has been voided — {data.voidedReason}
@@ -100,9 +107,17 @@ export function A4Renderer({ data }: { data: A4InvoiceData }) {
           balanced with whitespace rather than boxes or borders. */}
       <div className="flex items-start justify-between gap-8">
         <div className="flex items-start gap-4">
-          {data.shopLogoUrl && (
+          {data.shopLogoUrl ? (
             // eslint-disable-next-line @next/next/no-img-element -- print page
             <img src={data.shopLogoUrl} alt="" className="h-14 w-14 object-contain" />
+          ) : (
+            <span
+              className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl text-[24px] font-bold text-white"
+              style={{ background: accent }}
+              aria-hidden="true"
+            >
+              {data.shopName.trim().charAt(0).toUpperCase()}
+            </span>
           )}
           <div>
             <h1 className="text-[22px] font-semibold tracking-tight">{data.shopName}</h1>
@@ -114,8 +129,8 @@ export function A4Renderer({ data }: { data: A4InvoiceData }) {
           </div>
         </div>
         <div className="text-right">
-          <p className="text-[20px] font-semibold tracking-tight" style={{ color: accent }}>
-            INVOICE
+          <p className="whitespace-nowrap text-[20px] font-semibold tracking-tight" style={{ color: accent }}>
+            {data.gstin ? "TAX INVOICE" : "INVOICE"}
           </p>
           <p className="mt-1 text-[12px] text-neutral-500">
             Invoice No. <span className="whitespace-nowrap">{data.invoiceNumber}</span>
@@ -147,18 +162,20 @@ export function A4Renderer({ data }: { data: A4InvoiceData }) {
       {/* Item table — subtle separators, not heavy grid borders. */}
       <table className="mt-10 w-full border-collapse">
         <thead>
-          <tr className="border-b border-neutral-300 text-[11px] font-semibold uppercase tracking-wide text-neutral-400">
-            <th className="pb-2.5 text-left font-semibold">Description</th>
-            <th className="pb-2.5 text-left font-semibold">HSN</th>
-            <th className="pb-2.5 text-right font-semibold">Qty</th>
-            <th className="pb-2.5 text-right font-semibold">Rate</th>
-            <th className="pb-2.5 text-right font-semibold">Tax</th>
-            <th className="pb-2.5 text-right font-semibold">Amount</th>
+          <tr className="text-[11px] font-semibold uppercase tracking-wide text-neutral-500" style={{ background: tint }}>
+            <th className="py-2.5 pl-2 pr-2 text-left font-semibold">#</th>
+            <th className="py-2.5 pr-2 text-left font-semibold">Description</th>
+            <th className="py-2.5 pr-2 text-left font-semibold">HSN</th>
+            <th className="py-2.5 pr-2 text-right font-semibold">Qty</th>
+            <th className="py-2.5 pr-2 text-right font-semibold">Rate</th>
+            <th className="py-2.5 pr-2 text-right font-semibold">Tax</th>
+            <th className="py-2.5 pr-2 text-right font-semibold">Amount</th>
           </tr>
         </thead>
         <tbody>
           {data.items.map((item, i) => (
             <tr key={i} className="border-b border-neutral-100">
+              <td className="py-3 pl-2 pr-2 align-top text-[12px] text-neutral-400 tabular-nums">{i + 1}</td>
               <td className="py-3 pr-3 text-[13px]">
                 {item.name}
                 {item.warrantyText && <div className="mt-0.5 text-[11px] text-neutral-400">{item.warrantyText}</div>}
@@ -170,7 +187,7 @@ export function A4Renderer({ data }: { data: A4InvoiceData }) {
               <td className="py-3 pr-3 text-right text-[13px] tabular-nums">{item.qty}</td>
               <td className="py-3 pr-3 text-right text-[13px] tabular-nums">{money(item.rate)}</td>
               <td className="py-3 pr-3 text-right text-[12px] text-neutral-500 tabular-nums">{item.taxPercent}%</td>
-              <td className="py-3 text-right text-[13px] font-medium tabular-nums">{money(item.amount)}</td>
+              <td className="py-3 pr-2 text-right text-[13px] font-medium tabular-nums">{money(item.amount)}</td>
             </tr>
           ))}
         </tbody>
@@ -203,12 +220,13 @@ export function A4Renderer({ data }: { data: A4InvoiceData }) {
             />
           )}
 
-          <div className="mt-3 flex items-baseline justify-between border-t border-neutral-300 pt-3">
+          <div className="mt-3 flex items-baseline justify-between rounded-lg px-3 py-2.5" style={{ background: tint }}>
             <p className="text-[13px] font-semibold">Grand Total</p>
             <p className="text-[20px] font-semibold tabular-nums" style={{ color: accent }}>
               {money(data.total)}
             </p>
           </div>
+          <p className="mt-1.5 text-right text-[11px] italic text-neutral-500">{amountInWords(data.total)}</p>
 
           <div className="mt-3 text-[12px] text-neutral-500">
             <SummaryLine label={`Paid (${data.paymentLabel})`} value={money(data.paidAmount)} />
@@ -230,6 +248,18 @@ export function A4Renderer({ data }: { data: A4InvoiceData }) {
           )}
         </div>
       </div>
+
+      <div className="mt-12 flex justify-end" style={{ breakInside: "avoid" }}>
+        <div className="text-center">
+          <p className="text-[12px] font-medium text-neutral-600">For {data.shopName}</p>
+          <div className="mx-auto mt-10 w-44 border-t border-neutral-300" />
+          <p className="mt-1.5 text-[11px] text-neutral-400">Authorised Signatory</p>
+        </div>
+      </div>
+
+      {!(data.bankDetails || data.termsAndConditions || data.footerText) && (
+        <p className="mt-10 text-center text-[12px] text-neutral-400">Thank you for your business.</p>
+      )}
 
       {/* Footer — small but readable, restrained. */}
       {(data.bankDetails || data.termsAndConditions || data.footerText) && (

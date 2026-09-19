@@ -149,7 +149,7 @@ export function VendorsClient({ initialVendors }: { initialVendors: Vendor[] }) 
       )}
 
       {filtered.length === 0 ? (
-        <EmptyState text="No vendors yet — add your first supplier to start logging purchases." />
+        <EmptyState icon={Building2} title="No suppliers yet" text="Add the wholesalers you buy from to log purchases and track what you owe them." />
       ) : (
         <ul className="flex flex-col gap-2 md:grid md:grid-cols-2 md:gap-3">
           {filtered.map((v) => (

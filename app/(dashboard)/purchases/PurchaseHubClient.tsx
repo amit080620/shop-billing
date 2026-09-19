@@ -122,7 +122,16 @@ export function PurchaseHubClient({ purchases, payments }: { purchases: Purchase
 
           {historyTab === "purchase" ? (
             purchases.length === 0 ? (
-              <EmptyState text="No purchases yet — purchase records will appear here once you add one." />
+              <EmptyState
+                icon={ShoppingCart}
+                title="No purchases yet"
+                text="Log what you buy from suppliers to track stock, cost and GST input credit."
+                action={
+                  <Link href="/purchases/new" className="btn-primary-sm">
+                    + Add purchase
+                  </Link>
+                }
+              />
             ) : (
               <ul className="flex flex-col gap-2">
                 {purchases.map((p) => (
@@ -146,7 +155,7 @@ export function PurchaseHubClient({ purchases, payments }: { purchases: Purchase
               </ul>
             )
           ) : payments.length === 0 ? (
-            <EmptyState text="No supplier payments yet — payments will appear here once you record one." />
+            <EmptyState icon={Wallet} text="No supplier payments yet — they appear here once you record one." />
           ) : (
             <ul className="flex flex-col gap-2">
               {payments.map((p) => (

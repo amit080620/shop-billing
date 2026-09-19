@@ -79,7 +79,16 @@ export default async function AllBillsPage({
       )}
 
       {filtered.length === 0 ? (
-        <EmptyState text="No bills in this range. Try Last 7 days or Last 30 days." />
+        <EmptyState
+          icon={Receipt}
+          title="No bills here"
+          text="Nothing was billed in this range. Try Last 7 days or Last 30 days."
+          action={
+            <Link href="/bills/new" className="btn-primary-sm">
+              + New bill
+            </Link>
+          }
+        />
       ) : (
         <ul className="flex flex-col gap-2">
           {filtered.map((b) => {

@@ -1,4 +1,33 @@
-import { BarChart3 } from "lucide-react";
+import {
+  BarChart3,
+  BookOpen,
+  Briefcase,
+  CalendarCheck,
+  CalendarClock,
+  CalendarDays,
+  ChefHat,
+  ChevronRight,
+  ClipboardCheck,
+  FileSpreadsheet,
+  FileText,
+  FlaskConical,
+  HeartHandshake,
+  History,
+  Hourglass,
+  Landmark,
+  Lightbulb,
+  Receipt,
+  Repeat,
+  Scale,
+  ShieldAlert,
+  Trash2,
+  TrendingUp,
+  Truck,
+  Users,
+  UtensilsCrossed,
+  Wrench,
+  type LucideIcon,
+} from "lucide-react";
 import Link from "next/link";
 import { requireSession } from "@/lib/auth";
 import { PageHeader } from "@/app/components/PageHeader";
@@ -228,14 +257,48 @@ export default async function ReportsPage() {
   );
 }
 
+// One icon per report, looked up by its link, so every row reads at a glance.
+const REPORT_ICONS: Record<string, LucideIcon> = {
+  "/daily-summary": CalendarCheck,
+  "/insights": Lightbulb,
+  "/reports/profit": TrendingUp,
+  "/reports/credit-aging": Hourglass,
+  "/reports/win-back": HeartHandshake,
+  "/reports/staff-performance": Users,
+  "/reports/vendor-comparison": Scale,
+  "/reports/ca-export": Briefcase,
+  "/reports/export": FileSpreadsheet,
+  "/reports/sales": Receipt,
+  "/reports/gstr1": FileText,
+  "/reports/gstr3b": Landmark,
+  "/reports/purchase-register": BookOpen,
+  "/restaurant/reports": UtensilsCrossed,
+  "/restaurant/reports/items": ChefHat,
+  "/transport/reports": Truck,
+  "/service/reports": Wrench,
+  "/pharmacy/expiry": CalendarClock,
+  "/pharmacy/write-offs": Trash2,
+  "/pharmacy/schedule-x-register": ShieldAlert,
+  "/rentals/history": History,
+  "/lab/orders": FlaskConical,
+  "/clinic/appointments": CalendarDays,
+  "/salon/appointments": CalendarDays,
+  "/gym/attendance": ClipboardCheck,
+  "/jewellery/exchanges": Repeat,
+};
+
 function ReportLink({ href, label, sub }: { href: string; label: string; sub: string }) {
+  const Icon = REPORT_ICONS[href] ?? BarChart3;
   return (
-    <Link href={href} className="flex items-center justify-between px-4 py-3.5">
-      <div>
-        <p className="text-sm font-medium text-foreground">{label}</p>
-        <p className="text-xs text-muted">{sub}</p>
-      </div>
-      <span className="text-muted">›</span>
+    <Link href={href} className="flex items-center gap-3 px-3.5 py-3 transition-colors hover:bg-surface-2 active:bg-surface-2">
+      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-soft text-brand-text">
+        <Icon size={17} strokeWidth={1.9} />
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block text-sm font-medium text-foreground">{label}</span>
+        <span className="block text-xs text-muted">{sub}</span>
+      </span>
+      <ChevronRight size={16} className="shrink-0 text-muted" />
     </Link>
   );
 }
