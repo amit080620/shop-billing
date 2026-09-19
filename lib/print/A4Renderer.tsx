@@ -117,7 +117,9 @@ export function A4Renderer({ data }: { data: A4InvoiceData }) {
           <p className="text-[20px] font-semibold tracking-tight" style={{ color: accent }}>
             INVOICE
           </p>
-          <p className="mt-1 text-[12px] text-neutral-500">Invoice No. {data.invoiceNumber}</p>
+          <p className="mt-1 text-[12px] text-neutral-500">
+            Invoice No. <span className="whitespace-nowrap">{data.invoiceNumber}</span>
+          </p>
           <p className="text-[12px] text-neutral-500">{data.dateText}</p>
         </div>
       </div>

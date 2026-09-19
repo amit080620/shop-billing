@@ -11,7 +11,7 @@ import { buildWhatsAppLink } from "@/lib/whatsapp";
 import { recordPaymentAction } from "@/lib/actions/customers";
 import { useToast } from "@/app/components/Toast";
 import { addGrowthLogAction, uploadPatientPhotoAction, deletePatientPhotoAction } from "@/lib/actions/clinic";
-import { formatMoney, formatDateTime } from "@/lib/format";
+import { formatMoney, formatDateTime, paymentMethodLabel } from "@/lib/format";
 import { EmptyState } from "@/app/components/EmptyState";
 import { Popup } from "@/app/components/Popup";
 import { DownloadStatementButton } from "./DownloadStatementButton";
@@ -280,7 +280,7 @@ export function LedgerClient({
                         {formatDateTime(entry.data.createdAt)}
                         {entry.data.paidAmount > 0 &&
                           (entry.data.creditAmount > 0
-                            ? ` · ${formatMoney(entry.data.paidAmount)} paid via ${entry.data.paymentMethod.toUpperCase()}`
+                            ? ` · ${formatMoney(entry.data.paidAmount)} paid by ${paymentMethodLabel(entry.data.paymentMethod)}`
                             : ` · Paid via ${entry.data.paymentMethod.toUpperCase()}`)}
                       </p>
                     </div>

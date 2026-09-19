@@ -91,7 +91,7 @@ export function DownloadImageButton({
     <div className="flex w-full flex-col gap-1">
       <button onClick={handleDownload} disabled={isGenerating} className="bill-action">
         <FileDown size={15} />
-        {isGenerating ? "Preparing…" : "Download PDF"}
+        {isGenerating ? "Preparing…" : "Save PDF"}
       </button>
       {error && <p className="text-xs text-credit">{error}</p>}
     </div>

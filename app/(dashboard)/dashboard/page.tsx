@@ -26,7 +26,6 @@ import {
   Repeat,
   MapPin,
   TrendingDown,
-  TrendingUp,
   UtensilsCrossed,
   ChefHat,
   CheckCircle2,
@@ -36,7 +35,6 @@ import {
   Rocket,
   PartyPopper,
   Package,
-  Users,
   Home,
   Check,
   ChevronRight,
@@ -194,8 +192,8 @@ const STOCK_BUSINESSES = new Set(["grocery", "mart", "hardware", "general", "pha
 function QuickLinks({ businessType }: { businessType: string }) {
   const links = [
     { href: "/products", label: getTerminology(businessType).productPlural, icon: Package },
-    { href: "/customers", label: `${customerNounFor(businessType)}s`, icon: Users },
-    { href: "/reports", label: "Reports", icon: TrendingUp },
+    { href: "/bills/all", label: "All bills", icon: Receipt },
+    { href: "/daily-summary", label: "Day summary", icon: Wallet },
   ];
   return (
     <nav aria-label="Shortcuts" className="grid grid-cols-3 gap-2">
