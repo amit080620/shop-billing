@@ -24,8 +24,8 @@ export default async function ScheduleXRegisterPage({
   const toDate = to || todayIso();
 
   const admin = createSupabaseAdminClient();
-  const startOfRange = new Date(`${fromDate}T00:00:00`);
-  const endOfRange = new Date(`${toDate}T23:59:59.999`);
+  const startOfRange = new Date(`${fromDate}T00:00:00+05:30`);
+  const endOfRange = new Date(`${toDate}T23:59:59.999+05:30`);
 
   const { data: scheduleXProducts } = await admin
     .from("products")

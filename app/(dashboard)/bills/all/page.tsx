@@ -23,8 +23,8 @@ export default async function AllBillsPage({
     .from("bills")
     .select("id, invoice_number, total, status, created_at, customers ( name )")
     .eq("shop_id", session.shopId)
-    .gte("created_at", `${from}T00:00:00`)
-    .lte("created_at", `${to}T23:59:59.999`)
+    .gte("created_at", `${from}T00:00:00+05:30`)
+    .lte("created_at", `${to}T23:59:59.999+05:30`)
     .order("created_at", { ascending: false })
     .limit(200);
 

@@ -28,8 +28,8 @@ export async function exportReportAction(
 ): Promise<{ error?: string; csv?: string; filename?: string; headers?: string[]; rows?: (string | number)[][] }> {
   const session = await requireSession();
   const admin = createSupabaseAdminClient();
-  const fromTs = `${from}T00:00:00`;
-  const toTs = `${to}T23:59:59.999`;
+  const fromTs = `${from}T00:00:00+05:30`;
+  const toTs = `${to}T23:59:59.999+05:30`;
 
   if (type === "bills") {
     const { data } = await admin

@@ -26,8 +26,8 @@ export default async function DailySummaryPage({
 
   const { data: branches } = await admin.from("branches").select("id, name").eq("shop_id", session.shopId).order("name");
 
-  const startOfDay = new Date(`${date}T00:00:00`);
-  const endOfDay = new Date(`${date}T23:59:59.999`);
+  const startOfDay = new Date(`${date}T00:00:00+05:30`);
+  const endOfDay = new Date(`${date}T23:59:59.999+05:30`);
 
   let billsQuery = admin
     .from("bills")

@@ -25,3 +25,22 @@ export function isoMonthsAgo(months: number): string {
 export function istDayStart(daysAgo = 0): Date {
   return new Date(`${isoDaysAgo(daysAgo)}T00:00:00+05:30`);
 }
+
+/** [start, end) instants of a calendar month in IST (month is 1–12).
+ * new Date(year, month - 1, 1) on the UTC server started the month at
+ * 5:30 AM IST, filing the 1st's early-morning sales under the previous
+ * month's GST return. */
+export function istMonthRange(year: number, month: number): { start: Date; end: Date; startDate: string; endDate: string } {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const [ny, nm] = month === 12 ? [year + 1, 1] : [year, month + 1];
+  // startDate/endDate are for plain DATE columns (e.g. purchase_date).
+  const startDate = `${year}-${pad(month)}-01`;
+  const endDate = `${ny}-${pad(nm)}-01`;
+  return { start: new Date(`${startDate}T00:00:00+05:30`), end: new Date(`${endDate}T00:00:00+05:30`), startDate, endDate };
+}
+
+/** The current IST year and month (1–12). */
+export function istYearMonth(): { year: number; month: number } {
+  const [y, m] = todayIso().split("-").map(Number);
+  return { year: y, month: m };
+}

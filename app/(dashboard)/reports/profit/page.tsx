@@ -24,8 +24,8 @@ export default async function ProfitPage({
     .select("id")
     .eq("shop_id", session.shopId)
     .eq("status", "active")
-    .gte("created_at", `${fromDate}T00:00:00`)
-    .lte("created_at", `${toDate}T23:59:59.999`);
+    .gte("created_at", `${fromDate}T00:00:00+05:30`)
+    .lte("created_at", `${toDate}T23:59:59.999+05:30`);
 
   const billIds = (bills ?? []).map((b) => b.id);
 
@@ -39,15 +39,15 @@ export default async function ProfitPage({
       .select("id")
       .eq("shop_id", session.shopId)
       .eq("status", "settled")
-      .gte("settled_at", `${fromDate}T00:00:00`)
-      .lte("settled_at", `${toDate}T23:59:59.999`),
+      .gte("settled_at", `${fromDate}T00:00:00+05:30`)
+      .lte("settled_at", `${toDate}T23:59:59.999+05:30`),
     admin
       .from("rentals")
       .select("id")
       .eq("shop_id", session.shopId)
       .neq("status", "cancelled")
-      .gte("created_at", `${fromDate}T00:00:00`)
-      .lte("created_at", `${toDate}T23:59:59.999`),
+      .gte("created_at", `${fromDate}T00:00:00+05:30`)
+      .lte("created_at", `${toDate}T23:59:59.999+05:30`),
   ]);
 
   const orderIds = (restaurantOrders ?? []).map((o) => o.id);

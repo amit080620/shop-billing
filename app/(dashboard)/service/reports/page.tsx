@@ -31,8 +31,8 @@ export default async function ServiceReportsPage({
     .from("service_jobs")
     .select("id, job_number, item_description, status, technician_name, final_cost, advance_paid, created_at, device_category")
     .eq("shop_id", session.shopId)
-    .gte("created_at", `${fromDate}T00:00:00`)
-    .lte("created_at", `${toDate}T23:59:59.999`)
+    .gte("created_at", `${fromDate}T00:00:00+05:30`)
+    .lte("created_at", `${toDate}T23:59:59.999+05:30`)
     .order("created_at", { ascending: false });
 
   const all = jobs ?? [];

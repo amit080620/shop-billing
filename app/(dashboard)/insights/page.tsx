@@ -22,8 +22,8 @@ export default async function InsightsPage({
   const fromDate = fromParam || isoDaysAgo(7);
   const toDate = toParam || todayIso();
 
-  const rangeStart = new Date(`${fromDate}T00:00:00`);
-  const rangeEnd = new Date(`${toDate}T23:59:59.999`);
+  const rangeStart = new Date(`${fromDate}T00:00:00+05:30`);
+  const rangeEnd = new Date(`${toDate}T23:59:59.999+05:30`);
   const rangeDays = Math.max(1, Math.round((rangeEnd.getTime() - rangeStart.getTime()) / 86400000));
 
   // Previous period of the same length, immediately before the selected

@@ -18,8 +18,8 @@ export default async function StaffPerformancePage({
   const { from: fromParam, to: toParam } = await searchParams;
   const fromDate = fromParam || isoDaysAgo(30);
   const toDate = toParam || todayIso();
-  const startRange = `${fromDate}T00:00:00`;
-  const endRange = `${toDate}T23:59:59.999`;
+  const startRange = `${fromDate}T00:00:00+05:30`;
+  const endRange = `${toDate}T23:59:59.999+05:30`;
 
   const [{ data: staffList }, { data: bills }, { data: payments }] = await Promise.all([
     admin.from("staff").select("id, name, role").eq("shop_id", session.shopId),

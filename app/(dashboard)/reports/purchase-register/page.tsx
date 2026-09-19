@@ -2,6 +2,7 @@ import Link from "next/link";
 import { requireSession } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { formatMoney } from "@/lib/format";
+import { istMonthRange, istYearMonth } from "@/lib/dateHelpers";
 import { PeriodPicker, MONTHS } from "../PeriodPicker";
 import { Check } from "lucide-react";
 import { ExportCsvButton } from "@/app/components/ExportCsvButton";
@@ -13,15 +14,15 @@ export default async function PurchaseRegisterPage({
   searchParams: Promise<{ year?: string; month?: string }>;
 }) {
   const { year: yearParam, month: monthParam } = await searchParams;
-  const now = new Date();
-  const year = Number(yearParam) || now.getFullYear();
-  const month = Number(monthParam) || now.getMonth() + 1;
+  const now = istYearMonth();
+  const year = Number(yearParam) || now.year;
+  const month = Number(monthParam) || now.month;
 
   const session = await requireSession();
   const admin = createSupabaseAdminClient();
 
-  const start = new Date(year, month - 1, 1);
-  const end = new Date(year, month, 1);
+  // Month boundaries at IST midnight, not the UTC server's.
+  const { startDate, endDate } = istMonthRange(year, month);
 
   const { data: purchases } = await admin
     .from("purchases")
@@ -29,8 +30,8 @@ export default async function PurchaseRegisterPage({
       "id, vendor_invoice_number, purchase_date, taxable_amount, cgst_amount, sgst_amount, igst_amount, total, itc_eligible, reverse_charge, vendors ( name, gstin )",
     )
     .eq("shop_id", session.shopId)
-    .gte("purchase_date", start.toISOString().slice(0, 10))
-    .lt("purchase_date", end.toISOString().slice(0, 10))
+    .gte("purchase_date", startDate)
+    .lt("purchase_date", endDate)
     .order("purchase_date");
 
   type Row = {

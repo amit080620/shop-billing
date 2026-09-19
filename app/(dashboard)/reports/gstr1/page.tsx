@@ -2,6 +2,7 @@ import Link from "next/link";
 import { requireSession } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { formatMoney } from "@/lib/format";
+import { istMonthRange, istYearMonth } from "@/lib/dateHelpers";
 import { PeriodPicker, MONTHS } from "../PeriodPicker";
 import { Gstr1Client } from "./Gstr1Client";
 
@@ -11,15 +12,15 @@ export default async function Gstr1Page({
   searchParams: Promise<{ year?: string; month?: string }>;
 }) {
   const { year: yearParam, month: monthParam } = await searchParams;
-  const now = new Date();
-  const year = Number(yearParam) || now.getFullYear();
-  const month = Number(monthParam) || now.getMonth() + 1; // 1-12
+  const now = istYearMonth();
+  const year = Number(yearParam) || now.year;
+  const month = Number(monthParam) || now.month; // 1-12
 
   const session = await requireSession();
   const admin = createSupabaseAdminClient();
 
-  const start = new Date(year, month - 1, 1);
-  const end = new Date(year, month, 1);
+  // Month boundaries at IST midnight, not the UTC server's.
+  const { start, end } = istMonthRange(year, month);
 
   const [{ data: bills }, { data: restaurantOrders }, { data: rentals }] = await Promise.all([
     admin

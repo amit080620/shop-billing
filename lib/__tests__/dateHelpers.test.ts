@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
-import { todayIso, isoDaysAgo, isoMonthsAgo, istDayStart } from "../dateHelpers";
+import { todayIso, isoDaysAgo, isoMonthsAgo, istDayStart, istMonthRange } from "../dateHelpers";
 
 describe("dateHelpers — genuinely IST-aware (fixed a real UTC-rollover bug earlier)", () => {
   afterEach(() => {
@@ -64,5 +64,15 @@ describe("istDayStart", () => {
   it("steps back whole days", () => {
     expect(istDayStart(0).getTime() - istDayStart(1).getTime()).toBe(24 * 3600 * 1000);
     expect(istDayStart(0).getTime() - istDayStart(6).getTime()).toBe(6 * 24 * 3600 * 1000);
+  });
+});
+
+describe("istMonthRange", () => {
+  it("starts and ends at IST midnight, including the December rollover", () => {
+    const sep = istMonthRange(2026, 9);
+    expect(sep.start.toISOString()).toBe("2026-08-31T18:30:00.000Z");
+    expect(sep.end.toISOString()).toBe("2026-09-30T18:30:00.000Z");
+    const dec = istMonthRange(2026, 12);
+    expect(dec.end.toISOString()).toBe("2026-12-31T18:30:00.000Z");
   });
 });

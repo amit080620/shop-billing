@@ -21,8 +21,8 @@ export default async function StaffCashSummaryPage({
   const session = await requireOwner();
   const admin = createSupabaseAdminClient();
 
-  const startOfDay = new Date(`${date}T00:00:00`);
-  const endOfDay = new Date(`${date}T23:59:59.999`);
+  const startOfDay = new Date(`${date}T00:00:00+05:30`);
+  const endOfDay = new Date(`${date}T23:59:59.999+05:30`);
 
   const [{ data: staff }, { data: bills }, { data: paymentsReceived }, { data: purchases }, { data: vendorPayments }] =
     await Promise.all([
