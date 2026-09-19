@@ -1,5 +1,6 @@
 "use client";
 
+import { useOrigin } from "@/lib/useOrigin";
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -126,7 +127,8 @@ export function BookingSettingsClient({
     });
   }
 
-  const publicUrl = publicToken && typeof window !== "undefined" ? `${window.location.origin}/book/${publicToken}` : null;
+  const origin = useOrigin();
+  const publicUrl = publicToken && origin ? `${origin}/book/${publicToken}` : null;
 
   return (
     <div className="flex flex-col gap-3 pb-6">

@@ -1,5 +1,6 @@
 "use client";
 
+import { useOrigin } from "@/lib/useOrigin";
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -16,7 +17,8 @@ export function KioskSettingsClient({ isEnabled: initialEnabled, publicToken }: 
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
-  const publicUrl = publicToken && typeof window !== "undefined" ? `${window.location.origin}/gym-checkin/${publicToken}` : null;
+  const origin = useOrigin();
+  const publicUrl = publicToken && origin ? `${origin}/gym-checkin/${publicToken}` : null;
 
   function toggle(next: boolean) {
     startTransition(async () => {

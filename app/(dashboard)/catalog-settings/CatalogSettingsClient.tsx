@@ -1,5 +1,6 @@
 "use client";
 
+import { useOrigin } from "@/lib/useOrigin";
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -61,7 +62,8 @@ export function CatalogSettingsClient({
     });
   }
 
-  const publicUrl = publicToken && typeof window !== "undefined" ? `${window.location.origin}/shop/${publicToken}` : null;
+  const origin = useOrigin();
+  const publicUrl = publicToken && origin ? `${origin}/shop/${publicToken}` : null;
 
   return (
     <div className="flex flex-col gap-4 pb-6">
