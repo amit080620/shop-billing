@@ -2,8 +2,10 @@
 
 import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis } from "recharts";
 import { useRouter } from "next/navigation";
+import { useT } from "@/lib/i18n/LangContext";
 
 export function SalesTrendChart({ data }: { data: { day: string; date: string; total: number }[] }) {
+  const { t } = useT();
   const router = useRouter();
   const hasAnySales = data.some((d) => d.total > 0);
 
@@ -60,8 +62,8 @@ export function SalesTrendChart({ data }: { data: { day: string; date: string; t
 
       {!hasAnySales && (
         <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-1 bg-background text-center">
-          <p className="text-xs text-muted">No sales in this period yet</p>
-          <p className="text-[11px] text-muted/70">Your first bill will show up here</p>
+          <p className="text-xs text-muted">{t("No sales in this period yet")}</p>
+          <p className="text-[11px] text-muted/70">{t("Your first bill will show up here")}</p>
         </div>
       )}
     </div>

@@ -307,10 +307,10 @@ export function ProductsClient({
             </div>
           )}
           <Link href="/products/scan-menu" className="flex shrink-0 items-center gap-1.5 rounded-full border border-border bg-surface px-3 py-1.5 text-xs font-medium text-foreground hover:bg-surface-2">
-            Scan price list
+            {t("Scan price list")}
           </Link>
           <button type="button" onClick={() => setShowCategoryForm((v) => !v)} className="flex shrink-0 items-center gap-1.5 rounded-full border border-border bg-surface px-3 py-1.5 text-xs font-medium text-foreground hover:bg-surface-2">
-            Categories
+            {t("Categories")}
           </button>
           <Link href="/products/labels" className="flex shrink-0 items-center gap-1.5 rounded-full border border-border bg-surface px-3 py-1.5 text-xs font-medium text-foreground hover:bg-surface-2">
             {t("products.printLabels")}

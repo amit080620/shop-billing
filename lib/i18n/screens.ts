@@ -16,6 +16,14 @@ export const SCREEN_STRINGS: Record<string, [en: string, hi: string, mr: string]
   "home.allBills": ["All bills", "सभी बिल", "सर्व बिले"],
   "home.daySummary": ["Day summary", "दिन का हिसाब", "दिवसाचा हिशोब"],
 
+  "home.setUp": ["Set up {shop}", "{shop} सेट अप करें", "{shop} सेट अप करा"],
+  "home.setupProgress": ["{done} of {total} done", "{total} में से {done} पूरे", "{total} पैकी {done} पूर्ण"],
+  "home.addFirst": ["Add your first {item}", "अपना पहला {item} जोड़ें", "आपले पहिले {item} जोडा"],
+  "home.addOne": ["Add a {who}", "एक {who} जोड़ें", "एक {who} जोडा"],
+  "home.festivalIn": ["{name} in {days} days", "{name} {days} दिन में", "{name} {days} दिवसांत"],
+  "home.festivalTomorrow": ["{name} tomorrow", "{name} कल", "{name} उद्या"],
+  "bill.loyaltyHas": ["🎁 {name} has {points} loyalty points", "🎁 {name} के {points} लॉयल्टी पॉइंट", "🎁 {name} यांचे {points} लॉयल्टी पॉइंट"],
+
   // Date range chips
   "range.today": ["Today", "आज", "आज"],
   "range.last7": ["Last 7 days", "पिछले 7 दिन", "मागील 7 दिवस"],

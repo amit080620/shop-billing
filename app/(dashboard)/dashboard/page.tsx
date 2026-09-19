@@ -68,12 +68,12 @@ export default async function DashboardPage() {
   // billing screen for the business type.
   const terms = getTerminology(session.businessType);
   const setupSteps = [
-    { done: !!session.shopStateCode, label: "Set your shop's GST state", href: "/settings" },
-    { done: (productCount ?? 0) > 0, label: `Add your first ${terms.productSingular.toLowerCase()}`, href: "/products" },
+    { done: !!session.shopStateCode, label: t("Set your shop's GST state"), href: "/settings" },
+    { done: (productCount ?? 0) > 0, label: t("home.addFirst", { item: terms.productSingular.toLowerCase() }), href: "/products" },
     isRestaurant
-      ? { done: (tableCount ?? 0) > 0, label: "Add your tables", href: "/restaurant" }
-      : { done: (customerCount ?? 0) > 0, label: `Add a ${customerNounFor(session.businessType).toLowerCase()}`, href: "/customers" },
-    { done: (anyBill?.length ?? 0) > 0, label: "Create your first bill", href: "/" },
+      ? { done: (tableCount ?? 0) > 0, label: t("Add your tables"), href: "/restaurant" }
+      : { done: (customerCount ?? 0) > 0, label: t("home.addOne", { who: customerNounFor(session.businessType).toLowerCase() }), href: "/customers" },
+    { done: (anyBill?.length ?? 0) > 0, label: t("Create your first bill"), href: "/" },
   ];
   const doneCount = setupSteps.filter((s) => s.done).length;
   const setupComplete = doneCount === setupSteps.length;
@@ -112,10 +112,10 @@ export default async function DashboardPage() {
         <section className="neu-card p-4">
           <div className="flex items-center justify-between gap-3">
             <p className="flex items-center gap-2 text-sm font-semibold text-foreground">
-              <Rocket size={16} className="text-brand-text" /> Set up {session.shopName}
+              <Rocket size={16} className="text-brand-text" /> {t("home.setUp", { shop: session.shopName })}
             </p>
             <p className="shrink-0 text-xs font-medium text-muted">
-              {doneCount} of {setupSteps.length} done
+              {t("home.setupProgress", { done: doneCount, total: setupSteps.length })}
             </p>
           </div>
           <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-surface-2" aria-hidden="true">
@@ -173,9 +173,9 @@ export default async function DashboardPage() {
           </span>
           <span className="min-w-0 flex-1">
             <span className="block text-sm font-semibold text-foreground">
-              {nextFestival.name} in {nextFestival.daysUntil} day{nextFestival.daysUntil === 1 ? "" : "s"}
+              {nextFestival.daysUntil === 1 ? t("home.festivalTomorrow", { name: nextFestival.name }) : t("home.festivalIn", { name: nextFestival.name, days: nextFestival.daysUntil })}
             </span>
-            <span className="block truncate text-xs text-muted">Check stock — restock ideas & a reminder</span>
+            <span className="block truncate text-xs text-muted">{t("Check stock — restock ideas & a reminder")}</span>
           </span>
           <ChevronRight size={16} className="shrink-0 text-muted" />
         </Link>

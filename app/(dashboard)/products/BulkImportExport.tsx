@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { bulkImportProductsAction, type ImportResult } from "@/lib/actions/bulk-import";
 import { downloadCsv } from "@/app/components/downloadCsv";
+import { useT } from "@/lib/i18n/LangContext";
 
 type Product = {
   name: string;
@@ -52,6 +53,7 @@ function toBool(v: unknown) {
 }
 
 export function BulkImportExport({ products, onImported, businessType }: { products: Product[]; onImported: () => void; businessType: string }) {
+  const { t: tr } = useT();
   const [open, setOpen] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   const [result, setResult] = useState<ImportResult | null>(null);
@@ -152,7 +154,7 @@ export function BulkImportExport({ products, onImported, businessType }: { produ
   return (
     <div className="flex flex-col gap-3 rounded-xl border border-border bg-surface p-4">
       <div className="flex items-center justify-between">
-        <p className="text-sm font-semibold text-brand-text">Bulk import / export</p>
+        <p className="text-sm font-semibold text-brand-text">{tr("Bulk import / export")}</p>
         <button onClick={() => setOpen(false)} className="flex items-center gap-1 text-xs font-medium text-muted">
           {/* eslint-disable-next-line @next/next/no-img-element -- small branded SVG icon */}
           <img src="/assets/ray-icons/close.svg" alt="" className="h-3 w-3" /> Close

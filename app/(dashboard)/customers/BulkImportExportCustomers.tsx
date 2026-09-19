@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { startBulkImportCustomersAction, getBulkImportJobStatusAction, fetchAllCustomersForExportAction, type CustomerImportResult } from "@/lib/actions/bulk-import";
 import { downloadCsv } from "@/app/components/downloadCsv";
+import { useT } from "@/lib/i18n/LangContext";
 
 const BASE_HEADERS = ["name", "phone", "gstin", "address", "stateCode", "dateOfBirth", "gender"];
 const CLINIC_HEADERS = ["bloodGroup", "knownAllergies"];
@@ -21,6 +22,7 @@ export function BulkImportExportCustomers({
   isClinic: boolean;
   isGym: boolean;
 }) {
+  const { t: tr } = useT();
   const [open, setOpen] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
@@ -123,7 +125,7 @@ export function BulkImportExportCustomers({
       <button onClick={() => setOpen(true)} className="self-start text-sm font-medium text-brand">
         <span className="flex items-center gap-1">
           {/* eslint-disable-next-line @next/next/no-img-element -- small branded SVG icon */}
-          <img src="/assets/ray-icons/upload.svg" alt="" className="h-3.5 w-3.5" /> Bulk import / export {noun}
+          <img src="/assets/ray-icons/upload.svg" alt="" className="h-3.5 w-3.5" /> {tr("Bulk import / export")}
         </span>
       </button>
     );
@@ -132,7 +134,7 @@ export function BulkImportExportCustomers({
   return (
     <div className="flex flex-col gap-3 rounded-xl border border-border bg-surface p-4">
       <div className="flex items-center justify-between">
-        <p className="text-sm font-semibold text-brand-text">Bulk import / export</p>
+        <p className="text-sm font-semibold text-brand-text">{tr("Bulk import / export")}</p>
         <button onClick={() => setOpen(false)} className="text-xs font-medium text-muted">
           Close
         </button>

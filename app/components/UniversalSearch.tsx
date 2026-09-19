@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Search, X, User, Package, Receipt, LayoutGrid, ClipboardList, Compass, Loader2 } from "lucide-react";
 import { universalSearchAction, type SearchResult } from "@/lib/actions/search";
+import { useT } from "@/lib/i18n/LangContext";
 
 const GROUP_ICON: Record<string, typeof User> = {
   Customers: User,
@@ -15,6 +16,7 @@ const GROUP_ICON: Record<string, typeof User> = {
 };
 
 export function UniversalSearch({ ownsGlobalShortcut = true }: { ownsGlobalShortcut?: boolean }) {
+  const { t } = useT();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -109,7 +111,7 @@ export function UniversalSearch({ ownsGlobalShortcut = true }: { ownsGlobalShort
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onFocus={() => setShowPanel(true)}
-          placeholder="Search products, customers, bills…"
+          placeholder={t("Search products, customers, bills…")}
           className="w-full py-2 pl-9 pr-9 text-sm text-foreground"
         />
         {query ? (

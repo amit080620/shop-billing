@@ -683,8 +683,8 @@ export function NewBillClient({
             triggerLabel={t("bill.addNewProduct")}
             fields={[
               { name: "name", label: t("bill.addNewProduct").replace("+ ", ""), required: true },
-              { name: "price", label: "Price (₹)", type: "number", required: true },
-              { name: "unit", label: "Unit", options: [...UNITS], defaultValue: "NOS" },
+              { name: "price", label: t("Price (₹)"), type: "number", required: true },
+              { name: "unit", label: t("Unit"), options: [...UNITS], defaultValue: "NOS" },
               { name: "gstPercent", label: "GST %", type: "number" },
             ]}
             onSubmit={async (v) => {
@@ -981,10 +981,9 @@ export function NewBillClient({
           className="rounded-lg border border-border px-3.5 py-2.5 text-sm outline-none focus:border-brand"
         />
 
-        {customerMode === "existing" && selectedCustomer && (
+        {customerMode === "existing" && selectedCustomer && (selectedCustomer.loyalty_points ?? 0) > 0 && (
           <p className="text-xs font-medium text-brand-text">
-            🎁 {selectedCustomer.name} has {selectedCustomer.loyalty_points ?? 0} loyalty point
-            {(selectedCustomer.loyalty_points ?? 0) === 1 ? "" : "s"}
+            {t("bill.loyaltyHas", { name: selectedCustomer.name, points: selectedCustomer.loyalty_points ?? 0 })}
           </p>
         )}
 

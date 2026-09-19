@@ -192,7 +192,7 @@ export default async function MorePage() {
           <MenuLink href="/birthdays" label="Birthdays" sub="Wish customers, bring them back" icon={Cake} />
           <MenuLink href="/festivals" label="Festival planner" sub="Upcoming festivals, stock-up hints & posters" icon={PartyPopper} />
           <MenuLink href="/profit-leak" label="Profit leak detector" sub="Where your money is stuck, at a glance" icon={TrendingDown} />
-          <MenuLink href="/shelf-watch" label="Ankhon se Inventory" sub="Shelf ki photo se stock-kami turant pata chale" icon={ScanEye} />
+          <MenuLink href="/shelf-watch" label="Shelf watch" sub="Photo a shelf; AI spots what's running low" icon={ScanEye} />
           <MenuLink href="/requests" label={t("more.requests")} sub={t("more.requests.sub")} icon={Bell} />
         </MenuGroup>
 
@@ -205,7 +205,7 @@ export default async function MorePage() {
 
         <MenuGroup title="Settings & help">
           <MenuLink href="/profile" label="Shop settings" sub="GST profile, invoice, printer, preferences" icon={Settings} />
-          <MenuLink href="/fast-print-setup" label="One-click print setup" sub="Laptop se bina dialog ke seedha print" icon={Printer} />
+          <MenuLink href="/fast-print-setup" label="One-click print setup" sub="Print from a laptop without the dialog" icon={Printer} />
           <MenuLink href="/offline-bill" label="Offline billing" sub="Keep billing with no connection — syncs when you're back" icon={WifiOff} />
           {isOwner && mod("audit_log") && (
             <>
@@ -228,24 +228,26 @@ export default async function MorePage() {
 
 /** A labelled group rendered as one card of divided rows — every option
  * is visible at a glance instead of hidden behind collapsed sections. */
-function MenuGroup({ title, children }: { title: string; children: React.ReactNode }) {
+async function MenuGroup({ title, children }: { title: string; children: React.ReactNode }) {
+  const { t } = await getTranslator();
   return (
     <section className="flex flex-col gap-1.5">
-      <h2 className="px-1 text-xs font-semibold text-muted">{title}</h2>
+      <h2 className="px-1 text-xs font-semibold text-muted">{t(title)}</h2>
       <div className="flex flex-col divide-y divide-border overflow-hidden rounded-xl border border-border bg-surface">{children}</div>
     </section>
   );
 }
 
-function MenuLink({ href, label, sub, icon: Icon }: { href: string; label: string; sub: string; icon: LucideIcon }) {
+async function MenuLink({ href, label, sub, icon: Icon }: { href: string; label: string; sub: string; icon: LucideIcon }) {
+  const { t } = await getTranslator();
   return (
     <Link href={href} className="flex items-center gap-3 px-3.5 py-3 transition-colors hover:bg-surface-2 active:bg-surface-2">
       <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-soft text-brand-text">
         <Icon size={17} strokeWidth={1.9} />
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-sm font-medium text-foreground">{label}</span>
-        <span className="block truncate text-xs text-muted">{sub}</span>
+        <span className="block truncate text-sm font-medium text-foreground">{t(label)}</span>
+        <span className="block truncate text-xs text-muted">{t(sub)}</span>
       </span>
       <ChevronRight size={16} className="shrink-0 text-muted" />
     </Link>

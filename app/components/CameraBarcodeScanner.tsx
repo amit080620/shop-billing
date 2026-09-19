@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useRef, useState } from "react";
 import type { Html5Qrcode as Html5QrcodeType } from "html5-qrcode";
+import { useT } from "@/lib/i18n/LangContext";
 
 // A browser page can never programmatically open Chrome's permission
 // dialog or site-settings screen — that's a deliberate security boundary,
@@ -19,7 +20,7 @@ function wait(ms: number) {
 
 export function CameraBarcodeScanner({
   onScan,
-  label = "Scan with camera",
+  label,
   compact = false,
 }: {
   onScan: (code: string) => void;
@@ -27,6 +28,8 @@ export function CameraBarcodeScanner({
   compact?: boolean;
 }) {
   const [active, setActive] = useState(false);
+  const { t } = useT();
+  const buttonLabel = label ?? t("Scan with camera");
   const [error, setError] = useState<string | null>(null);
   const containerId = `barcode-scanner-${useId().replace(/:/g, "")}`;
   const scannerRef = useRef<Html5QrcodeType | null>(null);
@@ -134,7 +137,7 @@ export function CameraBarcodeScanner({
           }
         >
           {/* eslint-disable-next-line @next/next/no-img-element -- small branded SVG icon */}
-          <img src="/assets/ray-icons/scan.svg" alt="" className="h-3.5 w-3.5" /> {label}
+          <img src="/assets/ray-icons/scan.svg" alt="" className="h-3.5 w-3.5" /> {buttonLabel}
         </button>
         {error && <p className="text-xs text-credit">{error}</p>}
       </div>

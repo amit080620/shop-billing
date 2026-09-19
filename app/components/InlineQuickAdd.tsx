@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { ContactPickerButton } from "./ContactPickerButton";
+import { useT } from "@/lib/i18n/LangContext";
 
 type Field = {
   name: string;
@@ -35,6 +36,7 @@ export function InlineQuickAdd<T>({
    * typed themselves. */
   phoneAutofill?: (phone: string) => Promise<string | null>;
 }) {
+  const { t } = useT();
   const [open, setOpen] = useState(false);
   const [values, setValues] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | null>(null);
@@ -125,7 +127,7 @@ export function InlineQuickAdd<T>({
           onClick={submit}
           className="rounded-lg bg-brand px-3 py-1.5 text-xs font-medium text-white disabled:opacity-60"
         >
-          {isPending ? "Adding…" : "Add & use"}
+          {isPending ? t("common.adding") : t("common.addUse")}
         </button>
         <button
           type="button"
@@ -136,7 +138,7 @@ export function InlineQuickAdd<T>({
           }}
           className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-muted"
         >
-          Cancel
+          {t("common.cancel")}
         </button>
       </div>
     </div>

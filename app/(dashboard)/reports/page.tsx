@@ -32,20 +32,22 @@ import Link from "next/link";
 import { requireSession } from "@/lib/auth";
 import { PageHeader } from "@/app/components/PageHeader";
 import { isModuleEnabled } from "@/lib/modules";
+import { getTranslator } from "@/lib/i18n/server";
 
 export default async function ReportsPage() {
   const session = await requireSession();
+  const { t } = await getTranslator();
 
   return (
     <div className="flex flex-col gap-3">
       <PageHeader
-        title="Reports"
+        title={t("Reports")}
          
         icon={<BarChart3 size={17} strokeWidth={1.8} />}
       />
 
       <section className="flex flex-col gap-2">
-        <h2 className="px-1 text-xs font-semibold uppercase tracking-wide text-muted">Daily tools</h2>
+        <h2 className="px-1 text-xs font-semibold uppercase tracking-wide text-muted">{t("Daily tools")}</h2>
         <div className="neu-card flex flex-col divide-y divide-border overflow-hidden">
           <ReportLink
             href="/daily-summary"
@@ -99,7 +101,7 @@ export default async function ReportsPage() {
 
       <section className="flex flex-col gap-2">
         <h2 className="px-1 text-xs font-semibold uppercase tracking-wide text-muted">
-          {session.businessType === "restaurant"
+          {t(session.businessType === "restaurant"
             ? "Restaurant"
             : session.businessType === "transport"
               ? "Transport"
@@ -119,7 +121,7 @@ export default async function ReportsPage() {
                             ? "Jewellery"
                             : session.businessType === "salon"
                               ? "Salon"
-                              : "Sales"}
+                              : "Sales")}
         </h2>
         <div className="neu-card flex flex-col divide-y divide-border overflow-hidden">
           {session.businessType === "restaurant" && (
@@ -218,9 +220,9 @@ export default async function ReportsPage() {
       <section className="flex flex-col gap-2">
         <h2 className="flex items-center gap-1 px-1 text-xs font-semibold uppercase tracking-wide text-muted">
           {/* eslint-disable-next-line @next/next/no-img-element -- small branded SVG icon */}
-          <img src="/assets/ray-icons/gst.svg" alt="" className="h-3.5 w-3.5" /> GST filing
+          <img src="/assets/ray-icons/gst.svg" alt="" className="h-3.5 w-3.5" /> {t("GST filing")}
         </h2>
-        <p className="text-xs text-muted">Always available regardless of plan — required for tax compliance.</p>
+        <p className="text-xs text-muted">{t("Always available regardless of plan — required for tax compliance.")}</p>
 
         {session.gstScheme === "composition" && (
           <p className="rounded-lg bg-credit-soft px-3 py-2 text-sm text-credit">
@@ -230,9 +232,7 @@ export default async function ReportsPage() {
         )}
 
         <p className="neu-card px-3.5 py-3 text-xs text-muted">
-          Laid out the same way the GST portal organizes them, built from your own sales and
-          purchase entries — they don&apos;t file anything for you. Review the numbers (or have
-          your CA review them) before entering them on the portal.
+          {t("Laid out the same way the GST portal organizes them, built from your own sales and purchase entries — they don't file anything for you. Review the numbers (or have your CA review them) before entering them on the portal.")}
         </p>
 
         <div className="neu-card flex flex-col divide-y divide-border overflow-hidden">
@@ -287,16 +287,17 @@ const REPORT_ICONS: Record<string, LucideIcon> = {
   "/jewellery/exchanges": Repeat,
 };
 
-function ReportLink({ href, label, sub }: { href: string; label: string; sub: string }) {
+async function ReportLink({ href, label, sub }: { href: string; label: string; sub: string }) {
   const Icon = REPORT_ICONS[href] ?? BarChart3;
+  const { t } = await getTranslator();
   return (
     <Link href={href} className="flex items-center gap-3 px-3.5 py-3 transition-colors hover:bg-surface-2 active:bg-surface-2">
       <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-soft text-brand-text">
         <Icon size={17} strokeWidth={1.9} />
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block text-sm font-medium text-foreground">{label}</span>
-        <span className="block text-xs text-muted">{sub}</span>
+        <span className="block text-sm font-medium text-foreground">{t(label)}</span>
+        <span className="block text-xs text-muted">{t(sub)}</span>
       </span>
       <ChevronRight size={16} className="shrink-0 text-muted" />
     </Link>

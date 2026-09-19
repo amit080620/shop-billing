@@ -30,6 +30,7 @@ export default async function DashboardLayout({
   const roleLabel = session.role === "owner" ? translate(lang, "role.owner") : translate(lang, "role.staff");
 
   return (
+    <LangProvider lang={lang}>
     <div className="min-h-screen bg-background pb-24 md:pb-0 md:pl-72">
       <DesktopSidebar
         lang={lang}
@@ -91,7 +92,7 @@ export default async function DashboardLayout({
       </header>
 
       <main className="page-enter mx-auto max-w-lg px-4 py-4 pb-24 md:max-w-5xl md:px-8 md:py-8 md:pb-8 xl:max-w-6xl">
-        <LangProvider lang={lang}>{children}</LangProvider>
+        {children}
       </main>
 
       <BottomNav lang={lang} businessType={session.businessType} permissions={session.permissions} fastBillingEnabled={fastBillingEnabled} />
@@ -101,5 +102,6 @@ export default async function DashboardLayout({
           booking or print pages, which live outside this layout. */}
       <LazyFloatingWidgets calculatorEnabled={calculatorEnabled} assistantEnabled={assistantEnabled} />
     </div>
+    </LangProvider>
   );
 }

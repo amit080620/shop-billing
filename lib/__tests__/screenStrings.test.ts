@@ -20,3 +20,15 @@ describe("screen strings", () => {
     expect(interpolate(translate("hi", "common.due"), { amount: "₹52.00" })).toBe("₹52.00 बाकी");
   });
 });
+
+describe("menu text", () => {
+  it("has Hindi and Marathi for every entry, and English stays as is", async () => {
+    const { MENU_TEXT } = await import("../i18n/menuText");
+    for (const [english, [hi, mr]] of Object.entries(MENU_TEXT)) {
+      expect(hi.trim(), `${english} hi`).not.toBe("");
+      expect(mr.trim(), `${english} mr`).not.toBe("");
+      expect(translate("en", english)).toBe(english);
+    }
+    expect(translate("hi", "Daily summary")).toBe("दैनिक हिसाब");
+  });
+});

@@ -34,7 +34,7 @@ export function PurchaseHubClient({ purchases, payments }: { purchases: Purchase
               topContext === ctx ? "bg-brand text-white" : "border border-border text-muted"
             }`}
           >
-            {ctx === "purchase" ? "Purchase" : "Purchase History"}
+            {ctx === "purchase" ? t("Purchase") : t("Purchase History")}
           </button>
         ))}
       </div>
@@ -50,7 +50,7 @@ export function PurchaseHubClient({ purchases, payments }: { purchases: Purchase
                   purchaseTab === tab ? "bg-brand-soft text-brand-text" : "text-muted"
                 }`}
               >
-                {tab === "add" ? "Add Purchase" : "Make Payment"}
+                {tab === "add" ? t("Add Purchase") : t("Make Payment")}
               </button>
             ))}
           </div>
@@ -62,8 +62,8 @@ export function PurchaseHubClient({ purchases, payments }: { purchases: Purchase
                   <Plus size={16} strokeWidth={2} />
                 </span>
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-semibold text-foreground">Add Purchase</p>
-                  <p className="text-xs text-muted">Record a new purchase from a supplier</p>
+                  <p className="text-sm font-semibold text-foreground">{t("Add Purchase")}</p>
+                  <p className="text-xs text-muted">{t("Record a new purchase from a supplier")}</p>
                 </div>
                 <ArrowRight size={14} className="shrink-0 text-muted" />
               </Link>
@@ -72,8 +72,8 @@ export function PurchaseHubClient({ purchases, payments }: { purchases: Purchase
                   <RefreshCw size={16} strokeWidth={2} />
                 </span>
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-semibold text-foreground">Reorder low stock</p>
-                  <p className="text-xs text-muted">One tap to a pre-filled purchase for everything running low</p>
+                  <p className="text-sm font-semibold text-foreground">{t("Reorder low stock")}</p>
+                  <p className="text-xs text-muted">{t("One tap to a pre-filled purchase for everything running low")}</p>
                 </div>
                 <ArrowRight size={14} className="shrink-0 text-muted" />
               </Link>
@@ -84,8 +84,8 @@ export function PurchaseHubClient({ purchases, payments }: { purchases: Purchase
                 <Wallet size={16} strokeWidth={2} />
               </span>
               <div className="min-w-0 flex-1">
-                <p className="text-sm font-semibold text-foreground">Make Payment</p>
-                <p className="text-xs text-muted">Pick a supplier to settle their outstanding balance</p>
+                <p className="text-sm font-semibold text-foreground">{t("Make Payment")}</p>
+                <p className="text-xs text-muted">{t("Pick a supplier to settle their outstanding balance")}</p>
               </div>
               <ArrowRight size={14} className="shrink-0 text-muted" />
             </Link>
