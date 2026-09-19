@@ -119,6 +119,7 @@ export function SearchableSelect<T>({
       if (onEnter?.(text)) {
         setQuery("");
         setHighlight(0);
+        setOpen(false); // keep any message under the box (e.g. barcode not found) visible
         return;
       }
       const item = filtered[highlight] ?? filtered[0];

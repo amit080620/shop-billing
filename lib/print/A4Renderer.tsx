@@ -70,7 +70,8 @@ const A4_FONT_STACK =
   '-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", system-ui, sans-serif';
 
 export function A4Renderer({ data }: { data: A4InvoiceData }) {
-  const accent = data.accentColor || "#1a1a1a";
+  // Same default the invoice settings page shows as selected.
+  const accent = data.accentColor || "#0f6b5c";
   // A light wash of the accent for the table header and total band (valid
   // for the #RRGGBB colours invoice settings allow).
   const tint = /^#[0-9a-f]{6}$/i.test(accent) ? `${accent}12` : "#f5f5f5";
