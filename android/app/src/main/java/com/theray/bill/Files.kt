@@ -25,7 +25,7 @@ class Files(private val activity: MainActivity) {
     private val authority = "${activity.packageName}.files"
 
     fun save(base64: String, name: String, mime: String, done: (String?) -> Unit) {
-        val bytes = try { Base64.decode(base64, Base64.DEFAULT) } catch (e: IllegalArgumentException) { return done("Couldn't read the file") }
+        val bytes = try { Base64.decode(base64, Base64.DEFAULT) } catch (e: IllegalArgumentException) { return done(L.t("cant_read")) }
         val fileName = safeName(name)
         val type = mime.ifBlank { "application/octet-stream" }
         if (Build.VERSION.SDK_INT >= 29) {
@@ -39,12 +39,12 @@ class Files(private val activity: MainActivity) {
                     ?.also { uri -> activity.contentResolver.openOutputStream(uri)?.use { it.write(bytes) } }
             } catch (e: Exception) {
                 null
-            } ?: return done("Couldn't save the file")
+            } ?: return done(L.t("cant_save"))
             saved(uri, fileName, type)
             done(null)
         } else {
             activity.withPermissions(arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE)) { granted ->
-                if (!granted) return@withPermissions done("Allow storage permission to save files")
+                if (!granted) return@withPermissions done(L.t("allow_storage"))
                 try {
                     @Suppress("DEPRECATION")
                     val dir = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "The Ray").apply { mkdirs() }
@@ -52,7 +52,7 @@ class Files(private val activity: MainActivity) {
                     saved(FileProvider.getUriForFile(activity, authority, file), file.name, type)
                     done(null)
                 } catch (e: Exception) {
-                    done("Couldn't save the file")
+                    done(L.t("cant_save"))
                 }
             }
         }
@@ -62,13 +62,13 @@ class Files(private val activity: MainActivity) {
     private fun saved(uri: Uri, name: String, mime: String) {
         activity.runOnUiThread {
             AlertDialog.Builder(activity)
-                .setTitle("Saved to Downloads")
-                .setMessage("$name\n\nFind it in Downloads › The Ray.")
-                .setPositiveButton("Open") { _, _ ->
-                    start(Intent(Intent.ACTION_VIEW).setDataAndType(uri, mime).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION), "No app found to open this file")
+                .setTitle(L.t("saved_title"))
+                .setMessage(L.t("saved_where", name))
+                .setPositiveButton(L.t("open")) { _, _ ->
+                    start(Intent(Intent.ACTION_VIEW).setDataAndType(uri, mime).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION), L.t("no_app_file"))
                 }
-                .setNeutralButton("Share") { _, _ -> shareUris(listOf(uri), mime, "", "") }
-                .setNegativeButton("Close", null)
+                .setNeutralButton(L.t("share")) { _, _ -> shareUris(listOf(uri), mime, "", "") }
+                .setNegativeButton(L.t("close"), null)
                 .show()
         }
     }
@@ -79,7 +79,7 @@ class Files(private val activity: MainActivity) {
         if (files.length() == 0) {
             val intent = Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, text)
             args.optString("title").takeIf { it.isNotBlank() }?.let { intent.putExtra(Intent.EXTRA_SUBJECT, it) }
-            start(Intent.createChooser(intent, "Share"), "No app found to share with")
+            start(Intent.createChooser(intent, L.t("share")), L.t("no_app_share"))
             return
         }
         val dir = File(activity.cacheDir, "share").apply { deleteRecursively(); mkdirs() }
@@ -107,7 +107,7 @@ class Files(private val activity: MainActivity) {
         if (title.isNotBlank()) intent.putExtra(Intent.EXTRA_SUBJECT, title)
         intent.clipData = ClipData.newRawUri("", uris[0]).apply { uris.drop(1).forEach { addItem(ClipData.Item(it)) } }
         intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-        start(Intent.createChooser(intent, "Share"), "No app found to share with")
+        start(Intent.createChooser(intent, L.t("share")), L.t("no_app_share"))
     }
 
     /** Regular (http) downloads go through Android's download manager with
@@ -129,10 +129,10 @@ class Files(private val activity: MainActivity) {
                 setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, "The Ray/$name")
             }
             (activity.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager).enqueue(request)
-            activity.toast("Downloading $name…")
+            activity.toast(L.t("downloading", name))
         }
         if (Build.VERSION.SDK_INT >= 29) enqueue()
-        else activity.withPermissions(arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE)) { if (it) enqueue() else activity.toast("Allow storage permission to download") }
+        else activity.withPermissions(arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE)) { if (it) enqueue() else activity.toast(L.t("allow_storage")) }
     }
 
     private fun start(intent: Intent, failure: String) {

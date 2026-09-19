@@ -33,11 +33,11 @@ describe("printing inside the Android app", () => {
 
   it("forgets an unreachable printer so the next print shows the list", async () => {
     const { store } = installApp(async () => {
-      throw new Error("Couldn't reach RPP02. Check the printer is ON, charged and near the phone.");
+      throw new Error("Couldn't reach RPP02. Check the printer is ON, charged and near the phone, then tap Print again to choose the printer.");
     });
     store.set("ray-native-printer", "AA:BB");
     const result = await printViaBluetooth(new Uint8Array([1]));
-    expect(result.error).toMatch(/Couldn't reach RPP02.*Tap Print again/);
+    expect(result.error).toMatch(/Couldn't reach RPP02.*tap Print again/i);
     expect(hasRememberedPrinter()).toBe(false);
   });
 

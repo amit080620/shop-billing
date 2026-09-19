@@ -46,6 +46,7 @@ class Bridge(private val activity: MainActivity, private val files: Files) {
 
     private fun handle(raw: String, reply: JavaScriptReplyProxy) {
         val msg = try { JSONObject(raw) } catch (e: Exception) { return }
+        L.refresh(BuildConfig.APP_URL)
         val id = msg.optInt("id")
         val args = msg.optJSONObject("args") ?: JSONObject()
         val done = { result: Any?, error: String? ->

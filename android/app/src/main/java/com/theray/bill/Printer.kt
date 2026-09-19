@@ -87,7 +87,7 @@ class Printer(private val activity: MainActivity) {
     // ------------------------------------------------ Permission and power
 
     private fun ready(scan: Boolean, then: (String?) -> Unit) {
-        val adapter = adapter ?: return then("This phone has no Bluetooth")
+        val adapter = adapter ?: return then(L.t("no_bluetooth"))
         val permissions = when {
             Build.VERSION.SDK_INT >= 31 -> arrayOf(Manifest.permission.BLUETOOTH_CONNECT, Manifest.permission.BLUETOOTH_SCAN)
             scan -> arrayOf(Manifest.permission.ACCESS_FINE_LOCATION)
@@ -97,11 +97,11 @@ class Printer(private val activity: MainActivity) {
             // Before Android 12, location only matters for finding new
             // printers; paired ones still work without it.
             if (!granted && Build.VERSION.SDK_INT >= 31) {
-                return@withPermissions then("Allow the \"Nearby devices\" permission to print over Bluetooth")
+                return@withPermissions then(L.t("allow_nearby"))
             }
             if (adapter.isEnabled) return@withPermissions then(null)
             activity.launchForResult(Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)) { _, _ ->
-                then(if (adapter.isEnabled) null else "Turn on Bluetooth to print")
+                then(if (adapter.isEnabled) null else L.t("turn_on_bt"))
             }
         }
     }
@@ -129,7 +129,7 @@ class Printer(private val activity: MainActivity) {
                 val item = getItem(position)!!
                 view.findViewById<TextView>(android.R.id.text1).text = item.name
                 view.findViewById<TextView>(android.R.id.text2).text =
-                    if (item.device.bondState == BluetoothDevice.BOND_BONDED) "Paired · ${item.device.address}" else "New · tap to pair · ${item.device.address}"
+                    if (item.device.bondState == BluetoothDevice.BOND_BONDED) L.t("paired", item.device.address) else L.t("new_device", item.device.address)
                 return view
             }
         }
@@ -142,10 +142,10 @@ class Printer(private val activity: MainActivity) {
 
         fun showStatus() {
             status.text = when {
-                found.isNotEmpty() && searching -> "Tap your printer. Still looking for more…"
-                found.isNotEmpty() -> "Tap your printer."
-                searching -> "Looking for printers… Turn the printer ON and keep it near the phone."
-                else -> "No printer found. Turn the printer ON, then pair it in Bluetooth settings (PIN is usually 0000 or 1234)."
+                found.isNotEmpty() && searching -> L.t("found_searching")
+                found.isNotEmpty() -> L.t("found")
+                searching -> L.t("searching")
+                else -> L.t("none_found")
             }
         }
 
@@ -161,10 +161,10 @@ class Printer(private val activity: MainActivity) {
         }
 
         val dialog = builder
-            .setTitle("Select printer")
+            .setTitle(L.t("select_printer"))
             .setView(content)
-            .setNeutralButton("Bluetooth settings", null)
-            .setNegativeButton("Cancel", null)
+            .setNeutralButton(L.t("bt_settings"), null)
+            .setNegativeButton(L.t("cancel"), null)
             .create()
         listView.setOnItemClickListener { _, _, which, _ ->
             chosen = found[which].device
@@ -252,7 +252,7 @@ class Printer(private val activity: MainActivity) {
             }.recoverCatching { e ->
                 throw Exception(
                     if (e is PrinterException) e.message
-                    else "Couldn't reach ${nameOf(device)}. Check the printer is ON, charged and near the phone.",
+                    else L.t("cant_reach", nameOf(device)),
                 )
             }
             main.post { done(result) }
@@ -375,7 +375,7 @@ class Printer(private val activity: MainActivity) {
             if (gatt.requestMtu(185)) mtuSet.await(3, TimeUnit.SECONDS)
             gatt.discoverServices()
             if (!discovered.await(8, TimeUnit.SECONDS) || failed.get()) throw IOException("BLE services not found")
-            val target = writableCharacteristic(gatt) ?: throw PrinterException("Connected, but this printer has no print channel we can write to.")
+            val target = writableCharacteristic(gatt) ?: throw PrinterException(L.t("no_channel"))
 
             val noResponse = target.properties and BluetoothGattCharacteristic.PROPERTY_WRITE_NO_RESPONSE != 0
             val writeType = if (noResponse) BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE else BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT

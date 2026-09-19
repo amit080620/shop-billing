@@ -60,6 +60,7 @@ export const SCREEN_STRINGS: Record<string, [en: string, hi: string, mr: string]
     "पहली बार एक बार प्रिंटर चुनना होगा — उसके बाद एक टैप में प्रिंट।",
     "पहिल्यांदा एकदा प्रिंटर निवडावा लागेल — नंतर एका टॅपमध्ये प्रिंट.",
   ],
+  "print.cancelled": ["Printer selection was cancelled.", "प्रिंटर चुनना रद्द हुआ।", "प्रिंटर निवड रद्द झाली."],
   "billPage.changePrinter": ["Change printer", "प्रिंटर बदलें", "प्रिंटर बदला"],
 
   // Customers

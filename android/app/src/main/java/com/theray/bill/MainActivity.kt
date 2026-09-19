@@ -121,6 +121,7 @@ class MainActivity : Activity() {
         override fun onPageFinished(view: WebView, url: String?) {
             progress.visibility = View.GONE
             pageReady = true
+            L.refresh(BuildConfig.APP_URL)
             bridge.injectFallback(view)
             CookieManager.getInstance().flush()
         }
@@ -170,7 +171,7 @@ class MainActivity : Activity() {
                 val picker = pickerIntent(accepts, params.mode == FileChooserParams.MODE_OPEN_MULTIPLE)
                 val camera = if (wantsImage && hasPermission(Manifest.permission.CAMERA)) cameraIntent() else null
                 chooseFile(
-                    Intent.createChooser(picker, "Choose file").apply {
+                    Intent.createChooser(picker, L.t("choose_file")).apply {
                         if (camera != null) putExtra(Intent.EXTRA_INITIAL_INTENTS, arrayOf(camera))
                     },
                 )
@@ -251,7 +252,7 @@ class MainActivity : Activity() {
                 if (fallback != null) startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(fallback))) else throw e
             }
         } catch (e: Exception) {
-            toast("No app found to open this link")
+            toast(L.t("no_app_link"))
         }
     }
 

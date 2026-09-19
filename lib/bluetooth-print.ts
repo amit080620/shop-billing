@@ -1,4 +1,11 @@
 import { nativeApp, isNativeApp, type RayApp } from "./nativeApp";
+import { translate, type Lang } from "./i18n/dictionary";
+
+/** The language picked in the app (lang cookie), for messages built here. */
+function currentLang(): Lang {
+  const match = typeof document !== "undefined" ? /(?:^|;s*)lang=(hi|mr)/.exec(document.cookie) : null;
+  return (match?.[1] as Lang | undefined) ?? "en";
+}
 
 // TypeScript's bundled DOM lib doesn't yet include the newer Web
 // Bluetooth "persistent permissions" API (getDevices, device.id) —
@@ -125,11 +132,12 @@ async function printViaNativeApp(app: RayApp, data: Uint8Array): Promise<Bluetoo
     return {};
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    if (message === "cancelled") return { error: "Printer selection was cancelled." };
+    if (message === "cancelled") return { error: translate(currentLang(), "print.cancelled") };
     // Same as below: a printer that can't be reached is forgotten, so the
-    // next tap shows the printer list instead of retrying it forever.
+    // next tap shows the printer list instead of retrying it forever. The
+    // app's message already says so, in the chosen language.
     localStorage.removeItem(NATIVE_PRINTER_KEY);
-    return { error: `${message} Tap Print again to choose the printer.` };
+    return { error: message };
   }
 }
 
