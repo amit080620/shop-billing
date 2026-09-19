@@ -69,10 +69,10 @@ export default async function DashboardPage() {
   const terms = getTerminology(session.businessType);
   const setupSteps = [
     { done: !!session.shopStateCode, label: t("Set your shop's GST state"), href: "/settings" },
-    { done: (productCount ?? 0) > 0, label: t("home.addFirst", { item: terms.productSingular.toLowerCase() }), href: "/products" },
+    { done: (productCount ?? 0) > 0, label: t("home.addFirst", { item: t(terms.productSingular.toLowerCase()) }), href: "/products" },
     isRestaurant
       ? { done: (tableCount ?? 0) > 0, label: t("Add your tables"), href: "/restaurant" }
-      : { done: (customerCount ?? 0) > 0, label: t("home.addOne", { who: customerNounFor(session.businessType).toLowerCase() }), href: "/customers" },
+      : { done: (customerCount ?? 0) > 0, label: t("home.addOne", { who: t(customerNounFor(session.businessType).toLowerCase()) }), href: "/customers" },
     { done: (anyBill?.length ?? 0) > 0, label: t("Create your first bill"), href: "/" },
   ];
   const doneCount = setupSteps.filter((s) => s.done).length;

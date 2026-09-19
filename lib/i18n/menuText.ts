@@ -277,4 +277,15 @@ export const MENU_TEXT: Record<string, [hi: string, mr: string]> = {
   "Sharad Navratri begins": ["शारदीय नवरात्रि शुरू", "शारदीय नवरात्र सुरू"],
   "Ugadi / Gudi Padwa (Chaitra Navratri begins)": ["उगादी / गुड़ी पड़वा (चैत्र नवरात्रि शुरू)", "उगादी / गुढीपाडवा (चैत्र नवरात्र सुरू)"],
   "Ugadi / Gudi Padwa": ["उगादी / गुड़ी पड़वा", "उगादी / गुढीपाडवा"],
+
+  // Lower-case nouns used inside home setup steps ("Add your first {item}")
+  "product": ["सामान", "वस्तू"],
+  "item": ["आइटम", "वस्तू"],
+  "material": ["माल", "माल"],
+  "medicine": ["दवा", "औषध"],
+  "menu item": ["मेन्यू आइटम", "मेनू पदार्थ"],
+  "service": ["सर्विस", "सेवा"],
+  "customer": ["ग्राहक", "ग्राहक"],
+  "member": ["मेंबर", "सदस्य"],
+  "patient": ["मरीज़", "रुग्ण"],
 };
