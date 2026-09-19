@@ -15,6 +15,7 @@ import { EmptyState } from "@/app/components/EmptyState";
 import { Popup } from "@/app/components/Popup";
 import { UserPlus } from "lucide-react";
 import { useT } from "@/lib/i18n/LangContext";
+import { BackLink } from "@/app/components/BackLink";
 
 type Lead = {
   id: string;
@@ -83,9 +84,7 @@ export function LeadsClient({ leads }: { leads: Lead[] }) {
         }
         icon={<UserPlus size={18} strokeWidth={1.8} />}
       />
-      <Link href="/gym/members" className="text-sm text-muted">
-        ← Members
-      </Link>
+      <BackLink fallback="/gym/members" />
 
       {showForm && (
         <Popup open={showForm} onClose={() => setShowForm(false)} title="Add lead">

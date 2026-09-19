@@ -1,11 +1,11 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import Link from "next/link";
 import { saveThermalPrintSettingsAction, saveDefaultPrintFormatAction, type ThermalPrintSettings } from "@/lib/actions/settings";
 import { PageHeader } from "@/app/components/PageHeader";
 import { Printer } from "lucide-react";
-import { useT } from "@/lib/i18n/LangContext";
+import { useT } from "@/lib/i18n/LangContext";
+import { BackLink } from "@/app/components/BackLink";
 
 function Toggle({ label, checked, onChange }: { label: string; checked: boolean; onChange: (v: boolean) => void }) {
   return (
@@ -187,9 +187,7 @@ export function ThermalPrintSettingsClient({ initial, initialDefaultFormat }: { 
   return (
     <div className="flex flex-col gap-4 pb-6">
       <PageHeader title={t("Thermal print settings")} icon={<Printer size={18} strokeWidth={1.8} />} />
-      <Link href="/profile" className="text-sm text-muted">
-        ← Profile
-      </Link>
+      <BackLink fallback="/profile" />
 
       <div className="rounded-xl border border-border bg-surface p-3.5">
         <p className="mb-2 text-sm font-semibold text-foreground">{t("Default print format")}</p>

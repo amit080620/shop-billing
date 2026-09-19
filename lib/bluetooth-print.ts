@@ -1,5 +1,11 @@
 import { nativeApp, isNativeApp, type RayApp } from "./nativeApp";
-import { translate, type Lang } from "./i18n/dictionary";
+import type { Lang } from "./i18n/dictionary";
+
+const CANCELLED: Record<Lang, string> = {
+  en: "Printer selection was cancelled.",
+  hi: "प्रिंटर चुनना रद्द हुआ।",
+  mr: "प्रिंटर निवड रद्द झाली.",
+};
 
 /** The language picked in the app (lang cookie), for messages built here. */
 function currentLang(): Lang {
@@ -132,7 +138,7 @@ async function printViaNativeApp(app: RayApp, data: Uint8Array): Promise<Bluetoo
     return {};
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    if (message === "cancelled") return { error: translate(currentLang(), "print.cancelled") };
+    if (message === "cancelled") return { error: CANCELLED[currentLang()] };
     // Same as below: a printer that can't be reached is forgotten, so the
     // next tap shows the printer list instead of retrying it forever. The
     // app's message already says so, in the chosen language.

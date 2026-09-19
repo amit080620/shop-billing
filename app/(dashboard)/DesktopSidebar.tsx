@@ -58,7 +58,7 @@ export function DesktopSidebar({
         <ul className="flex flex-col gap-0.5">
           <li>
             <SidebarLink href="/dashboard" active={pathname === "/dashboard"} icon={<LayoutDashboard size={18} strokeWidth={pathname === "/dashboard" ? 2.2 : 1.8} />}>
-              Dashboard
+              {t("nav.home")}
             </SidebarLink>
           </li>
           {tabs.map((tab) => {

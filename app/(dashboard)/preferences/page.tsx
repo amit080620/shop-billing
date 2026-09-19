@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { getTheme, getCalculatorEnabled, getAssistantEnabled, getLiteMode } from "@/lib/theme";
 import { ThemeToggle } from "@/app/components/ThemeToggle";
 import { CalculatorToggle } from "@/app/components/CalculatorToggle";
@@ -8,6 +7,7 @@ import { LanguageToggle } from "@/lib/i18n/LanguageToggle";
 import { getTranslator } from "@/lib/i18n/server";
 import { PageHeader } from "@/app/components/PageHeader";
 import { SlidersHorizontal } from "lucide-react";
+import { BackLink } from "@/app/components/BackLink";
 
 export default async function PreferencesPage() {
   const { lang, t } = await getTranslator();
@@ -18,9 +18,7 @@ export default async function PreferencesPage() {
 
   return (
     <div className="flex flex-col gap-4 pb-6">
-      <Link href="/profile" className="text-sm text-muted">
-        ← Profile
-      </Link>
+      <BackLink fallback="/profile" />
       <PageHeader title="Preferences" icon={<SlidersHorizontal size={18} strokeWidth={1.8} />} />
 
       <div className="neu-tray flex flex-col gap-2 p-2">

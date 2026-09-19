@@ -191,7 +191,7 @@ const STOCK_BUSINESSES = new Set(["grocery", "mart", "hardware", "general", "pha
 
 function QuickLinks({ businessType, t }: { businessType: string; t: (key: string) => string }) {
   const links = [
-    { href: "/products", label: getTerminology(businessType).productPlural, icon: Package },
+    { href: "/products", label: t(getTerminology(businessType).productPlural), icon: Package },
     { href: "/bills/all", label: t("home.allBills"), icon: Receipt },
     { href: "/daily-summary", label: t("home.daySummary"), icon: Wallet },
   ];

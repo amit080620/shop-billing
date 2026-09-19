@@ -2,7 +2,6 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { Circle } from "lucide-react";
 import { setTodaysMetalRateAction } from "@/lib/actions/jewellery";
 import { formatMoney } from "@/lib/format";
@@ -10,6 +9,7 @@ import { PageHeader } from "@/app/components/PageHeader";
 import { EmptyState } from "@/app/components/EmptyState";
 import { Coins } from "lucide-react";
 import { useT } from "@/lib/i18n/LangContext";
+import { BackLink } from "@/app/components/BackLink";
 
 type HistoryRow = { metalType: string; rate: number; date: string };
 
@@ -52,9 +52,7 @@ export function RatesClient({
         subtitle="Set the per-gram rate each morning — it applies to every gold/silver item billed today."
         icon={<Coins size={18} strokeWidth={1.8} />}
       />
-      <Link href="/products" className="text-sm text-muted">
-        ← Items
-      </Link>
+      <BackLink fallback="/products" />
 
       <div className="flex flex-col gap-3 rounded-xl border border-border bg-surface p-4">
         <label className="flex flex-col gap-1.5 text-sm">

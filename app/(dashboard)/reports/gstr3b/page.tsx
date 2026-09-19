@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { requireSession } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { formatMoney } from "@/lib/format";
@@ -6,6 +5,7 @@ import { istMonthRange, istYearMonth, MONTHS } from "@/lib/dateHelpers";
 import { PeriodPicker } from "../PeriodPicker";
 import { ExportCsvButton } from "@/app/components/ExportCsvButton";
 import { getTranslator } from "@/lib/i18n/server";
+import { BackLink } from "@/app/components/BackLink";
 
 export default async function Gstr3bPage({
   searchParams,
@@ -76,9 +76,7 @@ export default async function Gstr3bPage({
 
   return (
     <div className="flex flex-col gap-4">
-      <Link href="/reports" className="text-sm text-muted">
-        ← Reports
-      </Link>
+      <BackLink fallback="/reports" />
       <div className="flex items-center justify-between">
         <h1 className="text-lg font-bold tracking-tight text-foreground md:text-2xl">{t("GSTR-3B")}</h1>
         <PeriodPicker year={year} month={month} />

@@ -7,6 +7,7 @@ import { Circle } from "lucide-react";
 import { EmptyState } from "@/app/components/EmptyState";
 import { Repeat } from "lucide-react";
 import { getTranslator } from "@/lib/i18n/server";
+import { BackLink } from "@/app/components/BackLink";
 
 export default async function JewelleryExchangesPage() {
   const { t } = await getTranslator();
@@ -31,9 +32,7 @@ export default async function JewelleryExchangesPage() {
         subtitle="Old gold/silver taken in — for your melting & refining records."
         icon={<Repeat size={18} strokeWidth={1.8} />}
       />
-      <Link href="/jewellery/rates" className="text-sm text-muted">
-        ← Today&apos;s rate
-      </Link>
+      <BackLink fallback="/jewellery/rates" />
 
       {(!exchanges || exchanges.length === 0) ? (
         <EmptyState text="No exchanges recorded yet — they will show up here after a bill with an old gold/silver exchange." />

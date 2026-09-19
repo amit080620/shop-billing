@@ -8,6 +8,7 @@ import { CatalogOrderRow } from "./CatalogOrderRow";
 import { isModuleEnabled } from "@/lib/modules";
 import { ModuleBlocked } from "@/app/components/ModuleBlocked";
 import { getTranslator } from "@/lib/i18n/server";
+import { BackLink } from "@/app/components/BackLink";
 
 export default async function CatalogOrdersPage({
   searchParams,
@@ -62,9 +63,7 @@ export default async function CatalogOrdersPage({
          
         icon={<ShoppingBag size={17} strokeWidth={1.8} />}
       />
-      <Link href="/catalog-settings" className="text-sm text-muted">
-        ← Catalog link settings
-      </Link>
+      <BackLink fallback="/catalog-settings" />
 
       <div className="flex gap-2 overflow-x-auto pb-1">
         {(["pending", "accepted", "rejected"] as const).map((s) => (

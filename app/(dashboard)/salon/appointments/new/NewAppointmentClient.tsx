@@ -4,7 +4,6 @@ import { keepValuesOnError } from "@/lib/keepValuesOnError";
 import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { createAppointmentAction } from "@/lib/actions/appointments";
 import { useToast } from "@/app/components/Toast";
 import { PhoneInput } from "@/app/components/PhoneInput";
@@ -13,6 +12,7 @@ import { SearchableSelect } from "@/app/components/SearchableSelect";
 import type { Lang } from "@/lib/i18n/dictionary";
 import { CalendarPlus } from "lucide-react";
 import { todayIso } from "@/lib/dateHelpers";
+import { BackLink } from "@/app/components/BackLink";
 
 type Customer = { id: string; name: string; phone: string };
 type Service = { id: string; name: string };
@@ -52,9 +52,7 @@ export function NewAppointmentClient({ customers, services, lang }: { customers:
         title="Book appointment"
         icon={<CalendarPlus size={18} strokeWidth={1.8} />}
       />
-      <Link href="/salon/appointments" className="text-sm text-muted">
-        ← Appointments
-      </Link>
+      <BackLink fallback="/salon/appointments" />
 
       <form action={formAction} className="flex flex-col gap-3">
         <input type="hidden" name="customerId" value={selectedCustomer?.id ?? ""} />

@@ -2,10 +2,10 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { saveInvoiceSettingsAction, uploadSettingsImageAction } from "@/lib/actions/settings";
 import { PageHeader } from "@/app/components/PageHeader";
 import { useT } from "@/lib/i18n/LangContext";
+import { BackLink } from "@/app/components/BackLink";
 
 const PRESET_COLORS = ["#0f6b5c", "#B45309", "#1D4ED8", "#B91C1C", "#7C3AED", "#0E7490"];
 
@@ -90,9 +90,7 @@ export function InvoiceSettingsClient({
         icon={<img src="/assets/ray-icons/invoice.svg" alt="" className="h-9 w-9 md:h-11 md:w-11" />}
         bareIcon
       />
-      <Link href="/more" className="text-sm text-muted">
-        {t("← More")}
-      </Link>
+      <BackLink fallback="/dashboard" />
 
       <label className="flex flex-col gap-1.5 text-sm">
         <span className="font-medium text-foreground">{t("Tagline (optional, shown under your shop name)")}</span>

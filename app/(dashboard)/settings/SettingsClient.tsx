@@ -3,12 +3,12 @@
 import { keepValuesOnError } from "@/lib/keepValuesOnError";
 import { useActionState, useEffect, useRef, useState, useTransition } from "react";
 import { useFormStatus } from "react-dom";
-import Link from "next/link";
 import Image from "next/image";
 import { updateShopSettingsAction, uploadLogoAction, removeLogoAction } from "@/lib/actions/settings";
 import { INDIAN_STATES } from "@/lib/constants/states";
 import { BUSINESS_TYPES } from "@/lib/businessType";
-import { useT } from "@/lib/i18n/LangContext";
+import { useT } from "@/lib/i18n/LangContext";
+import { BackLink } from "@/app/components/BackLink";
 
 type ShopSettings = {
   name: string;
@@ -60,9 +60,7 @@ export function SettingsClient({ shop }: { shop: ShopSettings }) {
 
   return (
     <div className="flex flex-col gap-4">
-      <Link href="/more" className="text-sm text-muted">
-        {t("← More")}
-      </Link>
+      <BackLink fallback="/dashboard" />
       <div>
         <h1 className="text-lg font-bold tracking-tight text-foreground md:text-2xl">{t("GST & shop profile")}</h1>
         <p className="text-sm text-muted">

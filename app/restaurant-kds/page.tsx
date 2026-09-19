@@ -2,6 +2,8 @@ import { requireSession } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { getTranslator } from "@/lib/i18n/server";
 import { KdsClient } from "./KdsClient";
+import { LangProvider } from "@/lib/i18n/LangContext";
+import { messagesFor } from "@/lib/i18n/dictionary";
 
 export default async function KdsPage() {
   const session = await requireSession();
@@ -33,12 +35,14 @@ export default async function KdsPage() {
   const { data: kdsSettings } = await admin.from("kds_settings").select("columns, font_scale").eq("shop_id", session.shopId).maybeSingle();
 
   return (
-    <KdsClient
-      shopName={session.shopName}
-      initialTickets={tickets}
-      lang={lang}
-      columns={kdsSettings?.columns ?? 3}
-      fontScale={kdsSettings?.font_scale ?? "normal"}
-    />
+    <LangProvider lang={lang} messages={messagesFor(lang)}>
+      <KdsClient
+        shopName={session.shopName}
+        initialTickets={tickets}
+        lang={lang}
+        columns={kdsSettings?.columns ?? 3}
+        fontScale={kdsSettings?.font_scale ?? "normal"}
+      />
+    </LangProvider>
   );
 }

@@ -4,13 +4,13 @@ import { keepValuesOnError } from "@/lib/keepValuesOnError";
 import { useState, useTransition } from "react";
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
-import Link from "next/link";
 import { addStaffAction, removeStaffAction } from "@/lib/actions/staff";
 import { useToast } from "@/app/components/Toast";
 import { Popup } from "@/app/components/Popup";
 import { EditStaffButton } from "./EditStaffButton";
 import { PermissionsButton } from "./PermissionsButton";
-import { useT } from "@/lib/i18n/LangContext";
+import { useT } from "@/lib/i18n/LangContext";
+import { BackLink } from "@/app/components/BackLink";
 
 type StaffMember = { id: string; name: string; role: "owner" | "manager" | "staff"; permissions: string[]; email: string | null };
 
@@ -55,9 +55,7 @@ export function StaffClient({
 
   return (
     <div className="flex flex-col gap-4">
-      <Link href="/more" className="text-sm text-muted">
-        {t("← More")}
-      </Link>
+      <BackLink fallback="/dashboard" />
 
       <div className="flex items-center justify-between">
         <h1 className="text-lg font-bold tracking-tight text-foreground md:text-2xl">Staff</h1>

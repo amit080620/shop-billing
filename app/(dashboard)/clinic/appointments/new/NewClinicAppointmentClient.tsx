@@ -4,7 +4,6 @@ import { keepValuesOnError } from "@/lib/keepValuesOnError";
 import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { createClinicAppointmentAction } from "@/lib/actions/clinic";
 import { useToast } from "@/app/components/Toast";
 import { PhoneInput } from "@/app/components/PhoneInput";
@@ -13,6 +12,7 @@ import { SearchableSelect } from "@/app/components/SearchableSelect";
 import type { Lang } from "@/lib/i18n/dictionary";
 import { CalendarPlus } from "lucide-react";
 import { todayIso } from "@/lib/dateHelpers";
+import { BackLink } from "@/app/components/BackLink";
 
 type Patient = { id: string; name: string; phone: string };
 
@@ -50,9 +50,7 @@ export function NewClinicAppointmentClient({ patients, lang }: { patients: Patie
         title="Book appointment"
         icon={<CalendarPlus size={18} strokeWidth={1.8} />}
       />
-      <Link href="/clinic/appointments" className="text-sm text-muted">
-        ← Appointments
-      </Link>
+      <BackLink fallback="/clinic/appointments" />
 
       <form action={formAction} className="flex flex-col gap-3">
         <input type="hidden" name="patientId" value={selectedPatient?.id ?? ""} />

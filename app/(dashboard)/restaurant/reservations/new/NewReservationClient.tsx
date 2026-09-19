@@ -4,7 +4,6 @@ import { keepValuesOnError } from "@/lib/keepValuesOnError";
 import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { createReservationAction } from "@/lib/actions/reservations";
 import { useToast } from "@/app/components/Toast";
 import { PhoneInput } from "@/app/components/PhoneInput";
@@ -13,6 +12,7 @@ import { SearchableSelect } from "@/app/components/SearchableSelect";
 import type { Lang } from "@/lib/i18n/dictionary";
 import { CalendarPlus } from "lucide-react";
 import { todayIso } from "@/lib/dateHelpers";
+import { BackLink } from "@/app/components/BackLink";
 
 type Customer = { id: string; name: string; phone: string };
 
@@ -50,9 +50,7 @@ export function NewReservationClient({ customers, tables, lang }: { customers: C
         title="Book reservation"
         icon={<CalendarPlus size={18} strokeWidth={1.8} />}
       />
-      <Link href="/restaurant/reservations" className="text-sm text-muted">
-        ← Reservations
-      </Link>
+      <BackLink fallback="/restaurant/reservations" />
 
       <form action={formAction} className="flex flex-col gap-3">
         <input type="hidden" name="customerId" value={selectedCustomer?.id ?? ""} />

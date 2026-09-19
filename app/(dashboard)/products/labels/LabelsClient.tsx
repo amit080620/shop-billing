@@ -1,11 +1,11 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import Link from "next/link";
 import { formatMoney } from "@/lib/format";
 import { generateBarcodeAction } from "@/lib/actions/products";
 import { Printer } from "lucide-react";
-import { useT } from "@/lib/i18n/LangContext";
+import { useT } from "@/lib/i18n/LangContext";
+import { BackLink } from "@/app/components/BackLink";
 
 type Product = { id: string; name: string; price: number; unit: string; barcode: string | null };
 
@@ -55,9 +55,7 @@ export function LabelsClient({ shopName, products: initialProducts }: { shopName
           <h1 className="text-lg font-bold tracking-tight text-foreground md:text-2xl">{t("Print barcode labels")}</h1>
           <p className="text-sm text-muted">{t("Tap + on each item you need stickers for, then Print.")}</p>
         </div>
-        <Link href="/products" className="text-sm text-brand">
-          ← Inventory
-        </Link>
+        <BackLink fallback="/products" />
       </div>
 
       <div className="no-print flex flex-col gap-2">

@@ -12,6 +12,7 @@ import { SearchableSelect } from "@/app/components/SearchableSelect";
 import type { Lang } from "@/lib/i18n/dictionary";
 import { UserPlus } from "lucide-react";
 import { useT } from "@/lib/i18n/LangContext";
+import { BackLink } from "@/app/components/BackLink";
 
 type Plan = { id: string; name: string; durationDays: number; price: number; ptSessionsIncluded: number };
 type Member = { id: string; name: string; phone: string };
@@ -76,9 +77,7 @@ export function SellMembershipClient({
         title={t("Sell membership")}
         icon={<UserPlus size={18} strokeWidth={1.8} />}
       />
-      <Link href="/gym/members" className="text-sm text-muted">
-        ← Members
-      </Link>
+      <BackLink fallback="/gym/members" />
 
       <section className="flex flex-col gap-2">
         <p className="text-sm font-medium text-foreground">Member</p>

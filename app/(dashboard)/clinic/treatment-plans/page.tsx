@@ -4,6 +4,7 @@ import { PageHeader } from "@/app/components/PageHeader";
 import { EmptyState } from "@/app/components/EmptyState";
 import { ClipboardList } from "lucide-react";
 import { getTranslator } from "@/lib/i18n/server";
+import { BackLink } from "@/app/components/BackLink";
 
 const STATUS_STYLE: Record<string, string> = {
   draft: "bg-gray-100 text-gray-600",
@@ -26,9 +27,7 @@ export default async function TreatmentPlansPage() {
         }
         icon={<ClipboardList size={18} strokeWidth={1.8} />}
       />
-      <Link href="/clinic" className="text-sm text-muted">
-        ← Clinic
-      </Link>
+      <BackLink fallback="/clinic" />
 
       {plans.length === 0 ? (
         <EmptyState text="No treatment plans yet — create one to give a patient a quotation before starting work." />

@@ -8,6 +8,7 @@ export const SCREEN_STRINGS: Record<string, [en: string, hi: string, mr: string]
   "common.due": ["{amount} due", "{amount} बाकी", "{amount} बाकी"],
   "common.paid": ["Paid", "चुकता", "भरले"],
   "common.voided": ["Voided", "रद्द", "रद्द"],
+  "common.back": ["Back", "वापस", "मागे"],
   "common.delete": ["Delete", "हटाएं", "हटवा"],
 
   // Home

@@ -22,6 +22,7 @@ import { DeleteCustomerButton } from "./DeleteCustomerButton";
 import { PaymentMethodPicker } from "@/app/components/PaymentMethodPicker";
 import { useTranslation } from "@/lib/i18n/useTranslation";
 import type { Lang } from "@/lib/i18n/dictionary";
+import { BackLink } from "@/app/components/BackLink";
 
 type BillItem = { name: string; quantity: number; unitPrice: number; lineTotal: number };
 type Bill = {
@@ -112,9 +113,7 @@ export function LedgerClient({
 
   return (
     <div className="flex flex-col gap-4">
-      <Link href="/customers" className="text-sm text-muted">
-        ← Customers
-      </Link>
+      <BackLink fallback="/customers" />
 
       <div className="neu-card p-4">
         <div className="flex items-start justify-between gap-2">

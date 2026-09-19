@@ -2,7 +2,6 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import {
   createWorkoutPlanAction,
   deleteWorkoutPlanAction,
@@ -18,6 +17,7 @@ import { PageHeader } from "@/app/components/PageHeader";
 import { EmptyState } from "@/app/components/EmptyState";
 import { Popup } from "@/app/components/Popup";
 import type { Lang } from "@/lib/i18n/dictionary";
+import { BackLink } from "@/app/components/BackLink";
 
 type Member = { id: string; name: string; phone: string; fitnessGoal: string | null; heightCm: number | null; weightKg: number | null; assignedTrainerId: string | null };
 type Exercise = { id: string; muscleGroup: string | null; exerciseName: string; sets: number | null; reps: string | null; restSeconds: number | null };
@@ -61,9 +61,7 @@ export function MemberDetailClient({
         subtitle={member.phone}
         icon={<User size={18} strokeWidth={1.8} />}
       />
-      <Link href="/gym/members" className="text-sm text-muted">
-        ← Members
-      </Link>
+      <BackLink fallback="/gym/members" />
 
       <div className="flex gap-2 overflow-x-auto pb-1">
         {(["overview", "workout", "diet", "progress"] as const).map((tb) => (

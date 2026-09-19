@@ -1,6 +1,6 @@
-import Link from "next/link";
 import { Lock } from "lucide-react";
 import { MODULES, type ModuleKey } from "@/lib/modules";
+import { BackLink } from "@/app/components/BackLink";
 
 export function ModuleBlocked({ moduleKey }: { moduleKey: ModuleKey }) {
   const moduleInfo = MODULES.find((m) => m.key === moduleKey);
@@ -13,9 +13,7 @@ export function ModuleBlocked({ moduleKey }: { moduleKey: ModuleKey }) {
       <p className="max-w-sm text-sm text-muted">
         Contact support to add this to your plan.
       </p>
-      <Link href="/more" className="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-white">
-        Back to More
-      </Link>
+      <BackLink fallback="/dashboard" />
     </div>
   );
 }

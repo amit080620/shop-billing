@@ -8,6 +8,7 @@ import { saveCatalogSettingsAction } from "@/lib/actions/catalog";
 import { PageHeader } from "@/app/components/PageHeader";
 import { Store, Inbox } from "lucide-react";
 import { useT } from "@/lib/i18n/LangContext";
+import { BackLink } from "@/app/components/BackLink";
 
 export function CatalogSettingsClient({
   isEnabled: initialEnabled,
@@ -74,9 +75,7 @@ export function CatalogSettingsClient({
         subtitle="Share one link where anyone can browse your items with photos and order — no app, no login for them."
         icon={<Store size={18} strokeWidth={1.8} />}
       />
-      <Link href="/more" className="text-sm text-muted">
-        {t("← More")}
-      </Link>
+      <BackLink fallback="/dashboard" />
 
       <label className="flex items-center justify-between rounded-xl border border-border bg-surface px-4 py-3.5 shadow-sm">
         <span className="text-sm font-medium text-foreground">{t("Enable public catalog link")}</span>

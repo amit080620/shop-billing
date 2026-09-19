@@ -8,6 +8,7 @@ import { EmptyState } from "@/app/components/EmptyState";
 import { AttendanceRow } from "./AttendanceRow";
 import { CheckInForm } from "./CheckInForm";
 import { ClipboardCheck, Smartphone } from "lucide-react";
+import { BackLink } from "@/app/components/BackLink";
 
 export default async function GymAttendancePage() {
   const { t } = await getTranslator();
@@ -46,9 +47,7 @@ export default async function GymAttendancePage() {
         title={t("Attendance")}
         icon={<ClipboardCheck size={18} strokeWidth={1.8} />}
       />
-      <Link href="/gym/members" className="text-sm text-muted">
-        ← Members
-      </Link>
+      <BackLink fallback="/gym/members" />
 
       <div className="grid grid-cols-2 gap-3">
         <div className="rounded-xl border border-border bg-surface p-3.5 text-center shadow-sm">

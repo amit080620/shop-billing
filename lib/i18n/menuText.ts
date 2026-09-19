@@ -288,4 +288,10 @@ export const MENU_TEXT: Record<string, [hi: string, mr: string]> = {
   "customer": ["ग्राहक", "ग्राहक"],
   "member": ["मेंबर", "सदस्य"],
   "patient": ["मरीज़", "रुग्ण"],
+
+  // Bottom-nav tab names for non-retail businesses
+  "New Rx": ["नया पर्चा", "नवीन प्रिस्क्रिप्शन"],
+  "Fast Bill": ["फ़ास्ट बिल", "जलद बिल"],
+  "Jobs": ["जॉब", "जॉब"],
+  "Rate": ["रेट", "दर"],
 };

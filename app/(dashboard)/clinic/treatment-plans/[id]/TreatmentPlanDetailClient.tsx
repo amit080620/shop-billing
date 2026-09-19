@@ -7,6 +7,7 @@ import { markTreatmentItemDoneAction, convertTreatmentPlanToBillAction } from "@
 import { PageHeader } from "@/app/components/PageHeader";
 import { useToast } from "@/app/components/Toast";
 import { ClipboardList, Printer, CheckCircle2, Circle, Receipt } from "lucide-react";
+import { BackLink } from "@/app/components/BackLink";
 
 type Item = { id: string; toothNumber: string | null; procedureName: string; description: string | null; estimatedCost: number; status: string };
 type Plan = { id: string; patientId: string | null; patientName: string; patientPhone: string | null; doctorName: string | null; notes: string | null; status: string; billId: string | null; createdAt: string };
@@ -46,9 +47,7 @@ export function TreatmentPlanDetailClient({ plan, items: initialItems }: { plan:
   return (
     <div className="flex flex-col gap-3">
       <PageHeader title={plan.patientName} icon={<ClipboardList size={18} strokeWidth={1.8} />} />
-      <Link href="/clinic/treatment-plans" className="text-sm text-muted">
-        ← Treatment plans
-      </Link>
+      <BackLink fallback="/clinic/treatment-plans" />
 
       <div className="neu-card flex flex-col gap-1 p-3.5">
         {plan.doctorName && <p className="text-sm text-muted">Dr. {plan.doctorName}</p>}

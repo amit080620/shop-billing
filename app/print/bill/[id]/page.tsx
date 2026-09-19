@@ -4,6 +4,7 @@ import Link from "next/link";
 import { requireSession, hasPermission } from "@/lib/auth";
 import { getTranslator } from "@/lib/i18n/server";
 import { LangProvider } from "@/lib/i18n/LangContext";
+import { messagesFor } from "@/lib/i18n/dictionary";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { formatMoney, formatDateTime } from "@/lib/format";
 import { buildUpiLink, generateQrDataUrl } from "@/lib/qr";
@@ -225,7 +226,7 @@ export default async function PrintBillPage({
     bill.customer_id && loyaltyRate > 0 ? Math.floor((Number(bill.paid_amount) / 100) * loyaltyRate) : 0;
 
   return (
-    <LangProvider lang={lang}>
+    <LangProvider lang={lang} messages={messagesFor(lang)}>
       <BillSuccessSound />
       <Suspense fallback={null}>
         <BillCreatedConfirmation amount={formatMoney(bill.total)} pointsEarned={pointsEarned} />

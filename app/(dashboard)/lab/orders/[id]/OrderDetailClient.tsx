@@ -7,6 +7,7 @@ import { updateLabOrderStatusAction, saveTestResultAction, billLabOrderAction } 
 import { formatMoney } from "@/lib/format";
 import { PageHeader } from "@/app/components/PageHeader";
 import { FlaskConical, Printer } from "lucide-react";
+import { BackLink } from "@/app/components/BackLink";
 
 type Order = {
   id: string;
@@ -89,9 +90,7 @@ export function OrderDetailClient({ order, items }: { order: Order; items: Item[
         subtitle={`#${order.orderNumber} · ${order.patientPhone}`}
         icon={<FlaskConical size={18} strokeWidth={1.8} />}
       />
-      <Link href="/lab/orders" className="text-sm text-muted">
-        ← Orders
-      </Link>
+      <BackLink fallback="/lab/orders" />
 
       <Link
         href={`/print/lab-report/${order.id}`}

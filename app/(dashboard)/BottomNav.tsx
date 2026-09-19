@@ -29,7 +29,7 @@ export function tabsFor(businessType: string, t: (key: string) => string, permis
     return [{ href: "/restaurant-kds", label: t("nav.kitchen"), icon: KitchenIcon }];
   }
 
-  const fastBillingTab = fastBillingEnabled ? [{ href: "/fast-billing", label: "Fast Bill", icon: FastBillIcon }] : [];
+  const fastBillingTab = fastBillingEnabled ? [{ href: "/fast-billing", label: t("Fast Bill"), icon: FastBillIcon }] : [];
   const reportsTab = { href: "/reports", label: t("nav.reports"), icon: ReportIcon };
 
   // Home and More genuinely move to the top header now (next to the
@@ -63,23 +63,23 @@ export function tabsFor(businessType: string, t: (key: string) => string, permis
 
   const TRANSPORT_TABS = [
     { href: "/bills/new", label: t("nav.sell"), icon: SellIcon },
-    { href: "/transport/vehicles", label: "Vehicles", icon: TruckNavIcon },
+    { href: "/transport/vehicles", label: t("Vehicles"), icon: TruckNavIcon },
     { href: "/purchases", label: t("nav.buy"), icon: BuyIcon },
     reportsTab,
     ...fastBillingTab,
   ];
 
   const SERVICE_TABS = [
-    { href: "/bills/new", label: "Sell", icon: SellIcon },
+    { href: "/bills/new", label: t("nav.sell"), icon: SellIcon },
     { href: "/purchases", label: t("nav.buy"), icon: BuyIcon },
-    { href: "/service", label: "Jobs", icon: ServiceIcon },
+    { href: "/service", label: t("Jobs"), icon: ServiceIcon },
     reportsTab,
     ...fastBillingTab,
   ];
 
   const SALON_TABS = [
     { href: "/bills/new", label: t("nav.sell"), icon: SellIcon },
-    { href: "/salon/appointments", label: "Appointments", icon: SalonNavIcon },
+    { href: "/salon/appointments", label: t("Appointments"), icon: SalonNavIcon },
     { href: "/purchases", label: t("nav.buy"), icon: BuyIcon },
     reportsTab,
     ...fastBillingTab,
@@ -87,31 +87,31 @@ export function tabsFor(businessType: string, t: (key: string) => string, permis
 
   const JEWELLERY_TABS = [
     { href: "/bills/new", label: t("nav.sell"), icon: SellIcon },
-    { href: "/jewellery/rates", label: "Rate", icon: JewelleryNavIcon },
+    { href: "/jewellery/rates", label: t("Rate"), icon: JewelleryNavIcon },
     { href: "/purchases", label: t("nav.buy"), icon: BuyIcon },
     reportsTab,
     ...fastBillingTab,
   ];
 
   const CLINIC_TABS = [
-    { href: "/clinic/prescriptions/new", label: "New Rx", icon: ClinicNavIcon },
-    { href: "/clinic/appointments", label: "Appointments", icon: ClinicAppointmentIcon },
+    { href: "/clinic/prescriptions/new", label: t("New Rx"), icon: ClinicNavIcon },
+    { href: "/clinic/appointments", label: t("Appointments"), icon: ClinicAppointmentIcon },
     { href: "/purchases", label: t("nav.buy"), icon: BuyIcon },
     reportsTab,
     ...fastBillingTab,
   ];
 
   const GYM_TABS = [
-    { href: "/gym/members/new", label: "Sell", icon: SellIcon },
-    { href: "/gym/members", label: "Members", icon: TableIcon },
+    { href: "/gym/members/new", label: t("nav.sell"), icon: SellIcon },
+    { href: "/gym/members", label: t("Members"), icon: TableIcon },
     { href: "/purchases", label: t("nav.buy"), icon: BuyIcon },
     reportsTab,
     ...fastBillingTab,
   ];
 
   const LAB_TABS = [
-    { href: "/lab/orders/new", label: "New order", icon: SellIcon },
-    { href: "/lab/orders", label: "Orders", icon: TableIcon },
+    { href: "/lab/orders/new", label: t("New order"), icon: SellIcon },
+    { href: "/lab/orders", label: t("Orders"), icon: TableIcon },
     { href: "/purchases", label: t("nav.buy"), icon: BuyIcon },
     reportsTab,
     ...fastBillingTab,

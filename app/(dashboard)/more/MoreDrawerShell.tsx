@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { X } from "lucide-react";
+import { canGoBackInApp } from "@/app/components/BackLink";
 
 export function MoreDrawerShell({ title, children }: { title: string; children: React.ReactNode }) {
   const router = useRouter();
@@ -25,10 +26,10 @@ export function MoreDrawerShell({ title, children }: { title: string; children: 
 
   function close() {
     setOpen(false);
-    // Wait for the slide-out before navigating. router.back() does nothing
-    // without real history (deep link, fresh launch), hence the fallback.
+    // Wait for the slide-out before navigating; with no earlier page in
+    // the app (deep link, fresh launch) go home rather than leave the app.
     setTimeout(() => {
-      if (window.history.length > 1) router.back();
+      if (canGoBackInApp()) router.back();
       else router.push("/dashboard");
     }, 200);
   }

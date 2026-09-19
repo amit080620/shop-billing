@@ -23,7 +23,8 @@ import type { Lang } from "@/lib/i18n/dictionary";
 import { FileText, ClipboardList } from "lucide-react";
 import { ToothChart, type ToothChartData } from "@/app/components/ToothChart";
 import { todayIso } from "@/lib/dateHelpers";
-import { useT } from "@/lib/i18n/LangContext";
+import { useT } from "@/lib/i18n/LangContext";
+import { BackLink } from "@/app/components/BackLink";
 
 type Patient = { id: string; name: string; phone: string; dateOfBirth: string | null; gender: string | null };
 type MedicineRow = PrescriptionItemInput & {
@@ -271,9 +272,7 @@ export function NewPrescriptionClient({
         title={t("New prescription")}
         icon={<FileText size={18} strokeWidth={1.8} />}
       />
-      <Link href="/clinic" className="text-sm text-muted">
-        ← Clinic
-      </Link>
+      <BackLink fallback="/clinic" />
 
       {templates.length > 0 && (
         <div className="flex flex-col gap-1.5">

@@ -6,7 +6,6 @@ import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import { useRouter } from "next/navigation";
 ;
-import Link from "next/link";
 import { createClassAction, toggleClassActiveAction, deleteClassAction, bookClassAction, cancelClassBookingAction } from "@/lib/actions/gym";
 import { PageHeader } from "@/app/components/PageHeader";
 import { EmptyState } from "@/app/components/EmptyState";
@@ -14,6 +13,7 @@ import { SearchableSelect } from "@/app/components/SearchableSelect";
 import type { Lang } from "@/lib/i18n/dictionary";
 import { CalendarDays, X } from "lucide-react";
 import { useT } from "@/lib/i18n/LangContext";
+import { BackLink } from "@/app/components/BackLink";
 
 type ClassBooking = { id: string; memberId: string; memberName: string };
 type GymClass = {
@@ -98,9 +98,7 @@ export function ClassesClient({
         }
         icon={<CalendarDays size={18} strokeWidth={1.8} />}
       />
-      <Link href="/gym/members" className="text-sm text-muted">
-        ← Members
-      </Link>
+      <BackLink fallback="/gym/members" />
 
       {showForm && (
         <form action={formAction} className="flex flex-col gap-3 rounded-xl border border-border bg-surface p-4">

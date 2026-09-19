@@ -7,6 +7,7 @@ import { EmptyState } from "@/app/components/EmptyState";
 import { ReservationRow } from "./ReservationRow";
 import { CalendarCheck } from "lucide-react";
 import { todayIso } from "@/lib/dateHelpers";
+import { BackLink } from "@/app/components/BackLink";
 
 export default async function ReservationsPage({
   searchParams,
@@ -37,9 +38,7 @@ export default async function ReservationsPage({
         }
         icon={<CalendarCheck size={18} strokeWidth={1.8} />}
       />
-      <Link href="/restaurant" className="text-sm text-muted">
-        ← Tables
-      </Link>
+      <BackLink fallback="/restaurant" />
 
       <form className="flex items-center gap-2" action="/restaurant/reservations">
         <input

@@ -4,7 +4,6 @@ import { keepValuesOnError } from "@/lib/keepValuesOnError";
 import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { createJobAction } from "@/lib/actions/service";
 import { useToast } from "@/app/components/Toast";
 import { PhoneInput } from "@/app/components/PhoneInput";
@@ -13,7 +12,8 @@ import { SearchableSelect } from "@/app/components/SearchableSelect";
 import { modelsFor, type DeviceModel } from "@/lib/deviceLibrary";
 import type { Lang } from "@/lib/i18n/dictionary";
 import { Wrench } from "lucide-react";
-import { useT } from "@/lib/i18n/LangContext";
+import { useT } from "@/lib/i18n/LangContext";
+import { BackLink } from "@/app/components/BackLink";
 
 type Customer = { id: string; name: string; phone: string };
 type JobItem = { name: string; quantity: number; notes: string };
@@ -92,9 +92,7 @@ export function NewJobClient({ customers, lang }: { customers: Customer[]; lang:
         title={t("New job")}
         icon={<Wrench size={18} strokeWidth={1.8} />}
       />
-      <Link href="/service" className="text-sm text-muted">
-        ← Jobs
-      </Link>
+      <BackLink fallback="/service" />
 
       <form action={formAction} className="flex flex-col gap-3">
         <input type="hidden" name="customerId" value={selectedCustomer?.id ?? ""} />

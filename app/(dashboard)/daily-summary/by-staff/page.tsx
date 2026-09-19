@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { requireOwner } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { formatMoney } from "@/lib/format";
@@ -6,6 +5,7 @@ import { PageHeader } from "@/app/components/PageHeader";
 import { EmptyState } from "@/app/components/EmptyState";
 import { Users } from "lucide-react";
 import { todayIso } from "@/lib/dateHelpers";
+import { BackLink } from "@/app/components/BackLink";
 
 function round2(n: number) {
   return Math.round((n + Number.EPSILON) * 100) / 100;
@@ -92,9 +92,7 @@ export default async function StaffCashSummaryPage({
         subtitle="Who handled how much — across every payment method combined."
         icon={<Users size={18} strokeWidth={1.8} />}
       />
-      <Link href={`/daily-summary?date=${date}`} className="text-sm text-muted">
-        ← Daily summary
-      </Link>
+      <BackLink fallback={`/daily-summary?date=${date}`} />
 
       <form className="flex items-center gap-2" action="/daily-summary/by-staff">
         <input type="date" name="date" defaultValue={date} className="flex-1 rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand" />

@@ -5,6 +5,7 @@ import { PageHeader } from "@/app/components/PageHeader";
 import { EmptyState } from "@/app/components/EmptyState";
 import { ShieldCheck } from "lucide-react";
 import { getTranslator } from "@/lib/i18n/server";
+import { BackLink } from "@/app/components/BackLink";
 
 export default async function WarrantyLookupPage({
   searchParams,
@@ -102,9 +103,7 @@ export default async function WarrantyLookupPage({
         subtitle="Search by customer phone or invoice number to check warranty status."
         icon={<ShieldCheck size={18} strokeWidth={1.8} />}
       />
-      <Link href="/products" className="text-sm text-muted">
-        ← Inventory
-      </Link>
+      <BackLink fallback="/products" />
 
       <form className="flex gap-2" action="/warranty">
         <input

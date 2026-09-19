@@ -6,7 +6,8 @@ import { EmptyState } from "@/app/components/EmptyState";
 import { ClinicAppointmentRow } from "./ClinicAppointmentRow";
 import { Calendar } from "lucide-react";
 import { todayIso } from "@/lib/dateHelpers";
-import { getTranslator } from "@/lib/i18n/server";
+import { getTranslator } from "@/lib/i18n/server";
+import { BackLink } from "@/app/components/BackLink";
 
 export default async function ClinicAppointmentsPage({
   searchParams,
@@ -37,9 +38,7 @@ export default async function ClinicAppointmentsPage({
         }
         icon={<Calendar size={18} strokeWidth={1.8} />}
       />
-      <Link href="/clinic" className="text-sm text-muted">
-        ← Clinic
-      </Link>
+      <BackLink fallback="/clinic" />
 
       <Link
         href="/clinic/settings/booking"

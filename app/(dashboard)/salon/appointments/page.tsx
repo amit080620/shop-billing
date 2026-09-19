@@ -7,6 +7,7 @@ import { EmptyState } from "@/app/components/EmptyState";
 import { AppointmentRow } from "./AppointmentRow";
 import { Calendar } from "lucide-react";
 import { todayIso } from "@/lib/dateHelpers";
+import { BackLink } from "@/app/components/BackLink";
 
 export default async function AppointmentsPage({
   searchParams,
@@ -38,9 +39,7 @@ export default async function AppointmentsPage({
         }
         icon={<Calendar size={18} strokeWidth={1.8} />}
       />
-      <Link href="/dashboard" className="text-sm text-muted">
-        ← Home
-      </Link>
+      <BackLink fallback="/dashboard" />
 
       <form className="flex items-center gap-2" action="/salon/appointments">
         <input

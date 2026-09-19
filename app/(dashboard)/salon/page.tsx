@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { requireSession } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { formatMoney } from "@/lib/format";
@@ -7,6 +6,7 @@ import { EmptyState } from "@/app/components/EmptyState";
 import { Scissors } from "lucide-react";
 import { todayIso } from "@/lib/dateHelpers";
 import { getTranslator } from "@/lib/i18n/server";
+import { BackLink } from "@/app/components/BackLink";
 
 function startOfMonthIso() {
   const d = new Date();
@@ -59,9 +59,7 @@ export default async function SalonStaffReportPage({
         subtitle="Who's bringing in how much — handy for commission."
         icon={<Scissors size={18} strokeWidth={1.8} />}
       />
-      <Link href="/dashboard" className="text-sm text-muted">
-        ← Home
-      </Link>
+      <BackLink fallback="/dashboard" />
 
       <form className="flex items-center gap-2" action="/salon">
         <input type="date" name="from" defaultValue={fromDate} className="flex-1 rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand" />

@@ -2,12 +2,12 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { savePrescriptionSettingsAction } from "@/lib/actions/clinic";
 import { uploadSettingsImageAction } from "@/lib/actions/settings";
 import { PageHeader } from "@/app/components/PageHeader";
 import { Stethoscope } from "lucide-react";
-import { useT } from "@/lib/i18n/LangContext";
+import { useT } from "@/lib/i18n/LangContext";
+import { BackLink } from "@/app/components/BackLink";
 
 export function SettingsClient({
   headerText: initialHeaderText,
@@ -116,9 +116,7 @@ export function SettingsClient({
         subtitle="Set your letterhead once — every prescription you print uses this."
         icon={<Stethoscope size={18} strokeWidth={1.8} />}
       />
-      <Link href="/clinic" className="text-sm text-muted">
-        ← Clinic
-      </Link>
+      <BackLink fallback="/clinic" />
 
       <label className="flex flex-col gap-1.5 text-sm">
         <span className="font-medium text-foreground">Specialty</span>

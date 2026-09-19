@@ -4,7 +4,10 @@ import { LayoutDashboard } from "lucide-react";
 import { requireSession } from "@/lib/auth";
 import { getLang } from "@/lib/i18n/server";
 import { LangProvider } from "@/lib/i18n/LangContext";
-import { translate } from "@/lib/i18n/dictionary";
+import { MenuDrawerProvider } from "./MenuDrawer";
+import { MoreMenu } from "./more/MoreMenu";
+import { NavDepthTracker } from "@/app/components/BackLink";
+import { translate, messagesFor } from "@/lib/i18n/dictionary";
 import { BottomNav } from "./BottomNav";
 import { DesktopSidebar } from "./DesktopSidebar";
 import { WelcomeTour } from "./WelcomeTour";
@@ -30,7 +33,9 @@ export default async function DashboardLayout({
   const roleLabel = session.role === "owner" ? translate(lang, "role.owner") : translate(lang, "role.staff");
 
   return (
-    <LangProvider lang={lang}>
+    <LangProvider lang={lang} messages={messagesFor(lang)}>
+    <MenuDrawerProvider title={translate(lang, "more.title")} menu={<MoreMenu />}>
+    <NavDepthTracker />
     <div className="min-h-screen bg-background pb-24 md:pb-0 md:pl-72">
       <DesktopSidebar
         lang={lang}
@@ -102,6 +107,7 @@ export default async function DashboardLayout({
           booking or print pages, which live outside this layout. */}
       <LazyFloatingWidgets calculatorEnabled={calculatorEnabled} assistantEnabled={assistantEnabled} />
     </div>
+    </MenuDrawerProvider>
     </LangProvider>
   );
 }

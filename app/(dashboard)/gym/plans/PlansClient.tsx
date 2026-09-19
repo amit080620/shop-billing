@@ -5,7 +5,6 @@ import { useState, useTransition } from "react";
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { createMembershipPlanAction, togglePlanActiveAction, deletePlanAction } from "@/lib/actions/gym";
 import { useToast } from "@/app/components/Toast";
 import { formatMoney } from "@/lib/format";
@@ -14,6 +13,7 @@ import { EmptyState } from "@/app/components/EmptyState";
 import { Popup } from "@/app/components/Popup";
 import { ListChecks } from "lucide-react";
 import { useT } from "@/lib/i18n/LangContext";
+import { BackLink } from "@/app/components/BackLink";
 
 type Plan = { id: string; name: string; durationDays: number; price: number; ptSessionsIncluded: number; isActive: boolean };
 
@@ -66,9 +66,7 @@ export function PlansClient({ plans }: { plans: Plan[] }) {
         }
         icon={<ListChecks size={18} strokeWidth={1.8} />}
       />
-      <Link href="/gym" className="text-sm text-muted">
-        ← Gym
-      </Link>
+      <BackLink fallback="/gym" />
 
       {showForm && (
         <Popup open={showForm} onClose={() => setShowForm(false)} title="Add plan">

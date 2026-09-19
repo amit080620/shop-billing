@@ -3,7 +3,6 @@
 import { useOrigin } from "@/lib/useOrigin";
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { saveBookingSettingsAction, type WorkingHours } from "@/lib/actions/clinic";
 import { Camera, MessageCircle, X } from "lucide-react";
 import { uploadSettingsImageAction } from "@/lib/actions/settings";
@@ -11,6 +10,7 @@ import { PageHeader } from "@/app/components/PageHeader";
 import { CalendarClock } from "lucide-react";
 import { todayIso } from "@/lib/dateHelpers";
 import { useT } from "@/lib/i18n/LangContext";
+import { BackLink } from "@/app/components/BackLink";
 
 const DAYS: { key: string; label: string }[] = [
   { key: "mon", label: "Monday" },
@@ -139,9 +139,7 @@ export function BookingSettingsClient({
         subtitle={`Let ${noun}s book their own slot from a link you share — no login needed for them.`}
         icon={<CalendarClock size={18} strokeWidth={1.8} />}
       />
-      <Link href={backLink} className="text-sm text-muted">
-        ← Back
-      </Link>
+      <BackLink fallback={backLink} />
 
       <label className="flex items-center justify-between rounded-xl border border-border bg-surface px-4 py-3.5 shadow-sm">
         <span className="text-sm font-medium text-foreground">Enable public booking link</span>

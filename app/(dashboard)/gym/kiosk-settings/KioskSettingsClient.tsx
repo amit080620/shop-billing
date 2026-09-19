@@ -3,12 +3,12 @@
 import { useOrigin } from "@/lib/useOrigin";
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { saveKioskSettingsAction } from "@/lib/actions/gym";
 import { useToast } from "@/app/components/Toast";
 import { PageHeader } from "@/app/components/PageHeader";
 import { Tablet, MessageCircle } from "lucide-react";
 import { useT } from "@/lib/i18n/LangContext";
+import { BackLink } from "@/app/components/BackLink";
 
 export function KioskSettingsClient({ isEnabled: initialEnabled, publicToken }: { isEnabled: boolean; publicToken: string | null }) {
   const { t } = useT();
@@ -42,9 +42,7 @@ export function KioskSettingsClient({ isEnabled: initialEnabled, publicToken }: 
         subtitle="Leave this link open on a tablet or old phone at the entrance — members check themselves in by typing their phone number. No staff needed per member."
         icon={<Tablet size={18} strokeWidth={1.8} />}
       />
-      <Link href="/gym/attendance" className="text-sm text-muted">
-        ← Attendance
-      </Link>
+      <BackLink fallback="/gym/attendance" />
 
       <label className="neu-card flex items-center justify-between px-4 py-3.5">
         <span className="text-sm font-medium text-foreground">Enable self check-in kiosk</span>

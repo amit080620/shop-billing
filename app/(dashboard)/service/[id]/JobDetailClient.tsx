@@ -10,6 +10,7 @@ import { formatMoney } from "@/lib/format";
 import { useTranslation } from "@/lib/i18n/useTranslation";
 import { buildWhatsAppLink as buildWaLink } from "@/lib/whatsapp";
 import type { Lang } from "@/lib/i18n/dictionary";
+import { BackLink } from "@/app/components/BackLink";
 
 type Job = {
   id: string;
@@ -114,9 +115,7 @@ export function JobDetailClient({
 
   return (
     <div className="flex flex-col gap-4 pb-6">
-      <Link href="/service" className="text-sm text-muted">
-        ← Jobs
-      </Link>
+      <BackLink fallback="/service" />
 
       <div>
         <h1 className="text-lg font-bold tracking-tight text-foreground md:text-2xl">{job.itemDescription}</h1>

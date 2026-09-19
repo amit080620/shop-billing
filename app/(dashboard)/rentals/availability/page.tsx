@@ -1,9 +1,9 @@
-import Link from "next/link";
 import { requireSession } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { PageHeader } from "@/app/components/PageHeader";
 import { AvailabilityCalendar } from "./AvailabilityCalendar";
 import { CalendarSearch } from "lucide-react";
+import { BackLink } from "@/app/components/BackLink";
 
 export default async function RentalAvailabilityPage({
   searchParams,
@@ -58,9 +58,7 @@ export default async function RentalAvailabilityPage({
         subtitle="See which days an item is already booked, at a glance."
         icon={<CalendarSearch size={18} strokeWidth={1.8} />}
       />
-      <Link href="/rentals" className="text-sm text-muted">
-        ← Rentals
-      </Link>
+      <BackLink fallback="/rentals" />
 
       {(!products || products.length === 0) ? (
         <p className="text-sm text-muted">No rentable items yet — mark an item as rentable in Products first.</p>

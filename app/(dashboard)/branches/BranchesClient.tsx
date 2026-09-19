@@ -5,7 +5,6 @@ import { useState, useTransition } from "react";
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import {
   createBranchAction,
   updateBranchAction,
@@ -18,6 +17,7 @@ import { PageHeader } from "@/app/components/PageHeader";
 import { EmptyState } from "@/app/components/EmptyState";
 import { Popup } from "@/app/components/Popup";
 import { useT } from "@/lib/i18n/LangContext";
+import { BackLink } from "@/app/components/BackLink";
 
 type Branch = { id: string; name: string; address: string | null; isActive: boolean };
 type Staff = { id: string; name: string; role: "owner" | "manager" | "staff"; branchId: string | null };
@@ -63,9 +63,7 @@ export function BranchesClient({ branches, staff }: { branches: Branch[]; staff:
         }
         icon={<Building2 size={18} strokeWidth={1.8} />}
       />
-      <Link href="/more" className="text-sm text-muted">
-        {t("← More")}
-      </Link>
+      <BackLink fallback="/dashboard" />
 
       {showForm && (
         <Popup open={showForm} onClose={() => setShowForm(false)} title="Add branch">

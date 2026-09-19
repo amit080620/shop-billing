@@ -11,6 +11,7 @@ import { SearchableSelect } from "@/app/components/SearchableSelect";
 import type { Lang } from "@/lib/i18n/dictionary";
 import { FlaskConical, Footprints, Home } from "lucide-react";
 import { useT } from "@/lib/i18n/LangContext";
+import { BackLink } from "@/app/components/BackLink";
 
 type Test = { id: string; name: string; price: number; sampleType: string };
 type Package = { id: string; name: string; price: number };
@@ -87,9 +88,7 @@ export function NewOrderClient({
         title={t("New order")}
         icon={<FlaskConical size={18} strokeWidth={1.8} />}
       />
-      <Link href="/lab/orders" className="text-sm text-muted">
-        ← Orders
-      </Link>
+      <BackLink fallback="/lab/orders" />
 
       <section className="flex flex-col gap-2">
         <p className="text-sm font-medium text-foreground">Patient</p>

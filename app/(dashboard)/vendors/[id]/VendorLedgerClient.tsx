@@ -9,7 +9,8 @@ import { recordVendorPaymentAction } from "@/lib/actions/vendors";
 import { formatMoney, formatDateTime } from "@/lib/format";
 import { EmptyState } from "@/app/components/EmptyState";
 import { PaymentMethodPicker } from "@/app/components/PaymentMethodPicker";
-import { EditVendorButton } from "./EditVendorButton";
+import { EditVendorButton } from "./EditVendorButton";
+import { BackLink } from "@/app/components/BackLink";
 
 type Purchase = {
   id: string;
@@ -64,9 +65,7 @@ export function VendorLedgerClient({
 
   return (
     <div className="flex flex-col gap-4">
-      <Link href="/vendors" className="text-sm text-muted">
-        ← Vendors
-      </Link>
+      <BackLink fallback="/vendors" />
 
       <div className="neu-card p-4">
         <div className="flex items-start justify-between gap-2">

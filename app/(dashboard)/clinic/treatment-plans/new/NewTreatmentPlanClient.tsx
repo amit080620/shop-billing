@@ -2,7 +2,6 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { createTreatmentPlanAction } from "@/lib/actions/treatmentPlans";
 import { PhoneInput } from "@/app/components/PhoneInput";
 import { PageHeader } from "@/app/components/PageHeader";
@@ -11,6 +10,7 @@ import { useToast } from "@/app/components/Toast";
 import type { Lang } from "@/lib/i18n/dictionary";
 import { ClipboardList, Plus, Trash2 } from "lucide-react";
 import { ToothChart, CONDITION_LABELS, type ToothChartData } from "@/app/components/ToothChart";
+import { BackLink } from "@/app/components/BackLink";
 
 type Patient = { id: string; name: string; phone: string };
 type PlanItem = { key: string; toothNumber: string; procedureName: string; description: string; estimatedCost: string };
@@ -168,9 +168,7 @@ export function NewTreatmentPlanClient({
   return (
     <div className="flex flex-col gap-3">
       <PageHeader title="New treatment plan" icon={<ClipboardList size={18} strokeWidth={1.8} />} />
-      <Link href="/clinic/treatment-plans" className="text-sm text-muted">
-        ← Treatment plans
-      </Link>
+      <BackLink fallback="/clinic/treatment-plans" />
 
       <label className="flex flex-col gap-1.5 text-sm">
         <span className="font-medium text-foreground">Patient</span>

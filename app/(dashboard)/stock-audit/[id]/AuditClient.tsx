@@ -3,8 +3,8 @@
 import { unitLabel } from "@/lib/format";
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { updateAuditItemAction, completeAuditAction, discardAuditAction } from "@/lib/actions/stock-audit";
+import { BackLink } from "@/app/components/BackLink";
 
 type Item = {
   id: string;
@@ -65,9 +65,7 @@ export function AuditClient({
 
   return (
     <div className="flex flex-col gap-4 pb-20">
-      <Link href="/stock-audit" className="text-sm text-muted">
-        ← All counts
-      </Link>
+      <BackLink fallback="/stock-audit" />
 
       <div className="flex items-center justify-between">
         <h1 className="text-lg font-bold tracking-tight text-foreground md:text-2xl">

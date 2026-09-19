@@ -5,7 +5,6 @@ import { useState, useTransition } from "react";
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { createLabTestAction, toggleLabTestActiveAction, deleteLabTestAction, createLabPackageAction, deleteLabPackageAction } from "@/lib/actions/lab";
 import { useToast } from "@/app/components/Toast";
 import { formatMoney } from "@/lib/format";
@@ -13,6 +12,7 @@ import { PageHeader } from "@/app/components/PageHeader";
 import { EmptyState } from "@/app/components/EmptyState";
 import { TestTube } from "lucide-react";
 import { useT } from "@/lib/i18n/LangContext";
+import { BackLink } from "@/app/components/BackLink";
 
 type Test = { id: string; name: string; category: string | null; sampleType: string; price: number; gstPercent: number; turnaroundHours: number; referenceRange: string | null; unit: string | null; isActive: boolean };
 type Package = { id: string; name: string; price: number; isActive: boolean; testNames: string[] };
@@ -72,9 +72,7 @@ export function TestsClient({ tests, packages }: { tests: Test[]; packages: Pack
         title="Test catalog"
         icon={<TestTube size={18} strokeWidth={1.8} />}
       />
-      <Link href="/lab/orders" className="text-sm text-muted">
-        ← Orders
-      </Link>
+      <BackLink fallback="/lab/orders" />
 
       <div className="flex gap-2">
         <button onClick={() => setTab("tests")} className={`rounded-full border px-3.5 py-1.5 text-xs font-medium ${tab === "tests" ? "border-brand bg-brand-soft text-brand-text" : "border-border text-muted"}`}>
