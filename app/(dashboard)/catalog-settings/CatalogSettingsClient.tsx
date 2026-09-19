@@ -70,12 +70,12 @@ export function CatalogSettingsClient({
 
   return (
     <div className="flex flex-col gap-4 pb-6">
+      <BackLink fallback="/dashboard" />
       <PageHeader
         title={t("Catalog link")}
         subtitle="Share one link where anyone can browse your items with photos and order — no app, no login for them."
         icon={<Store size={18} strokeWidth={1.8} />}
       />
-      <BackLink fallback="/dashboard" />
 
       <label className="flex items-center justify-between rounded-xl border border-border bg-surface px-4 py-3.5 shadow-sm">
         <span className="text-sm font-medium text-foreground">{t("Enable public catalog link")}</span>

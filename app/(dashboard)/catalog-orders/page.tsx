@@ -58,12 +58,12 @@ export default async function CatalogOrdersPage({
 
   return (
     <div className="flex flex-col gap-4">
+      <BackLink fallback="/catalog-settings" />
       <PageHeader
         title={t("Catalog orders")}
          
         icon={<ShoppingBag size={17} strokeWidth={1.8} />}
       />
-      <BackLink fallback="/catalog-settings" />
 
       <div className="flex gap-2 overflow-x-auto pb-1">
         {(["pending", "accepted", "rejected"] as const).map((s) => (

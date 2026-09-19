@@ -18,6 +18,7 @@ export default async function TreatmentPlansPage() {
 
   return (
     <div className="flex flex-col gap-3">
+      <BackLink fallback="/clinic" />
       <PageHeader
         title={t("Treatment plans")}
         action={
@@ -27,7 +28,6 @@ export default async function TreatmentPlansPage() {
         }
         icon={<ClipboardList size={18} strokeWidth={1.8} />}
       />
-      <BackLink fallback="/clinic" />
 
       {plans.length === 0 ? (
         <EmptyState text="No treatment plans yet — create one to give a patient a quotation before starting work." />

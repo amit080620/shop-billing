@@ -268,11 +268,11 @@ export function NewPrescriptionClient({
 
   return (
     <div className="flex flex-col gap-3 pb-6">
+      <BackLink fallback="/clinic" />
       <PageHeader
         title={t("New prescription")}
         icon={<FileText size={18} strokeWidth={1.8} />}
       />
-      <BackLink fallback="/clinic" />
 
       {templates.length > 0 && (
         <div className="flex flex-col gap-1.5">

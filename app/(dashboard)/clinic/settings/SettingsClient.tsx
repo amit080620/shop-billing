@@ -111,12 +111,12 @@ export function SettingsClient({
 
   return (
     <div className="flex flex-col gap-3 pb-6">
+      <BackLink fallback="/clinic" />
       <PageHeader
         title={t("Prescription pad settings")}
         subtitle="Set your letterhead once — every prescription you print uses this."
         icon={<Stethoscope size={18} strokeWidth={1.8} />}
       />
-      <BackLink fallback="/clinic" />
 
       <label className="flex flex-col gap-1.5 text-sm">
         <span className="font-medium text-foreground">Specialty</span>

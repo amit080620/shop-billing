@@ -87,12 +87,12 @@ export default async function StaffCashSummaryPage({
 
   return (
     <div className="flex flex-col gap-4">
+      <BackLink fallback={`/daily-summary?date=${date}`} />
       <PageHeader
         title="Staff-wise cash"
         subtitle="Who handled how much — across every payment method combined."
         icon={<Users size={18} strokeWidth={1.8} />}
       />
-      <BackLink fallback={`/daily-summary?date=${date}`} />
 
       <form className="flex items-center gap-2" action="/daily-summary/by-staff">
         <input type="date" name="date" defaultValue={date} className="flex-1 rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand" />

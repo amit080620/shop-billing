@@ -43,11 +43,11 @@ export default async function GymAttendancePage() {
 
   return (
     <div className="flex flex-col gap-3">
+      <BackLink fallback="/gym/members" />
       <PageHeader
         title={t("Attendance")}
         icon={<ClipboardCheck size={18} strokeWidth={1.8} />}
       />
-      <BackLink fallback="/gym/members" />
 
       <div className="grid grid-cols-2 gap-3">
         <div className="rounded-xl border border-border bg-surface p-3.5 text-center shadow-sm">

@@ -56,12 +56,12 @@ export function MemberDetailClient({
 
   return (
     <div className="flex flex-col gap-3 pb-6">
+      <BackLink fallback="/gym/members" />
       <PageHeader
         title={member.name}
         subtitle={member.phone}
         icon={<User size={18} strokeWidth={1.8} />}
       />
-      <BackLink fallback="/gym/members" />
 
       <div className="flex gap-2 overflow-x-auto pb-1">
         {(["overview", "workout", "diet", "progress"] as const).map((tb) => (

@@ -85,12 +85,12 @@ export function OrderDetailClient({ order, items }: { order: Order; items: Item[
 
   return (
     <div className="flex flex-col gap-3 pb-6">
+      <BackLink fallback="/lab/orders" />
       <PageHeader
         title={order.patientName}
         subtitle={`#${order.orderNumber} · ${order.patientPhone}`}
         icon={<FlaskConical size={18} strokeWidth={1.8} />}
       />
-      <BackLink fallback="/lab/orders" />
 
       <Link
         href={`/print/lab-report/${order.id}`}

@@ -27,12 +27,12 @@ export default async function JewelleryExchangesPage() {
 
   return (
     <div className="flex flex-col gap-3">
+      <BackLink fallback="/jewellery/rates" />
       <PageHeader
         title={t("Exchange history")}
         subtitle="Old gold/silver taken in — for your melting & refining records."
         icon={<Repeat size={18} strokeWidth={1.8} />}
       />
-      <BackLink fallback="/jewellery/rates" />
 
       {(!exchanges || exchanges.length === 0) ? (
         <EmptyState text="No exchanges recorded yet — they will show up here after a bill with an old gold/silver exchange." />

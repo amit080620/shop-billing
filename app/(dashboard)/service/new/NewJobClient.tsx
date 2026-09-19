@@ -88,11 +88,11 @@ export function NewJobClient({ customers, lang }: { customers: Customer[]; lang:
 
   return (
     <div className="flex flex-col gap-4">
+      <BackLink fallback="/service" />
       <PageHeader
         title={t("New job")}
         icon={<Wrench size={18} strokeWidth={1.8} />}
       />
-      <BackLink fallback="/service" />
 
       <form action={formAction} className="flex flex-col gap-3">
         <input type="hidden" name="customerId" value={selectedCustomer?.id ?? ""} />

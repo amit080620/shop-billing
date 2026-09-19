@@ -73,11 +73,11 @@ export function SellMembershipClient({
 
   return (
     <div className="flex flex-col gap-3 pb-6">
+      <BackLink fallback="/gym/members" />
       <PageHeader
         title={t("Sell membership")}
         icon={<UserPlus size={18} strokeWidth={1.8} />}
       />
-      <BackLink fallback="/gym/members" />
 
       <section className="flex flex-col gap-2">
         <p className="text-sm font-medium text-foreground">Member</p>

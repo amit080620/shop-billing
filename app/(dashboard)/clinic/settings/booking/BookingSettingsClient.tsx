@@ -134,12 +134,12 @@ export function BookingSettingsClient({
 
   return (
     <div className="flex flex-col gap-3 pb-6">
+      <BackLink fallback={backLink} />
       <PageHeader
         title={t("Online booking")}
         subtitle={`Let ${noun}s book their own slot from a link you share — no login needed for them.`}
         icon={<CalendarClock size={18} strokeWidth={1.8} />}
       />
-      <BackLink fallback={backLink} />
 
       <label className="flex items-center justify-between rounded-xl border border-border bg-surface px-4 py-3.5 shadow-sm">
         <span className="text-sm font-medium text-foreground">Enable public booking link</span>

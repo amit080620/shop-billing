@@ -11,8 +11,8 @@ export default async function BarcodeSettingsPage() {
 
   return (
     <div className="flex flex-col gap-4 pb-6">
-      <PageHeader title={t("Barcode scanning")} icon={<ScanLine size={18} strokeWidth={1.8} />} />
       <BackLink fallback="/profile" />
+      <PageHeader title={t("Barcode scanning")} icon={<ScanLine size={18} strokeWidth={1.8} />} />
 
       <BarcodeScanModeToggle initial={barcodeScanMode} />
     </div>

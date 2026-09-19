@@ -68,11 +68,11 @@ export function TestsClient({ tests, packages }: { tests: Test[]; packages: Pack
 
   return (
     <div className="flex flex-col gap-3">
+      <BackLink fallback="/lab/orders" />
       <PageHeader
         title="Test catalog"
         icon={<TestTube size={18} strokeWidth={1.8} />}
       />
-      <BackLink fallback="/lab/orders" />
 
       <div className="flex gap-2">
         <button onClick={() => setTab("tests")} className={`rounded-full border px-3.5 py-1.5 text-xs font-medium ${tab === "tests" ? "border-brand bg-brand-soft text-brand-text" : "border-border text-muted"}`}>

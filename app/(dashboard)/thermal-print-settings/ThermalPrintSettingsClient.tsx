@@ -186,8 +186,8 @@ export function ThermalPrintSettingsClient({ initial, initialDefaultFormat }: { 
 
   return (
     <div className="flex flex-col gap-4 pb-6">
-      <PageHeader title={t("Thermal print settings")} icon={<Printer size={18} strokeWidth={1.8} />} />
       <BackLink fallback="/profile" />
+      <PageHeader title={t("Thermal print settings")} icon={<Printer size={18} strokeWidth={1.8} />} />
 
       <div className="rounded-xl border border-border bg-surface p-3.5">
         <p className="mb-2 text-sm font-semibold text-foreground">{t("Default print format")}</p>

@@ -47,12 +47,12 @@ export function RatesClient({
 
   return (
     <div className="flex flex-col gap-3">
+      <BackLink fallback="/products" />
       <PageHeader
         title={t("Today's rate")}
         subtitle="Set the per-gram rate each morning — it applies to every gold/silver item billed today."
         icon={<Coins size={18} strokeWidth={1.8} />}
       />
-      <BackLink fallback="/products" />
 
       <div className="flex flex-col gap-3 rounded-xl border border-border bg-surface p-4">
         <label className="flex flex-col gap-1.5 text-sm">

@@ -29,6 +29,7 @@ export default async function ClinicAppointmentsPage({
 
   return (
     <div className="flex flex-col gap-3">
+      <BackLink fallback="/clinic" />
       <PageHeader
         title={t("Appointments")}
         action={
@@ -38,7 +39,6 @@ export default async function ClinicAppointmentsPage({
         }
         icon={<Calendar size={18} strokeWidth={1.8} />}
       />
-      <BackLink fallback="/clinic" />
 
       <Link
         href="/clinic/settings/booking"

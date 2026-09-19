@@ -48,12 +48,23 @@ export function canGoBackInApp(): boolean {
   return depth > 1;
 }
 
+// Bottom-nav tab pages (every business type) are top-level screens: no
+// Back link there, same as any app's main tabs.
+const TAB_ROOTS = new Set([
+  "/dashboard", "/bills/new", "/customers", "/purchases", "/reports", "/fast-billing",
+  "/restaurant", "/restaurant-kds", "/rentals/new", "/transport/vehicles", "/service",
+  "/salon/appointments", "/jewellery/rates", "/clinic/prescriptions/new", "/clinic/appointments",
+  "/gym/members/new", "/gym/members", "/lab/orders/new", "/lab/orders",
+]);
+
 /** On-screen Back that behaves like the phone's back button: returns to
  * the page the person came from, and only when there is none (opened from
  * a link, fresh launch) goes to `fallback`, the page's natural parent. */
 export function BackLink({ fallback, label }: { fallback: string; label?: string }) {
   const router = useRouter();
+  const pathname = usePathname();
   const { t } = useT();
+  if (TAB_ROOTS.has(pathname)) return null;
   return (
     <Link
       href={fallback}

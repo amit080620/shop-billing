@@ -29,6 +29,7 @@ export default async function ReservationsPage({
 
   return (
     <div className="flex flex-col gap-3">
+      <BackLink fallback="/restaurant" />
       <PageHeader
         title="Reservations"
         action={
@@ -38,7 +39,6 @@ export default async function ReservationsPage({
         }
         icon={<CalendarCheck size={18} strokeWidth={1.8} />}
       />
-      <BackLink fallback="/restaurant" />
 
       <form className="flex items-center gap-2" action="/restaurant/reservations">
         <input

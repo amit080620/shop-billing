@@ -30,6 +30,7 @@ export default async function AppointmentsPage({
 
   return (
     <div className="flex flex-col gap-3">
+      <BackLink fallback="/dashboard" />
       <PageHeader
         title={t("Appointments")}
         action={
@@ -39,7 +40,6 @@ export default async function AppointmentsPage({
         }
         icon={<Calendar size={18} strokeWidth={1.8} />}
       />
-      <BackLink fallback="/dashboard" />
 
       <form className="flex items-center gap-2" action="/salon/appointments">
         <input

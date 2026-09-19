@@ -119,7 +119,7 @@ export function ToothChart({ chart, onChange }: { chart: ToothChartData; onChang
         <button
           type="button"
           onClick={() => setOpenTooth(openTooth === tooth ? null : tooth)}
-          className={`flex h-11 w-11 flex-col items-center justify-center gap-0.5 rounded-lg border ${CONDITION_COLORS[colorKey]}`}
+          className={`flex h-9 w-9 flex-col items-center justify-center gap-0.5 rounded-lg border sm:h-11 sm:w-11 ${CONDITION_COLORS[colorKey]}`}
           title={label}
         >
           <ToothIcon conditions={conditions} size={18} />
@@ -167,25 +167,26 @@ export function ToothChart({ chart, onChange }: { chart: ToothChartData; onChang
         Tap a tooth, then tick every procedure that applies — a tooth can genuinely have both RCT and a Crown
         marked together.
       </p>
-      <div className="flex flex-col items-center gap-2 overflow-visible">
-        <div className="flex gap-1">
-          {UPPER_RIGHT.map((t) => (
-            <ToothButton key={t} tooth={t} />
-          ))}
-          <span className="w-2" />
-          {UPPER_LEFT.map((t) => (
-            <ToothButton key={t} tooth={t} />
-          ))}
-        </div>
-        <div className="flex gap-1">
-          {LOWER_RIGHT.map((t) => (
-            <ToothButton key={t} tooth={t} />
-          ))}
-          <span className="w-2" />
-          {LOWER_LEFT.map((t) => (
-            <ToothButton key={t} tooth={t} />
-          ))}
-        </div>
+      {/* Each arch is two quadrants: side by side when there is room,
+          stacked on a phone — the chart never pushes the page sideways. */}
+      <div className="flex flex-col items-center gap-3">
+        {[
+          [UPPER_RIGHT, UPPER_LEFT],
+          [LOWER_RIGHT, LOWER_LEFT],
+        ].map(([right, left], arch) => (
+          <div key={arch} className="flex flex-wrap justify-center gap-x-3 gap-y-1">
+            <div className="flex gap-1">
+              {right.map((t) => (
+                <ToothButton key={t} tooth={t} />
+              ))}
+            </div>
+            <div className="flex gap-1">
+              {left.map((t) => (
+                <ToothButton key={t} tooth={t} />
+              ))}
+            </div>
+          </div>
+        ))}
       </div>
       <div className="mt-1 flex flex-wrap gap-2">
         {TOOTH_CONDITIONS.map((c) => (

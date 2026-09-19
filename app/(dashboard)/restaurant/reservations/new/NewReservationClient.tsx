@@ -46,11 +46,11 @@ export function NewReservationClient({ customers, tables, lang }: { customers: C
 
   return (
     <div className="flex flex-col gap-3">
+      <BackLink fallback="/restaurant/reservations" />
       <PageHeader
         title="Book reservation"
         icon={<CalendarPlus size={18} strokeWidth={1.8} />}
       />
-      <BackLink fallback="/restaurant/reservations" />
 
       <form action={formAction} className="flex flex-col gap-3">
         <input type="hidden" name="customerId" value={selectedCustomer?.id ?? ""} />

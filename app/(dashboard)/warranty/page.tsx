@@ -98,12 +98,12 @@ export default async function WarrantyLookupPage({
 
   return (
     <div className="flex flex-col gap-4">
+      <BackLink fallback="/products" />
       <PageHeader
         title={t("Warranty lookup")}
         subtitle="Search by customer phone or invoice number to check warranty status."
         icon={<ShieldCheck size={18} strokeWidth={1.8} />}
       />
-      <BackLink fallback="/products" />
 
       <form className="flex gap-2" action="/warranty">
         <input

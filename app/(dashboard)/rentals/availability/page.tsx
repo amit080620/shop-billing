@@ -53,12 +53,12 @@ export default async function RentalAvailabilityPage({
 
   return (
     <div className="flex flex-col gap-3">
+      <BackLink fallback="/rentals" />
       <PageHeader
         title="Availability calendar"
         subtitle="See which days an item is already booked, at a glance."
         icon={<CalendarSearch size={18} strokeWidth={1.8} />}
       />
-      <BackLink fallback="/rentals" />
 
       {(!products || products.length === 0) ? (
         <p className="text-sm text-muted">No rentable items yet — mark an item as rentable in Products first.</p>

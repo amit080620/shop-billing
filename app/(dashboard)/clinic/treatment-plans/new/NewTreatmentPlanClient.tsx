@@ -167,8 +167,8 @@ export function NewTreatmentPlanClient({
 
   return (
     <div className="flex flex-col gap-3">
-      <PageHeader title="New treatment plan" icon={<ClipboardList size={18} strokeWidth={1.8} />} />
       <BackLink fallback="/clinic/treatment-plans" />
+      <PageHeader title="New treatment plan" icon={<ClipboardList size={18} strokeWidth={1.8} />} />
 
       <label className="flex flex-col gap-1.5 text-sm">
         <span className="font-medium text-foreground">Patient</span>

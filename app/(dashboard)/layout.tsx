@@ -1,6 +1,5 @@
 import Image from "next/image";
 import Link from "next/link";
-import { LayoutDashboard } from "lucide-react";
 import { requireSession } from "@/lib/auth";
 import { getLang } from "@/lib/i18n/server";
 import { LangProvider } from "@/lib/i18n/LangContext";
@@ -80,13 +79,6 @@ export default async function DashboardLayout({
             </span>
           </Link>
           <HeaderTools calculator={calculatorEnabled} assistant={assistantEnabled} />
-          <Link
-            href="/dashboard"
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-foreground hover:bg-surface-2"
-            aria-label="Dashboard"
-          >
-            <LayoutDashboard size={19} />
-          </Link>
         </div>
         <div className="mx-auto max-w-lg px-4 pb-2.5 md:flex md:max-w-5xl md:items-center md:justify-end md:gap-1 md:px-8 md:py-3 xl:max-w-6xl">
           <UniversalSearch />

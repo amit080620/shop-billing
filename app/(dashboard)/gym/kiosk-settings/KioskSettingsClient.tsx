@@ -37,12 +37,12 @@ export function KioskSettingsClient({ isEnabled: initialEnabled, publicToken }: 
 
   return (
     <div className="flex flex-col gap-3">
+      <BackLink fallback="/gym/attendance" />
       <PageHeader
         title={t("Self check-in kiosk")}
         subtitle="Leave this link open on a tablet or old phone at the entrance — members check themselves in by typing their phone number. No staff needed per member."
         icon={<Tablet size={18} strokeWidth={1.8} />}
       />
-      <BackLink fallback="/gym/attendance" />
 
       <label className="neu-card flex items-center justify-between px-4 py-3.5">
         <span className="text-sm font-medium text-foreground">Enable self check-in kiosk</span>

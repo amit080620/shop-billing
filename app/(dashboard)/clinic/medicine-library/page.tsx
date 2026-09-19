@@ -11,8 +11,8 @@ export default async function MedicineLibraryPage() {
 
   return (
     <div className="flex flex-col gap-3">
-      <PageHeader title={t("Medicine library")} icon={<Pill size={18} strokeWidth={1.8} />} />
       <BackLink fallback="/clinic" />
+      <PageHeader title={t("Medicine library")} icon={<Pill size={18} strokeWidth={1.8} />} />
       <p className="text-xs text-muted">
         Every medicine you&apos;ve typed into a prescription is genuinely saved here — pick it from the search box
         next time instead of typing the full name again.

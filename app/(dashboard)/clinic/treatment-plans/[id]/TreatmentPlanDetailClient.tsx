@@ -46,8 +46,8 @@ export function TreatmentPlanDetailClient({ plan, items: initialItems }: { plan:
 
   return (
     <div className="flex flex-col gap-3">
-      <PageHeader title={plan.patientName} icon={<ClipboardList size={18} strokeWidth={1.8} />} />
       <BackLink fallback="/clinic/treatment-plans" />
+      <PageHeader title={plan.patientName} icon={<ClipboardList size={18} strokeWidth={1.8} />} />
 
       <div className="neu-card flex flex-col gap-1 p-3.5">
         {plan.doctorName && <p className="text-sm text-muted">Dr. {plan.doctorName}</p>}

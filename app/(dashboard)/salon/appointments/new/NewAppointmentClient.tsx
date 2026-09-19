@@ -48,11 +48,11 @@ export function NewAppointmentClient({ customers, services, lang }: { customers:
 
   return (
     <div className="flex flex-col gap-3">
+      <BackLink fallback="/salon/appointments" />
       <PageHeader
         title="Book appointment"
         icon={<CalendarPlus size={18} strokeWidth={1.8} />}
       />
-      <BackLink fallback="/salon/appointments" />
 
       <form action={formAction} className="flex flex-col gap-3">
         <input type="hidden" name="customerId" value={selectedCustomer?.id ?? ""} />

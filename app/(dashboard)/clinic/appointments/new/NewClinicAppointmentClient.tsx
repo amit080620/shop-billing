@@ -46,11 +46,11 @@ export function NewClinicAppointmentClient({ patients, lang }: { patients: Patie
 
   return (
     <div className="flex flex-col gap-3">
+      <BackLink fallback="/clinic/appointments" />
       <PageHeader
         title="Book appointment"
         icon={<CalendarPlus size={18} strokeWidth={1.8} />}
       />
-      <BackLink fallback="/clinic/appointments" />
 
       <form action={formAction} className="flex flex-col gap-3">
         <input type="hidden" name="patientId" value={selectedPatient?.id ?? ""} />

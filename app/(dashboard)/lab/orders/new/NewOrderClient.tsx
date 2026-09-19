@@ -84,11 +84,11 @@ export function NewOrderClient({
 
   return (
     <div className="flex flex-col gap-3 pb-6">
+      <BackLink fallback="/lab/orders" />
       <PageHeader
         title={t("New order")}
         icon={<FlaskConical size={18} strokeWidth={1.8} />}
       />
-      <BackLink fallback="/lab/orders" />
 
       <section className="flex flex-col gap-2">
         <p className="text-sm font-medium text-foreground">Patient</p>

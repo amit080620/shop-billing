@@ -83,6 +83,7 @@ export function InvoiceSettingsClient({
 
   return (
     <div className="flex flex-col gap-4 pb-6">
+      <BackLink fallback="/dashboard" />
       <PageHeader
         title={t("Invoice design")}
         subtitle="Your shop's branding on invoices and prescriptions — the line items, tax breakup, and totals stay fixed for GST accuracy; these are the parts you control."
@@ -90,7 +91,6 @@ export function InvoiceSettingsClient({
         icon={<img src="/assets/ray-icons/invoice.svg" alt="" className="h-9 w-9 md:h-11 md:w-11" />}
         bareIcon
       />
-      <BackLink fallback="/dashboard" />
 
       <label className="flex flex-col gap-1.5 text-sm">
         <span className="font-medium text-foreground">{t("Tagline (optional, shown under your shop name)")}</span>

@@ -54,12 +54,12 @@ export default async function SalonStaffReportPage({
 
   return (
     <div className="flex flex-col gap-3">
+      <BackLink fallback="/dashboard" />
       <PageHeader
         title={t("Staff-wise revenue")}
         subtitle="Who's bringing in how much — handy for commission."
         icon={<Scissors size={18} strokeWidth={1.8} />}
       />
-      <BackLink fallback="/dashboard" />
 
       <form className="flex items-center gap-2" action="/salon">
         <input type="date" name="from" defaultValue={fromDate} className="flex-1 rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand" />
