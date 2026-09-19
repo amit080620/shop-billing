@@ -37,7 +37,7 @@ export function ReturnForm({ rentalId, items, lang }: { rentalId: string; items:
     c === "good" ? t("rentalsPage.conditionGood") : c === "damaged" ? t("rentalsPage.conditionDamaged") : t("rentalsPage.conditionMissing");
 
   return (
-    <form action={formAction} className="flex flex-col gap-3 rounded-xl border border-dashed border-brand bg-brand-soft p-4">
+    <form action={formAction} className="flex flex-col gap-3 rounded-xl border border-border bg-surface p-4">
       <p className="text-sm font-semibold text-brand-text">{t("rentalsPage.processReturn")}</p>
       <input type="hidden" name="rentalId" value={rentalId} />
       <input type="hidden" name="items" value={itemsPayload} />

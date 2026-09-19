@@ -3,11 +3,12 @@ import { requireSession } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { formatMoney, formatDateTime } from "@/lib/format";
 import { EmptyState } from "@/app/components/EmptyState";
-import { SalesTrendChartLazy as SalesTrendChart, MiniCalendarLazy as MiniCalendar } from "@/app/components/DashboardLazy";
+import { SalesTrendChartLazy as SalesTrendChart } from "@/app/components/DashboardLazy";
 import { getTranslator } from "@/lib/i18n/server";
 import { isModuleEnabled } from "@/lib/modules";
 import { FESTIVALS } from "@/lib/festivals";
 import { getProfitLeakAction } from "@/lib/actions/profitLeak";
+import { getTerminology, customerNounFor } from "@/lib/businessType";
 import {
   Plus,
   AlertTriangle,
@@ -37,6 +38,7 @@ import {
   Users,
   Home,
   Check,
+  ChevronRight,
 } from "lucide-react";
 
 export default async function DashboardPage() {
@@ -44,10 +46,14 @@ export default async function DashboardPage() {
   const { t } = await getTranslator();
   const admin = createSupabaseAdminClient();
 
-  const [{ count: productCount }, { count: customerCount }, { data: anyBill }] = await Promise.all([
+  const isRestaurant = session.businessType === "restaurant";
+  const [{ count: productCount }, { count: customerCount }, { data: anyBill }, { count: tableCount }] = await Promise.all([
     admin.from("products").select("id", { count: "exact", head: true }).eq("shop_id", session.shopId),
     admin.from("customers").select("id", { count: "exact", head: true }).eq("shop_id", session.shopId),
     admin.from("bills").select("id").eq("shop_id", session.shopId).limit(1),
+    isRestaurant
+      ? admin.from("restaurant_tables").select("id", { count: "exact", head: true }).eq("shop_id", session.shopId).eq("is_deleted", false)
+      : Promise.resolve({ count: 0 }),
   ]);
 
   const catalogEnabled = isModuleEnabled(session.enabledModules, "public_catalog");
@@ -59,13 +65,20 @@ export default async function DashboardPage() {
         .eq("status", "pending")
     : { count: 0 };
 
+  // Setup steps in each business's own words. "/" routes to the right
+  // billing screen for the business type.
+  const terms = getTerminology(session.businessType);
   const setupSteps = [
     { done: !!session.shopStateCode, label: "Set your shop's GST state", href: "/settings" },
-    { done: (productCount ?? 0) > 0, label: "Add your first product", href: "/products" },
-    { done: (customerCount ?? 0) > 0, label: "Add a customer", href: "/customers" },
-    { done: (anyBill?.length ?? 0) > 0, label: "Create your first bill", href: "/bills/new" },
+    { done: (productCount ?? 0) > 0, label: `Add your first ${terms.productSingular.toLowerCase()}`, href: "/products" },
+    isRestaurant
+      ? { done: (tableCount ?? 0) > 0, label: "Add your tables", href: "/restaurant" }
+      : { done: (customerCount ?? 0) > 0, label: `Add a ${customerNounFor(session.businessType).toLowerCase()}`, href: "/customers" },
+    { done: (anyBill?.length ?? 0) > 0, label: "Create your first bill", href: "/" },
   ];
-  const setupComplete = setupSteps.every((s) => s.done);
+  const doneCount = setupSteps.filter((s) => s.done).length;
+  const setupComplete = doneCount === setupSteps.length;
+  const nextStep = setupSteps.find((s) => !s.done);
 
   const todayMidnight = new Date();
   todayMidnight.setHours(0, 0, 0, 0);
@@ -80,14 +93,14 @@ export default async function DashboardPage() {
   return (
     <div className="flex flex-col gap-3">
       <div>
-        <p className="text-lg font-semibold text-foreground">{t(greetingKey())}, {session.staffName.split(" ")[0]}</p>
+        <p className="text-xl font-bold tracking-tight text-foreground md:text-2xl">{t(greetingKey())}, {session.staffName.split(" ")[0]}</p>
         <p className="text-sm text-muted">{t("home.subtitle", { shop: session.shopName })}</p>
       </div>
 
       {catalogEnabled && (pendingCatalogOrders ?? 0) > 0 && (
         <Link
           href="/catalog-orders"
-          className="flex items-center justify-between rounded-xl border border-dashed border-danger bg-danger-soft px-4 py-3"
+          className="flex items-center justify-between rounded-xl border border-danger/25 bg-danger-soft px-4 py-3"
         >
           <span className="flex items-center gap-2 text-sm font-semibold text-danger">
             <span className="flex h-2.5 w-2.5 animate-pulse rounded-full bg-danger" />
@@ -97,49 +110,51 @@ export default async function DashboardPage() {
         </Link>
       )}
 
-      {!setupComplete && (
-        <section className="rounded-xl border border-dashed border-brand bg-brand-soft p-4">
-          <p className="flex items-center gap-1.5 text-sm font-semibold text-brand-text"><Rocket size={15} /> Getting started</p>
-          <p className="mt-0.5 text-xs text-brand-text/80">A few quick steps to set up {session.shopName}.</p>
-          <ul className="mt-3 flex flex-col gap-2">
+      {!setupComplete && nextStep && (
+        <section className="neu-card p-4">
+          <div className="flex items-center justify-between gap-3">
+            <p className="flex items-center gap-2 text-sm font-semibold text-foreground">
+              <Rocket size={16} className="text-brand-text" /> Set up {session.shopName}
+            </p>
+            <p className="shrink-0 text-xs font-medium text-muted">
+              {doneCount} of {setupSteps.length} done
+            </p>
+          </div>
+          <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-surface-2" aria-hidden="true">
+            <div className="h-full rounded-full bg-brand transition-all" style={{ width: `${(doneCount / setupSteps.length) * 100}%` }} />
+          </div>
+          <ul className="mt-3 flex flex-col gap-2.5">
             {setupSteps.map((step) => (
-              <li key={step.label}>
-                <Link href={step.href} className="flex items-center gap-2 text-sm">
-                  <span
-                    className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs ${
-                      step.done ? "bg-brand text-white" : "border border-brand text-transparent"
-                    }`}
-                  >
-                    {step.done && <Check size={12} strokeWidth={3} />}
-                  </span>
-                  <span className={step.done ? "text-muted line-through" : "font-medium text-foreground"}>
-                    {step.label}
-                  </span>
-                </Link>
+              <li key={step.label} className="flex items-center gap-2.5 text-sm">
+                <span
+                  className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full ${
+                    step.done ? "bg-success text-white" : "border-2 border-border-strong"
+                  }`}
+                >
+                  {step.done && <Check size={12} strokeWidth={3} />}
+                </span>
+                <span className={step.done ? "text-muted line-through" : "font-medium text-foreground"}>{step.label}</span>
               </li>
             ))}
           </ul>
+          <Link href={nextStep.href} className="btn-primary-sm mt-4 inline-flex items-center gap-1">
+            {nextStep.label} <ChevronRight size={15} />
+          </Link>
         </section>
       )}
 
       {nextFestival && (
-        <Link
-          href="/festivals"
-          className="rounded-xl border border-dashed border-brand bg-brand-soft p-4"
-          style={{ boxShadow: "var(--elev-sm)" }}
-        >
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <p className="flex items-center gap-1.5 text-sm font-semibold text-brand-text neu-text">
-                <PartyPopper size={15} /> {nextFestival.name} in {nextFestival.daysUntil} day{nextFestival.daysUntil === 1 ? "" : "s"}
-              </p>
-              <p className="mt-0.5 text-xs text-brand-text/80">
-                Good time to check stock — tap for restock ideas & a calendar reminder.
-              </p>
-            </div>
-            {/* eslint-disable-next-line @next/next/no-img-element -- small branded SVG icon */}
-            <img src="/assets/ray-icons/arrow-right.svg" alt="" className="h-4 w-4 shrink-0" />
-          </div>
+        <Link href="/festivals" className="neu-card flex items-center gap-3 p-3.5">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-warning-soft text-warning">
+            <PartyPopper size={18} />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-sm font-semibold text-foreground">
+              {nextFestival.name} in {nextFestival.daysUntil} day{nextFestival.daysUntil === 1 ? "" : "s"}
+            </span>
+            <span className="block truncate text-xs text-muted">Check stock — restock ideas & a reminder</span>
+          </span>
+          <ChevronRight size={16} className="shrink-0 text-muted" />
         </Link>
       )}
 
@@ -226,21 +241,21 @@ async function RetailHome({
   return (
     <>
       {profitLeak.totalAtRisk > 0 && (
-        <Link
-          href="/profit-leak"
-          className="flex items-center justify-between gap-3 rounded-xl bg-gradient-to-r from-danger to-[#7c1d1d] p-4 text-white"
-        >
-          <div className="min-w-0">
-            <p className="text-xs font-medium opacity-90">⚠️ Aapka paisa risk mein hai</p>
-            <p className="text-xl font-extrabold">{formatMoney(profitLeak.totalAtRisk)}</p>
-          </div>
-          <span className="shrink-0 rounded-lg bg-white/20 px-3 py-1.5 text-xs font-semibold">Dekhein →</span>
+        <Link href="/profit-leak" className="flex items-center gap-3 rounded-xl border border-warning/25 bg-warning-soft p-3.5">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-surface text-warning">
+            <AlertTriangle size={18} />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-xs font-medium text-warning">Paisa phansa hua hai</span>
+            <span className="block text-lg font-bold tracking-tight text-foreground">{formatMoney(profitLeak.totalAtRisk)}</span>
+          </span>
+          <span className="shrink-0 text-xs font-semibold text-warning">Dekhein →</span>
         </Link>
       )}
       {expiringCount > 0 && (
         <Link
           href="/pharmacy/expiry"
-          className="flex items-center justify-between gap-3 rounded-xl border border-dashed border-credit bg-credit-soft p-4"
+          className="flex items-center justify-between gap-3 rounded-xl border border-credit/25 bg-credit-soft p-4"
         >
           <div>
             <p className="text-sm font-semibold text-credit">{expiringCount} batch{expiringCount === 1 ? "" : "es"} expiring within 30 days</p>
@@ -250,18 +265,7 @@ async function RetailHome({
         </Link>
       )}
 
-      <section className="neu-card grid grid-cols-2 gap-3 p-4">
-        <div className="border-r border-border/60 pr-3">
-          <MiniCalendar />
-        </div>
-        <div>
-          <div className="mb-1 flex items-center justify-between">
-            <p className="text-xs font-medium text-muted">Last 7 days</p>
-            <p className="text-sm font-semibold text-foreground neu-text">{formatMoney(weekTotal)}</p>
-          </div>
-          <SalesTrendChart data={trend} />
-        </div>
-      </section>
+      <TrendCard trend={trend} />
 
       <section className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <StatCard label={t("home.todaySales")} value={formatMoney(todayTotal)} href="/daily-summary" icon={Wallet} />
@@ -373,18 +377,7 @@ async function LabHome({
 
   return (
     <>
-      <section className="neu-card grid grid-cols-2 gap-3 p-4">
-        <div className="border-r border-border/60 pr-3">
-          <MiniCalendar />
-        </div>
-        <div>
-          <div className="mb-1 flex items-center justify-between">
-            <p className="text-xs font-medium text-muted">Last 7 days</p>
-            <p className="text-sm font-semibold text-foreground neu-text">{formatMoney(sum(trend.map((d) => d.total)))}</p>
-          </div>
-          <SalesTrendChart data={trend} />
-        </div>
-      </section>
+      <TrendCard trend={trend} />
 
       {homeCollections && homeCollections.length > 0 && (
         <Link href="/lab/orders" className="flex flex-col gap-1 rounded-xl border border-amber-500 bg-amber-50 px-4 py-3">
@@ -516,18 +509,7 @@ async function GymHome({
 
   return (
     <>
-      <section className="neu-card grid grid-cols-2 gap-3 p-4">
-        <div className="border-r border-border/60 pr-3">
-          <MiniCalendar />
-        </div>
-        <div>
-          <div className="mb-1 flex items-center justify-between">
-            <p className="text-xs font-medium text-muted">Last 7 days</p>
-            <p className="text-sm font-semibold text-foreground neu-text">{formatMoney(sum(trend.map((d) => d.total)))}</p>
-          </div>
-          <SalesTrendChart data={trend} />
-        </div>
-      </section>
+      <TrendCard trend={trend} />
 
       {expiringMemberships && expiringMemberships.length > 0 && (
         <Link href="/gym/members" className="flex flex-col gap-1 rounded-xl border border-credit bg-credit-soft px-4 py-3">
@@ -654,18 +636,7 @@ async function ClinicHome({
 
   return (
     <>
-      <section className="neu-card grid grid-cols-2 gap-3 p-4">
-        <div className="border-r border-border/60 pr-3">
-          <MiniCalendar />
-        </div>
-        <div>
-          <div className="mb-1 flex items-center justify-between">
-            <p className="text-xs font-medium text-muted">Last 7 days</p>
-            <p className="text-sm font-semibold text-foreground neu-text">{formatMoney(sum(trend.map((d) => d.total)))}</p>
-          </div>
-          <SalesTrendChart data={trend} />
-        </div>
-      </section>
+      <TrendCard trend={trend} />
 
       {overdueFollowUps && overdueFollowUps.length > 0 && (
         <div className="flex flex-col gap-1 rounded-xl border border-credit bg-credit-soft px-4 py-3">
@@ -813,18 +784,7 @@ async function JewelleryHome({
 
   return (
     <>
-      <section className="neu-card grid grid-cols-2 gap-3 p-4">
-        <div className="border-r border-border/60 pr-3">
-          <MiniCalendar />
-        </div>
-        <div>
-          <div className="mb-1 flex items-center justify-between">
-            <p className="text-xs font-medium text-muted">Last 7 days</p>
-            <p className="text-sm font-semibold text-foreground neu-text">{formatMoney(sum(trend.map((d) => d.total)))}</p>
-          </div>
-          <SalesTrendChart data={trend} />
-        </div>
-      </section>
+      <TrendCard trend={trend} />
 
       <Link
         href="/jewellery/rates"
@@ -955,18 +915,7 @@ async function SalonHome({
 
   return (
     <>
-      <section className="neu-card grid grid-cols-2 gap-3 p-4">
-        <div className="border-r border-border/60 pr-3">
-          <MiniCalendar />
-        </div>
-        <div>
-          <div className="mb-1 flex items-center justify-between">
-            <p className="text-xs font-medium text-muted">Last 7 days</p>
-            <p className="text-sm font-semibold text-foreground neu-text">{formatMoney(sum(trend.map((d) => d.total)))}</p>
-          </div>
-          <SalesTrendChart data={trend} />
-        </div>
-      </section>
+      <TrendCard trend={trend} />
 
       <section className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <StatCard label={t("home.todaySales")} value={formatMoney(todayTotal)} href="/daily-summary" icon={Wallet} />
@@ -1135,18 +1084,7 @@ async function ServiceHome({
 
   return (
     <>
-      <section className="neu-card grid grid-cols-2 gap-3 p-4">
-        <div className="border-r border-border/60 pr-3">
-          <MiniCalendar />
-        </div>
-        <div>
-          <div className="mb-1 flex items-center justify-between">
-            <p className="text-xs font-medium text-muted">Last 7 days</p>
-            <p className="text-sm font-semibold text-foreground neu-text">{formatMoney(sum(trend.map((d) => d.total)))}</p>
-          </div>
-          <SalesTrendChart data={trend} />
-        </div>
-      </section>
+      <TrendCard trend={trend} />
 
       {overdueJobs && overdueJobs.length > 0 && (
         <Link href="/service?status=all" className="flex flex-col gap-1 rounded-xl border border-credit bg-credit-soft px-4 py-3">
@@ -1302,18 +1240,7 @@ async function TransportHome({
 
   return (
     <>
-      <section className="neu-card grid grid-cols-2 gap-3 p-4">
-        <div className="border-r border-border/60 pr-3">
-          <MiniCalendar />
-        </div>
-        <div>
-          <div className="mb-1 flex items-center justify-between">
-            <p className="text-xs font-medium text-muted">Last 7 days</p>
-            <p className="text-sm font-semibold text-foreground neu-text">{formatMoney(sum(trend.map((d) => d.total)))}</p>
-          </div>
-          <SalesTrendChart data={trend} />
-        </div>
-      </section>
+      <TrendCard trend={trend} />
 
       {expiringVehicleDocs.length > 0 && (
         <Link href="/transport/vehicles" className="flex flex-col gap-1 rounded-xl border border-credit bg-credit-soft px-4 py-3">
@@ -1448,18 +1375,7 @@ async function PharmacyHome({
 
   return (
     <>
-      <section className="neu-card grid grid-cols-2 gap-3 p-4">
-        <div className="border-r border-border/60 pr-3">
-          <MiniCalendar />
-        </div>
-        <div>
-          <div className="mb-1 flex items-center justify-between">
-            <p className="text-xs font-medium text-muted">Last 7 days</p>
-            <p className="text-sm font-semibold text-foreground neu-text">{formatMoney(sum(trend.map((d) => d.total)))}</p>
-          </div>
-          <SalesTrendChart data={trend} />
-        </div>
-      </section>
+      <TrendCard trend={trend} />
 
       <section className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <StatCard label={t("home.todaySales")} value={formatMoney(todayTotal)} href="/daily-summary" icon={Wallet} />
@@ -1590,18 +1506,7 @@ async function RestaurantHome({ shopId }: { shopId: string }) {
 
   return (
     <>
-      <section className="neu-card grid grid-cols-2 gap-3 p-4">
-        <div className="border-r border-border/60 pr-3">
-          <MiniCalendar />
-        </div>
-        <div>
-          <div className="mb-1 flex items-center justify-between">
-            <p className="text-xs font-medium text-muted">Last 7 days</p>
-            <p className="text-sm font-semibold text-foreground neu-text">{formatMoney(sum(trend.map((d) => d.total)))}</p>
-          </div>
-          <SalesTrendChart data={trend} />
-        </div>
-      </section>
+      <TrendCard trend={trend} />
 
       <section className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <StatCard label="Tables occupied" value={`${occupied} / ${tables?.length ?? 0}`} href="/restaurant" icon={UtensilsCrossed} />
@@ -1699,18 +1604,7 @@ async function RentalHome({ shopId }: { shopId: string }) {
 
   return (
     <>
-      <section className="neu-card grid grid-cols-2 gap-3 p-4">
-        <div className="border-r border-border/60 pr-3">
-          <MiniCalendar />
-        </div>
-        <div>
-          <div className="mb-1 flex items-center justify-between">
-            <p className="text-xs font-medium text-muted">Last 7 days</p>
-            <p className="text-sm font-semibold text-foreground neu-text">{formatMoney(sum(trend.map((d) => d.total)))}</p>
-          </div>
-          <SalesTrendChart data={trend} />
-        </div>
-      </section>
+      <TrendCard trend={trend} />
 
       {overdueRentals.length > 0 && (
         <Link href="/rentals" className="flex flex-col gap-1 rounded-xl border border-credit bg-credit-soft px-4 py-3">
@@ -1818,46 +1712,33 @@ function StatCard({
   href?: string;
   icon?: React.ComponentType<{ size?: number; strokeWidth?: number }>;
 }) {
-  const cardClassName = `hover-lift group relative overflow-hidden rounded-xl p-4 transition-transform active:scale-[0.98] ${
-    tone === "credit" ? "bg-credit-soft" : "neu-card"
-  } ${className}`;
-  const cardStyle =
-    tone === "credit"
-      ? { boxShadow: "var(--elev-sm)" }
-      : undefined;
+  const credit = tone === "credit";
   const content = (
     <>
-      <div className="flex items-center justify-between">
-        <p className={`text-xs font-medium ${tone === "credit" ? "text-credit" : "text-muted"}`}>{label}</p>
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-xs font-medium text-muted">{label}</p>
         {Icon && (
           <span
-            className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${
-              tone === "credit" ? "bg-surface text-credit" : "bg-brand-soft text-brand-text"
+            className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${
+              credit ? "bg-credit-soft text-credit" : "bg-brand-soft text-brand-text"
             }`}
-            style={{ boxShadow: "var(--elev-xs)" }}
           >
-            <Icon size={17} strokeWidth={2} />
+            <Icon size={15} strokeWidth={2} />
           </span>
         )}
       </div>
-      <p className={`mt-2 text-3xl font-bold tracking-tight ${tone === "credit" ? "text-credit neu-text" : "text-foreground neu-text"}`}>
-        {value}
-      </p>
+      {/* Sized to fit a lakh-rupee figure in a half-width phone card. */}
+      <p className={`mt-2 truncate text-xl font-bold tracking-tight md:text-2xl ${credit ? "text-credit" : "text-foreground"}`}>{value}</p>
     </>
   );
+  const cardClassName = `neu-card block p-3.5 ${className}`;
 
-  if (href) {
-    return (
-      <Link href={href} className={cardClassName} style={cardStyle}>
-        {content}
-      </Link>
-    );
-  }
-
-  return (
-    <div className={cardClassName} style={cardStyle}>
+  return href ? (
+    <Link href={href} className={cardClassName}>
       {content}
-    </div>
+    </Link>
+  ) : (
+    <div className={cardClassName}>{content}</div>
   );
 }
 
@@ -1893,4 +1774,18 @@ function buildSevenDayTrend<T extends Record<string, unknown>>(
     trend.push({ day: dayStart.toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata", weekday: "short" }), date: isoDate, total: dayTotal });
   }
   return trend;
+}
+
+/** Last-7-days revenue with its daily trend — the one chart every
+ * business type's home shows. */
+function TrendCard({ trend }: { trend: { day: string; date: string; total: number }[] }) {
+  return (
+    <section className="neu-card p-4">
+      <div className="mb-2 flex items-baseline justify-between gap-3">
+        <p className="text-sm font-medium text-muted">Last 7 days</p>
+        <p className="text-lg font-bold tracking-tight text-foreground">{formatMoney(sum(trend.map((d) => d.total)))}</p>
+      </div>
+      <SalesTrendChart data={trend} />
+    </section>
+  );
 }

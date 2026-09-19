@@ -182,7 +182,7 @@ export function ProductOptionsManager({
               </div>
 
               {showNewGroup ? (
-                <div className="mt-3 flex flex-col gap-2 rounded-lg border border-dashed border-brand bg-brand-soft p-3">
+                <div className="mt-3 flex flex-col gap-2 rounded-lg border border-border bg-surface p-3">
                   <input
                     value={newGroupName}
                     onChange={(e) => setNewGroupName(e.target.value)}

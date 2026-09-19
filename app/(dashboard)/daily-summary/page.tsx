@@ -172,7 +172,7 @@ export default async function DailySummaryPage({
       </p>
 
       {session.role === "owner" && (
-        <Link href={`/daily-summary/by-staff?date=${date}`} className="flex items-center gap-1.5 rounded-lg border border-dashed border-brand bg-brand-soft px-3.5 py-3 text-sm font-medium text-brand-text">
+        <Link href={`/daily-summary/by-staff?date=${date}`} className="flex items-center gap-1.5 rounded-lg border border-border bg-surface px-3.5 py-3 text-sm font-medium text-brand-text">
           <Users size={14} /> Staff-wise breakdown →
         </Link>
       )}

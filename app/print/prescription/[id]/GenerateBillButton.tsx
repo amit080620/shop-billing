@@ -28,7 +28,7 @@ export function GenerateBillButton({
   }
 
   return (
-    <div className="flex flex-col gap-2 rounded-lg border border-dashed border-brand bg-brand-soft p-3">
+    <div className="flex flex-col gap-2 rounded-lg border border-border bg-surface p-3">
       <p className="text-xs text-brand-text">
         Generate an invoice for these medicines — prices come from your product catalog where the names match, others bill as manual lines.
       </p>

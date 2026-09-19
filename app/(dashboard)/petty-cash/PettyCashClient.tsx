@@ -113,7 +113,7 @@ export function PettyCashClient({ entries }: { entries: Entry[] }) {
 
       {showForm && (
         <Popup open={showForm} onClose={() => setShowForm(false)} title={`Add ${expenseType} expense`}>
-        <form action={formAction} className="flex flex-col gap-3 rounded-xl border border-dashed border-brand bg-brand-soft p-4">
+        <form action={formAction} className="flex flex-col gap-3 rounded-xl border border-border bg-surface p-4">
           <input type="hidden" name="expenseType" value={expenseType} />
           <button
             type="button"

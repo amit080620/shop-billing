@@ -154,7 +154,7 @@ export function MemberRow({ member, lang }: { member: Member; lang: Lang }) {
       </div>
 
       {showFreeze && m && (
-        <div className="mt-2 flex items-center gap-2 rounded-lg border border-dashed border-brand bg-brand-soft p-2">
+        <div className="mt-2 flex items-center gap-2 rounded-lg border border-border bg-surface p-2">
           <input
             type="number"
             min={1}

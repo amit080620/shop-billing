@@ -264,7 +264,7 @@ export function JobDetailClient({
       {error && <p className="text-sm text-danger">{error}</p>}
 
       {job.status !== "delivered" && job.status !== "cancelled" && (
-        <div className="flex flex-col gap-2 rounded-xl border border-dashed border-brand bg-brand-soft p-4">
+        <div className="flex flex-col gap-2 rounded-xl border border-border bg-surface p-4">
           <p className="text-sm font-semibold text-brand-text">Update status</p>
           <div className="flex flex-wrap gap-2">
             {job.status !== "received" && (

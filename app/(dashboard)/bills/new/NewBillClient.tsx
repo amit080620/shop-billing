@@ -1099,7 +1099,7 @@ export function NewBillClient({
         )}
 
         {tripInfo && totals.total > 50000 && (
-          <p className="flex items-start gap-1.5 rounded-lg border border-dashed border-credit bg-credit-soft px-3.5 py-2.5 text-xs text-credit">
+          <p className="flex items-start gap-1.5 rounded-lg border border-credit/25 bg-credit-soft px-3.5 py-2.5 text-xs text-credit">
             <AlertTriangle size={13} className="mt-0.5 shrink-0" />
             This delivery is over ₹50,000 — an E-way Bill is legally required for goods
             movement above this value. Generate one on the GST e-way bill portal before the
@@ -1120,7 +1120,7 @@ export function NewBillClient({
         )}
 
         {cart.some((c) => c.requiresPrescription) && (
-          <div className="flex flex-col gap-2 rounded-lg border border-dashed border-brand bg-brand-soft p-3">
+          <div className="flex flex-col gap-2 rounded-lg border border-border bg-surface p-3">
             <p className="flex items-start gap-1.5 text-xs font-medium text-brand-text">
               <Pill size={13} className="mt-0.5 shrink-0" />
               One or more items need a prescription (Rx) — enter both before generating the invoice.
@@ -1348,7 +1348,7 @@ function TransportChargePicker({
   }
 
   return (
-    <div className="flex flex-col gap-2 rounded-lg border border-dashed border-brand bg-brand-soft p-3">
+    <div className="flex flex-col gap-2 rounded-lg border border-border bg-surface p-3">
       <select
         value={vehicleId}
         onChange={(e) => setVehicleId(e.target.value)}
@@ -1479,7 +1479,7 @@ function JewelleryCalculator({
   }
 
   return (
-    <div className="flex flex-col gap-2 rounded-lg border border-dashed border-brand bg-brand-soft p-3">
+    <div className="flex flex-col gap-2 rounded-lg border border-border bg-surface p-3">
       <p className="text-xs text-brand-text">
         Today&apos;s rate — {goldRate ? `Gold ₹${goldRate}/g` : "Gold not set"}
         {silverRate ? ` · Silver ₹${silverRate}/g` : ""}
@@ -1662,7 +1662,7 @@ function ExchangeCalculator({
   }
 
   return (
-    <div className="flex flex-col gap-2 rounded-xl border border-dashed border-brand bg-brand-soft p-4">
+    <div className="flex flex-col gap-2 rounded-xl border border-border bg-surface p-4">
       <p className="text-sm font-semibold text-brand-text">Old gold/silver exchange</p>
       <p className="text-xs text-brand-text/80">
         This value is treated as part of the payment — it reduces what the customer needs to pay in cash, and is kept as a separate record for your own melting/refining books.

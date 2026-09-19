@@ -69,7 +69,7 @@ export function VehiclesClient({ vehicles, lang }: { vehicles: Vehicle[]; lang: 
         {t("vehicles.reportLink")}
       </Link>
 
-      <form action={formAction} className="flex flex-col gap-3 rounded-xl border border-dashed border-brand bg-brand-soft p-4">
+      <form action={formAction} className="flex flex-col gap-3 rounded-xl border border-border bg-surface p-4">
         <div className="grid grid-cols-2 gap-2">
           <input
             name="name"
@@ -208,7 +208,7 @@ function VehicleEditRow({
   const [isPending, startTransition] = useTransition();
 
   return (
-    <li className="flex flex-col gap-2 rounded-xl border border-dashed border-brand bg-brand-soft p-4">
+    <li className="flex flex-col gap-2 rounded-xl border border-border bg-surface p-4">
       <input
         value={name}
         onChange={(e) => setName(e.target.value)}

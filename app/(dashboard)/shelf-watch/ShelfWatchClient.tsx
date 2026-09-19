@@ -130,7 +130,7 @@ export function ShelfWatchClient({ initialShelves }: { initialShelves: ShelfWatc
                 </p>
               )}
               {Array.isArray(result) && (
-                <div className="flex flex-col gap-1.5 rounded-lg border border-dashed border-credit bg-credit-soft p-2.5">
+                <div className="flex flex-col gap-1.5 rounded-lg border border-credit/25 bg-credit-soft p-2.5">
                   {result.map((c, i) => (
                     <p key={i} className="flex items-start gap-1.5 text-xs text-foreground">
                       <AlertTriangle size={13} className="mt-0.5 shrink-0 text-credit" />

@@ -629,7 +629,7 @@ function FastCheckoutButton({
       {/* Customer — always available (not just for Udhar), since ANY
           paid sale can earn/redeem loyalty points, not only credit
           ones. Required only when Udhar is selected. */}
-      <div className={`flex flex-col gap-2 rounded-lg border p-2.5 ${isUdhar ? "border-dashed border-danger bg-danger-soft" : "border-border"}`}>
+      <div className={`flex flex-col gap-2 rounded-lg border p-2.5 ${isUdhar ? "border-danger/25 bg-danger-soft" : "border-border"}`}>
         <p className={`text-[11px] ${isUdhar ? "text-danger" : "text-muted"}`}>
           {isUdhar
             ? "A mobile number is genuinely needed here — this is who the udhar is recovered from later."

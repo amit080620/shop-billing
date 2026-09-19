@@ -88,7 +88,7 @@ export function TestsClient({ tests, packages }: { tests: Test[]; packages: Pack
             + Test
           </button>
           {showTestForm && (
-            <form action={testFormAction} className="flex flex-col gap-3 rounded-xl border border-dashed border-brand bg-brand-soft p-4">
+            <form action={testFormAction} className="flex flex-col gap-3 rounded-xl border border-border bg-surface p-4">
               <input name="name" placeholder="Test name (e.g. CBC, Blood Sugar Fasting)" required className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand" />
               <input name="category" placeholder="Category (optional, e.g. Hematology)" className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand" />
               <div className="grid grid-cols-2 gap-2">
@@ -179,7 +179,7 @@ export function TestsClient({ tests, packages }: { tests: Test[]; packages: Pack
             + Package
           </button>
           {showPackageForm && (
-            <div className="flex flex-col gap-3 rounded-xl border border-dashed border-brand bg-brand-soft p-4">
+            <div className="flex flex-col gap-3 rounded-xl border border-border bg-surface p-4">
               <input value={packageName} onChange={(e) => setPackageName(e.target.value)} placeholder="Package name (e.g. Full Body Checkup)" className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand" />
               <p className="text-xs text-muted">Pick tests to include — price is the sum of selected tests, editable later from the tests themselves.</p>
               <div className="flex max-h-48 flex-col gap-1 overflow-y-auto">

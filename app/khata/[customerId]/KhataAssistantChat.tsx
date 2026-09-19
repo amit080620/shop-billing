@@ -70,7 +70,7 @@ export function KhataAssistantChat({ customerId }: { customerId: string }) {
     return (
       <button
         onClick={() => setOpen(true)}
-        className="flex items-center justify-center gap-2 rounded-xl border border-dashed border-brand bg-brand-soft px-4 py-3 text-sm font-medium text-brand-text"
+        className="flex items-center justify-center gap-2 rounded-xl border border-border bg-surface px-4 py-3 text-sm font-medium text-brand-text"
       >
         <Sparkles size={15} /> Poochho apna hisaab
       </button>

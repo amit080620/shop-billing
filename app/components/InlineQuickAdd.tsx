@@ -79,7 +79,7 @@ export function InlineQuickAdd<T>({
   }
 
   return (
-    <div className="flex flex-col gap-2 rounded-lg border border-dashed border-brand bg-brand-soft p-3">
+    <div className="flex flex-col gap-2 rounded-lg border border-border bg-surface p-3">
       {contactFields && (
         <ContactPickerButton
           onPick={(name, phone) =>

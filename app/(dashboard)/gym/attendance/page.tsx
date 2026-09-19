@@ -86,7 +86,7 @@ export default async function GymAttendancePage() {
 
       <CheckInForm lang={lang} members={members ?? []} />
 
-      <Link href="/gym/kiosk-settings" className="flex items-center justify-between rounded-xl border border-dashed border-brand bg-brand-soft px-4 py-3 text-sm">
+      <Link href="/gym/kiosk-settings" className="flex items-center justify-between rounded-xl border border-border bg-surface px-4 py-3 text-sm">
         <span className="flex items-center gap-1.5 text-brand-text"><Smartphone size={14} /> Set up self check-in kiosk — members check themselves in</span>
         <span className="text-brand-text">→</span>
       </Link>

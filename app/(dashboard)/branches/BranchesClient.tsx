@@ -66,7 +66,7 @@ export function BranchesClient({ branches, staff }: { branches: Branch[]; staff:
 
       {showForm && (
         <Popup open={showForm} onClose={() => setShowForm(false)} title="Add branch">
-        <form action={formAction} className="flex flex-col gap-3 rounded-xl border border-dashed border-brand bg-brand-soft p-4">
+        <form action={formAction} className="flex flex-col gap-3 rounded-xl border border-border bg-surface p-4">
           <input name="name" placeholder="Branch name (e.g. MG Road)" required className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand" />
           <input name="address" placeholder="Address (optional)" className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand" />
           {state?.error && <p className="text-sm text-danger">{state.error}</p>}
@@ -175,7 +175,7 @@ function BranchEditRow({ branch, onDone }: { branch: Branch; onDone: () => void 
   const [isPending, startTransition] = useTransition();
 
   return (
-    <li className="flex flex-col gap-2 rounded-xl border border-dashed border-brand bg-brand-soft p-4">
+    <li className="flex flex-col gap-2 rounded-xl border border-border bg-surface p-4">
       <input value={name} onChange={(e) => setName(e.target.value)} className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand" />
       <input value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Address" className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand" />
       {error && <p className="text-xs text-danger">{error}</p>}

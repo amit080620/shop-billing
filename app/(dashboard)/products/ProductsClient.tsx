@@ -552,7 +552,7 @@ export function ProductsClient({
                   />
                 )}
               </div>
-              <div className="flex flex-col gap-3 rounded-lg border border-dashed border-brand bg-brand-soft p-3">
+              <div className="flex flex-col gap-3 rounded-lg border border-border bg-surface p-3">
                 <p className="text-xs text-brand-text">Public catalog — shown on your shareable order link (More → Catalog link)</p>
                 <label className="flex items-center gap-2 text-sm text-foreground">
                   <input
@@ -645,7 +645,7 @@ export function ProductsClient({
                 {t("products.alsoRentable")}
               </label>
               {isRentable && (
-                <div className="flex flex-col gap-3 rounded-lg border border-dashed border-brand bg-brand-soft p-3">
+                <div className="flex flex-col gap-3 rounded-lg border border-border bg-surface p-3">
                   <p className="text-xs text-brand-text">{t("products.rentalRateExplain")}</p>
                   <div className="grid grid-cols-2 gap-3">
                     <Field name="rentalRateHourly" label={t("products.perHour")} type="number" step="0.01" min="0" defaultValue={editingProduct?.rentalRateHourly != null ? String(editingProduct.rentalRateHourly) : undefined} />
@@ -684,7 +684,7 @@ export function ProductsClient({
             </>
           )}
           {showJewellerySection && (
-            <div className="flex flex-col gap-3 rounded-lg border border-dashed border-brand bg-brand-soft p-3">
+            <div className="flex flex-col gap-3 rounded-lg border border-border bg-surface p-3">
               <p className="text-xs text-brand-text">
                 Fill these in to price this item by weight in New Bill — set today&apos;s rate first under More → Jewellery → Today&apos;s rate.
               </p>
@@ -727,7 +727,7 @@ export function ProductsClient({
             {["pharmacy", "clinic"].includes(businessType) ? t("products.trackBatch") : "Track with batch & expiry date"}
           </label>
           {isPharma && (
-            <div className="flex flex-col gap-3 rounded-lg border border-dashed border-brand bg-brand-soft p-3">
+            <div className="flex flex-col gap-3 rounded-lg border border-border bg-surface p-3">
               {["pharmacy", "clinic"].includes(businessType) && (
                 <>
                   <Field name="saltComposition" label={t("products.saltComposition")} placeholder={t("products.saltPlaceholder")} defaultValue={editingProduct?.saltComposition ?? undefined} />
@@ -775,7 +775,7 @@ export function ProductsClient({
           </>
           )}
           {productState?.error?.startsWith("DUPLICATE_WARNING:") ? (
-            <div className="flex flex-col gap-2 rounded-lg border border-dashed border-brand bg-brand-soft p-3">
+            <div className="flex flex-col gap-2 rounded-lg border border-border bg-surface p-3">
               <p className="text-sm text-brand-text">{productState.error.replace("DUPLICATE_WARNING: ", "")}</p>
               <button
                 type="button"
@@ -1110,7 +1110,7 @@ function CategoryRow({ category, onChanged }: { category: Category; onChanged: (
   }
 
   return (
-    <li className="flex flex-col gap-1.5 rounded-lg border border-dashed border-brand bg-brand-soft px-3.5 py-2">
+    <li className="flex flex-col gap-1.5 rounded-lg border border-border bg-surface px-3.5 py-2">
       <div className="flex items-center gap-2">
         <input
           value={name}

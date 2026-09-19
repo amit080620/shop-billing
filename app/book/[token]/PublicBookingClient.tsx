@@ -138,7 +138,7 @@ export function PublicBookingClient({
       )}
 
       {selectedSlot && (
-        <div className="flex flex-col gap-3 rounded-xl border border-dashed border-brand bg-brand-soft p-4">
+        <div className="flex flex-col gap-3 rounded-xl border border-border bg-surface p-4">
           <p className="text-sm font-semibold text-brand-text">
             {selectedDay?.label} at {selectedSlot}
           </p>

@@ -150,7 +150,7 @@ export function BulkImportExport({ products, onImported, businessType }: { produ
   }
 
   return (
-    <div className="flex flex-col gap-3 rounded-xl border border-dashed border-brand bg-brand-soft p-4">
+    <div className="flex flex-col gap-3 rounded-xl border border-border bg-surface p-4">
       <div className="flex items-center justify-between">
         <p className="text-sm font-semibold text-brand-text">Bulk import / export</p>
         <button onClick={() => setOpen(false)} className="flex items-center gap-1 text-xs font-medium text-muted">

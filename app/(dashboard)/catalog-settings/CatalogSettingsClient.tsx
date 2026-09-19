@@ -150,7 +150,7 @@ export function CatalogSettingsClient({
       </Link>
 
       {publicUrl && enabled && (
-        <div className="flex flex-col gap-2 rounded-xl border border-dashed border-brand bg-brand-soft p-4">
+        <div className="flex flex-col gap-2 rounded-xl border border-border bg-surface p-4">
           <p className="text-xs font-medium text-brand-text">Your catalog link — share this anywhere</p>
           <p className="break-all rounded-lg bg-surface px-3 py-2 text-xs text-foreground">{publicUrl}</p>
           <div className="flex gap-2">

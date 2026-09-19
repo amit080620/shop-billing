@@ -463,7 +463,7 @@ function GrowthChart({
 
       {showForm && (
         <Popup open={showForm} onClose={() => setShowForm(false)} title="Add growth entry">
-        <div className="flex flex-col gap-2 rounded-lg border border-dashed border-brand bg-brand-soft p-3">
+        <div className="flex flex-col gap-2 rounded-lg border border-border bg-surface p-3">
           <div className="grid grid-cols-3 gap-2">
             <input type="number" step="0.1" value={height} onChange={(e) => setHeight(e.target.value)} placeholder="Height (cm)" className="rounded-lg border border-border bg-surface px-2 py-1.5 text-xs outline-none focus:border-brand" />
             <input type="number" step="0.1" value={weight} onChange={(e) => setWeight(e.target.value)} placeholder="Weight (kg)" className="rounded-lg border border-border bg-surface px-2 py-1.5 text-xs outline-none focus:border-brand" />
@@ -561,7 +561,7 @@ function PatientPhotos({
         ))}
         <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Note (optional)" className="flex-1 rounded-lg border border-border bg-background px-2 py-1.5 text-xs outline-none focus:border-brand" />
       </div>
-      <label className="self-start rounded-lg border border-dashed border-brand bg-brand-soft px-3 py-1.5 text-xs font-medium text-brand-text">
+      <label className="self-start rounded-lg border border-border bg-surface px-3 py-1.5 text-xs font-medium text-brand-text">
         {isPending ? "Uploading…" : "+ Upload photo"}
         <input
           type="file"

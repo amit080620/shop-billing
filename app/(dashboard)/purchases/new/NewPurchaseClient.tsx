@@ -476,7 +476,7 @@ export function NewPurchaseClient({
             type="button"
             onClick={() => scanInputRef.current?.click()}
             disabled={isScanning}
-            className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-dashed border-brand bg-brand-soft px-3.5 py-2.5 text-sm font-medium text-brand-text disabled:opacity-60"
+            className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-border bg-surface px-3.5 py-2.5 text-sm font-medium text-brand-text disabled:opacity-60"
           >
             {isScanning ? <Loader2 size={16} className="animate-spin" /> : <Camera size={16} />}
             {isScanning ? `Reading… ${scanProgress}%` : "Take photo"}
@@ -583,7 +583,7 @@ export function NewPurchaseClient({
                   </p>
                 )}
                 {line.isPharma && (
-                  <div className="grid grid-cols-1 gap-2.5 rounded-lg border border-dashed border-brand bg-brand-soft p-2.5 sm:grid-cols-3">
+                  <div className="grid grid-cols-1 gap-2.5 rounded-lg border border-border bg-surface p-2.5 sm:grid-cols-3">
                     <LabeledInput
                       label="Batch no."
                       type="text"

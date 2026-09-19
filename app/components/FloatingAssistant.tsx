@@ -181,7 +181,7 @@ export function FloatingAssistant({ enabled }: { enabled: boolean }) {
               <div key={i} className="flex flex-col gap-1.5">
                 <div
                   className={`max-w-[85%] rounded-xl px-3 py-2 text-sm ${
-                    m.role === "user" ? "self-end bg-brand text-white" : m.proactive ? "self-start border border-dashed border-brand bg-brand-soft text-brand-text" : "self-start bg-background text-foreground"
+                    m.role === "user" ? "self-end bg-brand text-white" : m.proactive ? "self-start border border-border bg-surface text-brand-text" : "self-start bg-background text-foreground"
                   }`}
                 >
                   {m.proactive && <p className="mb-0.5 flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide"><Sparkles size={9} /> Heads up</p>}

@@ -35,7 +35,7 @@ export default async function PublicStorefrontPage({
           <Image src={shop.logo_url} alt="" width={64} height={64} className="mb-2 h-16 w-16 rounded-full object-contain" />
         )}
         <h1 className="text-xl font-bold text-foreground">{shop.name}</h1>
-        <div className="rounded-2xl border border-dashed border-danger bg-danger-soft px-5 py-4">
+        <div className="rounded-2xl border border-danger/25 bg-danger-soft px-5 py-4">
           <p className="text-sm font-semibold text-danger">We&apos;re currently closed</p>
           {settings.closed_until && (
             <p className="mt-1 text-sm text-danger">

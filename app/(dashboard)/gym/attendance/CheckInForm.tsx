@@ -16,7 +16,7 @@ export function CheckInForm({ lang, members }: { lang: Lang; members: Member[] }
   const [isPending, startTransition] = useTransition();
 
   return (
-    <div className="flex flex-col gap-2 rounded-xl border border-dashed border-brand bg-brand-soft p-4">
+    <div className="flex flex-col gap-2 rounded-xl border border-border bg-surface p-4">
       <p className="flex items-center gap-1.5 text-sm font-medium text-brand-text"><CheckCircle2 size={14} /> Check in a member</p>
       <SearchableSelect
         lang={lang}

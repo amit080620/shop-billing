@@ -78,7 +78,7 @@ export function AuditClient({
       </div>
 
       {!isDraft && discrepancies.length > 0 && (
-        <p className="rounded-lg border border-dashed border-credit bg-credit-soft px-3.5 py-2.5 text-xs text-credit">
+        <p className="rounded-lg border border-credit/25 bg-credit-soft px-3.5 py-2.5 text-xs text-credit">
           {discrepancies.length} item(s) had a mismatch — stock levels below were updated to match the physical count.
         </p>
       )}

@@ -34,7 +34,7 @@ export function WhatsAppSendButton({
 
   if (!customerPhone) {
     return (
-      <p className="rounded-lg border border-dashed border-gray-300 px-3.5 py-2.5 text-center text-xs text-gray-500">
+      <p className="rounded-lg bg-gray-50 px-3.5 py-2.5 text-xs text-gray-500">
         No phone on file for this sale — attach a customer with a phone number to send invoices on WhatsApp.
       </p>
     );

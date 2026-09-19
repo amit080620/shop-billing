@@ -100,7 +100,7 @@ export function ClassesClient({
       </Link>
 
       {showForm && (
-        <form action={formAction} className="flex flex-col gap-3 rounded-xl border border-dashed border-brand bg-brand-soft p-4">
+        <form action={formAction} className="flex flex-col gap-3 rounded-xl border border-border bg-surface p-4">
           <input name="name" placeholder="Class name (e.g. Yoga, Zumba)" required className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand" />
           <select name="trainerId" className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand">
             <option value="">No trainer assigned</option>

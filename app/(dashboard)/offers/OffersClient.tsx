@@ -117,7 +117,7 @@ export function OffersClient({
           </label>
 
           {selectedCustomers.length > 0 && (
-            <section className="flex flex-col gap-2 rounded-xl border border-dashed border-brand bg-brand-soft p-3">
+            <section className="flex flex-col gap-2 rounded-xl border border-border bg-surface p-3">
               <p className="text-xs font-semibold text-brand-text">
                 Ready to send ({selectedCustomers.length})
               </p>

@@ -160,7 +160,7 @@ function WorkoutTab({ memberId, plans, onChange }: { memberId: string; plans: Wo
 
       {showForm && (
         <Popup open={showForm} onClose={() => setShowForm(false)} title="New workout plan">
-        <div className="flex flex-col gap-3 rounded-xl border border-dashed border-brand bg-brand-soft p-4">
+        <div className="flex flex-col gap-3 rounded-xl border border-border bg-surface p-4">
           <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Plan title (e.g. Week 1 — Push Day)" className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand" />
           {exercises.map((ex, i) => (
             <div key={i} className="flex flex-col gap-1.5 rounded-lg border border-border bg-surface p-2.5">
@@ -304,7 +304,7 @@ function DietTab({ memberId, plans, onChange }: { memberId: string; plans: DietP
 
       {showForm && (
         <Popup open={showForm} onClose={() => setShowForm(false)} title="New diet plan">
-        <div className="flex flex-col gap-3 rounded-xl border border-dashed border-brand bg-brand-soft p-4">
+        <div className="flex flex-col gap-3 rounded-xl border border-border bg-surface p-4">
           <select value={goal} onChange={(e) => setGoal(e.target.value)} className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand">
             <option value="">Goal (optional)</option>
             <option value="Weight Loss">Weight Loss</option>
@@ -437,7 +437,7 @@ function ProgressTab({ memberId, logs, onChange }: { memberId: string; logs: Pro
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex flex-col gap-2 rounded-xl border border-dashed border-brand bg-brand-soft p-4">
+      <div className="flex flex-col gap-2 rounded-xl border border-border bg-surface p-4">
         <p className="text-sm font-medium text-brand-text">Log today&apos;s progress</p>
         <div className="flex gap-2">
           <input type="number" step="0.1" value={weight} onChange={(e) => setWeight(e.target.value)} placeholder="Weight (kg)" className="flex-1 rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand" />

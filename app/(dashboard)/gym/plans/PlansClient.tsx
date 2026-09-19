@@ -69,7 +69,7 @@ export function PlansClient({ plans }: { plans: Plan[] }) {
 
       {showForm && (
         <Popup open={showForm} onClose={() => setShowForm(false)} title="Add plan">
-        <form action={formAction} className="flex flex-col gap-3 rounded-xl border border-dashed border-brand bg-brand-soft p-4">
+        <form action={formAction} className="flex flex-col gap-3 rounded-xl border border-border bg-surface p-4">
           <input name="name" placeholder="Plan name (e.g. Gold — 3 Months)" required className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand" />
           <div className="flex flex-wrap gap-1.5">
             {PRESET_DURATIONS.map((d) => (

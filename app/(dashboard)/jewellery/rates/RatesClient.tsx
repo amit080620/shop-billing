@@ -54,7 +54,7 @@ export function RatesClient({
         ← Items
       </Link>
 
-      <div className="flex flex-col gap-3 rounded-xl border border-dashed border-brand bg-brand-soft p-4">
+      <div className="flex flex-col gap-3 rounded-xl border border-border bg-surface p-4">
         <label className="flex flex-col gap-1.5 text-sm">
           <span className="flex items-center gap-1.5 font-medium text-brand-text"><Circle size={10} className="fill-amber-400 text-amber-400" /> Gold rate (₹ per gram)</span>
           <div className="flex gap-2">

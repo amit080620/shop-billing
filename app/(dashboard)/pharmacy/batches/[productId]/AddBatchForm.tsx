@@ -20,7 +20,7 @@ export function AddBatchForm({ productId, lang }: { productId: string; lang: Lan
   const [state, formAction] = useActionState(addBatchAction, null);
 
   return (
-    <form action={formAction} className="flex flex-col gap-3 rounded-xl border border-dashed border-brand bg-brand-soft p-4">
+    <form action={formAction} className="flex flex-col gap-3 rounded-xl border border-border bg-surface p-4">
       <input type="hidden" name="productId" value={productId} />
       <p className="text-sm font-semibold text-brand-text">{t("batches.addNew")}</p>
       <div className="grid grid-cols-2 gap-3">

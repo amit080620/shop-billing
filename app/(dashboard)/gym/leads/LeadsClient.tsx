@@ -86,7 +86,7 @@ export function LeadsClient({ leads }: { leads: Lead[] }) {
 
       {showForm && (
         <Popup open={showForm} onClose={() => setShowForm(false)} title="Add lead">
-        <form action={formAction} className="flex flex-col gap-3 rounded-xl border border-dashed border-brand bg-brand-soft p-4">
+        <form action={formAction} className="flex flex-col gap-3 rounded-xl border border-border bg-surface p-4">
           <input name="name" placeholder="Name" required className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand" />
           <PhoneInput mode="form" name="phone" required />
           <input name="interestedPlan" placeholder="Interested plan (optional)" className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand" />

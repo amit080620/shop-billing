@@ -37,11 +37,87 @@ const SECTION_LABEL: Record<"inside" | "outside" | "takeaway", string> = {
   outside: "Outside",
   takeaway: "Takeaway",
 };
-const SECTION_BADGE: Record<"inside" | "outside" | "takeaway", { letter: string; className: string }> = {
-  inside: { letter: "I", className: "bg-brand-soft text-brand-text" },
-  outside: { letter: "O", className: "bg-brand-soft text-brand-text" },
-  takeaway: { letter: "T", className: "bg-brand-soft text-brand-text" },
+// Tile colours are readable from across the room: green free, amber
+// reserved, red occupied.
+const TILE_TONE = {
+  free: { tile: "border-success/30 bg-surface", dot: "bg-success", text: "text-success" },
+  reserved: { tile: "border-warning/35 bg-warning-soft", dot: "bg-warning", text: "text-warning" },
+  occupied: { tile: "border-danger/35 bg-danger-soft", dot: "bg-danger", text: "text-danger" },
 };
+
+function TableTile({
+  table,
+  dimmed,
+  freeLabel,
+  onOpen,
+  onQr,
+  onClearEmpty,
+}: {
+  table: Table;
+  dimmed: boolean;
+  freeLabel: string;
+  onOpen: () => void;
+  onQr: () => void;
+  onClearEmpty: (e: React.MouseEvent) => void;
+}) {
+  const state = table.status === "occupied" ? "occupied" : table.reservation ? "reserved" : "free";
+  const tone = TILE_TONE[state];
+  return (
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={onOpen}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") onOpen();
+      }}
+      className={`relative flex min-h-24 flex-col justify-between gap-2 rounded-xl border p-3 transition-colors hover:border-border-strong active:scale-[0.98] md:min-h-28 md:p-4 ${tone.tile} ${
+        dimmed ? "opacity-60" : ""
+      }`}
+    >
+      <div className="flex items-start justify-between gap-1">
+        <div className="min-w-0">
+          <p className="truncate text-base font-bold leading-tight text-foreground md:text-lg">{table.name}</p>
+          <p className="text-[11px] text-muted">{SECTION_LABEL[table.section ?? "inside"]}</p>
+        </div>
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onQr();
+          }}
+          className="-mr-1 -mt-1 shrink-0 rounded-md p-1 text-muted hover:bg-surface-2 hover:text-foreground"
+          aria-label={`QR code and settings for ${table.name}`}
+        >
+          <QrCode size={15} />
+        </button>
+      </div>
+      <div className="flex flex-col gap-1">
+        {table.readyCount > 0 && (
+          <span className="inline-flex w-fit items-center gap-1 rounded-full bg-brand px-2 py-0.5 text-[10px] font-bold text-white">
+            <Bell size={10} /> {table.readyCount} ready
+          </span>
+        )}
+        <span className={`flex items-center gap-1.5 text-xs font-semibold ${tone.text}`}>
+          <span className={`h-2 w-2 shrink-0 rounded-full ${tone.dot}`} aria-hidden="true" />
+          {state === "occupied" ? (
+            table.openOrderTotal === 0 ? (
+              <button onClick={onClearEmpty} className="flex items-center gap-1 underline decoration-dotted">
+                <X size={11} /> Empty — clear
+              </button>
+            ) : (
+              formatMoney(table.openOrderTotal)
+            )
+          ) : state === "reserved" && table.reservation ? (
+            <span className="flex min-w-0 items-center gap-1 truncate">
+              <CalendarClock size={11} className="shrink-0" /> {table.reservation.time}
+            </span>
+          ) : (
+            freeLabel
+          )}
+        </span>
+      </div>
+    </div>
+  );
+}
 
 export function TablesClient({ tables, lang }: { tables: Table[]; lang: Lang }) {
   const { t } = useTranslation(lang);
@@ -363,21 +439,10 @@ export function TablesClient({ tables, lang }: { tables: Table[]; lang: Lang }) 
               key={s}
               type="button"
               onClick={() => setSectionFilter(s)}
-              className={`shrink-0 rounded-2xl px-3 py-1.5 text-xs font-semibold transition-all duration-200 active:scale-[0.97] ${
-                sectionFilter === s ? "text-brand-text" : "text-muted hover:-translate-y-0.5"
+              aria-pressed={sectionFilter === s}
+              className={`shrink-0 rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-colors ${
+                sectionFilter === s ? "border-brand/30 bg-brand-soft text-brand-text" : "border-border bg-surface text-muted hover:text-foreground"
               }`}
-              style={
-                sectionFilter === s
-                  ? {
-                      background: "var(--brand-soft)",
-                      boxShadow: "var(--elev-inset), 0 0 0 1.5px var(--brand-light)",
-                    }
-                  : {
-                      background: "var(--surface)",
-                      boxShadow: "var(--elev-sm)",
-                      border: "1px solid var(--border)",
-                    }
-              }
             >
               {s === "all" ? "All tables" : SECTION_LABEL[s]}
             </button>
@@ -392,74 +457,15 @@ export function TablesClient({ tables, lang }: { tables: Table[]; lang: Lang }) 
           {tables
             .filter((table) => sectionFilter === "all" || (table.section ?? "inside") === sectionFilter)
             .map((table) => (
-            <div
+            <TableTile
               key={table.id}
-              role="button"
-              tabIndex={0}
-              onClick={() => handleTableTap(table)}
-              style={{
-                background:
-                  table.status === "occupied"
-                    ? "linear-gradient(155deg, #fef2f2 0%, #fee2e2 100%)"
-                    : table.reservation
-                      ? "linear-gradient(155deg, #fffbeb 0%, #fef3c7 100%)"
-                      : "linear-gradient(155deg, #f0fdf4 0%, #dcfce7 100%)",
-                boxShadow:
-                  table.status === "occupied"
-                    ? "var(--elev-sm), 0 0 0 1.5px rgba(220,38,38,0.25)"
-                    : table.reservation
-                      ? "var(--elev-sm), 0 0 0 1.5px rgba(217,119,6,0.25)"
-                      : "var(--elev-sm), 0 0 0 1.5px rgba(5,150,105,0.25)",
-              }}
-              className={`hover-lift relative flex flex-col items-center justify-center gap-1 rounded-2xl p-4 transition-all duration-200 hover:-translate-y-1 active:translate-y-0 active:scale-[0.97] md:gap-1.5 md:p-6 ${
-                isPending ? "opacity-60" : ""
-              }`}
-            >
-              {table.readyCount > 0 && (
-                <span className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-brand text-[10px] font-bold text-white" style={{ boxShadow: "0 2px 5px rgba(0,0,0,0.35)" }}>
-                  <Bell size={11} />
-                </span>
-              )}
-              {!table.readyCount && table.status !== "occupied" && table.reservation && (
-                <span className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-amber-500 text-[10px] font-bold text-white" style={{ boxShadow: "0 2px 5px rgba(0,0,0,0.35)" }}>
-                  <CalendarClock size={11} />
-                </span>
-              )}
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  showQr(table);
-                }}
-                className="absolute -left-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-gray-700 text-[10px] text-white"
-                style={{ boxShadow: "0 2px 5px rgba(0,0,0,0.35)" }}
-                aria-label="Show QR code"
-              >
-                <QrCode size={11} />
-              </button>
-              <span
-                className={`absolute -bottom-1.5 -left-1.5 flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold ${SECTION_BADGE[table.section ?? "inside"].className}`}
-                style={{ boxShadow: "0 2px 5px rgba(0,0,0,0.3)" }}
-                title={SECTION_LABEL[table.section ?? "inside"]}
-              >
-                {SECTION_BADGE[table.section ?? "inside"].letter}
-              </span>
-              <span className={`text-sm font-bold md:text-lg ${table.status === "occupied" ? "text-red-700" : table.reservation ? "text-amber-800" : "text-emerald-800"}`}>
-                {table.name}
-              </span>
-              <span className={`text-[11px] font-medium md:text-xs ${table.status === "occupied" ? "text-red-600" : table.reservation ? "text-amber-700" : "text-emerald-700"}`}>
-                {table.status === "occupied"
-                  ? table.openOrderTotal === 0
-                    ? (
-                      <button onClick={(e) => handleClearEmpty(table, e)} className="flex items-center gap-1 underline decoration-dotted">
-                        <X size={11} /> Empty — tap to clear
-                      </button>
-                    )
-                    : formatMoney(table.openOrderTotal)
-                  : table.reservation
-                    ? `${table.reservation.time} — ${table.reservation.customerName}`
-                    : t("tables.free")}
-              </span>
-            </div>
+              table={table}
+              dimmed={isPending}
+              freeLabel={t("tables.free")}
+              onOpen={() => handleTableTap(table)}
+              onQr={() => showQr(table)}
+              onClearEmpty={(e) => handleClearEmpty(table, e)}
+            />
           ))}
         </div>
       )}
