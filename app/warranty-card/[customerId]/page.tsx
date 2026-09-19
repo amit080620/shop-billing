@@ -1,3 +1,4 @@
+import { istDayStart } from "@/lib/dateHelpers";
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
@@ -6,8 +7,7 @@ import { ShieldCheck, ShieldX } from "lucide-react";
 
 function daysUntil(dateStr: string) {
   const target = new Date(`${dateStr}T00:00:00`);
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  const today = istDayStart();
   return Math.ceil((target.getTime() - today.getTime()) / 86400000);
 }
 

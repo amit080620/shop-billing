@@ -1,5 +1,6 @@
 "use client";
 
+import { todayIso } from "@/lib/dateHelpers";
 import { useRef, useState } from "react";
 import { Camera, Image as ImageIcon, Loader2, Trash2, CheckCircle2 } from "lucide-react";
 import { scanImageWithAI } from "@/lib/actions/aiScan";
@@ -181,7 +182,7 @@ export function SalesHistoryImportClient() {
                       type="date"
                       value={entry.date}
                       onChange={(e) => updateEntry(entry.id, { date: e.target.value })}
-                      max={new Date().toISOString().slice(0, 10)}
+                      max={todayIso()}
                       className="flex-1 rounded-lg border border-border px-2.5 py-1.5 text-xs outline-none focus:border-brand"
                     />
                     <input

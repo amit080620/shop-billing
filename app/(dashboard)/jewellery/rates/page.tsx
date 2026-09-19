@@ -1,3 +1,4 @@
+import { todayIso } from "@/lib/dateHelpers";
 import { requireSession } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { RatesClient } from "./RatesClient";
@@ -6,7 +7,7 @@ export default async function MetalRatesPage() {
   const session = await requireSession();
   const admin = createSupabaseAdminClient();
 
-  const today = new Date().toISOString().slice(0, 10);
+  const today = todayIso();
   const { data: rates } = await admin
     .from("metal_rates")
     .select("metal_type, rate_per_gram")

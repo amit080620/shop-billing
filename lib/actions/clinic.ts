@@ -1,5 +1,6 @@
 "use server";
 
+import { todayIso } from "@/lib/dateHelpers";
 import { revalidatePath } from "next/cache";
 import { requireSession } from "../auth";
 import { createSupabaseAdminClient } from "../supabase/admin";
@@ -749,7 +750,7 @@ export async function exportMedicineLibraryCsvAction(): Promise<{ csv: string; f
         .join(","),
     );
   }
-  return { csv: lines.join("\n"), filename: `medicine-library-${new Date().toISOString().slice(0, 10)}.csv` };
+  return { csv: lines.join("\n"), filename: `medicine-library-${todayIso()}.csv` };
 }
 
 /** Genuinely bulk-imports a medicine database CSV — matches the

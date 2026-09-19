@@ -1,3 +1,4 @@
+import { todayIso } from "@/lib/dateHelpers";
 import { NextResponse } from "next/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { computeBriefing } from "@/lib/actions/assistant";
@@ -20,7 +21,7 @@ export async function GET(request: Request) {
 
   const admin = createSupabaseAdminClient();
   const { data: shops } = await admin.from("shops").select("id");
-  const today = new Date().toISOString().slice(0, 10);
+  const today = todayIso();
 
   let processed = 0;
   let failed = 0;

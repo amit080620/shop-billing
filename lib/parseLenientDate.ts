@@ -1,3 +1,5 @@
+import { todayIso } from "@/lib/dateHelpers";
+
 /** Best-effort parser for whatever date format a handwritten register
  * might use — DD/MM/YYYY, DD-MM-YY, DD.MM.YYYY, etc. Falls back to
  * today if genuinely unparseable, since the review screen lets the
@@ -15,5 +17,5 @@ export function parseLenientDate(raw: string): string {
     const candidate = `${year}-${month}-${day}`;
     if (!Number.isNaN(new Date(candidate).getTime())) return candidate;
   }
-  return new Date().toISOString().slice(0, 10);
+  return todayIso();
 }

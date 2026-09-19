@@ -1,3 +1,4 @@
+import { todayIso } from "@/lib/dateHelpers";
 import { requireSession } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { PettyCashClient } from "./PettyCashClient";
@@ -9,9 +10,8 @@ export default async function PettyCashPage() {
   if (!isModuleEnabled(session.enabledModules, "petty_cash")) return <ModuleBlocked moduleKey="petty_cash" />;
   const admin = createSupabaseAdminClient();
 
-  const startOfMonth = new Date();
-  startOfMonth.setDate(1);
-  startOfMonth.setHours(0, 0, 0, 0);
+  // First of this month at IST midnight (not the server's UTC midnight).
+  const startOfMonth = new Date(`${todayIso().slice(0, 7)}-01T00:00:00+05:30`);
 
   const { data: entries } = await admin
     .from("petty_cash_entries")

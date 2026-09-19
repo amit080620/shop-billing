@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
-import { todayIso, isoDaysAgo, isoMonthsAgo } from "../dateHelpers";
+import { todayIso, isoDaysAgo, isoMonthsAgo, istDayStart } from "../dateHelpers";
 
 describe("dateHelpers — genuinely IST-aware (fixed a real UTC-rollover bug earlier)", () => {
   afterEach(() => {
@@ -52,5 +52,17 @@ describe("dateHelpers — genuinely IST-aware (fixed a real UTC-rollover bug ear
 
   it("genuinely produces a real ISO date string format (YYYY-MM-DD) regardless of when the test runs", () => {
     expect(todayIso()).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+  });
+});
+
+describe("istDayStart", () => {
+  it("is midnight in India (18:30 UTC the previous day), whatever the server timezone", () => {
+    expect(istDayStart().toISOString()).toMatch(/T18:30:00\.000Z$/);
+    expect(new Date(istDayStart().getTime() + 5.5 * 3600 * 1000).toISOString().slice(0, 10)).toBe(todayIso());
+  });
+
+  it("steps back whole days", () => {
+    expect(istDayStart(0).getTime() - istDayStart(1).getTime()).toBe(24 * 3600 * 1000);
+    expect(istDayStart(0).getTime() - istDayStart(6).getTime()).toBe(6 * 24 * 3600 * 1000);
   });
 });

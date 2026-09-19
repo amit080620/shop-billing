@@ -1,5 +1,6 @@
 "use client";
 
+import { todayIso } from "@/lib/dateHelpers";
 import { useState } from "react";
 import { Plus, Trash2, CheckCircle2 } from "lucide-react";
 import { createHistoricalSalesAction } from "@/lib/actions/salesHistoryImport";
@@ -7,7 +8,7 @@ import { createHistoricalSalesAction } from "@/lib/actions/salesHistoryImport";
 type Row = { id: string; name: string; date: string; amount: number; fullyPaid: boolean };
 
 function newRow(): Row {
-  return { id: crypto.randomUUID(), name: "", date: new Date().toISOString().slice(0, 10), amount: 0, fullyPaid: true };
+  return { id: crypto.randomUUID(), name: "", date: todayIso(), amount: 0, fullyPaid: true };
 }
 
 /** For the day-to-day case, not the "digitize years of paper" case —
@@ -75,7 +76,7 @@ export function BulkSaleEntryClient() {
                   type="date"
                   value={row.date}
                   onChange={(e) => updateRow(row.id, { date: e.target.value })}
-                  max={new Date().toISOString().slice(0, 10)}
+                  max={todayIso()}
                   className="flex-1 rounded-lg border border-border px-2.5 py-1.5 text-xs outline-none focus:border-brand"
                 />
                 <input

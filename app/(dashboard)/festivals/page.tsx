@@ -1,3 +1,4 @@
+import { istDayStart } from "@/lib/dateHelpers";
 import { requireSession } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { formatMoney } from "@/lib/format";
@@ -34,8 +35,7 @@ export default async function FestivalsPage() {
     categoryName: Array.isArray(p.categories) ? p.categories[0]?.name : (p.categories as { name: string } | null)?.name,
   }));
 
-  const now = new Date();
-  now.setHours(0, 0, 0, 0);
+  const now = istDayStart();
 
   const upcoming = FESTIVALS.map((f) => {
     const date = new Date(`${f.date}T00:00:00`);

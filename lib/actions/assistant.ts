@@ -1,5 +1,6 @@
 "use server";
 
+import { todayIso, istDayStart } from "@/lib/dateHelpers";
 import { requireSession } from "../auth";
 import { createSupabaseAdminClient } from "../supabase/admin";
 import { buildWhatsAppLink } from "../whatsapp";
@@ -231,10 +232,7 @@ const TOOLS = [
  * strings a request maps to. The model is instructed (system prompt)
  * to always convert the person's words into a day-count itself. */
 function daysAgo(days: number): Date {
-  const d = new Date();
-  d.setDate(d.getDate() - Math.max(0, days));
-  d.setHours(0, 0, 0, 0);
-  return d;
+  return istDayStart(Math.max(0, days));
 }
 
 type UnifiedSale = { total: number; creditAmount: number; customerId: string | null; id: string; source: "bill" | "restaurant_order" };
@@ -781,7 +779,7 @@ export async function getProactiveBriefingAction(): Promise<{ answer?: string; e
 
   try {
     const admin = createSupabaseAdminClient();
-    const today = new Date().toISOString().slice(0, 10);
+    const today = todayIso();
     const { data: cached } = await admin.from("daily_briefings").select("message").eq("shop_id", session.shopId).eq("briefing_date", today).maybeSingle();
     if (cached) return { answer: cached.message ?? undefined };
 

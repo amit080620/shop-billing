@@ -1,5 +1,6 @@
 "use client";
 
+import { istDayStart } from "@/lib/dateHelpers";
 import { useMemo, useState, useTransition } from "react";
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
@@ -65,8 +66,7 @@ export function PettyCashClient({ entries }: { entries: Entry[] }) {
   const filteredEntries = useMemo(() => entries.filter((e) => e.expenseType === expenseType), [entries, expenseType]);
 
   const todayTotal = useMemo(() => {
-    const todayStart = new Date();
-    todayStart.setHours(0, 0, 0, 0);
+    const todayStart = istDayStart();
     return filteredEntries.filter((e) => new Date(e.createdAt) >= todayStart).reduce((s, e) => s + e.amount, 0);
   }, [filteredEntries]);
   const monthTotal = useMemo(() => filteredEntries.reduce((s, e) => s + e.amount, 0), [filteredEntries]);

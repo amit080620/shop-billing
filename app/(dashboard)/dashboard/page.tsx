@@ -1,3 +1,4 @@
+import { istDayStart, todayIso } from "@/lib/dateHelpers";
 import Link from "next/link";
 import { requireSession } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
@@ -80,8 +81,7 @@ export default async function DashboardPage() {
   const setupComplete = doneCount === setupSteps.length;
   const nextStep = setupSteps.find((s) => !s.done);
 
-  const todayMidnight = new Date();
-  todayMidnight.setHours(0, 0, 0, 0);
+  const todayMidnight = istDayStart();
   const nextFestival = FESTIVALS.map((f) => {
     const date = new Date(`${f.date}T00:00:00`);
     const daysUntil = Math.round((date.getTime() - todayMidnight.getTime()) / (1000 * 60 * 60 * 24));
@@ -219,11 +219,8 @@ async function RetailHome({
   t: (key: string, vars?: Record<string, string | number>) => string;
 }) {
   const admin = createSupabaseAdminClient();
-  const startOfToday = new Date();
-  startOfToday.setHours(0, 0, 0, 0);
-  const startOfWeek = new Date();
-  startOfWeek.setDate(startOfWeek.getDate() - 6);
-  startOfWeek.setHours(0, 0, 0, 0);
+  const startOfToday = istDayStart();
+  const startOfWeek = istDayStart(6);
 
   const expiryCutoff = new Date();
   expiryCutoff.setDate(expiryCutoff.getDate() + 30);
@@ -347,11 +344,8 @@ async function LabHome({
   t: (key: string, vars?: Record<string, string | number>) => string;
 }) {
   const admin = createSupabaseAdminClient();
-  const startOfToday = new Date();
-  startOfToday.setHours(0, 0, 0, 0);
-  const startOfWeek = new Date();
-  startOfWeek.setDate(startOfWeek.getDate() - 6);
-  startOfWeek.setHours(0, 0, 0, 0);
+  const startOfToday = istDayStart();
+  const startOfWeek = istDayStart(6);
 
   const [todayBills, weekBills, { data: pendingOrders }, { data: homeCollections }] = await Promise.all([
     admin.from("bills").select("total").eq("shop_id", session.shopId).eq("status", "active").gte("created_at", startOfToday.toISOString()),
@@ -441,11 +435,8 @@ async function GymHome({
   t: (key: string, vars?: Record<string, string | number>) => string;
 }) {
   const admin = createSupabaseAdminClient();
-  const startOfToday = new Date();
-  startOfToday.setHours(0, 0, 0, 0);
-  const startOfWeek = new Date();
-  startOfWeek.setDate(startOfWeek.getDate() - 6);
-  startOfWeek.setHours(0, 0, 0, 0);
+  const startOfToday = istDayStart();
+  const startOfWeek = istDayStart(6);
   const in7Days = new Date();
   in7Days.setDate(in7Days.getDate() + 7);
   const in7DaysIso = `${in7Days.getFullYear()}-${String(in7Days.getMonth() + 1).padStart(2, "0")}-${String(in7Days.getDate()).padStart(2, "0")}`;
@@ -547,11 +538,8 @@ async function ClinicHome({
   t: (key: string, vars?: Record<string, string | number>) => string;
 }) {
   const admin = createSupabaseAdminClient();
-  const startOfToday = new Date();
-  startOfToday.setHours(0, 0, 0, 0);
-  const startOfWeek = new Date();
-  startOfWeek.setDate(startOfWeek.getDate() - 6);
-  startOfWeek.setHours(0, 0, 0, 0);
+  const startOfToday = istDayStart();
+  const startOfWeek = istDayStart(6);
 
   const todayIso = `${startOfToday.getFullYear()}-${String(startOfToday.getMonth() + 1).padStart(2, "0")}-${String(startOfToday.getDate()).padStart(2, "0")}`;
 
@@ -681,12 +669,9 @@ async function JewelleryHome({
   t: (key: string, vars?: Record<string, string | number>) => string;
 }) {
   const admin = createSupabaseAdminClient();
-  const startOfToday = new Date();
-  startOfToday.setHours(0, 0, 0, 0);
-  const startOfWeek = new Date();
-  startOfWeek.setDate(startOfWeek.getDate() - 6);
-  startOfWeek.setHours(0, 0, 0, 0);
-  const today = new Date().toISOString().slice(0, 10);
+  const startOfToday = istDayStart();
+  const startOfWeek = istDayStart(6);
+  const today = todayIso();
 
   const [todayBills, weekBills, recentBills, { data: rates }] = await Promise.all([
     admin.from("bills").select("total").eq("shop_id", session.shopId).eq("status", "active").gte("created_at", startOfToday.toISOString()),
@@ -783,11 +768,8 @@ async function SalonHome({
   t: (key: string, vars?: Record<string, string | number>) => string;
 }) {
   const admin = createSupabaseAdminClient();
-  const startOfToday = new Date();
-  startOfToday.setHours(0, 0, 0, 0);
-  const startOfWeek = new Date();
-  startOfWeek.setDate(startOfWeek.getDate() - 6);
-  startOfWeek.setHours(0, 0, 0, 0);
+  const startOfToday = istDayStart();
+  const startOfWeek = istDayStart(6);
 
   const todayIso = `${startOfToday.getFullYear()}-${String(startOfToday.getMonth() + 1).padStart(2, "0")}-${String(startOfToday.getDate()).padStart(2, "0")}`;
 
@@ -896,11 +878,8 @@ async function ServiceHome({
   t: (key: string, vars?: Record<string, string | number>) => string;
 }) {
   const admin = createSupabaseAdminClient();
-  const startOfToday = new Date();
-  startOfToday.setHours(0, 0, 0, 0);
-  const startOfWeek = new Date();
-  startOfWeek.setDate(startOfWeek.getDate() - 6);
-  startOfWeek.setHours(0, 0, 0, 0);
+  const startOfToday = istDayStart();
+  const startOfWeek = istDayStart(6);
 
   const [
     todayBills,
@@ -1053,11 +1032,8 @@ async function TransportHome({
   t: (key: string, vars?: Record<string, string | number>) => string;
 }) {
   const admin = createSupabaseAdminClient();
-  const startOfToday = new Date();
-  startOfToday.setHours(0, 0, 0, 0);
-  const startOfWeek = new Date();
-  startOfWeek.setDate(startOfWeek.getDate() - 6);
-  startOfWeek.setHours(0, 0, 0, 0);
+  const startOfToday = istDayStart();
+  const startOfWeek = istDayStart(6);
 
   const [todayBills, weekBills, recentBills, { data: todayTrips }, { data: vehicles }] = await Promise.all([
     admin.from("bills").select("total").eq("shop_id", session.shopId).eq("status", "active").gte("created_at", startOfToday.toISOString()),
@@ -1161,11 +1137,8 @@ async function PharmacyHome({
   t: (key: string, vars?: Record<string, string | number>) => string;
 }) {
   const admin = createSupabaseAdminClient();
-  const startOfToday = new Date();
-  startOfToday.setHours(0, 0, 0, 0);
-  const startOfWeek = new Date();
-  startOfWeek.setDate(startOfWeek.getDate() - 6);
-  startOfWeek.setHours(0, 0, 0, 0);
+  const startOfToday = istDayStart();
+  const startOfWeek = istDayStart(6);
   const expiryCutoff = new Date();
   expiryCutoff.setDate(expiryCutoff.getDate() + 30);
 
@@ -1263,11 +1236,8 @@ async function PharmacyHome({
 // ─── Restaurant ──────────────────────────────────────────────────────────
 async function RestaurantHome({ shopId }: { shopId: string }) {
   const admin = createSupabaseAdminClient();
-  const startOfToday = new Date();
-  startOfToday.setHours(0, 0, 0, 0);
-  const startOfWeek = new Date();
-  startOfWeek.setDate(startOfWeek.getDate() - 6);
-  startOfWeek.setHours(0, 0, 0, 0);
+  const startOfToday = istDayStart();
+  const startOfWeek = istDayStart(6);
 
   const [{ data: tables }, { data: openOrders }, { data: weekSettled }, { data: recentSettled }] = await Promise.all([
     admin.from("restaurant_tables").select("id, status").eq("shop_id", shopId),
@@ -1357,9 +1327,7 @@ async function RestaurantHome({ shopId }: { shopId: string }) {
 async function RentalHome({ shopId }: { shopId: string }) {
   const admin = createSupabaseAdminClient();
   const now = new Date();
-  const startOfWeek = new Date();
-  startOfWeek.setDate(startOfWeek.getDate() - 6);
-  startOfWeek.setHours(0, 0, 0, 0);
+  const startOfWeek = istDayStart(6);
 
   const [{ data: active }, { data: recentRentals }, { data: weekRentals }] = await Promise.all([
     admin.from("rentals").select("id, end_date, rental_number, customers ( name )").eq("shop_id", shopId).in("status", ["booked", "active"]),
@@ -1505,9 +1473,7 @@ function buildSevenDayTrend<T extends Record<string, unknown>>(
 ): { day: string; date: string; total: number }[] {
   const trend: { day: string; date: string; total: number }[] = [];
   for (let i = 6; i >= 0; i--) {
-    const dayStart = new Date();
-    dayStart.setDate(dayStart.getDate() - i);
-    dayStart.setHours(0, 0, 0, 0);
+    const dayStart = istDayStart(i);
     const dayEnd = new Date(dayStart);
     dayEnd.setDate(dayEnd.getDate() + 1);
     const dayTotal = sum(

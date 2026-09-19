@@ -1,5 +1,6 @@
 "use server";
 
+import { todayIso } from "@/lib/dateHelpers";
 import { revalidatePath } from "next/cache";
 import { requireSession } from "../auth";
 import { createSupabaseAdminClient } from "../supabase/admin";
@@ -13,7 +14,7 @@ export async function setTodaysMetalRateAction(
   if (!ratePerGram || ratePerGram <= 0) return { error: "Enter a valid rate" };
 
   const admin = createSupabaseAdminClient();
-  const today = new Date().toISOString().slice(0, 10);
+  const today = todayIso();
 
   const { error } = await admin
     .from("metal_rates")

@@ -1,5 +1,6 @@
 "use client";
 
+import { todayIso } from "@/lib/dateHelpers";
 import { useState } from "react";
 import { ChevronDown, ChevronLeft, ChevronRight, Search, X } from "lucide-react";
 import { formatMoney, formatDateTime } from "@/lib/format";
@@ -101,7 +102,7 @@ export function KhataHistoryBook({ entries }: { entries: KhataEntry[] }) {
             type="date"
             value={searchDate}
             onChange={(e) => searchByDate(e.target.value)}
-            max={new Date().toISOString().slice(0, 10)}
+            max={todayIso()}
             className="min-w-0 flex-1 bg-transparent text-xs text-foreground outline-none"
             aria-label="Jump to a date"
           />

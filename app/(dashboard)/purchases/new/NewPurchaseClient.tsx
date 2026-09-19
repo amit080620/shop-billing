@@ -1,5 +1,6 @@
 "use client";
 
+import { todayIso } from "@/lib/dateHelpers";
 import { useMemo, useState, useRef, useEffect } from "react";
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
@@ -68,7 +69,7 @@ export function NewPurchaseClient({
     vendors.find((v) => v.id === preselectedVendorId) ?? null,
   );
   const [vendorInvoiceNumber, setVendorInvoiceNumber] = useState("");
-  const [purchaseDate, setPurchaseDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [purchaseDate, setPurchaseDate] = useState(() => todayIso());
   const [lines, setLines] = useState<Line[]>([]);
   const [paidAmount, setPaidAmount] = useState<number | "">("");
   const [paymentMethod, setPaymentMethod] = useState<"cash" | "card" | "upi" | "online" | "other" | "udhar">("cash");

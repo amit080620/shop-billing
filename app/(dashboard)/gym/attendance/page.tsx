@@ -1,3 +1,4 @@
+import { istDayStart } from "@/lib/dateHelpers";
 import Link from "next/link";
 import { requireSession } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
@@ -13,8 +14,7 @@ export default async function GymAttendancePage() {
   const { lang } = await getTranslator();
   const admin = createSupabaseAdminClient();
 
-  const startOfToday = new Date();
-  startOfToday.setHours(0, 0, 0, 0);
+  const startOfToday = istDayStart();
   const last30Days = new Date();
   last30Days.setDate(last30Days.getDate() - 30);
 
