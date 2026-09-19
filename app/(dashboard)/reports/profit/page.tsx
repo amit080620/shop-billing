@@ -158,8 +158,7 @@ export default async function ProfitPage({
 
       {unknown.length > 0 && (
         <p className="neu-card px-3.5 py-3 text-xs text-muted">
-          {unknown.length} item{unknown.length === 1 ? "" : "s"} sold in this period have no purchase entry yet, so
-          their cost isn&apos;t counted above — record those purchases to see the full picture.
+          {t("profit.uncosted", { count: unknown.length })}
         </p>
       )}
 

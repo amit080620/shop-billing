@@ -71,9 +71,7 @@ export function LoyaltySettingsClient({
         <div className="neu-card p-4 text-sm">
           <p className="font-medium text-foreground">Example</p>
           <p className="mt-1 text-muted">
-            A ₹500 bill earns <span className="font-medium text-brand-text">{examplePoints} points</span>, worth{" "}
-            <span className="font-medium text-brand-text">{formatMoney(exampleValue)}</span> the next time they
-            redeem.
+            {t("loyalty.example", { points: examplePoints, value: formatMoney(exampleValue) })}
           </p>
         </div>
       )}

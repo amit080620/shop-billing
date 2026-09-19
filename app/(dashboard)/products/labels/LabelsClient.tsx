@@ -148,8 +148,7 @@ export function LabelsClient({ shopName, products: initialProducts }: { shopName
           </>
         ) : (
           <p className="text-xs text-muted">
-            Tap the <span className="font-semibold text-brand-text">+</span> button next to an
-            item above to add it here — the print button appears once you&apos;ve picked at least one.
+            {t("Tap the + button next to an item above to add it here — the print button appears once you've picked at least one.")}
           </p>
         )}
       </div>

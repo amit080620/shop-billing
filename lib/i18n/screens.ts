@@ -27,6 +27,17 @@ export const SCREEN_STRINGS: Record<string, [en: string, hi: string, mr: string]
   "daily.moneyIn": ["Money in — {amount}", "आया पैसा — {amount}", "आलेले पैसे — {amount}"],
   "daily.moneyOut": ["Money out — {amount}", "गया पैसा — {amount}", "गेलेले पैसे — {amount}"],
 
+  "profit.uncosted": [
+    "{count} item(s) sold in this period have no purchase entry yet, so their cost isn't counted above — record those purchases to see the full picture.",
+    "इस अवधि में बिके {count} सामान की खरीद दर्ज नहीं, इसलिए उनकी लागत ऊपर नहीं जुड़ी — पूरी तस्वीर के लिए वो खरीद दर्ज करें।",
+    "या कालावधीत विकलेल्या {count} वस्तूंची खरेदी नोंदलेली नाही, म्हणून त्यांची किंमत वर मोजलेली नाही — पूर्ण चित्रासाठी ती खरेदी नोंदवा.",
+  ],
+  "loyalty.example": [
+    "A ₹500 bill earns {points} points, worth {value} the next time they redeem.",
+    "₹500 के बिल पर {points} पॉइंट मिलेंगे, जो अगली बार {value} के बराबर होंगे।",
+    "₹500 च्या बिलावर {points} पॉइंट मिळतील, जे पुढच्या वेळी {value} इतके असतील.",
+  ],
+
   // Date range chips
   "range.today": ["Today", "आज", "आज"],
   "range.last7": ["Last 7 days", "पिछले 7 दिन", "मागील 7 दिवस"],
