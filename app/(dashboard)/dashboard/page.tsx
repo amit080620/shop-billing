@@ -173,7 +173,7 @@ export default async function DashboardPage() {
           </span>
           <span className="min-w-0 flex-1">
             <span className="block text-sm font-semibold text-foreground">
-              {nextFestival.daysUntil === 1 ? t("home.festivalTomorrow", { name: nextFestival.name }) : t("home.festivalIn", { name: nextFestival.name, days: nextFestival.daysUntil })}
+              {nextFestival.daysUntil === 1 ? t("home.festivalTomorrow", { name: t(nextFestival.name) }) : t("home.festivalIn", { name: t(nextFestival.name), days: nextFestival.daysUntil })}
             </span>
             <span className="block truncate text-xs text-muted">{t("Check stock — restock ideas & a reminder")}</span>
           </span>
