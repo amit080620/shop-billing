@@ -1,5 +1,6 @@
 "use client";
 
+import { keepValuesOnError } from "@/lib/keepValuesOnError";
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import { adminLoginAction } from "@/lib/actions/admin-auth";
@@ -19,7 +20,7 @@ function SubmitButton() {
 }
 
 export default function AdminLoginPage() {
-  const [state, formAction] = useActionState(adminLoginAction, null);
+  const [state, formAction] = useActionState(keepValuesOnError(adminLoginAction), null);
 
   return (
     <div className="admin-shell flex min-h-screen items-center justify-center bg-gray-950 px-6">

@@ -1,5 +1,6 @@
 "use client";
 
+import { keepValuesOnError } from "@/lib/keepValuesOnError";
 import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { returnRentalAction } from "@/lib/actions/rentals";
@@ -27,7 +28,7 @@ export function ReturnForm({ rentalId, items, lang }: { rentalId: string; items:
   const [damageCharge, setDamageCharge] = useState<number | "">("");
   const [lateFee, setLateFee] = useState<number | "">("");
 
-  const [state, formAction] = useActionState(returnRentalAction, null);
+  const [state, formAction] = useActionState(keepValuesOnError(returnRentalAction), null);
 
   const itemsPayload = JSON.stringify(
     items.map((i) => ({ rentalItemId: i.id, condition: conditions[i.id] ?? "good", damageNotes: notes[i.id] || undefined })),

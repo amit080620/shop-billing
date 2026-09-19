@@ -1,5 +1,6 @@
 "use client";
 
+import { keepValuesOnError } from "@/lib/keepValuesOnError";
 import { useState, useTransition } from "react";
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
@@ -54,7 +55,7 @@ export function LeadsClient({ leads }: { leads: Lead[] }) {
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const [state, formAction] = useActionState(
-    async (prev: { error?: string } | null, formData: FormData) => {
+    keepValuesOnError(async (prev: { error?: string } | null, formData: FormData) => {
       const result = await createLeadAction(prev, formData);
       if (!result?.error) {
         setShowForm(false);
@@ -62,7 +63,7 @@ export function LeadsClient({ leads }: { leads: Lead[] }) {
         router.refresh();
       }
       return result;
-    },
+    }),
     null,
   );
 

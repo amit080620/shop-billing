@@ -1,4 +1,5 @@
 "use client";
+import { keepValuesOnError } from "@/lib/keepValuesOnError";
 import { Users } from "lucide-react";
 
 import { useRef, useState, useEffect } from "react";
@@ -74,14 +75,14 @@ export function CustomersClient({
 
   const { showToast } = useToast();
   const [state, formAction] = useActionState(
-    async (prev: { error?: string } | null, formData: FormData) => {
+    keepValuesOnError(async (prev: { error?: string } | null, formData: FormData) => {
       const result = await createCustomerAction(prev, formData);
       if (!result?.error) {
         setShowForm(false);
         showToast(`${isClinic ? "Patient" : isGym ? "Member" : "Customer"} added`);
       }
       return result;
-    },
+    }),
     null,
   );
 

@@ -26,7 +26,6 @@ import {
   MapPin,
   TrendingDown,
   TrendingUp,
-  Gem,
   UtensilsCrossed,
   ChefHat,
   CheckCircle2,
@@ -714,10 +713,8 @@ async function JewelleryHome({
         <span className="text-muted">›</span>
       </Link>
 
-      <section className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        <StatCard label={t("home.todaySales")} value={formatMoney(todayTotal)} href="/daily-summary" icon={Wallet} />
-        <StatCard label="Items" value="Manage" href="/products" icon={Gem} />
-      </section>
+      {/* Items are one tap away in the shortcuts row below. */}
+      <StatCard label={t("home.todaySales")} value={formatMoney(todayTotal)} href="/daily-summary" icon={Wallet} />
 
       <Link
         href="/bills/new"

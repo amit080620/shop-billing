@@ -1,5 +1,6 @@
 "use client";
 
+import { keepValuesOnError } from "@/lib/keepValuesOnError";
 import { todayIso } from "@/lib/dateHelpers";
 import { useMemo, useState, useRef, useEffect } from "react";
 import { useActionState } from "react";
@@ -130,7 +131,7 @@ export function NewPurchaseClient({
     [lines, paidAmount, isUdhar],
   );
 
-  const [state, formAction] = useActionState(createPurchaseAction, null);
+  const [state, formAction] = useActionState(keepValuesOnError(createPurchaseAction), null);
   const [isScanning, setIsScanning] = useState(false);
   const [scanProgress, setScanProgress] = useState(0);
   const [scanError, setScanError] = useState<string | null>(null);

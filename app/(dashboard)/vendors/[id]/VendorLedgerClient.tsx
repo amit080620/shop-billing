@@ -1,5 +1,6 @@
 "use client";
 
+import { keepValuesOnError } from "@/lib/keepValuesOnError";
 import { useState } from "react";
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
@@ -48,11 +49,11 @@ export function VendorLedgerClient({
   const [showPaymentForm, setShowPaymentForm] = useState(false);
 
   const [state, formAction] = useActionState(
-    async (prev: { error?: string } | null, formData: FormData) => {
+    keepValuesOnError(async (prev: { error?: string } | null, formData: FormData) => {
       const result = await recordVendorPaymentAction(prev, formData);
       if (!result?.error) setShowPaymentForm(false);
       return result;
-    },
+    }),
     null,
   );
 

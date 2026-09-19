@@ -1,5 +1,6 @@
 "use client";
 
+import { keepValuesOnError } from "@/lib/keepValuesOnError";
 import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { useRouter } from "next/navigation";
@@ -34,14 +35,14 @@ export function NewAppointmentClient({ customers, services, lang }: { customers:
 
   const { showToast } = useToast();
   const [state, formAction] = useActionState(
-    async (prev: { error?: string } | null, formData: FormData) => {
+    keepValuesOnError(async (prev: { error?: string } | null, formData: FormData) => {
       const result = await createAppointmentAction(prev, formData);
       if (!result?.error) {
         showToast("Appointment booked");
         router.push("/salon/appointments");
       }
       return result;
-    },
+    }),
     null,
   );
 

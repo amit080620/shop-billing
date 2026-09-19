@@ -1,5 +1,6 @@
 "use client";
 
+import { keepValuesOnError } from "@/lib/keepValuesOnError";
 import { useState, useTransition } from "react";
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
@@ -37,7 +38,7 @@ export function TestsClient({ tests, packages }: { tests: Test[]; packages: Pack
   const { showToast } = useToast();
 
   const [testState, testFormAction] = useActionState(
-    async (prev: { error?: string } | null, formData: FormData) => {
+    keepValuesOnError(async (prev: { error?: string } | null, formData: FormData) => {
       const result = await createLabTestAction(prev, formData);
       if (!result?.error) {
         setShowTestForm(false);
@@ -45,7 +46,7 @@ export function TestsClient({ tests, packages }: { tests: Test[]; packages: Pack
         router.refresh();
       }
       return result;
-    },
+    }),
     null,
   );
 

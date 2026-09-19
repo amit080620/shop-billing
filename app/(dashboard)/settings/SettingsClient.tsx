@@ -1,5 +1,6 @@
 "use client";
 
+import { keepValuesOnError } from "@/lib/keepValuesOnError";
 import { useActionState, useEffect, useRef, useState, useTransition } from "react";
 import { useFormStatus } from "react-dom";
 import Link from "next/link";
@@ -53,7 +54,7 @@ function SubmitButton({ hasError }: { hasError: boolean }) {
 }
 
 export function SettingsClient({ shop }: { shop: ShopSettings }) {
-  const [state, formAction] = useActionState(updateShopSettingsAction, null);
+  const [state, formAction] = useActionState(keepValuesOnError(updateShopSettingsAction), null);
 
   return (
     <div className="flex flex-col gap-4">
@@ -288,7 +289,7 @@ function LogoUploadSection({ currentLogoUrl }: { currentLogoUrl: string | null }
   const [isPending, startTransition] = useTransition();
   const [isRemovingLogo, setIsRemovingLogo] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [state, formAction] = useActionState(uploadLogoAction, null);
+  const [state, formAction] = useActionState(keepValuesOnError(uploadLogoAction), null);
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];

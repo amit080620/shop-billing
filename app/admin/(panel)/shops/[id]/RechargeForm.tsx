@@ -1,5 +1,6 @@
 "use client";
 
+import { keepValuesOnError } from "@/lib/keepValuesOnError";
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import { rechargeShopAction } from "@/lib/actions/admin-subscriptions";
@@ -18,7 +19,7 @@ function SubmitButton() {
 }
 
 export function RechargeForm({ shopId }: { shopId: string }) {
-  const [state, formAction] = useActionState(rechargeShopAction, null);
+  const [state, formAction] = useActionState(keepValuesOnError(rechargeShopAction), null);
 
   return (
     <form

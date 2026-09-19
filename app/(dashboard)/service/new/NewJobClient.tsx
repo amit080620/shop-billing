@@ -1,5 +1,6 @@
 "use client";
 
+import { keepValuesOnError } from "@/lib/keepValuesOnError";
 import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { useRouter } from "next/navigation";
@@ -72,14 +73,14 @@ export function NewJobClient({ customers, lang }: { customers: Customer[]; lang:
 
   const { showToast } = useToast();
   const [state, formAction] = useActionState(
-    async (prev: { error?: string } | null, formData: FormData) => {
+    keepValuesOnError(async (prev: { error?: string } | null, formData: FormData) => {
       const result = await createJobAction(prev, formData);
       if (!result?.error) {
         showToast("Job card created");
         router.push(result?.jobId ? `/service/${result.jobId}` : "/service");
       }
       return result;
-    },
+    }),
     null,
   );
 

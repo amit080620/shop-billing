@@ -5,6 +5,7 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useTranslation } from "@/lib/i18n/useTranslation";
 import { tabsFor } from "./BottomNav";
+import { activeTabHref } from "@/lib/activeTab";
 import type { Lang } from "@/lib/i18n/dictionary";
 import { HelpCircle, LayoutDashboard } from "lucide-react";
 import { HamburgerToggle } from "./HamburgerToggle";
@@ -31,6 +32,7 @@ export function DesktopSidebar({
   const pathname = usePathname();
   const { t } = useTranslation(lang);
   const tabs = tabsFor(businessType, t, permissions, fastBillingEnabled);
+  const activeHref = activeTabHref(pathname, tabs.map((tab) => tab.href));
 
   return (
     <aside className="no-print fixed inset-y-0 left-0 z-30 hidden w-72 flex-col border-r border-border bg-surface md:flex">
@@ -60,7 +62,7 @@ export function DesktopSidebar({
             </SidebarLink>
           </li>
           {tabs.map((tab) => {
-            const active = tab.href === "/" ? pathname === "/" : pathname.startsWith(tab.href);
+            const active = tab.href === activeHref;
             const Icon = tab.icon;
             return (
               <li key={tab.href}>

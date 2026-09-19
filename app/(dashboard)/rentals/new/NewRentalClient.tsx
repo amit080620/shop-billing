@@ -1,5 +1,6 @@
 "use client";
 
+import { keepValuesOnError } from "@/lib/keepValuesOnError";
 import { useActionState, useMemo, useState } from "react";
 import { useFormStatus } from "react-dom";
 import Link from "next/link";
@@ -158,7 +159,7 @@ export function NewRentalClient({
     [customerId, startDate, endDate, cart, deliveryRequired, deliveryAddress, deliveryCharge, paidAmount, paymentMethod, notes],
   );
 
-  const [state, formAction] = useActionState(createRentalAction, null);
+  const [state, formAction] = useActionState(keepValuesOnError(createRentalAction), null);
 
   return (
     <form action={formAction} className="flex flex-col gap-4">

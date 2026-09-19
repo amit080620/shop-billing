@@ -1,5 +1,6 @@
 "use client";
 
+import { keepValuesOnError } from "@/lib/keepValuesOnError";
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import Image from "next/image";
 import { useActionState } from "react";
@@ -153,7 +154,7 @@ export function ProductsClient({
 
   const { showToast } = useToast();
   const [productState, productAction] = useActionState(
-    async (prev: { error?: string } | null, formData: FormData) => {
+    keepValuesOnError(async (prev: { error?: string } | null, formData: FormData) => {
       const wasEditing = !!editingProduct;
       const result = editingProduct
         ? await updateProductAction(editingProduct.id, prev, formData)
@@ -171,19 +172,19 @@ export function ProductsClient({
         }
       }
       return result;
-    },
+    }),
     null,
   );
 
   const [categoryState, categoryAction] = useActionState(
-    async (prev: { error?: string } | null, formData: FormData) => {
+    keepValuesOnError(async (prev: { error?: string } | null, formData: FormData) => {
       const result = await createCategoryAction(prev, formData);
       if (!result?.error) {
         setShowCategoryForm(false);
         showToast("Category added");
       }
       return result;
-    },
+    }),
     null,
   );
 

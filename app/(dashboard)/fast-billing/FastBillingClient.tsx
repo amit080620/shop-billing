@@ -1,5 +1,6 @@
 "use client";
 
+import { keepValuesOnError } from "@/lib/keepValuesOnError";
 import { useMemo, useState, useActionState, useRef, useEffect } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -520,7 +521,7 @@ function FastCheckoutButton({
     setResolvedCustomerId(voiceCustomer.id);
      
   }, [voiceCustomer]);
-  const [state, formAction, isPending] = useActionState(createBillAction, null);
+  const [state, formAction, isPending] = useActionState(keepValuesOnError(createBillAction), null);
   const formRef = useRef<HTMLFormElement>(null);
 
   const subtotal = cart.reduce((s, l) => s + l.qty * l.price, 0);

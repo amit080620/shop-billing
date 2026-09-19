@@ -1,5 +1,6 @@
 "use client";
 
+import { keepValuesOnError } from "@/lib/keepValuesOnError";
 import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { adminSetBusinessTypeAction } from "@/lib/actions/admin-subscriptions";
@@ -27,7 +28,7 @@ export function BusinessTypeForm({
   businessType: string;
   locked: boolean;
 }) {
-  const [state, formAction] = useActionState(adminSetBusinessTypeAction, null);
+  const [state, formAction] = useActionState(keepValuesOnError(adminSetBusinessTypeAction), null);
   // Controlled, not defaultValue/defaultChecked — after a save, the server
   // re-sends these as fresh props, but an *uncontrolled* select/checkbox
   // ignores prop changes post-mount, which is what was showing the wrong

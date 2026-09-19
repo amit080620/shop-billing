@@ -1,5 +1,6 @@
 "use client";
 
+import { keepValuesOnError } from "@/lib/keepValuesOnError";
 import { useActionState, useMemo, useState } from "react";
 import { useFormStatus } from "react-dom";
 import Link from "next/link";
@@ -62,7 +63,7 @@ export function ReturnClient({
 
   const lines = JSON.stringify(selectedLines.map((l) => ({ billItemId: l.item.id, quantity: l.quantity })));
 
-  const [state, formAction] = useActionState(createReturnAction, null);
+  const [state, formAction] = useActionState(keepValuesOnError(createReturnAction), null);
 
   if (items.length === 0) {
     return (

@@ -1,5 +1,6 @@
 "use client";
 
+import { keepValuesOnError } from "@/lib/keepValuesOnError";
 import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { useRouter } from "next/navigation";
@@ -32,14 +33,14 @@ export function NewReservationClient({ customers, tables, lang }: { customers: C
 
   const { showToast } = useToast();
   const [state, formAction] = useActionState(
-    async (prev: { error?: string } | null, formData: FormData) => {
+    keepValuesOnError(async (prev: { error?: string } | null, formData: FormData) => {
       const result = await createReservationAction(prev, formData);
       if (!result?.error) {
         showToast("Reservation booked");
         router.push("/restaurant/reservations");
       }
       return result;
-    },
+    }),
     null,
   );
 

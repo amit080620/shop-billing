@@ -1,5 +1,6 @@
 "use client";
 
+import { keepValuesOnError } from "@/lib/keepValuesOnError";
 import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { writeOffBatchAction } from "@/lib/actions/pharmacy";
@@ -32,7 +33,7 @@ export function WriteOffButton({
 }) {
   const { t } = useTranslation(lang);
   const [open, setOpen] = useState(false);
-  const [state, formAction] = useActionState(writeOffBatchAction, null);
+  const [state, formAction] = useActionState(keepValuesOnError(writeOffBatchAction), null);
 
   if (!open) {
     return (

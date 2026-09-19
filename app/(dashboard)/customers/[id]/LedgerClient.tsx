@@ -1,5 +1,6 @@
 "use client";
 
+import { keepValuesOnError } from "@/lib/keepValuesOnError";
 import { useState } from "react";
 import Image from "next/image";
 import { useActionState } from "react";
@@ -77,14 +78,14 @@ export function LedgerClient({
 
   const { showToast } = useToast();
   const [state, formAction] = useActionState(
-    async (prev: { error?: string } | null, formData: FormData) => {
+    keepValuesOnError(async (prev: { error?: string } | null, formData: FormData) => {
       const result = await recordPaymentAction(prev, formData);
       if (!result?.error) {
         setShowPaymentForm(false);
         showToast("Payment recorded");
       }
       return result;
-    },
+    }),
     null,
   );
 

@@ -1,5 +1,6 @@
 "use client";
 
+import { keepValuesOnError } from "@/lib/keepValuesOnError";
 import { useRef, useState, useTransition } from "react";
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
@@ -65,14 +66,14 @@ export function RequestsClient({
   const [isPending, startTransition] = useTransition();
 
   const [state, formAction] = useActionState(
-    async (prev: { error?: string } | null, formData: FormData) => {
+    keepValuesOnError(async (prev: { error?: string } | null, formData: FormData) => {
       const result = await createItemRequestAction(prev, formData);
       if (!result?.error) {
         setShowForm(false);
         setSelectedCustomer(null);
       }
       return result;
-    },
+    }),
     null,
   );
 

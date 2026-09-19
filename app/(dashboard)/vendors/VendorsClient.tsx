@@ -1,5 +1,6 @@
 "use client";
 
+import { keepValuesOnError } from "@/lib/keepValuesOnError";
 import { useRef, useState } from "react";
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
@@ -38,14 +39,14 @@ export function VendorsClient({ initialVendors }: { initialVendors: Vendor[] }) 
 
   const { showToast } = useToast();
   const [state, formAction] = useActionState(
-    async (prev: { error?: string } | null, formData: FormData) => {
+    keepValuesOnError(async (prev: { error?: string } | null, formData: FormData) => {
       const result = await createVendorAction(prev, formData);
       if (!result?.error) {
         setShowForm(false);
         showToast("Vendor added");
       }
       return result;
-    },
+    }),
     null,
   );
 

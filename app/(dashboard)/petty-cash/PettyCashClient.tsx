@@ -1,5 +1,6 @@
 "use client";
 
+import { keepValuesOnError } from "@/lib/keepValuesOnError";
 import { istDayStart } from "@/lib/dateHelpers";
 import { useMemo, useState, useTransition } from "react";
 import { useActionState } from "react";
@@ -48,7 +49,7 @@ export function PettyCashClient({ entries }: { entries: Entry[] }) {
   const [expenseType, setExpenseType] = useState<"business" | "owner">("business");
 
   const [state, formAction] = useActionState(
-    async (prev: { error?: string } | null, formData: FormData) => {
+    keepValuesOnError(async (prev: { error?: string } | null, formData: FormData) => {
       const result = await createPettyCashEntryAction(prev, formData);
       if (!result?.error) {
         setShowForm(false);
@@ -59,7 +60,7 @@ export function PettyCashClient({ entries }: { entries: Entry[] }) {
         router.refresh();
       }
       return result;
-    },
+    }),
     null,
   );
 

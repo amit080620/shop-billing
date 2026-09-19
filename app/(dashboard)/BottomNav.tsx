@@ -15,8 +15,10 @@ import {
   Gem,
   Stethoscope,
   Zap,
+  CalendarPlus,
 } from "lucide-react";
 import { useTranslation } from "@/lib/i18n/useTranslation";
+import { activeTabHref } from "@/lib/activeTab";
 import type { Lang } from "@/lib/i18n/dictionary";
 
 export function tabsFor(businessType: string, t: (key: string) => string, permissions: string[] = [], fastBillingEnabled = false) {
@@ -50,7 +52,7 @@ export function tabsFor(businessType: string, t: (key: string) => string, permis
 
   const RENTAL_TABS = [
     { href: "/bills/new", label: t("nav.sell"), icon: SellIcon },
-    { href: "/rentals/new", label: t("nav.newRental"), icon: BuyIcon },
+    { href: "/rentals/new", label: t("nav.newRental"), icon: RentalIcon },
     { href: "/purchases", label: t("nav.buy"), icon: BuyIcon },
     reportsTab,
     ...fastBillingTab,
@@ -128,12 +130,13 @@ export function BottomNav({ lang, businessType, permissions = [], fastBillingEna
   const pathname = usePathname();
   const { t } = useTranslation(lang);
   const tabs = tabsFor(businessType, t, permissions, fastBillingEnabled);
+  const activeHref = activeTabHref(pathname, tabs.map((tab) => tab.href));
 
   return (
     <nav className="no-print fixed inset-x-0 bottom-0 z-20 border-t border-border bg-surface/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-md md:hidden">
       <ul className="mx-auto flex max-w-lg items-stretch justify-between px-2">
         {tabs.map((tab) => {
-          const active = pathname.startsWith(tab.href);
+          const active = tab.href === activeHref;
           const Icon = tab.icon;
           return (
             <li key={tab.href} className="flex-1">
@@ -163,6 +166,9 @@ export function BottomNav({ lang, businessType, permissions = [], fastBillingEna
 
 function SellIcon({ active }: { active: boolean }) {
   return <Receipt size={22} strokeWidth={active ? 2.3 : 1.8} />;
+}
+function RentalIcon({ active }: { active: boolean }) {
+  return <CalendarPlus size={22} strokeWidth={active ? 2.3 : 1.8} />;
 }
 function BuyIcon({ active }: { active: boolean }) {
   return <PackagePlus size={22} strokeWidth={active ? 2.3 : 1.8} />;
@@ -197,3 +203,4 @@ function JewelleryNavIcon({ active }: { active: boolean }) {
 function ClinicNavIcon({ active }: { active: boolean }) {
   return <Stethoscope size={22} strokeWidth={active ? 2.3 : 1.8} />;
 }
+

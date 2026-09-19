@@ -150,6 +150,17 @@ export function NewOrderClient({
         </div>
       </section>
 
+      {tests.length === 0 && packages.length === 0 && (
+        <div className="flex flex-col items-start gap-2 rounded-xl border border-border bg-surface p-4">
+          <p className="text-sm font-semibold text-foreground">No tests set up yet</p>
+          <p className="text-xs text-muted">Add your test catalog — names, prices and reference ranges — and it shows up here for booking.</p>
+          <Link href="/lab/tests" className="btn-primary-sm">
+            Set up tests
+          </Link>
+        </div>
+      )}
+
+      {packages.length > 0 && (
       <section className="flex flex-col gap-2">
         <p className="text-sm font-medium text-foreground">Packages</p>
         <div className="flex flex-col gap-1.5">
@@ -164,7 +175,9 @@ export function NewOrderClient({
           ))}
         </div>
       </section>
+      )}
 
+      {tests.length > 0 && (
       <section className="flex flex-col gap-2">
         <p className="text-sm font-medium text-foreground">Individual tests</p>
         <div className="flex max-h-64 flex-col gap-1.5 overflow-y-auto">
@@ -179,6 +192,7 @@ export function NewOrderClient({
           ))}
         </div>
       </section>
+      )}
 
       {total > 0 && (
         <div className="flex justify-between rounded-lg bg-brand-soft px-3.5 py-2.5 text-sm">

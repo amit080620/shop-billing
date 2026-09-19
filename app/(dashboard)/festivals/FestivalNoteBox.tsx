@@ -1,5 +1,6 @@
 "use client";
 
+import { keepValuesOnError } from "@/lib/keepValuesOnError";
 import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { saveFestivalNoteAction } from "@/lib/actions/festival-notes";
@@ -19,7 +20,7 @@ function SaveButton() {
 }
 
 export function FestivalNoteBox({ slug, initialNote }: { slug: string; initialNote: string }) {
-  const [state, formAction] = useActionState(saveFestivalNoteAction, null);
+  const [state, formAction] = useActionState(keepValuesOnError(saveFestivalNoteAction), null);
   const [value, setValue] = useState(initialNote);
 
   return (

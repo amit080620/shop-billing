@@ -1,5 +1,6 @@
 "use client";
 
+import { keepValuesOnError } from "@/lib/keepValuesOnError";
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import { Mail } from "lucide-react";
@@ -23,7 +24,7 @@ export function ForgotPasswordForm({
 }: {
   action: (prev: { error?: string; success?: boolean } | null, formData: FormData) => Promise<{ error?: string; success?: boolean }>;
 }) {
-  const [state, formAction] = useActionState(action, null);
+  const [state, formAction] = useActionState(keepValuesOnError(action), null);
 
   if (state?.success) {
     return (

@@ -1,5 +1,6 @@
 "use client";
 
+import { keepValuesOnError } from "@/lib/keepValuesOnError";
 import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { useRouter } from "next/navigation";
@@ -22,14 +23,14 @@ export function EditVendorButton({ vendor }: { vendor: Vendor }) {
   const [open, setOpen] = useState(false);
   const router = useRouter();
   const [state, formAction] = useActionState(
-    async (prev: { error?: string } | null, formData: FormData) => {
+    keepValuesOnError(async (prev: { error?: string } | null, formData: FormData) => {
       const result = await updateVendorAction(vendor.id, prev, formData);
       if (!result?.error) {
         setOpen(false);
         router.refresh();
       }
       return result;
-    },
+    }),
     null,
   );
 

@@ -1,5 +1,6 @@
 "use client";
 
+import { keepValuesOnError } from "@/lib/keepValuesOnError";
 import { useActionState, useState, useTransition } from "react";
 import { useFormStatus } from "react-dom";
 import { useRouter } from "next/navigation";
@@ -53,7 +54,7 @@ export function VehiclesClient({ vehicles, lang }: { vehicles: Vehicle[]; lang: 
   const { t } = useTranslation(lang);
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
-  const [state, formAction] = useActionState(createVehicleAction, null);
+  const [state, formAction] = useActionState(keepValuesOnError(createVehicleAction), null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);

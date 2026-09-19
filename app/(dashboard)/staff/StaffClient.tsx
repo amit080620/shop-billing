@@ -1,5 +1,6 @@
 "use client";
 
+import { keepValuesOnError } from "@/lib/keepValuesOnError";
 import { useState, useTransition } from "react";
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
@@ -39,14 +40,14 @@ export function StaffClient({
 
   const { showToast } = useToast();
   const [state, formAction] = useActionState(
-    async (prev: { error?: string } | null, formData: FormData) => {
+    keepValuesOnError(async (prev: { error?: string } | null, formData: FormData) => {
       const result = await addStaffAction(prev, formData);
       if (!result?.error) {
         setShowForm(false);
         showToast("Staff member added");
       }
       return result;
-    },
+    }),
     null,
   );
 

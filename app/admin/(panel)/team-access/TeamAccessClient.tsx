@@ -1,5 +1,6 @@
 "use client";
 
+import { keepValuesOnError } from "@/lib/keepValuesOnError";
 import { useState, useTransition } from "react";
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
@@ -21,7 +22,7 @@ function CreateSubmitButton() {
 }
 
 export function TeamAccessClient({ viewers }: { viewers: Viewer[] }) {
-  const [createState, createAction] = useActionState(adminCreateTeamViewerAction, null);
+  const [createState, createAction] = useActionState(keepValuesOnError(adminCreateTeamViewerAction), null);
 
   return (
     <div className="flex flex-col gap-4">

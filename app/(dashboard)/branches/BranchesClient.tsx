@@ -1,5 +1,6 @@
 "use client";
 
+import { keepValuesOnError } from "@/lib/keepValuesOnError";
 import { useState, useTransition } from "react";
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
@@ -37,14 +38,14 @@ export function BranchesClient({ branches, staff }: { branches: Branch[]; staff:
   const [isPending, startTransition] = useTransition();
 
   const [state, formAction] = useActionState(
-    async (prev: { error?: string } | null, formData: FormData) => {
+    keepValuesOnError(async (prev: { error?: string } | null, formData: FormData) => {
       const result = await createBranchAction(prev, formData);
       if (!result?.error) {
         setShowForm(false);
         router.refresh();
       }
       return result;
-    },
+    }),
     null,
   );
 

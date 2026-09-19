@@ -1,5 +1,6 @@
 "use client";
 
+import { keepValuesOnError } from "@/lib/keepValuesOnError";
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import { addBatchAction } from "@/lib/actions/pharmacy";
@@ -17,7 +18,7 @@ function SubmitButton({ label, pendingLabel }: { label: string; pendingLabel: st
 
 export function AddBatchForm({ productId, lang }: { productId: string; lang: Lang }) {
   const { t } = useTranslation(lang);
-  const [state, formAction] = useActionState(addBatchAction, null);
+  const [state, formAction] = useActionState(keepValuesOnError(addBatchAction), null);
 
   return (
     <form action={formAction} className="flex flex-col gap-3 rounded-xl border border-border bg-surface p-4">

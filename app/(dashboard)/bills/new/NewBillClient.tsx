@@ -1,5 +1,6 @@
 "use client";
 
+import { keepValuesOnError } from "@/lib/keepValuesOnError";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useActionState } from "react";
@@ -246,7 +247,7 @@ export function NewBillClient({
     [cart, discountType, discountValue, redemptionValue, paidAmount, supplyType, shopContext.priceIncludesGst],
   );
 
-  const [state, formAction] = useActionState(createBillAction, null);
+  const [state, formAction] = useActionState(keepValuesOnError(createBillAction), null);
 
   // The floating calculator picks this up automatically when opened.
   useSyncCalculatorAmount(cart.length > 0 ? totals.total : null);

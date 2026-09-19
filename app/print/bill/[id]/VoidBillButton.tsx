@@ -1,5 +1,6 @@
 "use client";
 
+import { keepValuesOnError } from "@/lib/keepValuesOnError";
 import { useState } from "react";
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
@@ -23,11 +24,11 @@ export function VoidBillButton({ billId, invoiceNumber }: { billId: string; invo
   const [open, setOpen] = useState(false);
   const { showToast } = useToast();
   const [state, formAction] = useActionState(
-    async (prev: { error?: string } | null, formData: FormData) => {
+    keepValuesOnError(async (prev: { error?: string } | null, formData: FormData) => {
       const result = await voidBillAction(prev, formData);
       if (!result?.error) showToast("Invoice voided", "info");
       return result;
-    },
+    }),
     null,
   );
 
