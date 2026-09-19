@@ -5,6 +5,7 @@ import { RechargeForm } from "./RechargeForm";
 import { BusinessTypeForm } from "./BusinessTypeForm";
 import { ModulesForm } from "./ModulesForm";
 import { AdminResetPasswordButton } from "./AdminResetPasswordButton";
+import { DeleteShopButton } from "./DeleteShopButton";
 
 export default async function AdminShopDetailPage({
   params,
@@ -15,7 +16,7 @@ export default async function AdminShopDetailPage({
   const { id } = await params;
   const admin = createSupabaseAdminClient();
 
-  const [{ data: shop }, { data: transactions }, { data: staff }, { data: bills }] = await Promise.all([
+  const [{ data: shop }, { data: transactions }, { data: staff }, { count: billCount }] = await Promise.all([
     admin.from("shops").select("id, name, legal_name, gstin, city, state, wallet_balance, subscription_valid_until, business_type, business_type_locked, enabled_modules").eq("id", id).single(),
     admin
       .from("subscription_transactions")
@@ -88,7 +89,7 @@ export default async function AdminShopDetailPage({
             </li>
           ))}
         </ul>
-        <p className="mt-2 text-xs text-gray-400">{bills?.length ?? 0} bills created total</p>
+        <p className="mt-2 text-xs text-gray-400">{billCount ?? 0} bills created total</p>
       </section>
 
       <section>
@@ -120,6 +121,8 @@ export default async function AdminShopDetailPage({
           </ul>
         )}
       </section>
+
+      <DeleteShopButton shopId={shop.id} shopName={shop.name} billCount={billCount ?? 0} />
     </div>
   );
 }

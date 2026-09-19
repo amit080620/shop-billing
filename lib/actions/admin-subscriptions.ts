@@ -116,3 +116,44 @@ export async function adminSetShopModulesAction(shopId: string, enabledModules: 
   revalidatePath(`/admin/shops/${shopId}`);
   return {};
 }
+
+/** Permanently deletes a shop, all of its data, and its staff logins.
+ * Super-admin only, and the exact shop name must be typed to confirm.
+ *
+ * Every table's shop_id cascades on delete. purchases.vendor_id is ON
+ * DELETE RESTRICT, which could fail the cascade depending on the order
+ * Postgres removes rows in, so purchases (their items/payments cascade)
+ * are removed first as a precaution. Staff rows go with the shop; their
+ * auth users are removed afterwards so the emails can sign up again. */
+export async function adminDeleteShopAction(shopId: string, confirmName: string): Promise<{ error?: string }> {
+  await requireSuperAdmin();
+  const db = createSupabaseAdminClient();
+
+  const { data: shop } = await db.from("shops").select("id, name").eq("id", shopId).maybeSingle();
+  if (!shop) return { error: "Shop not found" };
+  if (confirmName.trim() !== shop.name.trim()) return { error: "Type the shop name exactly as shown to confirm" };
+
+  const { data: staff } = await db.from("staff").select("id").eq("shop_id", shopId);
+
+  const { error: purchasesError } = await db.from("purchases").delete().eq("shop_id", shopId);
+  if (purchasesError) {
+    console.error("Could not delete shop purchases", purchasesError);
+    return { error: `Could not delete purchases: ${purchasesError.message}` };
+  }
+  const { error } = await db.from("shops").delete().eq("id", shopId);
+  if (error) {
+    console.error("Could not delete shop", error);
+    return { error: `Could not delete shop: ${error.message}` };
+  }
+
+  const failedLogins: string[] = [];
+  for (const s of staff ?? []) {
+    const { error: authError } = await db.auth.admin.deleteUser(s.id);
+    if (authError) failedLogins.push(s.id);
+  }
+  revalidatePath("/admin");
+  if (failedLogins.length > 0) {
+    return { error: `Shop deleted, but ${failedLogins.length} login(s) could not be removed — delete them in Supabase Auth.` };
+  }
+  return {};
+}
