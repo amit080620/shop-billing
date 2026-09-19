@@ -139,3 +139,23 @@ describe("billSchema — genuinely the first line of defense against bad data re
     expect(result.success).toBe(true);
   });
 });
+
+describe("purchaseSchema", () => {
+  const base = {
+    vendorId: "11111111-1111-4111-8111-111111111111",
+    vendorInvoiceNumber: "SW-1",
+    purchaseDate: "2026-09-19",
+    paidAmount: 0,
+    items: [{ description: "Salt", quantity: 2, unitPrice: 20, gstPercent: 5 }],
+  };
+  it("accepts a line with a cost", async () => {
+    const { purchaseSchema } = await import("../schemas");
+    expect(purchaseSchema.safeParse(base).success).toBe(true);
+  });
+  it("rejects a ₹0 line", async () => {
+    const { purchaseSchema } = await import("../schemas");
+    const r = purchaseSchema.safeParse({ ...base, items: [{ ...base.items[0], unitPrice: 0 }] });
+    expect(r.success).toBe(false);
+    expect(r.error?.issues[0].message).toBe("Enter the purchase cost for every item");
+  });
+});

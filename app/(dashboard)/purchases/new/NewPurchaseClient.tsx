@@ -42,13 +42,13 @@ type Line = {
   rawScannedDescription?: string;
 };
 
-function SubmitButton() {
+function SubmitButton({ disabled }: { disabled: boolean }) {
   const { pending } = useFormStatus();
   return (
     <button
       type="submit"
-      disabled={pending}
-      className="btn-primary w-full text-center"
+      disabled={pending || disabled}
+      className="btn-primary w-full text-center disabled:opacity-50"
     >
       {pending ? "Saving purchase…" : "Save purchase"}
     </button>
@@ -696,7 +696,7 @@ export function NewPurchaseClient({
         <p className="rounded-lg bg-credit-soft px-3 py-2 text-sm text-credit">{state.error}</p>
       )}
 
-      <SubmitButton />
+      <SubmitButton disabled={!canSubmit} />
       {!canSubmit && (
         <p className="text-center text-xs text-muted">
           Add a vendor, invoice number, and at least one item with its cost to save.

@@ -172,7 +172,9 @@ export const purchaseSchema = z.object({
   vendorId: z.string().uuid(),
   vendorInvoiceNumber: z.string().trim().min(1, "Enter the vendor's invoice number").max(60),
   purchaseDate: z.string().min(1),
-  items: z.array(lineItemSchema).min(1, "Add at least one item"),
+  // Every purchase line needs a cost: a ₹0 line records stock with no cost,
+  // no money out and no ITC.
+  items: z.array(lineItemSchema.extend({ unitPrice: z.coerce.number().positive("Enter the purchase cost for every item") })).min(1, "Add at least one item"),
   paidAmount: z.coerce.number().min(0),
   paymentMethod: z.enum(paymentMethods).default("cash"),
   itcEligible: z.boolean().default(true),
