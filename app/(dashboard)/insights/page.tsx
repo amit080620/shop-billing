@@ -1,6 +1,6 @@
 import { requireSession } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
-import { formatMoney } from "@/lib/format";
+import { formatMoney, unitLabel } from "@/lib/format";
 import { PageHeader } from "@/app/components/PageHeader";
 import { EmptyState } from "@/app/components/EmptyState";
 import { isModuleEnabled } from "@/lib/modules";
@@ -281,7 +281,7 @@ export default async function InsightsPage({
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium text-foreground">{p.name}</p>
                   <p className="text-xs text-credit">
-                    {p.stockQuantity} {p.unit} sitting unsold
+                    {p.stockQuantity} {unitLabel(p.unit)} sitting unsold
                   </p>
                 </div>
                 <p className="shrink-0 text-sm font-semibold text-credit">

@@ -243,6 +243,7 @@ function WorkoutTab({ memberId, plans, onChange }: { memberId: string; plans: Wo
                 <p className="text-sm font-semibold text-foreground">{p.title}</p>
                 <button
                   onClick={() => {
+                    if (!confirm(`Delete "${p.title}"?`)) return;
                     setDeletingPlanId(p.id);
                     startTransition(async () => {
                       await deleteWorkoutPlanAction(p.id);
@@ -378,6 +379,7 @@ function DietTab({ memberId, plans, onChange }: { memberId: string; plans: DietP
                 <p className="text-sm font-semibold text-foreground">{p.goal || "Diet plan"}</p>
                 <button
                   onClick={() => {
+                    if (!confirm("Delete this diet plan?")) return;
                     setDeletingPlanId(p.id);
                     startTransition(async () => {
                       await deleteDietPlanAction(p.id);

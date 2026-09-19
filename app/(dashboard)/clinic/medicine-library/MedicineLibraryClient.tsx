@@ -98,6 +98,7 @@ export function MedicineLibraryClient({ medicines: initial }: { medicines: Medic
   }
 
   function remove(id: string) {
+    if (!confirm("Remove this medicine from your library?")) return;
     setMedicines((prev) => prev.filter((m) => m.id !== id));
     startTransition(async () => {
       await deleteMedicineFromLibraryAction(id);

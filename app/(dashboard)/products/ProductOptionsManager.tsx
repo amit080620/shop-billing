@@ -63,6 +63,7 @@ export function ProductOptionsManager({
   }
 
   function handleDeleteGroup(groupId: string) {
+    if (!confirm("Delete this option group and all its choices?")) return;
     setDeletingGroupId(groupId);
     startTransition(async () => {
       await deleteOptionGroupAction(groupId);
@@ -87,6 +88,7 @@ export function ProductOptionsManager({
   }
 
   function handleDeleteChoice(choiceId: string, groupId: string) {
+    if (!confirm("Delete this choice?")) return;
     setDeletingChoiceId(choiceId);
     startTransition(async () => {
       await deleteOptionChoiceAction(choiceId, groupId);

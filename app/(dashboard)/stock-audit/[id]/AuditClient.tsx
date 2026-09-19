@@ -1,5 +1,6 @@
 "use client";
 
+import { unitLabel } from "@/lib/format";
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -91,9 +92,9 @@ export function AuditClient({
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium text-foreground">{item.productName}</p>
                 <p className="text-xs text-muted">
-                  System: {item.systemQuantity} {item.unit}
+                  System: {item.systemQuantity} {unitLabel(item.unit)}
                   {diff !== null && diff !== 0 && (
-                    <span className={diff > 0 ? "text-brand" : "text-danger"}> · {diff > 0 ? "+" : ""}{diff} {item.unit}</span>
+                    <span className={diff > 0 ? "text-brand" : "text-danger"}> · {diff > 0 ? "+" : ""}{diff} {unitLabel(item.unit)}</span>
                   )}
                 </p>
               </div>

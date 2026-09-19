@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { MessageCircle, ShoppingCart } from "lucide-react";
 import { buildWhatsAppLink } from "@/lib/whatsapp";
-import { formatMoney } from "@/lib/format";
+import { formatMoney, unitLabel } from "@/lib/format";
 import type { LowStockReorderItem } from "@/lib/actions/purchases";
 import { REORDER_HANDOFF_KEY, type ReorderHandoff } from "@/lib/reorderHandoff";
 
@@ -53,7 +53,7 @@ export function ReorderClient({
     const message = [
       `Order from ${shopName}:`,
       ``,
-      ...chosen.map((i, n) => `${n + 1}. ${i.name} — ${qty[i.productId]} ${i.unit}`),
+      ...chosen.map((i, n) => `${n + 1}. ${i.name} — ${qty[i.productId]} ${unitLabel(i.unit)}`),
       ``,
       `Please confirm availability and price. Thank you.`,
     ].join("\n");
@@ -125,12 +125,12 @@ export function ReorderClient({
                 )}
               </p>
               <p className="text-xs text-credit">
-                {item.currentStock} {item.unit} left · alert at {item.lowStockThreshold}
+                {item.currentStock} {unitLabel(item.unit)} left · alert at {item.lowStockThreshold}
                 {item.lastUnitPrice !== null && <> · last paid {formatMoney(item.lastUnitPrice)}</>}
               </p>
               {item.daysUntilStockout !== null && (
                 <p className="text-xs font-medium text-brand-text">
-                  {item.dailyConsumption} {item.unit}/day selling ·{" "}
+                  {item.dailyConsumption} {unitLabel(item.unit)}/day selling ·{" "}
                   {item.daysUntilStockout === 0 ? "may run out today" : `~${item.daysUntilStockout} day${item.daysUntilStockout === 1 ? "" : "s"} left`}
                 </p>
               )}

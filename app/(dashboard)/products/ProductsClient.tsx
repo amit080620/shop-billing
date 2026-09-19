@@ -19,7 +19,7 @@ import {
 } from "@/lib/actions/products";
 import { Package, Camera, Tag, ShieldCheck, Layers, Sparkles, Loader2 } from "lucide-react";
 import { suggestProductPriceAction } from "@/lib/actions/priceSuggestion";
-import { formatMoney } from "@/lib/format";
+import { formatMoney, unitLabel } from "@/lib/format";
 import { EmptyState } from "@/app/components/EmptyState";
 import { useToast } from "@/app/components/Toast";
 import { PageHeader } from "@/app/components/PageHeader";
@@ -878,7 +878,7 @@ export function ProductsClient({
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium text-foreground">{p.name}</p>
                   <p className="text-xs text-muted">
-                    {p.categoryName ?? t("products.noCategory")} · GST {p.gstPercent}% · {p.unit}
+                    {p.categoryName ?? t("products.noCategory")} · GST {p.gstPercent}% · {unitLabel(p.unit)}
                     {p.hsnCode ? ` · HSN ${p.hsnCode}` : ""}
                     {p.barcode ? ` · ${p.barcode}` : ""}
                   </p>
@@ -926,7 +926,7 @@ export function ProductsClient({
                     <button
                       onClick={() => handleGenerateBarcode(p.id)}
                       disabled={generatingBarcodeFor === p.id}
-                      className="mt-1 text-xs font-medium text-brand disabled:opacity-60"
+                      className="mt-1 text-xs font-medium text-muted hover:text-brand disabled:opacity-60"
                     >
                       {generatingBarcodeFor === p.id ? t("products.generating") : t("products.generateBarcode")}
                     </button>
@@ -940,7 +940,7 @@ export function ProductsClient({
                         className="h-1.5 w-1.5 rounded-full"
                         style={{ backgroundColor: TONE_COLORS[tone] }}
                       />
-                      {t("products.inStock", { qty: p.stockQuantity, unit: p.unit })}
+                      {t("products.inStock", { qty: p.stockQuantity, unit: unitLabel(p.unit) })}
                       {tone === "red" ? ` · ${t("products.low")}` : tone === "orange" ? ` · ${t("products.gettingLow")}` : ""}
                     </span>
                   )}
@@ -962,6 +962,8 @@ export function ProductsClient({
                     <button
                       disabled={isPending}
                       onClick={() => {
+                        // One stray tap used to delete a product outright.
+                        if (!confirm(`Delete "${p.name}"?`)) return;
                         setDeletingId(p.id);
                         startTransition(async () => {
                           const result = await deleteProductAction(p.id);
@@ -970,7 +972,7 @@ export function ProductsClient({
                           if (!result?.error) showToast("Item deleted", "info");
                         });
                       }}
-                      className="text-xs font-medium text-danger disabled:opacity-50"
+                      className="text-xs font-medium text-muted hover:text-danger disabled:opacity-50"
                     >
                       {t("products.delete")}
                     </button>

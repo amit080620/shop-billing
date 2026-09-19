@@ -22,3 +22,16 @@ const PAYMENT_LABELS: Record<string, string> = { upi: "UPI", udhar: "Udhar", cas
 export function paymentMethodLabel(method: string): string {
   return PAYMENT_LABELS[method] ?? method.charAt(0).toUpperCase() + method.slice(1);
 }
+
+const UNIT_LABELS: Record<string, string> = {
+  NOS: "pc", PCS: "pc", KG: "kg", GM: "g", LTR: "L", ML: "ml", MTR: "m", TON: "ton", QTL: "quintal",
+  BOX: "box", DZN: "dozen", PKT: "pack", BAG: "bag", CFT: "cu ft", CUM: "cu m", PLATE: "plate", BOWL: "bowl",
+  GLASS: "glass", STRIP: "strip", BOTTLE: "bottle", SET: "set", DAY: "day", HRS: "hr",
+};
+
+/** Everyday name for a stored unit code on screen ("NOS" → "pc"). The GST
+ * codes themselves stay in the data and on invoices. */
+export function unitLabel(unit: string | null | undefined): string {
+  if (!unit) return "";
+  return UNIT_LABELS[unit.toUpperCase()] ?? unit.toLowerCase();
+}

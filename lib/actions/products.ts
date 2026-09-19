@@ -401,6 +401,21 @@ export async function quickCreateProductAction(
   }
 
   const admin = createSupabaseAdminClient();
+
+  // Quick-add from the billing screen is where duplicates crept in (the same
+  // item typed twice at the counter). Case-insensitive exact name match;
+  // % and _ are escaped so ilike doesn't treat them as wildcards.
+  const { data: existing } = await admin
+    .from("products")
+    .select("name")
+    .eq("shop_id", session.shopId)
+    .ilike("name", parsed.data.name.trim().replace(/[\\%_]/g, (c) => `\\${c}`))
+    .limit(1)
+    .maybeSingle();
+  if (existing) {
+    return { error: `"${existing.name}" is already in your products — search for it above to add it.` };
+  }
+
   const { data, error } = await admin
     .from("products")
     .insert({

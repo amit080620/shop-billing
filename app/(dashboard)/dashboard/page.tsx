@@ -250,7 +250,6 @@ async function RetailHome({
   const expiringCount = expiringBatches?.length ?? 0;
 
   const todayTotal = sum(todayBills.data?.map((b) => b.total));
-  const weekTotal = sum(weekBills.data?.map((b) => b.total));
   const totalCredit = sum(allBillsCredit.data?.map((b) => b.credit_amount));
   const totalPaidBack = sum(allPayments.data?.map((p) => p.amount));
   const outstanding = Math.max(0, totalCredit - totalPaidBack);
@@ -289,9 +288,9 @@ async function RetailHome({
 
       <TrendCard trend={trend} />
 
-      <section className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        <StatCard label={t("home.todaySales")} value={formatMoney(todayTotal)} href="/daily-summary" icon={Wallet} />
-        <StatCard label={t("home.last7Days")} value={formatMoney(weekTotal)} icon={TrendingUp} />
+      {/* The 7-day total already heads the trend chart above. */}
+      <section className="grid grid-cols-2 gap-3 md:grid-cols-3">
+        <StatCard label={t("home.todaySales")} value={formatMoney(todayTotal)} href="/daily-summary" icon={Wallet} className="col-span-2 md:col-span-1" />
         <StatCard label={t("home.outstandingCredit")} value={formatMoney(outstanding)} tone="credit" href="/reminders" icon={Receipt} />
         <StatCard label={t("home.payableToVendors")} value={formatMoney(outstandingPayable)} tone="credit" icon={Handshake} />
       </section>

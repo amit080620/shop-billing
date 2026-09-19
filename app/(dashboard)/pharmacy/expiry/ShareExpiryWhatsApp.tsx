@@ -1,5 +1,6 @@
 "use client";
 
+import { unitLabel } from "@/lib/format";
 import { useTranslation } from "@/lib/i18n/useTranslation";
 import type { Lang } from "@/lib/i18n/dictionary";
 
@@ -13,14 +14,14 @@ export function ShareExpiryWhatsApp({ expired, critical, shopName, lang }: { exp
     if (expired.length > 0) {
       lines.push(`🔴 Already expired (${expired.length}):`);
       for (const r of expired.slice(0, 15)) {
-        lines.push(`• ${r.name} (Batch ${r.batchNumber}) — ${r.quantity} ${r.unit}`);
+        lines.push(`• ${r.name} (Batch ${r.batchNumber}) — ${r.quantity} ${unitLabel(r.unit)}`);
       }
       lines.push("");
     }
     if (critical.length > 0) {
       lines.push(`🟠 Expiring within 30 days (${critical.length}):`);
       for (const r of critical.slice(0, 15)) {
-        lines.push(`• ${r.name} (Batch ${r.batchNumber}) — ${r.quantity} ${r.unit}, ${r.daysLeft}d left`);
+        lines.push(`• ${r.name} (Batch ${r.batchNumber}) — ${r.quantity} ${unitLabel(r.unit)}, ${r.daysLeft}d left`);
       }
     }
     lines.push("", "Sent from the shop billing app.");

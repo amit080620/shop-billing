@@ -589,6 +589,7 @@ function PatientPhotos({
               <span className="rounded-full bg-background px-1.5 py-0.5 text-center text-[9px] font-medium capitalize text-muted">{p.label}</span>
               <button
                 onClick={() => {
+                  if (!confirm("Delete this photo?")) return;
                   setDeletingPhotoId(p.id);
                   startTransition(async () => {
                     await deletePatientPhotoAction(p.id, patientId);

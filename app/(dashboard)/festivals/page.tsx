@@ -1,7 +1,7 @@
 import { istDayStart } from "@/lib/dateHelpers";
 import { requireSession } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
-import { formatMoney } from "@/lib/format";
+import { formatMoney, unitLabel } from "@/lib/format";
 import { PageHeader } from "@/app/components/PageHeader";
 import { FESTIVALS } from "@/lib/festivals";
 import { AddToCalendarButton } from "./AddToCalendarButton";
@@ -140,7 +140,7 @@ export default async function FestivalsPage() {
                     {trend.map((t) => (
                       <li key={t.name} className="flex justify-between text-xs">
                         <span className="text-foreground">{t.name}</span>
-                        <span className="text-muted">{t.qty} {t.unit} sold</span>
+                        <span className="text-muted">{t.qty} {unitLabel(t.unit)} sold</span>
                       </li>
                     ))}
                   </ul>
@@ -166,7 +166,7 @@ export default async function FestivalsPage() {
                               }
                               style={near ? { color: "#c2760f" } : undefined}
                             >
-                              {p.stockQuantity} {p.unit} in stock{low ? " · Low!" : ""}
+                              {p.stockQuantity} {unitLabel(p.unit)} in stock{low ? " · Low!" : ""}
                             </span>
                           ) : (
                             <span className="text-muted">{formatMoney(p.price)}</span>

@@ -10,7 +10,7 @@ import { quickCreateProductAction } from "@/lib/actions/products";
 import { calculateTransactionTotals } from "@/lib/validation/schemas";
 import { determineSupplyType, round2 } from "@/lib/gst";
 import { UNITS } from "@/lib/constants/states";
-import { formatMoney } from "@/lib/format";
+import { formatMoney, unitLabel } from "@/lib/format";
 import { useSyncCalculatorAmount } from "@/lib/calculatorAmount";
 import { SearchableSelect } from "@/app/components/SearchableSelect";
 import { InlineQuickAdd } from "@/app/components/InlineQuickAdd";
@@ -525,7 +525,15 @@ export function NewBillClient({
   }
 
   if (step === "cart") {
+    const canComplete = cart.length > 0 && !(customerMode === "existing" && !selectedCustomer);
+    const complete = () => {
+      setPaidAmount(totals.total);
+      setStep("ticket");
+    };
     return (
+      // Desktop: a two-column counter layout — items on the left, a sticky
+      // bill summary on the right. Phones keep the bar pinned above the nav.
+      <div className="md:grid md:grid-cols-[minmax(0,1fr)_300px] md:items-start md:gap-6">
       <div className="flex flex-col gap-3">
         {!isOnline && (
           <Link
@@ -638,7 +646,7 @@ export function NewBillClient({
             getKey={(p) => p.id}
             getLabel={(p) => p.name}
             getSubLabel={(p) =>
-              p.trackInventory ? `${formatMoney(p.price)} · ${p.stockQuantity} ${p.unit} left` : formatMoney(p.price)
+              p.trackInventory ? `${formatMoney(p.price)} · ${p.stockQuantity} ${unitLabel(p.unit)} left` : formatMoney(p.price)
             }
             onSelect={addProduct}
             placeholder={t("bill.searchProducts")}
@@ -719,7 +727,7 @@ export function NewBillClient({
                         {line.name}
                       </p>
                       <p className="text-xs text-muted">
-                        {formatMoney(line.price)}/{line.saleMode === "loose" ? line.looseUnitName : line.unit} · GST {line.gstPercent}%
+                        {formatMoney(line.price)}/{line.saleMode === "loose" ? line.looseUnitName : unitLabel(line.unit)} · GST {line.gstPercent}%
                       </p>
                       {line.bulkMinQty && line.bulkPrice && (
                         <p className="flex items-center gap-1 text-[11px] text-brand">
@@ -737,7 +745,7 @@ export function NewBillClient({
                               line.saleMode === "pack" ? "border-brand bg-brand-soft text-brand-text" : "border-border text-muted"
                             }`}
                           >
-                            Full {line.unit}
+                            Full {unitLabel(line.unit)}
                           </button>
                           <button
                             onClick={() => toggleSaleMode(line.productId, "loose")}
@@ -815,24 +823,42 @@ export function NewBillClient({
                 {formatMoney(totals.subtotal)}
               </span>
             </div>
-            <div ref={cartEndRef} className="pb-32 md:pb-16" />
+            <div ref={cartEndRef} className="pb-32 md:pb-0" />
           </section>
         )}
+      </div>
 
-        <div className="fixed inset-x-0 bottom-[calc(var(--bottom-nav-h)+env(safe-area-inset-bottom))] z-20 border-t border-border bg-surface/95 px-4 py-3 backdrop-blur-md md:bottom-0 md:left-72">
+        <aside className="neu-card sticky top-24 hidden flex-col gap-3 p-4 md:flex" aria-label="Bill summary">
+          <p className="text-sm font-semibold text-foreground">Bill summary</p>
+          <div className="flex flex-col gap-1.5 text-sm">
+            <div className="flex justify-between gap-2">
+              <span className="text-muted">{t("bill.customer")}</span>
+              <span className="truncate font-medium text-foreground">
+                {customerMode === "existing" ? selectedCustomer?.name ?? "—" : t("bill.walkin")}
+              </span>
+            </div>
+            <div className="flex justify-between gap-2">
+              <span className="text-muted">Items</span>
+              <span className="font-medium text-foreground">{cart.length}</span>
+            </div>
+          </div>
+          <div className="flex items-baseline justify-between gap-2 border-t border-border pt-3">
+            <span className="text-sm text-muted">{t("bill.subtotal")}</span>
+            <span className="text-2xl font-bold tracking-tight text-foreground">{formatMoney(totals.subtotal)}</span>
+          </div>
+          <p className="text-xs text-muted">GST, discount and payment come next.</p>
+          <button disabled={!canComplete} onClick={complete} className="btn-primary w-full disabled:opacity-40">
+            {t("bill.completeTicket")} →
+          </button>
+        </aside>
+
+        <div className="fixed inset-x-0 bottom-[calc(var(--bottom-nav-h)+env(safe-area-inset-bottom))] z-20 border-t border-border bg-surface/95 px-4 py-3 backdrop-blur-md md:hidden">
           <div className="mx-auto flex max-w-lg items-center justify-between gap-3 md:max-w-5xl xl:max-w-6xl">
             <div className="min-w-0">
               <p className="text-xs text-muted">{t("bill.subtotal")}</p>
               <p className="truncate text-lg font-bold text-foreground">{formatMoney(totals.subtotal)}</p>
             </div>
-            <button
-              disabled={cart.length === 0 || (customerMode === "existing" && !selectedCustomer)}
-              onClick={() => {
-                setPaidAmount(totals.total);
-                setStep("ticket");
-              }}
-              className="btn-primary shrink-0 px-6 text-center disabled:opacity-40"
-            >
+            <button disabled={!canComplete} onClick={complete} className="btn-primary shrink-0 px-6 text-center disabled:opacity-40">
               {t("bill.completeTicket")} →
             </button>
           </div>
