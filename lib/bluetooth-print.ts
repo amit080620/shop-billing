@@ -1,3 +1,5 @@
+import { nativeApp, isNativeApp, type RayApp } from "./nativeApp";
+
 // TypeScript's bundled DOM lib doesn't yet include the newer Web
 // Bluetooth "persistent permissions" API (getDevices, device.id) —
 // it's real and shipped in Chrome, just not in the type definitions.
@@ -28,6 +30,11 @@ declare global {
 // to scanning all of a device's services/characteristics for a
 // writable one if the common UUID isn't present.
 
+// Inside the Android app (lib/nativeApp.ts) printing goes through native
+// code instead, which also reaches classic-Bluetooth (SPP) printers that Web
+// Bluetooth can't see, and remembers the printer without Chrome flags.
+const NATIVE_PRINTER_KEY = "ray-native-printer";
+
 const COMMON_PRINTER_SERVICES = [
   "000018f0-0000-1000-8000-00805f9b34fb",
   "0000ff00-0000-1000-8000-00805f9b34fb",
@@ -51,6 +58,7 @@ export function isWebBluetoothSupported(): boolean {
  * setup is for. This checks the actual device type so the "just
  * Print" button defaults correctly on both. */
 export function shouldDefaultToBluetooth(): boolean {
+  if (isNativeApp()) return true;
   if (!isWebBluetoothSupported()) return false;
   if (typeof navigator === "undefined") return false;
   return /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
@@ -96,17 +104,41 @@ async function getRememberedDevice(): Promise<BluetoothDevice | null> {
 }
 
 export function forgetRememberedPrinter() {
-  if (typeof localStorage !== "undefined") localStorage.removeItem(REMEMBERED_PRINTER_KEY);
+  if (typeof localStorage === "undefined") return;
+  localStorage.removeItem(REMEMBERED_PRINTER_KEY);
+  localStorage.removeItem(NATIVE_PRINTER_KEY);
 }
 
 export function hasRememberedPrinter(): boolean {
-  return typeof localStorage !== "undefined" && !!localStorage.getItem(REMEMBERED_PRINTER_KEY);
+  return typeof localStorage !== "undefined" && !!localStorage.getItem(isNativeApp() ? NATIVE_PRINTER_KEY : REMEMBERED_PRINTER_KEY);
+}
+
+/** Android app: prints to the saved printer, or shows the native printer
+ * list (paired + nearby, classic and BLE) the first time. */
+async function printViaNativeApp(app: RayApp, data: Uint8Array): Promise<BluetoothPrintResult> {
+  try {
+    const printer = await app.call<{ address: string }>("printer.print", {
+      data: app.toBase64(data),
+      address: localStorage.getItem(NATIVE_PRINTER_KEY) ?? "",
+    });
+    localStorage.setItem(NATIVE_PRINTER_KEY, printer.address);
+    return {};
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    if (message === "cancelled") return { error: "Printer selection was cancelled." };
+    // Same as below: a printer that can't be reached is forgotten, so the
+    // next tap shows the printer list instead of retrying it forever.
+    localStorage.removeItem(NATIVE_PRINTER_KEY);
+    return { error: `${message} Tap Print again to choose the printer.` };
+  }
 }
 
 /** Opens the browser's device picker, connects, and sends the given
  * ESC/POS bytes. Returns an error message on any failure so the UI
  * can show a clear fallback suggestion rather than a silent failure. */
 export async function printViaBluetooth(data: Uint8Array): Promise<BluetoothPrintResult> {
+  const app = nativeApp();
+  if (app) return printViaNativeApp(app, data);
   if (!isWebBluetoothSupported()) {
     return {
       error:

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { X } from "lucide-react";
+import { isNativeApp } from "@/lib/nativeApp";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -46,7 +47,8 @@ export function InstallAppButton() {
 
   useEffect(() => {
     setPlatform(detectPlatform());
-    if (window.matchMedia("(display-mode: standalone)").matches || (window.navigator as { standalone?: boolean }).standalone) {
+    // The Android app is already installed by definition.
+    if (isNativeApp() || window.matchMedia("(display-mode: standalone)").matches || (window.navigator as { standalone?: boolean }).standalone) {
       setInstalled(true);
     }
 
