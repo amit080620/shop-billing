@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { todayIso, isoDaysAgo, isoMonthsAgo } from "@/lib/dateHelpers";
+import { todayIso, isoDaysAgo, formatIsoDate } from "@/lib/dateHelpers";
 
 export function SalesReportDateControls({ from, to }: { from: string; to: string }) {
   const router = useRouter();
@@ -23,11 +23,11 @@ export function SalesReportDateControls({ from, to }: { from: string; to: string
         <button onClick={() => go(todayIso(), todayIso())} className={pillClass} style={from === todayIso() && to === todayIso() ? activeStyle : undefined}>
           Today
         </button>
-        <button onClick={() => go(isoDaysAgo(7), todayIso())} className={pillClass} style={from === isoDaysAgo(7) && to === todayIso() ? activeStyle : undefined}>
-          This week
+        <button onClick={() => go(isoDaysAgo(6), todayIso())} className={pillClass} style={from === isoDaysAgo(6) && to === todayIso() ? activeStyle : undefined}>
+          Last 7 days
         </button>
-        <button onClick={() => go(isoMonthsAgo(1), todayIso())} className={pillClass} style={from === isoMonthsAgo(1) && to === todayIso() ? activeStyle : undefined}>
-          This month
+        <button onClick={() => go(isoDaysAgo(29), todayIso())} className={pillClass} style={from === isoDaysAgo(29) && to === todayIso() ? activeStyle : undefined}>
+          Last 30 days
         </button>
         <button onClick={() => setShowCustom((v) => !v)} className={pillClass} style={showCustom ? activeStyle : undefined}>
           Custom range
@@ -48,7 +48,7 @@ export function SalesReportDateControls({ from, to }: { from: string; to: string
           </button>
         </div>
       )}
-      <p className="text-xs text-muted">Showing {from} → {to}</p>
+      <p className="text-xs text-muted">{from === to ? formatIsoDate(from) : `${formatIsoDate(from)} – ${formatIsoDate(to)}`}</p>
     </div>
   );
 }

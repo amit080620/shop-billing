@@ -15,7 +15,7 @@ export default async function SalesReportPage({
 }) {
   const session = await requireSession();
   const { from: fromParam, to: toParam } = await searchParams;
-  const fromDate = fromParam || isoDaysAgo(7);
+  const fromDate = fromParam || isoDaysAgo(6);
   const toDate = toParam || todayIso();
 
   const admin = createSupabaseAdminClient();

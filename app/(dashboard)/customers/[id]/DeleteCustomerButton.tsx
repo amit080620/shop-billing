@@ -28,7 +28,7 @@ export function DeleteCustomerButton({ customerId, customerName }: { customerId:
       <button
         onClick={handleDelete}
         disabled={isPending}
-        className="flex items-center gap-1 text-xs font-medium text-danger disabled:opacity-60"
+        className="flex items-center gap-1 text-xs font-medium text-muted hover:text-danger disabled:opacity-60"
       >
         <Trash2 size={13} /> {isPending ? "Deleting…" : "Delete"}
       </button>

@@ -44,3 +44,16 @@ export function istYearMonth(): { year: number; month: number } {
   const [y, m] = todayIso().split("-").map(Number);
   return { year: y, month: m };
 }
+
+// Plain module (not "use client") so server pages get the real array.
+export const MONTHS = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December",
+];
+
+/** "2026-09-12" → "12 Sep 2026" (no timezone shift: parsed as a plain date). */
+export function formatIsoDate(iso: string): string {
+  const [y, m, d] = iso.split("-").map(Number);
+  if (!y || !m || !d) return iso;
+  return `${d} ${MONTHS[m - 1].slice(0, 3)} ${y}`;
+}

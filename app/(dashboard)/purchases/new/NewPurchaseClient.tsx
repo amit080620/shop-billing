@@ -349,9 +349,12 @@ export function NewPurchaseClient({
     reverseCharge,
   });
 
+  // Every line needs a cost: a catalog item picked without its purchase
+  // rate saved a ₹0 purchase, which then showed as no money out, no ITC and
+  // stock with no cost.
   const canSubmit =
     vendor && vendorInvoiceNumber.trim().length > 0 && lines.length > 0 &&
-    lines.every((l) => l.description.trim() && l.quantity > 0);
+    lines.every((l) => l.description.trim() && l.quantity > 0 && l.unitPrice > 0);
 
   return (
     <form
@@ -696,7 +699,7 @@ export function NewPurchaseClient({
       <SubmitButton />
       {!canSubmit && (
         <p className="text-center text-xs text-muted">
-          Add a vendor, invoice number, and at least one item to save.
+          Add a vendor, invoice number, and at least one item with its cost to save.
         </p>
       )}
     </form>

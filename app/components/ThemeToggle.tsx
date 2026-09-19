@@ -44,7 +44,7 @@ export function ThemeToggle({ theme: initial }: { theme: "light" | "dark" | "aut
   }
 
   return (
-    <div className="flex flex-wrap gap-0.5 rounded-lg border border-border bg-surface p-0.5">
+    <div className="flex shrink-0 gap-0.5 rounded-lg border border-border bg-surface p-0.5">
       <button
         onClick={() => switchTo("light")}
         className={`rounded-md px-2.5 py-1 text-xs font-medium ${

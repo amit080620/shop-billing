@@ -2,10 +2,7 @@
 
 import { useRouter, usePathname } from "next/navigation";
 
-const MONTHS = [
-  "January", "February", "March", "April", "May", "June",
-  "July", "August", "September", "October", "November", "December",
-];
+import { MONTHS } from "@/lib/dateHelpers";
 
 export function PeriodPicker({ year, month }: { year: number; month: number }) {
   const router = useRouter();
@@ -45,4 +42,3 @@ export function PeriodPicker({ year, month }: { year: number; month: number }) {
   );
 }
 
-export { MONTHS };

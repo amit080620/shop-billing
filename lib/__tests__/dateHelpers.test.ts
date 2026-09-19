@@ -76,3 +76,13 @@ describe("istMonthRange", () => {
     expect(dec.end.toISOString()).toBe("2026-12-31T18:30:00.000Z");
   });
 });
+
+describe("formatIsoDate", () => {
+  it("formats a plain date without a timezone shift", async () => {
+    const { formatIsoDate, MONTHS } = await import("../dateHelpers");
+    expect(formatIsoDate("2026-09-12")).toBe("12 Sep 2026");
+    expect(formatIsoDate("2027-01-01")).toBe("1 Jan 2027");
+    expect(formatIsoDate("bad")).toBe("bad");
+    expect(MONTHS).toHaveLength(12);
+  });
+});
