@@ -1,6 +1,11 @@
 import type { NextConfig } from "next";
 
+// One id per deploy, baked into both the client bundle and the server, so
+// an open tab can tell it is running an older release (see VersionWatcher).
+const buildId = process.env.VERCEL_DEPLOYMENT_ID || process.env.VERCEL_GIT_COMMIT_SHA || `local-${Date.now()}`;
+
 const nextConfig: NextConfig = {
+  env: { NEXT_PUBLIC_BUILD_ID: buildId },
   experimental: {
     serverActions: {
       // Genuinely raised from the 1MB default — a real medicine

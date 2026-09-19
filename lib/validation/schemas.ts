@@ -201,7 +201,7 @@ export const signupSchema = z.object({
     .default("general"),
   // Asked at signup so a new shop can bill immediately — billing is
   // blocked until the state is known (it decides CGST+SGST vs IGST).
-  stateCode: z.string().regex(/^d{2}$/, "Please choose your state"),
+  stateCode: z.string().regex(/^\d{2}$/, "Please choose your state"),
   ownerName: z.string().trim().min(1, "Your name is required").max(80),
   email: z.string().trim().email(),
   password: z.string().min(6, "Password must be at least 6 characters"),

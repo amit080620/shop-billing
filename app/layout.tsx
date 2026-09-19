@@ -89,13 +89,16 @@ export default async function RootLayout({
                     m.indexOf("reading 'call'") !== -1 ||
                     m.indexOf("loading chunk") !== -1 ||
                     m.indexOf("failed to fetch dynamically imported module") !== -1 ||
-                    m.indexOf("importing a module script failed") !== -1
+                    m.indexOf("importing a module script failed") !== -1 ||
+                    m.indexOf("was not found on the server") !== -1
                   );
                 }
                 function showRealError(message) {
+                  // Same 30-second guard and key as lib/recovery.ts.
                   try {
-                    if (!sessionStorage.getItem("ray-early-crash-retried")) {
-                      sessionStorage.setItem("ray-early-crash-retried", "1");
+                    var last = Number(sessionStorage.getItem("ray-auto-reload-at") || 0);
+                    if (Date.now() - last > 30000) {
+                      sessionStorage.setItem("ray-auto-reload-at", String(Date.now()));
                       location.reload();
                       return;
                     }
@@ -104,7 +107,7 @@ export default async function RootLayout({
                     '<div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px;text-align:center;font-family:system-ui,sans-serif;">' +
                     '<p style="font-size:16px;font-weight:600;color:#1a1a1a;">The app hit a loading problem</p>' +
                     '<p style="font-size:13px;color:#555;max-width:340px;word-break:break-word;">' + message + '</p>' +
-                    '<button onclick="sessionStorage.removeItem(\\'ray-early-crash-retried\\');location.reload();" style="background:linear-gradient(135deg,#6366f1,#4338ca);color:#fff;border:none;border-radius:10px;padding:12px 24px;font-size:14px;font-weight:600;">Try again</button>' +
+                    '<button onclick="location.reload();" style="background:#4f46e5;color:#fff;border:none;border-radius:10px;padding:12px 24px;font-size:14px;font-weight:600;">Try again</button>' +
                     '</div>';
                 }
                 window.addEventListener("error", function (e) {

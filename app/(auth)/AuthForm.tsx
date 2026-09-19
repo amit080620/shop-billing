@@ -1,7 +1,6 @@
 "use client";
 
-import { useActionState, useState } from "react";
-import { useFormStatus } from "react-dom";
+import { startTransition, useActionState, useState } from "react";
 import {
   Eye,
   EyeOff,
@@ -43,8 +42,7 @@ const BUSINESS_ICON_MAP: Record<string, LucideIcon> = {
   general: Building2,
 };
 
-function SubmitButton({ label, pleaseWaitLabel }: { label: string; pleaseWaitLabel: string }) {
-  const { pending } = useFormStatus();
+function SubmitButton({ label, pleaseWaitLabel, pending }: { label: string; pleaseWaitLabel: string; pending: boolean }) {
   return (
     <button
       type="submit"
@@ -80,12 +78,23 @@ export function AuthForm({
   submitLabel: string;
   pleaseWaitLabel?: string;
 }) {
-  const [state, formAction] = useActionState(action, null);
+  const [state, formAction, isPending] = useActionState(action, null);
   const [visibleFields, setVisibleFields] = useState<Record<string, boolean>>({});
   const [gridSelections, setGridSelections] = useState<Record<string, string>>({});
 
   return (
-    <form action={formAction} className="flex flex-col gap-4">
+    // Submitted via onSubmit rather than the form action prop: React 19
+    // resets a form after every action — including one that returns an
+    // error — which wiped the email, state and password the person had
+    // just typed whenever login/signup failed.
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        const data = new FormData(e.currentTarget);
+        startTransition(() => formAction(data));
+      }}
+      className="flex flex-col gap-4"
+    >
       {fields.map((f) => (
         <label key={f.name} className="flex flex-col gap-1.5 text-sm">
           <span className="font-medium text-foreground">{f.label}</span>
@@ -168,7 +177,7 @@ export function AuthForm({
           {state.error}
         </p>
       )}
-      <SubmitButton label={submitLabel} pleaseWaitLabel={pleaseWaitLabel} />
+      <SubmitButton label={submitLabel} pleaseWaitLabel={pleaseWaitLabel} pending={isPending} />
     </form>
   );
 }

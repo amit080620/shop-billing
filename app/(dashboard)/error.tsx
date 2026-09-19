@@ -3,10 +3,10 @@
 import { useEffect, useState } from "react";
 import { RefreshCw, AlertTriangle } from "lucide-react";
 import { logClientErrorAction } from "@/lib/actions/errorReporting";
+import { reloadOnce } from "@/lib/recovery";
 
 export default function DashboardError({
   error,
-  reset,
 }: {
   error: Error & { digest?: string };
   reset: () => void;
@@ -41,37 +41,26 @@ export default function DashboardError({
     // whatever still slips through. Guarded by sessionStorage so a
     // genuinely repeating error still falls through to this screen
     // instead of reload-looping.
-    if (typeof window !== "undefined" && !window.sessionStorage.getItem("ray-crash-auto-retried")) {
-      window.sessionStorage.setItem("ray-crash-auto-retried", "1");
-      setAutoRetried(true);
-      window.location.reload();
-    }
+    if (reloadOnce()) setAutoRetried(true);
   }, [error]);
 
   if (autoRetried) return null;
 
   return (
     <div className="flex min-h-[70vh] flex-col items-center justify-center gap-4 px-6 text-center">
-      <div
-        className="flex h-16 w-16 items-center justify-center rounded-full text-danger"
-        style={{ boxShadow: "var(--elev-sm)" }}
-      >
+      <div className="flex h-14 w-14 items-center justify-center rounded-full bg-danger-soft text-danger">
         <AlertTriangle size={28} />
       </div>
       <div>
-        <p className="text-base font-semibold text-foreground">Something genuinely went wrong</p>
+        <p className="text-base font-semibold text-foreground">Something went wrong</p>
         <p className="mt-1 max-w-xs text-sm text-muted">
           This screen hit an unexpected problem. Your data is safe — tap below to try again.
         </p>
         {error.digest && <p className="mt-2 text-xs text-muted">Reference: {error.digest}</p>}
       </div>
-      <button
-        onClick={() => {
-          window.sessionStorage.removeItem("ray-crash-auto-retried");
-          reset();
-        }}
-        className="btn-primary flex items-center gap-2 px-6"
-      >
+      {/* A full reload, not reset(): most crashes are a phone running code
+          from before the latest deploy, which only a fresh load fixes. */}
+      <button onClick={() => window.location.reload()} className="btn-primary flex items-center gap-2 px-6">
         <RefreshCw size={16} /> Try again
       </button>
     </div>

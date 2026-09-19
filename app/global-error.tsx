@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { logClientErrorAction } from "@/lib/actions/errorReporting";
+import { reloadOnce } from "@/lib/recovery";
 
 export default function GlobalError({
   error,
-  reset,
 }: {
   error: Error & { digest?: string };
   reset: () => void;
@@ -36,11 +36,7 @@ export default function GlobalError({
     // reactive fallback for whatever still slips through. Guarded
     // by sessionStorage so a genuinely repeating error still falls
     // through to the manual "Try again" UI instead of reload-looping.
-    if (typeof window !== "undefined" && !window.sessionStorage.getItem("ray-crash-auto-retried")) {
-      window.sessionStorage.setItem("ray-crash-auto-retried", "1");
-      setAutoRetried(true);
-      window.location.reload();
-    }
+    if (reloadOnce()) setAutoRetried(true);
   }, [error]);
 
   if (autoRetried) return null;
@@ -60,18 +56,15 @@ export default function GlobalError({
             textAlign: "center",
           }}
         >
-          <p style={{ fontSize: "16px", fontWeight: 600, color: "#1a1a1a" }}>Something genuinely went wrong</p>
+          <p style={{ fontSize: "16px", fontWeight: 600, color: "#1a1a1a" }}>Something went wrong</p>
           <p style={{ fontSize: "14px", color: "#666", maxWidth: "320px" }}>
             The app hit an unexpected problem loading. Please try again.
           </p>
           {error.digest && <p style={{ fontSize: "12px", color: "#999" }}>Reference: {error.digest}</p>}
           <button
-            onClick={() => {
-              window.sessionStorage.removeItem("ray-crash-auto-retried");
-              reset();
-            }}
+            onClick={() => window.location.reload()}
             style={{
-              background: "linear-gradient(135deg, #6366f1, #4338ca)",
+              background: "#4f46e5",
               color: "white",
               border: "none",
               borderRadius: "10px",

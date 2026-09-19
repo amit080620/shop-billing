@@ -3,50 +3,55 @@
 import { useEffect, useState } from "react";
 import { RefreshCw } from "lucide-react";
 
-const CHECK_INTERVAL_MS = 5 * 60 * 1000; // every 5 minutes — frequent enough to catch a new deploy within a reasonable window, rare enough to never be a meaningful network cost
+const CHECK_INTERVAL_MS = 5 * 60 * 1000;
+const CURRENT = process.env.NEXT_PUBLIC_BUILD_ID;
 
-/** Extracts Next.js's own build ID from a freshly-fetched page's HTML.
- * This ID changes on EVERY deploy, which is exactly what makes it a
- * reliable signal — unlike comparing a specific chunk hash (which
- * only changes for files that were actually edited), the build ID
- * changes even for the smallest, single-line change. */
-function extractBuildId(html: string): string | null {
-  const match = html.match(/"buildId":"([^"]+)"/);
-  return match ? match[1] : null;
+async function isOutdated(): Promise<boolean> {
+  try {
+    const res = await fetch("/api/version", { cache: "no-store" });
+    const { id } = (await res.json()) as { id?: string };
+    return !!id && !!CURRENT && id !== CURRENT;
+  } catch {
+    return false; // offline or a hiccup is never treated as a new version
+  }
 }
 
+/** Keeps an open tab or installed app from running code older than the
+ * server. Old code talking to a new deploy is what crashed the app with
+ * "Application error" (missing chunks, unknown server actions).
+ * - Returning to the app (phone unlocked, app reopened): if a new version
+ *   is live, reload right away, before anything is typed.
+ * - While in use: check every few minutes and offer a refresh button, so
+ *   a half-filled bill is never reloaded out from under someone.
+ * (The previous version read window.__NEXT_DATA__, which only exists in
+ * the Pages Router, so it never detected anything.) */
 export function VersionWatcher() {
   const [updateAvailable, setUpdateAvailable] = useState(false);
 
   useEffect(() => {
-    const initialBuildId = (window as unknown as { __NEXT_DATA__?: { buildId?: string } }).__NEXT_DATA__?.buildId;
-    if (!initialBuildId) return; // can't compare against nothing — fail silently rather than false-alarm
-
-    const interval = setInterval(async () => {
-      try {
-        // Deliberately fetches the CURRENT page fresh (bypassing any
-        // HTTP cache) rather than a fixed URL — this works correctly
-        // regardless of which page someone has open.
-        const response = await fetch(window.location.pathname, { cache: "no-store" });
-        const html = await response.text();
-        const latestBuildId = extractBuildId(html);
-        if (latestBuildId && latestBuildId !== initialBuildId) {
-          setUpdateAvailable(true);
-          clearInterval(interval);
-        }
-      } catch {
-        // A failed check (offline, network hiccup) is never treated as
-        // "a new version exists" — silently try again next interval.
+    let hiddenAt = 0;
+    async function onVisibility() {
+      if (document.visibilityState === "hidden") {
+        hiddenAt = Date.now();
+        return;
       }
+      // Only auto-reload after a real absence; a quick app switch keeps state.
+      if (Date.now() - hiddenAt > 60_000 && (await isOutdated())) window.location.reload();
+    }
+    const interval = setInterval(async () => {
+      if (document.visibilityState === "visible" && (await isOutdated())) setUpdateAvailable(true);
     }, CHECK_INTERVAL_MS);
-
-    return () => clearInterval(interval);
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
   }, []);
 
   if (!updateAvailable) return null;
 
   return (
-    <div className="fixed inset-x-0 bottom-20 z-50 mx-auto flex w-fit max-w-[90%] items-center gap-3 rounded-full bg-foreground px-4 py-2.5 text-background shadow-lg md:bottom-4">
+    <div className="fixed inset-x-0 bottom-[calc(var(--bottom-nav-h)+env(safe-area-inset-bottom)+12px)] z-50 mx-auto flex w-fit max-w-[90%] items-center gap-3 rounded-full bg-foreground px-4 py-2.5 text-background shadow-lg md:bottom-4">
       <span className="text-xs font-medium">Naya version aa gaya hai</span>
       <button
         onClick={() => window.location.reload()}
