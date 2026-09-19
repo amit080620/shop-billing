@@ -264,7 +264,7 @@ export function ThermalPrintSettingsClient({ initial, initialDefaultFormat }: { 
       />
 
       <button onClick={save} disabled={isPending} className={`btn-primary w-full text-center disabled:opacity-60 ${saved ? "animate-save-success" : ""}`}>
-        {isPending ? "Saving…" : saved ? "Saved ✓" : "Save settings"}
+        {isPending ? t("Saving…") : saved ? t("Saved ✓") : t("Save settings")}
       </button>
     </div>
   );

@@ -321,7 +321,7 @@ export function MenuScanClient() {
           className="btn-primary flex flex-1 items-center justify-center gap-2 disabled:opacity-60"
         >
           <Camera size={16} />
-          {previewUrl ? "Scan another" : "Take photo"}
+          {previewUrl ? t("Scan another") : t("Take photo")}
         </button>
         <button
           onClick={() => galleryInputRef.current?.click()}

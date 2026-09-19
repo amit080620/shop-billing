@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { saveBarcodeScanModeAction } from "@/lib/actions/settings";
 import { Camera, Keyboard, Layers, X } from "lucide-react";
+import { useT } from "@/lib/i18n/LangContext";
 
 const OPTIONS = [
   { value: "off" as const, label: "Off", icon: X, sub: "Turn off barcode scanning entirely — hides camera & scan option everywhere" },
@@ -12,6 +13,7 @@ const OPTIONS = [
 ];
 
 export function BarcodeScanModeToggle({ initial }: { initial: "camera" | "hardware" | "both" | "off" }) {
+  const { t } = useT();
   const [mode, setMode] = useState(initial);
   const [isPending, startTransition] = useTransition();
 
@@ -40,8 +42,8 @@ export function BarcodeScanModeToggle({ initial }: { initial: "camera" | "hardwa
               <Icon size={16} strokeWidth={1.8} />
             </span>
             <div className="min-w-0 flex-1">
-              <p className={`text-sm font-medium ${active ? "text-brand-text" : "text-foreground"}`}>{opt.label}</p>
-              <p className="text-xs text-muted">{opt.sub}</p>
+              <p className={`text-sm font-medium ${active ? "text-brand-text" : "text-foreground"}`}>{t(opt.label)}</p>
+              <p className="text-xs text-muted">{t(opt.sub)}</p>
             </div>
           </button>
         );

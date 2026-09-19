@@ -28,7 +28,7 @@ export function FastBillingSettingsClient({ enabled, productCount }: { enabled: 
     <div className="flex flex-col gap-3">
       <div className="neu-card flex items-center justify-between p-4">
         <div>
-          <p className="text-sm font-medium text-foreground">Fast Billing</p>
+          <p className="text-sm font-medium text-foreground">{t("Fast billing")}</p>
           <p className="text-xs text-muted">{t("A tap-to-add product grid — built for quick counters (chai, snacks, quick food).")}</p>
         </div>
         <button

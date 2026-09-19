@@ -180,7 +180,7 @@ export default async function DailySummaryPage({
 
       <section className="rounded-xl p-4 shadow-md" style={{ background: "var(--brand)" }}>
         <p className="text-xs font-medium uppercase tracking-wide text-white/80">
-          Expected cash in drawer (change today)
+          {t("Expected cash in drawer (change today)")}
         </p>
         <p className="mt-1 text-2xl font-bold text-white">{formatMoney(net.cash)}</p>
         <p className="mt-1 text-xs text-white/70">

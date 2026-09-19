@@ -129,7 +129,7 @@ export function PosterClient({ shopName, initialOccasion }: { shopName: string; 
         </div>
         <button onClick={generate} disabled={isGenerating} className="btn-primary flex items-center justify-center gap-2 disabled:opacity-60">
           {isGenerating ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
-          {isGenerating ? "Writing…" : text ? "Write again" : "Create poster"}
+          {isGenerating ? t("Writing…") : text ? t("Write again") : t("Create poster")}
         </button>
         {error && <p className="text-sm text-danger">{error}</p>}
       </div>

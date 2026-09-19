@@ -90,15 +90,15 @@ export function PettyCashClient({ entries }: { entries: Entry[] }) {
       {/* Top-level context switch — Business vs Owner, genuinely
           separate datasets, never merged. */}
       <div className="flex gap-2">
-        {(["business", "owner"] as const).map((t) => (
+        {(["business", "owner"] as const).map((type) => (
           <button
-            key={t}
-            onClick={() => setExpenseType(t)}
+            key={type}
+            onClick={() => setExpenseType(type)}
             className={`flex-1 rounded-xl py-2.5 text-sm font-semibold capitalize ${
-              expenseType === t ? "bg-brand text-white" : "border border-border text-muted"
+              expenseType === type ? "bg-brand text-white" : "border border-border text-muted"
             }`}
           >
-            {t} expense
+            {type === "business" ? t("Business Expense") : t("Owner Expense")}
           </button>
         ))}
       </div>
@@ -189,7 +189,7 @@ export function PettyCashClient({ entries }: { entries: Entry[] }) {
       )}
 
       {filteredEntries.length === 0 ? (
-        <EmptyState text={`No ${expenseType} expenses logged yet — they'll appear here once you record one.`} />
+        <EmptyState text={expenseType === "business" ? t("No business expenses logged yet — they'll appear here once you record one.") : t("No owner expenses logged yet — they'll appear here once you record one.")} />
       ) : (
         <ul className="flex flex-col gap-2 md:grid md:grid-cols-2 md:gap-3">
           {filteredEntries.map((e) => (

@@ -137,7 +137,7 @@ export function SalesHistoryImportClient() {
           className="btn-primary flex flex-1 items-center justify-center gap-2 disabled:opacity-60"
         >
           {isScanning ? <Loader2 size={16} className="animate-spin" /> : <Camera size={16} />}
-          {isScanning ? "Reading…" : "Take photo"}
+          {isScanning ? t("Reading…") : t("Take photo")}
         </button>
         <button
           type="button"

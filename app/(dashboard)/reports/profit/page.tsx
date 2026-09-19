@@ -164,7 +164,7 @@ export default async function ProfitPage({
       )}
 
       <section className="flex flex-col gap-2">
-        <h2 className="px-1 text-xs font-semibold uppercase tracking-wide text-muted">Most profitable items</h2>
+        <h2 className="px-1 text-xs font-semibold uppercase tracking-wide text-muted">{t("Most profitable items")}</h2>
         {known.length === 0 ? (
           <EmptyState text={t("No costed sales in this period yet — record purchases so profit can be worked out.")} />
         ) : (

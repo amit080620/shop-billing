@@ -3,8 +3,10 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { startAuditAction } from "@/lib/actions/stock-audit";
+import { useT } from "@/lib/i18n/LangContext";
 
 export function StartAuditButton() {
+  const { t } = useT();
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -25,7 +27,7 @@ export function StartAuditButton() {
         disabled={isPending}
         className="btn-primary text-center disabled:opacity-60"
       >
-        {isPending ? "Preparing…" : "+ Start new count"}
+        {isPending ? t("Preparing…") : t("+ Start new count")}
       </button>
       {error && <p className="text-sm text-danger">{error}</p>}
     </div>

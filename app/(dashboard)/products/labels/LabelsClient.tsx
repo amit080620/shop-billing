@@ -83,7 +83,7 @@ export function LabelsClient({ shopName, products: initialProducts }: { shopName
                   : undefined
               }
             >
-              {size === "thermal" ? "Thermal roll (40mm)" : "A4 sheet (grid)"}
+              {size === "thermal" ? t("Thermal roll (40mm)") : t("A4 sheet (grid)")}
             </button>
           ))}
         </div>
@@ -124,7 +124,7 @@ export function LabelsClient({ shopName, products: initialProducts }: { shopName
                   disabled={generating === p.id}
                   className="shrink-0 rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-brand disabled:opacity-60"
                 >
-                  {generating === p.id ? "…" : "Generate barcode"}
+                  {generating === p.id ? "…" : t("Generate barcode")}
                 </button>
               )}
             </li>

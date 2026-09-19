@@ -164,7 +164,7 @@ export function SettingsClient({
             ) : uploadingImage === "header" ? (
               "Uploading…"
             ) : (
-              "Tap to upload"
+              t("Tap to upload")
             )}
             <input
               type="file"
@@ -187,7 +187,7 @@ export function SettingsClient({
             ) : uploadingImage === "footer" ? (
               "Uploading…"
             ) : (
-              "Tap to upload"
+              t("Tap to upload")
             )}
             <input
               type="file"

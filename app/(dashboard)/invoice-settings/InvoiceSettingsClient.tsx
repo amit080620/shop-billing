@@ -146,7 +146,7 @@ export function InvoiceSettingsClient({
             ) : uploadingImage === "header" ? (
               "Uploading…"
             ) : (
-              "Tap to upload"
+              t("Tap to upload")
             )}
             <input
               type="file"
@@ -169,7 +169,7 @@ export function InvoiceSettingsClient({
             ) : uploadingImage === "footer" ? (
               "Uploading…"
             ) : (
-              "Tap to upload"
+              t("Tap to upload")
             )}
             <input
               type="file"

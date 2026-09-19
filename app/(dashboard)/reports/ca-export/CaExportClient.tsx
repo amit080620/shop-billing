@@ -70,8 +70,7 @@ export function CaExportClient() {
 
       <div className="neu-card flex flex-col gap-2 p-4">
         <p className="text-sm text-foreground">
-          Downloads your full <b>{t("Sales")}</b> and <b>Purchases</b> for the period as two Excel-ready files —
-          exactly what a CA needs to reconcile your books at year-end or for GST filing.
+          {t("Downloads your full Sales and Purchases for the period as two Excel-ready files — exactly what a CA needs to reconcile your books at year-end or for GST filing.")}
         </p>
       </div>
 
@@ -129,7 +128,7 @@ export function CaExportClient() {
         className={`btn-primary flex items-center justify-center gap-2 disabled:opacity-60 ${justDone ? "animate-save-success" : ""}`}
       >
         <Download size={16} />
-        {isPending ? "Preparing…" : justDone ? "Downloaded ✓" : "Download sales + purchases"}
+        {isPending ? t("Preparing…") : justDone ? t("Downloaded ✓") : t("Download sales + purchases")}
       </button>
       <p className="text-center text-xs text-muted">
         {t("Two files will download — forward both to your accountant as-is.")}

@@ -487,7 +487,7 @@ export function NewPurchaseClient({
             className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-border bg-surface px-3.5 py-2.5 text-sm font-medium text-brand-text disabled:opacity-60"
           >
             {isScanning ? <Loader2 size={16} className="animate-spin" /> : <Camera size={16} />}
-            {isScanning ? `Reading… ${scanProgress}%` : "Take photo"}
+            {isScanning ? `${t("Reading…")} ${scanProgress}%` : t("Take photo")}
           </button>
           <button
             type="button"

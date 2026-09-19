@@ -266,7 +266,7 @@ export default async function PrintBillPage({
             {t("← All bills")}
           </Link>
           <Link href="/" className="btn-primary-sm">
-            + New bill
+            {t("common.newBillPlus")}
           </Link>
         </div>
 

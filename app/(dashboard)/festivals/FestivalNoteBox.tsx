@@ -8,6 +8,7 @@ import { PenLine, Check } from "lucide-react";
 import { useT } from "@/lib/i18n/LangContext";
 
 function SaveButton() {
+  const { t } = useT();
   const { pending } = useFormStatus();
   return (
     <button
@@ -15,7 +16,7 @@ function SaveButton() {
       disabled={pending}
       className="btn-primary-sm self-start disabled:opacity-60"
     >
-      {pending ? "Saving…" : "Save note"}
+      {pending ? t("Saving…") : t("Save note")}
     </button>
   );
 }

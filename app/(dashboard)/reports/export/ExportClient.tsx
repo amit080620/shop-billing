@@ -136,7 +136,7 @@ export function ExportClient({ businessType }: { businessType: string }) {
                   : undefined
               }
             >
-              {d.label}
+              {t(d.label)}
             </button>
           ))}
         </div>
@@ -178,7 +178,7 @@ export function ExportClient({ businessType }: { businessType: string }) {
         className={`btn-primary flex items-center justify-center gap-2 disabled:opacity-60 ${justExported ? "animate-save-success" : ""}`}
       >
         <Download size={16} />
-        {isPending ? "Preparing…" : justExported ? "Downloaded ✓" : "Download as Excel (CSV)"}
+        {isPending ? t("Preparing…") : justExported ? t("Downloaded ✓") : t("Download as Excel (CSV)")}
       </button>
       <button
         onClick={downloadPdf}
@@ -186,7 +186,7 @@ export function ExportClient({ businessType }: { businessType: string }) {
         className="flex items-center justify-center gap-2 rounded-xl border border-border bg-surface px-4 py-3 text-sm font-medium text-foreground disabled:opacity-60"
       >
         <FileText size={16} />
-        {isPending ? "Preparing…" : "Download as PDF"}
+        {isPending ? t("Preparing…") : t("Download as PDF")}
       </button>
       <p className="text-center text-xs text-muted">
         {t("Excel opens in any spreadsheet app; PDF is ready to print or share as-is.")}
