@@ -32,28 +32,28 @@ export function ProfitLeakClient() {
     {
       icon: <Clock size={18} />,
       label: "Expire hone wala stock",
-      sub: `${data.expiringStockCount} batch${data.expiringStockCount === 1 ? "" : "es"} — agle 30 din mein`,
+      sub: `${data.expiringStockCount} batch${data.expiringStockCount === 1 ? "" : "es"} — within 30 days`,
       value: data.expiringStockValue,
       href: "/expiry-alerts",
     },
     {
       icon: <Package size={18} />,
-      label: "Dead stock (90 din se nahi bika)",
-      sub: `${data.deadStockCount} product${data.deadStockCount === 1 ? "" : "s"} — paisa shelf mein phansa hai`,
+      label: "Dead stock (unsold for 90 days)",
+      sub: `${data.deadStockCount} product${data.deadStockCount === 1 ? "" : "s"} — money sitting on the shelf`,
       value: data.deadStockValue,
       href: "/products",
     },
     {
       icon: <IndianRupee size={18} />,
-      label: "Purana udhar (30+ din se pending)",
-      sub: `${data.overdueUdharCount} customer${data.overdueUdharCount === 1 ? "" : "s"} — collect karna baaki hai`,
+      label: "Old udhaar (pending 30+ days)",
+      sub: `${data.overdueUdharCount} customer${data.overdueUdharCount === 1 ? "" : "s"} — still to collect`,
       value: data.overdueUdharValue,
       href: "/customers",
     },
     {
       icon: <TrendingDown size={18} />,
-      label: "Cost se kam/barabar price par bik raha",
-      sub: `${data.belowCostItems.length} item — har sale par loss ho raha hai`,
+      label: "Selling at or below cost",
+      sub: `${data.belowCostItems.length} item — every sale loses money`,
       value: data.belowCostValue,
       href: "/products",
     },
@@ -63,15 +63,15 @@ export function ProfitLeakClient() {
     <div className="flex flex-col gap-4">
       <div className="flex flex-col items-center gap-1.5 rounded-2xl bg-gradient-to-br from-danger to-[#7c1d1d] p-6 text-center text-white">
         <div className="flex items-center gap-1.5 text-xs font-medium opacity-90">
-          <AlertTriangle size={13} /> ABHI RISK MEIN
+          <AlertTriangle size={13} /> AT RISK NOW
         </div>
         <p className="text-4xl font-extrabold">{formatMoney(data.totalAtRisk)}</p>
-        <p className="text-xs opacity-80">Ye paisa genuinely kho sakta hai agar abhi action nahi liya</p>
+        <p className="text-xs opacity-80">You could lose this money if nothing is done</p>
       </div>
 
       {categories.length === 0 ? (
         <div className="neu-card p-6 text-center">
-          <p className="text-sm font-medium text-success">🎉 Koi genuine leak nahi mila — aapka business tight hai!</p>
+          <p className="text-sm font-medium text-success">🎉 No leaks found — your business is in good shape!</p>
         </div>
       ) : (
         <ul className="flex flex-col gap-2.5">

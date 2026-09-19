@@ -143,20 +143,6 @@ export default async function DashboardPage() {
         </section>
       )}
 
-      {nextFestival && STOCK_BUSINESSES.has(session.businessType) && (
-        <Link href="/festivals" className="neu-card flex items-center gap-3 p-3.5">
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-warning-soft text-warning">
-            <PartyPopper size={18} />
-          </span>
-          <span className="min-w-0 flex-1">
-            <span className="block text-sm font-semibold text-foreground">
-              {nextFestival.name} in {nextFestival.daysUntil} day{nextFestival.daysUntil === 1 ? "" : "s"}
-            </span>
-            <span className="block truncate text-xs text-muted">Check stock — restock ideas & a reminder</span>
-          </span>
-          <ChevronRight size={16} className="shrink-0 text-muted" />
-        </Link>
-      )}
 
       {session.businessType === "restaurant" ? (
         <RestaurantHome shopId={session.shopId} />
@@ -180,6 +166,21 @@ export default async function DashboardPage() {
         <LabHome session={session} t={t} />
       ) : (
         <RetailHome session={session} t={t} />
+      )}
+
+      {nextFestival && STOCK_BUSINESSES.has(session.businessType) && (
+        <Link href="/festivals" className="neu-card flex items-center gap-3 p-3.5">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-warning-soft text-warning">
+            <PartyPopper size={18} />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-sm font-semibold text-foreground">
+              {nextFestival.name} in {nextFestival.daysUntil} day{nextFestival.daysUntil === 1 ? "" : "s"}
+            </span>
+            <span className="block truncate text-xs text-muted">Check stock — restock ideas & a reminder</span>
+          </span>
+          <ChevronRight size={16} className="shrink-0 text-muted" />
+        </Link>
       )}
 
       <QuickLinks businessType={session.businessType} />
@@ -261,10 +262,10 @@ async function RetailHome({
             <AlertTriangle size={18} />
           </span>
           <span className="min-w-0 flex-1">
-            <span className="block text-xs font-medium text-warning">Paisa phansa hua hai</span>
+            <span className="block text-xs font-medium text-warning">Money at risk</span>
             <span className="block text-lg font-bold tracking-tight text-foreground">{formatMoney(profitLeak.totalAtRisk)}</span>
           </span>
-          <span className="shrink-0 text-xs font-semibold text-warning">Dekhein →</span>
+          <span className="shrink-0 text-xs font-semibold text-warning">See where →</span>
         </Link>
       )}
       {expiringCount > 0 && (
@@ -280,13 +281,10 @@ async function RetailHome({
         </Link>
       )}
 
-      <TrendCard trend={trend} />
-
-      {/* The 7-day total already heads the trend chart above. */}
       <section className="grid grid-cols-2 gap-3 md:grid-cols-3">
         <StatCard label={t("home.todaySales")} value={formatMoney(todayTotal)} href="/daily-summary" icon={Wallet} className="col-span-2 md:col-span-1" />
-        <StatCard label={t("home.outstandingCredit")} value={formatMoney(outstanding)} tone="credit" href="/reminders" icon={Receipt} />
-        <StatCard label={t("home.payableToVendors")} value={formatMoney(outstandingPayable)} tone="credit" icon={Handshake} />
+        <StatCard label={t("home.outstandingCredit")} value={formatMoney(outstanding)} tone={outstanding > 0 ? "credit" : "default"} href="/reminders" icon={Receipt} />
+        <StatCard label={t("home.payableToVendors")} value={formatMoney(outstandingPayable)} tone={outstandingPayable > 0 ? "credit" : "default"} href="/vendors" icon={Handshake} />
       </section>
 
       <Link
@@ -297,6 +295,8 @@ async function RetailHome({
         <PlusIcon />
         {t("home.newBill")}
       </Link>
+
+      <TrendCard trend={trend} />
 
       <section>
         <h2 className="mb-2 text-sm font-semibold text-foreground">{t("home.recentBills")}</h2>
@@ -1389,7 +1389,7 @@ async function RentalHome({ shopId }: { shopId: string }) {
 }
 
 function greetingKey() {
-  const hour = new Date().getHours();
+  const hour = Number(new Intl.DateTimeFormat("en-IN", { hour: "numeric", hourCycle: "h23", timeZone: "Asia/Kolkata" }).format(new Date()));
   if (hour < 12) return "home.greeting.morning";
   if (hour < 17) return "home.greeting.afternoon";
   return "home.greeting.evening";

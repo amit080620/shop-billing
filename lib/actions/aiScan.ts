@@ -55,7 +55,7 @@ export async function scanImageWithAI(
 
   const session = await requireSession();
   const quota = await checkAiQuota(session.shopId, "scan");
-  if (!quota.allowed) return { error: "Aaj ke liye scan ki daily limit khatam ho gayi.", errorType: "quota_exceeded" };
+  if (!quota.allowed) return { error: "Today's scan limit is used up. Try again tomorrow.", errorType: "quota_exceeded" };
 
   try {
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`, {

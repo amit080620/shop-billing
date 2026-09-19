@@ -2,25 +2,27 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { Printer } from "lucide-react";
 
 export function PrintButton() {
   const [justClicked, setJustClicked] = useState(false);
 
   return (
-    <div className="no-print flex flex-col items-start gap-1">
+    <div className="no-print flex w-full flex-col items-center gap-1">
       <button
         onClick={() => {
           setJustClicked(true);
           window.print();
           setTimeout(() => setJustClicked(false), 900);
         }}
-        className={`rounded-full bg-gray-900 px-4 py-1.5 text-xs font-semibold text-white transition-transform active:scale-95 ${justClicked ? "animate-save-success" : ""}`}
-        style={{ boxShadow: "-2px -2px 4px rgba(255,255,255,0.15), 2px 2px 6px rgba(0,0,0,0.35)" }}
+        className={`bill-action ${justClicked ? "animate-save-success" : ""}`}
       >
+        <Printer size={15} />
         {justClicked ? "Printing…" : "Print"}
       </button>
-      <Link href="/fast-print-setup" className="text-[10px] text-gray-400 underline">
-        Bina dialog ke print karna hai? Setup karein
+      {/* Kiosk printing is a laptop/desktop setup; phones can't use it. */}
+      <Link href="/fast-print-setup" className="hidden text-[11px] text-gray-400 underline md:inline">
+        Print without the dialog? Set it up
       </Link>
     </div>
   );

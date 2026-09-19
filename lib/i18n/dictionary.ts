@@ -4,6 +4,7 @@ export const translations: Record<Lang, Record<string, string>> = {
   en: {
     // Bottom nav
     "nav.home": "Home",
+    "nav.customers": "Customers",
     "nav.sell": "Sell",
     "nav.buy": "Buy",
     "nav.reports": "Reports",
@@ -57,8 +58,8 @@ export const translations: Record<Lang, Record<string, string>> = {
     "home.subtitle": "Here's how {shop} is doing.",
     "home.todaySales": "Today's sales",
     "home.last7Days": "Last 7 days",
-    "home.outstandingCredit": "Outstanding credit",
-    "home.payableToVendors": "Payable to vendors",
+    "home.outstandingCredit": "To collect",
+    "home.payableToVendors": "To pay vendors",
     "home.gstBothSides": "This month's GST — both sides",
     "home.outputSales": "Output (sales)",
     "home.inputPurchases": "Input (purchases)",
@@ -517,6 +518,7 @@ export const translations: Record<Lang, Record<string, string>> = {
     // Bottom nav
     "nav.home": "होम",
     "nav.sell": "बेचें",
+    "nav.customers": "ग्राहक",
     "nav.buy": "खरीदें",
     "nav.reports": "रिपोर्ट",
     "nav.more": "और",
@@ -1029,6 +1031,7 @@ export const translations: Record<Lang, Record<string, string>> = {
     // Bottom nav
     "nav.home": "होम",
     "nav.sell": "विक्री करा",
+    "nav.customers": "ग्राहक",
     "nav.buy": "खरेदी करा",
     "nav.reports": "अहवाल",
     "nav.more": "अधिक",

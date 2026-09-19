@@ -25,7 +25,7 @@ export function PriceAlertBanner({ alerts }: { alerts: PriceAlert[] }) {
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-start gap-2">
           <AlertTriangle size={16} className="mt-0.5 shrink-0 text-danger" />
-          <p className="text-sm font-semibold text-danger">Purchase rate badh gaya — Sale price update karna chahiye</p>
+          <p className="text-sm font-semibold text-danger">Purchase rate went up — update the sale price</p>
         </div>
         <button onClick={() => setDismissed(true)} aria-label="Dismiss" className="shrink-0 text-danger">
           <X size={16} />
@@ -34,13 +34,13 @@ export function PriceAlertBanner({ alerts }: { alerts: PriceAlert[] }) {
       <ul className="flex flex-col gap-1.5 pl-6">
         {alerts.map((a, i) => (
           <li key={i} className="text-xs text-foreground">
-            <span className="font-medium">{a.productName}</span> — naya rate {formatMoney(a.newCost)}, abhi Sale price sirf {formatMoney(a.currentSalePrice)} hai
-            {a.newCost >= a.currentSalePrice ? " — isi rate par abhi loss hoga" : " — margin bahut kam reh gaya hai"}.
+            <span className="font-medium">{a.productName}</span> — new cost {formatMoney(a.newCost)}, sale price only {formatMoney(a.currentSalePrice)}
+            {a.newCost >= a.currentSalePrice ? " — you would sell at a loss" : " — the margin is now very thin"}.
           </li>
         ))}
       </ul>
       <Link href="/products" className="self-start rounded-lg bg-danger px-3 py-1.5 text-xs font-semibold text-white">
-        Products mein price update karein
+        Update prices in Products
       </Link>
     </div>
   );

@@ -17,10 +17,10 @@ export async function getShelfWatchesAction(): Promise<ShelfWatch[]> {
 
 export async function createShelfWatchAction(name: string): Promise<{ id?: string; error?: string }> {
   const session = await requireSession();
-  if (!name.trim()) return { error: "Naam zaroori hai" };
+  if (!name.trim()) return { error: "Enter a name" };
   const admin = createSupabaseAdminClient();
   const { data, error } = await admin.from("shelf_watches").insert({ shop_id: session.shopId, name: name.trim() }).select("id").single();
-  if (error || !data) return { error: "Bana nahi paye" };
+  if (error || !data) return { error: "Couldn't create the shelf" };
   return { id: data.id };
 }
 
@@ -39,7 +39,7 @@ export async function checkShelfPhotoAction(shelfId: string, newPhotoBase64: str
 
   const admin = createSupabaseAdminClient();
   const { data: shelf } = await admin.from("shelf_watches").select("id, photo_url").eq("id", shelfId).eq("shop_id", session.shopId).maybeSingle();
-  if (!shelf) return { error: "Shelf nahi mila" };
+  if (!shelf) return { error: "Shelf not found" };
 
   const buffer = Buffer.from(newPhotoBase64, "base64");
   const path = `${session.shopId}/${shelfId}-${Date.now()}.jpg`;
@@ -78,7 +78,7 @@ export async function checkShelfPhotoAction(shelfId: string, newPhotoBase64: str
         const parsed = JSON.parse(cleaned);
         if (Array.isArray(parsed)) changes = parsed.filter((c) => c && typeof c.item === "string" && typeof c.observation === "string");
       } else if (response.status === 429) {
-        return { error: "AI quota khatam ho gaya aaj ke liye", errorType: "quota_exceeded" };
+        return { error: "Today's AI limit is used up", errorType: "quota_exceeded" };
       }
     } catch (err) {
       console.error("Shelf comparison failed", err);

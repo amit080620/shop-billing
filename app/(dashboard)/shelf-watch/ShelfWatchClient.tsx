@@ -48,7 +48,7 @@ export function ShelfWatchClient({ initialShelves }: { initialShelves: ShelfWatc
       setResults((prev) => ({ ...prev, [shelfId]: wasFirstPhoto ? "first" : result.changes && result.changes.length > 0 ? result.changes : "none" }));
       setShelves((prev) => prev.map((s) => (s.id === shelfId ? { ...s, lastCheckedAt: new Date().toISOString() } : s)));
     } catch {
-      setError("Photo process nahi ho payi — dobara try karein.");
+      setError("Couldn't read the photo — please try again.");
     } finally {
       setIsChecking(false);
       setActiveShelfId(null);
@@ -94,7 +94,7 @@ export function ShelfWatchClient({ initialShelves }: { initialShelves: ShelfWatc
                 )}
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-semibold text-foreground">{shelf.name}</p>
-                  <p className="text-xs text-muted">{shelf.photoUrl ? `Last check: ${new Date(shelf.lastCheckedAt).toLocaleDateString()}` : "Abhi tak photo nahi hai"}</p>
+                  <p className="text-xs text-muted">{shelf.photoUrl ? `Last check: ${new Date(shelf.lastCheckedAt).toLocaleDateString()}` : "No photo yet"}</p>
                 </div>
                 <input
                   ref={(el) => {
@@ -115,18 +115,18 @@ export function ShelfWatchClient({ initialShelves }: { initialShelves: ShelfWatc
                   className="flex shrink-0 items-center gap-1.5 rounded-lg border border-brand px-2.5 py-1.5 text-xs font-medium text-brand disabled:opacity-60"
                 >
                   {isThisChecking ? <Loader2 size={13} className="animate-spin" /> : <Camera size={13} />}
-                  {isThisChecking ? "Check ho raha hai…" : "Photo"}
+                  {isThisChecking ? "Checking…" : "Photo"}
                 </button>
               </div>
 
               {result === "first" && (
                 <p className="flex items-center gap-1.5 text-xs text-muted">
-                  <CheckCircle2 size={13} /> Pehli photo save ho gayi — agli baar se comparison shuru hoga.
+                  <CheckCircle2 size={13} /> First photo saved — the next photo will be compared with it.
                 </p>
               )}
               {result === "none" && (
                 <p className="flex items-center gap-1.5 text-xs text-success">
-                  <CheckCircle2 size={13} /> Kuch bhi genuinely kam nahi dikh raha — sab theek lagta hai.
+                  <CheckCircle2 size={13} /> Nothing looks low — all good.
                 </p>
               )}
               {Array.isArray(result) && (
@@ -146,7 +146,7 @@ export function ShelfWatchClient({ initialShelves }: { initialShelves: ShelfWatc
         })}
       </ul>
 
-      {shelves.length === 0 && <p className="py-6 text-center text-sm text-muted">Abhi koi shelf add nahi ki — upar naam likh kar shuru karein.</p>}
+      {shelves.length === 0 && <p className="py-6 text-center text-sm text-muted">No shelves yet — type a name above to start.</p>}
     </div>
   );
 }

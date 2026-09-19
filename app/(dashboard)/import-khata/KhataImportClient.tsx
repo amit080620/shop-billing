@@ -179,7 +179,7 @@ export function KhataImportClient() {
                     <input
                       value={entry.phone}
                       onChange={(e) => updateEntry(entry.id, { phone: e.target.value.replace(/\D/g, "").slice(0, 10) })}
-                      placeholder="Phone (agar hai)"
+                      placeholder="Phone (optional)"
                       inputMode="numeric"
                       className="flex-1 rounded-lg border border-border px-2.5 py-1.5 text-xs outline-none focus:border-brand"
                     />
@@ -187,7 +187,7 @@ export function KhataImportClient() {
                       type="number"
                       value={entry.amount || ""}
                       onChange={(e) => updateEntry(entry.id, { amount: Number(e.target.value) || 0 })}
-                      placeholder="Kitna udhar hai (₹)"
+                      placeholder="Udhaar amount (₹)"
                       className="w-32 rounded-lg border border-border px-2.5 py-1.5 text-xs outline-none focus:border-brand"
                     />
                   </div>
@@ -199,7 +199,7 @@ export function KhataImportClient() {
             ))}
           </ul>
           <button onClick={saveAll} disabled={isSaving} className="btn-primary disabled:opacity-60">
-            {isSaving ? "Save kar rahe hain…" : `${entries.filter((e) => e.include).length} customer import karein`}
+            {isSaving ? "Saving…" : `Import ${entries.filter((e) => e.include).length} customers`}
           </button>
         </>
       )}

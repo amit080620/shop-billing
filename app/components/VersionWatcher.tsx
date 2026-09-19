@@ -52,12 +52,12 @@ export function VersionWatcher() {
 
   return (
     <div className="fixed inset-x-0 bottom-[calc(var(--bottom-nav-h)+env(safe-area-inset-bottom)+12px)] z-50 mx-auto flex w-fit max-w-[90%] items-center gap-3 rounded-full bg-foreground px-4 py-2.5 text-background shadow-lg md:bottom-4">
-      <span className="text-xs font-medium">Naya version aa gaya hai</span>
+      <span className="text-xs font-medium">A new version is available</span>
       <button
         onClick={() => window.location.reload()}
         className="flex shrink-0 items-center gap-1.5 rounded-full bg-background px-3 py-1.5 text-xs font-semibold text-foreground"
       >
-        <RefreshCw size={12} /> Refresh karein
+        <RefreshCw size={12} /> Refresh
       </button>
     </div>
   );

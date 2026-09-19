@@ -512,6 +512,33 @@ label.neu-card:active {
     opacity: 0.5;
   }
 
+  /* Main actions on the bill page (Print, PDF). That page is always
+     light, since it shows the printed invoice. */
+  .bill-action {
+    display: inline-flex;
+    width: 100%;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    border-radius: 0.75rem;
+    border: 1px solid #e5e7eb;
+    background: #fff;
+    padding: 0.7rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #1f2937;
+    transition: background-color 0.15s ease, transform 0.1s ease;
+  }
+  .bill-action:hover:not(:disabled) {
+    background: #f9fafb;
+  }
+  .bill-action:active:not(:disabled) {
+    transform: scale(0.98);
+  }
+  .bill-action:disabled {
+    opacity: 0.6;
+  }
+
   /* Destructive — reserved for genuinely irreversible actions (void,
      delete). Danger-colored, but not screaming — a soft-tinted
      background rather than a solid red block, so it doesn't compete

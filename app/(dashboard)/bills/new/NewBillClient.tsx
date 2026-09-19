@@ -384,9 +384,9 @@ export function NewBillClient({
         if (matched) {
           setCustomerMode("existing");
           setSelectedCustomer(matched);
-          customerNote = ` Bill ${matched.name} ke naam par hai.`;
+          customerNote = ` Billed to ${matched.name}.`;
         } else {
-          customerNote = ` "${result.customer.spokenName}" naam ka customer nahi mila — haath se chunein.`;
+          customerNote = ` No customer named "${result.customer.spokenName}" — pick one by hand.`;
         }
       }
 

@@ -146,9 +146,9 @@ export function FastBillingClient({
       if (result.customer) {
         if (result.customer.matchedId) {
           setVoiceCustomer({ id: result.customer.matchedId, name: result.customer.matchedName!, phone: result.customer.matchedPhone, loyaltyPoints: result.customer.matchedLoyaltyPoints });
-          customerNote = ` Bill ${result.customer.matchedName} ke naam par hai.`;
+          customerNote = ` Billed to ${result.customer.matchedName}.`;
         } else {
-          customerNote = ` "${result.customer.spokenName}" naam ka customer nahi mila — haath se chunein.`;
+          customerNote = ` No customer named "${result.customer.spokenName}" — pick one by hand.`;
         }
       }
 

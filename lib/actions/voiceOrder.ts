@@ -54,7 +54,7 @@ export async function parseVoiceOrderAction(transcript: string): Promise<{
   if (!transcript.trim()) return { items: [] };
 
   const quota = await checkAiQuota(session.shopId, "voice");
-  if (!quota.allowed) return { error: "Aaj ke liye voice billing ki daily limit khatam ho gayi.", errorType: "quota_exceeded" };
+  if (!quota.allowed) return { error: "Today's voice billing limit is used up. Try again tomorrow.", errorType: "quota_exceeded" };
 
   const admin = createSupabaseAdminClient();
   const [products, customers] = await Promise.all([

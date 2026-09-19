@@ -78,9 +78,11 @@ export default async function CustomerLedgerPage({
   const { data: items } = billIds.length
     ? await admin
         .from("bill_items")
-        .select("bill_id, product_name, quantity, unit_price, line_total")
+        .select("bill_id, product_name, quantity, unit_price, line_total, warranty_expires_on")
         .in("bill_id", billIds)
-    : { data: [] as { bill_id: string; product_name: string; quantity: number; unit_price: number; line_total: number }[] };
+    : { data: [] as { bill_id: string; product_name: string; quantity: number; unit_price: number; line_total: number; warranty_expires_on: string | null }[] };
+  // Warranty card links only for customers who bought something with a warranty.
+  const hasWarranty = (items ?? []).some((i) => !!i.warranty_expires_on);
 
   const itemsByBill = new Map<string, { name: string; quantity: number; unitPrice: number; lineTotal: number }[]>();
   for (const item of items ?? []) {
@@ -100,6 +102,7 @@ export default async function CustomerLedgerPage({
     <LedgerClient
       lang={lang}
       isOwner={session.role === "owner"}
+      hasWarranty={hasWarranty}
       specialty={specialty}
       growthLogs={(growthLogs ?? []).map((g) => ({
         id: g.id,

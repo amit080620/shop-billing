@@ -37,7 +37,7 @@ export function RedisStatusClient() {
       <div className={`flex flex-col items-center gap-2 rounded-2xl p-6 text-center text-white ${success ? "bg-gradient-to-br from-success to-emerald-700" : "bg-gradient-to-br from-danger to-[#7c1d1d]"}`}>
         {success ? <CheckCircle2 size={36} /> : <XCircle size={36} />}
         <p className="text-lg font-bold">{success ? "Connected ✅" : "Connect Nahi Hua ❌"}</p>
-        <p className="text-xs opacity-90">{success ? "Redis mein genuinely likha aur wapas padha gaya — sab kaam kar raha hai." : "Neeche exact wajah dekhein"}</p>
+        <p className="text-xs opacity-90">{success ? "Wrote to Redis and read it back — everything works." : "See the exact reason below"}</p>
       </div>
 
       <div className="neu-card flex flex-col gap-3 p-4">
@@ -55,7 +55,7 @@ export function RedisStatusClient() {
       )}
 
       <button onClick={runTest} className="flex items-center justify-center gap-1.5 rounded-lg border border-brand px-3 py-2.5 text-sm font-medium text-brand">
-        <RotateCcw size={14} /> Dobara test karein
+        <RotateCcw size={14} /> Test again
       </button>
     </div>
   );

@@ -102,7 +102,7 @@ export function PosterClient({ shopName, initialOccasion }: { shopName: string; 
           />
         </label>
         <label className="flex flex-col gap-1.5 text-sm">
-          <span className="font-medium text-foreground">Discount % (agar hai)</span>
+          <span className="font-medium text-foreground">Discount % (optional)</span>
           <input
             type="number"
             value={discountPercent}
@@ -112,7 +112,7 @@ export function PosterClient({ shopName, initialOccasion }: { shopName: string; 
           />
         </label>
         <div className="flex flex-col gap-1.5">
-          <span className="text-sm font-medium text-foreground">Design chunein</span>
+          <span className="text-sm font-medium text-foreground">Choose a design</span>
           <div className="flex gap-2">
             {THEMES.map((t, i) => (
               <button
@@ -127,7 +127,7 @@ export function PosterClient({ shopName, initialOccasion }: { shopName: string; 
         </div>
         <button onClick={generate} disabled={isGenerating} className="btn-primary flex items-center justify-center gap-2 disabled:opacity-60">
           {isGenerating ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
-          {isGenerating ? "Likh rahe hain…" : text ? "Dobara likhein" : "Poster banayein"}
+          {isGenerating ? "Writing…" : text ? "Write again" : "Create poster"}
         </button>
         {error && <p className="text-sm text-danger">{error}</p>}
       </div>
@@ -167,10 +167,10 @@ export function PosterClient({ shopName, initialOccasion }: { shopName: string; 
           </div>
           <div className="flex gap-2">
             <button onClick={download} className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-brand px-3 py-2.5 text-sm font-medium text-brand">
-              <Download size={16} /> Download karein
+              <Download size={16} /> Download
             </button>
             <button onClick={share} className="btn-primary flex flex-1 items-center justify-center gap-2">
-              <Share2 size={16} /> Share karein
+              <Share2 size={16} /> Share
             </button>
           </div>
         </>

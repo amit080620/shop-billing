@@ -59,6 +59,7 @@ export function LedgerClient({
   returns,
   lang,
   isOwner,
+  hasWarranty,
   specialty,
   growthLogs,
   photos,
@@ -71,6 +72,7 @@ export function LedgerClient({
   returns: Return[];
   lang: Lang;
   isOwner: boolean;
+  hasWarranty: boolean;
   specialty: string;
   growthLogs: { id: string; heightCm: number | null; weightKg: number | null; headCircumferenceCm: number | null; note: string | null; createdAt: string }[];
   photos: { id: string; photoUrl: string; label: string; note: string | null; createdAt: string }[];
@@ -120,68 +122,54 @@ export function LedgerClient({
             <h1 className="text-lg font-bold tracking-tight text-foreground md:text-2xl">{customer.name}</h1>
             <p className="text-sm text-muted">{customer.phone}</p>
           </div>
-          <div className="flex flex-col items-end gap-2">
-            <EditCustomerButton customer={customer} />
-            {isOwner && <DeleteCustomerButton customerId={customer.id} customerName={customer.name} />}
-          </div>
+          <EditCustomerButton customer={customer} />
         </div>
         <div className="mt-3 flex items-end justify-between">
           <div>
-            <p className="text-xs text-muted">Outstanding balance</p>
-            <p className={`text-2xl font-semibold ${balance > 0 ? "text-credit" : "text-foreground"}`}>
-              {formatMoney(balance)}
+            <p className="text-xs text-muted">{balance > 0 ? "To collect" : "Balance"}</p>
+            <p className={`text-3xl font-bold tracking-tight ${balance > 0 ? "text-credit" : "text-success"}`}>
+              {balance > 0 ? formatMoney(balance) : "Settled ✓"}
             </p>
-            <p className="mt-1 text-xs font-medium text-brand-text">
-              🎁 {customer.loyaltyPoints} loyalty point{customer.loyaltyPoints === 1 ? "" : "s"}
-            </p>
+            {customer.loyaltyPoints > 0 && (
+              <p className="mt-1 text-xs font-medium text-brand-text">
+                🎁 {customer.loyaltyPoints} loyalty point{customer.loyaltyPoints === 1 ? "" : "s"}
+              </p>
+            )}
           </div>
+        </div>
+
+        {activeBills.length > 0 && (
+          <div className="mt-3 grid grid-cols-2 gap-2 border-t border-border/60 pt-3 text-center">
+            <div>
+              <p className="text-[11px] text-muted">Total business</p>
+              <p className="text-sm font-semibold text-foreground">{formatMoney(totalBusiness)}</p>
+            </div>
+            <div className="border-l border-border/60">
+              <p className="text-[11px] text-muted">Total paid</p>
+              <p className="text-sm font-semibold text-success">{formatMoney(totalPaid)}</p>
+            </div>
+          </div>
+        )}
+        <div className="mt-4 flex gap-2">
+          <button onClick={() => setShowPaymentForm(true)} className="btn-primary flex-1 !py-3 text-sm">
+            + Payment received
+          </button>
           {balance > 0 && (
             <a
               href={whatsappHref}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-1.5 rounded-lg bg-[#25D366] px-3.5 py-2 text-sm font-medium text-white"
+              className="flex items-center justify-center gap-1.5 rounded-[var(--radius)] bg-[#25D366] px-4 py-3 text-sm font-semibold text-white"
             >
               <WhatsAppIcon />
               Remind
             </a>
           )}
         </div>
-
-        {activeBills.length > 0 && (
-          <div className="mt-3 grid grid-cols-3 gap-2 border-t border-border/60 pt-3 text-center">
-            <div>
-              <p className="text-[11px] text-muted">Total business</p>
-              <p className="text-sm font-semibold text-foreground">{formatMoney(totalBusiness)}</p>
-            </div>
-            <div className="border-x border-border/60">
-              <p className="text-[11px] text-muted">Total paid</p>
-              <p className="text-sm font-semibold text-success">{formatMoney(totalPaid)}</p>
-            </div>
-            <div>
-              <p className="text-[11px] text-muted">Currently on udhar</p>
-              <p className={`text-sm font-semibold ${balance > 0 ? "text-credit" : "text-success"}`}>{formatMoney(balance)}</p>
-            </div>
-          </div>
-        )}
-        <div className="mt-3 flex flex-col gap-2">
-          <div className="flex gap-2">
-            <Link
-              href={`/khata/${customer.id}`}
-              target="_blank"
-              className="flex-1 rounded-lg bg-brand-soft px-3 py-2 text-center text-xs font-medium text-brand-text"
-            >
+        <div className="mt-2 flex flex-wrap items-center justify-center gap-x-1 gap-y-1 text-xs">
+            <Link href={`/khata/${customer.id}`} target="_blank" className="rounded-md px-2.5 py-1.5 font-medium text-brand-text">
               View khata
             </Link>
-            <Link
-              href={`/warranty-card/${customer.id}`}
-              target="_blank"
-              className="flex-1 rounded-lg bg-brand-soft px-3 py-2 text-center text-xs font-medium text-brand-text"
-            >
-              View warranty
-            </Link>
-          </div>
-          <div className="flex gap-2">
             <button
               onClick={() => {
                 const link = `${window.location.origin}/khata/${customer.id}`;
@@ -193,11 +181,17 @@ export function LedgerClient({
                 ].join("\n");
                 window.open(buildWhatsAppLink(customer.phone, message), "_blank");
               }}
-              className="flex-1 rounded-lg border border-border px-3 py-2 text-xs font-medium text-foreground"
+              className="rounded-md px-2.5 py-1.5 font-medium text-brand-text"
             >
               Share khata
             </button>
-            <button
+            <DownloadStatementButton customer={customer} shopName={shopName} balance={balance} bills={bills} payments={payments} />
+            {hasWarranty && (
+              <Link href={`/warranty-card/${customer.id}`} target="_blank" className="rounded-md px-2.5 py-1.5 font-medium text-brand-text">
+                Warranty card
+              </Link>
+            )}
+            {hasWarranty && <button
               onClick={() => {
                 const link = `${window.location.origin}/warranty-card/${customer.id}`;
                 const message = [
@@ -208,33 +202,19 @@ export function LedgerClient({
                 ].join("\n");
                 window.open(buildWhatsAppLink(customer.phone, message), "_blank");
               }}
-              className="flex-1 rounded-lg border border-border px-3 py-2 text-xs font-medium text-foreground"
+              className="rounded-md px-2.5 py-1.5 font-medium text-brand-text"
             >
               Share warranty
-            </button>
-          </div>
+            </button>}
         </div>
       </div>
 
       {specialty === "pediatric" && <GrowthChart patientId={customer.id} logs={growthLogs} />}
       {specialty === "dermatology" && <PatientPhotos patientId={customer.id} photos={photos} />}
 
-      <div className="flex gap-2">
-        <button
-          onClick={() => setShowPaymentForm((v) => !v)}
-          className="flex-1 rounded-lg border border-border px-4 py-2.5 text-sm font-medium text-foreground"
-        >
-          {showPaymentForm ? "Cancel" : "+ Record a payment"}
-        </button>
-        <DownloadStatementButton customer={customer} shopName={shopName} balance={balance} bills={bills} payments={payments} />
-      </div>
-      <p className="text-xs text-muted">
-        Tap any bill below to see exactly what was bought that day — a full itemized statement
-        (downloadable above) keeps monthly settlement transparent for regular udhaar customers.
-      </p>
 
       {showPaymentForm && (
-        <Popup open={showPaymentForm} onClose={() => setShowPaymentForm(false)} title="Record a payment">
+        <Popup open={showPaymentForm} onClose={() => setShowPaymentForm(false)} title="Payment received">
         <form
           action={formAction}
           className="flex flex-col gap-3"
@@ -390,6 +370,13 @@ export function LedgerClient({
             ))}
           </ul>
         </section>
+      )}
+
+      {/* Rarely needed and irreversible, so it sits at the very end. */}
+      {isOwner && (
+        <div className="flex justify-center pt-2">
+          <DeleteCustomerButton customerId={customer.id} customerName={customer.name} />
+        </div>
       )}
     </div>
   );

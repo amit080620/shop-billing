@@ -135,13 +135,13 @@ export function DownloadStatementButton({
   }
 
   return (
-    <div className="flex flex-1 flex-col items-center gap-1">
+    <div className="flex flex-col items-center gap-1">
       <button
         onClick={handleDownload}
         disabled={isGenerating || bills.length === 0}
-        className="w-full rounded-lg border border-border px-4 py-2.5 text-sm font-medium text-foreground disabled:opacity-50"
+        className="rounded-md px-2.5 py-1.5 text-xs font-medium text-brand-text disabled:opacity-50"
       >
-        {isGenerating ? "Preparing…" : "Download statement"}
+        {isGenerating ? "Preparing…" : "Statement PDF"}
       </button>
       {error && <p className="text-xs text-credit">{error}</p>}
     </div>

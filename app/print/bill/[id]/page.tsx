@@ -269,17 +269,25 @@ export default async function PrintBillPage({
           </Link>
         </div>
 
-        <div className="flex flex-wrap items-start gap-2">
-          {isThermal ? <BluetoothPrintButton receipt={receiptData} paperWidth={is58mm ? 32 : 48} /> : <PrintButton />}
-          <DownloadImageButton invoiceNumber={bill.invoice_number} upiLink={upiLink} isThermal={isThermal} />
-          <div role="group" aria-label="Paper size" className="flex rounded-full border border-gray-200 bg-gray-50 p-0.5">
-            <FormatPill href={`/print/bill/${id}?format=full`} label="A4" active={!isThermal} />
-            <FormatPill href={`/print/bill/${id}?format=thermal58`} label="58mm" active={is58mm} />
-            <FormatPill href={`/print/bill/${id}?format=thermal`} label="80mm" active={isThermal && !is58mm} />
+        <section className="flex flex-col gap-3 rounded-2xl border border-gray-200 bg-gray-50/70 p-3.5">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="truncate text-sm font-semibold text-gray-900">{customer?.name ?? "Walk-in customer"}</p>
+            <p className="text-xs text-gray-500">
+              {bill.invoice_number} · {formatDateTime(bill.created_at)}
+            </p>
+          </div>
+          <div className="shrink-0 text-right">
+            <p className="text-lg font-bold leading-tight text-gray-900">{formatMoney(bill.total)}</p>
+            {Number(bill.credit_amount) > 0 ? (
+              <p className="text-xs font-medium text-amber-700">{formatMoney(bill.credit_amount)} due</p>
+            ) : (
+              <p className="text-xs font-medium text-emerald-700">Paid</p>
+            )}
           </div>
         </div>
 
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1.5 [&>*:first-child]:flex-1">
           <WhatsAppSendButton
             lang={lang}
             customerName={customer?.name ?? null}
@@ -295,8 +303,23 @@ export default async function PrintBillPage({
           <InfoTooltip message="WhatsApp text messages can't carry a file — download the PDF, then attach it yourself in the WhatsApp chat for a clean copy. If there's a balance due, the QR area in that PDF is also tappable in most PDF viewers, opening the customer's UPI app directly." />
         </div>
 
+        <div className="grid grid-cols-2 items-start gap-2">
+          {isThermal ? <BluetoothPrintButton receipt={receiptData} paperWidth={is58mm ? 32 : 48} /> : <PrintButton />}
+          <DownloadImageButton invoiceNumber={bill.invoice_number} upiLink={upiLink} isThermal={isThermal} />
+        </div>
+
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-xs font-medium text-gray-500">Paper size</span>
+          <div role="group" aria-label="Paper size" className="flex rounded-full border border-gray-200 bg-white p-0.5">
+            <FormatPill href={`/print/bill/${id}?format=full`} label="A4" active={!isThermal} />
+            <FormatPill href={`/print/bill/${id}?format=thermal58`} label="58mm" active={is58mm} />
+            <FormatPill href={`/print/bill/${id}?format=thermal`} label="80mm" active={isThermal && !is58mm} />
+          </div>
+        </div>
+        </section>
+
         {bill.status === "active" && (
-          <div className="flex flex-wrap gap-2 border-t border-gray-100 pt-3">
+          <div className="flex flex-wrap gap-2">
             {hasPermission(session, "process_returns") && (
               <Link
                 href={`/returns/new?billId=${bill.id}`}

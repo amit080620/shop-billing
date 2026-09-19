@@ -104,7 +104,7 @@ export function BulkSaleEntryClient() {
       </button>
 
       <button onClick={saveAll} disabled={isSaving} className="btn-primary disabled:opacity-60">
-        {isSaving ? "Save kar rahe hain…" : `${rows.filter((r) => r.name.trim() && r.amount > 0).length} sale save karein`}
+        {isSaving ? "Saving…" : `Save ${rows.filter((r) => r.name.trim() && r.amount > 0).length} sales`}
       </button>
     </div>
   );

@@ -191,7 +191,7 @@ export default async function MorePage() {
           <MenuLink href="/loyalty-settings" label="Loyalty program" sub="Reward regulars for coming back" icon={Gift} />
           <MenuLink href="/birthdays" label="Birthdays" sub="Wish customers, bring them back" icon={Cake} />
           <MenuLink href="/festivals" label="Festival planner" sub="Upcoming festivals, stock-up hints & posters" icon={PartyPopper} />
-          <MenuLink href="/profit-leak" label="Profit leak detector" sub="Aapka paisa kahan phansa hai — ek nazar mein" icon={TrendingDown} />
+          <MenuLink href="/profit-leak" label="Profit leak detector" sub="Where your money is stuck, at a glance" icon={TrendingDown} />
           <MenuLink href="/shelf-watch" label="Ankhon se Inventory" sub="Shelf ki photo se stock-kami turant pata chale" icon={ScanEye} />
           <MenuLink href="/requests" label={t("more.requests")} sub={t("more.requests.sub")} icon={Bell} />
         </MenuGroup>

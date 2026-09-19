@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { FileDown } from "lucide-react";
 
 // 1 CSS px = 0.264583mm at the standard 96dpi reference used by browsers.
 const PX_TO_MM = 0.264583;
@@ -87,13 +88,9 @@ export function DownloadImageButton({
   }
 
   return (
-    <div className="flex flex-col items-start gap-1">
-      <button
-        onClick={handleDownload}
-        disabled={isGenerating}
-        className="rounded-full border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-60"
-        style={{ boxShadow: "-2px -2px 4px rgba(255,255,255,0.9), 2px 2px 4px rgba(0,0,0,0.1)" }}
-      >
+    <div className="flex w-full flex-col gap-1">
+      <button onClick={handleDownload} disabled={isGenerating} className="bill-action">
+        <FileDown size={15} />
         {isGenerating ? "Preparing…" : "Download PDF"}
       </button>
       {error && <p className="text-xs text-credit">{error}</p>}

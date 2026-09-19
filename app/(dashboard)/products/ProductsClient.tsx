@@ -18,7 +18,7 @@ import {
   generateBarcodeAction,
   uploadProductImageAction,
 } from "@/lib/actions/products";
-import { Package, Camera, Tag, ShieldCheck, Layers, Sparkles, Loader2 } from "lucide-react";
+import { Package, Camera, Tag, ShieldCheck, Layers, Sparkles, Loader2, Pencil, Trash2 } from "lucide-react";
 import { suggestProductPriceAction } from "@/lib/actions/priceSuggestion";
 import { formatMoney, unitLabel } from "@/lib/format";
 import { EmptyState } from "@/app/components/EmptyState";
@@ -222,8 +222,9 @@ export function ProductsClient({
 
   async function handleGenerateBarcode(productId: string) {
     setGeneratingBarcodeFor(productId);
-    await generateBarcodeAction(productId);
+    const result = await generateBarcodeAction(productId);
     setGeneratingBarcodeFor(null);
+    if (result.barcode && barcodeRef.current) barcodeRef.current.value = result.barcode;
     router.refresh();
   }
 
@@ -412,7 +413,7 @@ export function ProductsClient({
                     return;
                   }
                   if (!result.suggestion) {
-                    setPriceSuggestionNote(result.error ?? "Suggest nahi kar paye.");
+                    setPriceSuggestionNote(result.error ?? "Couldn't suggest a price.");
                     return;
                   }
                   const { price, gstPercent, reasoning } = result.suggestion;
@@ -424,12 +425,12 @@ export function ProductsClient({
                     const gstSelect = document.getElementById("product-gst-select") as HTMLSelectElement | null;
                     if (gstSelect) gstSelect.value = String(gstPercent);
                   }
-                  setPriceSuggestionNote(reasoning || (price === null ? "Similar product catalog mein nahi mila." : "Suggested — verify kar lein."));
+                  setPriceSuggestionNote(reasoning || (price === null ? "No similar product found in the catalog." : "Suggested — please check it."));
                 }}
                 className="flex w-fit items-center gap-1.5 rounded-lg border border-dashed border-brand px-2.5 py-1.5 text-xs font-medium text-brand disabled:opacity-60"
               >
                 {isSuggestingPrice ? <Loader2 size={13} className="animate-spin" /> : <Sparkles size={13} />}
-                {isSuggestingPrice ? "Dekh rahe hain…" : "Price/GST suggest karein (AI)"}
+                {isSuggestingPrice ? "Looking…" : "Suggest price & GST (AI)"}
               </button>
               {priceSuggestionNote && <p className="text-[11px] text-muted">{priceSuggestionNote}</p>}
             </div>
@@ -544,6 +545,16 @@ export function ProductsClient({
                   placeholder={t("products.barcodePlaceholder")}
                   className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-brand"
                 />
+                {editingProduct && !editingProduct.barcode && (
+                  <button
+                    type="button"
+                    onClick={() => handleGenerateBarcode(editingProduct.id)}
+                    disabled={generatingBarcodeFor === editingProduct.id}
+                    className="self-start text-xs font-medium text-brand-text disabled:opacity-60"
+                  >
+                    {generatingBarcodeFor === editingProduct.id ? t("products.generating") : `+ ${t("products.generateBarcode")}`}
+                  </button>
+                )}
                 {barcodeScanMode !== "hardware" && barcodeScanMode !== "off" && (
                   <CameraBarcodeScanner
                     label={t("products.scanWithCamera")}
@@ -834,9 +845,6 @@ export function ProductsClient({
 
       {deleteError && <p className="rounded-lg bg-credit-soft px-3.5 py-2.5 text-sm text-credit">{deleteError}</p>}
       {imageError && <p className="rounded-lg bg-credit-soft px-3.5 py-2.5 text-sm text-credit">{imageError}</p>}
-      {filtered.length > 0 && (
-        <p className="flex items-center gap-1 text-xs text-muted"><Camera size={12} /> Tap a photo icon to add a picture — any size, auto-cropped square.</p>
-      )}
 
       {filtered.length === 0 ? (
         <EmptyState
@@ -857,7 +865,7 @@ export function ProductsClient({
                 className={`neu-card flex items-center justify-between gap-3 px-3.5 py-3 ${deletingId === p.id && blockedProductId !== p.id ? "animate-delete" : ""}`}
                 style={tone ? { borderLeft: `3px solid ${TONE_COLORS[tone]}` } : undefined}
               >
-                <label className="relative flex h-12 w-12 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-lg border border-dashed border-border bg-background text-[10px] text-muted">
+                <label title="Add a photo" aria-label={`Add a photo of ${p.name}`} className="relative flex h-12 w-12 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-lg border border-dashed border-border bg-background text-[10px] text-muted">
                   {p.imageUrl ? (
                     <Image src={p.imageUrl} alt="" fill sizes="48px" className="object-cover" />
                   ) : uploadingImageFor === p.id ? (
@@ -876,7 +884,15 @@ export function ProductsClient({
                     }}
                   />
                 </label>
-                <div className="min-w-0 flex-1">
+                <div
+                  className="min-w-0 flex-1 cursor-pointer"
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => openEditProductForm(p)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") openEditProductForm(p);
+                  }}
+                >
                   <p className="truncate text-sm font-medium text-foreground">{p.name}</p>
                   <p className="text-xs text-muted">
                     {p.categoryName ?? t("products.noCategory")} · GST {p.gstPercent}% · {unitLabel(p.unit)}
@@ -923,15 +939,6 @@ export function ProductsClient({
                       {t("products.manageBatches")}{p.requiresPrescription ? " · Rx" : ""}
                     </a>
                   )}
-                  {!p.barcode && (
-                    <button
-                      onClick={() => handleGenerateBarcode(p.id)}
-                      disabled={generatingBarcodeFor === p.id}
-                      className="mt-1 text-xs font-medium text-muted hover:text-brand disabled:opacity-60"
-                    >
-                      {generatingBarcodeFor === p.id ? t("products.generating") : t("products.generateBarcode")}
-                    </button>
-                  )}
                   {p.trackInventory && tone && (
                     <span
                       className="mt-1 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium"
@@ -953,12 +960,14 @@ export function ProductsClient({
                   <p className="text-sm font-semibold text-foreground">
                     {formatMoney(p.price)}
                   </p>
-                  <div className="flex gap-2">
+                  <div className="flex items-center gap-1">
                     <button
                       onClick={() => openEditProductForm(p)}
-                      className="text-xs font-medium text-brand"
+                      aria-label={`${t("products.edit")} ${p.name}`}
+                      title={t("products.edit")}
+                      className="rounded-md p-1.5 text-muted hover:bg-surface-2 hover:text-brand-text"
                     >
-                      {t("products.edit")}
+                      <Pencil size={15} />
                     </button>
                     <button
                       disabled={isPending}
@@ -973,9 +982,11 @@ export function ProductsClient({
                           if (!result?.error) showToast("Item deleted", "info");
                         });
                       }}
-                      className="text-xs font-medium text-muted hover:text-danger disabled:opacity-50"
+                      aria-label={`${t("products.delete")} ${p.name}`}
+                      title={t("products.delete")}
+                      className="rounded-md p-1.5 text-muted hover:bg-danger-soft hover:text-danger disabled:opacity-50"
                     >
-                      {t("products.delete")}
+                      <Trash2 size={15} />
                     </button>
                     {isOwner && blockedProductId === p.id && (
                       <button

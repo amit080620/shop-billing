@@ -152,7 +152,7 @@ export function FloatingAssistant({ enabled }: { enabled: boolean }) {
         style={{ touchAction: "none", cursor: "grab" }}
       >
         <span className="flex items-center gap-1.5 text-sm font-semibold text-white">
-          <Sparkles size={14} /> Apni dukaan ke baare mein poochein
+          <Sparkles size={14} /> Ask about your shop
         </span>
         <button onPointerDown={(e) => e.stopPropagation()} onClick={() => setOpen(false)} aria-label="Close assistant" className="rounded-full p-1 text-white/80 hover:text-white">
           <X size={18} />
@@ -162,7 +162,7 @@ export function FloatingAssistant({ enabled }: { enabled: boolean }) {
       {notConfigured ? (
         <div className="flex flex-1 flex-col items-center justify-center gap-2 p-4 text-center">
           <Sparkles size={22} className="text-muted" />
-          <p className="text-sm font-medium text-foreground">Assistant abhi set up nahi hai</p>
+          <p className="text-sm font-medium text-foreground">The assistant is not set up yet</p>
           <p className="text-xs text-muted">Free Groq API key set up karni hogi (scan features se alag).</p>
         </div>
       ) : (

@@ -56,17 +56,14 @@ export function BluetoothPrintButton({ receipt, paperWidth }: { receipt: Receipt
   }
 
   return (
-    <div className="flex flex-col gap-1">
-      <div className="flex items-center gap-1.5">
+    <div className="flex w-full flex-col gap-1">
+      <div className="flex w-full items-center gap-1.5">
         <button
           onClick={handlePrint}
           disabled={status === "connecting"}
-          className={`flex items-center justify-center gap-1.5 rounded-full border border-brand px-3 py-1.5 text-xs font-medium text-brand disabled:opacity-60 ${
-            status === "done" ? "animate-save-success" : ""
-          }`}
-          style={{ boxShadow: "-2px -2px 4px rgba(255,255,255,0.9), 2px 2px 4px rgba(0,0,0,0.08)" }}
+          className={`bill-action flex-1 !border-brand !text-brand ${status === "done" ? "animate-save-success" : ""}`}
         >
-          <Printer size={13} />
+          <Printer size={15} />
           {status === "connecting" ? "Printing…" : status === "done" ? "Printed ✓" : "Print"}
         </button>
         {bluetoothSupported && remembered && status !== "connecting" && (

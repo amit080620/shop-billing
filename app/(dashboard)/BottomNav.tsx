@@ -16,9 +16,12 @@ import {
   Stethoscope,
   Zap,
   CalendarPlus,
+  House,
+  Users,
 } from "lucide-react";
 import { useTranslation } from "@/lib/i18n/useTranslation";
 import { activeTabHref } from "@/lib/activeTab";
+import { mobileTabs } from "@/lib/mobileTabs";
 import type { Lang } from "@/lib/i18n/dictionary";
 
 export function tabsFor(businessType: string, t: (key: string) => string, permissions: string[] = [], fastBillingEnabled = false) {
@@ -129,7 +132,10 @@ export function tabsFor(businessType: string, t: (key: string) => string, permis
 export function BottomNav({ lang, businessType, permissions = [], fastBillingEnabled = false }: { lang: Lang; businessType: string; permissions?: string[]; fastBillingEnabled?: boolean }) {
   const pathname = usePathname();
   const { t } = useTranslation(lang);
-  const tabs = tabsFor(businessType, t, permissions, fastBillingEnabled);
+  const tabs = mobileTabs(tabsFor(businessType, t, permissions, fastBillingEnabled), {
+    home: { href: "/dashboard", label: t("nav.home"), icon: HomeIcon },
+    customers: { href: "/customers", label: t("nav.customers"), icon: CustomersIcon },
+  });
   const activeHref = activeTabHref(pathname, tabs.map((tab) => tab.href));
 
   return (
@@ -164,6 +170,12 @@ export function BottomNav({ lang, businessType, permissions = [], fastBillingEna
   );
 }
 
+function HomeIcon({ active }: { active: boolean }) {
+  return <House size={22} strokeWidth={active ? 2.3 : 1.8} />;
+}
+function CustomersIcon({ active }: { active: boolean }) {
+  return <Users size={22} strokeWidth={active ? 2.3 : 1.8} />;
+}
 function SellIcon({ active }: { active: boolean }) {
   return <Receipt size={22} strokeWidth={active ? 2.3 : 1.8} />;
 }

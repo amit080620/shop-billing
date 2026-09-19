@@ -205,7 +205,7 @@ export function SalesHistoryImportClient() {
             ))}
           </ul>
           <button onClick={saveAll} disabled={isSaving} className="btn-primary disabled:opacity-60">
-            {isSaving ? "Save kar rahe hain…" : `${entries.filter((e) => e.include).length} sale import karein`}
+            {isSaving ? "Saving…" : `Import ${entries.filter((e) => e.include).length} sales`}
           </button>
         </>
       )}
