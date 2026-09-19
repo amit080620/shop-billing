@@ -40,7 +40,7 @@ export function EditBillButton({ billId, invoiceNumber, items }: { billId: strin
     <>
       <button
         onClick={() => setOpen(true)}
-        className="no-print inline-flex items-center gap-1 rounded-full border border-brand px-3 py-1.5 text-xs font-medium text-brand-text"
+        className="no-print inline-flex items-center gap-1 rounded-full border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50"
       >
         <span className="flex items-center gap-1">
           {/* eslint-disable-next-line @next/next/no-img-element -- small branded SVG icon */}

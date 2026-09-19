@@ -7,14 +7,14 @@ export function PrintButton() {
   const [justClicked, setJustClicked] = useState(false);
 
   return (
-    <div className="no-print flex flex-col items-end gap-1">
+    <div className="no-print flex flex-col items-start gap-1">
       <button
         onClick={() => {
           setJustClicked(true);
           window.print();
           setTimeout(() => setJustClicked(false), 900);
         }}
-        className={`rounded-full bg-black px-3 py-1.5 text-xs font-medium text-white transition-transform active:scale-90 ${justClicked ? "animate-save-success" : ""}`}
+        className={`rounded-full bg-gray-900 px-4 py-1.5 text-xs font-semibold text-white transition-transform active:scale-95 ${justClicked ? "animate-save-success" : ""}`}
         style={{ boxShadow: "-2px -2px 4px rgba(255,255,255,0.15), 2px 2px 6px rgba(0,0,0,0.35)" }}
       >
         {justClicked ? "Printing…" : "Print"}

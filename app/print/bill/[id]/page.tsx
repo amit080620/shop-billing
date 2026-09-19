@@ -256,8 +256,29 @@ export default async function PrintBillPage({
           </span>
         </div>
       )}
-      <div className="no-print mb-4 flex flex-col gap-2.5">
-        {/* Row 1: WhatsApp */}
+      <div className="no-print mb-6 flex flex-col gap-3">
+        {/* Next step first: at the counter the very next thing is usually
+            another sale. "/" routes to the right billing screen for this
+            business type. */}
+        <div className="flex items-center justify-between gap-3">
+          <Link href="/bills/all" className="text-sm font-medium text-gray-500 hover:text-gray-900">
+            ← All bills
+          </Link>
+          <Link href="/" className="btn-primary-sm">
+            + New bill
+          </Link>
+        </div>
+
+        <div className="flex flex-wrap items-start gap-2">
+          {isThermal ? <BluetoothPrintButton receipt={receiptData} paperWidth={is58mm ? 32 : 48} /> : <PrintButton />}
+          <DownloadImageButton invoiceNumber={bill.invoice_number} upiLink={upiLink} isThermal={isThermal} />
+          <div role="group" aria-label="Paper size" className="flex rounded-full border border-gray-200 bg-gray-50 p-0.5">
+            <FormatPill href={`/print/bill/${id}?format=full`} label="A4" active={!isThermal} />
+            <FormatPill href={`/print/bill/${id}?format=thermal58`} label="58mm" active={is58mm} />
+            <FormatPill href={`/print/bill/${id}?format=thermal`} label="80mm" active={isThermal && !is58mm} />
+          </div>
+        </div>
+
         <div className="flex items-center gap-1.5">
           <WhatsAppSendButton
             lang={lang}
@@ -271,35 +292,29 @@ export default async function PrintBillPage({
             creditAmount={Number(bill.credit_amount)}
             upiLink={upiLink}
           />
-          <InfoTooltip message="WhatsApp text messages can't carry a file — download the PDF above, then attach it yourself in the WhatsApp chat for a clean copy. If there's a balance due, the QR area in that PDF is also tappable in most PDF viewers, opening the customer's UPI app directly." />
+          <InfoTooltip message="WhatsApp text messages can't carry a file — download the PDF, then attach it yourself in the WhatsApp chat for a clean copy. If there's a balance due, the QR area in that PDF is also tappable in most PDF viewers, opening the customer's UPI app directly." />
         </div>
 
-        {/* Row 2: All remaining actions as compact pills in a single flex-wrap row */}
-        <div className="flex flex-wrap gap-1.5">
-          <FormatPill href={`/print/bill/${id}?format=full`} label="A4" active={!isThermal} />
-          <FormatPill href={`/print/bill/${id}?format=thermal58`} label="58mm" active={is58mm} />
-          <FormatPill href={`/print/bill/${id}?format=thermal`} label="80mm" active={isThermal && !is58mm} />
-          <DownloadImageButton invoiceNumber={bill.invoice_number} upiLink={upiLink} isThermal={isThermal} />
-          {isThermal ? <BluetoothPrintButton receipt={receiptData} paperWidth={is58mm ? 32 : 48} /> : <PrintButton />}
-          {bill.status === "active" && hasPermission(session, "process_returns") && (
-            <Link
-              href={`/returns/new?billId=${bill.id}`}
-              className="no-print inline-flex items-center gap-1 rounded-full border border-brand px-3 py-1.5 text-xs font-medium text-brand-text"
-            >
-              ↩ Return
-            </Link>
-          )}
-          {hasPermission(session, "edit_bills") && bill.status === "active" && (
-            <EditBillButton
-              billId={bill.id}
-              invoiceNumber={bill.invoice_number}
-              items={(items ?? []).map((i) => ({ id: i.id, productName: i.product_name, quantity: Number(i.quantity) }))}
-            />
-          )}
-          {hasPermission(session, "void_bills") && bill.status === "active" && (
-            <VoidBillButton billId={bill.id} invoiceNumber={bill.invoice_number} />
-          )}
-        </div>
+        {bill.status === "active" && (
+          <div className="flex flex-wrap gap-2 border-t border-gray-100 pt-3">
+            {hasPermission(session, "process_returns") && (
+              <Link
+                href={`/returns/new?billId=${bill.id}`}
+                className="inline-flex items-center gap-1 rounded-full border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50"
+              >
+                ↩ Return
+              </Link>
+            )}
+            {hasPermission(session, "edit_bills") && (
+              <EditBillButton
+                billId={bill.id}
+                invoiceNumber={bill.invoice_number}
+                items={(items ?? []).map((i) => ({ id: i.id, productName: i.product_name, quantity: Number(i.quantity) }))}
+              />
+            )}
+            {hasPermission(session, "void_bills") && <VoidBillButton billId={bill.id} invoiceNumber={bill.invoice_number} />}
+          </div>
+        )}
       </div>
 
       {bill.status === "voided" && (
@@ -355,12 +370,8 @@ function FormatPill({ href, label, active }: { href: string; label: string; acti
   return (
     <a
       href={href}
-      className={`rounded-full px-3 py-1.5 text-xs font-medium ${active ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-700"}`}
-      style={
-        active
-          ? undefined
-          : { boxShadow: "-2px -2px 4px rgba(255,255,255,0.9), 2px 2px 4px rgba(0,0,0,0.1)" }
-      }
+      aria-current={active ? "true" : undefined}
+      className={`rounded-full px-3 py-1 text-xs font-medium ${active ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-900"}`}
     >
       {label}
     </a>

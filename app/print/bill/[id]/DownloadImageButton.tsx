@@ -91,7 +91,7 @@ export function DownloadImageButton({
       <button
         onClick={handleDownload}
         disabled={isGenerating}
-        className="rounded-full bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-700 disabled:opacity-60"
+        className="rounded-full border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-60"
         style={{ boxShadow: "-2px -2px 4px rgba(255,255,255,0.9), 2px 2px 4px rgba(0,0,0,0.1)" }}
       >
         {isGenerating ? "Preparing…" : "Download PDF"}

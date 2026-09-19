@@ -35,7 +35,7 @@ export function VoidBillButton({ billId, invoiceNumber }: { billId: string; invo
     return (
       <button
         onClick={() => setOpen(true)}
-        className="no-print rounded-full border border-danger px-3 py-1.5 text-xs font-medium text-danger"
+        className="no-print rounded-full border border-red-200 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50"
       >
         Void invoice
       </button>
