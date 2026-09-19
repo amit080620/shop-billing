@@ -129,6 +129,16 @@ const TERMINOLOGY: Record<BusinessType, Terminology> = {
   },
 };
 
+/** The screen a business lands on when it opens the app — its everyday
+ * "make a sale" screen. Matches the first bottom-nav tab (BottomNav.tsx). */
+export function homePathFor(businessType: string, fastBillingEnabled = false): string {
+  if (businessType === "restaurant") return "/restaurant";
+  if (businessType === "clinic") return "/clinic/prescriptions/new";
+  if (businessType === "gym") return "/gym/members/new";
+  if (businessType === "lab") return "/lab/orders/new";
+  return fastBillingEnabled ? "/fast-billing" : "/bills/new";
+}
+
 export function getTerminology(businessType: string): Terminology {
   return TERMINOLOGY[businessType as BusinessType] ?? TERMINOLOGY.general;
 }

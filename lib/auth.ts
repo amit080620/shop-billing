@@ -25,6 +25,7 @@ export type SessionContext = {
   businessType: string;
   businessTypeLocked: boolean;
   enabledModules: string[] | null;
+  fastBillingEnabled: boolean;
 };
 
 /**
@@ -49,7 +50,7 @@ async function fetchStaffAndShop(userId: string) {
   const { data: staff, error } = await admin
     .from("staff")
     .select(
-      "id, name, role, permissions, shop_id, shops ( name, state_code, gstin, gst_scheme, price_includes_gst, logo_url, upi_id, subscription_valid_until, business_type, business_type_locked, enabled_modules )",
+      "id, name, role, permissions, shop_id, shops ( name, state_code, gstin, gst_scheme, price_includes_gst, logo_url, upi_id, subscription_valid_until, business_type, business_type_locked, enabled_modules, fast_billing_enabled )",
     )
     .eq("id", userId)
     .single();
@@ -170,6 +171,7 @@ export async function requireSession(): Promise<SessionContext> {
     businessType: shop?.business_type ?? "general",
     businessTypeLocked: shop?.business_type_locked ?? false,
     enabledModules: shop?.enabled_modules ?? null,
+    fastBillingEnabled: shop?.fast_billing_enabled ?? false,
   };
 }
 

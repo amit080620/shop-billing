@@ -28,6 +28,7 @@ const mockSession: SessionContext = {
   businessType: "grocery",
   businessTypeLocked: false,
   enabledModules: null,
+  fastBillingEnabled: false,
 };
 
 const genuineProduct = {

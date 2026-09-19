@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { requireOwner, requireSession } from "../auth";
+import { requireOwner, requireSession, revalidateStaffCache } from "../auth";
 import { createSupabaseAdminClient } from "../supabase/admin";
 import { shopSettingsSchema, LOGO_MAX_BYTES, LOGO_ALLOWED_TYPES } from "../validation/schemas";
 import { stateNameForCode } from "../constants/states";
@@ -254,6 +254,8 @@ export async function toggleFastBillingAction(enabled: boolean): Promise<{ error
     console.error("Could not toggle Fast Billing", error);
     return { error: "Could not save this setting" };
   }
+  // The flag rides on the cached session; drop it so the nav updates now.
+  await revalidateStaffCache(session.userId);
   revalidatePath("/more");
   revalidatePath("/fast-billing-settings");
   revalidatePath("/");

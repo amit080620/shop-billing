@@ -7,7 +7,13 @@ import { createSupabaseAdminClient } from "../supabase/admin";
 import { signupSchema, loginSchema } from "../validation/schemas";
 import { revalidateStaffCache } from "../auth";
 
-export type ActionState = { error?: string } | null;
+/** redirectTo: where the browser should go next. Login/signup finish with
+ * a full page load instead of a server-action redirect — the redirect path
+ * (action redirect, then "/" redirecting again) intermittently crashed the
+ * Next.js router ("Rendered more hooks…"), which surfaced on phones as
+ * "Application error" right after logging in. A full load also guarantees
+ * the freshly deployed app is what runs after login. */
+export type ActionState = { error?: string; redirectTo?: string } | null;
 
 export async function signupAction(
   _prev: ActionState,
@@ -90,7 +96,7 @@ export async function signupAction(
   }
 
   await revalidateStaffCache(authData.user.id);
-  redirect("/");
+  return { redirectTo: "/" };
 }
 
 export async function loginAction(
@@ -155,15 +161,15 @@ export async function loginAction(
 
   if (permissions.includes("kitchen_only")) {
     await revalidateStaffCache(authData.user.id);
-    redirect("/restaurant-kds");
+    return { redirectTo: "/restaurant-kds" };
   }
   if (staffRow && staffRow.role !== "owner" && shop?.business_type === "restaurant") {
     await revalidateStaffCache(authData.user.id);
-    redirect("/restaurant");
+    return { redirectTo: "/restaurant" };
   }
 
   await revalidateStaffCache(authData.user.id);
-  redirect("/");
+  return { redirectTo: "/" };
 }
 
 /** Signs out only this browser/device — other devices where the same
@@ -229,10 +235,7 @@ export async function forgotPasswordAction(
   return { success: true };
 }
 
-export async function resetPasswordAction(
-  _prev: { error?: string } | null,
-  formData: FormData,
-): Promise<{ error?: string } | null> {
+export async function resetPasswordAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
   const password = formData.get("password");
   if (typeof password !== "string" || password.length < 6) return { error: "Password must be at least 6 characters" };
 
@@ -243,5 +246,5 @@ export async function resetPasswordAction(
     return { error: "Could not reset password — the link may have expired. Request a new one." };
   }
 
-  redirect("/");
+  return { redirectTo: "/" };
 }

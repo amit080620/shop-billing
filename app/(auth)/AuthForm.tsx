@@ -1,6 +1,6 @@
 "use client";
 
-import { startTransition, useActionState, useState } from "react";
+import { startTransition, useActionState, useEffect, useState } from "react";
 import {
   Eye,
   EyeOff,
@@ -73,12 +73,18 @@ export function AuthForm({
   submitLabel,
   pleaseWaitLabel = "Please wait…",
 }: {
-  action: (prev: { error?: string } | null, formData: FormData) => Promise<{ error?: string } | null>;
+  action: (prev: { error?: string; redirectTo?: string } | null, formData: FormData) => Promise<{ error?: string; redirectTo?: string } | null>;
   fields: Field[];
   submitLabel: string;
   pleaseWaitLabel?: string;
 }) {
   const [state, formAction, isPending] = useActionState(action, null);
+
+  // Success hands back a destination; go there with a full page load (see
+  // ActionState in lib/actions/auth.ts for why not a client-side redirect).
+  useEffect(() => {
+    if (state?.redirectTo) window.location.replace(state.redirectTo);
+  }, [state]);
   const [visibleFields, setVisibleFields] = useState<Record<string, boolean>>({});
   const [gridSelections, setGridSelections] = useState<Record<string, string>>({});
 
@@ -177,7 +183,7 @@ export function AuthForm({
           {state.error}
         </p>
       )}
-      <SubmitButton label={submitLabel} pleaseWaitLabel={pleaseWaitLabel} pending={isPending} />
+      <SubmitButton label={submitLabel} pleaseWaitLabel={pleaseWaitLabel} pending={isPending || !!state?.redirectTo} />
     </form>
   );
 }

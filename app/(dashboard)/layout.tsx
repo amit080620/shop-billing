@@ -2,7 +2,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { LayoutDashboard } from "lucide-react";
 import { requireSession } from "@/lib/auth";
-import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { getLang } from "@/lib/i18n/server";
 import { translate } from "@/lib/i18n/dictionary";
 import { BottomNav } from "./BottomNav";
@@ -22,14 +21,8 @@ export default async function DashboardLayout({
   children: React.ReactNode;
 }) {
   const session = await requireSession();
-  const admin = createSupabaseAdminClient();
-  let fastBillingEnabled = false;
-  try {
-    const { data: shop } = await admin.from("shops").select("fast_billing_enabled").eq("id", session.shopId).single();
-    fastBillingEnabled = shop?.fast_billing_enabled ?? false;
-  } catch (err) {
-    console.error("Could not check fast_billing_enabled in layout", err);
-  }
+  // Comes with the (cached) session — no extra query on every page.
+  const fastBillingEnabled = session.fastBillingEnabled;
   const lang = await getLang();
   const calculatorEnabled = await getCalculatorEnabled();
   const assistantEnabled = await getAssistantEnabled();
