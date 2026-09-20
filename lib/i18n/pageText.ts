@@ -332,6 +332,8 @@ export const PAGE_TEXT: Record<string, [hi: string, mr: string]> = {
   "Members": ["मेंबर", "सदस्य"],
   "Member": ["मेंबर", "सदस्य"],
 
+  "Tick \"Track stock\" above and enter how many units you own, so the same item can't be booked twice for the same dates.": ["ऊपर \"स्टॉक ट्रैक करें\" पर निशान लगाकर लिखें कि आपके पास कितने नग हैं — तभी एक ही सामान एक ही तारीख में दो बार बुक नहीं होगा।", "वर \"स्टॉक ट्रॅक करा\" निवडून तुमच्याकडे किती नग आहेत ते लिहा — म्हणजे एकच वस्तू एकाच तारखेला दोनदा बुक होणार नाही."],
+
   // Item form extras
   "More options": ["और विकल्प", "अधिक पर्याय"],
   "MRP, barcode, catalog, HSN…": ["MRP, बारकोड, कैटलॉग, HSN…", "MRP, बारकोड, कॅटलॉग, HSN…"],

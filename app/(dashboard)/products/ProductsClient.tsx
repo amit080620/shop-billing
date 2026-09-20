@@ -686,6 +686,9 @@ export function ProductsClient({
               {isRentable && (
                 <div className="flex flex-col gap-3 rounded-lg border border-border bg-surface p-3">
                   <p className="text-xs text-brand-text">{t("products.rentalRateExplain")}</p>
+                  {!trackInventory && (
+                    <p className="text-xs text-muted">{t("Tick \"Track stock\" above and enter how many units you own, so the same item can't be booked twice for the same dates.")}</p>
+                  )}
                   <div className="grid grid-cols-2 gap-3">
                     <Field name="rentalRateHourly" label={t("products.perHour")} type="number" step="0.01" min="0" defaultValue={editingProduct?.rentalRateHourly != null ? String(editingProduct.rentalRateHourly) : undefined} />
                     <Field name="rentalRateDaily" label={t("products.perDay")} type="number" step="0.01" min="0" defaultValue={editingProduct?.rentalRateDaily != null ? String(editingProduct.rentalRateDaily) : undefined} />

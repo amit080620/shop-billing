@@ -38,7 +38,7 @@ export async function createRentalAction(
   const { data: dbProducts, error: productsError } = productIds.length
     ? await admin
         .from("products")
-        .select("id, name, is_rentable, stock_quantity, gst_percent, hsn_code")
+        .select("id, name, is_rentable, track_inventory, stock_quantity, gst_percent, hsn_code")
         .eq("shop_id", session.shopId)
         .in("id", productIds)
     : { data: [], error: null };
@@ -84,11 +84,16 @@ export async function createRentalAction(
     if (!item.productId) continue;
     const product = productMap.get(item.productId);
     if (!product) continue;
+    // Only shops that actually count their units can be told how many are
+    // free. Without stock tracking the count is 0 for everything, which
+    // silently made every booking impossible — a rental shop that hasn't
+    // entered quantities is trusted instead.
+    if (!product.track_inventory) continue;
     const alreadyCommitted = committedByProduct.get(item.productId) ?? 0;
     const available = Number(product.stock_quantity) - alreadyCommitted;
     if (item.quantity > available) {
       return {
-        error: `Only ${Math.max(0, available)} × "${product.name}" free for these dates (you asked for ${item.quantity}).`,
+        error: `Only ${Math.max(0, available)} × "${product.name}" free for these dates (you asked for ${item.quantity}). Add more units under Inventory, or untick "Track stock" for it.`,
       };
     }
   }
