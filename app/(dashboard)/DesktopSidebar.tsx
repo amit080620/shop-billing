@@ -77,11 +77,11 @@ export function DesktopSidebar({
 
       <div className="flex flex-col gap-0.5 border-t border-border p-3">
         <HamburgerToggle
-          label="All features"
+          label={t("All features")}
           className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted transition-colors hover:bg-surface-2 hover:text-foreground"
         />
         <SidebarLink href="/help" active={pathname.startsWith("/help")} icon={<HelpCircle size={18} strokeWidth={1.8} />}>
-          Help & support
+          {t("Help & support")}
         </SidebarLink>
       </div>
     </aside>

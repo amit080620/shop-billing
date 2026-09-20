@@ -102,9 +102,9 @@ export default async function DashboardPage() {
         >
           <span className="flex items-center gap-2 text-sm font-semibold text-danger">
             <span className="flex h-2.5 w-2.5 animate-pulse rounded-full bg-danger" />
-            {pendingCatalogOrders} new online {pendingCatalogOrders === 1 ? "order" : "orders"} waiting
+            {t("{n} new online order(s) waiting", { n: pendingCatalogOrders ?? 0 })}
           </span>
-          <span className="text-xs font-medium text-danger">Review →</span>
+          <span className="text-xs font-medium text-danger">{t("Review →")}</span>
         </Link>
       )}
 
@@ -272,8 +272,8 @@ async function RetailHome({
           className="flex items-center justify-between gap-3 rounded-xl border border-credit/25 bg-credit-soft p-4"
         >
           <div>
-            <p className="text-sm font-semibold text-credit">{expiringCount} batch{expiringCount === 1 ? "" : "es"} expiring within 30 days</p>
-            <p className="mt-0.5 text-xs text-credit/80">Tap to see which items, before it becomes stock loss.</p>
+            <p className="text-sm font-semibold text-credit">{t("{n} batch(es) expiring within 30 days", { n: expiringCount })}</p>
+            <p className="mt-0.5 text-xs text-credit/80">{t("Tap to see which items, before it becomes stock loss.")}</p>
           </div>
           <span className="shrink-0 text-credit">→</span>
         </Link>
@@ -385,7 +385,7 @@ async function LabHome({
 
       <section className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <StatCard label={t("home.todaySales")} value={formatMoney(todayTotal)} href="/daily-summary" icon={Wallet} />
-        <StatCard label="Pending orders" value={String(pendingOrders?.length ?? 0)} href="/lab/orders" icon={FlaskConical} />
+        <StatCard label={t("Pending orders")} value={String(pendingOrders?.length ?? 0)} href="/lab/orders" icon={FlaskConical} />
       </section>
 
       <div className="grid grid-cols-2 gap-3">
@@ -408,7 +408,7 @@ async function LabHome({
 
       {pendingOrders && pendingOrders.length > 0 && (
         <section>
-          <h2 className="mb-2 text-sm font-semibold text-foreground">Pending orders</h2>
+          <h2 className="mb-2 text-sm font-semibold text-foreground">{t("Pending orders")}</h2>
           <ul className="flex flex-col gap-2">
             {pendingOrders.slice(0, 5).map((o) => (
               <Link key={o.id} href={`/lab/orders/${o.id}`} className="flex items-center justify-between rounded-lg border border-border bg-surface px-3.5 py-2.5 shadow-sm">
@@ -502,7 +502,7 @@ async function GymHome({
 
       <section className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <StatCard label={t("home.todaySales")} value={formatMoney(todayTotal)} href="/daily-summary" icon={Wallet} />
-        <StatCard label="Check-ins today" value={String(todayAttendance?.length ?? 0)} href="/gym/attendance" icon={CheckCircle2} />
+        <StatCard label={t("Check-ins today")} value={String(todayAttendance?.length ?? 0)} href="/gym/attendance" icon={CheckCircle2} />
       </section>
 
       <div className="grid grid-cols-2 gap-3">
@@ -587,7 +587,7 @@ async function ClinicHome({
 
       <section className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <StatCard label={t("home.todaySales")} value={formatMoney(todayTotal)} href="/daily-summary" icon={Wallet} />
-        <StatCard label="Appointments today" value={String(todayAppointments?.length ?? 0)} href="/clinic/appointments" icon={Calendar} />
+        <StatCard label={t("Appointments today")} value={String(todayAppointments?.length ?? 0)} href="/clinic/appointments" icon={Calendar} />
       </section>
 
       <div className="grid grid-cols-2 gap-3">
@@ -610,7 +610,7 @@ async function ClinicHome({
 
       {todayAppointments && todayAppointments.length > 0 && (
         <section>
-          <h2 className="mb-2 text-sm font-semibold text-foreground">Today&apos;s appointments</h2>
+          <h2 className="mb-2 text-sm font-semibold text-foreground">{t("Today's appointments")}</h2>
           <ul className="flex flex-col gap-2">
             {todayAppointments.slice(0, 4).map((a) => (
               <Link
@@ -635,9 +635,9 @@ async function ClinicHome({
       )}
 
       <section>
-        <h2 className="mb-2 text-sm font-semibold text-foreground">Recent prescriptions</h2>
+        <h2 className="mb-2 text-sm font-semibold text-foreground">{t("Recent prescriptions")}</h2>
         {!recentPrescriptions.data || recentPrescriptions.data.length === 0 ? (
-          <EmptyState text="No prescriptions written yet." />
+          <EmptyState text={t("No prescriptions written yet.")} />
         ) : (
           <ul className="flex flex-col gap-2">
             {recentPrescriptions.data.map((rx) => (
@@ -804,12 +804,12 @@ async function SalonHome({
 
       <section className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <StatCard label={t("home.todaySales")} value={formatMoney(todayTotal)} href="/daily-summary" icon={Wallet} />
-        <StatCard label="Appointments today" value={String(todayAppointments?.length ?? 0)} href="/salon/appointments" icon={Calendar} />
+        <StatCard label={t("Appointments today")} value={String(todayAppointments?.length ?? 0)} href="/salon/appointments" icon={Calendar} />
       </section>
 
       {todayAppointments && todayAppointments.length > 0 && (
         <section>
-          <h2 className="mb-2 text-sm font-semibold text-foreground">Today&apos;s appointments</h2>
+          <h2 className="mb-2 text-sm font-semibold text-foreground">{t("Today's appointments")}</h2>
           <ul className="flex flex-col gap-2">
             {todayAppointments.slice(0, 4).map((a) => (
               <Link
@@ -959,9 +959,9 @@ async function ServiceHome({
 
       <section className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <StatCard label={t("home.todaySales")} value={formatMoney(todayTotal)} href="/daily-summary" icon={Wallet} />
-        <StatCard label="Jobs in progress" value={String(openJobs?.length ?? 0)} href="/service" icon={Wrench} />
+        <StatCard label={t("Jobs in progress")} value={String(openJobs?.length ?? 0)} href="/service" icon={Wrench} />
         <StatCard
-          label="Ready for pickup"
+          label={t("Ready for pickup")}
           value={String(readyJobs?.length ?? 0)}
           tone={(readyJobs?.length ?? 0) > 0 ? "credit" : "default"}
           href="/service?status=ready"
@@ -969,7 +969,7 @@ async function ServiceHome({
           className="col-span-2"
         />
         <StatCard
-          label="Low stock"
+          label={t("Low stock")}
           value={String(lowStockCount)}
           tone={lowStockCount > 0 ? "credit" : "default"}
           href="/reorder"
@@ -1004,9 +1004,9 @@ async function ServiceHome({
       </div>
 
       <section>
-        <h2 className="mb-2 text-sm font-semibold text-foreground">Recent jobs</h2>
+        <h2 className="mb-2 text-sm font-semibold text-foreground">{t("Recent jobs")}</h2>
         {!recentJobs || recentJobs.length === 0 ? (
-          <EmptyState text="No jobs yet — tap + New job when an item comes in for service." />
+          <EmptyState text={t("No jobs yet — tap + New job when an item comes in for service.")} />
         ) : (
           <ul className="flex flex-col gap-2">
             {recentJobs.map((j) => (
@@ -1076,7 +1076,7 @@ async function TransportHome({
 
       {expiringVehicleDocs.length > 0 && (
         <Link href="/transport/vehicles" className="flex flex-col gap-1 rounded-xl border border-credit bg-credit-soft px-4 py-3">
-          <p className="flex items-center gap-1 text-xs font-semibold text-credit"><AlertTriangle size={12} /> Vehicle documents need attention</p>
+          <p className="flex items-center gap-1 text-xs font-semibold text-credit"><AlertTriangle size={12} /> {t("Vehicle documents need attention")}</p>
           {expiringVehicleDocs.slice(0, 3).map((d, i) => {
             const days = Math.ceil((new Date(d.date!).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
             return (
@@ -1090,9 +1090,9 @@ async function TransportHome({
 
       <section className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <StatCard label={t("home.todaySales")} value={formatMoney(todayTotal)} href="/daily-summary" icon={Wallet} />
-        <StatCard label="Rounds today" value={String(roundsToday)} href="/transport/reports" icon={Truck} />
-        <StatCard label="Active vehicles" value={String(vehicles?.length ?? 0)} href="/transport/vehicles" icon={Truck} />
-        <StatCard label="Km covered today" value={kmToday.toLocaleString("en-IN")} icon={MapPin} />
+        <StatCard label={t("Rounds today")} value={String(roundsToday)} href="/transport/reports" icon={Truck} />
+        <StatCard label={t("Active vehicles")} value={String(vehicles?.length ?? 0)} href="/transport/vehicles" icon={Truck} />
+        <StatCard label={t("Km covered today")} value={kmToday.toLocaleString("en-IN")} icon={MapPin} />
       </section>
 
       <Link
@@ -1192,14 +1192,14 @@ async function PharmacyHome({
       <section className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <StatCard label={t("home.todaySales")} value={formatMoney(todayTotal)} href="/daily-summary" icon={Wallet} />
         <StatCard
-          label="Expiring soon"
+          label={t("Expiring soon")}
           value={String(expiringCount)}
           tone={expiringCount > 0 ? "credit" : "default"}
           href="/pharmacy/expiry"
           icon={Clock}
         />
         <StatCard
-          label="Low stock"
+          label={t("Low stock")}
           value={String(lowStockCount)}
           tone={lowStockCount > 0 ? "credit" : "default"}
           href="/reorder"
@@ -1257,6 +1257,7 @@ async function PharmacyHome({
 
 // ─── Restaurant ──────────────────────────────────────────────────────────
 async function RestaurantHome({ shopId }: { shopId: string }) {
+  const { t } = await getTranslator();
   const admin = createSupabaseAdminClient();
   const startOfToday = istDayStart();
   const startOfWeek = istDayStart(6);
@@ -1301,9 +1302,9 @@ async function RestaurantHome({ shopId }: { shopId: string }) {
       <TrendCard trend={trend} />
 
       <section className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        <StatCard label="Tables occupied" value={`${occupied} / ${tables?.length ?? 0}`} href="/restaurant" icon={UtensilsCrossed} />
-        <StatCard label="Orders in kitchen" value={String(ordersInKitchen)} tone={ordersInKitchen > 0 ? "credit" : "default"} href="/restaurant-kds" icon={ChefHat} />
-        <StatCard label="Today's revenue" value={formatMoney(todayRevenue)} href="/restaurant/reports" className="col-span-2" icon={Wallet} />
+        <StatCard label={t("Tables occupied")} value={`${occupied} / ${tables?.length ?? 0}`} href="/restaurant" icon={UtensilsCrossed} />
+        <StatCard label={t("Orders in kitchen")} value={String(ordersInKitchen)} tone={ordersInKitchen > 0 ? "credit" : "default"} href="/restaurant-kds" icon={ChefHat} />
+        <StatCard label={t("Today's revenue")} value={formatMoney(todayRevenue)} href="/restaurant/reports" className="col-span-2" icon={Wallet} />
       </section>
 
       <Link
@@ -1315,13 +1316,13 @@ async function RestaurantHome({ shopId }: { shopId: string }) {
         }}
       >
         <PlusIcon />
-        Go to Tables
+        {t("Go to Tables")}
       </Link>
 
       <section>
-        <h2 className="mb-2 text-sm font-semibold text-foreground">Recently settled</h2>
+        <h2 className="mb-2 text-sm font-semibold text-foreground">{t("Recently settled")}</h2>
         {!recentSettled || recentSettled.length === 0 ? (
-          <EmptyState text="No settled bills yet today — they'll show up here." />
+          <EmptyState text={t("No settled bills yet today — they'll show up here.")} />
         ) : (
           <ul className="flex flex-col gap-2">
             {recentSettled.map((o) => {
@@ -1347,6 +1348,7 @@ async function RestaurantHome({ shopId }: { shopId: string }) {
 
 // ─── Rental ────────────────────────────────────────────────────────────────
 async function RentalHome({ shopId }: { shopId: string }) {
+  const { t } = await getTranslator();
   const admin = createSupabaseAdminClient();
   const now = new Date();
   const startOfWeek = istDayStart(6);
@@ -1386,8 +1388,8 @@ async function RentalHome({ shopId }: { shopId: string }) {
       )}
 
       <section className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        <StatCard label="Active & booked" value={String(activeCount)} href="/rentals" icon={Repeat} />
-        <StatCard label="Overdue" value={String(overdueCount)} tone={overdueCount > 0 ? "credit" : "default"} href="/rentals" icon={Clock} />
+        <StatCard label={t("Active & booked")} value={String(activeCount)} href="/rentals" icon={Repeat} />
+        <StatCard label={t("Overdue")} value={String(overdueCount)} tone={overdueCount > 0 ? "credit" : "default"} href="/rentals" icon={Clock} />
       </section>
 
       <Link
@@ -1400,9 +1402,9 @@ async function RentalHome({ shopId }: { shopId: string }) {
       </Link>
 
       <section>
-        <h2 className="mb-2 text-sm font-semibold text-foreground">Recent rentals</h2>
+        <h2 className="mb-2 text-sm font-semibold text-foreground">{t("Recent rentals")}</h2>
         {!recentRentals || recentRentals.length === 0 ? (
-          <EmptyState text="No rentals booked yet — they'll show up here." />
+          <EmptyState text={t("No rentals booked yet — they'll show up here.")} />
         ) : (
           <ul className="flex flex-col gap-2">
             {recentRentals.map((r) => {

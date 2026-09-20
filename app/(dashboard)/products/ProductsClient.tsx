@@ -473,7 +473,7 @@ export function ProductsClient({
                   const input = document.getElementById("product-name-input") as HTMLInputElement | null;
                   if (input) input.value = m;
                 }}
-                placeholder="Search common generic names to fill in above"
+                placeholder={t("Search common generic names to fill in above")}
               />
               <p className="text-[11px] text-muted">
                 Starter list of common generic names — not exhaustive, always verify strength/formulation against the pack.
@@ -524,7 +524,7 @@ export function ProductsClient({
           {showMoreOptions ? (
             <div className="flex flex-col gap-3 rounded-lg border border-border p-3">
               <div className="flex items-center justify-between">
-                <p className="text-xs font-semibold text-muted">More options</p>
+                <p className="text-xs font-semibold text-muted">{t("More options")}</p>
                 <button type="button" onClick={() => setShowMoreOptions(false)} className="text-xs font-medium text-muted">
                   Hide
                 </button>
@@ -533,7 +533,7 @@ export function ProductsClient({
               {showMrpField && (
                 <Field
                   name="mrp"
-                  label="MRP (₹, optional — leave blank for loose/unpackaged items)"
+                  label={t("MRP (₹, optional — leave blank for loose/unpackaged items)")}
                   type="number"
                   step="0.01"
                   min="0"
@@ -545,7 +545,7 @@ export function ProductsClient({
                 <div className="grid grid-cols-2 gap-3">
                   <Field
                     name="bulkMinQty"
-                    label="Bulk qty (optional)"
+                    label={t("Bulk qty (optional)")}
                     type="number"
                     min="0"
                     step="0.01"
@@ -554,7 +554,7 @@ export function ProductsClient({
                   />
                   <Field
                     name="bulkPrice"
-                    label="Bulk price/unit (₹)"
+                    label={t("Bulk price/unit (₹)")}
                     type="number"
                     min="0"
                     step="0.01"
@@ -592,7 +592,7 @@ export function ProductsClient({
                 )}
               </div>
               <div className="flex flex-col gap-3 rounded-lg border border-border bg-surface p-3">
-                <p className="text-xs text-brand-text">Public catalog — shown on your shareable order link (More → Catalog link)</p>
+                <p className="text-xs text-brand-text">{t("Public catalog — shown on your shareable order link (More → Catalog link)")}</p>
                 <label className="flex items-center gap-2 text-sm text-foreground">
                   <input
                     type="checkbox"
@@ -600,7 +600,7 @@ export function ProductsClient({
                     defaultChecked={editingProduct?.showInCatalog ?? true}
                     className="h-4 w-4 rounded border-border"
                   />
-                  Show this item in the public catalog
+                  {t("Show this item in the public catalog")}
                 </label>
                 <label className="flex items-center gap-2 text-sm text-foreground">
                   <input
@@ -609,19 +609,19 @@ export function ProductsClient({
                     defaultChecked={editingProduct?.showInFastBilling ?? false}
                     className="h-4 w-4 rounded border-border"
                   />
-                  Show this item in Fast Billing (quick tap-to-add grid)
+                  {t("Show this item in Fast Billing (quick tap-to-add grid)")}
                 </label>
                 <div className="grid grid-cols-2 gap-3">
                   <Field
                     name="offerPrice"
-                    label="Offer price (₹, optional)"
+                    label={t("Offer price (₹, optional)")}
                     type="number"
                     min="0"
                     step="0.01"
-                    placeholder="Leave blank for no offer"
+                    placeholder={t("Leave blank for no offer")}
                     defaultValue={editingProduct?.offerPrice != null ? String(editingProduct.offerPrice) : undefined}
                   />
-                  <Field name="offerLabel" label="Offer badge (optional)" placeholder="e.g. Diwali Sale" defaultValue={editingProduct?.offerLabel ?? undefined} />
+                  <Field name="offerLabel" label={t("Offer badge (optional)")} placeholder={t("e.g. Diwali Sale")} defaultValue={editingProduct?.offerLabel ?? undefined} />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
@@ -651,8 +651,8 @@ export function ProductsClient({
               onClick={() => setShowMoreOptions(true)}
               className="flex items-center justify-between rounded-lg border border-dashed border-border px-3.5 py-2.5 text-sm font-medium text-brand"
             >
-              <span>+ More options</span>
-              <span className="text-xs font-normal text-muted">MRP, barcode, catalog, HSN…</span>
+              <span>+ {t("More options")}</span>
+              <span className="text-xs font-normal text-muted">{t("MRP, barcode, catalog, HSN…")}</span>
             </button>
           )}
           <label className="flex items-center gap-2 text-sm text-foreground">
@@ -707,12 +707,12 @@ export function ProductsClient({
                   onChange={(e) => setHasWarranty(e.target.checked)}
                   className="h-4 w-4 rounded border-border"
                 />
-                Comes with warranty
+                {t("Comes with warranty")}
               </label>
               {hasWarranty && (
                 <Field
                   name="warrantyMonths"
-                  label="Warranty period (months)"
+                  label={t("Warranty period (months)")}
                   type="number"
                   min="1"
                   max="240"
@@ -729,28 +729,28 @@ export function ProductsClient({
               </p>
               <div className="grid grid-cols-2 gap-3">
                 <label className="flex flex-col gap-1.5 text-xs text-brand-text">
-                  Metal
+                  {t("Metal")}
                   <select name="metalType" defaultValue={editingProduct?.metalType ?? ""} className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand">
-                    <option value="">Not weight-priced</option>
-                    <option value="gold">Gold</option>
-                    <option value="silver">Silver</option>
+                    <option value="">{t("Not weight-priced")}</option>
+                    <option value="gold">{t("Gold")}</option>
+                    <option value="silver">{t("Silver")}</option>
                   </select>
                 </label>
-                <Field name="purity" label="Purity" placeholder="e.g. 22K, 916" defaultValue={editingProduct?.purity ?? undefined} />
+                <Field name="purity" label={t("Purity")} placeholder="e.g. 22K, 916" defaultValue={editingProduct?.purity ?? undefined} />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <label className="flex flex-col gap-1.5 text-xs text-brand-text">
-                  Making charge type
+                  {t("Making charge type")}
                   <select name="makingChargeType" defaultValue={editingProduct?.makingChargeType ?? "per_gram"} className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand">
-                    <option value="per_gram">₹ per gram</option>
-                    <option value="flat">Flat ₹</option>
-                    <option value="percent">% of metal value</option>
+                    <option value="per_gram">{t("₹ per gram")}</option>
+                    <option value="flat">{t("Flat ₹")}</option>
+                    <option value="percent">{t("% of metal value")}</option>
                   </select>
                 </label>
-                <Field name="makingChargeValue" label="Making charge value" type="number" min="0" step="0.01" defaultValue={editingProduct?.makingChargeValue != null ? String(editingProduct.makingChargeValue) : undefined} />
+                <Field name="makingChargeValue" label={t("Making charge value")} type="number" min="0" step="0.01" defaultValue={editingProduct?.makingChargeValue != null ? String(editingProduct.makingChargeValue) : undefined} />
               </div>
-              <Field name="wastagePercent" label="Wastage % (optional)" type="number" min="0" max="30" step="0.01" placeholder="e.g. 5" defaultValue={editingProduct?.wastagePercent != null ? String(editingProduct.wastagePercent) : undefined} />
-              <Field name="hallmarkNumber" label="Hallmark / BIS number (optional)" placeholder="e.g. HUID code" defaultValue={editingProduct?.hallmarkNumber ?? undefined} />
+              <Field name="wastagePercent" label={t("Wastage % (optional)")} type="number" min="0" max="30" step="0.01" placeholder="e.g. 5" defaultValue={editingProduct?.wastagePercent != null ? String(editingProduct.wastagePercent) : undefined} />
+              <Field name="hallmarkNumber" label={t("Hallmark / BIS number (optional)")} placeholder={t("e.g. HUID code")} defaultValue={editingProduct?.hallmarkNumber ?? undefined} />
             </div>
           )}
           {showPharmaSection && (
@@ -910,7 +910,7 @@ export function ProductsClient({
                 className={`neu-card flex items-center justify-between gap-3 px-3.5 py-3 ${deletingId === p.id && blockedProductId !== p.id ? "animate-delete" : ""}`}
                 style={tone ? { borderLeft: `3px solid ${TONE_COLORS[tone]}` } : undefined}
               >
-                <label title="Add a photo" aria-label={`Add a photo of ${p.name}`} className="relative flex h-12 w-12 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-lg border border-dashed border-border bg-background text-[10px] text-muted">
+                <label title={t("Add a photo")} aria-label={t("Add a photo of {name}", { name: p.name })} className="relative flex h-12 w-12 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-lg border border-dashed border-border bg-background text-[10px] text-muted">
                   {p.imageUrl ? (
                     <Image src={p.imageUrl} alt="" fill sizes="48px" className="object-cover" />
                   ) : uploadingImageFor === p.id ? (
@@ -968,7 +968,7 @@ export function ProductsClient({
                       }}
                       className="mt-1 flex items-center gap-1 rounded-full border border-border px-2 py-0.5 text-[11px] font-medium text-muted"
                     >
-                      <Layers size={10} /> Options
+                      <Layers size={10} /> {t("Options")}
                     </button>
                   )}
                   {p.bulkMinQty && p.bulkPrice && (
