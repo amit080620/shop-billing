@@ -847,8 +847,8 @@ export function NewBillClient({
         )}
       </div>
 
-        <aside className="neu-card sticky top-24 hidden flex-col gap-3 p-4 md:flex" aria-label="Bill summary">
-          <p className="text-sm font-semibold text-foreground">Bill summary</p>
+        <aside className="neu-card sticky top-24 hidden flex-col gap-3 p-4 md:flex" aria-label={t("Bill summary")}>
+          <p className="text-sm font-semibold text-foreground">{t("Bill summary")}</p>
           <div className="flex flex-col gap-1.5 text-sm">
             <div className="flex justify-between gap-2">
               <span className="text-muted">{t("bill.customer")}</span>
@@ -865,7 +865,7 @@ export function NewBillClient({
             <span className="text-sm text-muted">{t("bill.subtotal")}</span>
             <span className="text-2xl font-bold tracking-tight text-foreground">{formatMoney(totals.subtotal)}</span>
           </div>
-          <p className="text-xs text-muted">GST, discount and payment come next.</p>
+          <p className="text-xs text-muted">{t("GST, discount and payment come next.")}</p>
           <button disabled={!canComplete} onClick={complete} className="btn-primary w-full disabled:opacity-40">
             {t("bill.completeTicket")} →
           </button>

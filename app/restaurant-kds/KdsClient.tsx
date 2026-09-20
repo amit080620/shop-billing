@@ -228,7 +228,13 @@ export function KdsClient({
         </div>
       ) : (
         <TVFocusZone id="kds-tickets">
-          <div className="grid gap-2.5" style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}>
+          {/* The column count is a kitchen-screen setting; on a phone or a
+              small tablet three columns squeeze a ticket into an unreadable
+              strip, so narrow screens step down to one or two. */}
+          <div
+            className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 md:[grid-template-columns:repeat(var(--kds-columns),minmax(0,1fr))]"
+            style={{ "--kds-columns": columns } as React.CSSProperties}
+          >
             {visibleTickets.map((ticket, index) => {
               const age = Math.floor((now - new Date(ticket.createdAt).getTime()) / 60000);
               const isRevised = !!ticket.revisedAt;

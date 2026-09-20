@@ -319,6 +319,9 @@ export const PAGE_TEXT: Record<string, [hi: string, mr: string]> = {
   "Void invoice": ["बिल रद्द करें", "बिल रद्द करा"],
   "↩ Return": ["↩ वापसी", "↩ परतावा"],
 
+  "Bill summary": ["बिल का हिसाब", "बिलाचा हिशोब"],
+  "GST, discount and payment come next.": ["GST, छूट और पेमेंट अगले कदम पर।", "GST, सवलत व पेमेंट पुढच्या टप्प्यावर."],
+
   // Money in / out and payment methods
   "Old udhaar collected today": ["आज मिला पुराना उधार", "आज मिळालेली जुनी उधारी"],
   "Purchases paid today": ["आज खरीद पर दिए", "आज खरेदीसाठी दिलेले"],
