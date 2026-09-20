@@ -64,9 +64,9 @@ export const HARDWARE: HardwareItem[] = [
   {
     id: "kit-counter",
     name: "Counter Starter Kit",
-    price: 4999,
+    price: 3999,
     worksWith: "58mm printer + barcode scanner + 20 rolls, tested together",
-    points: ["Everything to start billing on day one", "Saves ₹600 against buying separately", "Set up by us over a video call"],
+    points: ["Everything to start billing on day one", "Saves over ₹800 against buying separately", "Set up by us over a video call"],
     bundle: true,
     bestFor: ["grocery", "mart", "pharmacy", "hardware", "general"],
   },

@@ -642,7 +642,7 @@ export const PAGE_TEXT: Record<string, [hi: string, mr: string]> = {
   "Counter Starter Kit": ["काउंटर स्टार्टर किट", "काउंटर स्टार्टर किट"],
   "58mm printer + barcode scanner + 20 rolls, tested together": ["58mm प्रिंटर + बारकोड स्कैनर + 20 रोल, साथ में टेस्ट किए हुए", "58mm प्रिंटर + बारकोड स्कॅनर + 20 रोल, एकत्र तपासलेले"],
   "Everything to start billing on day one": ["पहले दिन से बिलिंग शुरू करने का सब सामान", "पहिल्या दिवसापासून बिलिंग सुरू करण्याचे सर्व साहित्य"],
-  "Saves ₹600 against buying separately": ["अलग-अलग खरीदने से ₹600 की बचत", "वेगवेगळे घेण्यापेक्षा ₹600 बचत"],
+  "Saves over ₹800 against buying separately": ["अलग-अलग खरीदने से ₹800 से ज़्यादा की बचत", "वेगवेगळे घेण्यापेक्षा ₹800 पेक्षा जास्त बचत"],
   "Set up by us over a video call": ["हम वीडियो कॉल पर सेट-अप कर देंगे", "आम्ही व्हिडिओ कॉलवर सेट-अप करून देऊ"],
   "Restaurant Kit": ["रेस्टोरेंट किट", "रेस्टॉरंट किट"],
   "Two 80mm printers (counter + kitchen) with 20 rolls each": ["दो 80mm प्रिंटर (काउंटर + किचन), हर एक के साथ 20 रोल", "दोन 80mm प्रिंटर (काउंटर + किचन), प्रत्येकासोबत 20 रोल"],
