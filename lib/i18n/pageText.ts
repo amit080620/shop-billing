@@ -319,6 +319,14 @@ export const PAGE_TEXT: Record<string, [hi: string, mr: string]> = {
   "Void invoice": ["बिल रद्द करें", "बिल रद्द करा"],
   "↩ Return": ["↩ वापसी", "↩ परतावा"],
 
+  "Customers": ["ग्राहक", "ग्राहक"],
+  "Customer": ["ग्राहक", "ग्राहक"],
+  "{who} added": ["{who} जुड़ गया", "{who} जोडले"],
+  "Patients": ["मरीज़", "रुग्ण"],
+  "Patient": ["मरीज़", "रुग्ण"],
+  "Members": ["मेंबर", "सदस्य"],
+  "Member": ["मेंबर", "सदस्य"],
+
   // Item form extras
   "More options": ["और विकल्प", "अधिक पर्याय"],
   "MRP, barcode, catalog, HSN…": ["MRP, बारकोड, कैटलॉग, HSN…", "MRP, बारकोड, कॅटलॉग, HSN…"],

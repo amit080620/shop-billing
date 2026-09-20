@@ -294,7 +294,7 @@ async function RetailHome({
         {t("home.newBill")}
       </Link>
 
-      <TrendCard trend={trend} />
+      <TrendCard trend={trend} label={t("range.last7")} />
 
       <section>
         <h2 className="mb-2 text-sm font-semibold text-foreground">{t("home.recentBills")}</h2>
@@ -370,7 +370,7 @@ async function LabHome({
 
   return (
     <>
-      <TrendCard trend={trend} />
+      <TrendCard trend={trend} label={t("range.last7")} />
 
       {homeCollections && homeCollections.length > 0 && (
         <Link href="/lab/orders" className="flex flex-col gap-1 rounded-xl border border-amber-500 bg-amber-50 px-4 py-3">
@@ -472,7 +472,7 @@ async function GymHome({
 
   return (
     <>
-      <TrendCard trend={trend} />
+      <TrendCard trend={trend} label={t("range.last7")} />
 
       {expiringMemberships && expiringMemberships.length > 0 && (
         <Link href="/gym/members" className="flex flex-col gap-1 rounded-xl border border-credit bg-credit-soft px-4 py-3">
@@ -571,7 +571,7 @@ async function ClinicHome({
 
   return (
     <>
-      <TrendCard trend={trend} />
+      <TrendCard trend={trend} label={t("range.last7")} />
 
       {overdueFollowUps && overdueFollowUps.length > 0 && (
         <div className="flex flex-col gap-1 rounded-xl border border-credit bg-credit-soft px-4 py-3">
@@ -691,7 +691,7 @@ async function JewelleryHome({
 
   return (
     <>
-      <TrendCard trend={trend} />
+      <TrendCard trend={trend} label={t("range.last7")} />
 
       <Link
         href="/jewellery/rates"
@@ -800,7 +800,7 @@ async function SalonHome({
 
   return (
     <>
-      <TrendCard trend={trend} />
+      <TrendCard trend={trend} label={t("range.last7")} />
 
       <section className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <StatCard label={t("home.todaySales")} value={formatMoney(todayTotal)} href="/daily-summary" icon={Wallet} />
@@ -944,7 +944,7 @@ async function ServiceHome({
 
   return (
     <>
-      <TrendCard trend={trend} />
+      <TrendCard trend={trend} label={t("range.last7")} />
 
       {overdueJobs && overdueJobs.length > 0 && (
         <Link href="/service?status=all" className="flex flex-col gap-1 rounded-xl border border-credit bg-credit-soft px-4 py-3">
@@ -1072,7 +1072,7 @@ async function TransportHome({
 
   return (
     <>
-      <TrendCard trend={trend} />
+      <TrendCard trend={trend} label={t("range.last7")} />
 
       {expiringVehicleDocs.length > 0 && (
         <Link href="/transport/vehicles" className="flex flex-col gap-1 rounded-xl border border-credit bg-credit-soft px-4 py-3">
@@ -1187,7 +1187,7 @@ async function PharmacyHome({
 
   return (
     <>
-      <TrendCard trend={trend} />
+      <TrendCard trend={trend} label={t("range.last7")} />
 
       <section className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <StatCard label={t("home.todaySales")} value={formatMoney(todayTotal)} href="/daily-summary" icon={Wallet} />
@@ -1299,7 +1299,7 @@ async function RestaurantHome({ shopId }: { shopId: string }) {
 
   return (
     <>
-      <TrendCard trend={trend} />
+      <TrendCard trend={trend} label={t("range.last7")} />
 
       <section className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <StatCard label={t("Tables occupied")} value={`${occupied} / ${tables?.length ?? 0}`} href="/restaurant" icon={UtensilsCrossed} />
@@ -1371,7 +1371,7 @@ async function RentalHome({ shopId }: { shopId: string }) {
 
   return (
     <>
-      <TrendCard trend={trend} />
+      <TrendCard trend={trend} label={t("range.last7")} />
 
       {overdueRentals.length > 0 && (
         <Link href="/rentals" className="flex flex-col gap-1 rounded-xl border border-credit bg-credit-soft px-4 py-3">
@@ -1518,11 +1518,11 @@ function buildSevenDayTrend<T extends Record<string, unknown>>(
 
 /** Last-7-days revenue with its daily trend — the one chart every
  * business type's home shows. */
-function TrendCard({ trend }: { trend: { day: string; date: string; total: number }[] }) {
+function TrendCard({ trend, label }: { trend: { day: string; date: string; total: number }[]; label: string }) {
   return (
     <section className="neu-card p-4">
       <div className="mb-2 flex items-baseline justify-between gap-3">
-        <p className="text-sm font-medium text-muted">Last 7 days</p>
+        <p className="text-sm font-medium text-muted">{label}</p>
         <p className="text-lg font-bold tracking-tight text-foreground">{formatMoney(sum(trend.map((d) => d.total)))}</p>
       </div>
       <SalesTrendChart data={trend} />

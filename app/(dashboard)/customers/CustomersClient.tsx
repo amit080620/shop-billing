@@ -81,7 +81,7 @@ export function CustomersClient({
       const result = await createCustomerAction(prev, formData);
       if (!result?.error) {
         setShowForm(false);
-        showToast(`${isClinic ? "Patient" : isGym ? "Member" : "Customer"} added`);
+        showToast(t("{who} added", { who: t(isClinic ? "Patient" : isGym ? "Member" : "Customer") }));
       }
       return result;
     }),
@@ -112,12 +112,12 @@ export function CustomersClient({
   return (
     <div className="flex flex-col gap-4">
       <PageHeader
-        title={isClinic ? "Patients" : isGym ? "Members" : "Customers"}
+        title={t(isClinic ? "Patients" : isGym ? "Members" : "Customers")}
          
         icon={<Users size={17} strokeWidth={1.8} />}
         action={
           <button onClick={() => setShowForm((v) => !v)} className="btn-primary-sm">
-            + {isClinic ? "Patient" : isGym ? "Member" : "Customer"}
+            + {t(isClinic ? "Patient" : isGym ? "Member" : "Customer")}
           </button>
         }
       />
