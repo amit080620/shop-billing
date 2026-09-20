@@ -1,4 +1,6 @@
 import { requireOwner } from "@/lib/auth";
+import { ModuleBlocked } from "@/app/components/ModuleBlocked";
+import { isModuleEnabled } from "@/lib/modules";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { formatMoney } from "@/lib/format";
 import { PageHeader } from "@/app/components/PageHeader";
@@ -19,6 +21,7 @@ export default async function StaffCashSummaryPage({
   const { date: dateParam } = await searchParams;
   const date = dateParam || todayIso();
   const session = await requireOwner();
+  if (!isModuleEnabled(session.enabledModules, "advanced_reports")) return <ModuleBlocked moduleKey="advanced_reports" />;
   const admin = createSupabaseAdminClient();
 
   const startOfDay = new Date(`${date}T00:00:00+05:30`);

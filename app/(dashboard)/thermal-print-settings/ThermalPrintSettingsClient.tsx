@@ -6,6 +6,7 @@ import { PageHeader } from "@/app/components/PageHeader";
 import { Printer } from "lucide-react";
 import { useT } from "@/lib/i18n/LangContext";
 import { BackLink } from "@/app/components/BackLink";
+import Link from "next/link";
 
 function Toggle({ label, checked, onChange }: { label: string; checked: boolean; onChange: (v: boolean) => void }) {
   return (
@@ -188,6 +189,18 @@ export function ThermalPrintSettingsClient({ initial, initialDefaultFormat }: { 
     <div className="flex flex-col gap-4 pb-6">
       <BackLink fallback="/profile" />
       <PageHeader title={t("Thermal print settings")} icon={<Printer size={18} strokeWidth={1.8} />} />
+
+      <Link
+        href="/plans#hardware"
+        className="flex items-center gap-3 rounded-xl border border-brand/30 bg-brand-soft px-3.5 py-3 text-sm"
+      >
+        <Printer size={18} className="shrink-0 text-brand-text" />
+        <span className="min-w-0 flex-1">
+          <span className="block font-semibold text-brand-text">{t("Don't have a printer yet?")}</span>
+          <span className="block text-xs text-muted">{t("See the printers we've tested with The Ray — 58mm Bluetooth from ₹2,499.")}</span>
+        </span>
+        <span className="text-brand-text" aria-hidden="true">›</span>
+      </Link>
 
       <div className="rounded-xl border border-border bg-surface p-3.5">
         <p className="mb-2 text-sm font-semibold text-foreground">{t("Default print format")}</p>

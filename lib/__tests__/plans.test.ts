@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { effectivePlan, limitsForPlan, limitMessage, modulesForPlan, planFor, planRank, PLANS } from "../plans";
+import { effectivePlan, limitsForPlan, limitMessage, minPlanForModule, modulesForPlan, planFor, planRank, PLANS } from "../plans";
+import { MODULES } from "../modules";
 
 const daysFromNow = (n: number) => {
   const d = new Date();
@@ -8,6 +9,16 @@ const daysFromNow = (n: number) => {
 };
 
 describe("plans", () => {
+  it("Pro + carries every module, so a new module can never be missing from the top plan", () => {
+    expect([...PLANS.pro_plus.modules].sort()).toEqual(MODULES.map((m) => m.key).sort());
+  });
+
+  it("blocked screens point at the cheapest plan that unlocks them", () => {
+    expect(minPlanForModule("offers")).toBe("basic");
+    expect(minPlanForModule("advanced_reports")).toBe("pro");
+    expect(minPlanForModule("multi_branch")).toBe("pro_plus");
+  });
+
   it("each tier includes everything the tier below it has", () => {
     const order = ["free", "basic", "pro", "pro_plus"] as const;
     for (let i = 1; i < order.length; i++) {

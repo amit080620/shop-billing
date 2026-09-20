@@ -234,6 +234,7 @@ export async function MoreMenu() {
         <MenuGroup title="Settings & help">
           <MenuLink href="/profile" label="Shop settings" sub="GST profile, invoice, printer, preferences" icon={Settings} />
           <MenuLink href="/fast-print-setup" label="One-click print setup" sub="Print from a laptop without the dialog" icon={Printer} />
+          <MenuLink href="/plans#hardware" label="Printers & counter hardware" sub="Bluetooth printers, scanners and starter kits" icon={Printer} />
           <MenuLink href="/offline-bill" label="Offline billing" sub="Keep billing with no connection — syncs when you're back" icon={WifiOff} />
           {isOwner && mod("audit_log") && (
             <>

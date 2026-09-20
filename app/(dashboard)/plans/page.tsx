@@ -48,18 +48,6 @@ function UsageBar({ label, used, limit }: { label: string; used: number; limit: 
 export default async function PlansPage() {
   const session = await requireSession();
   const { t } = await getTranslator();
-  if (!session.plansReady) {
-    // Plans switch on with the database update; until then everyone has the full app.
-    return (
-      <div className="flex flex-col gap-4">
-        <BackLink fallback="/dashboard" />
-        <PageHeader title={t("Plan & billing")} icon={<Crown size={18} strokeWidth={1.8} />} />
-        <p className="rounded-xl border border-dashed border-border px-4 py-8 text-center text-sm text-muted">
-          {t("Plans are being switched on — for now your shop has everything.")}
-        </p>
-      </div>
-    );
-  }
   const current = planFor(session.plan);
   const usage = session.plansReady ? await planUsage(session) : null;
   const trialDays = session.onTrial ? daysUntil(session.trialEndsAt) : null;
@@ -73,6 +61,15 @@ export default async function PlansPage() {
       <BackLink fallback="/dashboard" />
       <PageHeader title={t("Plan & billing")} icon={<Crown size={18} strokeWidth={1.8} />} />
 
+      {/* Plans switch on with the database update; until then everyone has
+          the full app, so only the parts that don't depend on a plan show. */}
+      {!session.plansReady && (
+        <p className="rounded-xl border border-dashed border-border px-4 py-5 text-center text-sm text-muted">
+          {t("Plans are being switched on — for now your shop has everything.")}
+        </p>
+      )}
+      {session.plansReady && (
+        <>
       {/* Current plan */}
       <section className="neu-card flex flex-col gap-3 p-4">
         <div className="flex items-center justify-between gap-2">
@@ -197,8 +194,11 @@ export default async function PlansPage() {
         <p className="text-center text-xs text-muted">{t("Pay by UPI or bank transfer — we share the details on WhatsApp and switch your plan on the same day.")}</p>
       </section>
 
+        </>
+      )}
+
       {/* Hardware */}
-      <section className="flex flex-col gap-3">
+      <section id="hardware" className="flex scroll-mt-24 flex-col gap-3">
         <div>
           <h2 className="flex items-center gap-2 text-base font-semibold text-foreground">
             <Printer size={17} /> {t("Printers & counter hardware")}

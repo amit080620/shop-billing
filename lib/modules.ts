@@ -11,7 +11,7 @@ export const MODULES = [
   { key: "public_catalog", label: "Public online ordering", description: "Shareable storefront link + order queue" },
   { key: "whatsapp_reminders", label: "WhatsApp reminders", description: "Payment, membership, and appointment reminders" },
   { key: "offers", label: "Offers & coupons", description: "Discount codes and promotions" },
-  { key: "advanced_reports", label: "Advanced reports", description: "GSTR-1, GSTR-3B, Insights, Daily summary by staff" },
+  { key: "advanced_reports", label: "Advanced reports", description: "Insights, profit, CA export pack, staff reports" },
   { key: "self_checkin_kiosk", label: "Self check-in kiosk", description: "Gym: member self check-in tablet" },
   { key: "leads_crm", label: "Leads tracker", description: "Gym: trial enquiries and walk-in tracking" },
   { key: "class_schedule", label: "Class schedule", description: "Gym: weekly classes and bookings" },

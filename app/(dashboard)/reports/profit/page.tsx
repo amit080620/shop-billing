@@ -1,4 +1,6 @@
 import { requireSession } from "@/lib/auth";
+import { ModuleBlocked } from "@/app/components/ModuleBlocked";
+import { isModuleEnabled } from "@/lib/modules";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { formatMoney } from "@/lib/format";
 import { PageHeader } from "@/app/components/PageHeader";
@@ -16,6 +18,7 @@ export default async function ProfitPage({
 }) {
   const { t } = await getTranslator();
   const session = await requireSession();
+  if (!isModuleEnabled(session.enabledModules, "advanced_reports")) return <ModuleBlocked moduleKey="advanced_reports" />;
   const admin = createSupabaseAdminClient();
 
   const { from: fromParam, to: toParam } = await searchParams;

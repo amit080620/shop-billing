@@ -34,10 +34,13 @@ import { PageHeader } from "@/app/components/PageHeader";
 import { isModuleEnabled } from "@/lib/modules";
 import { getTranslator } from "@/lib/i18n/server";
 import { BackLink } from "@/app/components/BackLink";
+import { PlanBadge } from "@/app/components/PlanBadge";
+import { minPlanForModule } from "@/lib/plans";
 
 export default async function ReportsPage() {
   const session = await requireSession();
   const { t } = await getTranslator();
+  const advanced = isModuleEnabled(session.enabledModules, "advanced_reports");
 
   return (
     <div className="flex flex-col gap-3">
@@ -56,17 +59,17 @@ export default async function ReportsPage() {
             label="Daily summary"
             sub="End-of-day cash reconciliation, by payment method"
           />
-          {isModuleEnabled(session.enabledModules, "advanced_reports") && (
-            <ReportLink
-              href="/insights"
-              label="Insights"
-              sub="Fast movers & dead stock, from your own sales"
-            />
-          )}
+          <ReportLink
+            href="/insights"
+            label="Insights"
+            sub="Fast movers & dead stock, from your own sales"
+            locked={!advanced}
+          />
           <ReportLink
             href="/reports/profit"
             label="Profit"
             sub="What you actually earned — sales minus stock cost"
+            locked={!advanced}
           />
           <ReportLink
             href="/reports/credit-aging"
@@ -82,6 +85,7 @@ export default async function ReportsPage() {
             href="/reports/staff-performance"
             label="Staff performance"
             sub="Who's selling, who's collecting"
+            locked={!advanced}
           />
           <ReportLink
             href="/reports/vendor-comparison"
@@ -92,6 +96,7 @@ export default async function ReportsPage() {
             href="/reports/ca-export"
             label="CA export pack"
             sub="Full-year sales & purchases, ready to send"
+            locked={!advanced}
           />
           <ReportLink
             href="/reports/export"
@@ -289,7 +294,7 @@ const REPORT_ICONS: Record<string, LucideIcon> = {
   "/jewellery/exchanges": Repeat,
 };
 
-async function ReportLink({ href, label, sub }: { href: string; label: string; sub: string }) {
+async function ReportLink({ href, label, sub, locked = false }: { href: string; label: string; sub: string; locked?: boolean }) {
   const Icon = REPORT_ICONS[href] ?? BarChart3;
   const { t } = await getTranslator();
   return (
@@ -301,6 +306,7 @@ async function ReportLink({ href, label, sub }: { href: string; label: string; s
         <span className="block text-sm font-medium text-foreground">{t(label)}</span>
         <span className="block text-xs text-muted">{t(sub)}</span>
       </span>
+      {locked && <PlanBadge plan={minPlanForModule("advanced_reports")} size="xs" className="shrink-0" />}
       <ChevronRight size={16} className="shrink-0 text-muted" />
     </Link>
   );
