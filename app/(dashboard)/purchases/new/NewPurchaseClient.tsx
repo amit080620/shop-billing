@@ -670,7 +670,7 @@ export function NewPurchaseClient({
                       : "border-border text-muted"
                 }`}
               >
-                {paymentMethodLabel(m)}
+                {t(paymentMethodLabel(m))}
               </button>
             ))}
           </div>

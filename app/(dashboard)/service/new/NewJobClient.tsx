@@ -98,7 +98,7 @@ export function NewJobClient({ customers, lang }: { customers: Customer[]; lang:
         <input type="hidden" name="customerId" value={selectedCustomer?.id ?? ""} />
 
         <label className="flex flex-col gap-1.5 text-sm">
-          <span className="font-medium text-foreground">Customer</span>
+          <span className="font-medium text-foreground">{t("Customer")}</span>
           <SearchableSelect
             lang={lang}
             items={customers}
@@ -110,13 +110,13 @@ export function NewJobClient({ customers, lang }: { customers: Customer[]; lang:
               setCustomerName(c.name);
               setCustomerPhone(c.phone);
             }}
-            placeholder="Search existing customer, or just type below"
+            placeholder={t("Search existing customer, or just type below")}
           />
         </label>
 
         <div className="grid grid-cols-2 gap-3">
           <label className="flex flex-col gap-1.5 text-sm">
-            <span className="font-medium text-foreground">Name</span>
+            <span className="font-medium text-foreground">{t("Name")}</span>
             <input
               name="customerName"
               value={customerName}
@@ -126,7 +126,7 @@ export function NewJobClient({ customers, lang }: { customers: Customer[]; lang:
             />
           </label>
           <label className="flex flex-col gap-1.5 text-sm">
-            <span className="font-medium text-foreground">Phone</span>
+            <span className="font-medium text-foreground">{t("Phone")}</span>
             <PhoneInput value={customerPhone} onChange={setCustomerPhone} required />
             <input type="hidden" name="customerPhone" value={customerPhone} />
           </label>
@@ -146,7 +146,7 @@ export function NewJobClient({ customers, lang }: { customers: Customer[]; lang:
         />
 
         <div className="flex flex-col gap-2">
-          <span className="text-sm font-medium text-foreground">What kind of item is this?</span>
+          <span className="text-sm font-medium text-foreground">{t("What kind of item is this?")}</span>
           <div className="flex flex-wrap gap-2">
             {CATEGORIES.map((cat) => (
               <button
@@ -174,13 +174,13 @@ export function NewJobClient({ customers, lang }: { customers: Customer[]; lang:
                   <input
                     value={id.label}
                     onChange={(e) => updateIdentifier(i, { label: e.target.value })}
-                    placeholder="e.g. IMEI"
+                    placeholder={t("e.g. IMEI")}
                     className="w-1/3 rounded-lg border border-border px-2.5 py-1.5 text-xs outline-none focus:border-brand"
                   />
                   <input
                     value={id.value}
                     onChange={(e) => updateIdentifier(i, { value: e.target.value })}
-                    placeholder="Value"
+                    placeholder={t("Value")}
                     className="flex-1 rounded-lg border border-border px-2.5 py-1.5 text-xs outline-none focus:border-brand"
                   />
                   <button type="button" onClick={() => removeIdentifierRow(i)} className="text-xs font-medium text-danger">
@@ -197,7 +197,7 @@ export function NewJobClient({ customers, lang }: { customers: Customer[]; lang:
 
         {modelsFor(deviceCategory).length > 0 && (
           <label className="flex flex-col gap-1.5 text-sm">
-            <span className="font-medium text-foreground">Quick pick model (optional — saves typing)</span>
+            <span className="font-medium text-foreground">{t("Quick pick model (optional — saves typing)")}</span>
             <SearchableSelect
               lang={lang}
               items={modelsFor(deviceCategory)}
@@ -205,13 +205,13 @@ export function NewJobClient({ customers, lang }: { customers: Customer[]; lang:
               getLabel={(m: DeviceModel) => `${m.brand} ${m.model}`}
               getSubLabel={() => ""}
               onSelect={(m: DeviceModel) => updateItem(0, { name: `${m.brand} ${m.model}` })}
-              placeholder="Search brand or model…"
+              placeholder={t("Search brand or model…")}
             />
           </label>
         )}
 
         <div className="flex flex-col gap-2">
-          <span className="text-sm font-medium text-foreground">Items being dropped off</span>
+          <span className="text-sm font-medium text-foreground">{t("Items being dropped off")}</span>
           {items.map((item, i) => (
             <div key={i} className="flex flex-col gap-1.5 rounded-lg border border-border bg-surface p-2.5">
               <div className="flex gap-2">
@@ -238,7 +238,7 @@ export function NewJobClient({ customers, lang }: { customers: Customer[]; lang:
               <input
                 value={item.notes}
                 onChange={(e) => updateItem(i, { notes: e.target.value })}
-                placeholder="Notes for this item (optional)"
+                placeholder={t("Notes for this item (optional)")}
                 className="rounded-lg border border-border px-3 py-1.5 text-xs outline-none focus:border-brand"
               />
             </div>
@@ -249,17 +249,17 @@ export function NewJobClient({ customers, lang }: { customers: Customer[]; lang:
         </div>
 
         <label className="flex flex-col gap-1.5 text-sm">
-          <span className="font-medium text-foreground">What needs to be done? (optional)</span>
+          <span className="font-medium text-foreground">{t("What needs to be done? (optional)")}</span>
           <input
             name="issueDescription"
-            placeholder="e.g. Replace screen, check battery"
+            placeholder={t("e.g. Replace screen, check battery")}
             className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-brand"
           />
         </label>
 
         <div className="grid grid-cols-2 gap-3">
           <label className="flex flex-col gap-1.5 text-sm">
-            <span className="font-medium text-foreground">Estimated cost (₹, optional)</span>
+            <span className="font-medium text-foreground">{t("Estimated cost (₹, optional)")}</span>
             <input
               name="estimatedCost"
               type="number"
@@ -269,7 +269,7 @@ export function NewJobClient({ customers, lang }: { customers: Customer[]; lang:
             />
           </label>
           <label className="flex flex-col gap-1.5 text-sm">
-            <span className="font-medium text-foreground">Expected ready by (optional)</span>
+            <span className="font-medium text-foreground">{t("Expected ready by (optional)")}</span>
             <input
               name="expectedDate"
               type="date"
@@ -279,7 +279,7 @@ export function NewJobClient({ customers, lang }: { customers: Customer[]; lang:
         </div>
 
         <label className="flex flex-col gap-1.5 text-sm">
-          <span className="font-medium text-foreground">Advance received (₹, optional)</span>
+          <span className="font-medium text-foreground">{t("Advance received (₹, optional)")}</span>
           <input
             name="advancePaid"
             type="number"

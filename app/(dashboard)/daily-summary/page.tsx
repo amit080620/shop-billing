@@ -193,8 +193,8 @@ export default async function DailySummaryPage({
           {/* eslint-disable-next-line @next/next/no-img-element -- small branded SVG icon */}
           <img src="/assets/ray-icons/payment.svg" alt="" className="h-3.5 w-3.5" /> {t("daily.moneyIn", { amount: formatMoney(grandTotalIn) })}
         </h2>
-        <BreakdownTable title={t("Sales collected today")} byMethod={salesByMethod} />
-        <BreakdownTable title="Old udhaar collected today" byMethod={oldCreditCollected} />
+        <BreakdownTable title={t("Sales collected today")} byMethod={salesByMethod} t={t} />
+        <BreakdownTable title={t("Old udhaar collected today")} byMethod={oldCreditCollected} t={t} />
         {newCreditGiven > 0 && (
           <p className="text-xs text-credit">
             + {formatMoney(newCreditGiven)} sold on fresh credit today (not cash yet — tracked in Reminders)
@@ -204,8 +204,8 @@ export default async function DailySummaryPage({
 
       <section className="neu-card flex flex-col gap-2 p-4">
         <h2 className="flex items-center gap-1.5 text-sm font-semibold text-foreground"><Receipt size={14} /> {t("daily.moneyOut", { amount: formatMoney(grandTotalOut) })}</h2>
-        <BreakdownTable title="Purchases paid today" byMethod={purchasesPaidByMethod} />
-        <BreakdownTable title="Vendor payments made today" byMethod={vendorPaymentsByMethod} />
+        <BreakdownTable title={t("Purchases paid today")} byMethod={purchasesPaidByMethod} t={t} />
+        <BreakdownTable title={t("Vendor payments made today")} byMethod={vendorPaymentsByMethod} t={t} />
         {newPayableCreated > 0 && (
           <p className="text-xs text-credit">
             + {formatMoney(newPayableCreated)} bought on credit from vendors today (not paid yet)
@@ -218,7 +218,7 @@ export default async function DailySummaryPage({
         <div className="flex flex-col gap-1.5 text-sm">
           {METHODS.map((m) => (
             <div key={m} className="flex justify-between">
-              <span className="text-muted">{paymentMethodLabel(m)}</span>
+              <span className="text-muted">{t(paymentMethodLabel(m))}</span>
               <span className={`font-medium ${net[m] < 0 ? "text-danger" : "text-foreground"}`}>
                 {formatMoney(net[m])}
               </span>
@@ -230,7 +230,7 @@ export default async function DailySummaryPage({
   );
 }
 
-function BreakdownTable({ title, byMethod }: { title: string; byMethod: Record<Method, number> }) {
+function BreakdownTable({ title, byMethod, t }: { title: string; byMethod: Record<Method, number>; t: (key: string) => string }) {
   const total = METHODS.reduce((s, m) => s + byMethod[m], 0);
   if (total === 0) return null;
   return (
@@ -239,7 +239,7 @@ function BreakdownTable({ title, byMethod }: { title: string; byMethod: Record<M
       <div className="mt-1 grid grid-cols-5 gap-1 text-center text-xs">
         {METHODS.map((m) => (
           <div key={m} className={byMethod[m] > 0 ? "" : "opacity-40"}>
-            <p className="text-muted">{paymentMethodLabel(m)}</p>
+            <p className="text-muted">{t(paymentMethodLabel(m))}</p>
             <p className="font-semibold text-foreground">{formatMoney(byMethod[m])}</p>
           </div>
         ))}

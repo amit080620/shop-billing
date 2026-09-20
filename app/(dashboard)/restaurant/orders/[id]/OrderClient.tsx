@@ -1236,7 +1236,7 @@ function SettleModal({
                 className="rounded-lg border border-border px-2 py-2 text-xs outline-none focus:border-brand"
               >
                 {(["cash", "card", "upi", "online", "other"] as const).map((m) => (
-                  <option key={m} value={m}>{paymentMethodLabel(m)}</option>
+                  <option key={m} value={m}>{t(paymentMethodLabel(m))}</option>
                 ))}
               </select>
               <input

@@ -31,7 +31,7 @@ export function PaymentMethodPicker({ name = "paymentMethod", defaultValue = "ca
                 : undefined
             }
           >
-            {paymentMethodLabel(m)}
+            {t(paymentMethodLabel(m))}
           </button>
         ))}
       </div>

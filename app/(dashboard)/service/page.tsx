@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { getTranslator } from "@/lib/i18n/server";
 import { requireSession } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { PageHeader } from "@/app/components/PageHeader";
@@ -26,6 +27,7 @@ export default async function ServiceJobsPage({
   searchParams: Promise<{ status?: string }>;
 }) {
   const session = await requireSession();
+  const { t } = await getTranslator();
   const { status } = await searchParams;
   const admin = createSupabaseAdminClient();
 
@@ -49,10 +51,10 @@ export default async function ServiceJobsPage({
   return (
     <div className="flex flex-col gap-4">
       <PageHeader
-        title="Jobs"
+        title={t("Jobs")}
         action={
           <Link href="/service/new" className="btn-primary-sm">
-            + New job
+            + {t("New job")}
           </Link>
         }
         icon={<Wrench size={18} strokeWidth={1.8} />}
@@ -60,7 +62,7 @@ export default async function ServiceJobsPage({
 
       <div className="flex gap-2 overflow-x-auto pb-1">
         <Link href="/service" className={`shrink-0 rounded-full border px-3.5 py-1.5 text-xs font-medium ${!activeFilter ? "border-brand bg-brand-soft text-brand-text" : "border-border text-muted"}`}>
-          Open jobs
+          {t("Open jobs")}
         </Link>
         {(["received", "in_progress", "ready", "delivered", "cancelled"] as const).map((s) => (
           <Link
@@ -68,13 +70,13 @@ export default async function ServiceJobsPage({
             href={`/service?status=${s}`}
             className={`shrink-0 rounded-full border px-3.5 py-1.5 text-xs font-medium ${activeFilter === s ? "border-brand bg-brand-soft text-brand-text" : "border-border text-muted"}`}
           >
-            {STATUS_LABELS[s]}
+            {t(STATUS_LABELS[s])}
           </Link>
         ))}
       </div>
 
       {(!jobs || jobs.length === 0) ? (
-        <EmptyState text="No jobs here — tap + New job when an item comes in for service." />
+        <EmptyState text={t("No jobs yet — tap + New job when an item comes in for service.")} />
       ) : (
         <ul className="flex flex-col gap-2 md:grid md:grid-cols-2 md:gap-3">
           {jobs.map((j) => (
@@ -90,7 +92,7 @@ export default async function ServiceJobsPage({
                   </p>
                 </div>
                 <span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-medium ${STATUS_TONE[j.status]}`}>
-                  {STATUS_LABELS[j.status]}
+                  {t(STATUS_LABELS[j.status])}
                 </span>
               </Link>
             </li>

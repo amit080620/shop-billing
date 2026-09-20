@@ -72,7 +72,7 @@ export default async function RestaurantReportsPage({
           <div className="flex flex-col gap-1.5">
             {methodRows.map(([method, amount]) => (
               <div key={method} className="flex items-center justify-between text-sm">
-                <span className="text-foreground">{paymentMethodLabel(method)}</span>
+                <span className="text-foreground">{t(paymentMethodLabel(method))}</span>
                 <span className="font-medium text-foreground">{formatMoney(amount)}</span>
               </div>
             ))}

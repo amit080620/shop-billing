@@ -389,7 +389,7 @@ export function NewRentalClient({
                 paymentMethod === m ? "border-brand bg-brand-soft text-brand-text" : "border-border text-muted"
               }`}
             >
-              {paymentMethodLabel(m)}
+              {t(paymentMethodLabel(m))}
             </button>
           ))}
         </div>

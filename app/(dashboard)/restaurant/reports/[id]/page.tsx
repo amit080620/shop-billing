@@ -64,7 +64,7 @@ export default async function RestaurantBillDetailPage({
         <ul className="flex flex-col gap-1.5">
           {(payments ?? []).map((p) => (
             <li key={p.id} className="flex justify-between rounded-lg bg-brand-soft px-3 py-2 text-sm">
-              <span className="text-brand-text">{paymentMethodLabel(p.payment_method)}</span>
+              <span className="text-brand-text">{t(paymentMethodLabel(p.payment_method))}</span>
               <span className="font-medium text-brand-text">{formatMoney(p.amount)}</span>
             </li>
           ))}

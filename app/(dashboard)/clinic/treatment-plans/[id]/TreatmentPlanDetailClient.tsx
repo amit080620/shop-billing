@@ -9,6 +9,7 @@ import { PageHeader } from "@/app/components/PageHeader";
 import { useToast } from "@/app/components/Toast";
 import { ClipboardList, Printer, CheckCircle2, Circle, Receipt } from "lucide-react";
 import { BackLink } from "@/app/components/BackLink";
+import { useT } from "@/lib/i18n/LangContext";
 
 type Item = { id: string; toothNumber: string | null; procedureName: string; description: string | null; estimatedCost: number; status: string };
 type Plan = { id: string; patientId: string | null; patientName: string; patientPhone: string | null; doctorName: string | null; notes: string | null; status: string; billId: string | null; createdAt: string };
@@ -16,6 +17,7 @@ type Plan = { id: string; patientId: string | null; patientName: string; patient
 export function TreatmentPlanDetailClient({ plan, items: initialItems }: { plan: Plan; items: Item[] }) {
   const router = useRouter();
   const { showToast } = useToast();
+  const { t } = useT();
   const [items, setItems] = useState(initialItems);
   const [isPending, startTransition] = useTransition();
   const [showBillConfirm, setShowBillConfirm] = useState(false);
@@ -113,7 +115,7 @@ export function TreatmentPlanDetailClient({ plan, items: initialItems }: { plan:
                 onClick={() => setPaymentMethod(m)}
                 className={`rounded-lg py-2 text-xs font-medium ${paymentMethod === m ? "bg-brand text-white" : "bg-background text-muted"}`}
               >
-                {paymentMethodLabel(m)}
+                {t(paymentMethodLabel(m))}
               </button>
             ))}
           </div>

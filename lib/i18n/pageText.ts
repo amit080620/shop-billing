@@ -319,6 +319,31 @@ export const PAGE_TEXT: Record<string, [hi: string, mr: string]> = {
   "Void invoice": ["बिल रद्द करें", "बिल रद्द करा"],
   "↩ Return": ["↩ वापसी", "↩ परतावा"],
 
+  // Money in / out and payment methods
+  "Old udhaar collected today": ["आज मिला पुराना उधार", "आज मिळालेली जुनी उधारी"],
+  "Purchases paid today": ["आज खरीद पर दिए", "आज खरेदीसाठी दिलेले"],
+  "Vendor payments made today": ["आज सप्लायर को दिए", "आज पुरवठादाराला दिलेले"],
+  "Cash": ["नकद", "रोख"],
+  "Card": ["कार्ड", "कार्ड"],
+  "Online": ["ऑनलाइन", "ऑनलाइन"],
+  "Other": ["अन्य", "इतर"],
+  "Udhar": ["उधार", "उधारी"],
+
+  // Repair jobs
+  "Open jobs": ["चल रहे काम", "चालू कामे"],
+  "What kind of item is this?": ["यह किस तरह का सामान है?", "ही कोणत्या प्रकारची वस्तू आहे?"],
+  "Items being dropped off": ["जो सामान जमा हो रहा है", "जमा होणाऱ्या वस्तू"],
+  "Notes for this item (optional)": ["इस सामान के लिए नोट (ज़रूरी नहीं)", "या वस्तूसाठी नोंद (ऐच्छिक)"],
+  "What needs to be done? (optional)": ["क्या काम करना है? (ज़रूरी नहीं)", "काय काम करायचे आहे? (ऐच्छिक)"],
+  "e.g. Replace screen, check battery": ["जैसे स्क्रीन बदलें, बैटरी देखें", "उदा. स्क्रीन बदला, बॅटरी तपासा"],
+  "Estimated cost (₹, optional)": ["अनुमानित खर्च (₹, ज़रूरी नहीं)", "अंदाजे खर्च (₹, ऐच्छिक)"],
+  "Expected ready by (optional)": ["कब तक तैयार (ज़रूरी नहीं)", "कधीपर्यंत तयार (ऐच्छिक)"],
+  "Advance received (₹, optional)": ["एडवांस मिला (₹, ज़रूरी नहीं)", "आगाऊ मिळाले (₹, ऐच्छिक)"],
+  "Quick pick model (optional — saves typing)": ["मॉडल चुनें (ज़रूरी नहीं — लिखने से बचेंगे)", "मॉडेल निवडा (ऐच्छिक — टाइप करायची गरज नाही)"],
+  "Search brand or model…": ["ब्रांड या मॉडल खोजें…", "ब्रँड किंवा मॉडेल शोधा…"],
+  "e.g. IMEI": ["जैसे IMEI", "उदा. IMEI"],
+  "Value": ["नंबर / वैल्यू", "क्रमांक / मूल्य"],
+
   // Appointments
   "Book appointment": ["अपॉइंटमेंट बुक करें", "अपॉइंटमेंट बुक करा"],
   "Booking…": ["बुक हो रहा है…", "बुक होत आहे…"],
@@ -433,7 +458,6 @@ export const PAGE_TEXT: Record<string, [hi: string, mr: string]> = {
   // Restaurant order screen
   "Tables": ["टेबल", "टेबल"],
   "All": ["सभी", "सर्व"],
-  "Other": ["अन्य", "इतर"],
   "Clear": ["हटाएं", "काढा"],
   "Done": ["हो गया", "झाले"],
   "Send": ["भेजें", "पाठवा"],
