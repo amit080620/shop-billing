@@ -42,7 +42,7 @@ export default async function AllBillsPage({
 
   return (
     <div className="flex flex-col gap-4">
-      <BackLink fallback="/bills" />
+      <BackLink fallback="/dashboard" />
       <PageHeader icon={<Receipt size={20} />} title={t("bills.title")} subtitle={t("bills.subtitle")} />
 
       <DateRangeControls from={from} to={to} basePath="/bills/all" />
