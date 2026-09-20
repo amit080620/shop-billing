@@ -34,13 +34,14 @@ export default async function SignupPage() {
           { name: "shopName", label: t("signup.shopName"), type: "text", placeholder: "Sharma General Store" },
           {
             name: "businessType",
-            label: "What kind of business is this?",
+            label: t("What kind of business is this?"),
+            requiredMessage: t("Pick the kind of business — this can't be changed later."),
             type: "grid",
             gridOptions: BUSINESS_TYPES.map((b) => ({ value: b.value, label: b.label.split(" / ")[0], icon: b.value, colors: b.colors })),
           },
           {
             name: "stateCode",
-            label: "State",
+            label: t("State"),
             type: "select",
             placeholder: "Choose your state",
             options: INDIAN_STATES.map((s) => ({ value: s.code, label: s.name })),

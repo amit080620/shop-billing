@@ -65,6 +65,7 @@ type Field = {
   placeholder?: string;
   options?: { value: string; label: string }[];
   gridOptions?: { value: string; label: string; icon: string; colors: [string, string] }[];
+  requiredMessage?: string;
 };
 
 export function AuthForm({
@@ -87,6 +88,10 @@ export function AuthForm({
   }, [state]);
   const [visibleFields, setVisibleFields] = useState<Record<string, boolean>>({});
   const [gridSelections, setGridSelections] = useState<Record<string, string>>({});
+  // A hidden input can't be validated by the browser, so an unanswered
+  // picker used to submit silently — and on signup that quietly locked
+  // the shop into the wrong business type for good.
+  const [missingGrid, setMissingGrid] = useState<string | null>(null);
 
   return (
     // Submitted via onSubmit rather than the form action prop: React 19
@@ -96,6 +101,13 @@ export function AuthForm({
     <form
       onSubmit={(e) => {
         e.preventDefault();
+        const unanswered = fields.find((f) => f.gridOptions && !gridSelections[f.name]);
+        if (unanswered) {
+          setMissingGrid(unanswered.name);
+          document.getElementById(`grid-${unanswered.name}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+          return;
+        }
+        setMissingGrid(null);
         const data = new FormData(e.currentTarget);
         startTransition(() => formAction(data));
       }}
@@ -105,15 +117,21 @@ export function AuthForm({
         <label key={f.name} className="flex flex-col gap-1.5 text-sm">
           <span className="font-medium text-foreground">{f.label}</span>
           {f.gridOptions ? (
-            <div className="grid grid-cols-3 gap-2.5">
-              <input type="hidden" name={f.name} value={gridSelections[f.name] ?? ""} required />
+            <div
+              id={`grid-${f.name}`}
+              className={`grid grid-cols-3 gap-2.5 ${missingGrid === f.name ? "rounded-xl ring-1 ring-danger" : ""}`}
+            >
+              <input type="hidden" name={f.name} value={gridSelections[f.name] ?? ""} />
               {f.gridOptions.map((opt) => {
                 const selected = gridSelections[f.name] === opt.value;
                 return (
                   <button
                     key={opt.value}
                     type="button"
-                    onClick={() => setGridSelections((prev) => ({ ...prev, [f.name]: opt.value }))}
+                    onClick={() => {
+                      setGridSelections((prev) => ({ ...prev, [f.name]: opt.value }));
+                      setMissingGrid(null);
+                    }}
                     aria-pressed={selected}
                     className={`flex flex-col items-center gap-2 rounded-xl border bg-surface p-3 text-center transition-colors ${
                       selected ? "border-brand bg-brand-soft ring-1 ring-brand" : "border-border hover:border-border-strong"
@@ -132,6 +150,9 @@ export function AuthForm({
                   </button>
                 );
               })}
+              {missingGrid === f.name && (
+                <p className="col-span-3 text-xs font-medium text-danger">{f.requiredMessage ?? "Please choose one."}</p>
+              )}
             </div>
           ) : f.options ? (
             <select

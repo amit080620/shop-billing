@@ -319,6 +319,11 @@ export const PAGE_TEXT: Record<string, [hi: string, mr: string]> = {
   "Void invoice": ["बिल रद्द करें", "बिल रद्द करा"],
   "↩ Return": ["↩ वापसी", "↩ परतावा"],
 
+  // Signup
+  "What kind of business is this?": ["यह किस तरह का बिज़नेस है?", "हा कोणत्या प्रकारचा व्यवसाय आहे?"],
+  "Pick the kind of business — this can't be changed later.": ["बिज़नेस का प्रकार चुनें — बाद में इसे बदला नहीं जा सकता।", "व्यवसायाचा प्रकार निवडा — नंतर तो बदलता येत नाही."],
+  "State": ["राज्य", "राज्य"],
+
   "Customers": ["ग्राहक", "ग्राहक"],
   "Customer": ["ग्राहक", "ग्राहक"],
   "{who} added": ["{who} जुड़ गया", "{who} जोडले"],
