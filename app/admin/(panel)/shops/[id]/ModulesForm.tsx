@@ -4,12 +4,15 @@ import { useState, useTransition } from "react";
 import { adminSetShopModulesAction } from "@/lib/actions/admin-subscriptions";
 import { MODULES } from "@/lib/modules";
 
-export function ModulesForm({ shopId, enabledModules }: { shopId: string; enabledModules: string[] | null }) {
+/** `planName` is set once plans are switched on: an untouched shop then
+ * follows its plan's modules, and ticking "Restrict" is an override for
+ * this one shop on top of the plan. */
+export function ModulesForm({ shopId, enabledModules, planName, planModules }: { shopId: string; enabledModules: string[] | null; planName?: string; planModules?: string[] }) {
   // null means "everything on, never restricted yet" — the toggle grid
   // needs a concrete list to check boxes against, so it's expanded to
   // the full module list locally without writing anything until the
   // admin actually changes something and saves.
-  const [selected, setSelected] = useState<string[]>(enabledModules ?? MODULES.map((m) => m.key));
+  const [selected, setSelected] = useState<string[]>(enabledModules ?? planModules ?? MODULES.map((m) => m.key));
   const [isRestricted, setIsRestricted] = useState(enabledModules !== null);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
@@ -42,12 +45,16 @@ export function ModulesForm({ shopId, enabledModules }: { shopId: string; enable
             onChange={(e) => setIsRestricted(e.target.checked)}
             className="h-3.5 w-3.5 rounded border-gray-700"
           />
-          Restrict this shop&apos;s modules
+          {planName ? "Override the plan for this shop" : "Restrict this shop's modules"}
         </label>
       </div>
 
       {!isRestricted ? (
-        <p className="mt-2 text-xs text-gray-400">All modules enabled — nothing is restricted for this shop.</p>
+        <p className="mt-2 text-xs text-gray-400">
+          {planName
+            ? `Follows the ${planName} plan — ${planModules?.length ?? 0} of ${MODULES.length} modules. Tick the box above only for a one-off exception.`
+            : "All modules enabled — nothing is restricted for this shop."}
+        </p>
       ) : (
         <div className="mt-2 flex flex-col gap-1.5">
           {MODULES.map((m) => (

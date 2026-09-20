@@ -164,7 +164,12 @@ export default async function AdminShopDetailPage({
 
       <BusinessTypeForm shopId={shop.id} businessType={shop.business_type} locked={shop.business_type_locked} />
 
-      <ModulesForm shopId={shop.id} enabledModules={shop.enabled_modules} />
+      <ModulesForm
+        shopId={shop.id}
+        enabledModules={shop.enabled_modules}
+        planName={plansReady ? planFor(eff.key).name : undefined}
+        planModules={plansReady ? planFor(eff.key).modules : undefined}
+      />
 
       <section className="rounded-xl border border-gray-800 bg-gray-900 p-3">
         <p className="text-xs font-medium text-gray-300">Staff ({staffWithEmail.length})</p>
