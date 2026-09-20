@@ -3,6 +3,7 @@ import Link from "next/link";
 import { requireSession } from "@/lib/auth";
 import { getLang } from "@/lib/i18n/server";
 import { LangProvider } from "@/lib/i18n/LangContext";
+import { PlanBadge } from "@/app/components/PlanBadge";
 import { MenuDrawerProvider } from "./MenuDrawer";
 import { MoreMenu } from "./more/MoreMenu";
 import { NavDepthTracker } from "@/app/components/BackLink";
@@ -45,6 +46,7 @@ export default async function DashboardLayout({
         shopLogoUrl={session.shopLogoUrl}
         permissions={session.permissions}
         fastBillingEnabled={fastBillingEnabled}
+        plan={session.plansReady ? session.plan : undefined}
       />
 
       {/* One sticky top bar for both breakpoints. On mobile it carries the
@@ -72,7 +74,10 @@ export default async function DashboardLayout({
               </span>
             )}
             <span className="min-w-0">
-              <span className="block truncate text-sm font-semibold leading-tight text-foreground">{session.shopName}</span>
+              <span className="flex items-center gap-1.5">
+                <span className="truncate text-sm font-semibold leading-tight text-foreground">{session.shopName}</span>
+                {session.plansReady && <PlanBadge plan={session.plan} size="xs" className="shrink-0" />}
+              </span>
               <span className="block truncate text-xs leading-tight text-muted">
                 {session.staffName} · {roleLabel}
               </span>

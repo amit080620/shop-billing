@@ -47,6 +47,7 @@ export default async function SignupPage() {
             options: INDIAN_STATES.map((s) => ({ value: s.code, label: s.name })),
           },
           { name: "ownerName", label: t("signup.ownerName"), type: "text", placeholder: "Rakesh Sharma" },
+          { name: "ownerPhone", label: t("Your mobile number"), type: "tel", placeholder: "98765 43210" },
           { name: "email", label: t("auth.email"), type: "email", placeholder: "you@example.com" },
           { name: "password", label: t("auth.password"), type: "password", placeholder: "At least 6 characters" },
         ]}

@@ -7,6 +7,7 @@ const valid = {
   businessType: "grocery",
   stateCode: "27",
   ownerName: "Rakesh Sharma",
+  ownerPhone: "9876543210",
   email: "rakesh@example.com",
   password: "secret123",
 };
@@ -24,5 +25,16 @@ describe("signupSchema", () => {
     expect(signupSchema.safeParse({ ...valid, stateCode: "" }).success).toBe(false);
     expect(signupSchema.safeParse({ ...valid, stateCode: null }).success).toBe(false);
     expect(signupSchema.safeParse({ ...valid, stateCode: "Maharashtra" }).success).toBe(false);
+  });
+
+  it("needs a 10-digit Indian mobile so support and renewals can reach the shop", () => {
+    expect(signupSchema.safeParse(valid).success).toBe(true);
+    expect(signupSchema.safeParse({ ...valid, ownerPhone: "98765 43210" }).success).toBe(false);
+    expect(signupSchema.safeParse({ ...valid, ownerPhone: "12345" }).success).toBe(false);
+    expect(signupSchema.safeParse({ ...valid, ownerPhone: "1234567890" }).success).toBe(false); // must start 6-9
+    expect(signupSchema.safeParse({ ...valid, ownerPhone: "" }).success).toBe(false);
+    const withoutPhone: Partial<typeof valid> = { ...valid };
+    delete withoutPhone.ownerPhone;
+    expect(signupSchema.safeParse(withoutPhone).success).toBe(false);
   });
 });

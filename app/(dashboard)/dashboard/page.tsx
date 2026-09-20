@@ -6,6 +6,7 @@ import { formatMoney, formatDateTime } from "@/lib/format";
 import { EmptyState } from "@/app/components/EmptyState";
 import { SalesTrendChartLazy as SalesTrendChart } from "@/app/components/DashboardLazy";
 import { getTranslator } from "@/lib/i18n/server";
+import { PlanBanner } from "./PlanBanner";
 import { isModuleEnabled } from "@/lib/modules";
 import { FESTIVALS } from "@/lib/festivals";
 import { getProfitLeakAction } from "@/lib/actions/profitLeak";
@@ -94,6 +95,8 @@ export default async function DashboardPage() {
         <p className="text-xl font-bold tracking-tight text-foreground md:text-2xl">{t(greetingKey())}, {session.staffName.split(" ")[0]}</p>
         <p className="text-sm text-muted">{t("home.subtitle", { shop: session.shopName })}</p>
       </div>
+
+      <PlanBanner />
 
       {catalogEnabled && (pendingCatalogOrders ?? 0) > 0 && (
         <Link

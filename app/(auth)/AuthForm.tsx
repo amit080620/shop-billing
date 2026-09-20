@@ -194,6 +194,7 @@ export function AuthForm({
               type={f.type}
               placeholder={f.placeholder}
               required
+              {...(f.type === "tel" ? { inputMode: "numeric" as const, maxLength: 10, pattern: "[0-9]{10}" } : {})}
               className="px-3.5 py-3 text-base"
             />
           )}

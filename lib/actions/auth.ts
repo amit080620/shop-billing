@@ -24,13 +24,14 @@ export async function signupAction(
     businessType: formData.get("businessType") || "general",
     stateCode: formData.get("stateCode"),
     ownerName: formData.get("ownerName"),
+    ownerPhone: formData.get("ownerPhone"),
     email: formData.get("email"),
     password: formData.get("password"),
   });
   if (!parsed.success) {
     return { error: parsed.error.issues[0].message };
   }
-  const { shopName, businessType, stateCode, ownerName, email, password } = parsed.data;
+  const { shopName, businessType, stateCode, ownerName, ownerPhone, email, password } = parsed.data;
 
   const admin = createSupabaseAdminClient();
 
@@ -59,17 +60,41 @@ export async function signupAction(
     return { error: authError?.message ?? "Could not create account" };
   }
 
-  // New shops get a 14-day trial by default — a super admin extends this
-  // via /admin once the shop is on a paid plan. Existing shops created
-  // before this rolled out keep their unlimited access (NULL), untouched.
+  // Every new shop tries the whole app for 14 days and then settles on
+  // the Free plan — no card, no lockout, and the counter keeps billing.
+  // A super admin assigns a paid plan from /admin once payment arrives.
   const trialEnds = new Date();
   trialEnds.setDate(trialEnds.getDate() + 14);
 
-  const { data: shop, error: shopError } = await admin
+  let { data: shop, error: shopError } = await admin
     .from("shops")
-    .insert({ name: shopName, business_type: businessType, state_code: stateCode, business_type_locked: true, subscription_valid_until: trialEnds.toISOString().slice(0, 10) })
+    .insert({
+      name: shopName,
+      business_type: businessType,
+      state_code: stateCode,
+      business_type_locked: true,
+      plan: "free",
+      trial_ends_at: trialEnds.toISOString().slice(0, 10),
+      owner_phone: ownerPhone,
+    })
     .select("id")
     .single();
+  // Before migration 0040 the plan columns don't exist and the insert
+  // fails on them. Signing up must keep working through that gap, so fall
+  // back to the original shape: a 14-day subscription window, no plan.
+  if (shopError && (shopError.code === "42703" || shopError.code === "PGRST204")) {
+    ({ data: shop, error: shopError } = await admin
+      .from("shops")
+      .insert({
+        name: shopName,
+        business_type: businessType,
+        state_code: stateCode,
+        business_type_locked: true,
+        subscription_valid_until: trialEnds.toISOString().slice(0, 10),
+      })
+      .select("id")
+      .single());
+  }
   if (shopError || !shop) {
     await admin.auth.admin.deleteUser(authData.user.id);
     return { error: "Could not create shop. Please try again." };

@@ -4,6 +4,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useTranslation } from "@/lib/i18n/useTranslation";
+import { PlanBadge } from "@/app/components/PlanBadge";
+import type { PlanKey } from "@/lib/plans";
 import { tabsFor } from "./BottomNav";
 import { activeTabHref } from "@/lib/activeTab";
 import type { Lang } from "@/lib/i18n/dictionary";
@@ -19,6 +21,7 @@ export function DesktopSidebar({
   shopLogoUrl,
   permissions = [],
   fastBillingEnabled = false,
+  plan,
 }: {
   lang: Lang;
   businessType: string;
@@ -27,6 +30,7 @@ export function DesktopSidebar({
   roleLabel: string;
   shopLogoUrl: string | null;
   permissions?: string[];
+  plan?: PlanKey;
   fastBillingEnabled?: boolean;
 }) {
   const pathname = usePathname();
@@ -47,6 +51,7 @@ export function DesktopSidebar({
           )}
           <span className="min-w-0 flex-1">
             <span className="line-clamp-2 block text-sm font-semibold leading-snug text-foreground">{shopName}</span>
+            {plan && <PlanBadge plan={plan} size="xs" className="mb-0.5 mt-0.5" />}
             <span className="block truncate text-xs text-muted">
               {staffName} · {roleLabel}
             </span>

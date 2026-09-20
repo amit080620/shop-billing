@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { requireOwner } from "../auth";
 import { createSupabaseAdminClient } from "../supabase/admin";
+import { branchLimitError } from "../planLimits";
 
 export type ActionState = { error?: string } | null;
 
@@ -11,6 +12,8 @@ export async function createBranchAction(
   formData: FormData,
 ): Promise<ActionState> {
   const session = await requireOwner();
+  const overLimit = await branchLimitError(session);
+  if (overLimit) return { error: overLimit };
   const admin = createSupabaseAdminClient();
 
   const name = formData.get("name");

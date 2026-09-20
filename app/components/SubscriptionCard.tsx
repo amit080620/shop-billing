@@ -1,9 +1,9 @@
 import { requireSession } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { getTranslator } from "@/lib/i18n/server";
+import { SALES_WHATSAPP } from "@/lib/sales";
 
-// Support/recharge contact — update this to the real number when ready.
-const SUPPORT_WHATSAPP_NUMBER = "918123455501";
+const SUPPORT_WHATSAPP_NUMBER = SALES_WHATSAPP;
 
 function daysBetween(from: Date, to: Date) {
   return Math.ceil((to.getTime() - from.getTime()) / (1000 * 60 * 60 * 24));

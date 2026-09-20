@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { requireSession, requireOwner } from "../auth";
 import { createSupabaseAdminClient } from "../supabase/admin";
+import { productLimitError } from "../planLimits";
 import { productSchema, categorySchema } from "../validation/schemas";
 import { logAuditEvent } from "../audit";
 import { findDuplicateProductAI } from "./duplicateCheck";
@@ -15,6 +16,8 @@ export async function createProductAction(
   formData: FormData,
 ): Promise<ActionState> {
   const session = await requireSession(); // every mutation re-verifies the session
+  const overLimit = await productLimitError(session);
+  if (overLimit) return { error: overLimit };
   const parsed = productSchema.safeParse({
     name: formData.get("name"),
     price: formData.get("price"),

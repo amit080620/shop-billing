@@ -28,6 +28,14 @@ const mockSession: SessionContext = {
   businessType: "grocery",
   businessTypeLocked: false,
   enabledModules: null,
+  plan: "pro_plus",
+  planLimits: { billsPerMonth: null, products: null, staff: null, branches: 5 },
+  onTrial: false,
+  planExpired: false,
+  trialEndsAt: null,
+  paidUntil: null,
+  plansReady: true,
+  ownerPhone: null,
   fastBillingEnabled: false,
 };
 

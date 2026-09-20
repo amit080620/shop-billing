@@ -4,6 +4,8 @@ import { LogoutButton } from "./LogoutButton";
 import { getTranslator } from "@/lib/i18n/server";
 import { getTerminology } from "@/lib/businessType";
 import { isModuleEnabled } from "@/lib/modules";
+import { PlanBadge } from "@/app/components/PlanBadge";
+import { planFor } from "@/lib/plans";
 import {
   AlertTriangle,
   BarChart3,
@@ -63,8 +65,33 @@ export async function MoreMenu() {
   const isOwner = session.role === "owner";
   const mod = (key: Parameters<typeof isModuleEnabled>[1]) => isModuleEnabled(session.enabledModules, key);
 
+  const daysLeft = session.paidUntil ? Math.ceil((new Date(session.paidUntil).getTime() - Date.now()) / 86_400_000) : null;
+  const trialLeft = session.onTrial && session.trialEndsAt ? Math.ceil((new Date(session.trialEndsAt).getTime() - Date.now()) / 86_400_000) : null;
+  const planLine = session.onTrial && trialLeft !== null
+    ? t("Free trial · {n} days left", { n: Math.max(0, trialLeft) })
+    : session.planExpired
+      ? t("Plan ended — renew to get everything back")
+      : session.plan === "free"
+        ? t("See what upgrading adds")
+        : daysLeft !== null
+          ? t("{n} days left", { n: Math.max(0, daysLeft) })
+          : t(planFor(session.plan).tagline);
+
   return (
       <div className="flex flex-col gap-5">
+        {session.plansReady && (
+          <Link
+            href="/plans"
+            className="flex items-center gap-3 rounded-xl border border-border bg-surface px-3.5 py-3 transition-colors hover:bg-surface-2"
+          >
+            <PlanBadge plan={session.plan} size="md" />
+            <span className="min-w-0 flex-1">
+              <span className="block text-sm font-semibold text-foreground">{t("Plan & billing")}</span>
+              <span className="block truncate text-xs text-muted">{planLine}</span>
+            </span>
+            <span className="text-muted" aria-hidden="true">›</span>
+          </Link>
+        )}
         {type === "restaurant" && (
           <MenuGroup title="Restaurant">
             <MenuLink href="/restaurant-kds" label="Kitchen display (TV)" sub="Big-screen view for the kitchen" icon={MonitorPlay} />

@@ -31,6 +31,13 @@ export interface Database {
           logo_url: string | null;
           upi_id: string | null;
           subscription_valid_until: string | null;
+          plan: string;
+          plan_started_at: string | null;
+          plan_note: string | null;
+          plan_price: number | null;
+          plan_limits: Json | null;
+          trial_ends_at: string | null;
+          owner_phone: string | null;
           wallet_balance: number;
           business_type: string;
           business_type_locked: boolean;
@@ -59,6 +66,13 @@ export interface Database {
           logo_url?: string | null;
           upi_id?: string | null;
           subscription_valid_until?: string | null;
+          plan?: string;
+          plan_started_at?: string | null;
+          plan_note?: string | null;
+          plan_price?: number | null;
+          plan_limits?: Json | null;
+          trial_ends_at?: string | null;
+          owner_phone?: string | null;
           wallet_balance?: number;
           business_type?: string;
           business_type_locked?: boolean;
@@ -87,6 +101,13 @@ export interface Database {
           logo_url?: string | null;
           upi_id?: string | null;
           subscription_valid_until?: string | null;
+          plan?: string;
+          plan_started_at?: string | null;
+          plan_note?: string | null;
+          plan_price?: number | null;
+          plan_limits?: Json | null;
+          trial_ends_at?: string | null;
+          owner_phone?: string | null;
           wallet_balance?: number;
           business_type?: string;
           business_type_locked?: boolean;
@@ -1070,6 +1091,18 @@ export interface Database {
         Row: { version: string; applied_at: string };
         Insert: { version: string; applied_at?: string };
         Update: { version?: string; applied_at?: string };
+        Relationships: [];
+      };
+      sales_enquiries: {
+        Row: { id: string; shop_id: string; kind: "plan" | "hardware" | "service" | "upcoming" | "custom"; item: string; status: "new" | "contacted" | "won" | "lost"; created_at: string };
+        Insert: { id?: string; shop_id: string; kind: "plan" | "hardware" | "service" | "upcoming" | "custom"; item: string; status?: "new" | "contacted" | "won" | "lost"; created_at?: string };
+        Update: { id?: string; shop_id?: string; kind?: "plan" | "hardware" | "service" | "upcoming" | "custom"; item?: string; status?: "new" | "contacted" | "won" | "lost"; created_at?: string };
+        Relationships: [];
+      };
+      plan_changes: {
+        Row: { id: string; shop_id: string; from_plan: string | null; to_plan: string; amount: number | null; months: number | null; note: string | null; changed_by: string | null; created_at: string };
+        Insert: { id?: string; shop_id: string; from_plan?: string | null; to_plan: string; amount?: number | null; months?: number | null; note?: string | null; changed_by?: string | null; created_at?: string };
+        Update: { id?: string; shop_id?: string; from_plan?: string | null; to_plan?: string; amount?: number | null; months?: number | null; note?: string | null; changed_by?: string | null; created_at?: string };
         Relationships: [];
       };
       signup_attempts: {

@@ -205,6 +205,12 @@ export const signupSchema = z.object({
   // blocked until the state is known (it decides CGST+SGST vs IGST).
   stateCode: z.string().regex(/^\d{2}$/, "Please choose your state"),
   ownerName: z.string().trim().min(1, "Your name is required").max(80),
+  // The owner's own mobile: how support and renewals reach the shop, and
+  // the only contact The Ray has for a shop that never files GST.
+  ownerPhone: z
+    .string()
+    .trim()
+    .regex(/^[6-9]\d{9}$/, "Enter a 10-digit mobile number"),
   email: z.string().trim().email(),
   password: z.string().min(6, "Password must be at least 6 characters"),
 });

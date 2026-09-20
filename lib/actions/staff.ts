@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { requireOwner } from "../auth";
 import { createSupabaseAdminClient } from "../supabase/admin";
+import { staffLimitError } from "../planLimits";
 import { staffInviteSchema } from "../validation/schemas";
 import { logAuditEvent } from "../audit";
 
@@ -13,6 +14,8 @@ export async function addStaffAction(
   formData: FormData,
 ): Promise<ActionState> {
   const session = await requireOwner(); // only the shop owner can add staff
+  const overLimit = await staffLimitError(session);
+  if (overLimit) return { error: overLimit };
 
   const parsed = staffInviteSchema.safeParse({
     email: formData.get("email"),

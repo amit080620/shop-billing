@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { billLimitError } from "../planLimits";
 import { revalidatePath } from "next/cache";
 import { requireSession, hasPermission, type SessionContext } from "../auth";
 import { createSupabaseAdminClient } from "../supabase/admin";
@@ -20,6 +21,11 @@ export async function createBillCore(
   session: SessionContext,
   parsedData: BillInput,
 ): Promise<{ billId: string; invoiceNumber: string } | { error: string }> {
+  // Plan limit first: a bill that can't be created shouldn't consume an
+  // invoice number or touch stock.
+  const overLimit = await billLimitError(session);
+  if (overLimit) return { error: overLimit };
+
   const { customerId, items, discountType, discountValue, paidAmount, paymentMethod, doctorName, patientName, tripVehicleId, tripKm, tripDriverName, tripLoadWeight, tripLoadUnit, serviceProviderName, exchangeMetal, exchangeDescription, exchangeGrossWeight, exchangePurityPercent, exchangeRatePerGram, exchangeValue, redeemedPoints } = parsedData;
 
   // Old-gold/silver exchange is money-equivalent handed over at the

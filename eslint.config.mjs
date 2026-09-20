@@ -18,6 +18,9 @@ const eslintConfig = [
       "out/**",
       "build/**",
       "next-env.d.ts",
+      // The Android app (Kotlin + a bridge script injected into the WebView)
+      // is built by Gradle, not by this project's tooling.
+      "android/**",
     ],
   },
   {

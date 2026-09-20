@@ -7,6 +7,7 @@ import { createSupabaseAdminClient } from "./supabase/admin";
 import type { PermissionKey } from "./permissions";
 import { getRedis } from "./redis";
 import { invalidateCache } from "./cache";
+import { effectivePlan, limitsForPlan, modulesForPlan, type PlanKey, type PlanLimits } from "./plans";
 
 export type SessionContext = {
   userId: string;
@@ -26,6 +27,20 @@ export type SessionContext = {
   businessTypeLocked: boolean;
   enabledModules: string[] | null;
   fastBillingEnabled: boolean;
+  /** The plan in force right now — a trial counts as Pro +, and a paid
+   * plan whose date has passed falls back to Free instead of locking the
+   * shop out of its own billing. */
+  plan: PlanKey;
+  planLimits: PlanLimits;
+  /** True while the 14-day trial is running, and true once a paid plan
+   * has lapsed — both drive the banner on the home screen. */
+  onTrial: boolean;
+  planExpired: boolean;
+  trialEndsAt: string | null;
+  paidUntil: string | null;
+  /** False until migration 0040 has been run on the database. */
+  plansReady: boolean;
+  ownerPhone: string | null;
 };
 
 /**
@@ -45,16 +60,31 @@ export type SessionContext = {
 // acceptable trade rather than hunting down and wiring cache
 // invalidation into every staff/shop-mutating action across the app.
 // Auth token validation itself (getAuthenticatedUser) is NEVER cached.
+const SHOP_COLUMNS =
+  "name, state_code, gstin, gst_scheme, price_includes_gst, logo_url, upi_id, subscription_valid_until, business_type, business_type_locked, enabled_modules, fast_billing_enabled";
+const PLAN_COLUMNS = "plan, plan_limits, trial_ends_at, owner_phone";
+
 async function fetchStaffAndShop(userId: string) {
   const admin = createSupabaseAdminClient();
-  const { data: staff, error } = await admin
+  const withPlans = await admin
     .from("staff")
-    .select(
-      "id, name, role, permissions, shop_id, shops ( name, state_code, gstin, gst_scheme, price_includes_gst, logo_url, upi_id, subscription_valid_until, business_type, business_type_locked, enabled_modules, fast_billing_enabled )",
-    )
+    .select(`id, name, role, permissions, shop_id, shops ( ${SHOP_COLUMNS}, ${PLAN_COLUMNS} )`)
     .eq("id", userId)
     .single();
-  return { staff, error };
+  // The plan columns come from migration 0040. Until it has been run on a
+  // database, asking for them is an error — and an error here would sign
+  // every shop out. Fall back to the columns that have always existed;
+  // requireSession then treats the shop as having full, unlimited access,
+  // exactly as before plans existed.
+  if (withPlans.error && withPlans.error.code === "42703") {
+    const legacy = await admin
+      .from("staff")
+      .select(`id, name, role, permissions, shop_id, shops ( ${SHOP_COLUMNS} )`)
+      .eq("id", userId)
+      .single();
+    return { staff: legacy.data, error: legacy.error };
+  }
+  return { staff: withPlans.data, error: withPlans.error };
 }
 
 /** Redis-backed instead of Next.js's own unstable_cache — the latter
@@ -149,10 +179,26 @@ export async function requireSession(): Promise<SessionContext> {
 
   const shop = Array.isArray(staff.shops) ? staff.shops[0] : staff.shops;
 
-  // NULL means unlimited — only block once an actual date has passed.
-  if (shop?.subscription_valid_until && new Date(shop.subscription_valid_until) < new Date()) {
+  // A lapsed plan no longer locks the shop out: it drops to Free (see
+  // effectivePlan), keeps its data and its counter running, and sees a
+  // renewal banner. Losing access to your own billing over a missed
+  // renewal is how a shop leaves for good.
+  const shopPlanFields = shop as { plan?: string; plan_limits?: unknown; trial_ends_at?: string | null; owner_phone?: string | null } | null | undefined;
+  const plansReady = !!shopPlanFields && "plan" in shopPlanFields;
+  if (!plansReady && shop?.subscription_valid_until && new Date(shop.subscription_valid_until) < new Date()) {
+    // Migration 0040 not run yet: the old rule still applies.
     redirect("/subscription-expired");
   }
+  const plan = plansReady
+    ? effectivePlan({
+        plan: shopPlanFields?.plan,
+        subscription_valid_until: shop?.subscription_valid_until,
+        trial_ends_at: shopPlanFields?.trial_ends_at,
+      })
+    : { key: "pro_plus" as PlanKey, onTrial: false, expired: false };
+  const planLimits = plansReady
+    ? limitsForPlan(plan.key, (shopPlanFields?.plan_limits as Partial<PlanLimits> | null) ?? null)
+    : { billsPerMonth: null, products: null, staff: null, branches: null };
 
   return {
     userId: user.id,
@@ -170,8 +216,19 @@ export async function requireSession(): Promise<SessionContext> {
     priceIncludesGst: shop?.price_includes_gst ?? true,
     businessType: shop?.business_type ?? "general",
     businessTypeLocked: shop?.business_type_locked ?? false,
-    enabledModules: shop?.enabled_modules ?? null,
+    // What the shop may actually use: the plan's own module set, unless a
+    // super admin has hand-picked modules for this shop. Before migration
+    // 0040 there are no plans, so the old rule (null = everything) holds.
+    enabledModules: plansReady ? modulesForPlan(plan.key, shop?.enabled_modules ?? null) : (shop?.enabled_modules ?? null),
     fastBillingEnabled: shop?.fast_billing_enabled ?? false,
+    plan: plan.key,
+    planLimits,
+    onTrial: plan.onTrial,
+    planExpired: plan.expired,
+    trialEndsAt: shopPlanFields?.trial_ends_at ?? null,
+    paidUntil: shop?.subscription_valid_until ?? null,
+    plansReady,
+    ownerPhone: shopPlanFields?.owner_phone ?? null,
   };
 }
 
