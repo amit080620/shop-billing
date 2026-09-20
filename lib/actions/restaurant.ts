@@ -26,6 +26,32 @@ export async function createTableAction(
   return { tableId: data.id };
 }
 
+/** Adds `count` tables named T<n>, carrying on from the highest T-number
+ * the shop already has (T1–T10, then T11–T15 next time). */
+export async function createNumberedTablesAction(
+  count: number,
+  section: "inside" | "outside" | "takeaway" = "inside",
+): Promise<{ error?: string; added?: number }> {
+  const session = await requireSession();
+  const n = Math.floor(Number(count));
+  if (!Number.isFinite(n) || n < 1 || n > 50) return { error: "Choose between 1 and 50 tables" };
+  const admin = createSupabaseAdminClient();
+  const { data: existing } = await admin
+    .from("restaurant_tables")
+    .select("name")
+    .eq("shop_id", session.shopId)
+    .eq("is_deleted", false);
+  const highest = (existing ?? []).reduce((max, t) => {
+    const m = /^T\s*(\d+)$/i.exec(String(t.name).trim());
+    return m ? Math.max(max, Number(m[1])) : max;
+  }, 0);
+  const rows = Array.from({ length: n }, (_, i) => ({ shop_id: session.shopId, name: `T${highest + i + 1}`, section }));
+  const { error } = await admin.from("restaurant_tables").insert(rows);
+  if (error) return { error: "Could not add tables" };
+  revalidatePath("/restaurant");
+  return { added: n };
+}
+
 export async function setTableSectionAction(tableId: string, section: "inside" | "outside" | "takeaway"): Promise<{ error?: string }> {
   const session = await requireSession();
   const admin = createSupabaseAdminClient();
@@ -104,7 +130,11 @@ export async function recalcOrderTotals(orderId: string) {
   const { data: items } = await admin
     .from("restaurant_order_items")
     .select("id, quantity, unit_price, gst_percent")
-    .eq("order_id", orderId);
+    .eq("order_id", orderId)
+    // A cancelled dish stays visible on the kitchen ticket until the
+    // cook acknowledges it, but the customer must never be charged for
+    // it — so it leaves every total the moment it's cancelled.
+    .neq("status", "cancelled");
 
   // unit_price's meaning depends on this order's own price_includes_gst
   // (captured once at creation, from the shop's setting at that time —
@@ -341,6 +371,40 @@ export async function addOrderItemAction(
   // printed bill ends up disagreeing with what's actually charged.
   const modifierExtra = selectedModifiers.reduce((sum, m) => sum + Number(m.price || 0), 0);
   const effectiveUnitPrice = round2(Number(product.price) + modifierExtra);
+
+  // Tapping the same dish again adds to the line that's already there,
+  // as long as nothing about it differs and it hasn't gone to the
+  // kitchen yet — one "3 × Butter Naan" line instead of three identical
+  // ones on the order and on the bill.
+  if (selectedModifiers.length === 0 && !itemNote?.trim()) {
+    const { data: openLines } = await admin
+      .from("restaurant_order_items")
+      .select("id, quantity, selected_modifiers, item_note")
+      .eq("order_id", orderId)
+      .eq("product_id", product.id)
+      .eq("kot_printed", false)
+      .eq("status", "pending");
+    const plainLine = (openLines ?? []).find(
+      (l) => !l.item_note && (!Array.isArray(l.selected_modifiers) || l.selected_modifiers.length === 0),
+    );
+    if (plainLine) {
+      const newQuantity = round2(Number(plainLine.quantity) + quantity);
+      const { error: bumpError } = await admin
+        .from("restaurant_order_items")
+        .update({
+          quantity: newQuantity,
+          line_subtotal: round2(newQuantity * effectiveUnitPrice),
+          line_total: round2(newQuantity * effectiveUnitPrice),
+        })
+        .eq("id", plainLine.id);
+      if (bumpError) return { error: "Could not add item" };
+      await admin.from("restaurant_tables").update({ status: "occupied" }).eq("id", order.table_id);
+      await recalcOrderTotals(orderId);
+      revalidatePath(`/restaurant/orders/${orderId}`);
+      revalidatePath("/restaurant");
+      return {};
+    }
+  }
 
   const { error } = await admin.from("restaurant_order_items").insert({
     order_id: orderId,
@@ -618,6 +682,7 @@ export async function settleOrderAction(
     .from("restaurant_order_items")
     .select("product_id, quantity")
     .eq("order_id", orderId)
+    .neq("status", "cancelled")
     .not("product_id", "is", null);
   // Genuinely independent per item, so this runs concurrently rather
   // than one product's DB round-trip at a time.

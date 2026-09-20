@@ -18,9 +18,9 @@ import {
   generateBarcodeAction,
   uploadProductImageAction,
 } from "@/lib/actions/products";
-import { Package, Camera, Tag, ShieldCheck, Layers, Sparkles, Loader2, Pencil, Trash2, ScanBarcode } from "lucide-react";
+import { Package, Camera, Tag, ShieldCheck, Layers, Sparkles, Loader2, Pencil, Trash2, ScanBarcode, X } from "lucide-react";
 import { suggestProductPriceAction } from "@/lib/actions/priceSuggestion";
-import { formatMoney, unitLabel } from "@/lib/format";
+import { formatMoney, unitLabel, unitName } from "@/lib/format";
 import { EmptyState } from "@/app/components/EmptyState";
 import { useToast } from "@/app/components/Toast";
 import { PageHeader } from "@/app/components/PageHeader";
@@ -30,7 +30,7 @@ import { barcodeFromQuery } from "@/lib/barcodeQuery";
 import { BulkImportExport } from "./BulkImportExport";
 import { COMMON_GST_RATES, UNITS } from "@/lib/constants/states";
 import { COMMON_MEDICINE_NAMES } from "@/lib/constants/commonMedicines";
-import { getUnitsForBusinessType } from "@/lib/businessType";
+import { getUnitsForBusinessType, nameExampleFor, sellsWarrantyItems } from "@/lib/businessType";
 import { ProductOptionsManager } from "./ProductOptionsManager";
 import { SearchableSelect } from "@/app/components/SearchableSelect";
 import { useTranslation } from "@/lib/i18n/useTranslation";
@@ -130,7 +130,7 @@ export function ProductsClient({
   // tracking" or a transport business seeing "available for rent".
   const showRentalSection = !["restaurant", "pharmacy", "transport"].includes(businessType);
   const showPharmaSection = !["restaurant", "transport", "rental"].includes(businessType);
-  const showWarrantySection = true;
+  const showWarrantySection = sellsWarrantyItems(businessType);
   const showMrpField = ["grocery", "mart", "general"].includes(businessType);
   const showBulkPricingField = ["grocery", "mart", "hardware", "general"].includes(businessType);
   const showJewellerySection = businessType === "jewellery";
@@ -151,6 +151,10 @@ export function ProductsClient({
   const [isSuggestingPrice, setIsSuggestingPrice] = useState(false);
   const [priceSuggestionNote, setPriceSuggestionNote] = useState<string | null>(null);
   const productFormRef = useRef<HTMLFormElement>(null);
+  // "Save & add another" keeps the sheet open on a fresh form, so a whole
+  // menu or price list can be typed in one go.
+  const addAnotherRef = useRef(false);
+  const [formNonce, setFormNonce] = useState(0);
 
   const { showToast } = useToast();
   const [productState, productAction] = useActionState(
@@ -160,15 +164,18 @@ export function ProductsClient({
         ? await updateProductAction(editingProduct.id, prev, formData)
         : await createProductAction(prev, formData);
       if (!result?.error) {
-        setShowForm(false);
-        setEditingProduct(null);
-        showToast(wasEditing ? "Item updated" : "Item added");
-        // Continue straight into configuring options for a brand-new
-        // restaurant item — e.g. Thali needs its Beverage choices set up
-        // right away, not as a separate disconnected step later.
-        if (!wasEditing && businessType === "restaurant" && result?.productId) {
-          const name = String(formData.get("name") ?? "");
-          setOptionsForProduct({ id: result.productId, name });
+        const name = String(formData.get("name") ?? "");
+        if (!wasEditing && addAnotherRef.current) {
+          setFormNonce((n) => n + 1);
+          setConfirmDuplicate(false);
+          setPriceSuggestionNote(null);
+          setTrackInventory(false);
+          setHasWarranty(false);
+          showToast(t("{name} added — type the next one", { name }));
+        } else {
+          setShowForm(false);
+          setEditingProduct(null);
+          showToast(wasEditing ? t("Item updated") : t("{name} added", { name }));
         }
       }
       return result;
@@ -266,15 +273,14 @@ export function ProductsClient({
   return (
     <div className="flex flex-col gap-4">
       <PageHeader
-        title={terminology.productPlural}
-         
+        title={t(terminology.productPlural)}
         icon={<Package size={17} strokeWidth={1.8} />}
         action={
           <button
             onClick={() => (showForm && !editingProduct ? setShowForm(false) : openNewProductForm())}
             className="btn-primary-sm shrink-0"
           >
-            + {terminology.productSingular}
+            + {t(terminology.productSingular)}
           </button>
         }
       />
@@ -392,16 +398,31 @@ export function ProductsClient({
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 sm:items-center sm:p-4" onClick={() => setShowForm(false)}>
         <div className="ray-pop max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-t-2xl bg-surface p-4 shadow-lg sm:rounded-2xl" onClick={(e) => e.stopPropagation()}>
         <form
-          key={editingProduct?.id ?? "new"}
+          key={`${editingProduct?.id ?? "new"}-${formNonce}`}
           ref={productFormRef}
           action={productAction}
           className="flex flex-col gap-3"
         >
           <input type="hidden" name="confirmDuplicate" value={confirmDuplicate ? "true" : "false"} />
-          {editingProduct && (
-            <p className="text-xs font-medium text-brand">{t("products.editing", { name: editingProduct.name })}</p>
-          )}
-          <Field id="product-name-input" name="name" label={t("products.name")} placeholder={t("products.namePlaceholder")} required defaultValue={editingProduct?.name} />
+          <div className="-mb-1 flex items-center justify-between gap-2">
+            <p className="min-w-0 truncate text-base font-semibold text-foreground">
+              {editingProduct
+                ? t("products.editing", { name: editingProduct.name })
+                : t("products.sheetNew", { item: t(terminology.productSingular).toLowerCase() })}
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                setShowForm(false);
+                setEditingProduct(null);
+              }}
+              aria-label={t("common.close")}
+              className="-mr-1.5 shrink-0 rounded-lg p-1.5 text-muted hover:bg-surface-2 hover:text-foreground"
+            >
+              <X size={20} />
+            </button>
+          </div>
+          <Field id="product-name-input" name="name" label={t("products.name")} placeholder={t("products.eg", { example: nameExampleFor(businessType) })} required autoFocus={!editingProduct} defaultValue={editingProduct?.name} />
           {!editingProduct && (
             <div className="flex flex-col gap-1.5">
               <button
@@ -481,12 +502,12 @@ export function ProductsClient({
             <span className="font-medium text-foreground">{t("products.unit")}</span>
             <select
               name="unit"
-              defaultValue={editingProduct?.unit ?? "NOS"}
+              defaultValue={editingProduct?.unit ?? orderedUnits[0]}
               className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-brand"
             >
               {orderedUnits.map((u) => (
                 <option key={u} value={u}>
-                  {u}
+                  {t(unitName(u))}
                 </option>
               ))}
             </select>
@@ -676,7 +697,7 @@ export function ProductsClient({
               )}
             </>
           )}
-          {showWarrantySection && (
+          {(showWarrantySection || hasWarranty) && (
             <>
               <label className="flex items-center gap-2 text-sm text-foreground">
                 <input
@@ -813,11 +834,22 @@ export function ProductsClient({
             productState?.error && <p className="text-sm text-credit">{productState.error}</p>
           )}
           <div className="flex gap-2">
-            <SubmitButton
-              label={editingProduct ? t("products.updateProduct") : t("products.saveProduct")}
-              pendingLabel={t("products.saving")}
-              hasError={!!productState?.error}
-            />
+            <div className="contents" onClickCapture={() => (addAnotherRef.current = false)}>
+              <SubmitButton
+                label={editingProduct ? t("products.updateProduct") : t("common.save")}
+                pendingLabel={t("products.saving")}
+                hasError={!!productState?.error}
+              />
+            </div>
+            {!editingProduct && (
+              <button
+                type="submit"
+                onClick={() => (addAnotherRef.current = true)}
+                className="rounded-lg border border-brand/40 px-3.5 py-2 text-sm font-semibold text-brand-text hover:bg-brand-soft"
+              >
+                {t("Save & add another")}
+              </button>
+            )}
             {editingProduct && (
               <button
                 type="button"
@@ -855,7 +887,13 @@ export function ProductsClient({
       {filtered.length === 0 ? (
         <EmptyState
           icon={Package}
-          text={t("products.emptyShelf")}
+          text={
+            search.trim() || filter !== "all"
+              ? t("No matching items")
+              : ["grocery", "mart", "general"].includes(businessType)
+                ? t("products.emptyShelf")
+                : t("products.emptyFor", { item: t(terminology.productSingular).toLowerCase() })
+          }
           action={
             <button onClick={openNewProductForm} className="btn-primary-sm">
               {terminology.addProductLabel}
@@ -1056,6 +1094,7 @@ function Field(props: {
   max?: string;
   defaultValue?: string;
   id?: string;
+  autoFocus?: boolean;
 }) {
   const { name, label, ...rest } = props;
   return (

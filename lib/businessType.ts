@@ -139,6 +139,34 @@ export function homePathFor(businessType: string, fastBillingEnabled = false): s
   return fastBillingEnabled ? "/fast-billing" : "/bills/new";
 }
 
+// Example shown in the empty name field of the add-item form, so a salon
+// isn't asked for something like "Amul Milk 500ml".
+const NAME_EXAMPLE: Record<BusinessType, string> = {
+  grocery: "Amul Milk 500ml",
+  mart: "Tata Salt 1kg",
+  hardware: "PVC pipe 1 inch",
+  pharmacy: "Paracetamol 500mg",
+  restaurant: "Paneer Butter Masala",
+  rental: "Plastic chair",
+  transport: "River sand",
+  service: "AC service",
+  salon: "Haircut",
+  jewellery: "Gold chain 22K",
+  clinic: "Consultation",
+  gym: "Whey protein 1kg",
+  lab: "Blood sugar test kit",
+  general: "Notebook A4",
+};
+
+export function nameExampleFor(businessType: string): string {
+  return NAME_EXAMPLE[businessType as BusinessType] ?? NAME_EXAMPLE.general;
+}
+
+/** Whether "Comes with warranty" makes sense for what this business sells. */
+export function sellsWarrantyItems(businessType: string): boolean {
+  return ["grocery", "mart", "hardware", "general", "service", "jewellery"].includes(businessType);
+}
+
 export function getTerminology(businessType: string): Terminology {
   return TERMINOLOGY[businessType as BusinessType] ?? TERMINOLOGY.general;
 }

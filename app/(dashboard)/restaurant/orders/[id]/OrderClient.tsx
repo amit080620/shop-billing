@@ -1,9 +1,12 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useOptimistic, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { X, Bell, Check, ShoppingCart, Ticket, ArrowLeft } from "lucide-react";
+import {
+  X, Bell, Check, ShoppingCart, Ticket, ArrowLeft, ChefHat, ChevronUp, Layers, Loader2, Merge, Minus, Plus,
+  Printer, Search, Trash2, UserRound, UtensilsCrossed, Wallet,
+} from "lucide-react";
 import { listProductOptionsAction, type OptionGroup } from "@/lib/actions/product-options";
 import {
   addOrderItemAction,
@@ -22,24 +25,30 @@ import {
 } from "@/lib/actions/restaurant";
 import { addComboToOrderAction } from "@/lib/actions/combos";
 import { formatMoney } from "@/lib/format";
-import { SearchableSelect } from "@/app/components/SearchableSelect";
 import { useTranslation } from "@/lib/i18n/useTranslation";
 import type { Lang } from "@/lib/i18n/dictionary";
 import { BluetoothPrintButton } from "@/app/components/BluetoothPrintButton";
 import { buildKotEscPos, buildReceiptEscPos, type ReceiptData } from "@/lib/escpos";
 import { getThermalPrintSettingsAction } from "@/lib/actions/settings";
 import { buildWhatsAppLink } from "@/lib/whatsapp";
+import { BackLink, canGoBackInApp } from "@/app/components/BackLink";
+import { EmptyState } from "@/app/components/EmptyState";
+import { VoiceSearchButton } from "@/app/components/VoiceSearchButton";
+import { useToast } from "@/app/components/Toast";
+import { paymentMethodLabel } from "@/lib/format";
 
-type Product = { id: string; name: string; price: number; category: string };
+type Product = { id: string; name: string; price: number; category: string; hasOptions: boolean };
 type Combo = { id: string; name: string; price: number };
 type Item = {
   id: string;
+  productId: string | null;
   productName: string;
   quantity: number;
   unitPrice: number;
   lineTotal: number;
   status: "pending" | "ready" | "served" | "cancelled";
   selectedModifiers: { group: string; choice: string; price: number }[];
+  kotPrinted: boolean;
 };
 type Order = {
   id: string;
@@ -63,12 +72,23 @@ type Order = {
   settledAt: string | null;
 };
 
+/** ₹220 for whole rupees, ₹22.50 otherwise — menu tiles stay short. */
+function menuPrice(n: number) {
+  return Number.isInteger(n) ? `₹${n.toLocaleString("en-IN")}` : formatMoney(n);
+}
+
+const STATUS_CHIP: Record<Order["status"], { label: string; className: string }> = {
+  open: { label: "Open", className: "bg-success-soft text-success" },
+  settled: { label: "Paid", className: "bg-brand-soft text-brand-text" },
+  cancelled: { label: "Cancelled", className: "bg-danger-soft text-danger" },
+};
+
 export function OrderClient({
   shopName,
   shopGstin,
   lang,
   order,
-  items: initialItems,
+  items: serverItems,
   products,
   combos,
   otherTables,
@@ -84,9 +104,9 @@ export function OrderClient({
 }) {
   const { t } = useTranslation(lang);
   const router = useRouter();
+  const { showToast } = useToast();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
-  const [deletingItemId, setDeletingItemId] = useState<string | null>(null);
   const [kotItems, setKotItems] = useState<{ name: string; quantity: number; modifiers: { group: string; choice: string; price: number }[] }[] | null>(null);
   const [showBillPrint, setShowBillPrint] = useState(false);
   const [showSettle, setShowSettle] = useState(false);
@@ -94,48 +114,66 @@ export function OrderClient({
   const [showMerge, setShowMerge] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
+  const [menuQuery, setMenuQuery] = useState("");
   const [waiterName, setWaiterName] = useState(order.waiterName ?? "");
-
   const [pickingProduct, setPickingProduct] = useState<Product | null>(null);
 
+  // A tapped dish shows in the order at once; the action's response
+  // (it revalidates this page) then replaces it with the saved line.
+  const [items, addOptimistic] = useOptimistic(serverItems, (state: Item[], product: Product) => {
+    const i = state.findIndex((x) => x.productId === product.id && !x.kotPrinted && x.status === "pending" && x.selectedModifiers.length === 0);
+    if (i >= 0) return state.map((x, idx) => (idx === i ? { ...x, quantity: x.quantity + 1, lineTotal: (x.quantity + 1) * x.unitPrice } : x));
+    return [
+      ...state,
+      { id: `tmp-${product.id}-${state.length}`, productId: product.id, productName: product.name, quantity: 1, unitPrice: product.price, lineTotal: product.price, status: "pending" as const, selectedModifiers: [], kotPrinted: false },
+    ];
+  });
+
+  const isReadOnly = order.status !== "open";
+  const activeItems = items.filter((i) => i.status !== "cancelled");
+  const itemCount = activeItems.reduce((s, i) => s + i.quantity, 0);
+  const newForKitchen = activeItems.filter((i) => !i.kotPrinted).reduce((s, i) => s + i.quantity, 0);
+  const qtyByProduct = new Map<string, number>();
+  for (const i of activeItems) if (i.productId) qtyByProduct.set(i.productId, (qtyByProduct.get(i.productId) ?? 0) + i.quantity);
+
+  const categories = [...new Set(products.map((p) => p.category))].sort();
+  const q = menuQuery.trim().toLowerCase();
+  const visibleProducts = products.filter((p) => (!activeCategory || p.category === activeCategory) && (!q || p.name.toLowerCase().includes(q)));
+
+  function run(action: () => Promise<{ error?: string } | void>) {
+    setError(null);
+    startTransition(async () => {
+      const result = await action();
+      if (result && result.error) setError(result.error);
+      router.refresh();
+    });
+  }
+
+  function tapProduct(p: Product) {
+    if (p.hasOptions) {
+      setPickingProduct(p);
+      return;
+    }
+    navigator.vibrate?.(8);
+    setError(null);
+    startTransition(async () => {
+      addOptimistic(p);
+      const result = await addOrderItemAction(order.id, p.id, 1);
+      if (result.error) setError(result.error);
+    });
+  }
+
   function addItem(p: Product, quantity: number, selectedModifiers: { group: string; choice: string; price: number }[] = []) {
-    startTransition(async () => {
-      const result = await addOrderItemAction(order.id, p.id, quantity, selectedModifiers);
-      if (result.error) setError(result.error);
-      router.refresh();
-    });
-  }
-
-  function addCombo(comboId: string) {
-    startTransition(async () => {
-      const result = await addComboToOrderAction(order.id, comboId);
-      if (result.error) setError(result.error);
-      router.refresh();
-    });
-  }
-
-  function removeItem(itemId: string) {
-    setDeletingItemId(itemId);
-    startTransition(async () => {
-      const result = await removeOrderItemAction(itemId, order.id);
-      if (result.error) setError(result.error);
-      router.refresh();
-    });
+    run(() => addOrderItemAction(order.id, p.id, quantity, selectedModifiers));
   }
 
   function changeQuantity(itemId: string, newQuantity: number) {
-    if (newQuantity <= 0) {
-      removeItem(itemId);
-      return;
-    }
-    startTransition(async () => {
-      const result = await updateOrderItemQuantityAction(itemId, order.id, newQuantity);
-      if (result.error) setError(result.error);
-      router.refresh();
-    });
+    if (newQuantity <= 0) run(() => removeOrderItemAction(itemId, order.id));
+    else run(() => updateOrderItemQuantityAction(itemId, order.id, newQuantity));
   }
 
-  function printKot() {
+  function sendToKitchen() {
+    setError(null);
     startTransition(async () => {
       const result = await getNewKotItemsAction(order.id);
       if (result.error) {
@@ -143,310 +181,315 @@ export function OrderClient({
         return;
       }
       if (!result.items || result.items.length === 0) {
-        setError(t("order.nothingNewKitchen"));
+        showToast(t("order.nothingNewKitchen"), "info");
         return;
       }
       setKotItems(result.items);
+      router.refresh();
     });
   }
 
-  function printKotViaBrowser() {
-    setTimeout(() => window.print(), 100);
+  // Back to the tables grid the way the phone's back button would go, so
+  // a settled order isn't left behind in history.
+  function leaveToTables() {
+    if (canGoBackInApp()) router.back();
+    else router.replace("/restaurant");
   }
 
-  const isReadOnly = order.status !== "open";
-  const categories = [...new Set(products.map((p) => p.category))].sort();
-
-  return (
-    <div className="flex flex-col gap-4 pb-24">
-      <div className="no-print flex items-center justify-between">
-        <div>
-          <h1 className="text-lg font-bold tracking-tight text-foreground md:text-2xl">{order.tableName}</h1>
-          <p className="text-xs text-muted">#{order.orderNumber} · {order.status}</p>
-        </div>
-        <Link href="/restaurant" className="text-sm text-brand">
-          {t("order.backToTables")}
-        </Link>
-      </div>
-
-      <OrderTimeline order={order} />
-
+  const chip = STATUS_CHIP[order.status];
+  const orderPanel = (
+    <OrderPanel
+      items={items}
+      order={order}
+      isReadOnly={isReadOnly}
+      syncing={isPending}
+      onQuantity={changeQuantity}
+      onRemove={(id) => run(() => removeOrderItemAction(id, order.id))}
+      onServed={(id) => run(() => markItemServedAction(id, order.id))}
+      t={t}
+    />
+  );
+  const actionButtons = (
+    <div className="flex gap-2">
       {!isReadOnly && (
-        <div className="no-print flex gap-2">
-          {(["dine_in", "takeaway", "delivery"] as const).map((type) => (
-            <button
-              key={type}
-              onClick={() =>
-                startTransition(async () => {
-                  await setOrderTypeAction(order.id, type);
-                  router.refresh();
-                })
-              }
-              className={`rounded-full border px-3 py-1.5 text-xs font-medium ${
-                order.orderType === type ? "border-brand bg-brand-soft text-brand-text" : "border-border text-muted"
-              }`}
-            >
-              {type === "dine_in" ? t("order.dineIn") : type === "takeaway" ? t("order.takeaway") : t("order.delivery")}
-            </button>
-          ))}
-        </div>
-      )}
-
-      {!isReadOnly && (
-        <input
-          value={waiterName}
-          onChange={(e) => setWaiterName(e.target.value)}
-          onBlur={() => {
-            if (waiterName !== (order.waiterName ?? "")) {
-              startTransition(async () => {
-                await setWaiterAction(order.id, waiterName);
-                router.refresh();
-              });
-            }
-          }}
-          placeholder={`${t("order.waiter")}: ${t("order.waiterPlaceholder")}`}
-          className="no-print rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand"
-        />
-      )}
-      {isReadOnly && order.waiterName && (
-        <p className="no-print text-xs text-muted">{t("order.waiter")}: {order.waiterName}</p>
-      )}
-
-      {!isReadOnly && otherTables.length > 0 && (
-        <button onClick={() => setShowMerge(true)} className="no-print self-start text-xs text-brand">
-          {t("order.mergeTable")}
+        <button
+          onClick={sendToKitchen}
+          disabled={isPending && !kotItems}
+          className={`relative flex flex-1 items-center justify-center gap-1.5 rounded-xl border px-2 py-3 text-sm font-semibold disabled:opacity-60 ${
+            newForKitchen > 0 ? "border-warning/50 bg-warning-soft text-warning" : "border-border text-foreground"
+          }`}
+        >
+          <ChefHat size={16} /> {t("KOT")}
+          {newForKitchen > 0 && (
+            <span className="rounded-full bg-warning px-1.5 text-[11px] font-bold leading-5 text-white">{t("{n} new", { n: newForKitchen })}</span>
+          )}
         </button>
       )}
+      <button onClick={() => setShowBillPrint(true)} className="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-border px-2 py-3 text-sm font-semibold text-foreground">
+        <Printer size={16} /> {t("Bill")}
+      </button>
+      {!isReadOnly && (
+        <button onClick={() => setShowSettle(true)} className="flex flex-[1.3] items-center justify-center gap-1.5 rounded-xl bg-brand px-2 py-3 text-sm font-semibold text-white">
+          <Wallet size={16} /> {t("order.settle")}
+        </button>
+      )}
+    </div>
+  );
 
-      {!isReadOnly && combos.length > 0 && (
-        <section className="no-print flex flex-col gap-2">
-          <p className="text-sm font-medium text-foreground">{t("order.combos")}</p>
-          <div className="flex gap-2 overflow-x-auto pb-1">
-            {combos.map((c) => (
+  return (
+    <div className={`flex flex-col gap-3 ${activeItems.length > 0 ? "pb-36" : "pb-6"} md:pb-6`}>
+      <div className="no-print flex flex-col gap-1">
+        <BackLink fallback="/restaurant" label={t("Tables")} />
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <h1 className="truncate text-xl font-bold tracking-tight text-foreground md:text-2xl">{order.tableName}</h1>
+              <span className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold ${chip.className}`}>{t(chip.label)}</span>
+            </div>
+            <p className="text-xs text-muted">#{order.orderNumber}</p>
+          </div>
+          {!isReadOnly && otherTables.length > 0 && (
+            <button onClick={() => setShowMerge(true)} className="flex shrink-0 items-center gap-1 rounded-lg border border-border px-2.5 py-1.5 text-xs font-medium text-muted hover:text-foreground">
+              <Merge size={13} /> {t("Merge")}
+            </button>
+          )}
+        </div>
+      </div>
+
+      {activeItems.length > 0 && <OrderTimeline order={order} t={t} />}
+
+      {!isReadOnly && (
+        <div className="no-print flex flex-col gap-2 sm:flex-row sm:items-center">
+          <div className="flex gap-1.5">
+            {(["dine_in", "takeaway", "delivery"] as const).map((type) => (
               <button
-                key={c.id}
-                onClick={() => addCombo(c.id)}
-                disabled={isPending}
-                className="shrink-0 rounded-lg border border-brand bg-brand-soft px-3 py-2 text-left disabled:opacity-60"
+                key={type}
+                onClick={() => run(() => setOrderTypeAction(order.id, type))}
+                aria-pressed={order.orderType === type}
+                className={`rounded-full border px-3 py-1.5 text-xs font-medium ${
+                  order.orderType === type ? "border-brand bg-brand-soft text-brand-text" : "border-border text-muted"
+                }`}
               >
-                <p className="text-xs font-medium text-brand-text">{c.name}</p>
-                <p className="text-[11px] text-brand-text/70">{formatMoney(c.price)}</p>
+                {type === "dine_in" ? t("order.dineIn") : type === "takeaway" ? t("order.takeaway") : t("order.delivery")}
               </button>
             ))}
           </div>
-        </section>
-      )}
-
-      {!isReadOnly && (
-        <section className="no-print flex flex-col gap-2">
-          <p className="text-sm font-medium text-foreground">{t("order.addItems")}</p>
-
-          {categories.length > 1 && (
-            <div className="flex gap-1.5 overflow-x-auto pb-1">
-              <button
-                type="button"
-                onClick={() => setActiveCategory(null)}
-                className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium ${
-                  activeCategory === null ? "border-brand bg-brand-soft text-brand-text" : "border-border text-muted"
-                }`}
-              >
-                All
-              </button>
-              {categories.map((cat) => (
-                <button
-                  key={cat}
-                  type="button"
-                  onClick={() => setActiveCategory(cat)}
-                  className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium ${
-                    activeCategory === cat ? "border-brand bg-brand-soft text-brand-text" : "border-border text-muted"
-                  }`}
-                >
-                  {cat}
-                </button>
-              ))}
-            </div>
-          )}
-
-          {activeCategory ? (
-            <div className="grid grid-cols-2 gap-2">
-              {products.filter((p) => p.category === activeCategory).map((p) => (
-                <button
-                  key={p.id}
-                  type="button"
-                  onClick={() => setPickingProduct(p)}
-                  className="neu-card flex flex-col items-start gap-0.5 px-3 py-2.5 text-left"
-                >
-                  <span className="truncate text-sm font-medium text-foreground">{p.name}</span>
-                  <span className="text-xs text-muted">{formatMoney(p.price)}</span>
-                </button>
-              ))}
-            </div>
-          ) : (
-            <SearchableSelect
-            lang={lang}
-              items={products}
-              getKey={(p) => p.id}
-              getLabel={(p) => p.name}
-              getSubLabel={(p) => formatMoney(p.price)}
-              onSelect={(p) => setPickingProduct(p)}
-              placeholder={t("order.searchMenu")}
+          <label className="relative min-w-0 flex-1">
+            <UserRound size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
+            <input
+              value={waiterName}
+              onChange={(e) => setWaiterName(e.target.value)}
+              onBlur={() => {
+                if (waiterName !== (order.waiterName ?? "")) run(() => setWaiterAction(order.id, waiterName));
+              }}
+              placeholder={t("Waiter name")}
+              aria-label={t("order.waiter")}
+              className="w-full rounded-lg border border-border bg-surface py-2 pl-9 pr-3 text-sm outline-none focus:border-brand"
             />
-          )}
-        </section>
-      )}
-
-      {(cartOpen || initialItems.length === 0) && (
-        <div
-          className={
-            initialItems.length === 0
-              ? "no-print flex flex-col gap-2"
-              : "no-print fixed inset-0 z-40 flex items-end justify-center bg-black/50"
-          }
-          onClick={() => initialItems.length > 0 && setCartOpen(false)}
-        >
-          <section
-            className={initialItems.length === 0 ? "flex flex-col gap-2" : "flex max-h-[80vh] w-full max-w-md flex-col gap-2 overflow-y-auto rounded-t-2xl bg-background p-4"}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between">
-              <p className="text-sm font-medium text-foreground">{t("order.orderLabel")}</p>
-              {initialItems.length > 0 && (
-                <button onClick={() => setCartOpen(false)} className="flex items-center gap-1 text-xs text-muted">
-                  <X size={12} /> Close
-                </button>
-              )}
-            </div>
-            {initialItems.length === 0 ? (
-              <p className="rounded-lg border border-dashed border-border px-3.5 py-6 text-center text-sm text-muted">
-                {t("order.noItemsYet")}
-              </p>
-            ) : (
-              <ul className="flex flex-col gap-2">
-                {initialItems.map((item) => (
-                  <li
-                    key={item.id}
-                    className={`neu-card flex items-center justify-between gap-2 px-3.5 py-2.5 ${deletingItemId === item.id ? "animate-delete" : ""}`}
-                  >
-                    <div className="min-w-0 flex-1">
-                      <span className="truncate text-sm text-foreground">{item.productName}</span>
-                      {item.selectedModifiers.length > 0 && (
-                        <p className="truncate text-xs text-muted">
-                          {item.selectedModifiers.map((m) => `└ ${m.choice}${m.price > 0 ? ` (+${formatMoney(m.price)})` : ""}`).join("  ")}
-                        </p>
-                      )}
-                      {item.status === "ready" && (
-                        <span className="ml-2 flex w-fit items-center gap-0.5 rounded-full bg-brand-soft px-2 py-0.5 text-[11px] font-medium text-brand-text"><Bell size={9} /> Ready</span>
-                      )}
-                      {item.status === "served" && (
-                        <span className="ml-2 flex w-fit items-center gap-0.5 rounded-full bg-background px-2 py-0.5 text-[11px] font-medium text-muted"><Check size={9} /> Served</span>
-                      )}
-                    </div>
-                    {!isReadOnly && item.status !== "served" && item.status !== "cancelled" ? (
-                      <div className="flex shrink-0 items-center gap-1 rounded-lg border border-border">
-                        <button onClick={() => changeQuantity(item.id, item.quantity - 1)} className="px-2 py-1 text-sm font-bold text-foreground">
-                          −
-                        </button>
-                        <span className="w-6 text-center text-sm font-semibold text-foreground">{item.quantity}</span>
-                        <button onClick={() => changeQuantity(item.id, item.quantity + 1)} className="px-2 py-1 text-sm font-bold text-foreground">
-                          +
-                        </button>
-                      </div>
-                    ) : (
-                      <span className="shrink-0 text-sm text-muted">× {item.quantity}</span>
-                    )}
-                    <span className="shrink-0 text-sm font-medium text-foreground">{formatMoney(item.unitPrice * item.quantity)}</span>
-                    {!isReadOnly && item.status === "ready" && (
-                      <button
-                        onClick={() =>
-                          startTransition(async () => {
-                            await markItemServedAction(item.id, order.id);
-                            router.refresh();
-                          })
-                        }
-                        className="shrink-0 rounded-lg border border-brand bg-brand-soft px-2 py-1 text-xs font-medium text-brand-text"
-                      >
-                        Served
-                      </button>
-                    )}
-                    {!isReadOnly && item.status !== "served" && (
-                      <button onClick={() => removeItem(item.id)} className="shrink-0 text-xs text-danger">
-                        <X size={13} />
-                      </button>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            )}
-            {initialItems.length > 0 && (
-              <div className="flex justify-between rounded-lg bg-brand-soft px-3.5 py-2.5 text-sm">
-                <span className="text-brand-text">{t("order.total")}</span>
-                <span className="font-semibold text-brand-text">{formatMoney(order.total)}</span>
-              </div>
-            )}
-          </section>
+          </label>
         </div>
       )}
 
-      {error && <p className="no-print text-sm text-danger">{error}</p>}
+      <div className="md:grid md:grid-cols-[minmax(0,1fr)_340px] md:items-start md:gap-5">
+        <div className="flex min-w-0 flex-col gap-3">
+          {!isReadOnly && combos.length > 0 && (
+            <section className="no-print flex flex-col gap-2">
+              <p className="text-sm font-semibold text-foreground">{t("order.combos")}</p>
+              <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 md:mx-0 md:px-0">
+                {combos.map((c) => (
+                  <button
+                    key={c.id}
+                    onClick={() => run(() => addComboToOrderAction(order.id, c.id))}
+                    className="shrink-0 rounded-xl border border-brand/40 bg-brand-soft px-3 py-2 text-left active:scale-[0.97]"
+                  >
+                    <p className="text-sm font-medium text-brand-text">{c.name}</p>
+                    <p className="text-xs text-brand-text/70">{menuPrice(c.price)}</p>
+                  </button>
+                ))}
+              </div>
+            </section>
+          )}
 
-      {initialItems.length > 0 && !cartOpen && (
-        <div className="no-print fixed inset-x-0 bottom-[calc(var(--bottom-nav-h)+env(safe-area-inset-bottom))] z-30 flex flex-col border-t border-border bg-surface shadow-lg md:bottom-0 md:left-72">
-          <button
-            onClick={() => setCartOpen(true)}
-            className="flex w-full items-center justify-between px-4 py-2.5 text-sm font-semibold text-white"
-            style={{ background: "var(--brand)" }}
-          >
-            <span className="flex items-center gap-1">
-              <ShoppingCart size={14} /> {initialItems.reduce((s, i) => s + i.quantity, 0)} item{initialItems.reduce((s, i) => s + i.quantity, 0) === 1 ? "" : "s"}
-            </span>
-            <span>{formatMoney(order.total)} · ▲ View order</span>
-          </button>
-          <div className="flex gap-2 p-3">
-            {!isReadOnly && (
-              <button onClick={printKot} disabled={isPending} className="flex-1 rounded-lg border border-border px-2 py-2.5 text-xs font-medium text-foreground disabled:opacity-60">
-                {t("order.printKot")}
-              </button>
-            )}
-            <button onClick={() => setShowBillPrint(true)} className="flex-1 rounded-lg border border-border px-2 py-2.5 text-xs font-medium text-foreground">
-              {t("order.printBill")}
+          {!isReadOnly && (
+            <section className="no-print flex flex-col gap-2.5">
+              <div className="relative">
+                <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
+                <input
+                  value={menuQuery}
+                  onChange={(e) => setMenuQuery(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && visibleProducts.length > 0 && q) {
+                      e.preventDefault();
+                      tapProduct(visibleProducts[0]);
+                      setMenuQuery("");
+                    }
+                  }}
+                  placeholder={t("order.searchMenu")}
+                  enterKeyHint="done"
+                  className="w-full rounded-xl border border-border bg-surface py-2.5 pl-9 pr-20 text-sm outline-none focus:border-brand"
+                />
+                <div className="absolute right-1.5 top-1/2 flex -translate-y-1/2 items-center">
+                  {menuQuery && (
+                    <button type="button" onClick={() => setMenuQuery("")} aria-label={t("Clear")} className="flex h-8 w-8 items-center justify-center rounded-full text-muted">
+                      <X size={15} />
+                    </button>
+                  )}
+                  <VoiceSearchButton lang={lang} onResult={setMenuQuery} />
+                </div>
+              </div>
+
+              {categories.length > 1 && (
+                <div className="-mx-4 flex gap-1.5 overflow-x-auto px-4 pb-0.5 md:mx-0 md:flex-wrap md:px-0">
+                  {[null, ...categories].map((cat) => (
+                    <button
+                      key={cat ?? "all"}
+                      type="button"
+                      onClick={() => setActiveCategory(cat)}
+                      aria-pressed={activeCategory === cat}
+                      className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium ${
+                        activeCategory === cat ? "border-brand bg-brand-soft text-brand-text" : "border-border text-muted"
+                      }`}
+                    >
+                      {cat === null ? t("All") : cat === "Other" ? t("Other") : cat}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {products.length === 0 ? (
+                <EmptyState
+                  icon={UtensilsCrossed}
+                  title={t("Your menu is empty")}
+                  text={t("Add your dishes once — then tap them here to take orders.")}
+                  action={
+                    <Link href="/products" className="btn-primary-sm">
+                      {t("Add menu items")}
+                    </Link>
+                  }
+                />
+              ) : visibleProducts.length === 0 ? (
+                <p className="rounded-xl border border-dashed border-border px-4 py-6 text-center text-sm text-muted">{t("No matching items")}</p>
+              ) : (
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
+                  {visibleProducts.map((p) => {
+                    const qty = qtyByProduct.get(p.id) ?? 0;
+                    return (
+                      <button
+                        key={p.id}
+                        type="button"
+                        onClick={() => tapProduct(p)}
+                        className={`relative flex min-h-[68px] flex-col items-start justify-between gap-1 rounded-xl border px-3 py-2.5 text-left transition-transform active:scale-[0.96] ${
+                          qty > 0 ? "border-brand/50 bg-brand-soft" : "border-border bg-surface hover:border-border-strong"
+                        }`}
+                      >
+                        <span className="line-clamp-2 pr-5 text-sm font-medium leading-snug text-foreground">{p.name}</span>
+                        <span className="flex items-center gap-1 text-xs text-muted">
+                          {menuPrice(p.price)}
+                          {p.hasOptions && <Layers size={11} aria-label={t("Has options")} />}
+                        </span>
+                        {qty > 0 && (
+                          <span className="absolute right-1.5 top-1.5 flex h-6 min-w-6 items-center justify-center rounded-full bg-brand px-1.5 text-xs font-bold text-white">
+                            {qty}
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </section>
+          )}
+
+          {isReadOnly && <section className="flex flex-col gap-3 rounded-2xl border border-border bg-surface p-4">{orderPanel}</section>}
+          {isReadOnly && (
+            <button onClick={() => setShowBillPrint(true)} className="btn-primary flex items-center justify-center gap-2">
+              <Printer size={16} /> {t("order.printBill")}
             </button>
-            {!isReadOnly && (
-              <>
-                <button onClick={() => setShowSettle(true)} className="flex-1 rounded-lg bg-brand px-2 py-2.5 text-xs font-medium text-white">
-                  {t("order.settle")}
-                </button>
-                <button onClick={() => setShowCancel(true)} className="rounded-lg border border-danger px-2 py-2.5 text-xs font-medium text-danger">
-                  <X size={14} />
-                </button>
-              </>
-            )}
-          </div>
+          )}
+        </div>
+
+        {!isReadOnly && (
+          <aside className="no-print sticky top-4 hidden flex-col gap-3 rounded-2xl border border-border bg-surface p-4 md:flex">
+            {orderPanel}
+            {activeItems.length > 0 && actionButtons}
+            <OrderFooterLinks onCancel={() => setShowCancel(true)} t={t} />
+          </aside>
+        )}
+      </div>
+
+      {error && <p className="no-print rounded-lg bg-danger-soft px-3 py-2 text-sm text-danger">{error}</p>}
+
+      {!isReadOnly && activeItems.length > 0 && !cartOpen && (
+        <div className="no-print fixed inset-x-0 bottom-[calc(var(--bottom-nav-h)+env(safe-area-inset-bottom))] z-30 flex flex-col border-t border-border bg-surface shadow-lg md:hidden">
+          <button onClick={() => setCartOpen(true)} className="flex w-full items-center justify-between bg-brand px-4 py-2.5 text-sm font-semibold text-white">
+            <span className="flex items-center gap-1.5">
+              <ShoppingCart size={15} /> {t(itemCount === 1 ? "1 item" : "{n} items", { n: itemCount })}
+            </span>
+            <span className="flex items-center gap-1.5">
+              {isPending && <Loader2 size={13} className="animate-spin" />}
+              {formatMoney(order.total)} · {t("View")} <ChevronUp size={15} />
+            </span>
+          </button>
+          <div className="p-2.5">{actionButtons}</div>
+        </div>
+      )}
+
+      {cartOpen && !isReadOnly && (
+        <div className="no-print fixed inset-0 z-40 flex items-end justify-center bg-black/50 md:hidden" onClick={() => setCartOpen(false)}>
+          <section
+            className="ray-pop flex max-h-[85vh] w-full max-w-md flex-col gap-3 overflow-y-auto rounded-t-2xl bg-surface p-4 pb-[calc(1rem+env(safe-area-inset-bottom))]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between">
+              <p className="text-base font-semibold text-foreground">{t("{table} — order", { table: order.tableName })}</p>
+              <button onClick={() => setCartOpen(false)} aria-label={t("common.close")} className="-mr-1.5 rounded-lg p-1.5 text-muted hover:text-foreground">
+                <X size={20} />
+              </button>
+            </div>
+            {orderPanel}
+            {activeItems.length > 0 && actionButtons}
+            <OrderFooterLinks onCancel={() => { setCartOpen(false); setShowCancel(true); }} t={t} />
+          </section>
         </div>
       )}
 
       {kotItems && (
         <>
-          <div className="no-print fixed inset-x-0 bottom-0 z-40 flex flex-col gap-2 border-t border-border bg-surface p-3">
-            <p className="text-xs font-medium text-muted">Send &quot;{kotItems.length} new item{kotItems.length === 1 ? "" : "s"}&quot; to the kitchen</p>
-            <div className="flex gap-2">
-              <BluetoothPrintButton
-                getBytes={() =>
-                  buildKotEscPos({
-                    title: `KITCHEN ORDER — #${order.orderNumber}`,
-                    subtitle: `${order.tableName} · ${new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata", dateStyle: "medium", timeStyle: "short" })}`,
-                    items: kotItems.map((i) => ({
-                      name: i.name,
-                      qty: i.quantity,
-                      modifiers: i.modifiers.map((m) => m.choice),
-                    })),
-                  })
-                }
-                onFallbackPrint={printKotViaBrowser}
-                className="flex-1 flex items-center justify-center gap-1.5 rounded-lg border border-brand px-3 py-2.5 text-xs font-medium text-brand"
-              />
-              <button onClick={() => setKotItems(null)} className="rounded-lg border border-border px-3 py-2.5 text-xs font-medium text-muted">
-                {t("order.close")}
-              </button>
+          <div className="no-print fixed inset-0 z-50 flex items-end justify-center bg-black/50 sm:items-center" onClick={() => setKotItems(null)}>
+            <div className="ray-pop w-full max-w-sm rounded-t-2xl bg-surface p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] sm:rounded-2xl" onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center gap-2">
+                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-warning-soft text-warning">
+                  <ChefHat size={18} />
+                </span>
+                <div>
+                  <p className="text-base font-semibold text-foreground">{t("Sent to kitchen")}</p>
+                  <p className="text-xs text-muted">{t("Print the KOT slip if your kitchen uses one.")}</p>
+                </div>
+              </div>
+              <ul className="mt-3 flex flex-col gap-1 rounded-xl border border-border p-3">
+                {kotItems.map((item, i) => (
+                  <li key={i} className="text-sm text-foreground">
+                    <span className="font-semibold">{item.quantity} ×</span> {item.name}
+                    {item.modifiers.length > 0 && <span className="text-xs text-muted"> — {item.modifiers.map((m) => m.choice).join(", ")}</span>}
+                  </li>
+                ))}
+              </ul>
+              <div className="mt-3 flex gap-2">
+                <BluetoothPrintButton
+                  getBytes={() =>
+                    buildKotEscPos({
+                      title: `KITCHEN ORDER — #${order.orderNumber}`,
+                      subtitle: `${order.tableName} · ${new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata", dateStyle: "medium", timeStyle: "short" })}`,
+                      items: kotItems.map((i) => ({ name: i.name, qty: i.quantity, modifiers: i.modifiers.map((m) => m.choice) })),
+                    })
+                  }
+                  onFallbackPrint={() => setTimeout(() => window.print(), 100)}
+                  className="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-brand px-3 py-3 text-sm font-semibold text-brand"
+                />
+                <button onClick={() => setKotItems(null)} className="rounded-xl border border-border px-4 py-3 text-sm font-medium text-muted">
+                  {t("Done")}
+                </button>
+              </div>
             </div>
           </div>
           <div id="kot-print" className="hidden-on-screen">
@@ -456,11 +499,7 @@ export function OrderClient({
             {kotItems.map((item, i) => (
               <div key={i}>
                 <p className="kot-item">{item.quantity} × {item.name}</p>
-                {item.modifiers.length > 0 && (
-                  <p className="kot-modifier">
-                    {item.modifiers.map((m) => `— ${m.choice}`).join(", ")}
-                  </p>
-                )}
+                {item.modifiers.length > 0 && <p className="kot-modifier">{item.modifiers.map((m) => `— ${m.choice}`).join(", ")}</p>}
               </div>
             ))}
           </div>
@@ -468,7 +507,7 @@ export function OrderClient({
       )}
 
       {showBillPrint && (
-        <BillPrintView shopName={shopName} shopGstin={shopGstin} order={order} items={initialItems} onClose={() => setShowBillPrint(false)} t={t} />
+        <BillPrintView shopName={shopName} shopGstin={shopGstin} order={order} items={activeItems} onClose={() => setShowBillPrint(false)} t={t} />
       )}
       {showSettle && (
         <SettleModal
@@ -476,23 +515,28 @@ export function OrderClient({
           total={order.total}
           reservationTokenAmount={order.reservationTokenAmount}
           onClose={() => setShowSettle(false)}
-          onDone={() => router.push("/restaurant")}
+          onDone={(paid) => {
+            showToast(t("{table} settled — {amount}", { table: order.tableName, amount: formatMoney(paid) }));
+            leaveToTables();
+          }}
           onShowBill={() => setShowBillPrint(true)}
           hidden={showBillPrint}
           t={t}
         />
       )}
       {showCancel && (
-        <CancelModal orderId={order.id} onClose={() => setShowCancel(false)} onDone={() => router.push("/restaurant")} t={t} />
-      )}
-      {showMerge && (
-        <MergeModal
-          currentOrderId={order.id}
-          otherTables={otherTables}
-          onClose={() => setShowMerge(false)}
-          onDone={() => router.refresh()}
+        <CancelModal
+          orderId={order.id}
+          onClose={() => setShowCancel(false)}
+          onDone={() => {
+            showToast(t("Order cancelled"), "info");
+            leaveToTables();
+          }}
           t={t}
         />
+      )}
+      {showMerge && (
+        <MergeModal currentOrderId={order.id} otherTables={otherTables} onClose={() => setShowMerge(false)} onDone={() => router.refresh()} t={t} />
       )}
 
       <style jsx global>{`
@@ -536,9 +580,129 @@ export function OrderClient({
             setPickingProduct(null);
           }}
           onClose={() => setPickingProduct(null)}
+          t={t}
         />
       )}
     </div>
+  );
+}
+
+function OrderPanel({
+  items,
+  order,
+  isReadOnly,
+  syncing,
+  onQuantity,
+  onRemove,
+  onServed,
+  t,
+}: {
+  items: Item[];
+  order: Order;
+  isReadOnly: boolean;
+  syncing: boolean;
+  onQuantity: (itemId: string, quantity: number) => void;
+  onRemove: (itemId: string) => void;
+  onServed: (itemId: string) => void;
+  t: Translator;
+}) {
+  const active = items.filter((i) => i.status !== "cancelled");
+  if (items.length === 0) {
+    return (
+      <div className="flex flex-col items-center gap-1 rounded-xl border border-dashed border-border px-4 py-6 text-center">
+        <UtensilsCrossed size={20} className="text-muted" />
+        <p className="text-sm text-muted">{t("Tap a dish to add it to this order.")}</p>
+      </div>
+    );
+  }
+  const tax = order.cgstAmount + order.sgstAmount + order.igstAmount;
+  return (
+    <div className="flex flex-col gap-2">
+      <ul className="flex flex-col divide-y divide-border">
+        {items.map((item) => {
+          const cancelled = item.status === "cancelled";
+          const pending = item.id.startsWith("tmp-");
+          const editable = !isReadOnly && !pending && item.status !== "served" && !cancelled;
+          return (
+            <li key={item.id} className={`flex items-center gap-2 py-2 ${cancelled ? "opacity-50" : ""}`}>
+              <div className="min-w-0 flex-1">
+                <p className={`truncate text-sm font-medium text-foreground ${cancelled ? "line-through" : ""}`}>{item.productName}</p>
+                {item.selectedModifiers.length > 0 && (
+                  <p className="truncate text-xs text-muted">{item.selectedModifiers.map((m) => `${m.choice}${m.price > 0 ? ` +${menuPrice(m.price)}` : ""}`).join(", ")}</p>
+                )}
+                <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-[11px]">
+                  <span className="text-muted">{menuPrice(item.unitPrice)}</span>
+                  {cancelled ? (
+                    <span className="font-medium text-danger">{t("Cancelled")}</span>
+                  ) : item.status === "ready" ? (
+                    <span className="flex items-center gap-0.5 rounded-full bg-brand-soft px-1.5 font-medium text-brand-text"><Bell size={9} /> {t("Ready")}</span>
+                  ) : item.status === "served" ? (
+                    <span className="flex items-center gap-0.5 text-muted"><Check size={10} /> {t("Served")}</span>
+                  ) : !item.kotPrinted && !isReadOnly ? (
+                    <span className="rounded-full bg-warning-soft px-1.5 font-medium text-warning">{t("Not sent")}</span>
+                  ) : null}
+                </div>
+              </div>
+              {editable ? (
+                <div className="flex shrink-0 items-center rounded-lg border border-border">
+                  <button onClick={() => onQuantity(item.id, item.quantity - 1)} aria-label={t("Fewer")} className="flex h-8 w-8 items-center justify-center text-foreground">
+                    <Minus size={14} />
+                  </button>
+                  <span className="w-6 text-center text-sm font-semibold text-foreground">{item.quantity}</span>
+                  <button onClick={() => onQuantity(item.id, item.quantity + 1)} aria-label={t("More")} className="flex h-8 w-8 items-center justify-center text-foreground">
+                    <Plus size={14} />
+                  </button>
+                </div>
+              ) : (
+                <span className="shrink-0 text-sm text-muted">× {item.quantity}</span>
+              )}
+              <span className="w-16 shrink-0 text-right text-sm font-semibold text-foreground">{menuPrice(item.unitPrice * item.quantity)}</span>
+              {!isReadOnly && item.status === "ready" && (
+                <button onClick={() => onServed(item.id)} className="shrink-0 rounded-lg border border-brand bg-brand-soft px-2 py-1 text-xs font-medium text-brand-text">
+                  {t("Served")}
+                </button>
+              )}
+              {editable && (
+                <button onClick={() => onRemove(item.id)} aria-label={t("Remove {name}", { name: item.productName })} className="-mr-1 shrink-0 rounded-md p-1 text-muted hover:text-danger">
+                  <Trash2 size={14} />
+                </button>
+              )}
+            </li>
+          );
+        })}
+      </ul>
+      {active.length > 0 && (
+        <div className="flex flex-col gap-0.5 rounded-xl bg-brand-soft px-3.5 py-2.5">
+          {order.discountAmount > 0 && (
+            <div className="flex justify-between text-xs text-brand-text/80">
+              <span>{t("order.discount")}</span>
+              <span>− {formatMoney(order.discountAmount)}</span>
+            </div>
+          )}
+          {tax > 0 && (
+            <div className="flex justify-between text-xs text-brand-text/80">
+              <span>GST</span>
+              <span>{formatMoney(tax)}</span>
+            </div>
+          )}
+          <div className="flex items-center justify-between text-sm">
+            <span className="font-medium text-brand-text">{t("order.total")}</span>
+            <span className="flex items-center gap-1.5 font-bold text-brand-text">
+              {syncing && <Loader2 size={13} className="animate-spin" />}
+              {formatMoney(order.total)}
+            </span>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function OrderFooterLinks({ onCancel, t }: { onCancel: () => void; t: Translator }) {
+  return (
+    <button onClick={onCancel} className="self-center py-1 text-xs font-medium text-danger">
+      {t("Cancel this order")}
+    </button>
   );
 }
 
@@ -546,10 +710,12 @@ function QuantityPickerModal({
   product,
   onConfirm,
   onClose,
+  t,
 }: {
   product: Product;
   onConfirm: (quantity: number, selectedModifiers: { group: string; choice: string; price: number }[]) => void;
   onClose: () => void;
+  t: Translator;
 }) {
   const [quantity, setQuantity] = useState(1);
   const quickPicks = [1, 2, 3, 4, 5, 6];
@@ -611,7 +777,7 @@ function QuantityPickerModal({
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 sm:items-center" onClick={onClose}>
       <div className="max-h-[85vh] w-full max-w-sm overflow-y-auto rounded-t-2xl bg-surface p-5 sm:rounded-2xl" onClick={(e) => e.stopPropagation()}>
         <p className="text-sm font-semibold text-foreground">{product.name}</p>
-        <p className="text-xs text-muted">{formatMoney(product.price)} each</p>
+        <p className="text-xs text-muted">{t("{price} each", { price: menuPrice(product.price) })}</p>
 
         <div className="mt-4 flex items-center justify-center gap-4">
           <button
@@ -649,7 +815,7 @@ function QuantityPickerModal({
               <div key={g.id}>
                 <p className="text-xs font-semibold text-foreground">
                   {g.name} {g.isRequired && <span className="text-danger">*</span>}
-                  {g.isMultiSelect && <span className="ml-1 text-[10px] font-normal text-muted">(choose any)</span>}
+                  {g.isMultiSelect && <span className="ml-1 text-[10px] font-normal text-muted">{t("(choose any)")}</span>}
                 </p>
                 <div className="mt-1.5 flex flex-col gap-1">
                   {g.choices.map((c) => {
@@ -664,7 +830,7 @@ function QuantityPickerModal({
                         }`}
                       >
                         <span>{c.name}</span>
-                        <span className="text-xs text-muted">{c.extraPrice > 0 ? `+${formatMoney(c.extraPrice)}` : "Included"}</span>
+                        <span className="text-xs text-muted">{c.extraPrice > 0 ? `+${menuPrice(c.extraPrice)}` : t("Included")}</span>
                       </button>
                     );
                   })}
@@ -674,14 +840,14 @@ function QuantityPickerModal({
           </div>
         )}
 
-        <p className="mt-4 text-center text-sm text-muted">Total: {formatMoney(unitPrice * quantity)}</p>
+        <p className="mt-4 text-center text-sm text-muted">{t("order.total")}: {formatMoney(unitPrice * quantity)}</p>
 
         <div className="mt-4 flex gap-2">
           <button onClick={handleConfirm} disabled={missingRequired} className="btn-primary flex-1 text-center disabled:opacity-60">
-            Add {quantity} to order
+            {t("Add {n} to order", { n: quantity })}
           </button>
           <button onClick={onClose} className="rounded-lg border border-border px-4 py-2 text-sm font-medium text-muted">
-            Cancel
+            {t("common.cancel")}
           </button>
         </div>
       </div>
@@ -791,7 +957,7 @@ function BillPrintView({
           </button>
         </div>
         <button onClick={() => setShowWhatsAppShare((v) => !v)} className="self-start text-xs font-medium text-brand">
-          {showWhatsAppShare ? "Hide WhatsApp share" : "Also send this bill on WhatsApp"}
+          {showWhatsAppShare ? t("Hide WhatsApp share") : t("Also send this bill on WhatsApp")}
         </button>
         {showWhatsAppShare && (
           <div className="flex gap-1.5">
@@ -800,7 +966,7 @@ function BillPrintView({
               inputMode="numeric"
               value={customerPhone}
               onChange={(e) => setCustomerPhone(e.target.value.replace(/\D/g, "").slice(0, 10))}
-              placeholder="Customer's 10-digit number"
+              placeholder={t("Customer's 10-digit number")}
               maxLength={10}
               className="flex-1 rounded-lg border border-border px-2.5 py-1.5 text-xs outline-none focus:border-brand"
             />
@@ -810,7 +976,7 @@ function BillPrintView({
               onClick={shareOnWhatsApp}
               className="shrink-0 rounded-lg bg-[#25D366] px-3 py-1.5 text-xs font-medium text-white disabled:opacity-40"
             >
-              Send
+              {t("Send")}
             </button>
           </div>
         )}
@@ -855,21 +1021,21 @@ function BillPrintView({
         {order.igstAmount > 0 && <div className="flex justify-between text-xs"><span>IGST</span><span>{formatMoney(order.igstAmount)}</span></div>}
         {order.roundOffAmount !== 0 && (
           <div className="flex justify-between text-xs">
-            <span>Round off</span>
+            <span>{t("Round off")}</span>
             <span>{order.roundOffAmount > 0 ? "+ " : "− "}{formatMoney(Math.abs(order.roundOffAmount))}</span>
           </div>
         )}
         <div className="mt-1 flex justify-between border-t border-black pt-1 text-sm font-bold"><span>{t("order.total")}</span><span>{formatMoney(order.total)}</span></div>
         {qrDataUrl && creditAmount > 0 && upiLink && (
           <div className="no-print mt-3 flex flex-col gap-1.5 border-t border-dashed border-gray-400 pt-3">
-            <p className="text-xs font-semibold text-gray-700">Or send the payment link on WhatsApp</p>
+            <p className="text-xs font-semibold text-gray-700">{t("Or send the payment link on WhatsApp")}</p>
             <div className="flex gap-1.5">
               <input
                 type="tel"
                 inputMode="numeric"
                 value={customerPhone}
                 onChange={(e) => setCustomerPhone(e.target.value.replace(/\D/g, "").slice(0, 10))}
-                placeholder="Customer's 10-digit number"
+                placeholder={t("Customer's 10-digit number")}
                 maxLength={10}
                 className="flex-1 rounded border border-gray-300 px-2 py-1.5 text-xs outline-none"
               />
@@ -882,14 +1048,14 @@ function BillPrintView({
                 }}
                 className="shrink-0 rounded bg-[#25D366] px-3 py-1.5 text-xs font-medium text-white disabled:opacity-40"
               >
-                Send
+                {t("Send")}
               </button>
             </div>
           </div>
         )}
         {qrDataUrl && creditAmount > 0 && (
           <div className="mt-3 flex flex-col items-center gap-1 border-t border-dashed border-gray-400 pt-3">
-            <p className="text-xs font-semibold text-gray-700">Scan to pay {formatMoney(creditAmount)}</p>
+            <p className="text-xs font-semibold text-gray-700">{t("Scan to pay {amount}", { amount: formatMoney(creditAmount) })}</p>
             {/* eslint-disable-next-line @next/next/no-img-element -- static data URL */}
             <img src={qrDataUrl} alt="UPI payment QR code" className="h-32 w-32" />
           </div>
@@ -929,7 +1095,7 @@ function SettleModal({
   total: number;
   reservationTokenAmount: number;
   onClose: () => void;
-  onDone: () => void;
+  onDone: (paidAmount: number) => void;
   onShowBill: () => void;
   hidden?: boolean;
   t: Translator;
@@ -965,7 +1131,7 @@ function SettleModal({
         setError(result.error);
         return;
       }
-      onDone();
+      onDone(paidTotal + reservationTokenAmount);
     });
   }
 
@@ -977,16 +1143,16 @@ function SettleModal({
         {step === "review" ? (
           <>
             <p className="text-sm font-semibold text-foreground">{t("order.settleBill")}</p>
-            <p className="mt-0.5 text-xs text-muted">Review the bill and apply a discount if needed — the customer should see the final amount before paying.</p>
+            <p className="mt-0.5 text-xs text-muted">{t("Check the bill and add a discount if needed — the customer should see the final amount before paying.")}</p>
 
             <div className="mt-3 rounded-lg border border-border px-3.5 py-3">
               <div className="flex justify-between text-sm">
-                <span className="text-muted">Bill amount</span>
+                <span className="text-muted">{t("Bill amount")}</span>
                 <span className={discountValue > 0 ? "text-muted line-through" : "font-semibold text-foreground"}>{formatMoney(total)}</span>
               </div>
               {discountValue > 0 && (
                 <div className="mt-1 flex justify-between text-sm">
-                  <span className="text-muted">After discount</span>
+                  <span className="text-muted">{t("After discount")}</span>
                   <span className="font-semibold text-brand-text">{formatMoney(netTotal)}</span>
                 </div>
               )}
@@ -1023,7 +1189,7 @@ function SettleModal({
                 disabled={isPending}
                 className="btn-primary flex-1 text-center disabled:opacity-60"
               >
-                {isPending ? "Saving…" : discountValue > 0 ? "Show updated bill →" : "Proceed to payment →"}
+                {isPending ? t("products.saving") : discountValue > 0 ? t("Show updated bill →") : t("Take payment →")}
               </button>
               <button onClick={onClose} className="rounded-lg border border-border px-4 py-2 text-sm font-medium text-muted">
                 {t("common.cancel")}
@@ -1036,11 +1202,11 @@ function SettleModal({
               <button onClick={() => setStep("review")} className="text-muted">
                 <ArrowLeft size={16} />
               </button>
-              <p className="text-sm font-semibold text-foreground">Collect payment</p>
+              <p className="text-sm font-semibold text-foreground">{t("Collect payment")}</p>
             </div>
             {discountValue > 0 && (
               <div className="mt-2 rounded-lg bg-brand-soft px-3.5 py-2.5 text-xs text-brand-text">
-                Final bill after {formatMoney(discountValue)} discount: <span className="font-semibold">{formatMoney(netTotal)}</span> — show this to the customer before collecting payment.
+                {t("Final bill after {discount} discount:", { discount: formatMoney(discountValue) })} <span className="font-semibold">{formatMoney(netTotal)}</span>
               </div>
             )}
         <label className="mt-1 flex flex-col gap-1 text-xs text-muted">
@@ -1066,10 +1232,11 @@ function SettleModal({
               <select
                 value={p.method}
                 onChange={(e) => updatePayment(i, { method: e.target.value as SettlePayment["method"] })}
+                aria-label={t("Paid via")}
                 className="rounded-lg border border-border px-2 py-2 text-xs outline-none focus:border-brand"
               >
                 {(["cash", "card", "upi", "online", "other"] as const).map((m) => (
-                  <option key={m} value={m}>{m}</option>
+                  <option key={m} value={m}>{paymentMethodLabel(m)}</option>
                 ))}
               </select>
               <input
@@ -1089,7 +1256,7 @@ function SettleModal({
 
         {reservationTokenAmount > 0 && (
           <div className="mt-3 flex justify-between text-sm">
-            <span className="flex items-center gap-1 text-muted"><Ticket size={12} /> Reservation token already paid</span>
+            <span className="flex items-center gap-1 text-muted"><Ticket size={12} /> {t("Reservation token already paid")}</span>
             <span className="font-semibold text-brand">− {formatMoney(reservationTokenAmount)}</span>
           </div>
         )}
@@ -1237,12 +1404,12 @@ function MergeModal({
   );
 }
 
-function OrderTimeline({ order }: { order: Order }) {
+function OrderTimeline({ order, t }: { order: Order; t: Translator }) {
   const steps: { label: string; time: string | null }[] = [
-    { label: "Ordered", time: order.createdAt },
-    { label: "Ready", time: order.firstReadyAt },
-    { label: "Served", time: order.servedAt },
-    { label: "Paid", time: order.settledAt },
+    { label: t("Ordered"), time: order.createdAt },
+    { label: t("Ready"), time: order.firstReadyAt },
+    { label: t("Served"), time: order.servedAt },
+    { label: t("common.paid"), time: order.settledAt },
   ];
   const fmt = (iso: string) =>
     new Date(iso).toLocaleTimeString("en-IN", { timeZone: "Asia/Kolkata", hour: "numeric", minute: "2-digit", hour12: true });

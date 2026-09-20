@@ -134,4 +134,14 @@ export const SCREEN_STRINGS: Record<string, [en: string, hi: string, mr: string]
     "जिनसे आप माल खरीदते हैं उन्हें जोड़ें — खरीद दर्ज करें और उनका बकाया देखें।",
     "ज्यांच्याकडून माल घेता ते जोडा — खरेदी नोंदवा आणि त्यांचे देणे पहा.",
   ],
+
+  // Product / menu / service form
+  "products.sheetNew": ["New {item}", "नया {item}", "नवीन {item}"],
+  "products.eg": ["e.g. {example}", "जैसे {example}", "उदा. {example}"],
+  "products.emptyFor": [
+    "Nothing here yet — add your first {item} to start billing.",
+    "अभी कुछ नहीं है — बिलिंग शुरू करने के लिए पहला {item} जोड़ें।",
+    "अजून काही नाही — बिलिंग सुरू करण्यासाठी पहिला {item} जोडा.",
+  ],
+  "common.close": ["Close", "बंद करें", "बंद करा"],
 };

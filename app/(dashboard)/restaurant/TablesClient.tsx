@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { createTableAction, startOrderAction, renameTableAction, deleteTableAction, clearEmptyOrderAction } from "@/lib/actions/restaurant";
+import { createTableAction, createNumberedTablesAction, startOrderAction, renameTableAction, deleteTableAction, clearEmptyOrderAction } from "@/lib/actions/restaurant";
 import { lookupCustomerByPhoneAction } from "@/lib/actions/customers";
 import {
   listPendingTableRequestsAction,
@@ -11,7 +11,7 @@ import {
   rejectTableOrderRequestAction,
   getTableQrImageAction,
 } from "@/lib/actions/table-orders";
-import { LayoutGrid, Layers, CalendarClock, Smartphone, Check, X, Bell, QrCode } from "lucide-react";
+import { LayoutGrid, Layers, CalendarClock, Smartphone, Check, X, Bell, QrCode, Minus, Plus } from "lucide-react";
 import { formatMoney } from "@/lib/format";
 import { PageHeader } from "@/app/components/PageHeader";
 import { useToast } from "@/app/components/Toast";
@@ -49,6 +49,7 @@ function TableTile({
   table,
   dimmed,
   freeLabel,
+  t,
   onOpen,
   onQr,
   onClearEmpty,
@@ -56,6 +57,7 @@ function TableTile({
   table: Table;
   dimmed: boolean;
   freeLabel: string;
+  t: (key: string, values?: Record<string, string | number>) => string;
   onOpen: () => void;
   onQr: () => void;
   onClearEmpty: (e: React.MouseEvent) => void;
@@ -77,23 +79,23 @@ function TableTile({
       <div className="flex items-start justify-between gap-1">
         <div className="min-w-0">
           <p className="truncate text-base font-bold leading-tight text-foreground md:text-lg">{table.name}</p>
-          <p className="text-[11px] text-muted">{SECTION_LABEL[table.section ?? "inside"]}</p>
+          <p className="text-[11px] text-muted">{t(SECTION_LABEL[table.section ?? "inside"])}</p>
         </div>
         <button
           onClick={(e) => {
             e.stopPropagation();
             onQr();
           }}
-          className="-mr-1 -mt-1 shrink-0 rounded-md p-1 text-muted hover:bg-surface-2 hover:text-foreground"
-          aria-label={`QR code and settings for ${table.name}`}
+          aria-label={t("QR code and settings for {name}", { name: table.name })}
+          className="-mr-2 -mt-2 shrink-0 rounded-lg p-2 text-muted hover:bg-surface-2 hover:text-foreground"
         >
-          <QrCode size={15} />
+          <QrCode size={16} />
         </button>
       </div>
       <div className="flex flex-col gap-1">
         {table.readyCount > 0 && (
           <span className="inline-flex w-fit items-center gap-1 rounded-full bg-brand px-2 py-0.5 text-[10px] font-bold text-white">
-            <Bell size={10} /> {table.readyCount} ready
+            <Bell size={10} /> {t("{n} ready", { n: table.readyCount })}
           </span>
         )}
         <span className={`flex items-center gap-1.5 text-xs font-semibold ${tone.text}`}>
@@ -101,7 +103,7 @@ function TableTile({
           {state === "occupied" ? (
             table.openOrderTotal === 0 ? (
               <button onClick={onClearEmpty} className="flex items-center gap-1 underline decoration-dotted">
-                <X size={11} /> Empty — clear
+                <X size={11} /> {t("Empty — clear")}
               </button>
             ) : (
               formatMoney(table.openOrderTotal)
@@ -126,6 +128,7 @@ export function TablesClient({ tables, lang }: { tables: Table[]; lang: Lang }) 
   const [showAddTable, setShowAddTable] = useState(false);
   const [newTableName, setNewTableName] = useState("");
   const [newTableSection, setNewTableSection] = useState<"inside" | "outside" | "takeaway">("inside");
+  const [bulkCount, setBulkCount] = useState(tables.length === 0 ? 10 : 5);
   const [sectionFilter, setSectionFilter] = useState<"all" | "inside" | "outside" | "takeaway">("all");
   const [error, setError] = useState<string | null>(null);
   const [qrTable, setQrTable] = useState<Table | null>(null);
@@ -170,10 +173,11 @@ export function TablesClient({ tables, lang }: { tables: Table[]; lang: Lang }) 
     const newlyReadyIds = [...currentReady].filter((id) => !seenReadyTableIds.current!.has(id));
     if (newlyReadyIds.length > 0) {
       playOrderReadyChime();
-      const names = newlyReadyIds.map((id) => tables.find((t) => t.id === id)?.name ?? "Table").join(", ");
-      showToast(`${names} — order ready to serve`);
+      const names = newlyReadyIds.map((id) => tables.find((x) => x.id === id)?.name ?? "Table").join(", ");
+      showToast(t("{names} — order ready to serve", { names }));
     }
     seenReadyTableIds.current = currentReady;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tables, showToast]);
 
   function playOrderReadyChime() {
@@ -275,7 +279,21 @@ export function TablesClient({ tables, lang }: { tables: Table[]; lang: Lang }) 
         setError(result.error);
         return;
       }
+      showToast(t("{name} added", { name: newTableName.trim() }));
       setNewTableName("");
+      setShowAddTable(false);
+      router.refresh();
+    });
+  }
+
+  function handleAddNumbered() {
+    startTransition(async () => {
+      const result = await createNumberedTablesAction(bulkCount, newTableSection);
+      if (result.error) {
+        setError(result.error);
+        return;
+      }
+      showToast(t("{n} tables added", { n: result.added ?? bulkCount }));
       setShowAddTable(false);
       router.refresh();
     });
@@ -340,7 +358,7 @@ export function TablesClient({ tables, lang }: { tables: Table[]; lang: Lang }) 
             border: "1px solid var(--border)",
           }}
         >
-          <Layers size={13} /> Combos
+          <Layers size={13} /> {t("Combos")}
         </Link>
         <Link
           href="/restaurant/reservations"
@@ -351,7 +369,7 @@ export function TablesClient({ tables, lang }: { tables: Table[]; lang: Lang }) 
             border: "1px solid var(--border)",
           }}
         >
-          <CalendarClock size={13} /> Reservations
+          <CalendarClock size={13} /> {t("Reservations")}
         </Link>
       </div>
 
@@ -361,23 +379,23 @@ export function TablesClient({ tables, lang }: { tables: Table[]; lang: Lang }) 
         <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1.5 px-1 pb-1 text-[10px] text-muted">
           <span className="flex items-center gap-1">
             <span className="h-2 w-2 rounded-full" style={{ background: "linear-gradient(135deg, #34d399, #059669)", boxShadow: "0 0 0 2px var(--background), 0 1px 2px rgba(0,0,0,0.3)" }} />
-            Free
+            {t("tables.free")}
           </span>
           <span className="flex items-center gap-1">
             <span className="h-2 w-2 rounded-full" style={{ background: "linear-gradient(135deg, #fbbf24, #d97706)", boxShadow: "0 0 0 2px var(--background), 0 1px 2px rgba(0,0,0,0.3)" }} />
-            Reserved
+            {t("Reserved")}
           </span>
           <span className="flex items-center gap-1">
             <span className="h-2 w-2 rounded-full" style={{ background: "linear-gradient(135deg, #f87171, #dc2626)", boxShadow: "0 0 0 2px var(--background), 0 1px 2px rgba(0,0,0,0.3)" }} />
-            <span className="hidden sm:inline">Occupied — tap to bill</span>
-            <span className="sm:hidden">Occupied</span>
+            <span className="hidden sm:inline">{t("Occupied — tap to bill")}</span>
+            <span className="sm:hidden">{t("Occupied")}</span>
           </span>
         </div>
       )}
 
       {requests.length > 0 && (
         <section className="flex flex-col gap-2 rounded-xl border border-brand bg-brand-soft p-3">
-          <p className="flex items-center gap-1.5 text-sm font-semibold text-brand-text"><Smartphone size={14} /> {requests.length} customer order request(s)</p>
+          <p className="flex items-center gap-1.5 text-sm font-semibold text-brand-text"><Smartphone size={14} /> {t("{n} order request(s) from customers", { n: requests.length })}</p>
           {requests.map((r) => (
             <div key={r.id} className="rounded-lg bg-surface p-3">
               <p className="text-sm font-medium text-foreground">
@@ -386,10 +404,10 @@ export function TablesClient({ tables, lang }: { tables: Table[]; lang: Lang }) 
               <p className="text-xs text-muted">{r.items.map((i) => `${i.quantity}× ${i.name}`).join(", ")}</p>
               <div className="mt-2 flex gap-2">
                 <button onClick={() => accept(r.id)} disabled={isPending} className="btn-primary-sm flex items-center gap-1 disabled:opacity-60">
-                  <Check size={13} /> Accept
+                  <Check size={13} /> {t("Accept")}
                 </button>
                 <button onClick={() => reject(r.id)} disabled={isPending} className="flex items-center gap-1 rounded-lg border border-danger px-3 py-1.5 text-xs font-medium text-danger disabled:opacity-60">
-                  <X size={13} /> Reject
+                  <X size={13} /> {t("Reject")}
                 </button>
               </div>
             </div>
@@ -399,35 +417,96 @@ export function TablesClient({ tables, lang }: { tables: Table[]; lang: Lang }) 
 
       {showAddTable && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 sm:items-center sm:p-4" onClick={() => setShowAddTable(false)}>
-        <div className="ray-pop w-full max-w-sm rounded-t-2xl bg-surface p-4 shadow-lg sm:rounded-2xl" onClick={(e) => e.stopPropagation()}>
-        <div className="flex flex-col gap-3">
-          <p className="text-sm font-semibold text-foreground">{t("tables.add")}</p>
-          <input
-            value={newTableName}
-            onChange={(e) => setNewTableName(e.target.value)}
-            placeholder={t("tables.namePlaceholder")}
-            autoFocus
-            className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand"
-          />
-          <div className="flex gap-1.5">
-            {(["inside", "outside", "takeaway"] as const).map((s) => (
-              <button
-                key={s}
-                type="button"
-                onClick={() => setNewTableSection(s)}
-                className={`rounded-full border px-3 py-1 text-xs font-medium ${
-                  newTableSection === s ? "border-brand bg-brand-soft text-brand-text" : "border-border text-muted"
-                }`}
+          <div
+            className="ray-pop w-full max-w-sm rounded-t-2xl bg-surface p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] shadow-lg sm:rounded-2xl sm:pb-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex flex-col gap-3.5">
+              <div className="flex items-center justify-between">
+                <p className="text-base font-semibold text-foreground">{t("Add tables")}</p>
+                <button
+                  type="button"
+                  onClick={() => setShowAddTable(false)}
+                  aria-label={t("common.close")}
+                  className="-mr-1.5 rounded-lg p-1.5 text-muted hover:bg-surface-2 hover:text-foreground"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+              <div className="flex gap-1.5">
+                {(["inside", "outside", "takeaway"] as const).map((s) => (
+                  <button
+                    key={s}
+                    type="button"
+                    onClick={() => setNewTableSection(s)}
+                    aria-pressed={newTableSection === s}
+                    className={`rounded-full border px-3 py-1.5 text-xs font-medium ${
+                      newTableSection === s ? "border-brand bg-brand-soft text-brand-text" : "border-border text-muted"
+                    }`}
+                  >
+                    {t(SECTION_LABEL[s])}
+                  </button>
+                ))}
+              </div>
+
+              <div className="flex flex-col gap-2.5 rounded-xl border border-border bg-background/40 p-3">
+                <p className="text-sm font-medium text-foreground">{t("Many at once")}</p>
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center rounded-lg border border-border">
+                    <button
+                      type="button"
+                      onClick={() => setBulkCount((n) => Math.max(1, n - 1))}
+                      aria-label={t("Fewer")}
+                      className="flex h-10 w-10 items-center justify-center text-foreground"
+                    >
+                      <Minus size={16} />
+                    </button>
+                    <input
+                      value={bulkCount}
+                      onChange={(e) => setBulkCount(Math.min(50, Math.max(1, Number(e.target.value.replace(/\D/g, "")) || 1)))}
+                      inputMode="numeric"
+                      aria-label={t("Number of tables")}
+                      className="h-10 w-12 border-0 bg-transparent text-center text-base font-semibold outline-none"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setBulkCount((n) => Math.min(50, n + 1))}
+                      aria-label={t("More")}
+                      className="flex h-10 w-10 items-center justify-center text-foreground"
+                    >
+                      <Plus size={16} />
+                    </button>
+                  </div>
+                  <button type="button" onClick={handleAddNumbered} disabled={isPending} className="btn-primary-sm h-10 flex-1 disabled:opacity-60">
+                    {t("Add {n} tables", { n: bulkCount })}
+                  </button>
+                </div>
+                <p className="text-xs text-muted">{t("Named T1, T2, T3… — rename any of them later from its QR icon.")}</p>
+              </div>
+
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  handleAddTable();
+                }}
+                className="flex flex-col gap-2"
               >
-                {SECTION_LABEL[s]}
-              </button>
-            ))}
+                <p className="text-sm font-medium text-foreground">{t("Or one with its own name")}</p>
+                <div className="flex gap-2">
+                  <input
+                    value={newTableName}
+                    onChange={(e) => setNewTableName(e.target.value)}
+                    placeholder={t("tables.namePlaceholder")}
+                    enterKeyHint="done"
+                    className="min-w-0 flex-1 rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand"
+                  />
+                  <button type="submit" disabled={isPending || !newTableName.trim()} className="rounded-lg border border-brand/40 px-4 text-sm font-semibold text-brand-text disabled:opacity-50">
+                    {t("tables.add")}
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
-          <button onClick={handleAddTable} disabled={isPending} className="btn-primary-sm">
-            {t("tables.add")}
-          </button>
-        </div>
-        </div>
         </div>
       )}
       {error && <p className="text-sm text-danger">{error}</p>}
@@ -444,14 +523,23 @@ export function TablesClient({ tables, lang }: { tables: Table[]; lang: Lang }) 
                 sectionFilter === s ? "border-brand/30 bg-brand-soft text-brand-text" : "border-border bg-surface text-muted hover:text-foreground"
               }`}
             >
-              {s === "all" ? "All tables" : SECTION_LABEL[s]}
+              {s === "all" ? t("All tables") : t(SECTION_LABEL[s])}
             </button>
           ))}
         </div>
       )}
 
       {tables.length === 0 ? (
-        <EmptyState text={t("tables.empty")} />
+        <EmptyState
+          icon={LayoutGrid}
+          title={t("No tables yet")}
+          text={t("Add your tables once — then tap a table to take its order.")}
+          action={
+            <button onClick={() => setShowAddTable(true)} className="btn-primary-sm">
+              {t("Add tables")}
+            </button>
+          }
+        />
       ) : (
         <div className="grid grid-cols-3 gap-3 md:grid-cols-5 md:gap-4">
           {tables
@@ -462,6 +550,7 @@ export function TablesClient({ tables, lang }: { tables: Table[]; lang: Lang }) 
               table={table}
               dimmed={isPending}
               freeLabel={t("tables.free")}
+              t={t}
               onOpen={() => handleTableTap(table)}
               onQr={() => showQr(table)}
               onClearEmpty={(e) => handleClearEmpty(table, e)}
@@ -473,14 +562,14 @@ export function TablesClient({ tables, lang }: { tables: Table[]; lang: Lang }) 
       {qrTable && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setQrTable(null)}>
           <div className="w-full max-w-xs rounded-2xl bg-surface p-5 text-center" onClick={(e) => e.stopPropagation()}>
-            <p className="text-sm font-semibold text-foreground">{qrTable.name} — Scan to order</p>
-            <p className="mt-1 text-xs text-muted">Print this and stick it on the table.</p>
+            <p className="text-sm font-semibold text-foreground">{t("{name} — scan to order", { name: qrTable.name })}</p>
+            <p className="mt-1 text-xs text-muted">{t("Print this and stick it on the table.")}</p>
             <div className="mt-3 flex items-center justify-center">
               {qrDataUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element -- small dynamically-generated data URL, next/image adds no value
-                <img src={qrDataUrl} alt="Table order QR code" className="h-48 w-48" />
+                <img src={qrDataUrl} alt={t("Table order QR code")} className="h-48 w-48 rounded-lg bg-white p-1" />
               ) : (
-                <div className="flex h-48 w-48 items-center justify-center text-xs text-muted">Generating…</div>
+                <div className="flex h-48 w-48 items-center justify-center text-xs text-muted">{t("Generating…")}</div>
               )}
             </div>
 
@@ -506,7 +595,7 @@ export function TablesClient({ tables, lang }: { tables: Table[]; lang: Lang }) 
                 disabled={isPending}
                 className="btn-primary-sm disabled:opacity-60"
               >
-                Rename
+                {t("Rename")}
               </button>
             </div>
             {tableActionError && <p className="mt-2 text-xs text-danger">{tableActionError}</p>}
@@ -514,7 +603,7 @@ export function TablesClient({ tables, lang }: { tables: Table[]; lang: Lang }) 
             <div className="mt-3 flex gap-2">
               <button
                 onClick={() => {
-                  if (!confirm(`Remove ${qrTable.name}?`)) return;
+                  if (!confirm(t("Remove {name}?", { name: qrTable.name }))) return;
                   startTransition(async () => {
                     const result = await deleteTableAction(qrTable.id);
                     if (result?.error) {
@@ -529,10 +618,10 @@ export function TablesClient({ tables, lang }: { tables: Table[]; lang: Lang }) 
                 disabled={isPending}
                 className="flex-1 rounded-lg border border-danger px-4 py-2 text-sm font-medium text-danger disabled:opacity-60"
               >
-                Remove table
+                {t("Remove table")}
               </button>
               <button onClick={() => setQrTable(null)} className="flex-1 rounded-lg border border-border px-4 py-2 text-sm font-medium text-muted">
-                Close
+                {t("common.close")}
               </button>
             </div>
           </div>
@@ -545,16 +634,15 @@ export function TablesClient({ tables, lang }: { tables: Table[]; lang: Lang }) 
             onClick={(e) => e.stopPropagation()}
             style={{ boxShadow: "var(--elev-sm)" }}
           >
-            <p className="text-base font-semibold text-foreground">Table {bookingTable.name}</p>
-            <p className="mt-1 text-xs text-muted">
-              Add the customer&apos;s name and mobile number to genuinely track loyalty points for this order —
-              or skip straight ahead, nothing here is required.
+            <p className="text-base font-semibold text-foreground">
+              {/^table\b/i.test(bookingTable.name) ? bookingTable.name : t("Table {name}", { name: bookingTable.name })}
             </p>
+            <p className="mt-1 text-xs text-muted">{t("Customer's name and mobile earn them loyalty points — optional, you can skip.")}</p>
             <div className="mt-4 flex flex-col gap-2.5">
               <input
                 value={bookingName}
                 onChange={(e) => setBookingName(e.target.value)}
-                placeholder="Customer name (optional)"
+                placeholder={t("Customer name (optional)")}
                 className="rounded-lg border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-brand"
               />
               <input
@@ -568,7 +656,7 @@ export function TablesClient({ tables, lang }: { tables: Table[]; lang: Lang }) 
                     });
                   }
                 }}
-                placeholder="Mobile number (optional, for loyalty points)"
+                placeholder={t("Mobile number (optional)")}
                 inputMode="numeric"
                 className="rounded-lg border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-brand"
               />
@@ -579,14 +667,14 @@ export function TablesClient({ tables, lang }: { tables: Table[]; lang: Lang }) 
                 disabled={isPending}
                 className="btn-primary w-full text-center disabled:opacity-60"
               >
-                {isPending ? "Booking…" : "Book table"}
+                {isPending ? t("Starting…") : t("Start order")}
               </button>
               <button
                 onClick={() => confirmBooking(true)}
                 disabled={isPending}
                 className="w-full rounded-lg border border-border py-2.5 text-sm font-medium text-muted disabled:opacity-60"
               >
-                Continue without loyalty points
+                {t("Skip — start without details")}
               </button>
             </div>
           </div>

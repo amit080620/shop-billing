@@ -29,6 +29,19 @@ const UNIT_LABELS: Record<string, string> = {
   GLASS: "glass", STRIP: "strip", BOTTLE: "bottle", SET: "set", DAY: "day", HRS: "hr",
 };
 
+const UNIT_NAMES: Record<string, string> = {
+  NOS: "Number (Nos)", PCS: "Pieces", KG: "Kilogram", GM: "Gram", TON: "Tonne", QTL: "Quintal", LTR: "Litre",
+  ML: "Millilitre", MTR: "Metre", BOX: "Box", DZN: "Dozen", PKT: "Packet", BAG: "Bag", CFT: "Cubic feet",
+  CUM: "Cubic metre", PLATE: "Plate", BOWL: "Bowl", GLASS: "Glass", STRIP: "Strip", BOTTLE: "Bottle",
+  SET: "Set", DAY: "Day", HRS: "Hour",
+};
+
+/** Full name of a unit code for pickers ("KG" → "Kilogram"); English, and
+ * a translation key in menuText.ts. */
+export function unitName(unit: string): string {
+  return UNIT_NAMES[unit.toUpperCase()] ?? unit;
+}
+
 /** Everyday name for a stored unit code on screen ("NOS" → "pc"). The GST
  * codes themselves stay in the data and on invoices. */
 export function unitLabel(unit: string | null | undefined): string {

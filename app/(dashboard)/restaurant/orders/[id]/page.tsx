@@ -1,6 +1,7 @@
 import { requireSession } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { getTranslator } from "@/lib/i18n/server";
+import { notFound } from "next/navigation";
 import { OrderClient } from "./OrderClient";
 
 export default async function OrderPage({
@@ -22,18 +23,18 @@ export default async function OrderPage({
     .eq("shop_id", session.shopId)
     .single();
 
-  if (!order) {
-    return <p className="text-sm text-muted">Order not found.</p>;
-  }
+  if (!order) notFound();
 
-  const [{ data: items }, { data: products }, { data: combos }, { data: linkedReservation }] = await Promise.all([
-    admin.from("restaurant_order_items").select("id, product_name, quantity, unit_price, line_total, status, selected_modifiers").eq("order_id", id).order("created_at"),
+  const [{ data: items }, { data: products }, { data: combos }, { data: linkedReservation }, { data: optionGroups }] = await Promise.all([
+    admin.from("restaurant_order_items").select("id, product_id, product_name, quantity, unit_price, line_total, status, selected_modifiers, kot_printed").eq("order_id", id).order("created_at"),
     admin.from("products").select("id, name, price, gst_percent, category_id, categories ( name )").eq("shop_id", session.shopId).order("name"),
     admin.from("combos").select("id, name, price").eq("shop_id", session.shopId).eq("is_active", true).order("name"),
     order.reservation_id
       ? admin.from("restaurant_reservations").select("token_amount").eq("id", order.reservation_id).maybeSingle()
       : Promise.resolve({ data: null }),
+    admin.from("product_option_groups").select("product_id").eq("shop_id", session.shopId),
   ]);
+  const productsWithOptions = new Set((optionGroups ?? []).map((g) => g.product_id));
 
   const { data: otherOpenOrders } = await admin
     .from("restaurant_orders")
@@ -72,17 +73,20 @@ export default async function OrderPage({
       }}
       items={(items ?? []).map((i) => ({
         id: i.id,
+        productId: i.product_id,
         productName: i.product_name,
         quantity: Number(i.quantity),
         unitPrice: Number(i.unit_price),
         lineTotal: Number(i.line_total),
         status: i.status,
         selectedModifiers: i.selected_modifiers,
+        kotPrinted: i.kot_printed,
       }))}
       products={(products ?? []).map((p) => ({
         id: p.id,
         name: p.name,
         price: Number(p.price),
+        hasOptions: productsWithOptions.has(p.id),
         category: Array.isArray(p.categories) ? p.categories[0]?.name ?? "Other" : (p.categories as { name: string } | null)?.name ?? "Other",
       }))}
       combos={(combos ?? []).map((c) => ({ id: c.id, name: c.name, price: Number(c.price) }))}
