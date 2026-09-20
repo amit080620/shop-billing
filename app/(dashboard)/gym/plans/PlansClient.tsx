@@ -57,6 +57,7 @@ export function PlansClient({ plans }: { plans: Plan[] }) {
 
   return (
     <div className="flex flex-col gap-3">
+      <BackLink fallback="/gym" />
       <PageHeader
         title={t("Membership plans")}
         action={
@@ -66,7 +67,6 @@ export function PlansClient({ plans }: { plans: Plan[] }) {
         }
         icon={<ListChecks size={18} strokeWidth={1.8} />}
       />
-      <BackLink fallback="/gym" />
 
       {showForm && (
         <Popup open={showForm} onClose={() => setShowForm(false)} title="Add plan">

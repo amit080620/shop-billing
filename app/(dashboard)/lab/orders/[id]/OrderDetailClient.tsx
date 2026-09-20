@@ -46,6 +46,9 @@ export function OrderDetailClient({ order, items }: { order: Order; items: Item[
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  // Which button started the work — one shared "pending" flag made the
+  // status button read "Updating…" while a result was being saved.
+  const [busy, setBusy] = useState<"status" | "result" | "bill" | null>(null);
   const [showBillForm, setShowBillForm] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<"cash" | "card" | "upi" | "online" | "other">("cash");
   const [paidAmount, setPaidAmount] = useState<number | "">("");
@@ -57,26 +60,32 @@ export function OrderDetailClient({ order, items }: { order: Order; items: Item[
   function advanceStatus() {
     const next = STATUS_FLOW[currentIndex + 1];
     if (!next) return;
+    setBusy("status");
     startTransition(async () => {
       const result = await updateLabOrderStatusAction(order.id, next);
       if (result.error) setError(result.error);
       router.refresh();
+      setBusy(null);
     });
   }
 
   function saveResult(itemId: string) {
+    setBusy("result");
     startTransition(async () => {
       const result = await saveTestResultAction(itemId, results[itemId] ?? "");
       if (result.error) setError(result.error);
       router.refresh();
+      setBusy(null);
     });
   }
 
   function generateBill() {
+    setBusy("bill");
     startTransition(async () => {
       const result = await billLabOrderAction(order.id, paymentMethod, typeof paidAmount === "number" ? paidAmount : total);
       if (result.error || !result.billId) {
         setError(result.error ?? "Could not generate bill");
+        setBusy(null);
         return;
       }
       router.push(`/print/bill/${result.billId}?new=1`);
@@ -118,7 +127,7 @@ export function OrderDetailClient({ order, items }: { order: Order; items: Item[
           <p className="text-sm font-medium text-foreground">Status: {STATUS_LABELS[order.status]}</p>
           {currentIndex >= 0 && currentIndex < STATUS_FLOW.length - 1 && (
             <button onClick={advanceStatus} disabled={isPending} className="btn-primary-sm self-start disabled:opacity-60">
-              {isPending ? "Updating…" : `Mark as: ${STATUS_LABELS[STATUS_FLOW[currentIndex + 1]]} →`}
+              {busy === "status" ? "Updating…" : `Mark as: ${STATUS_LABELS[STATUS_FLOW[currentIndex + 1]]} →`}
             </button>
           )}
         </div>
@@ -198,7 +207,7 @@ export function OrderDetailClient({ order, items }: { order: Order; items: Item[
                 />
               </div>
               <button onClick={generateBill} disabled={isPending} className="btn-primary-sm disabled:opacity-60">
-                {isPending ? "Generating…" : "Confirm & generate invoice"}
+                {busy === "bill" ? "Generating…" : "Confirm & generate invoice"}
               </button>
             </div>
           )}

@@ -86,6 +86,7 @@ export function ClassesClient({
 
   return (
     <div className="flex flex-col gap-3">
+      <BackLink fallback="/gym/members" />
       <PageHeader
         title={t("Classes")}
         subtitle="Weekly schedule — a lightweight roster, not a live capacity/waitlist system."
@@ -98,7 +99,6 @@ export function ClassesClient({
         }
         icon={<CalendarDays size={18} strokeWidth={1.8} />}
       />
-      <BackLink fallback="/gym/members" />
 
       {showForm && (
         <form action={formAction} className="flex flex-col gap-3 rounded-xl border border-border bg-surface p-4">

@@ -324,6 +324,8 @@ export const PAGE_TEXT: Record<string, [hi: string, mr: string]> = {
   "Pick the kind of business — this can't be changed later.": ["बिज़नेस का प्रकार चुनें — बाद में इसे बदला नहीं जा सकता।", "व्यवसायाचा प्रकार निवडा — नंतर तो बदलता येत नाही."],
   "State": ["राज्य", "राज्य"],
 
+  "Returned": ["वापस आ गया", "परत आले"],
+  "Out with the customer": ["ग्राहक के पास है", "ग्राहकाकडे आहे"],
   "Customers": ["ग्राहक", "ग्राहक"],
   "Customer": ["ग्राहक", "ग्राहक"],
   "{who} added": ["{who} जुड़ गया", "{who} जोडले"],

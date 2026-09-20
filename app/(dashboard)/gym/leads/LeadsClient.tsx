@@ -74,6 +74,7 @@ export function LeadsClient({ leads }: { leads: Lead[] }) {
 
   return (
     <div className="flex flex-col gap-3">
+      <BackLink fallback="/gym/members" />
       <PageHeader
         title={t("Leads")}
         subtitle="Trial enquiries and walk-ins — track who to follow up with."
@@ -84,7 +85,6 @@ export function LeadsClient({ leads }: { leads: Lead[] }) {
         }
         icon={<UserPlus size={18} strokeWidth={1.8} />}
       />
-      <BackLink fallback="/gym/members" />
 
       {showForm && (
         <Popup open={showForm} onClose={() => setShowForm(false)} title="Add lead">

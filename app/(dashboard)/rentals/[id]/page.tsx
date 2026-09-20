@@ -75,7 +75,15 @@ export default async function RentalDetailPage({
                 : "bg-brand-soft text-brand-text"
           }`}
         >
-          {rental.status}
+          {t(
+            rental.status === "returned"
+              ? "Returned"
+              : rental.status === "cancelled"
+                ? "Cancelled"
+                : rental.status === "active"
+                  ? "Out with the customer"
+                  : "rentalsPage.booked",
+          )}
         </span>
       </div>
 

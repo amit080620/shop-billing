@@ -53,6 +53,7 @@ export function BranchesClient({ branches, staff }: { branches: Branch[]; staff:
 
   return (
     <div className="flex flex-col gap-4">
+      <BackLink fallback="/dashboard" />
       <PageHeader
         title={t("Branches")}
         subtitle="Track which branch each sale and staff member belongs to — one account, multiple locations."
@@ -63,7 +64,6 @@ export function BranchesClient({ branches, staff }: { branches: Branch[]; staff:
         }
         icon={<Building2 size={18} strokeWidth={1.8} />}
       />
-      <BackLink fallback="/dashboard" />
 
       {showForm && (
         <Popup open={showForm} onClose={() => setShowForm(false)} title="Add branch">
