@@ -2,11 +2,13 @@ import { notFound } from "next/navigation";
 import { requireSession } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { PrintButton } from "@/app/print/bill/[id]/PrintButton";
+import { getTranslator } from "@/lib/i18n/server";
 import { ToothChartStatic } from "@/app/components/ToothChart";
 
 export default async function PrintTreatmentPlanPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const session = await requireSession();
+  const { t } = await getTranslator();
   const admin = createSupabaseAdminClient();
 
   const [{ data: plan }, { data: shop }] = await Promise.all([
@@ -32,7 +34,7 @@ export default async function PrintTreatmentPlanPage({ params }: { params: Promi
   return (
     <div className="mx-auto max-w-2xl bg-white p-6 text-[#1a1a1a]" style={{ fontFamily: "-apple-system, system-ui, sans-serif" }}>
       <div className="no-print mb-4 flex justify-end">
-        <PrintButton />
+        <PrintButton labels={{ print: t("billPage.print"), printing: t("billPage.printing"), kioskHint: t("billPage.kioskHint") }} />
       </div>
 
       <div className="flex items-center justify-between border-b border-gray-200 pb-4">

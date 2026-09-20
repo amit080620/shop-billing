@@ -3,6 +3,7 @@ import Link from "next/link";
 import { requireSession } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { PrintButton } from "@/app/print/bill/[id]/PrintButton";
+import { getTranslator } from "@/lib/i18n/server";
 import { GenerateBillButton } from "./GenerateBillButton";
 import { ToothChartStatic } from "@/app/components/ToothChart";
 
@@ -13,6 +14,7 @@ export default async function PrintPrescriptionPage({
 }) {
   const { id } = await params;
   const session = await requireSession();
+  const { t } = await getTranslator();
   const admin = createSupabaseAdminClient();
 
   const [{ data: prescription }, { data: settings }, { data: shop }, { data: invoiceSettings }] = await Promise.all([
@@ -51,6 +53,20 @@ export default async function PrintPrescriptionPage({
           .in("medicine_name", medicineNames)
       : { data: [] };
   const detailsByName = new Map((libraryDetails ?? []).map((d) => [d.medicine_name, d]));
+
+  // Catalog prices for the "generate bill" panel — the same name match
+  // the billing action itself uses.
+  const { data: catalogMatches } =
+    medicineNames.length > 0
+      ? await admin.from("products").select("name, price").eq("shop_id", session.shopId).in("name", medicineNames)
+      : { data: [] };
+  const priceByName = new Map((catalogMatches ?? []).map((p) => [p.name.toLowerCase(), Number(p.price)]));
+  const billLines = (items ?? []).map((it) => ({
+    medicineName: it.medicine_name,
+    quantity: it.quantity && it.quantity > 0 ? Number(it.quantity) : 1,
+    unitPrice: priceByName.get(it.medicine_name.toLowerCase()) ?? Number(detailsByName.get(it.medicine_name)?.price ?? 0),
+    inCatalog: priceByName.has(it.medicine_name.toLowerCase()),
+  }));
 
   const customer = Array.isArray(prescription.customers)
     ? prescription.customers[0]
@@ -206,10 +222,28 @@ export default async function PrintPrescriptionPage({
 
       <div className="no-print mt-6 flex flex-col gap-2">
         <div className="flex justify-end gap-2">
-          <PrintButton />
+          <PrintButton labels={{ print: t("billPage.print"), printing: t("billPage.printing"), kioskHint: t("billPage.kioskHint") }} />
         </div>
         {items && items.length > 0 && (
-          <GenerateBillButton prescriptionId={prescription.id} alreadyBilled={!!prescription.bill_id} existingBillId={prescription.bill_id} />
+          <GenerateBillButton
+            prescriptionId={prescription.id}
+            alreadyBilled={!!prescription.bill_id}
+            existingBillId={prescription.bill_id}
+            initialLines={billLines}
+            labels={{
+              title: t("Bill these medicines"),
+              qty: t("order.qty"),
+              price: t("Price"),
+              total: t("order.total"),
+              unpriced: t("Type a price for every medicine before billing."),
+              collectNow: t("Money collected now"),
+              paidVia: t("Paid via"),
+              generate: t("Generate bill"),
+              generating: t("Generating…"),
+              failed: t("Could not generate bill"),
+              viewBill: t("View bill for this prescription →"),
+            }}
+          />
         )}
         <Link href="/clinic" className="text-center text-sm text-muted">
           ← Back to Clinic

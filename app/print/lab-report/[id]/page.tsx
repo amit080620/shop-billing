@@ -3,6 +3,7 @@ import { requireSession } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { formatDateTime } from "@/lib/format";
 import { PrintButton } from "@/app/print/bill/[id]/PrintButton";
+import { getTranslator } from "@/lib/i18n/server";
 
 export default async function LabReportPrintPage({
   params,
@@ -11,6 +12,7 @@ export default async function LabReportPrintPage({
 }) {
   const { id } = await params;
   const session = await requireSession();
+  const { t } = await getTranslator();
   const admin = createSupabaseAdminClient();
 
   const [{ data: order }, { data: invoiceSettings }] = await Promise.all([
@@ -125,7 +127,7 @@ export default async function LabReportPrintPage({
       <p className="mt-4 text-center text-xs text-gray-500">{invoiceSettings?.footer_text || "Thank you for choosing us."}</p>
 
       <div className="no-print mt-6 flex justify-end">
-        <PrintButton />
+        <PrintButton labels={{ print: t("billPage.print"), printing: t("billPage.printing"), kioskHint: t("billPage.kioskHint") }} />
       </div>
     </div>
   );

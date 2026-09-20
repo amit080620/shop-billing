@@ -6,6 +6,7 @@ import { requireSession } from "../auth";
 import { createSupabaseAdminClient } from "../supabase/admin";
 import { logError } from "../audit";
 import { checkRateLimitAsync } from "../rateLimit";
+import { round2 } from "../gst";
 import { findOrCreateCustomerByPhone } from "./customers";
 
 export type ActionState = { error?: string } | null;
@@ -379,6 +380,7 @@ export async function createPrescriptionAction(input: {
 export async function generateBillFromPrescriptionAction(
   prescriptionId: string,
   paymentMethod: "cash" | "card" | "upi" | "online" | "other",
+  options?: { lines?: { medicineName: string; quantity: number; unitPrice: number }[]; collectNow?: boolean },
 ): Promise<{ error?: string; billId?: string }> {
   const session = await requireSession();
   const admin = createSupabaseAdminClient();
@@ -407,25 +409,33 @@ export async function generateBillFromPrescriptionAction(
     .in("name", medicineNames);
   const productByName = new Map((matchedProducts ?? []).map((p) => [p.name.toLowerCase(), p]));
 
+  // Prices typed on screen win over the catalog: a medicine the shop
+  // doesn't stock still has a real price on the counter, and billing it
+  // at zero (what used to happen) is never what was meant.
+  const priced = new Map((options?.lines ?? []).map((l) => [l.medicineName.toLowerCase(), l]));
+  const billItems = items.map((item) => {
+    const match = productByName.get(item.medicine_name.toLowerCase());
+    const override = priced.get(item.medicine_name.toLowerCase());
+    return {
+      productId: match?.id ?? null,
+      description: item.medicine_name,
+      hsnCode: match?.hsn_code ?? null,
+      quantity: override ? Math.max(1, override.quantity) : item.quantity && item.quantity > 0 ? item.quantity : 1,
+      unitPrice: override ? Math.max(0, override.unitPrice) : match ? Number(match.price) : 0,
+      gstPercent: match ? Number(match.gst_percent) : 0,
+    };
+  });
+  const billTotal = round2(billItems.reduce((sum, i) => sum + i.quantity * i.unitPrice, 0));
+
   const { createBillCore } = await import("./bills");
   const result = await createBillCore(session, {
     customerId: prescription.patient_id,
     doctorName: prescription.doctor_name ?? undefined,
     patientName: prescription.patient_name,
-    items: items.map((item) => {
-      const match = productByName.get(item.medicine_name.toLowerCase());
-      return {
-        productId: match?.id ?? null,
-        description: item.medicine_name,
-        hsnCode: match?.hsn_code ?? null,
-        quantity: item.quantity && item.quantity > 0 ? item.quantity : 1,
-        unitPrice: match ? Number(match.price) : 0,
-        gstPercent: match ? Number(match.gst_percent) : 0,
-      };
-    }),
+    items: billItems,
     discountType: "flat",
     discountValue: 0,
-    paidAmount: 0,
+    paidAmount: options?.collectNow === false ? 0 : billTotal,
     paymentMethod,
   });
   if ("error" in result) return { error: result.error };

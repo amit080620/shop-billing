@@ -319,6 +319,15 @@ export const PAGE_TEXT: Record<string, [hi: string, mr: string]> = {
   "Void invoice": ["बिल रद्द करें", "बिल रद्द करा"],
   "↩ Return": ["↩ वापसी", "↩ परतावा"],
 
+  // Prescription billing
+  "Bill these medicines": ["इन दवाओं का बिल बनाएं", "या औषधांचे बिल तयार करा"],
+  "Price": ["दाम", "किंमत"],
+  "Type a price for every medicine before billing.": ["बिल बनाने से पहले हर दवा का दाम लिखें।", "बिल तयार करण्यापूर्वी प्रत्येक औषधाची किंमत लिहा."],
+  "Money collected now": ["पैसे अभी मिल गए", "पैसे आता मिळाले"],
+  "Generate bill": ["बिल बनाएं", "बिल तयार करा"],
+  "Could not generate bill": ["बिल नहीं बन सका", "बिल तयार होऊ शकले नाही"],
+  "View bill for this prescription →": ["इस पर्चे का बिल देखें →", "या चिठ्ठीचे बिल पहा →"],
+
   // Restaurant order screen
   "Tables": ["टेबल", "टेबल"],
   "All": ["सभी", "सर्व"],

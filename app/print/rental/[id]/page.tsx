@@ -3,6 +3,7 @@ import { requireSession } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { formatMoney, formatDateTime } from "@/lib/format";
 import { PrintButton } from "@/app/print/bill/[id]/PrintButton";
+import { getTranslator } from "@/lib/i18n/server";
 
 export default async function PrintRentalSlipPage({
   params,
@@ -11,6 +12,7 @@ export default async function PrintRentalSlipPage({
 }) {
   const { id } = await params;
   const session = await requireSession();
+  const { t } = await getTranslator();
   const admin = createSupabaseAdminClient();
 
   const [{ data: rental }, { data: invoiceSettings }] = await Promise.all([
@@ -121,7 +123,7 @@ export default async function PrintRentalSlipPage({
       </div>
 
       <div className="no-print mt-6 flex justify-end">
-        <PrintButton />
+        <PrintButton labels={{ print: t("billPage.print"), printing: t("billPage.printing"), kioskHint: t("billPage.kioskHint") }} />
       </div>
     </div>
   );
