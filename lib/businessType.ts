@@ -158,6 +158,13 @@ const NAME_EXAMPLE: Record<BusinessType, string> = {
   general: "Notebook A4",
 };
 
+/** The unit a new item starts on. Only a restaurant's "plate" is safe to
+ * assume — a kirana store sells both loose kilos and sealed packets, and
+ * starting those on KG prices a 500ml milk packet per kilo. */
+export function defaultUnitFor(businessType: string): string {
+  return businessType === "restaurant" ? "PLATE" : "NOS";
+}
+
 export function nameExampleFor(businessType: string): string {
   return NAME_EXAMPLE[businessType as BusinessType] ?? NAME_EXAMPLE.general;
 }

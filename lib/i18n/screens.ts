@@ -135,6 +135,19 @@ export const SCREEN_STRINGS: Record<string, [en: string, hi: string, mr: string]
     "ज्यांच्याकडून माल घेता ते जोडा — खरेदी नोंदवा आणि त्यांचे देणे पहा.",
   ],
 
+  // New bill
+  "bill.emptyCart": [
+    "Search or scan an item above to start this bill.",
+    "बिल शुरू करने के लिए ऊपर सामान खोजें या स्कैन करें।",
+    "बिल सुरू करण्यासाठी वर वस्तू शोधा किंवा स्कॅन करा.",
+  ],
+  "bill.noProductsYet": [
+    "No items in your shop yet — add one and it'll be ready to bill in seconds.",
+    "अभी दुकान में कोई सामान नहीं — एक जोड़ें, फिर सेकंडों में बिल बन जाएगा।",
+    "अजून दुकानात काहीच नाही — एक जोडा, मग काही सेकंदात बिल तयार होईल.",
+  ],
+  "bill.addFirstProduct": ["+ Add your first item", "+ पहला सामान जोड़ें", "+ पहिली वस्तू जोडा"],
+
   // Product / menu / service form
   "products.sheetNew": ["New {item}", "नया {item}", "नवीन {item}"],
   "products.eg": ["e.g. {example}", "जैसे {example}", "उदा. {example}"],

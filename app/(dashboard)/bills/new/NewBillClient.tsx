@@ -16,7 +16,7 @@ import { useSyncCalculatorAmount } from "@/lib/calculatorAmount";
 import { SearchableSelect } from "@/app/components/SearchableSelect";
 import { InlineQuickAdd } from "@/app/components/InlineQuickAdd";
 import { Spinner } from "@/app/components/Spinner";
-import { Zap, Package, AlertTriangle, Pill, Truck, Gem, Recycle, Mic, ScanBarcode } from "lucide-react";
+import { Zap, Package, AlertTriangle, Pill, Truck, Gem, Recycle, Mic, ScanBarcode, ShoppingCart } from "lucide-react";
 import { barcodeFromQuery } from "@/lib/barcodeQuery";
 import dynamic from "next/dynamic";
 const CameraBarcodeScanner = dynamic(() => import("@/app/components/CameraBarcodeScanner").then((m) => m.CameraBarcodeScanner), { ssr: false });
@@ -715,6 +715,20 @@ export function NewBillClient({
             lang={lang}
             onAdd={addJewelleryItem}
           />
+        )}
+
+        {cart.length === 0 && (
+          <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed border-border px-4 py-7 text-center">
+            <ShoppingCart size={22} className="text-muted" />
+            <p className="text-sm text-muted">
+              {products.length === 0 ? t("bill.noProductsYet") : t("bill.emptyCart")}
+            </p>
+            {products.length === 0 && (
+              <Link href="/products" className="btn-primary-sm">
+                {t("bill.addFirstProduct")}
+              </Link>
+            )}
+          </div>
         )}
 
         {cart.length > 0 && (

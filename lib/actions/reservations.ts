@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { requireSession } from "../auth";
 import { createSupabaseAdminClient } from "../supabase/admin";
+import { findOrCreateCustomerByPhone } from "./customers";
 
 export type ActionState = { error?: string } | null;
 
@@ -28,9 +29,18 @@ export async function createReservationAction(
   if (typeof reservationDate !== "string" || !reservationDate) return { error: "Pick a date" };
   if (typeof reservationTime !== "string" || !reservationTime) return { error: "Pick a time" };
 
+  // Typing a name and number here is the same customer as picking one
+  // from the list — link (or create) their record so this booking
+  // reaches their khata, loyalty points and WhatsApp reminders.
+  let linkedCustomerId = typeof customerId === "string" && customerId ? customerId : null;
+  if (!linkedCustomerId) {
+    const linked = await findOrCreateCustomerByPhone(admin, session.shopId, customerPhone.trim(), customerName.trim());
+    linkedCustomerId = linked?.id ?? null;
+  }
+
   const { error } = await admin.from("restaurant_reservations").insert({
     shop_id: session.shopId,
-    customer_id: typeof customerId === "string" && customerId ? customerId : null,
+    customer_id: linkedCustomerId,
     customer_name: customerName.trim(),
     customer_phone: customerPhone.trim(),
     party_size: partySize ? Math.max(1, Number(partySize)) : 2,

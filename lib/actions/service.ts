@@ -5,6 +5,7 @@ import { requireSession } from "../auth";
 import { createSupabaseAdminClient } from "../supabase/admin";
 import { round2 } from "../gst";
 import { logError } from "../audit";
+import { findOrCreateCustomerByPhone } from "./customers";
 
 export type ActionState = { error?: string; jobId?: string } | null;
 
@@ -68,13 +69,23 @@ export async function createJobAction(
   });
   const jobNumber = `${financialYear}/J${String(issuedNumber ?? 0).padStart(5, "0")}`;
 
+  // A job taken in by typing a name and number is the same customer as
+  // one picked from the list — link (or create) their record now, so the
+  // invoice at delivery carries their name and phone, any unpaid balance
+  // lands in their khata, and the bill can be sent on WhatsApp.
+  let linkedCustomerId = typeof customerId === "string" && customerId ? customerId : null;
+  if (!linkedCustomerId) {
+    const linked = await findOrCreateCustomerByPhone(admin, session.shopId, customerPhone.trim(), customerName.trim());
+    linkedCustomerId = linked?.id ?? null;
+  }
+
   const { data: job, error } = await admin
     .from("service_jobs")
     .insert({
       shop_id: session.shopId,
       job_number: jobNumber,
       financial_year: financialYear,
-      customer_id: typeof customerId === "string" && customerId ? customerId : null,
+      customer_id: linkedCustomerId,
       customer_name: customerName.trim(),
       customer_phone: customerPhone.trim(),
       item_description: itemDescription,
@@ -250,8 +261,16 @@ export async function deliverJobAction(
 
   const { createBillCore } = await import("./bills");
   const totalPaid = round2(Number(job.advance_paid) + Math.max(0, additionalPayment));
+  // Older jobs (taken in before jobs linked a customer record) still have
+  // the phone on the job itself — use it rather than billing a walk-in.
+  let billCustomerId = job.customer_id;
+  if (!billCustomerId && job.customer_phone) {
+    const linked = await findOrCreateCustomerByPhone(admin, session.shopId, job.customer_phone, job.customer_name ?? undefined);
+    billCustomerId = linked?.id ?? null;
+    if (billCustomerId) await admin.from("service_jobs").update({ customer_id: billCustomerId }).eq("id", jobId);
+  }
   const result = await createBillCore(session, {
-    customerId: job.customer_id,
+    customerId: billCustomerId,
     items: [
       {
         productId: null,

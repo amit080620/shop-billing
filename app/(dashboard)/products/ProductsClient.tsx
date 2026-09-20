@@ -30,7 +30,7 @@ import { barcodeFromQuery } from "@/lib/barcodeQuery";
 import { BulkImportExport } from "./BulkImportExport";
 import { COMMON_GST_RATES, UNITS } from "@/lib/constants/states";
 import { COMMON_MEDICINE_NAMES } from "@/lib/constants/commonMedicines";
-import { getUnitsForBusinessType, nameExampleFor, sellsWarrantyItems } from "@/lib/businessType";
+import { defaultUnitFor, getUnitsForBusinessType, nameExampleFor, sellsWarrantyItems } from "@/lib/businessType";
 import { ProductOptionsManager } from "./ProductOptionsManager";
 import { SearchableSelect } from "@/app/components/SearchableSelect";
 import { useTranslation } from "@/lib/i18n/useTranslation";
@@ -502,7 +502,7 @@ export function ProductsClient({
             <span className="font-medium text-foreground">{t("products.unit")}</span>
             <select
               name="unit"
-              defaultValue={editingProduct?.unit ?? orderedUnits[0]}
+              defaultValue={editingProduct?.unit ?? defaultUnitFor(businessType)}
               className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-brand"
             >
               {orderedUnits.map((u) => (

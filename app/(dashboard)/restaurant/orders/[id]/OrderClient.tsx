@@ -215,13 +215,13 @@ export function OrderClient({
         <button
           onClick={sendToKitchen}
           disabled={isPending && !kotItems}
-          className={`relative flex flex-1 items-center justify-center gap-1.5 rounded-xl border px-2 py-3 text-sm font-semibold disabled:opacity-60 ${
+          className={`relative flex flex-1 items-center justify-center gap-1.5 rounded-xl border px-2 py-3 text-sm font-semibold whitespace-nowrap disabled:opacity-60 ${
             newForKitchen > 0 ? "border-warning/50 bg-warning-soft text-warning" : "border-border text-foreground"
           }`}
         >
           <ChefHat size={16} /> {t("KOT")}
           {newForKitchen > 0 && (
-            <span className="rounded-full bg-warning px-1.5 text-[11px] font-bold leading-5 text-white">{t("{n} new", { n: newForKitchen })}</span>
+            <span className="shrink-0 whitespace-nowrap rounded-full bg-warning px-1.5 text-[11px] font-bold leading-5 text-white">{t("{n} new", { n: newForKitchen })}</span>
           )}
         </button>
       )}
