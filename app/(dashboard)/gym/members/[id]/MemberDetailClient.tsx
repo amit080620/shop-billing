@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useT } from "@/lib/i18n/LangContext";
 import { useRouter } from "next/navigation";
 import {
   createWorkoutPlanAction,
@@ -50,6 +51,7 @@ export function MemberDetailClient({
   dietPlans: DietPlan[];
   progressLogs: ProgressLog[];
 }) {
+  const { t } = useT();
   const router = useRouter();
   const [tab, setTab] = useState<"overview" | "workout" | "diet" | "progress">("overview");
   const [isPending, startTransition] = useTransition();
@@ -81,11 +83,11 @@ export function MemberDetailClient({
         <div className="flex flex-col gap-3">
           <div className="grid grid-cols-2 gap-3">
             <div className="rounded-lg border border-border bg-surface p-3 text-center">
-              <p className="text-xs text-muted">Height</p>
+              <p className="text-xs text-muted">{t("Height")}</p>
               <p className="text-sm font-semibold text-foreground">{member.heightCm ? `${member.heightCm} cm` : "—"}</p>
             </div>
             <div className="rounded-lg border border-border bg-surface p-3 text-center">
-              <p className="text-xs text-muted">Weight</p>
+              <p className="text-xs text-muted">{t("Weight")}</p>
               <p className="text-sm font-semibold text-foreground">
                 {progressLogs.length > 0 && progressLogs[progressLogs.length - 1].weightKg
                   ? `${progressLogs[progressLogs.length - 1].weightKg} kg`
@@ -96,7 +98,7 @@ export function MemberDetailClient({
             </div>
           </div>
           <label className="flex flex-col gap-1.5 text-sm">
-            <span className="font-medium text-foreground">Assigned trainer</span>
+            <span className="font-medium text-foreground">{t("Assigned trainer")}</span>
             <select
               defaultValue={member.assignedTrainerId ?? ""}
               onChange={(e) =>
@@ -108,7 +110,7 @@ export function MemberDetailClient({
               disabled={isPending}
               className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand"
             >
-              <option value="">No trainer assigned</option>
+              <option value="">{t("No trainer assigned")}</option>
               {trainers.map((t) => (
                 <option key={t.id} value={t.id}>
                   {t.name}
@@ -127,6 +129,7 @@ export function MemberDetailClient({
 }
 
 function WorkoutTab({ memberId, plans, onChange }: { memberId: string; plans: WorkoutPlan[]; onChange: () => void }) {
+  const { t } = useT();
   const [showForm, setShowForm] = useState(false);
   const [title, setTitle] = useState("");
   const [notes, setNotes] = useState("");
@@ -157,9 +160,9 @@ function WorkoutTab({ memberId, plans, onChange }: { memberId: string; plans: Wo
       </button>
 
       {showForm && (
-        <Popup open={showForm} onClose={() => setShowForm(false)} title="New workout plan">
+        <Popup open={showForm} onClose={() => setShowForm(false)} title={t("New workout plan")}>
         <div className="flex flex-col gap-3 rounded-xl border border-border bg-surface p-4">
-          <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Plan title (e.g. Week 1 — Push Day)" className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand" />
+          <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder={t("Plan title (e.g. Week 1 — Push Day)")} className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand" />
           {exercises.map((ex, i) => (
             <div key={i} className="flex flex-col gap-1.5 rounded-lg border border-border bg-surface p-2.5">
               <div className="flex gap-1.5">
@@ -178,7 +181,7 @@ function WorkoutTab({ memberId, plans, onChange }: { memberId: string; plans: Wo
                 <input
                   value={ex.exerciseName}
                   onChange={(e) => setExercises((prev) => prev.map((p, j) => (j === i ? { ...p, exerciseName: e.target.value } : p)))}
-                  placeholder="Exercise name"
+                  placeholder={t("Exercise name")}
                   className="flex-1 rounded-lg border border-border px-2 py-1.5 text-xs outline-none focus:border-brand"
                 />
               </div>
@@ -187,20 +190,20 @@ function WorkoutTab({ memberId, plans, onChange }: { memberId: string; plans: Wo
                   type="number"
                   value={ex.sets ?? ""}
                   onChange={(e) => setExercises((prev) => prev.map((p, j) => (j === i ? { ...p, sets: e.target.value ? Number(e.target.value) : null } : p)))}
-                  placeholder="Sets"
+                  placeholder={t("Sets")}
                   className="w-16 rounded-lg border border-border px-2 py-1.5 text-xs outline-none focus:border-brand"
                 />
                 <input
                   value={ex.reps}
                   onChange={(e) => setExercises((prev) => prev.map((p, j) => (j === i ? { ...p, reps: e.target.value } : p)))}
-                  placeholder="Reps (e.g. 12 or 8-10)"
+                  placeholder={t("Reps (e.g. 12 or 8-10)")}
                   className="w-24 rounded-lg border border-border px-2 py-1.5 text-xs outline-none focus:border-brand"
                 />
                 <input
                   type="number"
                   value={ex.restSeconds ?? ""}
                   onChange={(e) => setExercises((prev) => prev.map((p, j) => (j === i ? { ...p, restSeconds: e.target.value ? Number(e.target.value) : null } : p)))}
-                  placeholder="Rest (sec)"
+                  placeholder={t("Rest (sec)")}
                   className="w-20 rounded-lg border border-border px-2 py-1.5 text-xs outline-none focus:border-brand"
                 />
                 {exercises.length > 1 && (
@@ -217,7 +220,7 @@ function WorkoutTab({ memberId, plans, onChange }: { memberId: string; plans: Wo
           >
             + Add exercise
           </button>
-          <textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Notes (optional)" rows={2} className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand" />
+          <textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder={t("Notes (optional)")} rows={2} className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand" />
           {error && <p className="text-xs text-danger">{error}</p>}
           <div className="flex gap-2">
             <button onClick={save} disabled={isPending} className="btn-primary-sm disabled:opacity-60">
@@ -232,7 +235,7 @@ function WorkoutTab({ memberId, plans, onChange }: { memberId: string; plans: Wo
       )}
 
       {plans.length === 0 ? (
-        <EmptyState text="No workout plans yet." />
+        <EmptyState text={t("No workout plans yet.")} />
       ) : (
         <ul className="flex flex-col gap-2">
           {plans.map((p) => (
@@ -272,6 +275,7 @@ function WorkoutTab({ memberId, plans, onChange }: { memberId: string; plans: Wo
 }
 
 function DietTab({ memberId, plans, onChange }: { memberId: string; plans: DietPlan[]; onChange: () => void }) {
+  const { t } = useT();
   const [showForm, setShowForm] = useState(false);
   const [goal, setGoal] = useState("");
   const [notes, setNotes] = useState("");
@@ -302,10 +306,10 @@ function DietTab({ memberId, plans, onChange }: { memberId: string; plans: DietP
       </button>
 
       {showForm && (
-        <Popup open={showForm} onClose={() => setShowForm(false)} title="New diet plan">
+        <Popup open={showForm} onClose={() => setShowForm(false)} title={t("New diet plan")}>
         <div className="flex flex-col gap-3 rounded-xl border border-border bg-surface p-4">
           <select value={goal} onChange={(e) => setGoal(e.target.value)} className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand">
-            <option value="">Goal (optional)</option>
+            <option value="">{t("Goal (optional)")}</option>
             <option value="Weight Loss">Weight Loss</option>
             <option value="Weight Gain">Weight Gain</option>
             <option value="Muscle Gain">Muscle Gain</option>
@@ -330,7 +334,7 @@ function DietTab({ memberId, plans, onChange }: { memberId: string; plans: DietP
                   type="number"
                   value={meal.calories ?? ""}
                   onChange={(e) => setMeals((prev) => prev.map((m, j) => (j === i ? { ...m, calories: e.target.value ? Number(e.target.value) : null } : m)))}
-                  placeholder="Kcal"
+                  placeholder={t("Kcal")}
                   className="w-20 rounded-lg border border-border px-2 py-1.5 text-xs outline-none focus:border-brand"
                 />
                 {meals.length > 1 && (
@@ -342,7 +346,7 @@ function DietTab({ memberId, plans, onChange }: { memberId: string; plans: DietP
               <input
                 value={meal.foodItems}
                 onChange={(e) => setMeals((prev) => prev.map((m, j) => (j === i ? { ...m, foodItems: e.target.value } : m)))}
-                placeholder="Food items (e.g. 3 eggs, 2 toast, banana)"
+                placeholder={t("Food items (e.g. 3 eggs, 2 toast, banana)")}
                 className="rounded-lg border border-border px-2 py-1.5 text-xs outline-none focus:border-brand"
               />
             </div>
@@ -353,7 +357,7 @@ function DietTab({ memberId, plans, onChange }: { memberId: string; plans: DietP
           >
             + Add meal
           </button>
-          <textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Notes (optional)" rows={2} className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand" />
+          <textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder={t("Notes (optional)")} rows={2} className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand" />
           {error && <p className="text-xs text-danger">{error}</p>}
           <div className="flex gap-2">
             <button onClick={save} disabled={isPending} className="btn-primary-sm disabled:opacity-60">
@@ -368,7 +372,7 @@ function DietTab({ memberId, plans, onChange }: { memberId: string; plans: DietP
       )}
 
       {plans.length === 0 ? (
-        <EmptyState text="No diet plans yet." />
+        <EmptyState text={t("No diet plans yet.")} />
       ) : (
         <ul className="flex flex-col gap-2">
           {plans.map((p) => (
@@ -407,6 +411,7 @@ function DietTab({ memberId, plans, onChange }: { memberId: string; plans: DietP
 }
 
 function ProgressTab({ memberId, logs, onChange }: { memberId: string; logs: ProgressLog[]; onChange: () => void }) {
+  const { t } = useT();
   const [weight, setWeight] = useState("");
   const [bodyFat, setBodyFat] = useState("");
   const [note, setNote] = useState("");
@@ -438,12 +443,12 @@ function ProgressTab({ memberId, logs, onChange }: { memberId: string; logs: Pro
   return (
     <div className="flex flex-col gap-3">
       <div className="flex flex-col gap-2 rounded-xl border border-border bg-surface p-4">
-        <p className="text-sm font-medium text-brand-text">Log today&apos;s progress</p>
+        <p className="text-sm font-medium text-brand-text">{t("Log today's progress")}</p>
         <div className="flex gap-2">
-          <input type="number" step="0.1" value={weight} onChange={(e) => setWeight(e.target.value)} placeholder="Weight (kg)" className="flex-1 rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand" />
-          <input type="number" step="0.1" value={bodyFat} onChange={(e) => setBodyFat(e.target.value)} placeholder="Body fat %" className="flex-1 rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand" />
+          <input type="number" step="0.1" value={weight} onChange={(e) => setWeight(e.target.value)} placeholder={t("Weight (kg)")} className="flex-1 rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand" />
+          <input type="number" step="0.1" value={bodyFat} onChange={(e) => setBodyFat(e.target.value)} placeholder={t("Body fat %")} className="flex-1 rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand" />
         </div>
-        <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Note (optional)" className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand" />
+        <input value={note} onChange={(e) => setNote(e.target.value)} placeholder={t("Note (optional)")} className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand" />
         {error && <p className="text-xs text-danger">{error}</p>}
         <button onClick={save} disabled={isPending} className="btn-primary-sm self-start disabled:opacity-60">
           {isPending ? "Saving…" : "+ Add entry"}
@@ -451,7 +456,7 @@ function ProgressTab({ memberId, logs, onChange }: { memberId: string; logs: Pro
       </div>
 
       {logs.length === 0 ? (
-        <EmptyState text="No progress logged yet." />
+        <EmptyState text={t("No progress logged yet.")} />
       ) : (
         <>
           {logs.some((l) => l.weightKg) && (

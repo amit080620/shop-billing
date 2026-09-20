@@ -80,7 +80,7 @@ export function SellMembershipClient({
       />
 
       <section className="flex flex-col gap-2">
-        <p className="text-sm font-medium text-foreground">Member</p>
+        <p className="text-sm font-medium text-foreground">{t("Member")}</p>
         <SearchableSelect
           lang={lang}
           items={members}
@@ -92,16 +92,16 @@ export function SellMembershipClient({
             setMemberName(m.name);
             setMemberPhone(m.phone);
           }}
-          placeholder="Search existing member, or just type below for a new one"
+          placeholder={t("Search existing member, or just type below for a new one")}
         />
         <div className="grid grid-cols-2 gap-3">
-          <input value={memberName} onChange={(e) => setMemberName(e.target.value)} placeholder="Name" className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-brand" />
+          <input value={memberName} onChange={(e) => setMemberName(e.target.value)} placeholder={t("Name")} className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-brand" />
           <PhoneInput value={memberPhone} onChange={setMemberPhone} />
         </div>
       </section>
 
       <section className="flex flex-col gap-2">
-        <p className="text-sm font-medium text-foreground">Plan</p>
+        <p className="text-sm font-medium text-foreground">{t("Plan")}</p>
         {plans.length === 0 ? (
           <p className="rounded-lg border border-dashed border-border px-4 py-4 text-center text-sm text-muted">
             No active plans —{" "}
@@ -138,7 +138,7 @@ export function SellMembershipClient({
 
       {selectedPlan && (
         <section className="flex flex-col gap-3 rounded-xl border border-border bg-surface p-4 shadow-sm">
-          <p className="text-sm font-medium text-foreground">Payment</p>
+          <p className="text-sm font-medium text-foreground">{t("Payment")}</p>
           <div className="grid grid-cols-2 gap-3">
             <select value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value as typeof paymentMethod)} className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-brand">
               <option value="cash">Cash</option>
@@ -154,7 +154,7 @@ export function SellMembershipClient({
               step="0.01"
               value={paidAmount}
               onChange={(e) => setPaidAmount(e.target.value === "" ? "" : Number(e.target.value))}
-              placeholder="Amount paid"
+              placeholder={t("Amount paid")}
               className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-brand"
             />
           </div>

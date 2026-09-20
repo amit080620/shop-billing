@@ -91,7 +91,7 @@ export function NewOrderClient({
       />
 
       <section className="flex flex-col gap-2">
-        <p className="text-sm font-medium text-foreground">Patient</p>
+        <p className="text-sm font-medium text-foreground">{t("Patient")}</p>
         <SearchableSelect
           lang={lang}
           items={patients}
@@ -103,24 +103,24 @@ export function NewOrderClient({
             setPatientName(p.name);
             setPatientPhone(p.phone);
           }}
-          placeholder="Search existing patient, or just type below for a new one"
+          placeholder={t("Search existing patient, or just type below for a new one")}
         />
         <div className="grid grid-cols-2 gap-2">
-          <input value={patientName} onChange={(e) => setPatientName(e.target.value)} placeholder="Name" className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-brand" />
+          <input value={patientName} onChange={(e) => setPatientName(e.target.value)} placeholder={t("Name")} className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-brand" />
           <PhoneInput value={patientPhone} onChange={setPatientPhone} />
           <input value={patientAge} onChange={(e) => setPatientAge(e.target.value)} placeholder="Age" className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-brand" />
           <select value={patientGender} onChange={(e) => setPatientGender(e.target.value)} className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-brand">
-            <option value="">Gender</option>
-            <option value="male">Male</option>
-            <option value="female">Female</option>
-            <option value="other">Other</option>
+            <option value="">{t("Gender")}</option>
+            <option value="male">{t("Male")}</option>
+            <option value="female">{t("Female")}</option>
+            <option value="other">{t("Other")}</option>
           </select>
         </div>
-        <input value={referringDoctorName} onChange={(e) => setReferringDoctorName(e.target.value)} placeholder="Referring doctor (optional)" className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-brand" />
+        <input value={referringDoctorName} onChange={(e) => setReferringDoctorName(e.target.value)} placeholder={t("Referring doctor (optional)")} className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-brand" />
       </section>
 
       <section className="flex flex-col gap-2">
-        <p className="text-sm font-medium text-foreground">Collection</p>
+        <p className="text-sm font-medium text-foreground">{t("Collection")}</p>
         <div className="flex gap-2">
           <button
             onClick={() => setCollectionType("walk_in")}
@@ -136,12 +136,12 @@ export function NewOrderClient({
           </button>
         </div>
         {collectionType === "home_collection" && (
-          <textarea value={homeAddress} onChange={(e) => setHomeAddress(e.target.value)} placeholder="Full address for sample collection" rows={2} className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-brand" />
+          <textarea value={homeAddress} onChange={(e) => setHomeAddress(e.target.value)} placeholder={t("Full address for sample collection")} rows={2} className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-brand" />
         )}
         <div className="grid grid-cols-2 gap-2">
-          <input value={collectionSlot} onChange={(e) => setCollectionSlot(e.target.value)} placeholder="Preferred time slot (e.g. 8-9 AM)" className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-brand" />
+          <input value={collectionSlot} onChange={(e) => setCollectionSlot(e.target.value)} placeholder={t("Preferred time slot (e.g. 8-9 AM)")} className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-brand" />
           <select value={phlebotomistId} onChange={(e) => setPhlebotomistId(e.target.value)} className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-brand">
-            <option value="">Assign staff (optional)</option>
+            <option value="">{t("Assign staff (optional)")}</option>
             {staff.map((s) => (
               <option key={s.id} value={s.id}>
                 {s.name}
@@ -153,8 +153,8 @@ export function NewOrderClient({
 
       {tests.length === 0 && packages.length === 0 && (
         <div className="flex flex-col items-start gap-2 rounded-xl border border-border bg-surface p-4">
-          <p className="text-sm font-semibold text-foreground">No tests set up yet</p>
-          <p className="text-xs text-muted">Add your test catalog — names, prices and reference ranges — and it shows up here for booking.</p>
+          <p className="text-sm font-semibold text-foreground">{t("No tests set up yet")}</p>
+          <p className="text-xs text-muted">{t("Add your test catalog — names, prices and reference ranges — and it shows up here for booking.")}</p>
           <Link href="/lab/tests" className="btn-primary-sm">
             Set up tests
           </Link>
@@ -163,7 +163,7 @@ export function NewOrderClient({
 
       {packages.length > 0 && (
       <section className="flex flex-col gap-2">
-        <p className="text-sm font-medium text-foreground">Packages</p>
+        <p className="text-sm font-medium text-foreground">{t("Packages")}</p>
         <div className="flex flex-col gap-1.5">
           {packages.map((p) => (
             <label key={p.id} className="flex items-center justify-between rounded-lg border border-border bg-surface px-3 py-2 text-sm">
@@ -180,7 +180,7 @@ export function NewOrderClient({
 
       {tests.length > 0 && (
       <section className="flex flex-col gap-2">
-        <p className="text-sm font-medium text-foreground">Individual tests</p>
+        <p className="text-sm font-medium text-foreground">{t("Individual tests")}</p>
         <div className="flex max-h-64 flex-col gap-1.5 overflow-y-auto">
           {tests.map((t) => (
             <label key={t.id} className="flex items-center justify-between rounded-lg border border-border bg-surface px-3 py-2 text-sm">
@@ -197,7 +197,7 @@ export function NewOrderClient({
 
       {total > 0 && (
         <div className="flex justify-between rounded-lg bg-brand-soft px-3.5 py-2.5 text-sm">
-          <span className="text-brand-text">Total</span>
+          <span className="text-brand-text">{t("order.total")}</span>
           <span className="font-semibold text-brand-text">{formatMoney(total)}</span>
         </div>
       )}

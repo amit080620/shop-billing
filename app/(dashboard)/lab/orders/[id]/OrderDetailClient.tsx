@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useT } from "@/lib/i18n/LangContext";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { updateLabOrderStatusAction, saveTestResultAction, billLabOrderAction } from "@/lib/actions/lab";
@@ -43,6 +44,7 @@ const FLAG_STYLE: Record<string, string> = {
 };
 
 export function OrderDetailClient({ order, items }: { order: Order; items: Item[] }) {
+  const { t } = useT();
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -124,10 +126,10 @@ export function OrderDetailClient({ order, items }: { order: Order; items: Item[
 
       {order.status !== "cancelled" && (
         <div className="flex flex-col gap-2 rounded-xl border border-border bg-surface p-3.5 shadow-sm">
-          <p className="text-sm font-medium text-foreground">Status: {STATUS_LABELS[order.status]}</p>
+          <p className="text-sm font-medium text-foreground">{t("Status")}: {t(STATUS_LABELS[order.status])}</p>
           {currentIndex >= 0 && currentIndex < STATUS_FLOW.length - 1 && (
             <button onClick={advanceStatus} disabled={isPending} className="btn-primary-sm self-start disabled:opacity-60">
-              {busy === "status" ? "Updating…" : `Mark as: ${STATUS_LABELS[STATUS_FLOW[currentIndex + 1]]} →`}
+              {busy === "status" ? t("Updating…") : t("Mark as: {status} →", { status: t(STATUS_LABELS[STATUS_FLOW[currentIndex + 1]]) })}
             </button>
           )}
         </div>
@@ -136,7 +138,7 @@ export function OrderDetailClient({ order, items }: { order: Order; items: Item[
       {error && <p className="text-sm text-danger">{error}</p>}
 
       <section className="flex flex-col gap-2">
-        <p className="text-sm font-medium text-foreground">Tests & results</p>
+        <p className="text-sm font-medium text-foreground">{t("Tests & results")}</p>
         <ul className="flex flex-col gap-2">
           {items.map((item) => (
             <li key={item.id} className="rounded-lg border border-border bg-surface p-3 shadow-sm">
@@ -153,7 +155,7 @@ export function OrderDetailClient({ order, items }: { order: Order; items: Item[
                 <input
                   value={results[item.id] ?? ""}
                   onChange={(e) => setResults((prev) => ({ ...prev, [item.id]: e.target.value }))}
-                  placeholder="Result"
+                  placeholder={t("Result")}
                   className="flex-1 rounded-lg border border-border bg-background px-2.5 py-1.5 text-sm outline-none focus:border-brand"
                 />
                 <button onClick={() => saveResult(item.id)} disabled={isPending} className="rounded-lg border border-brand px-2.5 py-1.5 text-xs font-medium text-brand-text disabled:opacity-60">
@@ -171,7 +173,7 @@ export function OrderDetailClient({ order, items }: { order: Order; items: Item[
       </section>
 
       <div className="flex justify-between rounded-lg bg-brand-soft px-3.5 py-2.5 text-sm">
-        <span className="text-brand-text">Total</span>
+        <span className="text-brand-text">{t("order.total")}</span>
         <span className="font-semibold text-brand-text">{formatMoney(total)}</span>
       </div>
 
@@ -202,18 +204,18 @@ export function OrderDetailClient({ order, items }: { order: Order; items: Item[
                   step="0.01"
                   value={paidAmount}
                   onChange={(e) => setPaidAmount(e.target.value === "" ? "" : Number(e.target.value))}
-                  placeholder="Amount paid"
+                  placeholder={t("Amount paid")}
                   className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-brand"
                 />
               </div>
               <button onClick={generateBill} disabled={isPending} className="btn-primary-sm disabled:opacity-60">
-                {busy === "bill" ? "Generating…" : "Confirm & generate invoice"}
+                {busy === "bill" ? t("Generating…") : t("Confirm & generate invoice")}
               </button>
             </div>
           )}
         </>
       ) : (
-        <p className="text-center text-xs text-muted">Mark the report as ready before generating the invoice.</p>
+        <p className="text-center text-xs text-muted">{t("Mark the report as ready before generating the invoice.")}</p>
       )}
     </div>
   );

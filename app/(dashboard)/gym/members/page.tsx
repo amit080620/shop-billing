@@ -101,9 +101,9 @@ export default async function GymMembersPage({
       </div>
 
       {showMineOnly && (!members || members.length === 0) ? (
-        <EmptyState text="No members assigned to you yet." />
+        <EmptyState text={t("No members assigned to you yet.")} />
       ) : (!members || members.length === 0) ? (
-        <EmptyState text="No members yet — sell your first membership to get started." />
+        <EmptyState text={t("No members yet — sell your first membership to get started.")} />
       ) : (
         <ul className="flex flex-col gap-2">
           {members.map((m) => {

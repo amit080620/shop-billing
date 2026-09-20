@@ -48,7 +48,7 @@ export default async function LabOrdersPage({
   return (
     <div className="flex flex-col gap-3">
       <PageHeader
-        title="Lab orders"
+        title={t("Lab orders")}
         action={
           <Link href="/lab/orders/new" className="btn-primary-sm">
             + Order
@@ -81,7 +81,7 @@ export default async function LabOrdersPage({
       </div>
 
       {(!orders || orders.length === 0) ? (
-        <EmptyState text="No orders here." />
+        <EmptyState text={t("No orders here.")} />
       ) : (
         <ul className="flex flex-col gap-2 md:grid md:grid-cols-2 md:gap-3">
           {orders.map((o) => (

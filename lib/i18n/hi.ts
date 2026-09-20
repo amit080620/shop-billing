@@ -146,7 +146,7 @@ const hi: Record<string, string> = {
 
   // Restaurant — Order screen
   "order.addItems": "Items जोड़ें",
-  "order.searchMenu": "Menu खोजें",
+  "order.searchMenu": "मेन्यू खोजें",
   "order.noItemsYet": "अभी कोई item नहीं — ऊपर खोजकर पहला जोड़ें।",
   "order.orderLabel": "ऑर्डर",
   "order.total": "कुल",
