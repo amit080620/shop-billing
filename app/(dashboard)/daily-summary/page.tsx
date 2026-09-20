@@ -7,6 +7,7 @@ import { Users, Receipt, Calculator } from "lucide-react";
 import { DatePicker } from "./DatePicker";
 import { todayIso } from "@/lib/dateHelpers";
 import { getTranslator } from "@/lib/i18n/server";
+import { BackLink } from "@/app/components/BackLink";
 
 const METHODS = ["cash", "card", "upi", "online", "other"] as const;
 type Method = (typeof METHODS)[number];
@@ -137,6 +138,7 @@ export default async function DailySummaryPage({
 
   return (
     <div className="flex flex-col gap-4">
+      <BackLink fallback="/dashboard" />
       <PageHeader
         title={t("Daily summary")}
         icon={<Calculator size={18} strokeWidth={1.8} />}

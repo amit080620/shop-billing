@@ -7,6 +7,7 @@ import { isModuleEnabled } from "@/lib/modules";
 import { ModuleBlocked } from "@/app/components/ModuleBlocked";
 import { AlertTriangle } from "lucide-react";
 import { getTranslator } from "@/lib/i18n/server";
+import { BackLink } from "@/app/components/BackLink";
 
 export default async function ErrorLogPage() {
   const { t } = await getTranslator();
@@ -23,6 +24,7 @@ export default async function ErrorLogPage() {
 
   return (
     <div className="flex flex-col gap-4">
+      <BackLink fallback="/dashboard" />
       <PageHeader
         title={t("Error log")}
         subtitle="Unexpected failures the app caught automatically — mostly useful if something needs investigating."

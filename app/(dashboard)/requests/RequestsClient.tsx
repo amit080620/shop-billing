@@ -21,6 +21,7 @@ import type { Lang } from "@/lib/i18n/dictionary";
 import { useTranslation } from "@/lib/i18n/useTranslation";
 import { ContactPickerButton } from "@/app/components/ContactPickerButton";
 import { PhoneInput } from "@/app/components/PhoneInput";
+import { BackLink } from "@/app/components/BackLink";
 
 type Customer = { id: string; name: string; phone: string };
 type Request = {
@@ -83,6 +84,7 @@ export function RequestsClient({
 
   return (
     <div className="flex flex-col gap-4">
+      <BackLink fallback="/dashboard" />
       <PageHeader
         title="Item requests"
         icon={<ClipboardList size={18} strokeWidth={1.8} />}

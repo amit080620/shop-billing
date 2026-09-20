@@ -6,6 +6,7 @@ import { EmptyState } from "@/app/components/EmptyState";
 import { ExportRegisterButton } from "./ExportRegisterButton";
 import { BookOpen } from "lucide-react";
 import { todayIso } from "@/lib/dateHelpers";
+import { BackLink } from "@/app/components/BackLink";
 
 function startOfMonthIso() {
   const d = new Date();
@@ -76,6 +77,7 @@ export default async function ScheduleXRegisterPage({
 
   return (
     <div className="flex flex-col gap-3">
+      <BackLink fallback="/pharmacy" />
       <PageHeader
         title={t("scheduleX.title")}
         subtitle={t("scheduleX.subtitle")}

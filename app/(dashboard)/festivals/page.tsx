@@ -9,6 +9,7 @@ import { FestivalNoteBox } from "./FestivalNoteBox";
 import { PartyPopper, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { getTranslator } from "@/lib/i18n/server";
+import { BackLink } from "@/app/components/BackLink";
 
 const TRENDABLE_WINDOW_DAYS = 45; // only bother checking last-year sales for festivals coming up reasonably soon
 
@@ -93,6 +94,7 @@ export default async function FestivalsPage() {
 
   return (
     <div className="flex flex-col gap-4">
+      <BackLink fallback="/dashboard" />
       <PageHeader
         title={t("Festival planner")}
         subtitle="Plan stock 15–20 days ahead of India's major festivals."

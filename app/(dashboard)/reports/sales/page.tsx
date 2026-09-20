@@ -8,6 +8,7 @@ import { DateRangeControls } from "@/app/components/DateRangeControls";
 import { BarChart3 } from "lucide-react";
 import { todayIso, isoDaysAgo } from "@/lib/dateHelpers";
 import { getTranslator } from "@/lib/i18n/server";
+import { BackLink } from "@/app/components/BackLink";
 
 export default async function SalesReportPage({
   searchParams,
@@ -39,6 +40,7 @@ export default async function SalesReportPage({
 
   return (
     <div className="flex flex-col gap-4">
+      <BackLink fallback="/reports" />
       <PageHeader title={t("Sales report")} subtitle="Every bill in the period, at a glance" icon={<BarChart3 size={18} strokeWidth={1.8} />} />
 
       <DateRangeControls from={fromDate} to={toDate} basePath="/reports/sales" />

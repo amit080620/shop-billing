@@ -35,6 +35,7 @@ import { ProductOptionsManager } from "./ProductOptionsManager";
 import { SearchableSelect } from "@/app/components/SearchableSelect";
 import { useTranslation } from "@/lib/i18n/useTranslation";
 import type { Lang } from "@/lib/i18n/dictionary";
+import { BackLink } from "@/app/components/BackLink";
 
 type Product = {
   id: string;
@@ -272,6 +273,7 @@ export function ProductsClient({
 
   return (
     <div className="flex flex-col gap-4">
+      <BackLink fallback="/dashboard" />
       <PageHeader
         title={t(terminology.productPlural)}
         icon={<Package size={17} strokeWidth={1.8} />}

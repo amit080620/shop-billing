@@ -13,6 +13,7 @@ import { getOcrCorrectionsAction, saveOcrCorrectionsAction } from "@/lib/actions
 import { applyCorrections } from "@/lib/applyCorrections";
 import { Camera, ScanLine, Trash2, Loader2, CheckCircle2, Image as ImageIcon, Sparkles } from "lucide-react";
 import { useT } from "@/lib/i18n/LangContext";
+import { BackLink } from "@/app/components/BackLink";
 
 type DraftItem = ScannedMenuItem & { id: string; include: boolean; matchedExistingName: string | null; rawScannedName: string };
 
@@ -275,6 +276,7 @@ export function MenuScanClient() {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
+        <BackLink fallback="/products" />
         <PageHeader icon={<ScanLine size={20} />} title="Scan a price list" subtitle="Camera or gallery — free, no extra cost" />
         <AIStatusBadge ref={aiStatusRef} />
       </div>

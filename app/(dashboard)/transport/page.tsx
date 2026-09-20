@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Truck, BarChart3 } from "lucide-react";
 import { PageHeader } from "@/app/components/PageHeader";
 import { getTranslator } from "@/lib/i18n/server";
+import { BackLink } from "@/app/components/BackLink";
 
 const LINKS = [
   { href: "/transport/vehicles", label: "Vehicles", sub: "Fleet & document expiry", icon: Truck },
@@ -12,6 +13,7 @@ export default async function TransportHubPage() {
   const { t } = await getTranslator();
   return (
     <div className="flex flex-col gap-3">
+      <BackLink fallback="/dashboard" />
       <PageHeader title={t("Transport")} icon={<Truck size={18} strokeWidth={1.8} />} />
       <div className="flex flex-col gap-2">
         {LINKS.map((l) => (

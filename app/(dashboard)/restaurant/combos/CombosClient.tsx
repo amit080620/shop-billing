@@ -13,6 +13,7 @@ import { SearchableSelect } from "@/app/components/SearchableSelect";
 import { useTranslation } from "@/lib/i18n/useTranslation";
 import type { Lang } from "@/lib/i18n/dictionary";
 import { Layers } from "lucide-react";
+import { BackLink } from "@/app/components/BackLink";
 
 type Product = { id: string; name: string; price: number };
 type Combo = { id: string; name: string; price: number; gstPercent: number; isActive: boolean; items: { name: string; quantity: number }[] };
@@ -100,6 +101,7 @@ export function CombosClient({ products, combos, lang }: { products: Product[]; 
 
   return (
     <div className="flex flex-col gap-3">
+      <BackLink fallback="/restaurant" />
       <PageHeader
         title={t("combos.title")}
         subtitle={t("combos.subtitle")}

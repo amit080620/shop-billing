@@ -4,6 +4,7 @@ import { getTranslator } from "@/lib/i18n/server";
 import { PageHeader } from "@/app/components/PageHeader";
 import { EmptyState } from "@/app/components/EmptyState";
 import { FileMinus } from "lucide-react";
+import { BackLink } from "@/app/components/BackLink";
 
 export default async function WriteOffsPage() {
   const session = await requireSession();
@@ -30,6 +31,7 @@ export default async function WriteOffsPage() {
 
   return (
     <div className="flex flex-col gap-3">
+      <BackLink fallback="/pharmacy" />
       <PageHeader
         title={t("writeoffs.title")}
         subtitle={t("writeoffs.subtitle")}

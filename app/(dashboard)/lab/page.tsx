@@ -2,6 +2,7 @@ import Link from "next/link";
 import { FlaskConical, ClipboardList, ListChecks } from "lucide-react";
 import { PageHeader } from "@/app/components/PageHeader";
 import { getTranslator } from "@/lib/i18n/server";
+import { BackLink } from "@/app/components/BackLink";
 
 const LINKS = [
   { href: "/lab/orders", label: "Orders", sub: "Test orders & results", icon: ClipboardList },
@@ -13,6 +14,7 @@ export default async function LabHubPage() {
   const { t } = await getTranslator();
   return (
     <div className="flex flex-col gap-3">
+      <BackLink fallback="/dashboard" />
       <PageHeader title={t("Lab")} icon={<FlaskConical size={18} strokeWidth={1.8} />} />
       <div className="flex flex-col gap-2">
         {LINKS.map((l) => (

@@ -1,9 +1,11 @@
 import { PageHeader } from "@/app/components/PageHeader";
 import { Printer } from "lucide-react";
+import { BackLink } from "@/app/components/BackLink";
 
 export default function FastPrintSetupPage() {
   return (
     <div className="flex flex-col gap-4">
+      <BackLink fallback="/dashboard" />
       <PageHeader icon={<Printer size={18} strokeWidth={1.8} />} title="One-click printing" subtitle="Print from a laptop or desktop without the print dialog. Set it up once." />
 
       <div className="neu-card flex flex-col gap-2 p-4">

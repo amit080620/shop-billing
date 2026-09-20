@@ -5,6 +5,7 @@ import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { PageHeader } from "@/app/components/PageHeader";
 import { EmptyState } from "@/app/components/EmptyState";
 import { Wrench } from "lucide-react";
+import { BackLink } from "@/app/components/BackLink";
 
 const STATUS_LABELS: Record<string, string> = {
   received: "Received",
@@ -50,6 +51,7 @@ export default async function ServiceJobsPage({
 
   return (
     <div className="flex flex-col gap-4">
+      <BackLink fallback="/dashboard" />
       <PageHeader
         title={t("Jobs")}
         action={

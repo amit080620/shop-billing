@@ -7,6 +7,7 @@ import { EmptyState } from "@/app/components/EmptyState";
 import { AlertTriangle } from "lucide-react";
 import { AgingRow } from "./AgingRow";
 import { getTranslator } from "@/lib/i18n/server";
+import { BackLink } from "@/app/components/BackLink";
 
 export default async function CreditAgingPage() {
   const { t } = await getTranslator();
@@ -87,6 +88,7 @@ export default async function CreditAgingPage() {
 
   return (
     <div className="flex flex-col gap-4">
+      <BackLink fallback="/reports" />
       <PageHeader
         title={t("Udhaar aging")}
         subtitle={t("Who's owed the longest — chase the oldest first")}

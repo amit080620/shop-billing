@@ -5,6 +5,7 @@ import { EmptyState } from "@/app/components/EmptyState";
 import { UserX } from "lucide-react";
 import { WinBackRow } from "./WinBackRow";
 import { getTranslator } from "@/lib/i18n/server";
+import { BackLink } from "@/app/components/BackLink";
 
 export default async function WinBackPage() {
   const { t } = await getTranslator();
@@ -69,6 +70,7 @@ export default async function WinBackPage() {
 
   return (
     <div className="flex flex-col gap-4">
+      <BackLink fallback="/reports" />
       <PageHeader
         title={t("Win them back")}
         subtitle={t("Regulars who've gone quiet — worth a nudge")}

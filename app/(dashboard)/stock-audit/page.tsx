@@ -8,6 +8,7 @@ import { StartAuditButton } from "./StartAuditButton";
 import { isModuleEnabled } from "@/lib/modules";
 import { ModuleBlocked } from "@/app/components/ModuleBlocked";
 import { getTranslator } from "@/lib/i18n/server";
+import { BackLink } from "@/app/components/BackLink";
 
 export default async function StockAuditListPage() {
   const { t } = await getTranslator();
@@ -24,6 +25,7 @@ export default async function StockAuditListPage() {
 
   return (
     <div className="flex flex-col gap-4">
+      <BackLink fallback="/dashboard" />
       <PageHeader
         title={t("Stock audit")}
         subtitle="Count what's actually on the shelf, reconcile against the system."

@@ -9,6 +9,7 @@ import { AddBatchForm } from "./AddBatchForm";
 import { DeleteBatchButton } from "./DeleteBatchButton";
 import { WriteOffButton } from "./WriteOffButton";
 import { Package } from "lucide-react";
+import { BackLink } from "@/app/components/BackLink";
 
 function daysUntil(dateStr: string) {
   return Math.round((new Date(dateStr).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
@@ -45,6 +46,7 @@ export default async function BatchesPage({
         {t("batches.backToInventory")}
       </Link>
 
+      <BackLink fallback="/pharmacy" />
       <PageHeader
         title={product.name}
         subtitle={t("batches.totalAcross", { qty: Number(product.stock_quantity), unit: product.unit })}

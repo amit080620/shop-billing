@@ -4,6 +4,7 @@ import { PageHeader } from "@/app/components/PageHeader";
 import { Gift } from "lucide-react";
 import { LoyaltySettingsClient } from "./LoyaltySettingsClient";
 import { getTranslator } from "@/lib/i18n/server";
+import { BackLink } from "@/app/components/BackLink";
 
 export default async function LoyaltySettingsPage() {
   const { t } = await getTranslator();
@@ -18,6 +19,7 @@ export default async function LoyaltySettingsPage() {
 
   return (
     <div className="flex flex-col gap-4">
+      <BackLink fallback="/dashboard" />
       <PageHeader title={t("Loyalty program")} subtitle={t("Reward regulars for coming back")} icon={<Gift size={18} strokeWidth={1.8} />} />
       <LoyaltySettingsClient
         pointsPer100={Number(shop?.loyalty_points_per_100 ?? 0)}

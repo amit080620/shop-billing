@@ -16,6 +16,7 @@ import { PhoneInput } from "@/app/components/PhoneInput";
 import { INDIAN_STATES } from "@/lib/constants/states";
 import { Building2 } from "lucide-react";
 import { useT } from "@/lib/i18n/LangContext";
+import { BackLink } from "@/app/components/BackLink";
 
 type Vendor = { id: string; name: string; phone: string | null; gstin: string | null; balance: number };
 
@@ -62,6 +63,7 @@ export function VendorsClient({ initialVendors }: { initialVendors: Vendor[] }) 
 
   return (
     <div className="flex flex-col gap-3">
+      <BackLink fallback="/dashboard" />
       <PageHeader
         title="Vendors"
         icon={<Building2 size={18} strokeWidth={1.8} />}

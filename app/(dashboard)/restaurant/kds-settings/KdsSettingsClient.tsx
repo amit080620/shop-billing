@@ -7,6 +7,7 @@ import { saveKdsSettingsAction } from "@/lib/actions/restaurant";
 import { PageHeader } from "@/app/components/PageHeader";
 import { Monitor, Check } from "lucide-react";
 import { useT } from "@/lib/i18n/LangContext";
+import { BackLink } from "@/app/components/BackLink";
 
 export function KdsSettingsClient({ columns: initialColumns, fontScale: initialFontScale }: { columns: number; fontScale: "normal" | "large" | "extra_large" }) {
   const { t } = useT();
@@ -32,6 +33,7 @@ export function KdsSettingsClient({ columns: initialColumns, fontScale: initialF
 
   return (
     <div className="flex flex-col gap-3">
+      <BackLink fallback="/restaurant" />
       <PageHeader
         title={t("Kitchen display settings")}
         subtitle="How tickets show on the KDS TV/screen — bigger, bolder text helps if it's mounted far from the line."

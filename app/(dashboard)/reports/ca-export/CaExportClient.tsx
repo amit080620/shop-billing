@@ -5,6 +5,7 @@ import { PageHeader } from "@/app/components/PageHeader";
 import { exportReportAction } from "@/lib/actions/export";
 import { Download, FileArchive } from "lucide-react";
 import { useT } from "@/lib/i18n/LangContext";
+import { BackLink } from "@/app/components/BackLink";
 
 function currentFinancialYearRange() {
   const now = new Date();
@@ -66,6 +67,7 @@ export function CaExportClient() {
 
   return (
     <div className="flex flex-col gap-4">
+      <BackLink fallback="/reports" />
       <PageHeader icon={<FileArchive size={20} />} title={t("CA export pack")} subtitle="Everything your accountant needs, in two files" />
 
       <div className="neu-card flex flex-col gap-2 p-4">

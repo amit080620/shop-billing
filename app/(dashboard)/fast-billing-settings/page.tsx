@@ -4,6 +4,7 @@ import { PageHeader } from "@/app/components/PageHeader";
 import { Zap } from "lucide-react";
 import { FastBillingSettingsClient } from "./FastBillingSettingsClient";
 import { getTranslator } from "@/lib/i18n/server";
+import { BackLink } from "@/app/components/BackLink";
 
 export default async function FastBillingSettingsPage() {
   const { t } = await getTranslator();
@@ -20,6 +21,7 @@ export default async function FastBillingSettingsPage() {
 
   return (
     <div className="flex flex-col gap-4">
+      <BackLink fallback="/dashboard" />
       <PageHeader title={t("Fast billing")} subtitle="A quick tap-to-add counter for busy hours" icon={<Zap size={18} strokeWidth={1.8} />} />
       <FastBillingSettingsClient enabled={shop?.fast_billing_enabled ?? false} productCount={fastBillingProductCount ?? 0} />
     </div>

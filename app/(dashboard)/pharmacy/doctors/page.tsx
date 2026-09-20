@@ -5,6 +5,7 @@ import { getTranslator } from "@/lib/i18n/server";
 import { PageHeader } from "@/app/components/PageHeader";
 import { EmptyState } from "@/app/components/EmptyState";
 import { Stethoscope } from "lucide-react";
+import { BackLink } from "@/app/components/BackLink";
 
 export default async function DoctorsReportPage() {
   const session = await requireSession();
@@ -33,6 +34,7 @@ export default async function DoctorsReportPage() {
 
   return (
     <div className="flex flex-col gap-3">
+      <BackLink fallback="/pharmacy" />
       <PageHeader
         title={t("doctors.title")}
         subtitle={t("doctors.subtitle")}

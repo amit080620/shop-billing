@@ -7,6 +7,7 @@ import { TrendingUp } from "lucide-react";
 import { DateRangeControls } from "@/app/components/DateRangeControls";
 import { todayIso, isoDaysAgo } from "@/lib/dateHelpers";
 import { getTranslator } from "@/lib/i18n/server";
+import { BackLink } from "@/app/components/BackLink";
 
 export default async function ProfitPage({
   searchParams,
@@ -131,6 +132,7 @@ export default async function ProfitPage({
 
   return (
     <div className="flex flex-col gap-4">
+      <BackLink fallback="/reports" />
       <PageHeader
         title={t("Profit")}
         subtitle="What you actually earned — sales minus what the stock cost you"

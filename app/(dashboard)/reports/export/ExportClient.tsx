@@ -6,6 +6,7 @@ import { exportReportAction, type ExportDataType } from "@/lib/actions/export";
 import { Download, FileSpreadsheet, FileText } from "lucide-react";
 import { todayIso, isoDaysAgo, isoMonthsAgo } from "@/lib/dateHelpers";
 import { useT } from "@/lib/i18n/LangContext";
+import { BackLink } from "@/app/components/BackLink";
 
 const DATA_TYPES: { value: ExportDataType; label: string; onlyFor?: string }[] = [
   { value: "bills", label: "Sales / Bills" },
@@ -118,6 +119,7 @@ export function ExportClient({ businessType }: { businessType: string }) {
 
   return (
     <div className="flex flex-col gap-4">
+      <BackLink fallback="/reports" />
       <PageHeader icon={<FileSpreadsheet size={20} />} title={t("Export data")} subtitle="Download any report as an Excel-ready file" />
 
       <div className="neu-card flex flex-col gap-3 p-4">

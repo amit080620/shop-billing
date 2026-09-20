@@ -1,10 +1,12 @@
 import { PageHeader } from "@/app/components/PageHeader";
 import { Database } from "lucide-react";
 import { RedisStatusClient } from "./RedisStatusClient";
+import { BackLink } from "@/app/components/BackLink";
 
 export default function RedisStatusPage() {
   return (
     <div className="flex flex-col gap-4">
+      <BackLink fallback="/dashboard" />
       <PageHeader icon={<Database size={18} strokeWidth={1.8} />} title="Redis Connection Test" subtitle="Check that Upstash is connected" />
       <RedisStatusClient />
     </div>

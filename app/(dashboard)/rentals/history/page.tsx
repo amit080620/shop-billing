@@ -6,6 +6,7 @@ import { getTranslator } from "@/lib/i18n/server";
 import { PageHeader } from "@/app/components/PageHeader";
 import { EmptyState } from "@/app/components/EmptyState";
 import { History } from "lucide-react";
+import { BackLink } from "@/app/components/BackLink";
 
 export default async function RentalHistoryPage() {
   const session = await requireSession();
@@ -22,6 +23,7 @@ export default async function RentalHistoryPage() {
 
   return (
     <div className="flex flex-col gap-3">
+      <BackLink fallback="/rentals" />
       <PageHeader
         title={t("rentalsPage.historyTitle")}
         icon={<History size={18} strokeWidth={1.8} />}

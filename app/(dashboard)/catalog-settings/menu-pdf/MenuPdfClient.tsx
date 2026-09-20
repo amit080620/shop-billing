@@ -5,6 +5,7 @@ import { PageHeader } from "@/app/components/PageHeader";
 import { getMenuForPdfAction } from "@/lib/actions/menu-pdf";
 import { FileText, Download } from "lucide-react";
 import { useT } from "@/lib/i18n/LangContext";
+import { BackLink } from "@/app/components/BackLink";
 
 export function MenuPdfClient() {
   const { t } = useT();
@@ -100,6 +101,7 @@ export function MenuPdfClient() {
 
   return (
     <div className="flex flex-col gap-4">
+      <BackLink fallback="/dashboard" />
       <PageHeader icon={<FileText size={20} />} title={t("Menu PDF")} subtitle="A shareable menu with clickable items that link to online ordering" />
 
       <div className="neu-card flex flex-col gap-2 p-4">

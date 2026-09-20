@@ -7,6 +7,7 @@ import { useTranslation } from "@/lib/i18n/useTranslation";
 import type { Lang } from "@/lib/i18n/dictionary";
 import { Tag } from "lucide-react";
 import { buildWhatsAppLink } from "@/lib/whatsapp";
+import { BackLink } from "@/app/components/BackLink";
 
 type Customer = { id: string; name: string; phone: string };
 
@@ -65,6 +66,7 @@ export function OffersClient({
 
   return (
     <div className="flex flex-col gap-4">
+      <BackLink fallback="/dashboard" />
       <PageHeader
         title={t("Send an offer")}
         subtitle="Write it once, select who to send it to (or Select all), then work through them — WhatsApp only lets a real person hit Send, so this can't be fully automatic."

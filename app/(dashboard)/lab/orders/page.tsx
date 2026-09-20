@@ -6,6 +6,7 @@ import { EmptyState } from "@/app/components/EmptyState";
 import { formatDateTime } from "@/lib/format";
 import { FlaskConical, ClipboardList } from "lucide-react";
 import { getTranslator } from "@/lib/i18n/server";
+import { BackLink } from "@/app/components/BackLink";
 
 const STATUS_LABELS: Record<string, string> = {
   booked: "Booked",
@@ -47,6 +48,7 @@ export default async function LabOrdersPage({
 
   return (
     <div className="flex flex-col gap-3">
+      <BackLink fallback="/lab" />
       <PageHeader
         title={t("Lab orders")}
         action={

@@ -8,6 +8,7 @@ import { EmptyState } from "@/app/components/EmptyState";
 import { DateRangeControls } from "./DateRangeControls";
 import { BarChart3 } from "lucide-react";
 import { todayIso } from "@/lib/dateHelpers";
+import { BackLink } from "@/app/components/BackLink";
 
 export default async function RestaurantReportsPage({
   searchParams,
@@ -47,6 +48,7 @@ export default async function RestaurantReportsPage({
 
   return (
     <div className="flex flex-col gap-3">
+      <BackLink fallback="/restaurant" />
       <PageHeader
         title={t("rreports.title")}
         icon={<BarChart3 size={18} strokeWidth={1.8} />}

@@ -15,6 +15,7 @@ import { PageHeader } from "@/app/components/PageHeader";
 import { Camera, X, Wallet} from "lucide-react";
 import { ScanBillModal } from "./ScanBillModal";
 import { useT } from "@/lib/i18n/LangContext";
+import { BackLink } from "@/app/components/BackLink";
 
 type Entry = { id: string; description: string; amount: number; category: string | null; expenseType: "business" | "owner"; createdAt: string };
 
@@ -76,6 +77,7 @@ export function PettyCashClient({ entries }: { entries: Entry[] }) {
 
   return (
     <div className="flex flex-col gap-3">
+      <BackLink fallback="/dashboard" />
       <PageHeader
         title="Expense"
         action={

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Calendar, FileText, ClipboardList, Pill, Settings, CalendarClock } from "lucide-react";
 import { PageHeader } from "@/app/components/PageHeader";
 import { getTranslator } from "@/lib/i18n/server";
+import { BackLink } from "@/app/components/BackLink";
 
 const LINKS = [
   { href: "/clinic/appointments", label: "Appointments", sub: "Book & manage patient visits", icon: Calendar },
@@ -16,6 +17,7 @@ export default async function ClinicHubPage() {
   const { t } = await getTranslator();
   return (
     <div className="flex flex-col gap-3">
+      <BackLink fallback="/dashboard" />
       <PageHeader title={t("Clinic")} icon={<Calendar size={18} strokeWidth={1.8} />} />
 
       <div className="flex flex-col gap-2">

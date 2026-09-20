@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Pill, Stethoscope, ShieldCheck, AlertTriangle, PackageMinus } from "lucide-react";
 import { PageHeader } from "@/app/components/PageHeader";
 import { getTranslator } from "@/lib/i18n/server";
+import { BackLink } from "@/app/components/BackLink";
 
 const LINKS = [
   { href: "/pharmacy/expiry", label: "Medicine expiry", sub: "Batches expiring soon", icon: AlertTriangle },
@@ -14,6 +15,7 @@ export default async function PharmacyHubPage() {
   const { t } = await getTranslator();
   return (
     <div className="flex flex-col gap-3">
+      <BackLink fallback="/dashboard" />
       <PageHeader title={t("Pharmacy")} icon={<Pill size={18} strokeWidth={1.8} />} />
       <div className="flex flex-col gap-2">
         {LINKS.map((l) => (

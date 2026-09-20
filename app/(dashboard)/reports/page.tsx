@@ -33,6 +33,7 @@ import { requireSession } from "@/lib/auth";
 import { PageHeader } from "@/app/components/PageHeader";
 import { isModuleEnabled } from "@/lib/modules";
 import { getTranslator } from "@/lib/i18n/server";
+import { BackLink } from "@/app/components/BackLink";
 
 export default async function ReportsPage() {
   const session = await requireSession();
@@ -40,6 +41,7 @@ export default async function ReportsPage() {
 
   return (
     <div className="flex flex-col gap-3">
+      <BackLink fallback="/dashboard" />
       <PageHeader
         title={t("Reports")}
          

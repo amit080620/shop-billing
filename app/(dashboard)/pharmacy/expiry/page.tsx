@@ -6,6 +6,7 @@ import { PageHeader } from "@/app/components/PageHeader";
 import { EmptyState } from "@/app/components/EmptyState";
 import { ShareExpiryWhatsApp } from "./ShareExpiryWhatsApp";
 import { AlertCircle } from "lucide-react";
+import { BackLink } from "@/app/components/BackLink";
 
 function daysUntil(dateStr: string) {
   return Math.round((new Date(dateStr).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
@@ -33,6 +34,7 @@ export default async function ExpiryAlertsPage() {
 
   return (
     <div className="flex flex-col gap-3">
+      <BackLink fallback="/pharmacy" />
       <PageHeader
         title={t("expiry.title")}
         subtitle={t("expiry.subtitle")}

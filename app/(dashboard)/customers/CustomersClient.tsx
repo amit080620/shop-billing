@@ -18,6 +18,7 @@ import { Popup } from "@/app/components/Popup";
 import { ContactPickerButton } from "@/app/components/ContactPickerButton";
 import { INDIAN_STATES } from "@/lib/constants/states";
 import { BulkImportExportCustomers } from "./BulkImportExportCustomers";
+import { BackLink } from "@/app/components/BackLink";
 
 type Customer = {
   id: string;
@@ -111,6 +112,7 @@ export function CustomersClient({
 
   return (
     <div className="flex flex-col gap-4">
+      <BackLink fallback="/dashboard" />
       <PageHeader
         title={t(isClinic ? "Patients" : isGym ? "Members" : "Customers")}
          

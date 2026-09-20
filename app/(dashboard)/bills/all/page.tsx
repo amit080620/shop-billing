@@ -8,6 +8,7 @@ import { Receipt, Search } from "lucide-react";
 import Link from "next/link";
 import { todayIso } from "@/lib/dateHelpers";
 import { getTranslator } from "@/lib/i18n/server";
+import { BackLink } from "@/app/components/BackLink";
 
 export default async function AllBillsPage({
   searchParams,
@@ -41,6 +42,7 @@ export default async function AllBillsPage({
 
   return (
     <div className="flex flex-col gap-4">
+      <BackLink fallback="/bills" />
       <PageHeader icon={<Receipt size={20} />} title={t("bills.title")} subtitle={t("bills.subtitle")} />
 
       <DateRangeControls from={from} to={to} basePath="/bills/all" />

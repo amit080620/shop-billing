@@ -5,6 +5,7 @@ import { PageHeader } from "@/app/components/PageHeader";
 import { HelpAccordion } from "./HelpAccordion";
 import { WatchTourButton } from "./WatchTourButton";
 import { HelpCircle } from "lucide-react";
+import { BackLink } from "@/app/components/BackLink";
 
 export default async function HelpPage() {
   const session = await requireSession();
@@ -13,6 +14,7 @@ export default async function HelpPage() {
 
   return (
     <div className="flex flex-col gap-4">
+      <BackLink fallback="/dashboard" />
       <PageHeader
         title={t("help.title")}
         subtitle={t("help.subtitle")}

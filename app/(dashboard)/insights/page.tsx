@@ -9,6 +9,7 @@ import { TrendingUp, Flame, TrendingDown } from "lucide-react";
 import { DateRangeControls } from "@/app/components/DateRangeControls";
 import { todayIso, isoDaysAgo } from "@/lib/dateHelpers";
 import { getTranslator } from "@/lib/i18n/server";
+import { BackLink } from "@/app/components/BackLink";
 
 export default async function InsightsPage({
   searchParams,
@@ -209,6 +210,7 @@ export default async function InsightsPage({
 
   return (
     <div className="flex flex-col gap-4">
+      <BackLink fallback="/dashboard" />
       <PageHeader
         title={t("Inventory insights")}
         subtitle="Based on your own sales data — no external AI involved."

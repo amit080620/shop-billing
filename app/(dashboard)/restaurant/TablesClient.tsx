@@ -18,6 +18,7 @@ import { useToast } from "@/app/components/Toast";
 import { EmptyState } from "@/app/components/EmptyState";
 import { useTranslation } from "@/lib/i18n/useTranslation";
 import type { Lang } from "@/lib/i18n/dictionary";
+import { BackLink } from "@/app/components/BackLink";
 
 type Table = {
   id: string;
@@ -327,6 +328,7 @@ export function TablesClient({ tables, lang }: { tables: Table[]; lang: Lang }) 
 
   return (
     <div className="flex flex-col gap-3">
+      <BackLink fallback="/dashboard" />
       <PageHeader
         title={t("tables.title")}
         action={

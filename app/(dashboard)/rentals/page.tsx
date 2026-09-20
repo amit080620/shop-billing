@@ -7,6 +7,7 @@ import { PageHeader } from "@/app/components/PageHeader";
 import { EmptyState } from "@/app/components/EmptyState";
 import { MarkActiveButton } from "./MarkActiveButton";
 import { Repeat, Calendar } from "lucide-react";
+import { BackLink } from "@/app/components/BackLink";
 
 export default async function RentalsPage() {
   const session = await requireSession();
@@ -28,6 +29,7 @@ export default async function RentalsPage() {
 
   return (
     <div className="flex flex-col gap-3">
+      <BackLink fallback="/dashboard" />
       <PageHeader
         title={t("rentalsPage.title")}
         action={

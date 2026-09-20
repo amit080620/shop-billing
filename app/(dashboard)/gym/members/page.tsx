@@ -6,6 +6,7 @@ import { PageHeader } from "@/app/components/PageHeader";
 import { EmptyState } from "@/app/components/EmptyState";
 import { MemberRow } from "./MemberRow";
 import { Users, User, ClipboardList, CheckCircle2, Filter } from "lucide-react";
+import { BackLink } from "@/app/components/BackLink";
 
 type MembershipRow = {
   id: string;
@@ -55,6 +56,7 @@ export default async function GymMembersPage({
 
   return (
     <div className="flex flex-col gap-3">
+      <BackLink fallback="/gym" />
       <PageHeader
         title={t("Members")}
         action={

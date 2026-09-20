@@ -7,6 +7,7 @@ import { Wrench } from "lucide-react";
 import { DateRangeControls } from "@/app/components/DateRangeControls";
 import { todayIso, isoDaysAgo } from "@/lib/dateHelpers";
 import { getTranslator } from "@/lib/i18n/server";
+import { BackLink } from "@/app/components/BackLink";
 
 const STATUS_LABELS: Record<string, string> = {
   received: "Received",
@@ -66,6 +67,7 @@ export default async function ServiceReportsPage({
 
   return (
     <div className="flex flex-col gap-4">
+      <BackLink fallback="/service" />
       <PageHeader
         title={t("Job report")}
         subtitle="Repairs taken in, completed and earned over a period"

@@ -9,6 +9,7 @@ import { PageHeader } from "@/app/components/PageHeader";
 import { buildWhatsAppLink as buildWaLink } from "@/lib/whatsapp";
 import { useTranslation } from "@/lib/i18n/useTranslation";
 import type { Lang } from "@/lib/i18n/dictionary";
+import { BackLink } from "@/app/components/BackLink";
 
 type Customer = { id: string; name: string; phone: string; balance: number; daysPending: number };
 
@@ -48,6 +49,7 @@ export function RemindersClient({
 
   return (
     <div className="flex flex-col gap-4">
+      <BackLink fallback="/dashboard" />
       <PageHeader
         title={t("Udhaar reminders")}
         subtitle="Select customers (or Select all), then work through the list — you still hit Send in WhatsApp yourself for each one."

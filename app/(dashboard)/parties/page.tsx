@@ -8,6 +8,7 @@ import { PageHeader } from "@/app/components/PageHeader";
 import { Users } from "lucide-react";
 import Link from "next/link";
 import { getTranslator } from "@/lib/i18n/server";
+import { BackLink } from "@/app/components/BackLink";
 
 const PAGE_SIZE = 50;
 
@@ -110,6 +111,7 @@ export default async function PartiesPage({
 
   return (
     <div className="flex flex-col gap-3">
+      <BackLink fallback="/dashboard" />
       <PageHeader title={t("Parties")} icon={<Users size={18} strokeWidth={1.8} />} />
 
       {/* Top-level context switch — Customers vs Suppliers, genuinely

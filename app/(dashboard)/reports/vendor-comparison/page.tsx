@@ -5,6 +5,7 @@ import { PageHeader } from "@/app/components/PageHeader";
 import { EmptyState } from "@/app/components/EmptyState";
 import { GitCompareArrows } from "lucide-react";
 import { getTranslator } from "@/lib/i18n/server";
+import { BackLink } from "@/app/components/BackLink";
 
 export default async function VendorComparisonPage() {
   const { t } = await getTranslator();
@@ -62,6 +63,7 @@ export default async function VendorComparisonPage() {
 
   return (
     <div className="flex flex-col gap-4">
+      <BackLink fallback="/reports" />
       <PageHeader
         title={t("Vendor price comparison")}
         subtitle="Same item, different vendors — who's actually cheapest"

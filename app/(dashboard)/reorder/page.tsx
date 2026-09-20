@@ -6,6 +6,7 @@ import { EmptyState } from "@/app/components/EmptyState";
 import { PackagePlus } from "lucide-react";
 import { ReorderClient } from "./ReorderClient";
 import { getTranslator } from "@/lib/i18n/server";
+import { BackLink } from "@/app/components/BackLink";
 
 export default async function ReorderPage() {
   const { t } = await getTranslator();
@@ -19,6 +20,7 @@ export default async function ReorderPage() {
 
   return (
     <div className="flex flex-col gap-4">
+      <BackLink fallback="/dashboard" />
       <PageHeader
         title={t("Reorder stock")}
         subtitle="What's running low — send it to a vendor, or start a purchase directly"

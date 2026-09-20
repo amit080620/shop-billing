@@ -12,6 +12,7 @@ import { EmptyState } from "@/app/components/EmptyState";
 import { useTranslation } from "@/lib/i18n/useTranslation";
 import type { Lang } from "@/lib/i18n/dictionary";
 import { Truck } from "lucide-react";
+import { BackLink } from "@/app/components/BackLink";
 
 type Vehicle = {
   id: string;
@@ -61,6 +62,7 @@ export function VehiclesClient({ vehicles, lang }: { vehicles: Vehicle[]; lang: 
 
   return (
     <div className="flex flex-col gap-3">
+      <BackLink fallback="/transport" />
       <PageHeader
         title={t("vehicles.title")}
         subtitle={t("vehicles.subtitle")}

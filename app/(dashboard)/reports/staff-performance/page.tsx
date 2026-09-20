@@ -7,6 +7,7 @@ import { Users } from "lucide-react";
 import { DateRangeControls } from "@/app/components/DateRangeControls";
 import { todayIso, isoDaysAgo } from "@/lib/dateHelpers";
 import { getTranslator } from "@/lib/i18n/server";
+import { BackLink } from "@/app/components/BackLink";
 
 export default async function StaffPerformancePage({
   searchParams,
@@ -64,6 +65,7 @@ export default async function StaffPerformancePage({
 
   return (
     <div className="flex flex-col gap-4">
+      <BackLink fallback="/reports" />
       <PageHeader title={t("Staff performance")} subtitle={t("Who's selling, who's collecting")} icon={<Users size={18} strokeWidth={1.8} />} />
 
       <DateRangeControls from={fromDate} to={toDate} basePath="/reports/staff-performance" />

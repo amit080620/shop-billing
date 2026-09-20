@@ -7,6 +7,7 @@ import { PageHeader } from "@/app/components/PageHeader";
 import { EmptyState } from "@/app/components/EmptyState";
 import { ShoppingCart, Wallet, Plus, ArrowRight, RefreshCw } from "lucide-react";
 import { useT } from "@/lib/i18n/LangContext";
+import { BackLink } from "@/app/components/BackLink";
 
 type Purchase = { id: string; vendorName: string; purchaseDate: string; billNumber: string; total: number; paidAmount: number; outstanding: number; paymentMethod: string };
 type Payment = { id: string; vendorName: string; amount: number; paymentMethod: string; note: string | null; createdAt: string };
@@ -23,6 +24,7 @@ export function PurchaseHubClient({ purchases, payments }: { purchases: Purchase
 
   return (
     <div className="flex flex-col gap-4">
+      <BackLink fallback="/dashboard" />
       <PageHeader title={t("Purchase")} icon={<ShoppingCart size={18} strokeWidth={1.8} />} />
 
       <div className="flex gap-2">

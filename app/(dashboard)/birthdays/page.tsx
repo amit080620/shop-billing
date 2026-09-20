@@ -5,6 +5,7 @@ import { EmptyState } from "@/app/components/EmptyState";
 import { Cake } from "lucide-react";
 import { BirthdayRow } from "./BirthdayRow";
 import { getTranslator } from "@/lib/i18n/server";
+import { BackLink } from "@/app/components/BackLink";
 
 export default async function BirthdaysPage() {
   const { t } = await getTranslator();
@@ -55,6 +56,7 @@ export default async function BirthdaysPage() {
 
   return (
     <div className="flex flex-col gap-4">
+      <BackLink fallback="/dashboard" />
       <PageHeader
         title={t("Birthdays")}
         subtitle="A quick greeting is the cheapest way to bring a customer back"

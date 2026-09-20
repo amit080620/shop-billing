@@ -8,6 +8,7 @@ import { EmptyState } from "@/app/components/EmptyState";
 import { DateRangeControls } from "../DateRangeControls";
 import { BarChart3 } from "lucide-react";
 import { todayIso } from "@/lib/dateHelpers";
+import { BackLink } from "@/app/components/BackLink";
 
 function startOfMonthIso() {
   const d = new Date();
@@ -98,6 +99,7 @@ export default async function ItemWiseReportPage({
 
   return (
     <div className="flex flex-col gap-3">
+      <BackLink fallback="/restaurant" />
       <PageHeader
         title={t("rreports.itemsTitle")}
         subtitle={t("rreports.itemsSubtitle")}

@@ -8,6 +8,7 @@ import { isModuleEnabled } from "@/lib/modules";
 import { ModuleBlocked } from "@/app/components/ModuleBlocked";
 import { History } from "lucide-react";
 import { getTranslator } from "@/lib/i18n/server";
+import { BackLink } from "@/app/components/BackLink";
 
 const ACTION_INFO: Record<string, { icon: typeof Trash2; label: string; tone: string }> = {
   bill_voided: { icon: Trash2, label: "Bill voided", tone: "text-danger" },
@@ -46,6 +47,7 @@ export default async function AuditLogPage() {
 
   return (
     <div className="flex flex-col gap-4">
+      <BackLink fallback="/dashboard" />
       <PageHeader
         title={t("Audit log")}
         subtitle="A record of sensitive actions — who did what, and when."
