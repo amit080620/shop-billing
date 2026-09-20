@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { paymentMethodLabel } from "@/lib/format";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { markTreatmentItemDoneAction, convertTreatmentPlanToBillAction } from "@/lib/actions/treatmentPlans";
@@ -110,9 +111,9 @@ export function TreatmentPlanDetailClient({ plan, items: initialItems }: { plan:
               <button
                 key={m}
                 onClick={() => setPaymentMethod(m)}
-                className={`rounded-lg py-2 text-xs font-medium capitalize ${paymentMethod === m ? "bg-brand text-white" : "bg-background text-muted"}`}
+                className={`rounded-lg py-2 text-xs font-medium ${paymentMethod === m ? "bg-brand text-white" : "bg-background text-muted"}`}
               >
-                {m}
+                {paymentMethodLabel(m)}
               </button>
             ))}
           </div>

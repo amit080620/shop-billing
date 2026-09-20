@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { paymentMethodLabel } from "@/lib/format";
 import Link from "next/link";
 import {
   getShopContext,
@@ -369,11 +370,11 @@ export default function OfflineBillPage() {
               <button
                 key={m}
                 onClick={() => setPaymentMethod(m)}
-                className={`rounded-full border px-3 py-1.5 text-xs font-medium capitalize ${
+                className={`rounded-full border px-3 py-1.5 text-xs font-medium ${
                   paymentMethod === m ? "border-brand bg-brand-soft text-brand-text" : "border-border text-muted"
                 }`}
               >
-                {m}
+                {paymentMethodLabel(m)}
               </button>
             ))}
           </div>

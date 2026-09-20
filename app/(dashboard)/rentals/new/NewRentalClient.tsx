@@ -7,7 +7,7 @@ import Link from "next/link";
 import { createRentalAction } from "@/lib/actions/rentals";
 import { calculateRentalTotals } from "@/lib/validation/schemas";
 import { determineSupplyType } from "@/lib/gst";
-import { formatMoney } from "@/lib/format";
+import { formatMoney, paymentMethodLabel } from "@/lib/format";
 import { SearchableSelect } from "@/app/components/SearchableSelect";
 import { InlineQuickAdd } from "@/app/components/InlineQuickAdd";
 import { quickCreateCustomerAction, lookupCustomerByPhoneAction } from "@/lib/actions/customers";
@@ -52,6 +52,13 @@ function SubmitButton({ t }: { t: Translator }) {
   );
 }
 
+/** "YYYY-MM-DDTHH:mm" in the device's own timezone, which is what a
+ * datetime-local input expects (toISOString would shift it to UTC). */
+function localDateTimeValue(d: Date) {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
 export function NewRentalClient({
   shopStateCode,
   lang,
@@ -67,8 +74,11 @@ export function NewRentalClient({
   const [customers, setCustomers] = useState(initialCustomers);
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [cart, setCart] = useState<CartLine[]>([]);
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
+  // Almost every booking starts now and runs for a day, and the form
+  // refused to submit until both were filled in by hand — so it starts
+  // there and the dates are changed only when they differ.
+  const [startDate, setStartDate] = useState(() => localDateTimeValue(new Date()));
+  const [endDate, setEndDate] = useState(() => localDateTimeValue(new Date(Date.now() + 24 * 60 * 60 * 1000)));
   const [deliveryRequired, setDeliveryRequired] = useState(false);
   const [deliveryAddress, setDeliveryAddress] = useState("");
   const [deliveryCharge, setDeliveryCharge] = useState<number | "">("");
@@ -375,11 +385,11 @@ export function NewRentalClient({
               key={m}
               type="button"
               onClick={() => setPaymentMethod(m)}
-              className={`rounded-full border px-3 py-1.5 text-xs font-medium capitalize ${
+              className={`rounded-full border px-3 py-1.5 text-xs font-medium ${
                 paymentMethod === m ? "border-brand bg-brand-soft text-brand-text" : "border-border text-muted"
               }`}
             >
-              {m}
+              {paymentMethodLabel(m)}
             </button>
           ))}
         </div>
