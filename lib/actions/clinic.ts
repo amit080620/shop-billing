@@ -6,6 +6,7 @@ import { requireSession } from "../auth";
 import { createSupabaseAdminClient } from "../supabase/admin";
 import { logError } from "../audit";
 import { checkRateLimitAsync } from "../rateLimit";
+import { findOrCreateCustomerByPhone } from "./customers";
 
 export type ActionState = { error?: string } | null;
 
@@ -39,9 +40,18 @@ export async function createClinicAppointmentAction(
   if (typeof appointmentDate !== "string" || !appointmentDate) return { error: "Pick a date" };
   if (typeof appointmentTime !== "string" || !appointmentTime) return { error: "Pick a time" };
 
+  // A patient booked by typing their name and number is the same person
+  // as one picked from the list — link (or create) their record so the
+  // visit, its bill and any reminder all reach the same patient.
+  let linkedPatientId = typeof patientId === "string" && patientId ? patientId : null;
+  if (!linkedPatientId) {
+    const linked = await findOrCreateCustomerByPhone(admin, session.shopId, patientPhone.trim(), patientName.trim());
+    linkedPatientId = linked?.id ?? null;
+  }
+
   const { error } = await admin.from("clinic_appointments").insert({
     shop_id: session.shopId,
-    patient_id: typeof patientId === "string" && patientId ? patientId : null,
+    patient_id: linkedPatientId,
     patient_name: patientName.trim(),
     patient_phone: patientPhone.trim(),
     reason_for_visit: typeof reasonForVisit === "string" && reasonForVisit.trim() ? reasonForVisit.trim() : null,
@@ -292,6 +302,14 @@ export async function createPrescriptionAction(input: {
 
   if (!input.patientName.trim()) return { error: "Enter the patient's name" };
 
+  // Same as a booking: a walk-in patient written down by hand still gets
+  // a patient record, so the medicine bill carries their name and phone.
+  let linkedPatientId = input.patientId;
+  if (!linkedPatientId && input.patientPhone?.trim()) {
+    const linked = await findOrCreateCustomerByPhone(admin, session.shopId, input.patientPhone.trim(), input.patientName.trim());
+    linkedPatientId = linked?.id ?? null;
+  }
+
   const financialYear = currentFinancialYear();
   const { data: issuedNumber } = await admin.rpc("next_prescription_number", {
     p_shop_id: session.shopId,
@@ -306,7 +324,7 @@ export async function createPrescriptionAction(input: {
       prescription_number: prescriptionNumber,
       financial_year: financialYear,
       appointment_id: input.appointmentId,
-      patient_id: input.patientId,
+      patient_id: linkedPatientId,
       patient_name: input.patientName.trim(),
       patient_age: input.patientAge || null,
       patient_gender: input.patientGender || null,

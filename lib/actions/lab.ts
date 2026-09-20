@@ -5,6 +5,7 @@ import { requireOwner, requireSession } from "../auth";
 import { createSupabaseAdminClient } from "../supabase/admin";
 import { financialYearFor, round2 } from "../gst";
 import { logError } from "../audit";
+import { findOrCreateCustomerByPhone } from "./customers";
 
 export type ActionState = { error?: string } | null;
 
@@ -120,6 +121,14 @@ export async function createLabOrderAction(input: {
   if (input.testIds.length === 0 && input.packageIds.length === 0) return { error: "Select at least one test or package" };
   if (input.collectionType === "home_collection" && !input.homeAddress.trim()) return { error: "Enter the home collection address" };
 
+  // Link (or create) the patient's record straight away, so the report
+  // and the bill both belong to the same person on their next visit.
+  let linkedPatientId = input.patientId;
+  if (!linkedPatientId) {
+    const linked = await findOrCreateCustomerByPhone(admin, session.shopId, input.patientPhone.trim(), input.patientName.trim());
+    linkedPatientId = linked?.id ?? null;
+  }
+
   const financialYear = financialYearFor(new Date());
   const { data: issuedNumber } = await admin.rpc("next_lab_order_number", { p_shop_id: session.shopId, p_financial_year: financialYear });
   const orderNumber = `${financialYear}/LAB${String(issuedNumber ?? 0).padStart(5, "0")}`;
@@ -130,7 +139,7 @@ export async function createLabOrderAction(input: {
       shop_id: session.shopId,
       order_number: orderNumber,
       financial_year: financialYear,
-      patient_id: input.patientId,
+      patient_id: linkedPatientId,
       patient_name: input.patientName.trim(),
       patient_phone: input.patientPhone.trim(),
       patient_age: input.patientAge || null,
@@ -250,18 +259,28 @@ export async function billLabOrderAction(orderId: string, paymentMethod: "cash" 
   const session = await requireSession();
   const admin = createSupabaseAdminClient();
 
-  const { data: order } = await admin.from("lab_orders").select("id, patient_id, patient_name, bill_id").eq("id", orderId).eq("shop_id", session.shopId).single();
+  const { data: order } = await admin.from("lab_orders").select("id, patient_id, patient_name, patient_phone, bill_id").eq("id", orderId).eq("shop_id", session.shopId).single();
   if (!order) return { error: "Order not found" };
   if (order.bill_id) return { error: "This order is already billed" };
 
   const { data: items } = await admin.from("lab_order_items").select("test_name, price, gst_percent").eq("order_id", orderId);
   if (!items || items.length === 0) return { error: "No tests on this order" };
 
+  // Reuse the patient's existing record by phone number rather than
+  // adding a second, phone-less copy of the same person every visit —
+  // a phone-less record can't be sent the report or a payment reminder.
   let customerId = order.patient_id;
   if (!customerId) {
-    const { data: newCustomer } = await admin.from("customers").insert({ shop_id: session.shopId, name: order.patient_name, phone: "" }).select("id").single();
-    customerId = newCustomer?.id ?? null;
+    const linked = order.patient_phone
+      ? await findOrCreateCustomerByPhone(admin, session.shopId, order.patient_phone, order.patient_name)
+      : null;
+    if (linked) customerId = linked.id;
+    else {
+      const { data: newCustomer } = await admin.from("customers").insert({ shop_id: session.shopId, name: order.patient_name, phone: "" }).select("id").single();
+      customerId = newCustomer?.id ?? null;
+    }
   }
+  if (customerId && customerId !== order.patient_id) await admin.from("lab_orders").update({ patient_id: customerId }).eq("id", orderId);
 
   const { createBillCore } = await import("./bills");
   const result = await createBillCore(session, {
