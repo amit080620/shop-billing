@@ -133,6 +133,11 @@ export function OrderClient({
   const activeItems = items.filter((i) => i.status !== "cancelled");
   const itemCount = activeItems.reduce((s, i) => s + i.quantity, 0);
   const newForKitchen = activeItems.filter((i) => !i.kotPrinted).reduce((s, i) => s + i.quantity, 0);
+  // While a tap is still saving, the stored total is a moment behind the
+  // lines on screen — show the lines' own sum until the server catches up,
+  // so the amount never reads lower than what's in the order.
+  const itemsSum = activeItems.reduce((sum, i) => sum + i.unitPrice * i.quantity, 0);
+  const liveTotal = isPending ? Math.max(0, itemsSum - order.discountAmount) : order.total;
   const qtyByProduct = new Map<string, number>();
   for (const i of activeItems) if (i.productId) qtyByProduct.set(i.productId, (qtyByProduct.get(i.productId) ?? 0) + i.quantity);
 
@@ -203,6 +208,7 @@ export function OrderClient({
       order={order}
       isReadOnly={isReadOnly}
       syncing={isPending}
+      liveTotal={liveTotal}
       onQuantity={changeQuantity}
       onRemove={(id) => run(() => removeOrderItemAction(id, order.id))}
       onServed={(id) => run(() => markItemServedAction(id, order.id))}
@@ -427,7 +433,7 @@ export function OrderClient({
             </span>
             <span className="flex items-center gap-1.5">
               {isPending && <Loader2 size={13} className="animate-spin" />}
-              {formatMoney(order.total)} · {t("View")} <ChevronUp size={15} />
+              {formatMoney(liveTotal)} · {t("View")} <ChevronUp size={15} />
             </span>
           </button>
           <div className="p-2.5">{actionButtons}</div>
@@ -592,6 +598,7 @@ function OrderPanel({
   order,
   isReadOnly,
   syncing,
+  liveTotal,
   onQuantity,
   onRemove,
   onServed,
@@ -601,6 +608,7 @@ function OrderPanel({
   order: Order;
   isReadOnly: boolean;
   syncing: boolean;
+  liveTotal: number;
   onQuantity: (itemId: string, quantity: number) => void;
   onRemove: (itemId: string) => void;
   onServed: (itemId: string) => void;
@@ -689,7 +697,7 @@ function OrderPanel({
             <span className="font-medium text-brand-text">{t("order.total")}</span>
             <span className="flex items-center gap-1.5 font-bold text-brand-text">
               {syncing && <Loader2 size={13} className="animate-spin" />}
-              {formatMoney(order.total)}
+              {formatMoney(liveTotal)}
             </span>
           </div>
         </div>
