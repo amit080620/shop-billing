@@ -13,21 +13,30 @@ import type { Lang } from "@/lib/i18n/dictionary";
 import { CalendarPlus } from "lucide-react";
 import { todayIso } from "@/lib/dateHelpers";
 import { BackLink } from "@/app/components/BackLink";
+import { useTranslation } from "@/lib/i18n/useTranslation";
 
 type Customer = { id: string; name: string; phone: string };
 type Service = { id: string; name: string };
 
-function SubmitButton() {
+function SubmitButton({ label, pendingLabel }: { label: string; pendingLabel: string }) {
   const { pending } = useFormStatus();
   return (
     <button type="submit" disabled={pending} className="btn-primary w-full text-center disabled:opacity-60">
-      {pending ? "Booking…" : "Book appointment"}
+      {pending ? pendingLabel : label}
     </button>
   );
 }
 
+/** The next half-hour, as "HH:mm" for a time input. */
+function nextHalfHour() {
+  const d = new Date();
+  d.setMinutes(d.getMinutes() > 30 ? 60 : 30, 0, 0);
+  return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+}
+
 export function NewAppointmentClient({ customers, services, lang }: { customers: Customer[]; services: Service[]; lang: Lang }) {
   const router = useRouter();
+  const { t } = useTranslation(lang);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
@@ -38,7 +47,7 @@ export function NewAppointmentClient({ customers, services, lang }: { customers:
     keepValuesOnError(async (prev: { error?: string } | null, formData: FormData) => {
       const result = await createAppointmentAction(prev, formData);
       if (!result?.error) {
-        showToast("Appointment booked");
+        showToast(t("Appointment booked"));
         router.push("/salon/appointments");
       }
       return result;
@@ -50,7 +59,7 @@ export function NewAppointmentClient({ customers, services, lang }: { customers:
     <div className="flex flex-col gap-3">
       <BackLink fallback="/salon/appointments" />
       <PageHeader
-        title="Book appointment"
+        title={t("Book appointment")}
         icon={<CalendarPlus size={18} strokeWidth={1.8} />}
       />
 
@@ -58,7 +67,7 @@ export function NewAppointmentClient({ customers, services, lang }: { customers:
         <input type="hidden" name="customerId" value={selectedCustomer?.id ?? ""} />
 
         <label className="flex flex-col gap-1.5 text-sm">
-          <span className="font-medium text-foreground">Customer</span>
+          <span className="font-medium text-foreground">{t("Customer")}</span>
           <SearchableSelect
             lang={lang}
             items={customers}
@@ -70,13 +79,13 @@ export function NewAppointmentClient({ customers, services, lang }: { customers:
               setCustomerName(c.name);
               setCustomerPhone(c.phone);
             }}
-            placeholder="Search existing customer, or just type below"
+            placeholder={t("Search existing customer, or just type below")}
           />
         </label>
 
         <div className="grid grid-cols-2 gap-3">
           <label className="flex flex-col gap-1.5 text-sm">
-            <span className="font-medium text-foreground">Name</span>
+            <span className="font-medium text-foreground">{t("Name")}</span>
             <input
               name="customerName"
               value={customerName}
@@ -86,44 +95,44 @@ export function NewAppointmentClient({ customers, services, lang }: { customers:
             />
           </label>
           <label className="flex flex-col gap-1.5 text-sm">
-            <span className="font-medium text-foreground">Phone</span>
+            <span className="font-medium text-foreground">{t("Phone")}</span>
             <PhoneInput value={customerPhone} onChange={setCustomerPhone} required />
             <input type="hidden" name="customerPhone" value={customerPhone} />
           </label>
         </div>
 
         <label className="flex flex-col gap-1.5 text-sm">
-          <span className="font-medium text-foreground">Service</span>
+          <span className="font-medium text-foreground">{t("Service")}</span>
           <SearchableSelect
             lang={lang}
             items={services}
             getKey={(s) => s.id}
             getLabel={(s) => s.name}
             onSelect={(s) => setServiceName(s.name)}
-            placeholder="Search your services, or just type below"
+            placeholder={t("Search your services, or just type below")}
           />
           <input
             name="serviceName"
             value={serviceName}
             onChange={(e) => setServiceName(e.target.value)}
-            placeholder="e.g. Haircut + beard trim"
+            placeholder={t("e.g. Haircut + beard trim")}
             required
             className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-brand"
           />
         </label>
 
         <label className="flex flex-col gap-1.5 text-sm">
-          <span className="font-medium text-foreground">Stylist / staff (optional)</span>
+          <span className="font-medium text-foreground">{t("Stylist / staff (optional)")}</span>
           <input
             name="stylistName"
-            placeholder="Who's doing it?"
+            placeholder={t("Who's doing it?")}
             className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-brand"
           />
         </label>
 
         <div className="grid grid-cols-2 gap-3">
           <label className="flex flex-col gap-1.5 text-sm">
-            <span className="font-medium text-foreground">Date</span>
+            <span className="font-medium text-foreground">{t("Date")}</span>
             <input
               name="appointmentDate"
               type="date"
@@ -133,10 +142,11 @@ export function NewAppointmentClient({ customers, services, lang }: { customers:
             />
           </label>
           <label className="flex flex-col gap-1.5 text-sm">
-            <span className="font-medium text-foreground">Time</span>
+            <span className="font-medium text-foreground">{t("Time")}</span>
             <input
               name="appointmentTime"
               type="time"
+              defaultValue={nextHalfHour()}
               required
               className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-brand"
             />
@@ -144,16 +154,16 @@ export function NewAppointmentClient({ customers, services, lang }: { customers:
         </div>
 
         <label className="flex flex-col gap-1.5 text-sm">
-          <span className="font-medium text-foreground">Notes (optional)</span>
+          <span className="font-medium text-foreground">{t("Notes (optional)")}</span>
           <input
             name="notes"
-            placeholder="Anything staff should know"
+            placeholder={t("Anything staff should know")}
             className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-brand"
           />
         </label>
 
         {state?.error && <p className="text-sm text-danger">{state.error}</p>}
-        <SubmitButton />
+        <SubmitButton label={t("Book appointment")} pendingLabel={t("Booking…")} />
       </form>
     </div>
   );

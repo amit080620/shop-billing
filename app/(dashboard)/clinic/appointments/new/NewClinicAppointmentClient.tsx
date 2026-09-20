@@ -25,6 +25,13 @@ function SubmitButton() {
   );
 }
 
+/** The next half-hour, as "HH:mm" for a time input. */
+function nextHalfHour() {
+  const d = new Date();
+  d.setMinutes(d.getMinutes() > 30 ? 60 : 30, 0, 0);
+  return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+}
+
 export function NewClinicAppointmentClient({ patients, lang }: { patients: Patient[]; lang: Lang }) {
   const router = useRouter();
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
@@ -106,7 +113,7 @@ export function NewClinicAppointmentClient({ patients, lang }: { patients: Patie
           </label>
           <label className="flex flex-col gap-1.5 text-sm">
             <span className="font-medium text-foreground">Time</span>
-            <input name="appointmentTime" type="time" required className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-brand" />
+            <input name="appointmentTime" type="time" defaultValue={nextHalfHour()} required className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-brand" />
           </label>
         </div>
 
