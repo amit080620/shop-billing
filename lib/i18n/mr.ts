@@ -97,6 +97,8 @@ const mr: Record<string, string> = {
   "move.noshow.detail": "बुक होत्या, वेळ निघून गेली, कोणी आलं नाही — कॉल करणं योग्य ठरेल",
   "move.tatbreach.title": "{n} सॅम्पल 48 तासांपेक्षा जास्त वेळ प्रलंबित आहेत",
   "move.tatbreach.detail": "ठरलेल्या वेळेत रिपोर्ट न मिळण्याचा धोका आहे",
+  "move.attrition.title": "{n} सदस्यांची उपस्थिती कमी होत आहे",
+  "move.attrition.detail": "आधी नियमित येत होते, अलीकडे कमी येत आहेत — नूतनीकरणाआधी चेक-इन करणं योग्य ठरेल",
 
   // Signup
   "signup.title": "तुमचे दुकान तयार करा",

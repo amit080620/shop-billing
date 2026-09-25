@@ -107,6 +107,8 @@ const hi: Record<string, string> = {
   "move.noshow.detail": "बुक थीं, समय निकल गया, कोई आया नहीं — कॉल करना ठीक रहेगा",
   "move.tatbreach.title": "{n} सैंपल 48 घंटों से ज़्यादा समय से पेंडिंग हैं",
   "move.tatbreach.detail": "तय समय पर रिपोर्ट न मिलने का खतरा है",
+  "move.attrition.title": "{n} मेंबर की उपस्थिति कम हो रही है",
+  "move.attrition.detail": "पहले नियमित आते थे, अब कम आ रहे हैं — रिन्यूअल से पहले चेक-इन करना ठीक रहेगा",
 
   // Signup
   "signup.title": "अपनी दुकान बनाएं",

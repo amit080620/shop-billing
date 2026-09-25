@@ -32,6 +32,7 @@ export async function computeTodaysMoves(shopId: string, businessType: string, l
       stockMove(admin, shopId, t),
       expiryMove(admin, shopId, t),
       businessType === "gym" ? membershipMove(admin, shopId, t) : null,
+      businessType === "gym" ? attritionRiskMove(admin, shopId, t) : null,
       businessType === "clinic" ? followUpMove(admin, shopId, t) : null,
       businessType === "transport" ? vehicleDocsMove(admin, shopId, t) : null,
       businessType === "service" ? serviceJobsMove(admin, shopId, t) : null,
@@ -179,6 +180,47 @@ async function membershipMove(admin: Admin, shopId: string, t: T): Promise<Move 
     detail: t("move.membership.detail"),
     href: "/gym/members",
     penalty: Math.min(25, count * 5),
+  };
+}
+
+/** A membership that hasn't expired yet can still be quietly slipping
+ * away — someone who used to come 3x a week and now hasn't shown up in
+ * a while is a real churn signal well before their renewal date, and
+ * nothing in the product currently compares a member against their
+ * OWN recent pattern the way this does. */
+async function attritionRiskMove(admin: Admin, shopId: string, t: T): Promise<Move | null> {
+  const { data: memberships } = await admin.from("memberships").select("member_id").eq("shop_id", shopId).eq("status", "active");
+  const memberIds = [...new Set((memberships ?? []).map((m) => m.member_id))];
+  if (memberIds.length === 0) return null;
+
+  const since28 = new Date(Date.now() - 28 * 86400000).toISOString();
+  const { data: attendance } = await admin.from("gym_attendance").select("member_id, checked_in_at").in("member_id", memberIds).gte("checked_in_at", since28);
+
+  const fourteenDaysAgo = Date.now() - 14 * 86400000;
+  const recentCount = new Map<string, number>();
+  const priorCount = new Map<string, number>();
+  for (const a of attendance ?? []) {
+    const isRecent = new Date(a.checked_in_at).getTime() >= fourteenDaysAgo;
+    const map = isRecent ? recentCount : priorCount;
+    map.set(a.member_id, (map.get(a.member_id) ?? 0) + 1);
+  }
+
+  // Needs a real prior habit (3+ visits in the earlier 14 days) before
+  // a quiet stretch counts as "declining" rather than just a new or
+  // occasional member with nothing to compare against yet.
+  let count = 0;
+  for (const memberId of memberIds) {
+    const prior = priorCount.get(memberId) ?? 0;
+    const recent = recentCount.get(memberId) ?? 0;
+    if (prior >= 3 && recent <= prior * 0.5) count++;
+  }
+  if (count === 0) return null;
+  return {
+    id: "attrition",
+    title: t("move.attrition.title", { n: count }),
+    detail: t("move.attrition.detail"),
+    href: "/gym/members",
+    penalty: Math.min(25, count * 6),
   };
 }
 

@@ -107,6 +107,8 @@ const en: Record<string, string> = {
   "move.noshow.detail": "Booked, past time, nobody marked arrived — worth a call",
   "move.tatbreach.title": "{n} sample(s) pending for over 48 hours",
   "move.tatbreach.detail": "At risk of missing the promised report time",
+  "move.attrition.title": "{n} member(s) showing declining attendance",
+  "move.attrition.detail": "Used to come regularly, gone quiet lately — before renewal is the time to check in",
 
   // Signup
   "signup.title": "Set up your shop",
