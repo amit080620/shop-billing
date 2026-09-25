@@ -175,7 +175,11 @@ export function NewBillClient({
       if (cart.some((c) => c.productId === partnerId)) continue;
       if (dismissedSuggestions.has(partnerId)) continue;
       const partner = products.find((p) => p.id === partnerId);
-      if (partner) return partner;
+      // Suggesting something that can't actually be sold right now is
+      // worse than no suggestion — the person would tap +Add into a
+      // stockout, exactly the problem the dashboard's own mismatched-
+      // stock alert exists to flag, not something to nudge toward.
+      if (partner && (!partner.trackInventory || partner.stockQuantity > 0)) return partner;
     }
     return null;
   }, [cart, affinityMap, dismissedSuggestions, products]);

@@ -2,6 +2,7 @@ import "server-only";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { todayIso } from "@/lib/dateHelpers";
 import { formatMoney } from "@/lib/format";
+import { computeAffinityMap } from "@/lib/basketAffinity";
 import type { Lang } from "@/lib/i18n/dictionary";
 import { translate, interpolate } from "@/lib/i18n/dictionary";
 
@@ -39,6 +40,7 @@ export async function computeTodaysMoves(shopId: string, businessType: string, l
       businessType === "service" ? serviceJobsMove(admin, shopId, t) : null,
       businessType === "rental" ? rentalsMove(admin, shopId, t) : null,
       businessType === "rental" ? idleAssetsMove(admin, shopId, t) : null,
+      businessType === "hardware" ? mismatchedStockMove(admin, shopId, t) : null,
       businessType === "jewellery" ? metalRateMove(admin, shopId, t) : null,
       businessType === "restaurant" ? stuckOrdersMove(admin, shopId, t) : null,
       businessType === "salon" ? noShowMove(admin, shopId, t) : null,
@@ -356,6 +358,52 @@ async function idleAssetsMove(admin: Admin, shopId: string, t: T): Promise<Move 
     detail: t("move.idleassets.detail"),
     href: "/products",
     penalty: Math.min(20, count * 3),
+  };
+}
+
+/** A hardware shop sells in matched pairs constantly — nuts and bolts,
+ * pipes and fittings, switches and wire — far more than a grocery
+ * shop does. Two items can each individually sit above their own
+ * "low stock" threshold and still be a real problem: if the item
+ * customers almost always buy alongside a healthy-stock item has
+ * quietly run out, every one of those add-on sales is being lost
+ * silently, invisible to a per-item stock check. Reuses the exact
+ * same affinity map the billing screen's own "bought together" nudge
+ * is built from, so this never disagrees with what a customer would
+ * actually be offered at the counter. */
+async function mismatchedStockMove(admin: Admin, shopId: string, t: T): Promise<Move | null> {
+  const affinityMap = await computeAffinityMap(admin, shopId);
+  const productIds = [...new Set(Object.entries(affinityMap).flat())];
+  if (productIds.length === 0) return null;
+
+  const { data: products } = await admin.from("products").select("id, name, stock_quantity, low_stock_threshold").eq("shop_id", shopId).eq("track_inventory", true).in("id", productIds);
+  const stockById = new Map((products ?? []).map((p) => [p.id, p]));
+
+  const seen = new Set<string>();
+  let count = 0;
+  for (const [productId, partnerId] of Object.entries(affinityMap)) {
+    const pairKey = [productId, partnerId].sort().join("|");
+    if (seen.has(pairKey)) continue;
+    seen.add(pairKey);
+
+    const product = stockById.get(productId);
+    const partner = stockById.get(partnerId);
+    if (!product || !partner) continue;
+
+    const productHealthy = Number(product.stock_quantity) > Number(product.low_stock_threshold);
+    const partnerOut = Number(partner.stock_quantity) <= 0;
+    const productOut = Number(product.stock_quantity) <= 0;
+    const partnerHealthy = Number(partner.stock_quantity) > Number(partner.low_stock_threshold);
+
+    if ((productHealthy && partnerOut) || (partnerHealthy && productOut)) count++;
+  }
+  if (count === 0) return null;
+  return {
+    id: "mismatchedstock",
+    title: t("move.mismatchedstock.title", { n: count }),
+    detail: t("move.mismatchedstock.detail"),
+    href: "/reorder",
+    penalty: Math.min(25, count * 6),
   };
 }
 

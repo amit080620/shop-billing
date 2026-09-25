@@ -129,6 +129,8 @@ const hi: Record<string, string> = {
   "move.rentals.detail": "अपनी तय तारीख से आगे निकल गया",
   "move.idleassets.title": "{n} आइटम 30+ दिनों से किराए पर नहीं गए",
   "move.idleassets.detail": "इन्हें फिर से चलाने के लिए छूट या प्रमोशन देना ठीक रहेगा",
+  "move.mismatchedstock.title": "{n} जोड़ी में से एक आइटम स्टॉक में नहीं है",
+  "move.mismatchedstock.detail": "एक खरीदने वाले ग्राहक आमतौर पर दूसरा भी चाहते हैं — यह एक्स्ट्रा सेल छूट रही है",
   "move.metalrate.title": "आज का सोना/चांदी रेट अभी सेट नहीं है",
   "move.metalrate.detail": "आज के हर बिल के लिए यह सही होना ज़रूरी है",
   "move.stuckorders.title": "{n} ऑर्डर 90 मिनट से ज़्यादा समय से खुले हैं",
