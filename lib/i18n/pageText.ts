@@ -816,6 +816,45 @@ export const PAGE_TEXT: Record<string, [hi: string, mr: string]> = {
   "Drug interactions": ["दवाओं की आपसी प्रतिक्रिया", "औषधांची परस्पर प्रतिक्रिया"],
   "Description": ["विवरण", "वर्णन"],
 
+  // Values looked up dynamically via t(SOME_MAP[key]) rather than a
+  // literal t("...") call — invisible to the usual missing-key scan, so
+  // these were caught by eye on a live Hindi screenshot instead.
+  "Sunday": ["रविवार", "रविवार"],
+  "Monday": ["सोमवार", "सोमवार"],
+  "Tuesday": ["मंगलवार", "मंगळवार"],
+  "Wednesday": ["बुधवार", "बुधवार"],
+  "Thursday": ["गुरुवार", "गुरुवार"],
+  "Friday": ["शुक्रवार", "शुक्रवार"],
+  "Saturday": ["शनिवार", "शनिवार"],
+  "New": ["नया", "नवीन"],
+  "Contacted": ["बात हुई", "संपर्क झाला"],
+  "Trial": ["ट्रायल", "ट्रायल"],
+  "Converted": ["मेंबर बना", "सदस्य झाला"],
+  "Lost": ["छूट गया", "गमावले"],
+  "Walk-in": ["वॉक-इन", "वॉक-इन"],
+  "Instagram": ["Instagram", "Instagram"],
+  "Facebook": ["Facebook", "Facebook"],
+  "Google": ["Google", "Google"],
+  "Referral": ["किसी के बताने से", "कोणीतरी सांगितल्याने"],
+  "Booked": ["बुक हुआ", "बुक झाले"],
+  "Sample collected": ["सैंपल ले लिया", "सॅम्पल घेतले"],
+  "Received at lab": ["लैब में पहुँचा", "लॅबमध्ये पोहोचले"],
+  "Processing": ["जाँच हो रही है", "तपासणी सुरू आहे"],
+  "Report ready": ["रिपोर्ट तैयार", "अहवाल तयार"],
+  "Delivered": ["दे दिया", "दिले"],
+
+  // More t(dynamicLookup) gaps found on a live-screenshot pass
+  "Received": ["मिल गया", "मिळाले"],
+  "In progress": ["चल रहा है", "चालू आहे"],
+  "Paid": ["हिसाब हो गया", "हिशोब झाला"],
+  "1 item": ["1 सामान", "1 वस्तू"],
+  "{n} items": ["{n} सामान", "{n} वस्तू"],
+  "This feature": ["यह सुविधा", "ही सुविधा"],
+
+  // Export data-type picker
+  "Sales / Bills": ["बिक्री / बिल", "विक्री / बिल"],
+  "Restaurant orders": ["रेस्टोरेंट ऑर्डर", "रेस्टॉरंट ऑर्डर"],
+
   // Restaurant order screen
   "Tables": ["टेबल", "टेबल"],
   "All": ["सभी", "सर्व"],
