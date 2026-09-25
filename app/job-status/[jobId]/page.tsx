@@ -2,7 +2,9 @@ import { notFound } from "next/navigation";
 import Image from "next/image";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { formatMoney, formatDateTime } from "@/lib/format";
-import { Inbox, Wrench, PackageCheck, CheckCircle2, XCircle } from "lucide-react";
+import { Inbox, Wrench, PackageCheck, CheckCircle2, XCircle, IndianRupee } from "lucide-react";
+import { buildUpiLink } from "@/lib/qr";
+import { AutoRefresh } from "@/app/components/AutoRefresh";
 
 // Looked up by the job's own UUID — unguessable, no login, read-only.
 // Same trust model already used by the order-status and khata links.
@@ -22,9 +24,12 @@ export default async function JobTrackPage({ params }: { params: Promise<{ jobId
 
   const { data: shop } = await admin
     .from("shops")
-    .select("name, logo_url")
+    .select("name, logo_url, upi_id")
     .eq("id", job.shop_id)
     .single();
+
+  const balanceDue = job.final_cost != null ? Math.max(0, Number(job.final_cost) - Number(job.advance_paid)) : 0;
+  const upiLink = shop?.upi_id && balanceDue > 0 ? buildUpiLink(shop.upi_id, shop.name, balanceDue, `Job #${job.job_number}`) : null;
 
   // The visible progress track. "cancelled" is deliberately not a step
   // on this line — it's an exit from the flow, shown separately below,
@@ -41,6 +46,7 @@ export default async function JobTrackPage({ params }: { params: Promise<{ jobId
 
   return (
     <div className="mx-auto flex min-h-screen max-w-md flex-col gap-4 px-4 py-6">
+      <AutoRefresh enabled={!isCancelled && job.status !== "delivered"} />
       <div className="flex flex-col items-center gap-2 text-center">
         {shop?.logo_url && (
           <Image src={shop.logo_url} alt="" width={56} height={56} className="h-14 w-14 rounded-full object-contain" />
@@ -125,8 +131,14 @@ export default async function JobTrackPage({ params }: { params: Promise<{ jobId
         </div>
       </div>
 
+      {upiLink && (
+        <a href={upiLink} className="btn-primary flex items-center justify-center gap-2 text-center">
+          <IndianRupee size={15} /> Pay {formatMoney(balanceDue)} now
+        </a>
+      )}
+
       <p className="text-center text-xs text-muted">
-        Refresh this page any time for the latest status — no need to call.
+        {isCancelled || job.status === "delivered" ? "Save this page for your records." : "This page updates on its own — no need to call."}
       </p>
     </div>
   );

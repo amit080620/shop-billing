@@ -59,13 +59,13 @@ export function PublicOrderClient({ qrToken }: { qrToken: string }) {
   }
 
   if (loading) {
-    return <div className="flex min-h-screen items-center justify-center text-sm text-gray-500">Loading menu…</div>;
+    return <div className="flex min-h-screen items-center justify-center text-sm text-muted">Loading menu…</div>;
   }
 
   if (error && menu.length === 0) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-2 px-6 text-center">
-        <p className="text-sm text-gray-600">{error}</p>
+        <p className="text-sm text-muted">{error}</p>
       </div>
     );
   }
@@ -73,11 +73,11 @@ export function PublicOrderClient({ qrToken }: { qrToken: string }) {
   if (sent) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-3 px-6 text-center">
-        <span className="flex h-16 w-16 items-center justify-center rounded-full" style={{ background: "var(--brand)" }}>
-          <CheckCircle2 size={32} className="text-white" />
+        <span className="flex h-16 w-16 items-center justify-center rounded-full text-white" style={{ background: "var(--brand)" }}>
+          <CheckCircle2 size={32} />
         </span>
-        <p className="text-lg font-semibold text-gray-900">Sent to the counter!</p>
-        <p className="text-sm text-gray-500">Staff will confirm your order shortly.</p>
+        <p className="text-lg font-semibold text-foreground">Sent to the counter!</p>
+        <p className="text-sm text-muted">Staff will confirm your order shortly.</p>
       </div>
     );
   }
@@ -86,8 +86,8 @@ export function PublicOrderClient({ qrToken }: { qrToken: string }) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-3 px-6 text-center">
         <div className="text-4xl">⏳</div>
-        <p className="text-lg font-semibold text-gray-900">Your order is being reviewed</p>
-        <p className="text-sm text-gray-500">Staff have your request — no need to send another one yet.</p>
+        <p className="text-lg font-semibold text-foreground">Your order is being reviewed</p>
+        <p className="text-sm text-muted">Staff have your request — no need to send another one yet.</p>
       </div>
     );
   }
@@ -96,35 +96,35 @@ export function PublicOrderClient({ qrToken }: { qrToken: string }) {
   const total = cart.reduce((s, c) => s + c.price * c.quantity, 0);
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-32">
-      <div className="bg-white px-4 py-4 shadow-sm">
-        <p className="text-lg font-bold text-gray-900">{shopName}</p>
-        <p className="text-sm text-gray-500">{tableName} · Scan-to-order menu</p>
+    <div className="min-h-screen bg-background pb-32">
+      <div className="bg-surface px-4 py-4 shadow-sm">
+        <p className="text-lg font-bold text-foreground">{shopName}</p>
+        <p className="text-sm text-muted">{tableName} · Scan-to-order menu</p>
       </div>
 
       <div className="flex flex-col gap-5 p-4">
         {categories.map((cat) => (
           <div key={cat}>
-            <p className="mb-2 text-sm font-semibold text-gray-700">{cat}</p>
+            <p className="mb-2 text-sm font-semibold text-foreground">{cat}</p>
             <div className="flex flex-col gap-2">
               {menu
                 .filter((m) => m.category === cat)
                 .map((item) => {
                   const inCart = cart.find((c) => c.productId === item.id);
                   return (
-                    <div key={item.id} className="flex items-center justify-between rounded-xl border border-gray-200 bg-white px-3.5 py-2.5">
+                    <div key={item.id} className="neu-card flex items-center justify-between px-3.5 py-2.5">
                       <div className="min-w-0">
-                        <p className="truncate text-sm font-medium text-gray-900">{item.name}</p>
-                        <p className="text-xs text-gray-500">₹{item.price.toLocaleString("en-IN")}</p>
+                        <p className="truncate text-sm font-medium text-foreground">{item.name}</p>
+                        <p className="text-xs text-muted">₹{item.price.toLocaleString("en-IN")}</p>
                       </div>
                       {inCart ? (
                         <div className="flex shrink-0 items-center gap-2">
-                          <button onClick={() => updateQty(item.id, inCart.quantity - 1)} className="h-7 w-7 rounded-full border border-gray-300 text-sm">−</button>
-                          <span className="w-5 text-center text-sm font-medium">{inCart.quantity}</span>
-                          <button onClick={() => updateQty(item.id, inCart.quantity + 1)} className="h-7 w-7 rounded-full bg-emerald-600 text-sm text-white">+</button>
+                          <button onClick={() => updateQty(item.id, inCart.quantity - 1)} className="h-7 w-7 rounded-full border border-border text-sm text-foreground">−</button>
+                          <span className="w-5 text-center text-sm font-medium text-foreground">{inCart.quantity}</span>
+                          <button onClick={() => updateQty(item.id, inCart.quantity + 1)} className="h-7 w-7 rounded-full text-sm text-white" style={{ background: "var(--brand)" }}>+</button>
                         </div>
                       ) : (
-                        <button onClick={() => addItem(item)} className="shrink-0 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white">
+                        <button onClick={() => addItem(item)} className="shrink-0 rounded-lg px-3 py-1.5 text-xs font-medium text-white" style={{ background: "var(--brand)" }}>
                           Add
                         </button>
                       )}
@@ -137,18 +137,18 @@ export function PublicOrderClient({ qrToken }: { qrToken: string }) {
       </div>
 
       {cart.length > 0 && (
-        <div className="fixed inset-x-0 bottom-0 flex flex-col gap-2 border-t border-gray-200 bg-white p-4 shadow-lg">
+        <div className="fixed inset-x-0 bottom-0 flex flex-col gap-2 border-t border-border bg-surface p-4 shadow-lg">
           <input
             value={customerName}
             onChange={(e) => setCustomerName(e.target.value)}
             placeholder="Your name (optional)"
-            className="rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none"
+            className="px-3 py-2 text-sm"
           />
-          {error && <p className="text-xs text-red-600">{error}</p>}
+          {error && <p className="text-xs text-danger">{error}</p>}
           <button
             onClick={submitOrder}
             disabled={submitting}
-            className="rounded-xl bg-emerald-600 px-4 py-3 text-center text-sm font-semibold text-white disabled:opacity-60"
+            className="btn-primary text-center disabled:opacity-60"
           >
             {submitting ? "Sending…" : `Send order — ₹${total.toLocaleString("en-IN")}`}
           </button>

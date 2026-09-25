@@ -509,10 +509,31 @@ export async function saveKioskSettingsAction(isEnabled: boolean): Promise<{ err
 /** No auth — a member types their own phone number on a tablet left at
  * the entrance and checks themselves in. This is the whole point: it
  * removes staff from the loop entirely for routine daily check-ins. */
+export type KioskMembershipStatus = "active" | "expiring_soon" | "expired" | "none";
+
+/** A lapsed member currently checks in exactly like an active one — no
+ * signal to the front desk, and no nudge to the member themselves,
+ * that a renewal is overdue. Worked out from the same membership row
+ * the app's own /gym/members screen already reads, not a new check. */
+async function membershipStatusFor(admin: ReturnType<typeof createSupabaseAdminClient>, memberId: string): Promise<{ membershipStatus: KioskMembershipStatus; daysLeft: number | null; planName: string | null }> {
+  const { data: memberships } = await admin
+    .from("memberships")
+    .select("plan_name, end_date, status")
+    .eq("member_id", memberId)
+    .order("end_date", { ascending: false })
+    .limit(1);
+  const membership = memberships?.[0];
+  if (!membership || membership.status !== "active") return { membershipStatus: "none", daysLeft: null, planName: null };
+
+  const daysLeft = Math.ceil((new Date(`${membership.end_date}T00:00:00`).getTime() - Date.now()) / 86400000);
+  const membershipStatus: KioskMembershipStatus = daysLeft < 0 ? "expired" : daysLeft <= 7 ? "expiring_soon" : "active";
+  return { membershipStatus, daysLeft, planName: membership.plan_name };
+}
+
 export async function publicKioskCheckInAction(
   token: string,
   phone: string,
-): Promise<{ error?: string; memberName?: string; alreadyIn?: boolean }> {
+): Promise<{ error?: string; memberName?: string; alreadyIn?: boolean; membershipStatus?: KioskMembershipStatus; daysLeft?: number | null; planName?: string | null }> {
   const admin = createSupabaseAdminClient();
 
   const { data: settings } = await admin.from("gym_kiosk_settings").select("shop_id, is_enabled").eq("public_token", token).maybeSingle();
@@ -525,20 +546,22 @@ export async function publicKioskCheckInAction(
   const { data: member } = await admin.from("customers").select("id, name, phone").eq("shop_id", settings.shop_id).ilike("phone", `%${last10}`).maybeSingle();
   if (!member) return { error: "We couldn't find that number — please check with the desk to register." };
 
+  const membership = await membershipStatusFor(admin, member.id);
+
   const { data: alreadyOpen } = await admin
     .from("gym_attendance")
     .select("id")
     .eq("member_id", member.id)
     .is("checked_out_at", null)
     .maybeSingle();
-  if (alreadyOpen) return { memberName: member.name, alreadyIn: true };
+  if (alreadyOpen) return { memberName: member.name, alreadyIn: true, ...membership };
 
   const { error } = await admin.from("gym_attendance").insert({ shop_id: settings.shop_id, member_id: member.id });
   if (error) {
-    if (error.code === "23505") return { memberName: member.name, alreadyIn: true };
+    if (error.code === "23505") return { memberName: member.name, alreadyIn: true, ...membership };
     console.error("Kiosk check-in failed", error);
     return { error: "Could not check in — please try again or ask at the desk." };
   }
 
-  return { memberName: member.name };
+  return { memberName: member.name, ...membership };
 }

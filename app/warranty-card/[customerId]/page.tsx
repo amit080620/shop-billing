@@ -3,7 +3,8 @@ import { notFound } from "next/navigation";
 import Image from "next/image";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { formatDateTime } from "@/lib/format";
-import { ShieldCheck, ShieldX } from "lucide-react";
+import { ShieldCheck, ShieldX, MessageCircle } from "lucide-react";
+import { buildWhatsAppLink } from "@/lib/whatsapp";
 
 function daysUntil(dateStr: string) {
   const target = new Date(`${dateStr}T00:00:00`);
@@ -26,7 +27,7 @@ export default async function WarrantyPage({ params }: { params: Promise<{ custo
   if (!customer) notFound();
 
   const [{ data: shop }, { data: bills }] = await Promise.all([
-    admin.from("shops").select("name, logo_url").eq("id", customer.shop_id).single(),
+    admin.from("shops").select("name, logo_url, owner_phone").eq("id", customer.shop_id).single(),
     admin
       .from("bills")
       .select("id, invoice_number, created_at")
@@ -103,12 +104,27 @@ export default async function WarrantyPage({ params }: { params: Promise<{ custo
                     {w.purchasedAt && (
                       <p className="text-[11px] text-muted">Bought {formatDateTime(w.purchasedAt)}</p>
                     )}
-                    <a
-                      href={`/print/bill/${w.billId}`}
-                      className="mt-1.5 inline-block text-xs font-medium text-brand-text underline"
-                    >
-                      View / print the bill
-                    </a>
+                    <div className="mt-2 flex flex-wrap items-center gap-3">
+                      <a
+                        href={`/print/bill/${w.billId}`}
+                        className="text-xs font-medium text-brand-text underline"
+                      >
+                        View / print the bill
+                      </a>
+                      {shop?.owner_phone && (
+                        <a
+                          href={buildWhatsAppLink(
+                            shop.owner_phone,
+                            `Hi, this is ${customer.name}. I have a warranty issue with "${w.productName}" (Bill ${w.invoiceNumber}, bought ${w.purchasedAt ? new Date(w.purchasedAt).toLocaleDateString("en-IN") : ""}). The problem is: `,
+                          )}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-1 text-xs font-medium text-brand-text underline"
+                        >
+                          <MessageCircle size={12} /> Claim warranty
+                        </a>
+                      )}
+                    </div>
                   </div>
                 </div>
               ))}

@@ -3,6 +3,7 @@ import Image from "next/image";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { formatMoney, formatDateTime } from "@/lib/format";
 import { CheckCircle2, Clock, XCircle } from "lucide-react";
+import { AutoRefresh } from "@/app/components/AutoRefresh";
 
 // Status is looked up by the order's own UUID — unguessable, and the
 // only thing the customer has. Deliberately no shop login required and
@@ -53,6 +54,7 @@ export default async function OrderStatusPage({ params }: { params: Promise<{ or
 
   return (
     <div className="mx-auto flex min-h-screen max-w-md flex-col gap-4 px-4 py-6">
+      <AutoRefresh enabled={order.status === "pending"} />
       <div className="flex flex-col items-center gap-2 text-center">
         {shop?.logo_url && (
           <Image src={shop.logo_url} alt="" width={56} height={56} className="h-14 w-14 rounded-full object-contain" />
@@ -94,7 +96,7 @@ export default async function OrderStatusPage({ params }: { params: Promise<{ or
       </div>
 
       <p className="text-center text-xs text-muted">
-        Save this page — refresh it any time to see the latest status.
+        {order.status === "pending" ? "Save this page — it updates on its own." : "Save this page for your records."}
       </p>
     </div>
   );

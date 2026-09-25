@@ -2,23 +2,27 @@
 
 import { useEffect, useState, useTransition } from "react";
 import Image from "next/image";
-import { publicKioskCheckInAction } from "@/lib/actions/gym";
-import { Hand, CheckCircle2 } from "lucide-react";
+import { publicKioskCheckInAction, type KioskMembershipStatus } from "@/lib/actions/gym";
+import { Hand, CheckCircle2, AlertTriangle } from "lucide-react";
+
+type CheckinResult = { error?: string; memberName?: string; alreadyIn?: boolean; membershipStatus?: KioskMembershipStatus; daysLeft?: number | null; planName?: string | null };
 
 export function KioskClient({ token, shopName, shopLogoUrl }: { token: string; shopName: string; shopLogoUrl: string | null }) {
   const [phone, setPhone] = useState("");
-  const [result, setResult] = useState<{ error?: string; memberName?: string; alreadyIn?: boolean } | null>(null);
+  const [result, setResult] = useState<CheckinResult | null>(null);
   const [isPending, startTransition] = useTransition();
 
   // Auto-reset back to the entry screen a few seconds after a
   // check-in, so this tablet is always ready for the NEXT member
-  // without anyone having to touch it in between.
+  // without anyone having to touch it in between. A renewal warning
+  // gets a bit longer on screen, since it's actually worth reading.
   useEffect(() => {
     if (!result) return;
+    const needsAttention = result.membershipStatus === "expired" || result.membershipStatus === "expiring_soon";
     const timer = setTimeout(() => {
       setResult(null);
       setPhone("");
-    }, 4000);
+    }, needsAttention ? 7000 : 4000);
     return () => clearTimeout(timer);
   }, [result]);
 
@@ -38,6 +42,8 @@ export function KioskClient({ token, shopName, shopLogoUrl }: { token: string; s
   }
 
   if (result && !result.error) {
+    const expired = result.membershipStatus === "expired";
+    const expiringSoon = result.membershipStatus === "expiring_soon";
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-gradient-to-br from-brand-soft to-background px-6 text-center">
         <span className="flex h-24 w-24 items-center justify-center rounded-full text-white" style={{ background: "var(--brand)" }}>
@@ -45,6 +51,14 @@ export function KioskClient({ token, shopName, shopLogoUrl }: { token: string; s
         </span>
         <p className="text-3xl font-bold text-foreground">{result.alreadyIn ? `Welcome back, ${result.memberName}!` : `Checked in, ${result.memberName}!`}</p>
         <p className="text-lg text-muted">{result.alreadyIn ? "You're already checked in today." : "Have a great workout!"}</p>
+        {(expired || expiringSoon) && (
+          <div className={`flex items-center gap-2 rounded-xl border px-4 py-3 ${expired ? "border-danger/30 bg-danger-soft text-danger" : "border-warning/30 bg-warning-soft text-warning"}`}>
+            <AlertTriangle size={18} className="shrink-0" />
+            <p className="text-sm font-medium">
+              {expired ? "Your membership has expired — please see the desk to renew." : `Your membership expires in ${result.daysLeft} day${result.daysLeft === 1 ? "" : "s"} — renew soon.`}
+            </p>
+          </div>
+        )}
       </div>
     );
   }
