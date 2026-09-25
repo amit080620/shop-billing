@@ -68,6 +68,28 @@ const mr: Record<string, string> = {
   "auth.pleaseWait": "कृपया थांबा…",
   "Forgot password?": "पासवर्ड विसरलात?",
 
+  // Ray Score / Today's Moves
+  "rayScore.title": "आज दुकानाची तब्येत",
+  "rayScore.allCaughtUp": "सगळं ठीक आहे — आज काहीही तातडीचं नाही.",
+  "move.cash.title": "{amount} थकबाकीचा पाठपुरावा करा",
+  "move.cash.detail": "{n} ग्राहकांनी 14+ दिवसांत पैसे भरले नाहीत",
+  "move.winback.title": "{n} नियमित ग्राहक गायब आहेत",
+  "move.winback.detail": "ते सहसा यापेक्षा लवकर परत येतात",
+  "move.stock.title": "{n} वस्तूंचा साठा कमी आहे",
+  "move.stock.detail": "संपण्याआधी पुन्हा ऑर्डर करा",
+  "move.expiry.title": "{n} बॅच 30 दिवसांत एक्सपायर होत आहेत",
+  "move.expiry.detail": "स्टॉक नुकसान होण्याआधी हे क्लिअर किंवा परत करा",
+  "move.membership.title": "{n} सदस्यत्व 7 दिवसांत संपत आहेत",
+  "move.membership.detail": "संपण्याआधी संपर्क साधा",
+  "move.followup.title": "{n} रुग्णाचा फॉलो-अप चुकला",
+  "move.followup.detail": "त्यांनी आतापर्यंत परत यायला हवं होतं",
+  "move.vehicledocs.title": "{n} वाहन कागदपत्रांकडे लक्ष द्यायचं आहे",
+  "move.vehicledocs.detail": "एक्सपायर झालेली किंवा 30 दिवसांत होणारी",
+  "move.servicejobs.title": "{n} जॉब त्यांच्या ठरलेल्या तारखेपुढे गेली",
+  "move.servicejobs.detail": "ग्राहक यांची वाट पाहत असतील",
+  "move.rentals.title": "{n} भाड्याची वस्तू अजून परत आली नाही",
+  "move.rentals.detail": "ठरलेल्या तारखेपुढे गेली",
+
   // Signup
   "signup.title": "तुमचे दुकान तयार करा",
   "signup.subtitle": "तुमचे दुकान आणि मालक लॉगिन तयार करते",

@@ -78,6 +78,28 @@ const hi: Record<string, string> = {
   "auth.pleaseWait": "कृपया प्रतीक्षा करें…",
   "Forgot password?": "पासवर्ड भूल गए?",
 
+  // Ray Score / Today's Moves
+  "rayScore.title": "आज दुकान की सेहत",
+  "rayScore.allCaughtUp": "सब कुछ ठीक है — आज कुछ भी ज़रूरी नहीं है।",
+  "move.cash.title": "{amount} के बकाया पर फॉलो-अप करें",
+  "move.cash.detail": "{n} ग्राहक(ों) ने 14+ दिनों से भुगतान नहीं किया",
+  "move.winback.title": "{n} नियमित ग्राहक गायब हैं",
+  "move.winback.detail": "वे आमतौर पर इससे जल्दी वापस आते हैं",
+  "move.stock.title": "{n} आइटम कम स्टॉक में हैं",
+  "move.stock.detail": "खत्म होने से पहले फिर से ऑर्डर करें",
+  "move.expiry.title": "{n} बैच 30 दिनों में एक्सपायर हो रहे हैं",
+  "move.expiry.detail": "स्टॉक नुकसान से पहले इन्हें साफ़ करें या वापस करें",
+  "move.membership.title": "{n} मेंबरशिप 7 दिनों में समाप्त हो रही हैं",
+  "move.membership.detail": "समाप्त होने से पहले संपर्क करें",
+  "move.followup.title": "{n} मरीज़ का फॉलो-अप छूट गया",
+  "move.followup.detail": "उन्हें अब तक वापस आना था",
+  "move.vehicledocs.title": "{n} वाहन दस्तावेज़ पर ध्यान देना है",
+  "move.vehicledocs.detail": "एक्सपायर हो चुके या 30 दिनों में एक्सपायर हो रहे",
+  "move.servicejobs.title": "{n} जॉब अपनी तय तारीख से आगे निकल गई",
+  "move.servicejobs.detail": "ग्राहक इनका इंतज़ार कर रहे हो सकते हैं",
+  "move.rentals.title": "{n} रेंटल अभी तक वापस नहीं आया",
+  "move.rentals.detail": "अपनी तय तारीख से आगे निकल गया",
+
   // Signup
   "signup.title": "अपनी दुकान बनाएं",
   "signup.subtitle": "आपकी दुकान और owner लॉगिन बनाता है",

@@ -7,6 +7,7 @@ import { EmptyState } from "@/app/components/EmptyState";
 import { SalesTrendChartLazy as SalesTrendChart } from "@/app/components/DashboardLazy";
 import { getTranslator } from "@/lib/i18n/server";
 import { PlanBanner } from "./PlanBanner";
+import { RayScoreCard } from "./RayScoreCard";
 import { isModuleEnabled } from "@/lib/modules";
 import { FESTIVALS } from "@/lib/festivals";
 import { getProfitLeakAction } from "@/lib/actions/profitLeak";
@@ -43,7 +44,7 @@ import {
 
 export default async function DashboardPage() {
   const session = await requireSession();
-  const { t } = await getTranslator();
+  const { t, lang } = await getTranslator();
   const admin = createSupabaseAdminClient();
 
   const isRestaurant = session.businessType === "restaurant";
@@ -97,6 +98,8 @@ export default async function DashboardPage() {
       </div>
 
       <PlanBanner />
+
+      <RayScoreCard shopId={session.shopId} businessType={session.businessType} lang={lang} t={t} />
 
       {catalogEnabled && (pendingCatalogOrders ?? 0) > 0 && (
         <Link

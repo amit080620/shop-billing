@@ -78,6 +78,28 @@ const en: Record<string, string> = {
   "auth.pleaseWait": "Please wait…",
   "Forgot password?": "Forgot password?",
 
+  // Ray Score / Today's Moves
+  "rayScore.title": "Shop health today",
+  "rayScore.allCaughtUp": "All caught up — nothing urgent today.",
+  "move.cash.title": "Follow up on {amount} overdue",
+  "move.cash.detail": "{n} customer(s) haven't paid in 14+ days",
+  "move.winback.title": "{n} regular(s) have gone quiet",
+  "move.winback.detail": "They usually come back sooner than this",
+  "move.stock.title": "{n} item(s) running low",
+  "move.stock.detail": "Reorder before you run out",
+  "move.expiry.title": "{n} batch(es) expiring within 30 days",
+  "move.expiry.detail": "Clear or return these before it becomes stock loss",
+  "move.membership.title": "{n} membership(s) expiring within 7 days",
+  "move.membership.detail": "Reach out before they lapse",
+  "move.followup.title": "{n} patient follow-up(s) missed",
+  "move.followup.detail": "They were due to come back by now",
+  "move.vehicledocs.title": "{n} vehicle document(s) need attention",
+  "move.vehicledocs.detail": "Expired or expiring within 30 days",
+  "move.servicejobs.title": "{n} job(s) past their expected date",
+  "move.servicejobs.detail": "Customers may be waiting on these",
+  "move.rentals.title": "{n} rental(s) not returned yet",
+  "move.rentals.detail": "Past their due date",
+
   // Signup
   "signup.title": "Set up your shop",
   "signup.subtitle": "Creates your shop and your owner login",
