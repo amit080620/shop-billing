@@ -93,6 +93,10 @@ const mr: Record<string, string> = {
   "move.metalrate.detail": "आजच्या प्रत्येक बिलासाठी हे बरोबर असणं गरजेचं आहे",
   "move.stuckorders.title": "{n} ऑर्डर 90 मिनिटांपेक्षा जास्त वेळ उघडी आहेत",
   "move.stuckorders.detail": "या टेबल्स विसरल्या गेल्या नाहीत ना ते तपासा",
+  "move.noshow.title": "{n} अपॉइंटमेंट कदाचित नो-शो आहेत",
+  "move.noshow.detail": "बुक होत्या, वेळ निघून गेली, कोणी आलं नाही — कॉल करणं योग्य ठरेल",
+  "move.tatbreach.title": "{n} सॅम्पल 48 तासांपेक्षा जास्त वेळ प्रलंबित आहेत",
+  "move.tatbreach.detail": "ठरलेल्या वेळेत रिपोर्ट न मिळण्याचा धोका आहे",
 
   // Signup
   "signup.title": "तुमचे दुकान तयार करा",

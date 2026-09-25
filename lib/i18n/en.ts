@@ -103,6 +103,10 @@ const en: Record<string, string> = {
   "move.metalrate.detail": "Every bill today needs it to be accurate",
   "move.stuckorders.title": "{n} order(s) open for over 90 minutes",
   "move.stuckorders.detail": "Check if these tables were forgotten",
+  "move.noshow.title": "{n} appointment(s) likely no-shows",
+  "move.noshow.detail": "Booked, past time, nobody marked arrived — worth a call",
+  "move.tatbreach.title": "{n} sample(s) pending for over 48 hours",
+  "move.tatbreach.detail": "At risk of missing the promised report time",
 
   // Signup
   "signup.title": "Set up your shop",

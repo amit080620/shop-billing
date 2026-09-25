@@ -38,6 +38,8 @@ export async function computeTodaysMoves(shopId: string, businessType: string, l
       businessType === "rental" ? rentalsMove(admin, shopId, t) : null,
       businessType === "jewellery" ? metalRateMove(admin, shopId, t) : null,
       businessType === "restaurant" ? stuckOrdersMove(admin, shopId, t) : null,
+      businessType === "salon" ? noShowMove(admin, shopId, t) : null,
+      businessType === "lab" ? tatBreachMove(admin, shopId, t) : null,
     ])
   ).filter((m): m is Move => m !== null);
 
@@ -279,5 +281,54 @@ async function stuckOrdersMove(admin: Admin, shopId: string, t: T): Promise<Move
     detail: t("move.stuckorders.detail"),
     href: "/restaurant",
     penalty: Math.min(25, count * 8),
+  };
+}
+
+/** A booked slot 30+ minutes past its time with nobody marked arrived
+ * is a likely no-show — worth a quick call both to fill the chair
+ * from a waitlist and because the same client tends to repeat the
+ * pattern if nobody ever follows up. Nothing in the product currently
+ * points this out; it just quietly sits in the appointments list. */
+async function noShowMove(admin: Admin, shopId: string, t: T): Promise<Move | null> {
+  const today = todayIso();
+  const { data } = await admin
+    .from("appointments")
+    .select("id, appointment_time")
+    .eq("shop_id", shopId)
+    .eq("appointment_date", today)
+    .in("status", ["booked", "confirmed"]);
+  const now = Date.now();
+  const count = (data ?? []).filter((a) => now - new Date(`${today}T${a.appointment_time}:00+05:30`).getTime() > 30 * 60000).length;
+  if (count === 0) return null;
+  return {
+    id: "noshow",
+    title: t("move.noshow.title", { n: count }),
+    detail: t("move.noshow.detail"),
+    href: "/salon/appointments",
+    penalty: Math.min(20, count * 6),
+  };
+}
+
+/** Diagnostic labs live and die by turnaround time — a sample still
+ * "processing" two days later is a real risk of a broken promise to a
+ * patient, not just a queue backlog. Flagging it here is the closest
+ * thing to a TAT-breach predictor a small lab has ever had without
+ * buying dedicated LIMS software. */
+async function tatBreachMove(admin: Admin, shopId: string, t: T): Promise<Move | null> {
+  const cutoff = new Date(Date.now() - 48 * 3600000).toISOString();
+  const { data } = await admin
+    .from("lab_orders")
+    .select("id")
+    .eq("shop_id", shopId)
+    .in("status", ["booked", "sample_collected", "received_at_lab", "processing"])
+    .lt("created_at", cutoff);
+  const count = data?.length ?? 0;
+  if (count === 0) return null;
+  return {
+    id: "tatbreach",
+    title: t("move.tatbreach.title", { n: count }),
+    detail: t("move.tatbreach.detail"),
+    href: "/lab/orders",
+    penalty: Math.min(30, count * 8),
   };
 }
