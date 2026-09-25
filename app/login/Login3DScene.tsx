@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { LanguageToggle } from "@/lib/i18n/LanguageToggle";
+import type { Lang } from "@/lib/i18n/dictionary";
 
 /** A genuinely deep, layered 3D scene for the login screen only — every
  * other auth screen (signup, forgot/reset password) keeps the plain
@@ -18,7 +20,7 @@ import { useEffect, useRef, useState } from "react";
  * (hover: hover, pointer: fine) — touch screens get the idle float/drift
  * animation instead, never a phantom gyroscope permission prompt.
  * Everything respects prefers-reduced-motion by freezing in place. */
-export function Login3DScene({ children }: { children: React.ReactNode }) {
+export function Login3DScene({ lang, children }: { lang: Lang; children: React.ReactNode }) {
   const [tilt, setTilt] = useState({ x: 0, y: 0 });
   const [ready, setReady] = useState(false);
   const frame = useRef<number | null>(null);
@@ -75,6 +77,25 @@ export function Login3DScene({ children }: { children: React.ReactNode }) {
           depth even though the whole thing is one flat plane. */}
       <div className="login-floor-wrap" aria-hidden="true">
         <div className="login-floor" />
+      </div>
+
+      {/* A fixed corner, not part of the centered column below — a
+          language switch reads as a deliberate top-right control here,
+          not an odd lone element floating in the middle of the page. */}
+      <div
+        className="login-corner"
+        style={
+          {
+            "--surface": "rgba(255,255,255,0.08)",
+            "--border": "rgba(255,255,255,0.14)",
+            "--brand-soft": "rgba(255,255,255,0.16)",
+            "--brand-text": "#ffffff",
+            "--muted": "rgba(255,255,255,0.65)",
+            "--foreground": "#ffffff",
+          } as React.CSSProperties
+        }
+      >
+        <LanguageToggle lang={lang} />
       </div>
 
       {/* The actual 3D stage: logo + form card, both inside one
@@ -193,6 +214,13 @@ export function Login3DScene({ children }: { children: React.ReactNode }) {
           to { background-position: 0 64px, 0 0; }
         }
 
+        .login-corner {
+          position: absolute;
+          top: max(16px, env(safe-area-inset-top));
+          right: max(16px, env(safe-area-inset-right));
+          z-index: 2;
+        }
+
         .login-stage {
           position: relative;
           z-index: 1;
@@ -229,6 +257,77 @@ export function Login3DScene({ children }: { children: React.ReactNode }) {
             transition: none;
           }
           .login-card-wrap {
+            transition: none;
+          }
+        }
+      `}</style>
+
+      {/* Soft-embossed "neumorphic" panel for the login form specifically
+          — the card and its fields read as pressed out of / into the
+          same dark material rather than a flat glass sheet, matching the
+          softer, tactile UI language the rest of the product's own
+          light-mode .neu-card already uses, just adapted to this
+          screen's dark backdrop. Global (not scoped to this component)
+          because it needs to reach AuthForm's own <input>/<button>
+          markup rendered as page.tsx's children, and !important to
+          out-rank the app-wide input styling rule — which is itself
+          !important by design, so nothing here can leak out and affect
+          any other screen's inputs. */}
+      <style jsx global>{`
+        .login-neu-card {
+          background: #1a1d24;
+          border-radius: 28px;
+          padding: 28px 24px;
+          box-shadow:
+            -10px -10px 24px rgba(255, 255, 255, 0.025),
+            12px 12px 28px rgba(0, 0, 0, 0.55);
+        }
+        .login-neu-card label {
+          color: rgba(255, 255, 255, 0.8);
+        }
+        .login-neu-card input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"]):not(.bg-transparent) {
+          background: #1a1d24 !important;
+          border-radius: 9999px !important;
+          padding: 0.8rem 1.25rem !important;
+          box-shadow:
+            inset 3px 3px 7px rgba(0, 0, 0, 0.5),
+            inset -3px -3px 7px rgba(255, 255, 255, 0.03) !important;
+          transition: box-shadow 0.15s ease;
+        }
+        .login-neu-card input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"]):not(.bg-transparent):focus {
+          box-shadow:
+            inset 2px 2px 5px rgba(0, 0, 0, 0.55),
+            inset -2px -2px 5px rgba(255, 255, 255, 0.03),
+            0 0 0 3px color-mix(in srgb, var(--brand) 35%, transparent) !important;
+        }
+        /* The password field's show/hide eye sits inside this same pill
+           (its wrapper is the only relatively-positioned field here), so
+           it keeps its extra right-side clearance even though the rule
+           above just reset padding on every side evenly. */
+        .login-neu-card .relative input:not(.bg-transparent) {
+          padding-right: 2.75rem !important;
+        }
+        .login-neu-card .btn-primary {
+          border-radius: 9999px;
+          background: linear-gradient(135deg, var(--brand), var(--brand-dark));
+          box-shadow:
+            -6px -6px 14px rgba(255, 255, 255, 0.035),
+            6px 6px 16px rgba(0, 0, 0, 0.5),
+            inset 0 1px 0 rgba(255, 255, 255, 0.16);
+          transition: box-shadow 0.12s ease, transform 0.12s ease;
+        }
+        .login-neu-card .btn-primary:active:not(:disabled) {
+          box-shadow:
+            inset 3px 3px 8px rgba(0, 0, 0, 0.4),
+            inset -2px -2px 6px rgba(255, 255, 255, 0.03);
+          transform: scale(0.99);
+        }
+        .login-neu-card .btn-primary:disabled {
+          background: #22262f;
+          box-shadow: inset 2px 2px 5px rgba(0, 0, 0, 0.4);
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .login-neu-card .btn-primary {
             transition: none;
           }
         }

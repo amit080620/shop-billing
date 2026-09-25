@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { loginAction } from "@/lib/actions/auth";
 import { AuthForm } from "@/app/(auth)/AuthForm";
-import { LanguageToggle } from "@/lib/i18n/LanguageToggle";
 import { getTranslator } from "@/lib/i18n/server";
 import { Login3DScene } from "./Login3DScene";
 
@@ -17,18 +16,18 @@ export default async function LoginPage() {
   const { lang, t } = await getTranslator();
 
   return (
-    <Login3DScene>
+    <Login3DScene lang={lang}>
       <div
         style={
           {
-            // Every var-backed class on this page (inputs, buttons, the
-            // language toggle, focus rings) reads its colour from these
-            // CSS custom properties. Scoping them once here — reusing the
-            // app's OWN real dark-theme token values (.dark in
-            // globals.css), not invented ones — keeps this screen pixel
-            // consistent with dark mode everywhere else, and is required
-            // (rather than plain Tailwind classes) because the global
-            // input rules apply their colours with !important.
+            // Every var-backed class on this page (inputs, buttons, focus
+            // rings) reads its colour from these CSS custom properties.
+            // Scoping them once here — reusing the app's OWN real
+            // dark-theme token values (.dark in globals.css), not
+            // invented ones — keeps this screen pixel consistent with
+            // dark mode everywhere else, and is required (rather than
+            // plain Tailwind classes) because the global input rules
+            // apply their colours with !important.
             "--background": "#0c0d11",
             "--surface": "#1c1f26",
             "--foreground": "#f4f5f7",
@@ -46,16 +45,12 @@ export default async function LoginPage() {
           } as React.CSSProperties
         }
       >
-        <div className="flex justify-end pb-4">
-          <LanguageToggle lang={lang} />
-        </div>
-
-        <div className="mb-6 text-center">
+        <div className="mb-7 text-center">
           <h1 className="text-2xl font-bold tracking-tight text-white">{t("login.title")}</h1>
           <p className="mt-1.5 text-sm text-white/60">{t("login.subtitle")}</p>
         </div>
 
-        <div className="rounded-3xl border border-white/15 bg-white/[0.07] p-6 shadow-[0_30px_80px_-20px_rgba(0,0,0,0.6)] backdrop-blur-xl [&_label]:text-white/80">
+        <div className="login-neu-card">
           <AuthForm
             action={loginAction}
             submitLabel={t("login.submit")}
@@ -65,7 +60,7 @@ export default async function LoginPage() {
               { name: "password", label: t("auth.password"), type: "password" },
             ]}
           />
-          <p className="mt-3 text-center text-sm">
+          <p className="mt-4 text-center text-sm">
             <Link href="/forgot-password" className="font-medium text-white/70 hover:text-white">
               {t("Forgot password?")}
             </Link>
