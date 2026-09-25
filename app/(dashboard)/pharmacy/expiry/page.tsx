@@ -5,11 +5,48 @@ import { getTranslator } from "@/lib/i18n/server";
 import { PageHeader } from "@/app/components/PageHeader";
 import { EmptyState } from "@/app/components/EmptyState";
 import { ShareExpiryWhatsApp } from "./ShareExpiryWhatsApp";
+import { DistributorReturnDraft } from "./DistributorReturnDraft";
 import { AlertCircle } from "lucide-react";
 import { BackLink } from "@/app/components/BackLink";
 
 function daysUntil(dateStr: string) {
   return Math.round((new Date(dateStr).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+}
+
+type Admin = ReturnType<typeof createSupabaseAdminClient>;
+
+/** For each product with a batch worth returning, the vendor of its
+ * MOST RECENT purchase (first row after ordering purchase_items by
+ * purchase date, descending) stands in for "who supplied this stock"
+ * — there's no batch-level purchase link in the schema, and re-buying
+ * the same medicine from a different distributor between orders is
+ * the rare case, not the common one. */
+async function buildVendorGroups(admin: Admin, shopId: string, batches: BatchRow[]) {
+  const productIds = [...new Set(batches.map((b) => b.product_id))];
+  const { data: purchaseItems } = await admin
+    .from("purchase_items")
+    .select("product_id, purchases!inner ( purchase_date, shop_id, vendor_id, vendors ( id, name, phone ) )")
+    .in("product_id", productIds)
+    .eq("purchases.shop_id", shopId)
+    .order("purchase_date", { foreignTable: "purchases", ascending: false });
+
+  const vendorByProduct = new Map<string, { id: string; name: string; phone: string | null }>();
+  for (const row of purchaseItems ?? []) {
+    if (!row.product_id || vendorByProduct.has(row.product_id)) continue;
+    const purchase = Array.isArray(row.purchases) ? row.purchases[0] : row.purchases;
+    const vendor = purchase ? (Array.isArray(purchase.vendors) ? purchase.vendors[0] : purchase.vendors) : null;
+    if (vendor) vendorByProduct.set(row.product_id, vendor);
+  }
+
+  const groups = new Map<string, { vendorId: string; vendorName: string; vendorPhone: string | null; rows: ReturnType<typeof toRow>[] }>();
+  for (const b of batches) {
+    const vendor = vendorByProduct.get(b.product_id);
+    if (!vendor) continue;
+    const existing = groups.get(vendor.id) ?? { vendorId: vendor.id, vendorName: vendor.name, vendorPhone: vendor.phone, rows: [] };
+    existing.rows.push(toRow(b));
+    groups.set(vendor.id, existing);
+  }
+  return [...groups.values()];
 }
 
 export default async function ExpiryAlertsPage() {
@@ -32,6 +69,13 @@ export default async function ExpiryAlertsPage() {
   const critical = (batches ?? []).filter((b) => { const d = daysUntil(b.expiry_date); return d >= 0 && d <= 30; });
   const upcoming = (batches ?? []).filter((b) => { const d = daysUntil(b.expiry_date); return d > 30 && d <= 90; });
 
+  // Worth a return conversation now (not the 31-90 day "keep an eye on
+  // it" bucket) — grouped by whichever vendor each product was most
+  // recently bought from, inferred from purchase history rather than
+  // a manual per-batch mapping step nobody would keep up with.
+  const returnable = [...expired, ...critical];
+  const returnGroups = returnable.length > 0 ? await buildVendorGroups(admin, session.shopId, returnable) : [];
+
   return (
     <div className="flex flex-col gap-3">
       <BackLink fallback="/pharmacy" />
@@ -51,6 +95,7 @@ export default async function ExpiryAlertsPage() {
             expired={expired.map(toRow)}
             critical={critical.map(toRow)}
           />
+          <DistributorReturnDraft groups={returnGroups} shopName={session.shopName} lang={lang} />
           {expired.length > 0 && <Group title={t("expiry.alreadyExpired", { count: expired.length })} batches={expired} t={t} />}
           {critical.length > 0 && <Group title={t("expiry.within30", { count: critical.length })} batches={critical} t={t} />}
           {upcoming.length > 0 && <Group title={t("expiry.days31to90", { count: upcoming.length })} batches={upcoming} t={t} />}
