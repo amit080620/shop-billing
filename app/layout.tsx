@@ -25,9 +25,15 @@ const notoSansDevanagari = Noto_Sans_Devanagari({
   display: "swap",
 });
 
+const SITE_URL = "https://bill.theray.in";
+const TITLE = "The Ray — Billing, GST & udhar for every kind of shop";
+const DESCRIPTION =
+  "GST billing, udhar reminders, stock and a daily health score for grocery, pharmacy, restaurants, salons, and every kind of shop in between. Free 14-day trial, no card needed.";
+
 export const metadata: Metadata = {
-  title: "The Ray - Shop Billing",
-  description: "Simple billing for small shops",
+  metadataBase: new URL(SITE_URL),
+  title: TITLE,
+  description: DESCRIPTION,
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
@@ -41,6 +47,21 @@ export const metadata: Metadata = {
       { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
     ],
     apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
+  },
+  // The preview card a shared link shows on WhatsApp, Google, etc. —
+  // the actual image comes from opengraph-image.tsx alongside this file,
+  // generated at request time rather than a static export.
+  openGraph: {
+    type: "website",
+    url: SITE_URL,
+    siteName: "The Ray",
+    title: TITLE,
+    description: DESCRIPTION,
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: TITLE,
+    description: DESCRIPTION,
   },
 };
 
