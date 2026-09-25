@@ -855,6 +855,10 @@ export const PAGE_TEXT: Record<string, [hi: string, mr: string]> = {
   "Sales / Bills": ["बिक्री / बिल", "विक्री / बिल"],
   "Restaurant orders": ["रेस्टोरेंट ऑर्डर", "रेस्टॉरंट ऑर्डर"],
 
+  // Shared PhoneInput component — used across ~15 forms app-wide
+  "10-digit mobile number": ["10 अंकों का मोबाइल नंबर", "10 अंकी मोबाइल नंबर"],
+  "For WhatsApp reminders": ["WhatsApp रिमाइंडर के लिए", "WhatsApp रिमाइंडरसाठी"],
+
   // Restaurant order screen
   "Tables": ["टेबल", "टेबल"],
   "All": ["सभी", "सर्व"],

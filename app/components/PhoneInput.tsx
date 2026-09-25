@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { digitsOnly } from "@/lib/phoneDigits";
+import { useT } from "@/lib/i18n/LangContext";
 
 export { digitsOnly };
 
@@ -28,7 +29,8 @@ export function PhoneInput(
     inputRef?: React.RefObject<HTMLInputElement | null>;
   },
 ) {
-  const { required, placeholder = "10-digit mobile number", className, inputRef } = props;
+  const { t } = useT();
+  const { required, placeholder = t("10-digit mobile number"), className, inputRef } = props;
 
   // Uncontrolled/form mode — a hidden input carries the genuine combined
   // "+91XXXXXXXXXX" value under the given `name`, so a native form

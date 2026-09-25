@@ -149,7 +149,7 @@ export function CustomersClient({
           </label>
           <label className="flex flex-col gap-1.5 text-sm">
             <span className="font-medium text-foreground">Phone</span>
-            <PhoneInput value={phone} onChange={setPhone} required placeholder="For WhatsApp reminders" />
+            <PhoneInput value={phone} onChange={setPhone} required placeholder={t("For WhatsApp reminders")} />
             <input type="hidden" name="phone" value={phone} />
           </label>
           <label className="flex flex-col gap-1.5 text-sm">
