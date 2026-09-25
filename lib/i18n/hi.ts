@@ -76,6 +76,7 @@ const hi: Record<string, string> = {
   "auth.password": "पासवर्ड",
   "login.submit": "लॉग इन करें",
   "auth.pleaseWait": "कृपया प्रतीक्षा करें…",
+  "Forgot password?": "पासवर्ड भूल गए?",
 
   // Signup
   "signup.title": "अपनी दुकान बनाएं",

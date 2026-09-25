@@ -76,6 +76,7 @@ const en: Record<string, string> = {
   "auth.password": "Password",
   "login.submit": "Log in",
   "auth.pleaseWait": "Please wait…",
+  "Forgot password?": "Forgot password?",
 
   // Signup
   "signup.title": "Set up your shop",

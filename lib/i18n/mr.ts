@@ -66,6 +66,7 @@ const mr: Record<string, string> = {
   "auth.password": "पासवर्ड",
   "login.submit": "लॉग इन करा",
   "auth.pleaseWait": "कृपया थांबा…",
+  "Forgot password?": "पासवर्ड विसरलात?",
 
   // Signup
   "signup.title": "तुमचे दुकान तयार करा",
