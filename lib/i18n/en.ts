@@ -99,6 +99,8 @@ const en: Record<string, string> = {
   "move.servicejobs.detail": "Customers may be waiting on these",
   "move.rentals.title": "{n} rental(s) not returned yet",
   "move.rentals.detail": "Past their due date",
+  "move.idleassets.title": "{n} item(s) haven't been rented in 30+ days",
+  "move.idleassets.detail": "Worth a discount or a promo push to get them moving again",
   "move.metalrate.title": "Today's gold/silver rate isn't set yet",
   "move.metalrate.detail": "Every bill today needs it to be accurate",
   "move.stuckorders.title": "{n} order(s) open for over 90 minutes",

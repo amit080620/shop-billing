@@ -37,6 +37,7 @@ export async function computeTodaysMoves(shopId: string, businessType: string, l
       businessType === "transport" ? vehicleDocsMove(admin, shopId, t) : null,
       businessType === "service" ? serviceJobsMove(admin, shopId, t) : null,
       businessType === "rental" ? rentalsMove(admin, shopId, t) : null,
+      businessType === "rental" ? idleAssetsMove(admin, shopId, t) : null,
       businessType === "jewellery" ? metalRateMove(admin, shopId, t) : null,
       businessType === "restaurant" ? stuckOrdersMove(admin, shopId, t) : null,
       businessType === "salon" ? noShowMove(admin, shopId, t) : null,
@@ -288,6 +289,45 @@ async function rentalsMove(admin: Admin, shopId: string, t: T): Promise<Move | n
     detail: t("move.rentals.detail"),
     href: "/rentals",
     penalty: Math.min(30, count * 7),
+  };
+}
+
+/** A rental asset sitting untouched for a month is quietly losing
+ * money every day it isn't out — the same way a stopped clock still
+ * costs rent. Nothing currently surfaces which items in the catalog
+ * have simply gone cold, as opposed to which bookings are overdue. */
+async function idleAssetsMove(admin: Admin, shopId: string, t: T): Promise<Move | null> {
+  const thirtyDaysAgo = new Date(Date.now() - 30 * 86400000);
+  const { data: products } = await admin.from("products").select("id, created_at").eq("shop_id", shopId).lt("created_at", thirtyDaysAgo.toISOString());
+  if (!products || products.length === 0) return null;
+
+  const { data: rentals } = await admin
+    .from("rentals")
+    .select("start_date, rental_items ( product_id )")
+    .eq("shop_id", shopId)
+    .neq("status", "cancelled");
+
+  const lastRentedByProduct = new Map<string, string>();
+  for (const r of rentals ?? []) {
+    for (const item of r.rental_items ?? []) {
+      if (!item.product_id) continue;
+      const existing = lastRentedByProduct.get(item.product_id);
+      if (!existing || r.start_date > existing) lastRentedByProduct.set(item.product_id, r.start_date);
+    }
+  }
+
+  const cutoffIso = thirtyDaysAgo.toISOString();
+  const count = products.filter((p) => {
+    const lastRented = lastRentedByProduct.get(p.id);
+    return !lastRented || lastRented < cutoffIso;
+  }).length;
+  if (count === 0) return null;
+  return {
+    id: "idleassets",
+    title: t("move.idleassets.title", { n: count }),
+    detail: t("move.idleassets.detail"),
+    href: "/products",
+    penalty: Math.min(20, count * 3),
   };
 }
 
