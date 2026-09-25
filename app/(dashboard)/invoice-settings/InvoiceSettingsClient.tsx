@@ -61,7 +61,7 @@ export function InvoiceSettingsClient({
           icon={<img src="/assets/ray-icons/invoice.svg" alt="" className="h-9 w-9 md:h-11 md:w-11" />}
           bareIcon
         />
-        <p className="text-sm text-muted">Only the shop owner can change invoice branding.</p>
+        <p className="text-sm text-muted">{t("Only the shop owner can change invoice branding.")}</p>
       </div>
     );
   }
@@ -86,7 +86,7 @@ export function InvoiceSettingsClient({
       <BackLink fallback="/dashboard" />
       <PageHeader
         title={t("Invoice design")}
-        subtitle="Your shop's branding on invoices and prescriptions — the line items, tax breakup, and totals stay fixed for GST accuracy; these are the parts you control."
+        subtitle={t("Your shop's branding on invoices and prescriptions — the line items, tax breakup, and totals stay fixed for GST accuracy; these are the parts you control.")}
         // eslint-disable-next-line @next/next/no-img-element -- small branded SVG icon
         icon={<img src="/assets/ray-icons/invoice.svg" alt="" className="h-9 w-9 md:h-11 md:w-11" />}
         bareIcon
@@ -97,7 +97,7 @@ export function InvoiceSettingsClient({
         <input
           value={tagline}
           onChange={(e) => setTagline(e.target.value)}
-          placeholder="e.g. Quality you can trust since 1995"
+          placeholder={t("e.g. Quality you can trust since 1995")}
           className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand"
         />
       </label>
@@ -107,18 +107,18 @@ export function InvoiceSettingsClient({
         <input
           value={footerText}
           onChange={(e) => setFooterText(e.target.value)}
-          placeholder="Thank you for your business!"
+          placeholder={t("Thank you for your business!")}
           className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand"
         />
       </label>
 
       <label className="flex flex-col gap-1.5 text-sm">
-        <span className="font-medium text-foreground">Terms & conditions (optional)</span>
+        <span className="font-medium text-foreground">{t("Terms & conditions (optional)")}</span>
         <textarea
           value={terms}
           onChange={(e) => setTerms(e.target.value)}
           rows={3}
-          placeholder={"Goods once sold will not be taken back.\nSubject to local jurisdiction."}
+          placeholder={t("Goods once sold will not be taken back.\nSubject to local jurisdiction.")}
           className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand"
         />
       </label>
@@ -129,7 +129,7 @@ export function InvoiceSettingsClient({
           value={bankDetails}
           onChange={(e) => setBankDetails(e.target.value)}
           rows={2}
-          placeholder={"A/c name: ...\nA/c No: ... · IFSC: ..."}
+          placeholder={t("A/c name: ...\nA/c No: ... · IFSC: ...")}
           className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand"
         />
       </label>
@@ -142,7 +142,7 @@ export function InvoiceSettingsClient({
               // eslint-disable-next-line @next/next/no-img-element -- small settings preview
               <img src={headerImageUrl} alt="" className="h-full w-full object-contain" />
             ) : uploadingImage === "header" ? (
-              "Uploading…"
+              t("Uploading…")
             ) : (
               t("Tap to upload")
             )}
@@ -165,7 +165,7 @@ export function InvoiceSettingsClient({
               // eslint-disable-next-line @next/next/no-img-element -- small settings preview
               <img src={footerImageUrl} alt="" className="h-full w-full object-contain" />
             ) : uploadingImage === "footer" ? (
-              "Uploading…"
+              t("Uploading…")
             ) : (
               t("Tap to upload")
             )}
@@ -220,7 +220,7 @@ export function InvoiceSettingsClient({
         disabled={isPending}
         className={`btn-primary w-full text-center disabled:opacity-60 ${saved ? "animate-save-success" : ""}`}
       >
-        {isPending ? "Saving…" : saved ? "Saved ✓" : "Save"}
+        {isPending ? t("products.saving") : saved ? t("Saved ✓") : t("common.save")}
       </button>
     </div>
   );

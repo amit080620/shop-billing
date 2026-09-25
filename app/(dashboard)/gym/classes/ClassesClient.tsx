@@ -31,11 +31,11 @@ type GymClass = {
 const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 const DAY_SHORT = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
-function SubmitButton() {
+function SubmitButton({ t }: { t: (key: string) => string }) {
   const { pending } = useFormStatus();
   return (
     <button type="submit" disabled={pending} className="btn-primary-sm disabled:opacity-60">
-      {pending ? "Saving…" : "+ Add class"}
+      {pending ? t("products.saving") : t("+ Add class")}
     </button>
   );
 }
@@ -89,11 +89,11 @@ export function ClassesClient({
       <BackLink fallback="/gym/members" />
       <PageHeader
         title={t("Classes")}
-        subtitle="Weekly schedule — a lightweight roster, not a live capacity/waitlist system."
+        subtitle={t("Weekly schedule — a lightweight roster, not a live capacity/waitlist system.")}
         action={
           isOwner ? (
             <button onClick={() => setShowForm((v) => !v)} className="btn-primary-sm">
-              + Class
+              + {t("Class")}
             </button>
           ) : undefined
         }
@@ -102,9 +102,9 @@ export function ClassesClient({
 
       {showForm && (
         <form action={formAction} className="flex flex-col gap-3 rounded-xl border border-border bg-surface p-4">
-          <input name="name" placeholder="Class name (e.g. Yoga, Zumba)" required className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand" />
+          <input name="name" placeholder={t("Class name (e.g. Yoga, Zumba)")} required className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand" />
           <select name="trainerId" className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand">
-            <option value="">No trainer assigned</option>
+            <option value="">{t("No trainer assigned")}</option>
             {trainers.map((t) => (
               <option key={t.id} value={t.id}>
                 {t.name}
@@ -126,21 +126,21 @@ export function ClassesClient({
           </div>
           <div className="grid grid-cols-3 gap-2">
             <input name="startTime" type="time" required className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand" />
-            <input name="durationMinutes" type="number" min="15" step="15" defaultValue={60} placeholder="Minutes" className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand" />
-            <input name="capacity" type="number" min="1" defaultValue={15} placeholder="Capacity" className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand" />
+            <input name="durationMinutes" type="number" min="15" step="15" defaultValue={60} placeholder={t("Minutes")} className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand" />
+            <input name="capacity" type="number" min="1" defaultValue={15} placeholder={t("Capacity")} className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand" />
           </div>
           {state?.error && <p className="text-sm text-danger">{state.error}</p>}
           <div className="flex gap-2">
-            <SubmitButton />
+            <SubmitButton t={t} />
             <button type="button" onClick={() => setShowForm(false)} className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-muted">
-              Cancel
+              {t("common.cancel")}
             </button>
           </div>
         </form>
       )}
 
       {classes.length === 0 ? (
-        <EmptyState text="No classes set up yet." />
+        <EmptyState text={t("No classes set up yet.")} />
       ) : (
         DAYS.map((dayName, dow) => {
           const dayClasses = classes.filter((c) => c.dayOfWeek === dow && c.isActive);
@@ -148,7 +148,7 @@ export function ClassesClient({
           return (
             <div key={dow} className="flex flex-col gap-2">
               <p className={`text-xs font-semibold ${dow === todayDow ? "text-brand-text" : "text-muted"}`}>
-                {dayName} {dow === todayDow ? "· Today" : ""}
+                {t(dayName)} {dow === todayDow ? `· ${t("Today")}` : ""}
               </p>
               <ul className="flex flex-col gap-2">
                 {dayClasses.map((c) => (
@@ -171,11 +171,11 @@ export function ClassesClient({
                             }
                             className="text-muted"
                           >
-                            Deactivate
+                            {t("Deactivate")}
                           </button>
                           <button
                             onClick={() => {
-                              if (!confirm(`Delete "${c.name}"?`)) return;
+                              if (!confirm(t('Delete "{name}"?', { name: c.name }))) return;
                               setDeletingId(c.id);
                               startTransition(async () => {
                                 await deleteClassAction(c.id);
@@ -184,7 +184,7 @@ export function ClassesClient({
                             }}
                             className="text-danger"
                           >
-                            Delete
+                            {t("common.delete")}
                           </button>
                         </div>
                       )}
@@ -192,7 +192,7 @@ export function ClassesClient({
                     {dow === todayDow && (
                       <div className="mt-2 flex flex-col gap-1.5">
                         <p className="text-[11px] text-muted">
-                          {c.todayBookings.length}/{c.capacity} booked today
+                          {t("{n}/{cap} booked today", { n: c.todayBookings.length, cap: c.capacity })}
                         </p>
                         {c.todayBookings.length > 0 && (
                           <ul className="flex flex-wrap gap-1">
@@ -215,7 +215,7 @@ export function ClassesClient({
                           </ul>
                         )}
                         <button onClick={() => setBookingFor(c)} className="self-start text-xs font-medium text-brand">
-                          + Book a member
+                          + {t("Book a member")}
                         </button>
                       </div>
                     )}
@@ -230,7 +230,7 @@ export function ClassesClient({
       {bookingFor && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 sm:items-center" onClick={() => setBookingFor(null)}>
           <div className="w-full max-w-sm rounded-t-2xl bg-surface p-5 sm:rounded-2xl" onClick={(e) => e.stopPropagation()}>
-            <p className="text-sm font-semibold text-foreground">Book into {bookingFor.name}</p>
+            <p className="text-sm font-semibold text-foreground">{t("Book into {name}", { name: bookingFor.name })}</p>
             <div className="mt-3">
               <SearchableSelect
                 lang={lang}
@@ -245,11 +245,11 @@ export function ClassesClient({
                     router.refresh();
                   })
                 }
-                placeholder="Search member…"
+                placeholder={t("Search member…")}
               />
             </div>
             <button onClick={() => setBookingFor(null)} className="mt-3 w-full rounded-lg border border-border px-4 py-2 text-sm font-medium text-muted">
-              Close
+              {t("common.close")}
             </button>
           </div>
         </div>

@@ -39,11 +39,11 @@ const STATUS_TONE: Record<string, string> = {
 };
 const SOURCES = ["Walk-in", "Instagram", "Facebook", "Google", "Referral", "WhatsApp"];
 
-function SubmitButton() {
+function SubmitButton({ t }: { t: (key: string) => string }) {
   const { pending } = useFormStatus();
   return (
     <button type="submit" disabled={pending} className="btn-primary-sm disabled:opacity-60">
-      {pending ? "Saving…" : "+ Add lead"}
+      {pending ? t("products.saving") : t("+ Add lead")}
     </button>
   );
 }
@@ -77,21 +77,21 @@ export function LeadsClient({ leads }: { leads: Lead[] }) {
       <BackLink fallback="/gym/members" />
       <PageHeader
         title={t("Leads")}
-        subtitle="Trial enquiries and walk-ins — track who to follow up with."
+        subtitle={t("Trial enquiries and walk-ins — track who to follow up with.")}
         action={
           <button onClick={() => setShowForm((v) => !v)} className="btn-primary-sm">
-            + Lead
+            + {t("Lead")}
           </button>
         }
         icon={<UserPlus size={18} strokeWidth={1.8} />}
       />
 
       {showForm && (
-        <Popup open={showForm} onClose={() => setShowForm(false)} title="Add lead">
+        <Popup open={showForm} onClose={() => setShowForm(false)} title={t("Add lead")}>
         <form action={formAction} className="flex flex-col gap-3 rounded-xl border border-border bg-surface p-4">
-          <input name="name" placeholder="Name" required className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand" />
+          <input name="name" placeholder={t("Name")} required className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand" />
           <PhoneInput mode="form" name="phone" required />
-          <input name="interestedPlan" placeholder="Interested plan (optional)" className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand" />
+          <input name="interestedPlan" placeholder={t("Interested plan (optional)")} className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand" />
           <input type="hidden" name="source" value={source} />
           <div className="flex flex-wrap gap-1.5">
             {SOURCES.map((s) => (
@@ -101,15 +101,15 @@ export function LeadsClient({ leads }: { leads: Lead[] }) {
                 onClick={() => setSource(s)}
                 className={`rounded-full border px-2.5 py-1 text-xs font-medium ${source === s ? "border-brand bg-surface text-brand-text" : "border-transparent bg-surface/60 text-muted"}`}
               >
-                {s}
+                {t(s)}
               </button>
             ))}
           </div>
           {state?.error && <p className="text-sm text-danger">{state.error}</p>}
           <div className="flex gap-2">
-            <SubmitButton />
+            <SubmitButton t={t} />
             <button type="button" onClick={() => setShowForm(false)} className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-muted">
-              Cancel
+              {t("common.cancel")}
             </button>
           </div>
         </form>
@@ -122,7 +122,7 @@ export function LeadsClient({ leads }: { leads: Lead[] }) {
           className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium ${filter === "all" ? "border-brand bg-brand-soft text-brand-text" : "border-border text-muted"}`}
           style={filter === "all" ? { boxShadow: "var(--elev-xs)" } : undefined}
         >
-          All
+          {t("All")}
         </button>
         {STATUSES.map((s) => (
           <button
@@ -131,13 +131,13 @@ export function LeadsClient({ leads }: { leads: Lead[] }) {
             className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium ${filter === s ? "border-brand bg-brand-soft text-brand-text" : "border-border text-muted"}`}
             style={filter === s ? { boxShadow: "var(--elev-xs)" } : undefined}
           >
-            {STATUS_LABELS[s]}
+            {t(STATUS_LABELS[s])}
           </button>
         ))}
       </div>
 
       {filtered.length === 0 ? (
-        <EmptyState text="No leads here." />
+        <EmptyState text={t("No leads here.")} />
       ) : (
         <ul className="flex flex-col gap-2 md:grid md:grid-cols-2 md:gap-3">
           {filtered.map((lead) => (
@@ -151,7 +151,7 @@ export function LeadsClient({ leads }: { leads: Lead[] }) {
                     {lead.interestedPlan ? ` · ${lead.interestedPlan}` : ""}
                   </p>
                 </div>
-                <span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-medium ${STATUS_TONE[lead.status]}`}>{STATUS_LABELS[lead.status]}</span>
+                <span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-medium ${STATUS_TONE[lead.status]}`}>{t(STATUS_LABELS[lead.status])}</span>
               </div>
               <div className="mt-2 flex flex-wrap items-center gap-1.5">
                 <select
@@ -167,7 +167,7 @@ export function LeadsClient({ leads }: { leads: Lead[] }) {
                 >
                   {STATUSES.map((s) => (
                     <option key={s} value={s}>
-                      {STATUS_LABELS[s]}
+                      {t(STATUS_LABELS[s])}
                     </option>
                   ))}
                 </select>
@@ -177,7 +177,7 @@ export function LeadsClient({ leads }: { leads: Lead[] }) {
                   rel="noopener noreferrer"
                   className="flex items-center gap-1 rounded-lg border border-brand bg-brand-soft px-2.5 py-1 text-xs font-medium text-brand-text"
                 >
-                  <MessageCircle size={12} /> WhatsApp
+                  <MessageCircle size={12} /> {t("WhatsApp")}
                 </a>
                 {lead.status === "converted" && (
                   <Link
@@ -189,7 +189,7 @@ export function LeadsClient({ leads }: { leads: Lead[] }) {
                 )}
                 <button
                   onClick={() => {
-                    if (!confirm("Delete this lead?")) return;
+                    if (!confirm(t("Delete this lead?"))) return;
                     setDeletingId(lead.id);
                     startTransition(async () => {
                       await deleteLeadAction(lead.id);
@@ -199,7 +199,7 @@ export function LeadsClient({ leads }: { leads: Lead[] }) {
                   disabled={isPending}
                   className="ml-auto text-xs text-danger disabled:opacity-50"
                 >
-                  Delete
+                  {t("common.delete")}
                 </button>
               </div>
             </li>

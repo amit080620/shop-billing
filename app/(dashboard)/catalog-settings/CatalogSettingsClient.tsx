@@ -73,7 +73,7 @@ export function CatalogSettingsClient({
       <BackLink fallback="/dashboard" />
       <PageHeader
         title={t("Catalog link")}
-        subtitle="Share one link where anyone can browse your items with photos and order — no app, no login for them."
+        subtitle={t("Share one link where anyone can browse your items with photos and order — no app, no login for them.")}
         icon={<Store size={18} strokeWidth={1.8} />}
       />
 
@@ -94,7 +94,7 @@ export function CatalogSettingsClient({
         </label>
         {deliveryEnabled && (
           <label className="flex flex-col gap-1">
-            <span className="text-xs text-muted">Delivery charge (₹)</span>
+            <span className="text-xs text-muted">{t("Delivery charge (₹)")}</span>
             <input
               type="number"
               min={0}
@@ -102,7 +102,7 @@ export function CatalogSettingsClient({
               onChange={(e) => setDeliveryCharge(Number(e.target.value) || 0)}
               className="rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-brand"
             />
-            <span className="text-xs text-muted">Shown to the customer at checkout and added to the final bill.</span>
+            <span className="text-xs text-muted">{t("Shown to the customer at checkout and added to the final bill.")}</span>
           </label>
         )}
       </div>
@@ -123,7 +123,7 @@ export function CatalogSettingsClient({
         {isClosed && (
           <div className="grid grid-cols-2 gap-2">
             <label className="flex flex-col gap-1">
-              <span className="text-xs text-muted">Closed from</span>
+              <span className="text-xs text-muted">{t("Closed from")}</span>
               <input
                 type="date"
                 value={closedFrom}
@@ -132,7 +132,7 @@ export function CatalogSettingsClient({
               />
             </label>
             <label className="flex flex-col gap-1">
-              <span className="text-xs text-muted">Reopens on</span>
+              <span className="text-xs text-muted">{t("Reopens on")}</span>
               <input
                 type="date"
                 value={closedUntil}
@@ -154,14 +154,14 @@ export function CatalogSettingsClient({
 
       {publicUrl && enabled && (
         <div className="flex flex-col gap-2 rounded-xl border border-border bg-surface p-4">
-          <p className="text-xs font-medium text-brand-text">Your catalog link — share this anywhere</p>
+          <p className="text-xs font-medium text-brand-text">{t("Your catalog link — share this anywhere")}</p>
           <p className="break-all rounded-lg bg-surface px-3 py-2 text-xs text-foreground">{publicUrl}</p>
           <div className="flex gap-2">
             <button
               onClick={() => navigator.clipboard.writeText(publicUrl)}
               className="rounded-lg border border-brand px-3 py-1.5 text-xs font-medium text-brand-text"
             >
-              Copy link
+              {t("Copy link")}
             </button>
             <a
               href={`https://wa.me/?text=${encodeURIComponent(`Browse & order from us: ${publicUrl}`)}`}
@@ -170,7 +170,7 @@ export function CatalogSettingsClient({
               className="flex items-center gap-1 rounded-lg border border-brand px-3 py-1.5 text-xs font-medium text-brand-text"
             >
               {/* eslint-disable-next-line @next/next/no-img-element -- small branded SVG icon */}
-              <img src="/assets/ray-icons/share.svg" alt="" className="h-3.5 w-3.5" /> Share on WhatsApp
+              <img src="/assets/ray-icons/share.svg" alt="" className="h-3.5 w-3.5" /> {t("Share on WhatsApp")}
             </a>
           </div>
         </div>
@@ -181,7 +181,7 @@ export function CatalogSettingsClient({
         <input
           value={bannerText}
           onChange={(e) => setBannerText(e.target.value)}
-          placeholder="e.g. Free delivery above ₹500!"
+          placeholder={t("e.g. Free delivery above ₹500!")}
           className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand"
         />
       </label>
@@ -196,7 +196,7 @@ export function CatalogSettingsClient({
         disabled={isPending}
         className={`btn-primary w-full text-center disabled:opacity-60 ${saved ? "animate-save-success" : ""}`}
       >
-        {isPending ? "Saving…" : saved ? "Saved ✓" : "Save"}
+        {isPending ? t("products.saving") : saved ? t("Saved ✓") : t("common.save")}
       </button>
 
       <Link href="/catalog-orders" className="flex items-center justify-center gap-1.5 rounded-xl border border-border bg-surface px-4 py-3.5 text-center text-sm font-medium text-brand shadow-sm">

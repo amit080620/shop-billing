@@ -17,20 +17,20 @@ import { BackLink } from "@/app/components/BackLink";
 
 type Plan = { id: string; name: string; durationDays: number; price: number; ptSessionsIncluded: number; isActive: boolean };
 
-function SubmitButton() {
+function SubmitButton({ t }: { t: (key: string) => string }) {
   const { pending } = useFormStatus();
   return (
     <button type="submit" disabled={pending} className="btn-primary-sm disabled:opacity-60">
-      {pending ? "Saving…" : "+ Add plan"}
+      {pending ? t("products.saving") : t("+ Add plan")}
     </button>
   );
 }
 
 const PRESET_DURATIONS = [
-  { label: "1 Month", days: 30 },
-  { label: "3 Months", days: 90 },
-  { label: "6 Months", days: 180 },
-  { label: "12 Months", days: 365 },
+  { label: "duration.1m", days: 30 },
+  { label: "duration.3m", days: 90 },
+  { label: "duration.6m", days: 180 },
+  { label: "duration.12m", days: 365 },
 ];
 
 export function PlansClient({ plans }: { plans: Plan[] }) {
@@ -47,7 +47,7 @@ export function PlansClient({ plans }: { plans: Plan[] }) {
       const result = await createMembershipPlanAction(prev, formData);
       if (!result?.error) {
         setShowForm(false);
-        showToast("Plan created");
+        showToast(t("Plan created"));
         router.refresh();
       }
       return result;
@@ -62,16 +62,16 @@ export function PlansClient({ plans }: { plans: Plan[] }) {
         title={t("Membership plans")}
         action={
           <button onClick={() => setShowForm((v) => !v)} className="btn-primary-sm">
-            + Plan
+            + {t("Plan")}
           </button>
         }
         icon={<ListChecks size={18} strokeWidth={1.8} />}
       />
 
       {showForm && (
-        <Popup open={showForm} onClose={() => setShowForm(false)} title="Add plan">
+        <Popup open={showForm} onClose={() => setShowForm(false)} title={t("Add plan")}>
         <form action={formAction} className="flex flex-col gap-3 rounded-xl border border-border bg-surface p-4">
-          <input name="name" placeholder="Plan name (e.g. Gold — 3 Months)" required className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand" />
+          <input name="name" placeholder={t("Plan name (e.g. Gold — 3 Months)")} required className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand" />
           <div className="flex flex-wrap gap-1.5">
             {PRESET_DURATIONS.map((d) => (
               <button
@@ -80,7 +80,7 @@ export function PlansClient({ plans }: { plans: Plan[] }) {
                 onClick={() => setDurationDays(d.days)}
                 className={`rounded-full border px-2.5 py-1 text-xs font-medium ${durationDays === d.days ? "border-brand bg-surface text-brand-text" : "border-transparent bg-surface/60 text-muted"}`}
               >
-                {d.label}
+                {t(d.label)}
               </button>
             ))}
           </div>
@@ -94,12 +94,12 @@ export function PlansClient({ plans }: { plans: Plan[] }) {
             className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand"
           />
           <input name="price" type="number" min="0" step="0.01" placeholder={t("Price (₹)")} required className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand" />
-          <input name="ptSessionsIncluded" type="number" min="0" step="1" placeholder="PT sessions included (0 if none)" className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand" />
+          <input name="ptSessionsIncluded" type="number" min="0" step="1" placeholder={t("PT sessions included (0 if none)")} className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand" />
           {state?.error && <p className="text-sm text-danger">{state.error}</p>}
           <div className="flex gap-2">
-            <SubmitButton />
+            <SubmitButton t={t} />
             <button type="button" onClick={() => setShowForm(false)} className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-muted">
-              Cancel
+              {t("common.cancel")}
             </button>
           </div>
         </form>
@@ -107,7 +107,7 @@ export function PlansClient({ plans }: { plans: Plan[] }) {
       )}
 
       {plans.length === 0 ? (
-        <EmptyState text="No plans yet — add your first membership plan (e.g. Monthly, Quarterly, Yearly)." />
+        <EmptyState text={t("No plans yet — add your first membership plan (e.g. Monthly, Quarterly, Yearly).")} />
       ) : (
         <ul className="flex flex-col gap-2 md:grid md:grid-cols-2 md:gap-3">
           {plans.map((p) => (
@@ -116,10 +116,10 @@ export function PlansClient({ plans }: { plans: Plan[] }) {
                 <div>
                   <p className="text-sm font-medium text-foreground">{p.name}</p>
                   <p className="text-xs text-muted">
-                    {p.durationDays} days · {formatMoney(p.price)}
-                    {p.ptSessionsIncluded > 0 ? ` · ${p.ptSessionsIncluded} PT sessions` : ""}
+                    {t("{n} days", { n: p.durationDays })} · {formatMoney(p.price)}
+                    {p.ptSessionsIncluded > 0 ? ` · ${t("{n} PT sessions", { n: p.ptSessionsIncluded })}` : ""}
                   </p>
-                  {!p.isActive && <span className="mt-1 inline-block rounded-full bg-danger/15 px-2 py-0.5 text-[11px] text-danger">Inactive</span>}
+                  {!p.isActive && <span className="mt-1 inline-block rounded-full bg-danger/15 px-2 py-0.5 text-[11px] text-danger">{t("Inactive")}</span>}
                 </div>
                 <div className="flex shrink-0 gap-2 text-xs">
                   <button
@@ -132,22 +132,22 @@ export function PlansClient({ plans }: { plans: Plan[] }) {
                     disabled={isPending}
                     className="font-medium text-muted disabled:opacity-50"
                   >
-                    {p.isActive ? "Deactivate" : "Activate"}
+                    {p.isActive ? t("Deactivate") : t("Activate")}
                   </button>
                   <button
                     onClick={() => {
-                      if (!confirm(`Delete "${p.name}"?`)) return;
+                      if (!confirm(t('Delete "{name}"?', { name: p.name }))) return;
                       setDeletingId(p.id);
                       startTransition(async () => {
                         await deletePlanAction(p.id);
-                        showToast("Plan deleted", "info");
+                        showToast(t("Plan deleted"), "info");
                         router.refresh();
                       });
                     }}
                     disabled={isPending}
                     className="font-medium text-danger disabled:opacity-50"
                   >
-                    Delete
+                    {t("common.delete")}
                   </button>
                 </div>
               </div>

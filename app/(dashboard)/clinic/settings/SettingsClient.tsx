@@ -114,53 +114,53 @@ export function SettingsClient({
       <BackLink fallback="/clinic" />
       <PageHeader
         title={t("Prescription pad settings")}
-        subtitle="Set your letterhead once — every prescription you print uses this."
+        subtitle={t("Set your letterhead once — every prescription you print uses this.")}
         icon={<Stethoscope size={18} strokeWidth={1.8} />}
       />
 
       <label className="flex flex-col gap-1.5 text-sm">
-        <span className="font-medium text-foreground">Specialty</span>
+        <span className="font-medium text-foreground">{t("Specialty")}</span>
         <select value={specialty} onChange={(e) => setSpecialty(e.target.value)} className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand">
-          <option value="general">General / Other</option>
-          <option value="dental">Dental — adds a visual tooth chart</option>
-          <option value="cardiology">Cardiology — adds a vitals panel</option>
-          <option value="physiotherapy">Physiotherapy — adds a vitals panel</option>
-          <option value="orthopedic">Orthopedic — adds a vitals panel</option>
-          <option value="ophthalmology">Ophthalmology / Eye — adds a vitals panel</option>
-          <option value="gynecology">Gynecology — adds a vitals panel</option>
-          <option value="ent">ENT — adds a vitals panel</option>
-          <option value="psychiatry">Psychiatry — adds a vitals panel</option>
-          <option value="dermatology">Dermatology — adds a vitals panel + before/after photos</option>
-          <option value="pediatric">Pediatric — adds a growth chart</option>
+          <option value="general">{t("General / Other")}</option>
+          <option value="dental">{t("Dental — adds a visual tooth chart")}</option>
+          <option value="cardiology">{t("Cardiology — adds a vitals panel")}</option>
+          <option value="physiotherapy">{t("Physiotherapy — adds a vitals panel")}</option>
+          <option value="orthopedic">{t("Orthopedic — adds a vitals panel")}</option>
+          <option value="ophthalmology">{t("Ophthalmology / Eye — adds a vitals panel")}</option>
+          <option value="gynecology">{t("Gynecology — adds a vitals panel")}</option>
+          <option value="ent">{t("ENT — adds a vitals panel")}</option>
+          <option value="psychiatry">{t("Psychiatry — adds a vitals panel")}</option>
+          <option value="dermatology">{t("Dermatology — adds a vitals panel + before/after photos")}</option>
+          <option value="pediatric">{t("Pediatric — adds a growth chart")}</option>
         </select>
-        <p className="text-xs text-muted">Changes what shows up on the New Prescription screen — just extra structured fields to fill in, nothing is auto-calculated or diagnosed.</p>
+        <p className="text-xs text-muted">{t("Changes what shows up on the New Prescription screen — just extra structured fields to fill in, nothing is auto-calculated or diagnosed.")}</p>
       </label>
 
       <label className="flex flex-col gap-1.5 text-sm">
-        <span className="font-medium text-foreground">Header (doctor name, qualifications, registration no.)</span>
+        <span className="font-medium text-foreground">{t("Header (doctor name, qualifications, registration no.)")}</span>
         <textarea
           value={headerText}
           onChange={(e) => setHeaderText(e.target.value)}
           rows={4}
-          placeholder={"Dr. Ramesh Kumar\nMBBS, MD (Medicine)\nReg. No. MH12345"}
+          placeholder={t("Dr. Ramesh Kumar\nMBBS, MD (Medicine)\nReg. No. MH12345")}
           className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand"
         />
       </label>
 
       <label className="flex items-center gap-2 text-sm text-foreground">
         <input type="checkbox" checked={showShopLogo} onChange={(e) => setShowShopLogo(e.target.checked)} className="h-4 w-4 rounded border-border" />
-        Also show clinic logo (from More → Settings) at the top
+        {t("Also show clinic logo (from More → Settings) at the top")}
       </label>
 
       <div className="grid grid-cols-2 gap-3">
         <div className="flex flex-col gap-1.5 text-sm">
-          <span className="font-medium text-foreground">Letterhead banner (optional)</span>
+          <span className="font-medium text-foreground">{t("Letterhead banner (optional)")}</span>
           <label className="relative flex h-20 cursor-pointer items-center justify-center overflow-hidden rounded-lg border border-dashed border-border bg-surface text-xs text-muted">
             {headerImageUrl ? (
               // eslint-disable-next-line @next/next/no-img-element -- small settings preview
               <img src={headerImageUrl} alt="" className="h-full w-full object-contain" />
             ) : uploadingImage === "header" ? (
-              "Uploading…"
+              t("Uploading…")
             ) : (
               t("Tap to upload")
             )}
@@ -177,13 +177,13 @@ export function SettingsClient({
           </label>
         </div>
         <div className="flex flex-col gap-1.5 text-sm">
-          <span className="font-medium text-foreground">Footer image / stamp (optional)</span>
+          <span className="font-medium text-foreground">{t("Footer image / stamp (optional)")}</span>
           <label className="relative flex h-20 cursor-pointer items-center justify-center overflow-hidden rounded-lg border border-dashed border-border bg-surface text-xs text-muted">
             {footerImageUrl ? (
               // eslint-disable-next-line @next/next/no-img-element -- small settings preview
               <img src={footerImageUrl} alt="" className="h-full w-full object-contain" />
             ) : uploadingImage === "footer" ? (
-              "Uploading…"
+              t("Uploading…")
             ) : (
               t("Tap to upload")
             )}
@@ -202,56 +202,55 @@ export function SettingsClient({
       </div>
       {imageError && <p className="text-sm text-danger">{imageError}</p>}
       <p className="-mt-2 text-xs text-muted">
-        Best size: about 800×200px for the letterhead banner, 800×150px for the footer (wide, short strips work best on an A4 print) — PNG/JPG/WEBP, under 2MB.
+        {t("Best size: about 800×200px for the letterhead banner, 800×150px for the footer (wide, short strips work best on an A4 print) — PNG/JPG/WEBP, under 2MB.")}
       </p>
 
       <label className="flex flex-col gap-1.5 text-sm">
-        <span className="font-medium text-foreground">Footer (clinic timings, address, contact, disclaimer)</span>
+        <span className="font-medium text-foreground">{t("Footer (clinic timings, address, contact, disclaimer)")}</span>
         <textarea
           value={footerText}
           onChange={(e) => setFooterText(e.target.value)}
           rows={3}
-          placeholder={"Mon–Sat: 10am–2pm, 6pm–9pm\n123 MG Road, Pune · 98765 43210"}
+          placeholder={t("Mon–Sat: 10am–2pm, 6pm–9pm\n123 MG Road, Pune · 98765 43210")}
           className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand"
         />
       </label>
 
       <div className="flex flex-col gap-2">
-        <span className="text-sm font-medium text-foreground">Rx fields</span>
+        <span className="text-sm font-medium text-foreground">{t("Rx fields")}</span>
         <p className="text-xs text-muted">
-          These become sections on every new prescription (e.g. Chief Complaint, Diagnosis, Lab Tests, Vitals) — add or remove as many as you use.
+          {t("These become sections on every new prescription (e.g. Chief Complaint, Diagnosis, Lab Tests, Vitals) — add or remove as many as you use.")}
         </p>
         {labels.map((label, i) => (
           <div key={i} className="flex gap-2">
             <input
               value={label}
               onChange={(e) => updateLabel(i, e.target.value)}
-              placeholder="e.g. Lab Tests"
+              placeholder={t("e.g. Lab Tests")}
               className="flex-1 rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand"
             />
             <button onClick={() => removeLabel(i)} className="rounded-lg border border-danger px-3 py-2 text-xs font-medium text-danger">
-              Remove
+              {t("Remove")}
             </button>
           </div>
         ))}
         <button onClick={addLabel} className="self-start text-sm font-medium text-brand">
-          + Add field
+          + {t("Add field")}
         </button>
       </div>
 
       <div className="flex flex-col gap-2 rounded-xl border border-border bg-surface p-3.5">
-        <p className="text-sm font-semibold text-foreground">Medicine details shown on the printed Rx</p>
+        <p className="text-sm font-semibold text-foreground">{t("Medicine details shown on the printed Rx")}</p>
         <p className="text-xs text-muted">
-          Your medicine library can hold a lot of detail per medicine — choose exactly what genuinely prints on
-          the prescription, field by field.
+          {t("Your medicine library can hold a lot of detail per medicine — choose exactly what genuinely prints on the prescription, field by field.")}
         </p>
-        <FieldToggle label="Price" checked={rxShowPrice} onChange={setRxShowPrice} />
-        <FieldToggle label="Manufacturer" checked={rxShowManufacturer} onChange={setRxShowManufacturer} />
-        <FieldToggle label="Salt / composition" checked={rxShowComposition} onChange={setRxShowComposition} />
-        <FieldToggle label="Pack size" checked={rxShowPackSize} onChange={setRxShowPackSize} />
-        <FieldToggle label="Side effects" checked={rxShowSideEffects} onChange={setRxShowSideEffects} />
-        <FieldToggle label="Drug interactions" checked={rxShowDrugInteractions} onChange={setRxShowDrugInteractions} />
-        <FieldToggle label="Description" checked={rxShowDescription} onChange={setRxShowDescription} />
+        <FieldToggle label={t("Price")} checked={rxShowPrice} onChange={setRxShowPrice} />
+        <FieldToggle label={t("Manufacturer")} checked={rxShowManufacturer} onChange={setRxShowManufacturer} />
+        <FieldToggle label={t("Salt / composition")} checked={rxShowComposition} onChange={setRxShowComposition} />
+        <FieldToggle label={t("Pack size")} checked={rxShowPackSize} onChange={setRxShowPackSize} />
+        <FieldToggle label={t("Side effects")} checked={rxShowSideEffects} onChange={setRxShowSideEffects} />
+        <FieldToggle label={t("Drug interactions")} checked={rxShowDrugInteractions} onChange={setRxShowDrugInteractions} />
+        <FieldToggle label={t("Description")} checked={rxShowDescription} onChange={setRxShowDescription} />
       </div>
 
       {error && <p className="text-sm text-danger">{error}</p>}
@@ -260,7 +259,7 @@ export function SettingsClient({
         disabled={isPending}
         className={`btn-primary w-full text-center disabled:opacity-60 ${saved ? "animate-save-success" : ""}`}
       >
-        {isPending ? "Saving…" : saved ? "Saved ✓" : "Save settings"}
+        {isPending ? t("products.saving") : saved ? t("Saved ✓") : t("Save settings")}
       </button>
     </div>
   );

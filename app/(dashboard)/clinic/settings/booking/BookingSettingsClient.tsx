@@ -12,14 +12,16 @@ import { todayIso } from "@/lib/dateHelpers";
 import { useT } from "@/lib/i18n/LangContext";
 import { BackLink } from "@/app/components/BackLink";
 
+// Full day names — deliberately not the three-letter short forms used
+// elsewhere (Sun, Mon…), since these are the row labels here, not chips.
 const DAYS: { key: string; label: string }[] = [
-  { key: "mon", label: "Monday" },
-  { key: "tue", label: "Tuesday" },
-  { key: "wed", label: "Wednesday" },
-  { key: "thu", label: "Thursday" },
-  { key: "fri", label: "Friday" },
-  { key: "sat", label: "Saturday" },
-  { key: "sun", label: "Sunday" },
+  { key: "mon", label: "day.monday" },
+  { key: "tue", label: "day.tuesday" },
+  { key: "wed", label: "day.wednesday" },
+  { key: "thu", label: "day.thursday" },
+  { key: "fri", label: "day.friday" },
+  { key: "sat", label: "day.saturday" },
+  { key: "sun", label: "day.sunday" },
 ];
 
 export function BookingSettingsClient({
@@ -137,18 +139,18 @@ export function BookingSettingsClient({
       <BackLink fallback={backLink} />
       <PageHeader
         title={t("Online booking")}
-        subtitle={`Let ${noun}s book their own slot from a link you share — no login needed for them.`}
+        subtitle={t("Let {noun}s book their own slot from a link you share — no login needed for them.", { noun: t(noun) })}
         icon={<CalendarClock size={18} strokeWidth={1.8} />}
       />
 
       <label className="flex items-center justify-between rounded-xl border border-border bg-surface px-4 py-3.5 shadow-sm">
-        <span className="text-sm font-medium text-foreground">Enable public booking link</span>
+        <span className="text-sm font-medium text-foreground">{t("Enable public booking link")}</span>
         <input type="checkbox" checked={enabled} onChange={(e) => setEnabled(e.target.checked)} className="h-5 w-5 rounded border-border" />
       </label>
 
       {isClinic && (
         <div className="flex flex-col gap-3 rounded-xl border border-border bg-surface p-4 shadow-sm">
-          <p className="text-sm font-medium text-foreground">Doctor profile — shown on your booking link</p>
+          <p className="text-sm font-medium text-foreground">{t("Doctor profile — shown on your booking link")}</p>
           <div className="flex items-center gap-3">
             <label className="relative flex h-16 w-16 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-full border border-dashed border-border bg-background text-[10px] text-muted">
               {doctorPhotoUrl ? (
@@ -174,32 +176,32 @@ export function BookingSettingsClient({
               <input
                 value={doctorName}
                 onChange={(e) => setDoctorName(e.target.value)}
-                placeholder="Dr. Ramesh Kumar"
+                placeholder={t("Dr. Ramesh Kumar")}
                 className="rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-brand"
               />
               <input
                 value={doctorQualifications}
                 onChange={(e) => setDoctorQualifications(e.target.value)}
-                placeholder="MBBS, MD (Medicine)"
+                placeholder={t("MBBS, MD (Medicine)")}
                 className="rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-brand"
               />
             </div>
           </div>
           {photoError && <p className="text-xs text-danger">{photoError}</p>}
-          <p className="text-xs text-muted">Best size: a square photo, about 400×400px (like a passport photo) — PNG/JPG/WEBP, under 2MB.</p>
+          <p className="text-xs text-muted">{t("Best size: a square photo, about 400×400px (like a passport photo) — PNG/JPG/WEBP, under 2MB.")}</p>
         </div>
       )}
 
       {publicUrl && enabled && (
         <div className="flex flex-col gap-2 rounded-xl border border-border bg-surface p-4">
-          <p className="text-xs font-medium text-brand-text">Your booking link — share this anywhere</p>
+          <p className="text-xs font-medium text-brand-text">{t("Your booking link — share this anywhere")}</p>
           <p className="break-all rounded-lg bg-surface px-3 py-2 text-xs text-foreground">{publicUrl}</p>
           <div className="flex gap-2">
             <button
               onClick={() => navigator.clipboard.writeText(publicUrl)}
               className="rounded-lg border border-brand px-3 py-1.5 text-xs font-medium text-brand-text"
             >
-              Copy link
+              {t("Copy link")}
             </button>
             <a
               href={`https://wa.me/?text=${encodeURIComponent(`Book an appointment: ${publicUrl}`)}`}
@@ -207,15 +209,15 @@ export function BookingSettingsClient({
               rel="noopener noreferrer"
               className="flex items-center gap-1 rounded-lg border border-brand px-3 py-1.5 text-xs font-medium text-brand-text"
             >
-              <MessageCircle size={12} /> Share on WhatsApp
+              <MessageCircle size={12} /> {t("Share on WhatsApp")}
             </a>
           </div>
         </div>
       )}
 
       <div className="flex flex-col gap-1.5 text-sm">
-        <span className="font-medium text-foreground">Gap between appointments (minutes)</span>
-        <p className="text-xs text-muted">After one appointment, the next slot opens this many minutes later.</p>
+        <span className="font-medium text-foreground">{t("Gap between appointments (minutes)")}</span>
+        <p className="text-xs text-muted">{t("After one appointment, the next slot opens this many minutes later.")}</p>
         <div className="flex flex-wrap gap-2">
           {["10", "15", "20", "30"].map((preset) => (
             <button
@@ -231,7 +233,7 @@ export function BookingSettingsClient({
                   : undefined
               }
             >
-              {preset} min
+              {t("{n} min", { n: preset })}
             </button>
           ))}
           <input
@@ -240,18 +242,18 @@ export function BookingSettingsClient({
             step={5}
             value={["10", "15", "20", "30"].includes(slotDuration) ? "" : slotDuration}
             onChange={(e) => setSlotDuration(e.target.value)}
-            placeholder="Custom"
+            placeholder={t("Custom")}
             className="w-24 rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand"
           />
         </div>
       </div>
 
       <div className="flex flex-col gap-2">
-        <p className="text-sm font-medium text-foreground">Working hours</p>
+        <p className="text-sm font-medium text-foreground">{t("Working hours")}</p>
         {DAYS.map((day) => (
           <div key={day.key} className="rounded-lg border border-border bg-surface p-3">
             <label className="flex items-center justify-between">
-              <span className="text-sm text-foreground">{day.label}</span>
+              <span className="text-sm text-foreground">{t(day.label)}</span>
               <input type="checkbox" checked={!!hours[day.key]} onChange={() => toggleDay(day.key)} className="h-4 w-4 rounded border-border" />
             </label>
             {dayRanges(day.key).length > 0 && (
@@ -264,7 +266,7 @@ export function BookingSettingsClient({
                       onChange={(e) => updateRange(day.key, i, { start: e.target.value })}
                       className="flex-1 rounded-lg border border-border px-2 py-1.5 text-xs outline-none focus:border-brand"
                     />
-                    <span className="text-xs text-muted">to</span>
+                    <span className="text-xs text-muted">{t("to")}</span>
                     <input
                       type="time"
                       value={range.end}
@@ -279,7 +281,7 @@ export function BookingSettingsClient({
                   </div>
                 ))}
                 <button onClick={() => addRange(day.key)} className="self-start text-xs font-medium text-brand">
-                  + Add another session (e.g. evening)
+                  + {t("Add another session (e.g. evening)")}
                 </button>
               </div>
             )}
@@ -288,9 +290,9 @@ export function BookingSettingsClient({
       </div>
 
       <div className="flex flex-col gap-2">
-        <p className="text-sm font-medium text-foreground">Leave / holiday dates</p>
+        <p className="text-sm font-medium text-foreground">{t("Leave / holiday dates")}</p>
         <p className="text-xs text-muted">
-          Blocks a specific date entirely from booking, even if it falls on a normally-working day above — use this for personal leave, festivals, or any day you won&apos;t be available.
+          {t("Blocks a specific date entirely from booking, even if it falls on a normally-working day above — use this for personal leave, festivals, or any day you won't be available.")}
         </p>
         <div className="flex gap-2">
           <input
@@ -301,7 +303,7 @@ export function BookingSettingsClient({
             className="flex-1 rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand"
           />
           <button onClick={addLeaveDate} disabled={!newLeaveDate} className="rounded-lg border border-brand px-3 py-2 text-xs font-medium text-brand-text disabled:opacity-50">
-            + Add
+            + {t("tables.add")}
           </button>
         </div>
         {unavailableDates.length > 0 && (
@@ -324,7 +326,7 @@ export function BookingSettingsClient({
         disabled={isPending}
         className={`btn-primary w-full text-center disabled:opacity-60 ${saved ? "animate-save-success" : ""}`}
       >
-        {isPending ? "Saving…" : saved ? "Saved ✓" : "Save"}
+        {isPending ? t("products.saving") : saved ? t("Saved ✓") : t("common.save")}
       </button>
     </div>
   );
