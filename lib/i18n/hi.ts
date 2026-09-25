@@ -99,6 +99,10 @@ const hi: Record<string, string> = {
   "move.servicejobs.detail": "ग्राहक इनका इंतज़ार कर रहे हो सकते हैं",
   "move.rentals.title": "{n} रेंटल अभी तक वापस नहीं आया",
   "move.rentals.detail": "अपनी तय तारीख से आगे निकल गया",
+  "move.metalrate.title": "आज का सोना/चांदी रेट अभी सेट नहीं है",
+  "move.metalrate.detail": "आज के हर बिल के लिए यह सही होना ज़रूरी है",
+  "move.stuckorders.title": "{n} ऑर्डर 90 मिनट से ज़्यादा समय से खुले हैं",
+  "move.stuckorders.detail": "जांच लें कि कहीं ये टेबल भूली तो नहीं गईं",
 
   // Signup
   "signup.title": "अपनी दुकान बनाएं",

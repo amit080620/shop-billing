@@ -36,6 +36,8 @@ export async function computeTodaysMoves(shopId: string, businessType: string, l
       businessType === "transport" ? vehicleDocsMove(admin, shopId, t) : null,
       businessType === "service" ? serviceJobsMove(admin, shopId, t) : null,
       businessType === "rental" ? rentalsMove(admin, shopId, t) : null,
+      businessType === "jewellery" ? metalRateMove(admin, shopId, t) : null,
+      businessType === "restaurant" ? stuckOrdersMove(admin, shopId, t) : null,
     ])
   ).filter((m): m is Move => m !== null);
 
@@ -242,5 +244,40 @@ async function rentalsMove(admin: Admin, shopId: string, t: T): Promise<Move | n
     detail: t("move.rentals.detail"),
     href: "/rentals",
     penalty: Math.min(30, count * 7),
+  };
+}
+
+/** Every bill on a jewellery counter depends on today's gold/silver
+ * rate; billing against yesterday's (or no) rate is a real margin
+ * risk, not a cosmetic gap — worth ranking above almost everything
+ * else since it affects every single sale made today. */
+async function metalRateMove(admin: Admin, shopId: string, t: T): Promise<Move | null> {
+  const today = todayIso();
+  const { data } = await admin.from("metal_rates").select("id").eq("shop_id", shopId).eq("effective_date", today).limit(1);
+  if (data && data.length > 0) return null;
+  return {
+    id: "metalrate",
+    title: t("move.metalrate.title"),
+    detail: t("move.metalrate.detail"),
+    href: "/jewellery/rates",
+    penalty: 20,
+  };
+}
+
+/** An order sitting open for hours with nobody touching it is either a
+ * forgotten table (real customer-experience damage) or a stale record
+ * nobody closed out — either way worth a glance, and nothing in the
+ * product currently surfaces "orders going stale" as its own signal. */
+async function stuckOrdersMove(admin: Admin, shopId: string, t: T): Promise<Move | null> {
+  const cutoff = new Date(Date.now() - 90 * 60000).toISOString();
+  const { data } = await admin.from("restaurant_orders").select("id").eq("shop_id", shopId).eq("status", "open").lt("created_at", cutoff);
+  const count = data?.length ?? 0;
+  if (count === 0) return null;
+  return {
+    id: "stuckorders",
+    title: t("move.stuckorders.title", { n: count }),
+    detail: t("move.stuckorders.detail"),
+    href: "/restaurant",
+    penalty: Math.min(25, count * 8),
   };
 }
