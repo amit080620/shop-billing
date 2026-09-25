@@ -14,6 +14,17 @@ const KIND_LABEL: Record<string, string> = {
   custom: "Custom plan",
 };
 
+/** A support ticket from Help → Contact us is stored as kind "custom"
+ * (see lib/actions/support.ts for why) with a "[Support/category]"
+ * prefix on item — this is what tells the two apart here, and lets the
+ * row show the same SR-xxxxxxxx reference number the shop saw. */
+function parseSupportTicket(kind: string, item: string): { label: string; message: string } {
+  const match = kind === "custom" ? item.match(/^\[Support\/(\w+)\]\s*([\s\S]*)$/) : null;
+  if (!match) return { label: KIND_LABEL[kind] ?? kind, message: item };
+  const [, category, message] = match;
+  return { label: `Support · ${category}`, message };
+}
+
 export default async function AdminEnquiriesPage({ searchParams }: { searchParams: Promise<{ status?: string }> }) {
   await requireSuperAdmin();
   const { status = "new" } = await searchParams;
@@ -79,13 +90,16 @@ export default async function AdminEnquiriesPage({ searchParams }: { searchParam
       <ul className="flex flex-col gap-2">
         {rows.map((r) => {
           const shop = Array.isArray(r.shops) ? r.shops[0] : r.shops;
+          const ticket = parseSupportTicket(r.kind, r.item);
+          const ticketId = ticket.label.startsWith("Support") ? `SR-${r.id.slice(0, 8).toUpperCase()}` : null;
           return (
             <li key={r.id} className="flex flex-col gap-2 rounded-xl border border-gray-800 bg-gray-900 px-4 py-3">
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
-                  <p className="text-sm font-medium">{r.item}</p>
+                  {ticketId && <p className="text-xs font-mono text-amber-400">{ticketId}</p>}
+                  <p className="text-sm font-medium">{ticket.message}</p>
                   <p className="text-xs text-gray-400">
-                    {KIND_LABEL[r.kind] ?? r.kind} ·{" "}
+                    {ticket.label} ·{" "}
                     {shop ? (
                       <Link href={`/admin/shops/${shop.id}`} className="underline">{shop.name}</Link>
                     ) : (

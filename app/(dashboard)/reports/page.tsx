@@ -164,7 +164,7 @@ export default async function ReportsPage() {
               <ReportLink href="/reports/sales" label="Sales report" sub="Every bill by date range" />
               <ReportLink href="/pharmacy/expiry" label="Expiry alerts" sub="Batches expiring soon — act before it's stock loss" />
               <ReportLink href="/pharmacy/write-offs" label="Write-off history" sub="Stock lost to expiry or damage" />
-              <ReportLink href="/pharmacy/schedule-x-register" label="Schedule X register" sub="Controlled-substance sale log, as required" />
+              <ReportLink href="/pharmacy/schedule-x-register" label="Schedule H1 & X register" sub="Controlled-substance sale log, as required" />
             </>
           )}
           {session.businessType === "rental" && (

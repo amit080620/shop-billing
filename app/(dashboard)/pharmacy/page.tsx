@@ -8,7 +8,7 @@ const LINKS = [
   { href: "/pharmacy/expiry", label: "Medicine expiry", sub: "Batches expiring soon", icon: AlertTriangle },
   { href: "/pharmacy/write-offs", label: "Write-offs", sub: "Expired/damaged stock removal", icon: PackageMinus },
   { href: "/pharmacy/doctors", label: "Doctors", sub: "Prescribing doctor directory", icon: Stethoscope },
-  { href: "/pharmacy/schedule-x-register", label: "Schedule X register", sub: "Controlled substance register", icon: ShieldCheck },
+  { href: "/pharmacy/schedule-x-register", label: "Schedule H1 & X register", sub: "Controlled substance register", icon: ShieldCheck },
 ];
 
 export default async function PharmacyHubPage() {

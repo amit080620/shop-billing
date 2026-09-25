@@ -194,7 +194,7 @@ export async function MoreMenu() {
           {type === "pharmacy" && (
             <>
               <MenuLink href="/pharmacy/doctors" label="Doctor-wise sales" sub="Prescriptions by doctor" icon={Stethoscope} />
-              <MenuLink href="/pharmacy/schedule-x-register" label="Schedule X register" sub="Narcotic sales compliance record" icon={BookOpen} />
+              <MenuLink href="/pharmacy/schedule-x-register" label="Schedule H1 & X register" sub="Controlled drug sales compliance record" icon={BookOpen} />
             </>
           )}
           {["hardware", "mart", "general"].includes(type) && (

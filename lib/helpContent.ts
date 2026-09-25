@@ -1,4 +1,5 @@
 import type { Lang } from "./i18n/dictionary";
+import type { BusinessType } from "./businessType";
 
 export type HelpItem = { q: string; a: string };
 export type HelpSection = { title: string; items: HelpItem[] };
@@ -175,64 +176,6 @@ export const HELP_CONTENT: Record<Lang, HelpSection[]> = {
         {
           q: "What are the real limitations I should know?",
           a: "Stock levels and prices reflect the last time you were online — if two staff members are both selling the same low-stock item while offline, you could oversell it. There's no barcode camera scanner in the offline screen yet, only text search. And you must have opened the Sell and Offline billing screens online at least once on THIS device before it can work with no connection.",
-        },
-      ],
-    },
-    {
-      title: "Restaurant — Tables & orders",
-      items: [
-        {
-          q: "How do I start an order?",
-          a: "Tap a free (green) table on the Tables screen — it opens a new order for that table and marks it occupied. Search the menu and tap an item to add it; tap again to add another one. Tap an occupied (red) table any time to reopen its order and keep adding.",
-        },
-        {
-          q: "What does Print KOT actually send?",
-          a: "Only the items added since the last KOT for that table — so if you print, then add two more dishes later, the second KOT shows just those two, not the whole order again. This is what stops the kitchen from re-cooking something already on the stove.",
-        },
-        {
-          q: "What's the Kitchen tab / Kitchen Display?",
-          a: "A full-screen, no-app-chrome view meant for a TV or tablet sitting in the kitchen — every open table's ticket, color-coded by how long it's been waiting (green under 10 minutes, orange 10–20, red 20+). It refreshes itself every few seconds, so nobody needs to keep printing paper KOTs.",
-        },
-        {
-          q: "How do I remove a wrongly-added item?",
-          a: "Tap the next to it in the order screen — no PIN needed, since correcting a mistake is a normal part of taking orders. A PIN is only required to cancel the entire table's order.",
-        },
-        {
-          q: "What's the Manager PIN for?",
-          a: "It's needed to cancel a started order (the whole table, not a single item) — deliberately a separate PIN from the owner's login password, set under Settings → Restaurant, so staff never need real account credentials just to void something with a supervisor's approval.",
-        },
-        {
-          q: "How does Settle work?",
-          a: "Tap Settle on an order, apply a discount if needed, then enter the payment — split it across cash, card, UPI, etc. if the customer's paying more than one way. Whatever's short of the total becomes credit against that customer, same as a regular bill.",
-        },
-        {
-          q: "Dine-in, Takeaway, Delivery — what's that toggle for?",
-          a: "Marks how the order is being served, for your own records and future reporting. It doesn't change how billing or KOT works.",
-        },
-      ],
-    },
-    {
-      title: "Rental — Bookings & returns",
-      items: [
-        {
-          q: "How do I make an item rentable?",
-          a: "In Inventory, edit the item and tick \"Also available for rent\" — then set a rate for whichever durations you actually rent by (hourly/daily/weekly/monthly) and, if you take one, a security deposit.",
-        },
-        {
-          q: "How does the app stop double-booking?",
-          a: "Every time you book, it checks every other booking for that same item whose dates overlap the ones you're entering, and only lets you book what's actually free for that window. If you ask for more than what's available, it tells you the exact number free instead.",
-        },
-        {
-          q: "What happens to the security deposit?",
-          a: "It's collected at booking time and held separately from the rental charge (no GST applies to it, since it's refundable, not a sale). When the item is returned, any damage charge is deducted from it automatically, and the remainder is refunded. If damage costs more than the deposit, the difference becomes credit owed by the customer.",
-        },
-        {
-          q: "How do I process a return?",
-          a: "Open the rental and tap Process return — mark each item's condition (good/damaged/missing), add a damage charge or late fee if applicable, and confirm. The item becomes available to book again immediately.",
-        },
-        {
-          q: "Where do past rentals go?",
-          a: "More → Rentals → Rental history shows everything that's been returned or cancelled, most recent first.",
         },
       ],
     },
@@ -421,64 +364,6 @@ export const HELP_CONTENT: Record<Lang, HelpSection[]> = {
       ],
     },
     {
-      title: "Restaurant — Tables और Orders",
-      items: [
-        {
-          q: "Order कैसे शुरू करें?",
-          a: "Tables screen पर किसी खाली (हरी) table पर टैप करें — उसके लिए नया order खुल जाता है और table occupied हो जाती है। Menu खोजें और item पर टैप करके जोड़ें; दोबारा टैप करने से और जुड़ता है। किसी occupied (लाल) table पर कभी भी टैप करके उसका order फिर से खोल सकते हैं।",
-        },
-        {
-          q: "Print KOT असल में क्या भेजता है?",
-          a: "सिर्फ़ वही items जो उस table के पिछले KOT के बाद जुड़े हों — तो अगर आपने print किया, फिर बाद में 2 और dish जोड़ीं, दूसरा KOT सिर्फ़ वही 2 दिखाएगा, पूरा order दोबारा नहीं। यही kitchen को already बन रही चीज़ दोबारा बनाने से रोकता है।",
-        },
-        {
-          q: "Kitchen tab / Kitchen Display क्या है?",
-          a: "एक पूरी स्क्रीन वाला view, बिना किसी app menu के — किसी TV या tablet के लिए जो kitchen में रखा हो। हर खुली table का ticket, रंग के हिसाब से (हरा 10 मिनट से कम, नारंगी 10-20, लाल 20+ मिनट) — कितनी देर से रुका है दिखाता है। यह अपने-आप हर कुछ सेकंड में update होता रहता है, तो कागज़ पर KOT print करने की ज़रूरत नहीं।",
-        },
-        {
-          q: "गलती से जुड़े item को कैसे हटाएँ?",
-          a: "Order screen में उसके बगल में दबाएँ — कोई PIN नहीं चाहिए, क्योंकि गलती ठीक करना सामान्य काम है। PIN सिर्फ़ पूरी table का order cancel करने के लिए चाहिए।",
-        },
-        {
-          q: "Manager PIN किसलिए है?",
-          a: "किसी शुरू हो चुकी order को cancel करने के लिए (पूरी table, सिर्फ़ एक item नहीं) — जानबूझकर owner के login password से अलग, Settings → Restaurant में सेट करें, ताकि staff को कभी असली account credentials न जानने पड़ें, सिर्फ़ supervisor की मंज़ूरी से काम हो जाए।",
-        },
-        {
-          q: "Settle कैसे काम करता है?",
-          a: "किसी order पर Settle दबाएँ, ज़रूरत हो तो discount लगाएँ, फिर payment डालें — अगर customer एक से ज़्यादा तरीके से पैसे दे रहा है तो cash/card/UPI में बाँट सकते हैं। जो total से कम रह जाए, वो customer के उधार में जुड़ जाता है, सामान्य बिल जैसे ही।",
-        },
-        {
-          q: "Dine-in, Takeaway, Delivery वाला toggle किसलिए है?",
-          a: "यह record रखता है कि order कैसे serve हुआ, आपकी अपनी जानकारी और आगे reports के लिए। billing या KOT के काम करने के तरीके में कोई फ़र्क़ नहीं पड़ता।",
-        },
-      ],
-    },
-    {
-      title: "Rental — Booking और Return",
-      items: [
-        {
-          q: "किसी item को rentable कैसे बनाएँ?",
-          a: "Inventory में item edit करें और \"Also available for rent\" टिक करें — फिर जिन duration पर असल में rent करते हैं (hourly/daily/weekly/monthly) उनकी rate भरें, और अगर लेते हैं तो security deposit।",
-        },
-        {
-          q: "App double-booking कैसे रोकता है?",
-          a: "जब भी book करें, वो उसी item की हर दूसरी booking से जाँच करता है जिनकी dates overlap होती हैं, और सिर्फ़ उतना ही book होने देता है जितना उस समय के लिए असल में खाली है। अगर उपलब्ध से ज़्यादा माँगें, तो सही उपलब्ध संख्या बता देता है।",
-        },
-        {
-          q: "Security deposit का क्या होता है?",
-          a: "यह booking के वक़्त लिया जाता है और rental charge से अलग रखा जाता है (इस पर GST नहीं लगता, क्योंकि यह refundable है, बिक्री नहीं)। सामान वापस आने पर, कोई damage charge अपने-आप deposit से कट जाता है, बाकी वापस मिल जाता है। अगर damage deposit से ज़्यादा हो, तो फ़र्क़ customer के उधार में जुड़ जाता है।",
-        },
-        {
-          q: "Return कैसे process करें?",
-          a: "Rental खोलें और Process return दबाएँ — हर item की हालत बताएं (अच्छी/खराब/गुम), ज़रूरत हो तो damage charge या late fee जोड़ें, और confirm करें। Item तुरंत दोबारा book होने लायक हो जाता है।",
-        },
-        {
-          q: "पुरानी rentals कहाँ मिलेंगी?",
-          a: "More → Rentals → Rental history में सारी वापस आई या cancel हुई rentals दिखती हैं, सबसे नई सबसे पहले।",
-        },
-      ],
-    },
-    {
       title: "बिल void करना",
       items: [
         {
@@ -663,64 +548,6 @@ export const HELP_CONTENT: Record<Lang, HelpSection[]> = {
       ],
     },
     {
-      title: "रेस्टॉरंट — टेबल्स व ऑर्डर्स",
-      items: [
-        {
-          q: "ऑर्डर कशी सुरू करायची?",
-          a: "Tables स्क्रीनवर एखाद्या रिकाम्या (हिरव्या) टेबलवर टॅप करा — त्यासाठी नवीन ऑर्डर उघडते आणि टेबल occupied होते. मेनू शोधा आणि आयटमवर टॅप करून जोडा; पुन्हा टॅप केल्यास आणखी एक जोडली जाते. व्यापलेल्या (लाल) टेबलवर कधीही टॅप करून त्याची ऑर्डर पुन्हा उघडता येते.",
-        },
-        {
-          q: "Print KOT नक्की काय पाठवते?",
-          a: "फक्त त्या टेबलच्या शेवटच्या KOT नंतर जोडलेले आयटम — म्हणजे तुम्ही प्रिंट केले, नंतर आणखी 2 डिश जोडल्या, तर दुसरे KOT फक्त त्या 2 दाखवते, संपूर्ण ऑर्डर पुन्हा नाही. यामुळेच स्वयंपाकघर आधीच बनत असलेली गोष्ट पुन्हा बनवत नाही.",
-        },
-        {
-          q: "Kitchen टॅब / Kitchen Display म्हणजे काय?",
-          a: "स्वयंपाकघरात ठेवलेल्या TV किंवा टॅबलेटसाठी बनवलेले, कोणत्याही app मेनूशिवाय पूर्ण स्क्रीन दृश्य — प्रत्येक उघड्या टेबलचे तिकीट, किती वेळ थांबले आहे त्यानुसार रंगीत (हिरवा 10 मिनिटांखाली, केशरी 10-20, लाल 20+ मिनिटे). हे दर काही सेकंदांनी आपोआप अपडेट होते, त्यामुळे कागदी KOT प्रिंट करायची गरज नाही.",
-        },
-        {
-          q: "चुकून जोडलेला आयटम कसा काढायचा?",
-          a: "ऑर्डर स्क्रीनमध्ये त्याच्या बाजूला दाबा — PIN लागत नाही, कारण चूक दुरुस्त करणे हे सामान्य काम आहे. संपूर्ण टेबलची ऑर्डर रद्द करण्यासाठीच PIN लागतो.",
-        },
-        {
-          q: "Manager PIN कशासाठी आहे?",
-          a: "सुरू झालेली ऑर्डर रद्द करण्यासाठी (संपूर्ण टेबल, एकच आयटम नाही) — मालकाच्या लॉगिन पासवर्डपेक्षा जाणूनबुजून वेगळे, Settings → Restaurant मध्ये सेट करा, जेणेकरून कर्मचाऱ्यांना कधीही खरे खाते credentials माहित असण्याची गरज नाही, फक्त पर्यवेक्षकाच्या मान्यतेने काम होते.",
-        },
-        {
-          q: "Settle कसे काम करते?",
-          a: "ऑर्डरवर Settle दाबा, गरज असल्यास सूट लावा, मग पेमेंट टाका — ग्राहक एकापेक्षा जास्त प्रकारे पैसे देत असेल तर cash/card/UPI मध्ये विभागू शकता. जे एकूण रकमेपेक्षा कमी राहील, ते ग्राहकाच्या उधारीत जोडले जाते, नेहमीच्या बिलासारखेच.",
-        },
-        {
-          q: "Dine-in, Takeaway, Delivery टॉगल कशासाठी आहे?",
-          a: "ऑर्डर कशी दिली गेली याची नोंद ठेवते, तुमच्या स्वतःच्या माहितीसाठी आणि पुढील अहवालांसाठी. बिलिंग किंवा KOT काम करण्याच्या पद्धतीत काहीही फरक पडत नाही.",
-        },
-      ],
-    },
-    {
-      title: "भाड्याने देणे — बुकिंग व परतावा",
-      items: [
-        {
-          q: "एखादी वस्तू rentable कशी बनवायची?",
-          a: "Inventory मध्ये वस्तू edit करा आणि \"Also available for rent\" टिक करा — मग तुम्ही ज्या कालावधीनुसार खरोखर भाड्याने देता (hourly/daily/weekly/monthly) त्यांचा दर भरा, आणि घेत असाल तर सुरक्षा ठेव.",
-        },
-        {
-          q: "App दुहेरी-बुकिंग कसे थांबवते?",
-          a: "जेव्हाही तुम्ही बुक करता, ते त्याच वस्तूच्या दुसऱ्या प्रत्येक बुकिंगशी तपासते ज्यांच्या तारखा जुळतात, आणि त्या कालावधीसाठी प्रत्यक्षात मोकळे असेल तेवढेच बुक करू देते. उपलब्धतेपेक्षा जास्त मागितल्यास, नेमकी उपलब्ध संख्या सांगते.",
-        },
-        {
-          q: "सुरक्षा ठेवीचे काय होते?",
-          a: "ती बुकिंगच्या वेळी घेतली जाते आणि भाड्याच्या रकमेपासून वेगळी ठेवली जाते (यावर GST लागत नाही, कारण ती परत करण्यायोग्य आहे, विक्री नाही). वस्तू परत आल्यावर, कोणताही नुकसान शुल्क आपोआप ठेवीतून वजा होतो, उरलेली रक्कम परत केली जाते. नुकसान ठेवीपेक्षा जास्त असल्यास, फरक ग्राहकाच्या उधारीत जोडला जातो.",
-        },
-        {
-          q: "परतावा कसा process करायचा?",
-          a: "भाडे उघडा आणि Process return दाबा — प्रत्येक वस्तूची स्थिती सांगा (चांगली/खराब/गहाळ), गरज असल्यास नुकसान शुल्क किंवा विलंब शुल्क जोडा, आणि पुष्टी करा. वस्तू लगेच पुन्हा बुक करण्यायोग्य होते.",
-        },
-        {
-          q: "जुनी भाडी कुठे मिळतील?",
-          a: "More → Rentals → Rental history मध्ये परत आलेली किंवा रद्द झालेली सर्व भाडी दिसतात, सर्वात नवीन आधी.",
-        },
-      ],
-    },
-    {
       title: "बिल void करणे",
       items: [
         {
@@ -730,4 +557,662 @@ export const HELP_CONTENT: Record<Lang, HelpSection[]> = {
       ],
     },
   ],
+};
+
+const RETAIL_EN: HelpSection = {
+  title: "Selling smarter",
+  items: [
+    {
+      q: "What's the \"Often bought with this\" suggestion when billing?",
+      a: "Built from YOUR shop's own last-30-days sales, not a generic model — when the item you just added has a strong \"usually bought together\" partner, a chip offers to add it in one tap. Dismiss it with the × if it's not wanted right now; it won't suggest an item that's out of stock.",
+    },
+    {
+      q: "What's the health score on Home?",
+      a: "Ray Score — a 0–100 number for the shop, plus \"Today's 3 Moves\": the highest-impact things worth doing right now (overdue udhar, low stock, regulars gone quiet, and more), ranked and one tap from the exact screen that fixes each one.",
+    },
+    {
+      q: "Do I need to track batch numbers and expiry?",
+      a: "It's a per-product toggle (\"Track with batch & expiry\") — not only for pharmacies, any item with a shelf life. Once on, add batches with their expiry date, and it shows up automatically in expiry alerts before it becomes stock loss.",
+    },
+  ],
+};
+const RETAIL_HI: HelpSection = {
+  title: "समझदारी से बेचना",
+  items: [
+    {
+      q: "बिल बनाते समय \"अक्सर इसके साथ खरीदा जाता है\" सुझाव क्या है?",
+      a: "यह आपकी अपनी दुकान की पिछले 30 दिनों की असली बिक्री से बनता है, किसी सामान्य मॉडल से नहीं — जब अभी जोड़े गए item का कोई मज़बूत \"साथ में बिकने वाला\" partner हो, तो एक चिप एक-टैप में जोड़ने का मौका देती है। अभी नहीं चाहिए तो × से हटा दें; जो item स्टॉक में नहीं है वो कभी सुझाया नहीं जाएगा।",
+    },
+    {
+      q: "Home पर health score क्या है?",
+      a: "Ray Score — दुकान के लिए 0–100 का एक नंबर, साथ में \"आज के 3 ज़रूरी काम\": अभी सबसे ज़्यादा असर डालने वाले काम (बकाया उधार, कम स्टॉक, गायब हो रहे नियमित ग्राहक, और भी) — क्रम में, और हर एक को ठीक करने वाली सही स्क्रीन पर एक टैप में।",
+    },
+    {
+      q: "क्या batch number और expiry track करना ज़रूरी है?",
+      a: "यह हर product पर अलग से चालू/बंद होता है (\"Track with batch & expiry\") — सिर्फ़ pharmacy के लिए नहीं, किसी भी ऐसे item के लिए जिसकी shelf life हो। चालू करने पर, expiry date के साथ batch जोड़ें, और वो अपने-आप expiry alerts में दिख जाएगा, स्टॉक loss बनने से पहले।",
+    },
+  ],
+};
+const RETAIL_MR: HelpSection = {
+  title: "हुशारीने विक्री करणे",
+  items: [
+    {
+      q: "बिल बनवताना \"अनेकदा याच्यासोबत घेतलं जातं\" सूचना म्हणजे काय?",
+      a: "ही तुमच्या स्वतःच्या दुकानाच्या मागील 30 दिवसांच्या खऱ्या विक्रीवरून बनते, कोणत्याही सामान्य मॉडेलवरून नाही — नुकत्याच जोडलेल्या आयटमचा एखादा मजबूत \"सोबत विकला जाणारा\" पार्टनर असेल, तर एक चिप एका टॅपमध्ये जोडण्याची संधी देते. आत्ता नको असल्यास × ने काढा; जो आयटम स्टॉकमध्ये नाही तो कधीच सुचवला जाणार नाही.",
+    },
+    {
+      q: "Home वर health score म्हणजे काय?",
+      a: "Ray Score — दुकानासाठी 0–100 चा एक नंबर, सोबत \"आजची 3 महत्त्वाची कामं\": आत्ता सर्वात जास्त परिणाम करणारी कामं (थकबाकी, कमी स्टॉक, गायब होणारे नियमित ग्राहक, आणि बरंच काही) — क्रमवारीत, आणि प्रत्येक दुरुस्त करणाऱ्या योग्य स्क्रीनवर एका टॅपमध्ये.",
+    },
+    {
+      q: "बॅच नंबर आणि एक्सपायरी ट्रॅक करणं गरजेचं आहे का?",
+      a: "हे प्रत्येक प्रॉडक्टवर वेगळं चालू/बंद होतं (\"Track with batch & expiry\") — फक्त फार्मसीसाठी नाही, शेल्फ लाइफ असलेल्या कोणत्याही आयटमसाठी. चालू केल्यावर, एक्सपायरी तारखेसह बॅच जोडा, आणि ते आपोआप एक्सपायरी अलर्टमध्ये दिसेल, स्टॉक लॉस होण्याआधी.",
+    },
+  ],
+};
+
+const HARDWARE_EN: HelpSection = {
+  title: "Running a hardware shop",
+  items: [
+    {
+      q: "What's the \"stock mismatch\" alert on Home?",
+      a: "Hardware sells in matched pairs constantly — nuts and bolts, pipes and fittings, switches and wire. If one item in a usually-bought-together pair is healthy in stock but its partner has run out, this flags it — a low-stock check on each item alone wouldn't catch it, since the healthy one still looks fine by itself.",
+    },
+    {
+      q: "How do I bill loose items like wire or pipe by length?",
+      a: "Turn on \"Sold in packs & loose\" for that product (units per pack + a loose unit name, e.g. metre) — the billing screen then lets you switch between a full pack and a loose amount for that line.",
+    },
+    {
+      q: "What's the \"Often bought with this\" suggestion?",
+      a: "Built from your own last-30-days sales — when an item with a strong \"usually bought together\" partner is added, a chip offers to add the partner in one tap. It won't suggest something that's out of stock.",
+    },
+  ],
+};
+const HARDWARE_HI: HelpSection = {
+  title: "Hardware दुकान चलाना",
+  items: [
+    {
+      q: "Home पर \"stock mismatch\" alert क्या है?",
+      a: "Hardware में हमेशा जोड़ी में सामान बिकता है — nut-bolt, pipe-fitting, switch-wire। अगर किसी जोड़ी में एक item का stock ठीक है पर दूसरा खत्म हो गया है, तो यह बताता है — अकेले हर item का low-stock check यह नहीं पकड़ पाता, क्योंकि ठीक वाला item अकेले देखने पर सही ही लगता है।",
+    },
+    {
+      q: "Wire या pipe जैसी loose चीज़ें लंबाई में कैसे बिल करें?",
+      a: "उस product पर \"Sold in packs & loose\" चालू करें (per pack units + loose unit का नाम, जैसे metre) — फिर billing screen पर उस line को पूरे pack और loose मात्रा में बदल सकते हैं।",
+    },
+    {
+      q: "\"अक्सर इसके साथ खरीदा जाता है\" सुझाव क्या है?",
+      a: "यह आपकी अपनी पिछले 30 दिनों की बिक्री से बनता है — जब किसी मज़बूत partner वाले item को जोड़ा जाए, एक चिप एक-टैप में partner जोड़ने का मौका देती है। जो item स्टॉक में नहीं है वो सुझाया नहीं जाएगा।",
+    },
+  ],
+};
+const HARDWARE_MR: HelpSection = {
+  title: "Hardware दुकान चालवणे",
+  items: [
+    {
+      q: "Home वर \"stock mismatch\" अलर्ट म्हणजे काय?",
+      a: "Hardware मध्ये नेहमी जोडीने सामान विकलं जातं — नट-बोल्ट, पाइप-फिटिंग, स्विच-वायर. एखाद्या जोडीतील एक आयटम स्टॉकमध्ये व्यवस्थित आहे पण दुसरा संपला आहे, तर हे दाखवतं — प्रत्येक आयटमचा वेगळा low-stock चेक हे पकडत नाही, कारण नीट असलेला आयटम एकटा बघितल्यास ठीकच वाटतो.",
+    },
+    {
+      q: "वायर किंवा पाइपसारख्या loose वस्तू लांबीनुसार कशा बिल करायच्या?",
+      a: "त्या प्रॉडक्टवर \"Sold in packs & loose\" चालू करा (per pack units + loose unit चं नाव, उदा. मीटर) — मग बिलिंग स्क्रीनवर त्या लाइनला पूर्ण पॅक आणि loose प्रमाणात बदलता येतं.",
+    },
+    {
+      q: "\"अनेकदा याच्यासोबत घेतलं जातं\" सूचना म्हणजे काय?",
+      a: "ही तुमच्या स्वतःच्या मागील 30 दिवसांच्या विक्रीवरून बनते — मजबूत पार्टनर असलेला आयटम जोडल्यावर, एक चिप एका टॅपमध्ये पार्टनर जोडण्याची संधी देते. जो आयटम स्टॉकमध्ये नाही तो सुचवला जाणार नाही.",
+    },
+  ],
+};
+
+const PHARMACY_EN: HelpSection = {
+  title: "Pharmacy compliance & stock",
+  items: [
+    {
+      q: "How do I track batch numbers and expiry?",
+      a: "Turn on \"Track with batch & expiry\" for a medicine, then add its batches (number, expiry date, quantity) under Inventory → that product → Manage batches. Anything expiring within 90 days shows up under Pharmacy → Medicine expiry.",
+    },
+    {
+      q: "What is the Schedule H1 & X register?",
+      a: "A legal requirement — every sale of an H1 (everyday prescription antibiotics/sedatives) or X (narcotic/psychotropic) drug must record the patient's name, the prescribing doctor, the drug, quantity and date. Mark a medicine's Drug Schedule as H1 or X in Inventory, and every sale of it (with the doctor/patient name entered at billing) shows up automatically under Pharmacy → Schedule H1 & X register, exportable as CSV for an inspection.",
+    },
+    {
+      q: "How do distributor returns work for expiring stock?",
+      a: "On Pharmacy → Medicine expiry, batches close to expiring are grouped by whichever vendor they were most recently bought from (worked out from your purchase history) — tap \"Send request\" to open a ready-written WhatsApp return request straight to that vendor.",
+    },
+  ],
+};
+const PHARMACY_HI: HelpSection = {
+  title: "Pharmacy compliance और stock",
+  items: [
+    {
+      q: "Batch number और expiry कैसे track करें?",
+      a: "किसी दवा पर \"Track with batch & expiry\" चालू करें, फिर Inventory → वो product → Manage batches में batch (number, expiry date, quantity) जोड़ें। 90 दिनों में expire होने वाली हर चीज़ Pharmacy → Medicine expiry में दिख जाती है।",
+    },
+    {
+      q: "Schedule H1 और X register क्या है?",
+      a: "यह कानूनन ज़रूरी है — H1 (रोज़ाना की prescription antibiotics/sedatives) या X (narcotic/psychotropic) दवा की हर बिक्री में patient का नाम, prescribe करने वाले doctor, दवा, quantity और date दर्ज होनी चाहिए। Inventory में दवा का Drug Schedule H1 या X सेट करें, और billing के वक़्त doctor/patient नाम डालने पर हर बिक्री अपने-आप Pharmacy → Schedule H1 & X register में दिख जाती है, inspection के लिए CSV में export कर सकते हैं।",
+    },
+    {
+      q: "Expire हो रहे stock के लिए distributor को return कैसे भेजें?",
+      a: "Pharmacy → Medicine expiry में, expire होने वाले batches उस vendor के हिसाब से group होते हैं जिससे वो आख़िरी बार खरीदे गए थे (आपकी purchase history से पता चलता है) — \"Send request\" दबाकर सीधे उसी vendor को तैयार WhatsApp return request भेज सकते हैं।",
+    },
+  ],
+};
+const PHARMACY_MR: HelpSection = {
+  title: "Pharmacy compliance व स्टॉक",
+  items: [
+    {
+      q: "बॅच नंबर आणि एक्सपायरी कशी ट्रॅक करायची?",
+      a: "एखाद्या औषधावर \"Track with batch & expiry\" चालू करा, मग Inventory → ते प्रॉडक्ट → Manage batches मध्ये बॅच (नंबर, एक्सपायरी तारीख, संख्या) जोडा. 90 दिवसांत एक्सपायर होणारी प्रत्येक गोष्ट Pharmacy → Medicine expiry मध्ये दिसते.",
+    },
+    {
+      q: "Schedule H1 व X रजिस्टर म्हणजे काय?",
+      a: "हे कायद्याने आवश्यक आहे — H1 (रोजच्या वापरातील अँटिबायोटिक/सेडेटिव्ह) किंवा X (narcotic/psychotropic) औषधाच्या प्रत्येक विक्रीत रुग्णाचं नाव, प्रिस्क्राइब करणारे डॉक्टर, औषध, संख्या व तारीख नोंदवली गेली पाहिजे. Inventory मध्ये औषधाचं Drug Schedule H1 किंवा X सेट करा, आणि बिलिंगच्या वेळी डॉक्टर/रुग्णाचं नाव टाकल्यावर प्रत्येक विक्री आपोआप Pharmacy → Schedule H1 & X register मध्ये दिसते, तपासणीसाठी CSV मध्ये export करता येते.",
+    },
+    {
+      q: "एक्सपायर होणाऱ्या स्टॉकसाठी डिस्ट्रिब्युटरला रिटर्न कसं पाठवायचं?",
+      a: "Pharmacy → Medicine expiry मध्ये, एक्सपायर होणाऱ्या बॅचेस ज्या वेंडरकडून शेवटच्या घेतल्या होत्या त्यानुसार गटबद्ध होतात (तुमच्या purchase history वरून कळतं) — \"Send request\" दाबून थेट त्याच वेंडरला तयार WhatsApp रिटर्न विनंती पाठवता येते.",
+    },
+  ],
+};
+
+const TRANSPORT_EN: HelpSection = {
+  title: "Trips & fleet",
+  items: [
+    {
+      q: "How do I log a trip?",
+      a: "On the Transport screen, add a trip against a vehicle with the distance covered — it becomes a billable transport charge you can add straight into a bill.",
+    },
+    {
+      q: "What are the vehicle alerts on Home?",
+      a: "Two separate ones: vehicle documents (RC/insurance/PUC/fitness) expiring or already expired within 30 days, and vehicles that haven't done a single trip in 14+ days — a real cost sitting idle, not just a paperwork reminder.",
+    },
+  ],
+};
+const TRANSPORT_HI: HelpSection = {
+  title: "Trips और Fleet",
+  items: [
+    {
+      q: "Trip कैसे log करें?",
+      a: "Transport screen पर, किसी vehicle के लिए तय की गई दूरी के साथ trip जोड़ें — यह एक billable transport charge बन जाता है जिसे सीधे किसी बिल में जोड़ सकते हैं।",
+    },
+    {
+      q: "Home पर vehicle alerts क्या हैं?",
+      a: "दो अलग-अलग: vehicle documents (RC/insurance/PUC/fitness) जो 30 दिनों में expire हो रहे हैं या हो चुके हैं, और वो vehicles जिन्होंने 14+ दिनों में एक भी trip नहीं की — यह सिर्फ़ paperwork reminder नहीं, खाली खड़े रहने का असली खर्चा है।",
+    },
+  ],
+};
+const TRANSPORT_MR: HelpSection = {
+  title: "ट्रिप्स व फ्लीट",
+  items: [
+    {
+      q: "ट्रिप कशी लॉग करायची?",
+      a: "Transport स्क्रीनवर, एखाद्या वाहनासाठी कापलेल्या अंतरासह ट्रिप जोडा — हे एक billable transport charge बनते जे थेट बिलामध्ये जोडता येते.",
+    },
+    {
+      q: "Home वर वाहन अलर्ट म्हणजे काय?",
+      a: "दोन वेगळे: वाहन कागदपत्रं (RC/इन्शुरन्स/PUC/फिटनेस) जी 30 दिवसांत एक्सपायर होत आहेत किंवा झाली आहेत, आणि ज्या वाहनांनी 14+ दिवसांत एकही ट्रिप केली नाही — हा फक्त कागदपत्रांचा रिमाइंडर नाही, रिकामं उभं राहण्याचा खरा खर्च आहे.",
+    },
+  ],
+};
+
+const SERVICE_EN: HelpSection = {
+  title: "Repair jobs",
+  items: [
+    {
+      q: "How does a job move through statuses?",
+      a: "Received → In progress → Ready → Delivered. Update the status from the job's own page as work moves along; the customer's bill is created once it's actually delivered and paid for.",
+    },
+    {
+      q: "What's the overdue-job alert on Home?",
+      a: "Jobs still open past their own expected date — worth a glance since a customer may already be waiting on it.",
+    },
+  ],
+};
+const SERVICE_HI: HelpSection = {
+  title: "Repair jobs",
+  items: [
+    {
+      q: "Job किन-किन status से गुज़रती है?",
+      a: "Received → In progress → Ready → Delivered। काम बढ़ने के साथ job के अपने page से status update करें; customer का बिल तभी बनता है जब सामान असल में deliver हो और payment हो जाए।",
+    },
+    {
+      q: "Home पर overdue-job alert क्या है?",
+      a: "जो jobs अपनी तय expected date से आगे निकल चुकी हैं फिर भी खुली हैं — ध्यान देने लायक, क्योंकि customer पहले से इंतज़ार कर रहा हो सकता है।",
+    },
+  ],
+};
+const SERVICE_MR: HelpSection = {
+  title: "रिपेअर जॉब्स",
+  items: [
+    {
+      q: "जॉब कोणत्या स्टेटसमधून जाते?",
+      a: "Received → In progress → Ready → Delivered. काम पुढे जाताना जॉबच्या स्वतःच्या पानावरून स्टेटस अपडेट करा; ग्राहकाचं बिल तेव्हाच बनतं जेव्हा सामान प्रत्यक्ष डिलिव्हर होतं आणि पेमेंट होतं.",
+    },
+    {
+      q: "Home वर overdue-job अलर्ट म्हणजे काय?",
+      a: "ज्या जॉब्स त्यांच्या ठरलेल्या expected date पुढे गेल्या तरी उघड्या आहेत — लक्ष देण्यासारखं, कारण ग्राहक आधीच वाट पाहत असू शकतो.",
+    },
+  ],
+};
+
+const SALON_EN: HelpSection = {
+  title: "Appointments",
+  items: [
+    {
+      q: "How do I book an appointment?",
+      a: "Salon → Appointments → New — pick the customer, service and stylist, and a date/time. It shows up on the day's appointment list, and can be turned straight into a bill once the service is done.",
+    },
+    {
+      q: "What's the \"likely no-show\" alert on Home?",
+      a: "A booked appointment whose time has passed by 30+ minutes with nobody marked arrived — worth a quick call, both to fill the slot and because the same client tends to repeat the pattern if nobody follows up.",
+    },
+  ],
+};
+const SALON_HI: HelpSection = {
+  title: "Appointments",
+  items: [
+    {
+      q: "Appointment कैसे book करें?",
+      a: "Salon → Appointments → New — customer, service, stylist और date/time चुनें। यह उस दिन की appointment list में दिख जाती है, और service पूरी होने पर सीधे बिल में बदल सकते हैं।",
+    },
+    {
+      q: "Home पर \"likely no-show\" alert क्या है?",
+      a: "एक booked appointment जिसका समय 30+ मिनट निकल चुका है और कोई arrived mark नहीं हुआ — एक कॉल करना ठीक रहेगा, स्लॉट भरने के लिए भी और क्योंकि बिना follow-up के यही pattern दोबारा हो सकता है।",
+    },
+  ],
+};
+const SALON_MR: HelpSection = {
+  title: "Appointments",
+  items: [
+    {
+      q: "Appointment कशी बुक करायची?",
+      a: "Salon → Appointments → New — ग्राहक, सेवा, स्टायलिस्ट आणि तारीख/वेळ निवडा. ती त्या दिवसाच्या appointment यादीत दिसते, आणि सेवा पूर्ण झाल्यावर थेट बिलामध्ये बदलता येते.",
+    },
+    {
+      q: "Home वर \"likely no-show\" अलर्ट म्हणजे काय?",
+      a: "बुक केलेली अपॉइंटमेंट ज्याची वेळ 30+ मिनिटं उलटली आहे आणि कोणीही arrived मार्क केलेलं नाही — एक कॉल करणं योग्य ठरेल, स्लॉट भरण्यासाठीही आणि कारण फॉलो-अपशिवाय हाच पॅटर्न पुन्हा होऊ शकतो.",
+    },
+  ],
+};
+
+const JEWELLERY_EN: HelpSection = {
+  title: "Rates & making charges",
+  items: [
+    {
+      q: "How do I set today's gold/silver rate?",
+      a: "Jewellery → Rates — set the per-gram rate for gold and/or silver each day before billing. It's used automatically for every item priced by weight.",
+    },
+    {
+      q: "What happens if I forget to set it?",
+      a: "The Home health score flags it as the top priority for the day — every sale needs today's rate to be accurate, so it's ranked above almost everything else.",
+    },
+  ],
+};
+const JEWELLERY_HI: HelpSection = {
+  title: "Rate और Making charges",
+  items: [
+    {
+      q: "आज का gold/silver rate कैसे set करें?",
+      a: "Jewellery → Rates — हर दिन billing से पहले gold और/या silver का per-gram rate set करें। यह वज़न के हिसाब से price होने वाले हर item में अपने-आप इस्तेमाल होता है।",
+    },
+    {
+      q: "अगर set करना भूल जाएँ तो?",
+      a: "Home का health score इसे दिन की सबसे ज़रूरी चीज़ बताता है — हर बिक्री के लिए आज का rate सही होना चाहिए, इसलिए यह लगभग हर चीज़ से ऊपर rank होता है।",
+    },
+  ],
+};
+const JEWELLERY_MR: HelpSection = {
+  title: "दर व मेकिंग चार्जेस",
+  items: [
+    {
+      q: "आजचा सोने/चांदीचा दर कसा सेट करायचा?",
+      a: "Jewellery → Rates — दररोज बिलिंगआधी सोनं आणि/किंवा चांदीचा per-gram दर सेट करा. वजनानुसार किंमत असलेल्या प्रत्येक वस्तूसाठी हा आपोआप वापरला जातो.",
+    },
+    {
+      q: "सेट करायचं विसरलं तर काय होतं?",
+      a: "Home चा health score हे दिवसाचं सर्वात महत्त्वाचं काम म्हणून दाखवतो — प्रत्येक विक्रीसाठी आजचा दर बरोबर असणं गरजेचं आहे, म्हणून हे जवळजवळ सर्वांपेक्षा वर rank होतं.",
+    },
+  ],
+};
+
+const CLINIC_EN: HelpSection = {
+  title: "Prescriptions & appointments",
+  items: [
+    {
+      q: "How do I write a prescription?",
+      a: "Clinic → Prescriptions → New — add the patient, diagnosis and medicines. It prints in a standard prescription format, and can set a follow-up date.",
+    },
+    {
+      q: "What's the missed follow-up alert on Home?",
+      a: "Patients whose follow-up date has already passed without a new visit recorded — surfaced so it doesn't just quietly sit in the prescriptions list.",
+    },
+  ],
+};
+const CLINIC_HI: HelpSection = {
+  title: "Prescriptions और Appointments",
+  items: [
+    {
+      q: "Prescription कैसे लिखें?",
+      a: "Clinic → Prescriptions → New — patient, diagnosis और दवाएँ जोड़ें। यह standard prescription format में print होती है, और follow-up date भी set कर सकते हैं।",
+    },
+    {
+      q: "Home पर missed follow-up alert क्या है?",
+      a: "वो patients जिनकी follow-up date निकल चुकी है और नई visit दर्ज नहीं हुई — ताकि यह prescriptions list में चुपचाप पड़ा न रह जाए।",
+    },
+  ],
+};
+const CLINIC_MR: HelpSection = {
+  title: "प्रिस्क्रिप्शन व अपॉइंटमेंट्स",
+  items: [
+    {
+      q: "प्रिस्क्रिप्शन कसं लिहायचं?",
+      a: "Clinic → Prescriptions → New — रुग्ण, निदान व औषधं जोडा. हे standard प्रिस्क्रिप्शन फॉरमॅटमध्ये प्रिंट होतं, आणि फॉलो-अप तारीखही सेट करता येते.",
+    },
+    {
+      q: "Home वर missed follow-up अलर्ट म्हणजे काय?",
+      a: "ज्या रुग्णांची फॉलो-अप तारीख उलटून गेली आहे आणि नवीन भेट नोंदवलेली नाही — जेणेकरून हे प्रिस्क्रिप्शन यादीत शांतपणे पडून राहू नये.",
+    },
+  ],
+};
+
+const GYM_EN: HelpSection = {
+  title: "Memberships & attendance",
+  items: [
+    {
+      q: "How do I check in a member?",
+      a: "Gym → Attendance — search the member and tap to check in. Today's check-in count shows on Home.",
+    },
+    {
+      q: "What's the attrition-risk alert on Home?",
+      a: "Compares each active member's check-ins in the last 14 days against their OWN prior 14-day habit (needs 3+ visits established first) — catches someone drifting away well before their membership actually expires, while a check-in call still has a chance of saving the renewal.",
+    },
+  ],
+};
+const GYM_HI: HelpSection = {
+  title: "Membership और Attendance",
+  items: [
+    {
+      q: "Member को check in कैसे करें?",
+      a: "Gym → Attendance — member खोजें और check in के लिए टैप करें। आज का check-in count Home पर दिखता है।",
+    },
+    {
+      q: "Home पर attrition-risk alert क्या है?",
+      a: "हर active member के पिछले 14 दिनों के check-ins को उसकी अपनी पहले की 14-दिन की आदत से compare करता है (पहले 3+ visits होनी ज़रूरी हैं) — membership खत्म होने से काफ़ी पहले किसी के दूर जाने का पता चल जाता है, जब एक call से renewal बचने का मौका अभी बचा हो।",
+    },
+  ],
+};
+const GYM_MR: HelpSection = {
+  title: "मेंबरशिप व उपस्थिती",
+  items: [
+    {
+      q: "सदस्याला चेक-इन कसं करायचं?",
+      a: "Gym → Attendance — सदस्य शोधा आणि चेक-इनसाठी टॅप करा. आजची चेक-इन संख्या Home वर दिसते.",
+    },
+    {
+      q: "Home वर attrition-risk अलर्ट म्हणजे काय?",
+      a: "प्रत्येक सक्रिय सदस्याच्या मागील 14 दिवसांच्या चेक-इनची तुलना त्यांच्याच आधीच्या 14-दिवसांच्या सवयीशी करतं (आधी 3+ भेटी झालेल्या असणं गरजेचं आहे) — मेंबरशिप संपण्याआधीच कोणी दूर जात असल्याचं कळतं, जेव्हा एका कॉलने renewal वाचवण्याची संधी अजून असते.",
+    },
+  ],
+};
+
+const LAB_EN: HelpSection = {
+  title: "Orders & turnaround",
+  items: [
+    {
+      q: "How does an order move through statuses?",
+      a: "Booked → Sample collected → Received at lab → Processing → Report ready → Delivered. Update the status from the order's own page as it moves through the lab.",
+    },
+    {
+      q: "What's the TAT-breach alert on Home?",
+      a: "A sample still in a non-final status after 48 hours is flagged as at risk of missing its turnaround-time promise — the closest thing to a TAT-breach predictor without dedicated LIMS software.",
+    },
+  ],
+};
+const LAB_HI: HelpSection = {
+  title: "Orders और Turnaround",
+  items: [
+    {
+      q: "Order किन-किन status से गुज़रती है?",
+      a: "Booked → Sample collected → Received at lab → Processing → Report ready → Delivered। lab में आगे बढ़ने के साथ order के अपने page से status update करें।",
+    },
+    {
+      q: "Home पर TAT-breach alert क्या है?",
+      a: "48 घंटों बाद भी non-final status में पड़ा sample तय समय पर report न मिलने के खतरे में flag होता है — बिना किसी dedicated LIMS software के, TAT-breach predictor जैसा सबसे नज़दीकी काम।",
+    },
+  ],
+};
+const LAB_MR: HelpSection = {
+  title: "ऑर्डर्स व टर्नअराउंड",
+  items: [
+    {
+      q: "ऑर्डर कोणत्या स्टेटसमधून जाते?",
+      a: "Booked → Sample collected → Received at lab → Processing → Report ready → Delivered. लॅबमध्ये पुढे जाताना ऑर्डरच्या स्वतःच्या पानावरून स्टेटस अपडेट करा.",
+    },
+    {
+      q: "Home वर TAT-breach अलर्ट म्हणजे काय?",
+      a: "48 तासांनंतरही non-final स्टेटसमध्ये असलेला सॅम्पल ठरलेल्या वेळेत रिपोर्ट न मिळण्याच्या धोक्यात असल्याचं दाखवतं — dedicated LIMS सॉफ्टवेअरशिवाय, TAT-breach predictor सारखं सर्वात जवळचं काम.",
+    },
+  ],
+};
+
+const RESTAURANT_EN: HelpSection = {
+  title: "Restaurant — Tables & orders",
+  items: [
+    {
+      q: "How do I start an order?",
+      a: "Tap a free (green) table on the Tables screen — it opens a new order for that table and marks it occupied. Search the menu and tap an item to add it; tap again to add another one. Tap an occupied (red) table any time to reopen its order and keep adding.",
+    },
+    {
+      q: "What does Print KOT actually send?",
+      a: "Only the items added since the last KOT for that table — so if you print, then add two more dishes later, the second KOT shows just those two, not the whole order again. This is what stops the kitchen from re-cooking something already on the stove.",
+    },
+    {
+      q: "What's the Kitchen tab / Kitchen Display?",
+      a: "A full-screen, no-app-chrome view meant for a TV or tablet sitting in the kitchen — every open table's ticket, color-coded by how long it's been waiting (green under 10 minutes, orange 10–20, red 20+). It refreshes itself every few seconds, so nobody needs to keep printing paper KOTs.",
+    },
+    {
+      q: "How do I remove a wrongly-added item?",
+      a: "Tap the next to it in the order screen — no PIN needed, since correcting a mistake is a normal part of taking orders. A PIN is only required to cancel the entire table's order.",
+    },
+    {
+      q: "What's the Manager PIN for?",
+      a: "It's needed to cancel a started order (the whole table, not a single item) — deliberately a separate PIN from the owner's login password, set under Settings → Restaurant, so staff never need real account credentials just to void something with a supervisor's approval.",
+    },
+    {
+      q: "How does Settle work?",
+      a: "Tap Settle on an order, apply a discount if needed, then enter the payment — split it across cash, card, UPI, etc. if the customer's paying more than one way. Whatever's short of the total becomes credit against that customer, same as a regular bill.",
+    },
+    {
+      q: "Dine-in, Takeaway, Delivery — what's that toggle for?",
+      a: "Marks how the order is being served, for your own records and future reporting. It doesn't change how billing or KOT works.",
+    },
+    {
+      q: "What's the \"order sitting too long\" alert on Home?",
+      a: "An order left open for 90+ minutes with no activity — either a forgotten table or a stale record nobody closed out. Worth a glance either way.",
+    },
+  ],
+};
+const RESTAURANT_HI: HelpSection = {
+  title: "Restaurant — Tables और Orders",
+  items: [
+    {
+      q: "Order कैसे शुरू करें?",
+      a: "Tables screen पर किसी खाली (हरी) table पर टैप करें — उसके लिए नया order खुल जाता है और table occupied हो जाती है। Menu खोजें और item पर टैप करके जोड़ें; दोबारा टैप करने से और जुड़ता है। किसी occupied (लाल) table पर कभी भी टैप करके उसका order फिर से खोल सकते हैं।",
+    },
+    {
+      q: "Print KOT असल में क्या भेजता है?",
+      a: "सिर्फ़ वही items जो उस table के पिछले KOT के बाद जुड़े हों — तो अगर आपने print किया, फिर बाद में 2 और dish जोड़ीं, दूसरा KOT सिर्फ़ वही 2 दिखाएगा, पूरा order दोबारा नहीं। यही kitchen को already बन रही चीज़ दोबारा बनाने से रोकता है।",
+    },
+    {
+      q: "Kitchen tab / Kitchen Display क्या है?",
+      a: "एक पूरी स्क्रीन वाला view, बिना किसी app menu के — किसी TV या tablet के लिए जो kitchen में रखा हो। हर खुली table का ticket, रंग के हिसाब से (हरा 10 मिनट से कम, नारंगी 10-20, लाल 20+ मिनट) — कितनी देर से रुका है दिखाता है। यह अपने-आप हर कुछ सेकंड में update होता रहता है, तो कागज़ पर KOT print करने की ज़रूरत नहीं।",
+    },
+    {
+      q: "गलती से जुड़े item को कैसे हटाएँ?",
+      a: "Order screen में उसके बगल में दबाएँ — कोई PIN नहीं चाहिए, क्योंकि गलती ठीक करना सामान्य काम है। PIN सिर्फ़ पूरी table का order cancel करने के लिए चाहिए।",
+    },
+    {
+      q: "Manager PIN किसलिए है?",
+      a: "किसी शुरू हो चुकी order को cancel करने के लिए (पूरी table, सिर्फ़ एक item नहीं) — जानबूझकर owner के login password से अलग, Settings → Restaurant में सेट करें, ताकि staff को कभी असली account credentials न जानने पड़ें, सिर्फ़ supervisor की मंज़ूरी से काम हो जाए।",
+    },
+    {
+      q: "Settle कैसे काम करता है?",
+      a: "किसी order पर Settle दबाएँ, ज़रूरत हो तो discount लगाएँ, फिर payment डालें — अगर customer एक से ज़्यादा तरीके से पैसे दे रहा है तो cash/card/UPI में बाँट सकते हैं। जो total से कम रह जाए, वो customer के उधार में जुड़ जाता है, सामान्य बिल जैसे ही।",
+    },
+    {
+      q: "Dine-in, Takeaway, Delivery वाला toggle किसलिए है?",
+      a: "यह record रखता है कि order कैसे serve हुआ, आपकी अपनी जानकारी और आगे reports के लिए। billing या KOT के काम करने के तरीके में कोई फ़र्क़ नहीं पड़ता।",
+    },
+    {
+      q: "Home पर \"order बहुत देर से खुली है\" alert क्या है?",
+      a: "कोई order 90+ मिनट से बिना किसी हलचल के खुली है — या तो table भूल गई, या कोई पुराना record बंद नहीं हुआ। दोनों ही सूरत में एक नज़र डालने लायक।",
+    },
+  ],
+};
+const RESTAURANT_MR: HelpSection = {
+  title: "रेस्टॉरंट — टेबल्स व ऑर्डर्स",
+  items: [
+    {
+      q: "ऑर्डर कशी सुरू करायची?",
+      a: "Tables स्क्रीनवर एखाद्या रिकाम्या (हिरव्या) टेबलवर टॅप करा — त्यासाठी नवीन ऑर्डर उघडते आणि टेबल occupied होते. मेनू शोधा आणि आयटमवर टॅप करून जोडा; पुन्हा टॅप केल्यास आणखी एक जोडली जाते. व्यापलेल्या (लाल) टेबलवर कधीही टॅप करून त्याची ऑर्डर पुन्हा उघडता येते.",
+    },
+    {
+      q: "Print KOT नक्की काय पाठवते?",
+      a: "फक्त त्या टेबलच्या शेवटच्या KOT नंतर जोडलेले आयटम — म्हणजे तुम्ही प्रिंट केले, नंतर आणखी 2 डिश जोडल्या, तर दुसरे KOT फक्त त्या 2 दाखवते, संपूर्ण ऑर्डर पुन्हा नाही. यामुळेच स्वयंपाकघर आधीच बनत असलेली गोष्ट पुन्हा बनवत नाही.",
+    },
+    {
+      q: "Kitchen टॅब / Kitchen Display म्हणजे काय?",
+      a: "स्वयंपाकघरात ठेवलेल्या TV किंवा टॅबलेटसाठी बनवलेले, कोणत्याही app मेनूशिवाय पूर्ण स्क्रीन दृश्य — प्रत्येक उघड्या टेबलचे तिकीट, किती वेळ थांबले आहे त्यानुसार रंगीत (हिरवा 10 मिनिटांखाली, केशरी 10-20, लाल 20+ मिनिटे). हे दर काही सेकंदांनी आपोआप अपडेट होते, त्यामुळे कागदी KOT प्रिंट करायची गरज नाही.",
+    },
+    {
+      q: "चुकून जोडलेला आयटम कसा काढायचा?",
+      a: "ऑर्डर स्क्रीनमध्ये त्याच्या बाजूला दाबा — PIN लागत नाही, कारण चूक दुरुस्त करणे हे सामान्य काम आहे. संपूर्ण टेबलची ऑर्डर रद्द करण्यासाठीच PIN लागतो.",
+    },
+    {
+      q: "Manager PIN कशासाठी आहे?",
+      a: "सुरू झालेली ऑर्डर रद्द करण्यासाठी (संपूर्ण टेबल, एकच आयटम नाही) — मालकाच्या लॉगिन पासवर्डपेक्षा जाणूनबुजून वेगळे, Settings → Restaurant मध्ये सेट करा, जेणेकरून कर्मचाऱ्यांना कधीही खरे खाते credentials माहित असण्याची गरज नाही, फक्त पर्यवेक्षकाच्या मान्यतेने काम होते.",
+    },
+    {
+      q: "Settle कसे काम करते?",
+      a: "ऑर्डरवर Settle दाबा, गरज असल्यास सूट लावा, मग पेमेंट टाका — ग्राहक एकापेक्षा जास्त प्रकारे पैसे देत असेल तर cash/card/UPI मध्ये विभागू शकता. जे एकूण रकमेपेक्षा कमी राहील, ते ग्राहकाच्या उधारीत जोडले जाते, नेहमीच्या बिलासारखेच.",
+    },
+    {
+      q: "Dine-in, Takeaway, Delivery टॉगल कशासाठी आहे?",
+      a: "ऑर्डर कशी दिली गेली याची नोंद ठेवते, तुमच्या स्वतःच्या माहितीसाठी आणि पुढील अहवालांसाठी. बिलिंग किंवा KOT काम करण्याच्या पद्धतीत काहीही फरक पडत नाही.",
+    },
+    {
+      q: "Home वर \"ऑर्डर खूप वेळ उघडी आहे\" अलर्ट म्हणजे काय?",
+      a: "एखादी ऑर्डर 90+ मिनिटं कोणत्याही हालचालीशिवाय उघडी आहे — एकतर टेबल विसरली गेली, किंवा जुनी नोंद बंद केली गेली नाही. दोन्ही बाबतीत एकदा बघण्यासारखं.",
+    },
+  ],
+};
+
+const RENTAL_EN: HelpSection = {
+  title: "Rental — Bookings & returns",
+  items: [
+    {
+      q: "How do I make an item rentable?",
+      a: "In Inventory, edit the item and tick \"Also available for rent\" — then set a rate for whichever durations you actually rent by (hourly/daily/weekly/monthly) and, if you take one, a security deposit.",
+    },
+    {
+      q: "How does the app stop double-booking?",
+      a: "Every time you book, it checks every other booking for that same item whose dates overlap the ones you're entering, and only lets you book what's actually free for that window. If you ask for more than what's available, it tells you the exact number free instead.",
+    },
+    {
+      q: "What happens to the security deposit?",
+      a: "It's collected at booking time and held separately from the rental charge (no GST applies to it, since it's refundable, not a sale). When the item is returned, any damage charge is deducted from it automatically, and the remainder is refunded. If damage costs more than the deposit, the difference becomes credit owed by the customer.",
+    },
+    {
+      q: "How do I process a return?",
+      a: "Open the rental and tap Process return — mark each item's condition (good/damaged/missing), add a damage charge or late fee if applicable, and confirm. The item becomes available to book again immediately.",
+    },
+    {
+      q: "Where do past rentals go?",
+      a: "More → Rentals → Rental history shows everything that's been returned or cancelled, most recent first.",
+    },
+    {
+      q: "What's the idle-asset alert on Home?",
+      a: "Catalog items that haven't appeared in any rental in the last 30 days — a real cost sitting idle, worth a discount or a promo push to get moving again.",
+    },
+  ],
+};
+const RENTAL_HI: HelpSection = {
+  title: "Rental — Booking और Return",
+  items: [
+    {
+      q: "किसी item को rentable कैसे बनाएँ?",
+      a: "Inventory में item edit करें और \"Also available for rent\" टिक करें — फिर जिन duration पर असल में rent करते हैं (hourly/daily/weekly/monthly) उनकी rate भरें, और अगर लेते हैं तो security deposit।",
+    },
+    {
+      q: "App double-booking कैसे रोकता है?",
+      a: "जब भी book करें, वो उसी item की हर दूसरी booking से जाँच करता है जिनकी dates overlap होती हैं, और सिर्फ़ उतना ही book होने देता है जितना उस समय के लिए असल में खाली है। अगर उपलब्ध से ज़्यादा माँगें, तो सही उपलब्ध संख्या बता देता है।",
+    },
+    {
+      q: "Security deposit का क्या होता है?",
+      a: "यह booking के वक़्त लिया जाता है और rental charge से अलग रखा जाता है (इस पर GST नहीं लगता, क्योंकि यह refundable है, बिक्री नहीं)। सामान वापस आने पर, कोई damage charge अपने-आप deposit से कट जाता है, बाकी वापस मिल जाता है। अगर damage deposit से ज़्यादा हो, तो फ़र्क़ customer के उधार में जुड़ जाता है।",
+    },
+    {
+      q: "Return कैसे process करें?",
+      a: "Rental खोलें और Process return दबाएँ — हर item की हालत बताएं (अच्छी/खराब/गुम), ज़रूरत हो तो damage charge या late fee जोड़ें, और confirm करें। Item तुरंत दोबारा book होने लायक हो जाता है।",
+    },
+    {
+      q: "पुरानी rentals कहाँ मिलेंगी?",
+      a: "More → Rentals → Rental history में सारी वापस आई या cancel हुई rentals दिखती हैं, सबसे नई सबसे पहले।",
+    },
+    {
+      q: "Home पर idle-asset alert क्या है?",
+      a: "Catalog के वो items जो पिछले 30 दिनों में किसी भी rental में नहीं गए — खाली पड़े रहने का असली खर्चा, discount या promo देकर दोबारा चलाना ठीक रहेगा।",
+    },
+  ],
+};
+const RENTAL_MR: HelpSection = {
+  title: "भाड्याने देणे — बुकिंग व परतावा",
+  items: [
+    {
+      q: "एखादी वस्तू rentable कशी बनवायची?",
+      a: "Inventory मध्ये वस्तू edit करा आणि \"Also available for rent\" टिक करा — मग तुम्ही ज्या कालावधीनुसार खरोखर भाड्याने देता (hourly/daily/weekly/monthly) त्यांचा दर भरा, आणि घेत असाल तर सुरक्षा ठेव.",
+    },
+    {
+      q: "App दुहेरी-बुकिंग कसे थांबवते?",
+      a: "जेव्हाही तुम्ही बुक करता, ते त्याच वस्तूच्या दुसऱ्या प्रत्येक बुकिंगशी तपासते ज्यांच्या तारखा जुळतात, आणि त्या कालावधीसाठी प्रत्यक्षात मोकळे असेल तेवढेच बुक करू देते. उपलब्धतेपेक्षा जास्त मागितल्यास, नेमकी उपलब्ध संख्या सांगते.",
+    },
+    {
+      q: "सुरक्षा ठेवीचे काय होते?",
+      a: "ती बुकिंगच्या वेळी घेतली जाते आणि भाड्याच्या रकमेपासून वेगळी ठेवली जाते (यावर GST लागत नाही, कारण ती परत करण्यायोग्य आहे, विक्री नाही). वस्तू परत आल्यावर, कोणताही नुकसान शुल्क आपोआप ठेवीतून वजा होतो, उरलेली रक्कम परत केली जाते. नुकसान ठेवीपेक्षा जास्त असल्यास, फरक ग्राहकाच्या उधारीत जोडला जातो.",
+    },
+    {
+      q: "परतावा कसा process करायचा?",
+      a: "भाडे उघडा आणि Process return दाबा — प्रत्येक वस्तूची स्थिती सांगा (चांगली/खराब/गहाळ), गरज असल्यास नुकसान शुल्क किंवा विलंब शुल्क जोडा, आणि पुष्टी करा. वस्तू लगेच पुन्हा बुक करण्यायोग्य होते.",
+    },
+    {
+      q: "जुनी भाडी कुठे मिळतील?",
+      a: "More → Rentals → Rental history मध्ये परत आलेली किंवा रद्द झालेली सर्व भाडी दिसतात, सर्वात नवीन आधी.",
+    },
+    {
+      q: "Home वर idle-asset अलर्ट म्हणजे काय?",
+      a: "कॅटलॉगमधील ज्या वस्तू मागील 30 दिवसांत कोणत्याही भाड्यात गेल्या नाहीत — रिकाम्या पडून राहण्याचा खरा खर्च, सूट किंवा प्रमोशन देऊन पुन्हा चालना देणं योग्य ठरेल.",
+    },
+  ],
+};
+
+/** Shown ABOVE the generic sections above, so the first thing a shop
+ * sees under Help is what's actually different about running THEIR
+ * kind of business — not the same Home/Sell/Buy walkthrough every
+ * other business type gets too. Falls back to the retail section for
+ * any business type without a dedicated one of its own. */
+export const BUSINESS_HELP_SECTION: Record<BusinessType, Record<Lang, HelpSection>> = {
+  grocery: { en: RETAIL_EN, hi: RETAIL_HI, mr: RETAIL_MR },
+  mart: { en: RETAIL_EN, hi: RETAIL_HI, mr: RETAIL_MR },
+  general: { en: RETAIL_EN, hi: RETAIL_HI, mr: RETAIL_MR },
+  hardware: { en: HARDWARE_EN, hi: HARDWARE_HI, mr: HARDWARE_MR },
+  pharmacy: { en: PHARMACY_EN, hi: PHARMACY_HI, mr: PHARMACY_MR },
+  restaurant: { en: RESTAURANT_EN, hi: RESTAURANT_HI, mr: RESTAURANT_MR },
+  rental: { en: RENTAL_EN, hi: RENTAL_HI, mr: RENTAL_MR },
+  transport: { en: TRANSPORT_EN, hi: TRANSPORT_HI, mr: TRANSPORT_MR },
+  service: { en: SERVICE_EN, hi: SERVICE_HI, mr: SERVICE_MR },
+  salon: { en: SALON_EN, hi: SALON_HI, mr: SALON_MR },
+  jewellery: { en: JEWELLERY_EN, hi: JEWELLERY_HI, mr: JEWELLERY_MR },
+  clinic: { en: CLINIC_EN, hi: CLINIC_HI, mr: CLINIC_MR },
+  gym: { en: GYM_EN, hi: GYM_HI, mr: GYM_MR },
+  lab: { en: LAB_EN, hi: LAB_HI, mr: LAB_MR },
 };

@@ -28,18 +28,25 @@ export default async function ScheduleXRegisterPage({
   const startOfRange = new Date(`${fromDate}T00:00:00+05:30`);
   const endOfRange = new Date(`${toDate}T23:59:59.999+05:30`);
 
-  const { data: scheduleXProducts } = await admin
+  // H1 covers everyday prescription antibiotics/sedatives — the
+  // register a pharmacy actually needs day to day. X (rare narcotic/
+  // psychotropic drugs) is the stricter, much less common case. Both
+  // require the same record: patient, prescriber, drug, quantity,
+  // date — so one combined register, with the schedule shown per row,
+  // is what a shop actually needs rather than two separate pages.
+  const { data: controlledProducts } = await admin
     .from("products")
-    .select("id")
+    .select("id, drug_schedule")
     .eq("shop_id", session.shopId)
-    .eq("drug_schedule", "x");
-  const productIds = (scheduleXProducts ?? []).map((p) => p.id);
+    .in("drug_schedule", ["h1", "x"]);
+  const productIds = (controlledProducts ?? []).map((p) => p.id);
+  const scheduleByProduct = new Map((controlledProducts ?? []).map((p) => [p.id, p.drug_schedule as "h1" | "x"]));
 
   const { data: items } = productIds.length
     ? await admin
         .from("bill_items")
         .select(
-          "id, product_name, quantity, batch_id, bills!inner ( id, invoice_number, created_at, doctor_name, patient_name, status, shop_id, customers ( name, phone ) )",
+          "id, product_id, product_name, quantity, batch_id, bills!inner ( id, invoice_number, created_at, doctor_name, patient_name, status, shop_id, customers ( name, phone ) )",
         )
         .in("product_id", productIds)
         .eq("bills.shop_id", session.shopId)
@@ -61,6 +68,7 @@ export default async function ScheduleXRegisterPage({
       const customer = Array.isArray(bill.customers) ? bill.customers[0] : bill.customers;
       return {
         id: item.id,
+        schedule: item.product_id ? (scheduleByProduct.get(item.product_id) ?? "h1") : "h1",
         date: bill.created_at,
         invoiceNumber: bill.invoice_number,
         medicine: item.product_name,
@@ -102,8 +110,13 @@ export default async function ScheduleXRegisterPage({
             {rows.map((r) => (
               <li key={r.id} className="neu-card px-3.5 py-3">
                 <div className="flex items-center justify-between text-sm">
-                  <span className="font-medium text-foreground">{r.medicine}</span>
-                  <span className="text-xs text-muted">{new Date(r.date).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata", day: "numeric", month: "short", year: "numeric" })}</span>
+                  <span className="flex min-w-0 items-center gap-1.5 font-medium text-foreground">
+                    <span className={`shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-bold ${r.schedule === "x" ? "bg-danger-soft text-danger" : "bg-brand-soft text-brand-text"}`}>
+                      {r.schedule === "x" ? t("scheduleX.badgeX") : t("scheduleX.badgeH1")}
+                    </span>
+                    <span className="truncate">{r.medicine}</span>
+                  </span>
+                  <span className="shrink-0 text-xs text-muted">{new Date(r.date).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata", day: "numeric", month: "short", year: "numeric" })}</span>
                 </div>
                 <p className="text-xs text-muted">
                   {t("scheduleX.lineDetail", { batch: r.batchNumber, qty: r.quantity, invoice: r.invoiceNumber })}

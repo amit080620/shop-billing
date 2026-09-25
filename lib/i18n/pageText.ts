@@ -963,4 +963,10 @@ export const PAGE_TEXT: Record<string, [hi: string, mr: string]> = {
   "Clinic / Doctor": ["क्लिनिक / डॉक्टर", "क्लिनिक / डॉक्टर"],
   "Gym / Fitness": ["जिम / फिटनेस", "जिम / फिटनेस"],
   "Lab / Diagnostics": ["लैब / डायग्नोस्टिक्स", "लॅब / डायग्नोस्टिक्स"],
+
+  // Help → Contact us
+  "Billing / payment issue": ["बिलिंग / पेमेंट की समस्या", "बिलिंग / पेमेंट समस्या"],
+  "Something's not working": ["कुछ काम नहीं कर रहा", "काहीतरी काम करत नाही"],
+  "Feature request": ["नया feature चाहिए", "नवीन feature हवं"],
+  "Something else": ["कुछ और", "आणखी काही"],
 };

@@ -3,6 +3,7 @@
 import { downloadCsv } from "@/app/components/downloadCsv";
 
 type Row = {
+  schedule: "h1" | "x";
   date: string;
   invoiceNumber: string;
   medicine: string;
@@ -17,9 +18,10 @@ type Row = {
 export function ExportRegisterButton({ rows, label }: { rows: Row[]; label: string }) {
   function exportCsv() {
     downloadCsv(
-      "schedule-x-register.csv",
-      ["Date", "Invoice Number", "Medicine", "Batch", "Quantity", "Customer", "Phone", "Doctor", "Patient"],
+      "schedule-h1-x-register.csv",
+      ["Schedule", "Date", "Invoice Number", "Medicine", "Batch", "Quantity", "Customer", "Phone", "Doctor", "Patient"],
       rows.map((r) => [
+        r.schedule.toUpperCase(),
         new Date(r.date).toLocaleDateString("en-IN"),
         r.invoiceNumber,
         r.medicine,
