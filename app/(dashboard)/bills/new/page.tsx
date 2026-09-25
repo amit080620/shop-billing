@@ -54,21 +54,61 @@ export default async function NewBillPage() {
   // "Frequently sold" quick-add chips — a real speed win for repeat items
   // (milk, bread, etc.) without typing anything.
   let frequentProductIds: string[] = [];
+  // "Bought together" — the one product each item most often shares a
+  // bill with, so adding rice can nudge atta the way a big e-commerce
+  // cart would, except built from THIS shop's own real sales instead of
+  // a platform-wide model. Reuses the same 30-day bill window as the
+  // frequent-items chips above, just grouped by bill instead of summed.
+  const affinityMap: Record<string, string> = {};
   const recentBillIds = (recentBills ?? []).map((b) => b.id);
   if (recentBillIds.length > 0) {
     const { data: items } = await admin
       .from("bill_items")
-      .select("product_id, quantity")
+      .select("bill_id, product_id, quantity")
       .in("bill_id", recentBillIds);
     const countByProduct = new Map<string, number>();
+    const itemsByBill = new Map<string, Set<string>>();
     for (const item of items ?? []) {
       if (!item.product_id) continue;
       countByProduct.set(item.product_id, (countByProduct.get(item.product_id) ?? 0) + Number(item.quantity));
+      if (!itemsByBill.has(item.bill_id)) itemsByBill.set(item.bill_id, new Set());
+      itemsByBill.get(item.bill_id)!.add(item.product_id);
     }
     frequentProductIds = [...countByProduct.entries()]
       .sort((a, b) => b[1] - a[1])
       .slice(0, 8)
       .map(([id]) => id);
+
+    const billCountByProduct = new Map<string, number>();
+    const pairCounts = new Map<string, number>();
+    for (const productIds of itemsByBill.values()) {
+      const ids = [...productIds];
+      for (const id of ids) billCountByProduct.set(id, (billCountByProduct.get(id) ?? 0) + 1);
+      for (let i = 0; i < ids.length; i++) {
+        for (let j = i + 1; j < ids.length; j++) {
+          const [a, b] = [ids[i], ids[j]].sort();
+          const key = `${a}|${b}`;
+          pairCounts.set(key, (pairCounts.get(key) ?? 0) + 1);
+        }
+      }
+    }
+    const bestPartner = new Map<string, { partnerId: string; coCount: number }>();
+    for (const [key, coCount] of pairCounts.entries()) {
+      const [a, b] = key.split("|");
+      for (const [x, y] of [[a, b] as const, [b, a] as const]) {
+        const existing = bestPartner.get(x);
+        if (!existing || coCount > existing.coCount) bestPartner.set(x, { partnerId: y, coCount });
+      }
+    }
+    // Needs real signal, not a coincidence — co-bought at least 3 times
+    // AND in at least a quarter of that product's own bills, or the
+    // suggestion is noise more often than it's useful.
+    for (const [productId, { partnerId, coCount }] of bestPartner.entries()) {
+      const ownBills = billCountByProduct.get(productId) ?? 0;
+      if (coCount >= 3 && ownBills > 0 && coCount / ownBills >= 0.25) {
+        affinityMap[productId] = partnerId;
+      }
+    }
   }
 
   return (
@@ -127,6 +167,7 @@ export default async function NewBillPage() {
       }))}
       customers={customers ?? []}
       frequentProductIds={frequentProductIds}
+      affinityMap={affinityMap}
       vehicles={(vehicles ?? []).map((v) => ({ id: v.id, name: v.name, ratePerKm: Number(v.rate_per_km) }))}
       goldRate={metalRates?.find((r) => r.metal_type === "gold") ? Number(metalRates.find((r) => r.metal_type === "gold")!.rate_per_gram) : null}
       silverRate={metalRates?.find((r) => r.metal_type === "silver") ? Number(metalRates.find((r) => r.metal_type === "silver")!.rate_per_gram) : null}

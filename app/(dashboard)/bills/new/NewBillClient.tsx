@@ -16,7 +16,7 @@ import { useSyncCalculatorAmount } from "@/lib/calculatorAmount";
 import { SearchableSelect } from "@/app/components/SearchableSelect";
 import { InlineQuickAdd } from "@/app/components/InlineQuickAdd";
 import { Spinner } from "@/app/components/Spinner";
-import { Zap, Package, AlertTriangle, Pill, Truck, Gem, Recycle, Mic, ScanBarcode, ShoppingCart } from "lucide-react";
+import { Zap, Package, AlertTriangle, Pill, Truck, Gem, Recycle, Mic, ScanBarcode, ShoppingCart, Sparkles, X } from "lucide-react";
 import { barcodeFromQuery } from "@/lib/barcodeQuery";
 import dynamic from "next/dynamic";
 const CameraBarcodeScanner = dynamic(() => import("@/app/components/CameraBarcodeScanner").then((m) => m.CameraBarcodeScanner), { ssr: false });
@@ -92,6 +92,7 @@ export function NewBillClient({
   customers,
   lang,
   frequentProductIds,
+  affinityMap,
   shopContext,
   vehicles,
   businessType,
@@ -105,6 +106,7 @@ export function NewBillClient({
   customers: Customer[];
   lang: Lang;
   frequentProductIds: string[];
+  affinityMap: Record<string, string>;
   vehicles: { id: string; name: string; ratePerKm: number }[];
   businessType: string;
   goldRate: number | null;
@@ -161,6 +163,22 @@ export function NewBillClient({
   const frequentProducts = frequentProductIds
     .map((id) => products.find((p) => p.id === id))
     .filter((p): p is Product => Boolean(p));
+
+  // "Bought together" nudge — looks at the most recently added cart
+  // line first, so the suggestion always reacts to what was just
+  // added rather than getting stuck on the first item forever.
+  const [dismissedSuggestions, setDismissedSuggestions] = useState<Set<string>>(new Set());
+  const basketBuddy = useMemo(() => {
+    for (let i = cart.length - 1; i >= 0; i--) {
+      const partnerId = affinityMap[cart[i].productId];
+      if (!partnerId) continue;
+      if (cart.some((c) => c.productId === partnerId)) continue;
+      if (dismissedSuggestions.has(partnerId)) continue;
+      const partner = products.find((p) => p.id === partnerId);
+      if (partner) return partner;
+    }
+    return null;
+  }, [cart, affinityMap, dismissedSuggestions, products]);
   const cartEndRef = useRef<HTMLDivElement>(null);
 
   // Scroll the newest cart item into view whenever something is added —
@@ -842,6 +860,29 @@ export function NewBillClient({
                 {formatMoney(totals.subtotal)}
               </span>
             </div>
+            {basketBuddy && (
+              <div className="flex items-center gap-2 rounded-lg border border-dashed border-brand/40 px-3 py-2 text-sm">
+                <Sparkles size={14} className="shrink-0 text-brand-text" />
+                <span className="min-w-0 flex-1 truncate text-foreground">
+                  {t("bill.basketBuddy", { name: basketBuddy.name })}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => addProduct(basketBuddy)}
+                  className="shrink-0 rounded-full bg-brand px-2.5 py-1 text-xs font-semibold text-white"
+                >
+                  {t("bill.basketBuddy.add")}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setDismissedSuggestions((p) => new Set(p).add(basketBuddy.id))}
+                  className="shrink-0 text-muted"
+                  aria-label={t("Dismiss")}
+                >
+                  <X size={14} />
+                </button>
+              </div>
+            )}
             <div ref={cartEndRef} className="pb-32 md:pb-0" />
           </section>
         )}
