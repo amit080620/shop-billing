@@ -35,6 +35,7 @@ export async function computeTodaysMoves(shopId: string, businessType: string, l
       businessType === "gym" ? attritionRiskMove(admin, shopId, t) : null,
       businessType === "clinic" ? followUpMove(admin, shopId, t) : null,
       businessType === "transport" ? vehicleDocsMove(admin, shopId, t) : null,
+      businessType === "transport" ? idleVehicleMove(admin, shopId, t) : null,
       businessType === "service" ? serviceJobsMove(admin, shopId, t) : null,
       businessType === "rental" ? rentalsMove(admin, shopId, t) : null,
       businessType === "rental" ? idleAssetsMove(admin, shopId, t) : null,
@@ -256,6 +257,33 @@ async function vehicleDocsMove(admin: Admin, shopId: string, t: T): Promise<Move
     detail: t("move.vehicledocs.detail"),
     href: "/transport/vehicles",
     penalty: Math.min(25, count * 5),
+  };
+}
+
+/** A vehicle in the active fleet that hasn't logged a trip in two
+ * weeks is a real cost sitting idle — insurance, EMI and driver pay
+ * don't pause just because the truck didn't move. Nothing currently
+ * flags a vehicle simply going quiet, only its paperwork expiring. */
+async function idleVehicleMove(admin: Admin, shopId: string, t: T): Promise<Move | null> {
+  const fourteenDaysAgo = new Date(Date.now() - 14 * 86400000);
+  const { data: vehicles } = await admin.from("vehicles").select("id, created_at").eq("shop_id", shopId).eq("is_active", true).lt("created_at", fourteenDaysAgo.toISOString());
+  if (!vehicles || vehicles.length === 0) return null;
+
+  const { data: trips } = await admin
+    .from("transport_trips")
+    .select("vehicle_id, created_at")
+    .eq("shop_id", shopId)
+    .gte("created_at", fourteenDaysAgo.toISOString());
+  const activeVehicleIds = new Set((trips ?? []).map((tr) => tr.vehicle_id));
+
+  const count = vehicles.filter((v) => !activeVehicleIds.has(v.id)).length;
+  if (count === 0) return null;
+  return {
+    id: "idlevehicle",
+    title: t("move.idlevehicle.title", { n: count }),
+    detail: t("move.idlevehicle.detail"),
+    href: "/transport/vehicles",
+    penalty: Math.min(20, count * 5),
   };
 }
 

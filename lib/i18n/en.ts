@@ -95,6 +95,8 @@ const en: Record<string, string> = {
   "move.followup.detail": "They were due to come back by now",
   "move.vehicledocs.title": "{n} vehicle document(s) need attention",
   "move.vehicledocs.detail": "Expired or expiring within 30 days",
+  "move.idlevehicle.title": "{n} vehicle(s) haven't done a trip in 14+ days",
+  "move.idlevehicle.detail": "Sitting idle still costs insurance, EMI and driver pay",
   "move.servicejobs.title": "{n} job(s) past their expected date",
   "move.servicejobs.detail": "Customers may be waiting on these",
   "move.rentals.title": "{n} rental(s) not returned yet",

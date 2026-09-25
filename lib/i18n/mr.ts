@@ -85,6 +85,8 @@ const mr: Record<string, string> = {
   "move.followup.detail": "त्यांनी आतापर्यंत परत यायला हवं होतं",
   "move.vehicledocs.title": "{n} वाहन कागदपत्रांकडे लक्ष द्यायचं आहे",
   "move.vehicledocs.detail": "एक्सपायर झालेली किंवा 30 दिवसांत होणारी",
+  "move.idlevehicle.title": "{n} वाहनाने 14+ दिवसांत एकही ट्रिप केली नाही",
+  "move.idlevehicle.detail": "रिकामं उभं राहिलं तरी इन्शुरन्स, EMI आणि ड्रायव्हरचा पगार लागतच राहतो",
   "move.servicejobs.title": "{n} जॉब त्यांच्या ठरलेल्या तारखेपुढे गेली",
   "move.servicejobs.detail": "ग्राहक यांची वाट पाहत असतील",
   "move.rentals.title": "{n} भाड्याची वस्तू अजून परत आली नाही",

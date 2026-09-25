@@ -95,6 +95,8 @@ const hi: Record<string, string> = {
   "move.followup.detail": "उन्हें अब तक वापस आना था",
   "move.vehicledocs.title": "{n} वाहन दस्तावेज़ पर ध्यान देना है",
   "move.vehicledocs.detail": "एक्सपायर हो चुके या 30 दिनों में एक्सपायर हो रहे",
+  "move.idlevehicle.title": "{n} वाहन ने 14+ दिनों से कोई ट्रिप नहीं की",
+  "move.idlevehicle.detail": "खाली खड़े रहने पर भी इंश्योरेंस, EMI और ड्राइवर की सैलरी लगती रहती है",
   "move.servicejobs.title": "{n} जॉब अपनी तय तारीख से आगे निकल गई",
   "move.servicejobs.detail": "ग्राहक इनका इंतज़ार कर रहे हो सकते हैं",
   "move.rentals.title": "{n} रेंटल अभी तक वापस नहीं आया",
