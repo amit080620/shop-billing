@@ -47,7 +47,7 @@ export default async function BookingsPage({ searchParams }: { searchParams: Pro
         <input
           name="q"
           defaultValue={search}
-          placeholder={t("Guest name, phone, booking no. or OTA reference")}
+          placeholder={t("Guest, phone, booking no. or OTA ID")}
           className="w-full rounded-xl border border-border bg-surface py-2.5 pl-9 pr-3 text-sm text-foreground outline-none focus:border-brand"
         />
       </form>

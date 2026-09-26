@@ -71,7 +71,7 @@ export const HOTEL_TEXT: Record<string, [hi: string, mr: string]> = {
   "New booking": ["नई booking", "नवीन booking"],
   "Bookings": ["Bookings", "Bookings"],
   "+ New booking": ["+ नई booking", "+ नवीन booking"],
-  "Guest name, phone, booking no. or OTA reference": ["मेहमान का नाम, फ़ोन, booking नंबर या OTA reference", "पाहुण्याचे नाव, फोन, booking क्रमांक किंवा OTA reference"],
+  "Guest, phone, booking no. or OTA ID": ["मेहमान, फ़ोन, booking नं. या OTA ID", "पाहुणा, फोन, booking क्र. किंवा OTA ID"],
   "results for": ["नतीजे:", "निकाल:"],
   "No booking matches that search.": ["इस खोज से कोई booking नहीं मिली।", "या शोधाशी जुळणारी booking नाही."],
   "Nothing here yet.": ["यहाँ अभी कुछ नहीं है।", "इथे अजून काही नाही."],

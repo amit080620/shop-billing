@@ -194,7 +194,14 @@ function RoomRow({ roomId, label, sub, days, today, bars, blocked }: { roomId: s
           className={`flex h-9 items-center gap-1 overflow-hidden border px-1.5 text-[11px] font-semibold ${bar.overstay ? "border-danger bg-danger-soft text-danger" : (BAR_STYLE[bar.status] ?? BAR_STYLE.reserved)} ${continuesLeft ? "rounded-l-none border-l-0" : "rounded-l-lg"} ${continuesRight ? "rounded-r-none border-r-0" : "rounded-r-lg"}`}
         >
           {span > 1 && sourceIsOta(bar.source) && <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-info" />}
-          <span className="truncate">{span > 1 ? bar.guestName : initials(bar.guestName)}</span>
+          {span > 1 ? (
+            <span className="truncate">{bar.guestName}</span>
+          ) : (
+            <>
+              <span className="md:hidden">{initials(bar.guestName)}</span>
+              <span className="hidden truncate md:inline">{bar.guestName}</span>
+            </>
+          )}
         </Link>
       </td>,
     );
