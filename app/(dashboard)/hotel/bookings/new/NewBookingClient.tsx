@@ -240,7 +240,7 @@ export function NewBookingClient({ today, initialCheckIn, presetRoom }: { today:
                       <Trash2 size={15} />
                     </button>
                   </div>
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 gap-3 min-[340px]:grid-cols-2">
                     <label className={HOTEL_LABEL}>
                       {t("Room number")}
                       <select value={l.roomId} onChange={(e) => patchLine(l.key, { roomId: e.target.value })} className={HOTEL_INPUT}>
@@ -357,32 +357,34 @@ export function NewBookingClient({ today, initialCheckIn, presetRoom }: { today:
         </label>
       </section>
 
-      {error && (
-        <p role="alert" className="rounded-lg border border-danger/20 bg-danger-soft px-3 py-2 text-sm text-danger">
-          {error}
-        </p>
-      )}
-
       <div className="fixed inset-x-0 bottom-[calc(var(--bottom-nav-h,4rem)+env(safe-area-inset-bottom))] z-30 border-t border-border bg-surface/95 px-4 py-3 backdrop-blur md:bottom-0 md:left-72">
-        <div className="mx-auto flex max-w-lg items-center gap-3 md:max-w-3xl">
-          <div className="min-w-0 flex-1">
-            {preview ? (
-              <>
-                <p className="text-xs text-muted">
-                  {nights} {nights === 1 ? t("night") : t("nights")} · {lines.length} {lines.length === 1 ? t("room") : t("rooms")} · {t("incl. GST")}
-                </p>
-                <p className="text-lg font-bold leading-tight text-foreground">
-                  {formatMoney(preview.invoiceTotal)}
-                  {advanceNumber > 0 && <span className="ml-2 text-xs font-medium text-muted">{t("Due")} {formatMoney(Math.max(0, preview.invoiceTotal - advanceNumber))}</span>}
-                </p>
-              </>
-            ) : (
-              <p className="text-xs text-muted">{t("Pick dates and rooms to see the total")}</p>
-            )}
+        <div className="mx-auto flex max-w-lg flex-col gap-2 md:max-w-3xl">
+          {/* The message sits in the bar so it is seen wherever on a long form the person is. */}
+          {error && (
+            <p role="alert" className="rounded-lg border border-danger/20 bg-danger-soft px-3 py-2 text-xs text-danger">
+              {error}
+            </p>
+          )}
+          <div className="flex items-center gap-3">
+            <div className="min-w-0 flex-1">
+              {preview ? (
+                <>
+                  <p className="text-xs text-muted">
+                    {nights} {nights === 1 ? t("night") : t("nights")} · {lines.length} {lines.length === 1 ? t("room") : t("rooms")} · {t("incl. GST")}
+                  </p>
+                  <p className="text-lg font-bold leading-tight text-foreground">
+                    {formatMoney(preview.invoiceTotal)}
+                    {advanceNumber > 0 && <span className="ml-2 text-xs font-medium text-muted">{t("Due")} {formatMoney(Math.max(0, preview.invoiceTotal - advanceNumber))}</span>}
+                  </p>
+                </>
+              ) : (
+                <p className="text-xs text-muted">{t("Pick dates and rooms to see the total")}</p>
+              )}
+            </div>
+            <button type="button" onClick={submit} disabled={isPending || !preview} className="btn-primary shrink-0 disabled:opacity-50">
+              {isPending ? t("Saving…") : t("Save booking")}
+            </button>
           </div>
-          <button type="button" onClick={submit} disabled={isPending || !preview} className="btn-primary shrink-0 disabled:opacity-50">
-            {isPending ? t("Saving…") : t("Save booking")}
-          </button>
         </div>
       </div>
     </div>
