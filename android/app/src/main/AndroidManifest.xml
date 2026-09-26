@@ -42,6 +42,12 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
 
+        <!-- Have Google Play services fetch the barcode scanner module while
+             the app installs, so the first scan doesn't wait for a download. -->
+        <meta-data
+            android:name="com.google.mlkit.vision.DEPENDENCIES"
+            android:value="barcode_ui" />
+
         <activity
             android:name=".MainActivity"
             android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboard|keyboardHidden|navigation|density|uiMode"

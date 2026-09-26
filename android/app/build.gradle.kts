@@ -18,8 +18,8 @@ android {
         applicationId = "com.theray.bill"
         minSdk = 24
         targetSdk = 35
-        versionCode = 2
-        versionName = "1.0.1"
+        versionCode = 3
+        versionName = "1.0.2"
         buildConfigField("String", "APP_URL", "\"https://bill.theray.in\"")
     }
 
@@ -54,4 +54,5 @@ android {
 dependencies {
     implementation("androidx.webkit:webkit:1.12.1")
     implementation("androidx.core:core:1.13.1")
+    implementation("com.google.android.gms:play-services-code-scanner:16.1.0")
 }

@@ -3,6 +3,7 @@
 import { useEffect, useId, useRef, useState } from "react";
 import type { Html5Qrcode as Html5QrcodeType } from "html5-qrcode";
 import { useT } from "@/lib/i18n/LangContext";
+import { nativeApp } from "@/lib/nativeApp";
 
 // A browser page can never programmatically open Chrome's permission
 // dialog or site-settings screen — that's a deliberate security boundary,
@@ -28,6 +29,7 @@ export function CameraBarcodeScanner({
   compact?: boolean;
 }) {
   const [active, setActive] = useState(false);
+  const [busy, setBusy] = useState(false);
   const { t } = useT();
   const buttonLabel = label ?? t("Scan with camera");
   const [error, setError] = useState<string | null>(null);
@@ -121,19 +123,39 @@ export function CameraBarcodeScanner({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [active]);
 
+  // Inside the Android app (1.0.2+) the scan runs in Google's native scanner,
+  // which reads shop barcodes far more reliably than the JavaScript decoder.
+  // Anywhere else — a browser, an older app, a phone without Google Play
+  // services, or a native failure — the in-page camera below is used.
+  async function startScan() {
+    setError(null);
+    const app = nativeApp();
+    if (app?.features?.barcode) {
+      setBusy(true);
+      try {
+        const result = await app.call<{ code: string | null }>("barcode.scan");
+        if (result?.code) onScan(result.code);
+        return;
+      } catch (err) {
+        console.error("Native scanner failed, using the in-page camera:", err);
+      } finally {
+        setBusy(false);
+      }
+    }
+    setActive(true);
+  }
+
   if (!active) {
     return (
       <div className="flex flex-col gap-1">
         <button
           type="button"
-          onClick={() => {
-            setError(null);
-            setActive(true);
-          }}
+          disabled={busy}
+          onClick={startScan}
           className={
             compact
-              ? "flex shrink-0 items-center gap-1.5 rounded-full border border-border bg-surface px-3 py-1.5 text-xs font-medium text-foreground hover:bg-surface-2"
-              : "flex items-center gap-1.5 self-start text-sm font-medium text-brand"
+              ? "flex shrink-0 items-center gap-1.5 rounded-full border border-border bg-surface px-3 py-1.5 text-xs font-medium text-foreground hover:bg-surface-2 disabled:opacity-60"
+              : "flex items-center gap-1.5 self-start text-sm font-medium text-brand disabled:opacity-60"
           }
         >
           {/* eslint-disable-next-line @next/next/no-img-element -- small branded SVG icon */}

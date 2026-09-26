@@ -15,9 +15,12 @@ import org.json.JSONObject
 class Bridge(private val activity: MainActivity, private val files: Files) {
     private val printer = Printer(activity)
     private val speech = Speech(activity)
+    private val scanner = Scanner(activity)
     private val origin = activity.appUrl.let { u -> "${u.scheme}://${u.host}" + (if (u.port != -1) ":${u.port}" else "") }
     private var channel = false
     private var documentStart = false
+
+    init { scanner.prepare() }
 
     fun install(webView: WebView) {
         if (!WebViewFeature.isFeatureSupported(WebViewFeature.WEB_MESSAGE_LISTENER)) return
@@ -40,6 +43,7 @@ class Bridge(private val activity: MainActivity, private val files: Files) {
         val config = JSONObject()
             .put("version", BuildConfig.VERSION_NAME)
             .put("speech", SpeechRecognizer.isRecognitionAvailable(activity))
+            .put("barcode", scanner.available)
         val js = activity.assets.open("bridge.js").bufferedReader().use { it.readText() }
         return "window.__RAY_NATIVE_CONFIG=$config;\n$js"
     }
@@ -76,6 +80,9 @@ class Bridge(private val activity: MainActivity, private val files: Files) {
                 done(null, null)
             }
             "speech.stop" -> { speech.stop(); done(null, null) }
+            "barcode.scan" -> scanner.scan { code, err ->
+                if (err != null) done(null, err) else done(JSONObject().put("code", code ?: JSONObject.NULL), null)
+            }
             "ui.bars" -> {
                 try { activity.setBarColor(Color.parseColor(args.optString("color"))) } catch (_: IllegalArgumentException) {}
                 done(null, null)

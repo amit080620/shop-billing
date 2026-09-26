@@ -6,7 +6,7 @@ adds what a browser can't do well:
 - **Any Bluetooth receipt printer.** Classic Bluetooth (SPP) and BLE, paired
   or new. The printer is picked once and remembered.
 - **Voice billing and search** through Android's speech recognizer.
-- **Camera** for barcode scanning and bill photos.
+- **Barcode scanning** in Google's native scanner (reads shop barcodes in poor light far better than a web page can; needs Google Play services, otherwise the in-page camera is used), and the **camera** for bill photos.
 - **Downloads** of PDFs and Excel/CSV files to `Downloads/The Ray`, with Open
   and Share.
 - **Share** to WhatsApp and other apps, and **A4 printing** through Android's
@@ -23,6 +23,7 @@ APK is only needed when code in this folder changes.
 | `Bridge.kt` + `assets/bridge.js` | Message channel, open only to the app's own origin. `bridge.js` adds `window.RayApp` and the polyfills for `SpeechRecognition`, `print()`, `navigator.share()` and blob downloads |
 | `Printer.kt` | Printer list, pairing, and sending ESC/POS bytes over SPP or BLE |
 | `Speech.kt` | Voice input |
+| `Scanner.kt` | Google ML Kit barcode scanner; asks Play services to pre-download its module at launch |
 | `Files.kt` | Saving, sharing, and download-manager downloads |
 
 On the web side, `lib/nativeApp.ts` detects the app. `lib/bluetooth-print.ts`

@@ -4,6 +4,9 @@
 export type RayApp = {
   platform: "android";
   version?: string;
+  /** Present on app versions that ship native scanning (1.0.2+); older
+   * installs have no `features`, so callers must treat it as optional. */
+  features?: { barcode?: boolean };
   call: <T = unknown>(method: string, args?: Record<string, unknown>) => Promise<T>;
   toBase64: (bytes: Uint8Array) => string;
 };
