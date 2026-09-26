@@ -1106,13 +1106,15 @@ export function NewBillClient({
       {businessType === "jewellery" && (
         <ExchangeCalculator
           exchangeInfo={exchangeInfo}
+          // Old gold handed over pays part of the bill, so the cash still to be paid goes down by its value
+          // (the server adds the exchange value to the cash paid, so it is never counted twice).
           onSet={(info) => {
             setExchangeInfo(info);
-            setPaidAmount((prev) => (typeof prev === "number" ? prev : 0) + info.value);
+            setPaidAmount((prev) => Math.max(0, (typeof prev === "number" ? prev : 0) - info.value));
           }}
           onClear={() => {
             if (exchangeInfo) {
-              setPaidAmount((prev) => Math.max(0, (typeof prev === "number" ? prev : 0) - exchangeInfo.value));
+              setPaidAmount((prev) => Math.min(totals.total, (typeof prev === "number" ? prev : 0) + exchangeInfo.value));
             }
             setExchangeInfo(null);
           }}
