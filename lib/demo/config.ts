@@ -224,5 +224,10 @@ export function isDemoEmail(email: string | null | undefined): boolean {
   return !!email && email.toLowerCase().endsWith(`@${DEMO_DOMAIN}`);
 }
 
+/** A demo shop is recognised by the " (demo)" the seeder adds to its legal name. */
+export function isDemoShopName(legalName: string | null | undefined): boolean {
+  return !!legalName && legalName.endsWith(" (demo)");
+}
+
 /** A demo shop older than this is wiped and refilled the next time someone opens it. */
 export const DEMO_MAX_AGE_HOURS = 20;

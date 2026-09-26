@@ -8,6 +8,8 @@ export default async function TeamLeadsPage() {
   const { data: shops } = await admin
     .from("shops")
     .select("id, name, created_at")
+    // The public demo shops are refilled every night; they are not signups.
+    .or('legal_name.is.null,legal_name.not.like."* (demo)"')
     .order("created_at", { ascending: false })
     .limit(200);
 

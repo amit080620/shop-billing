@@ -6,6 +6,7 @@ import { plansMigrationApplied } from "@/lib/actions/admin-plans";
 import { PlanBadge } from "@/app/components/PlanBadge";
 import { effectivePlan, PLANS, type PlanKey } from "@/lib/plans";
 import { buildWhatsAppLink } from "@/lib/whatsapp";
+import { isDemoShopName } from "@/lib/demo/config";
 import { CopyMigrationButton } from "./CopyMigrationButton";
 
 function statusFor(validUntil: string | null) {
@@ -59,7 +60,10 @@ export default async function AdminDashboardPage({ searchParams }: { searchParam
     .from("shops")
     .select(plansReady ? `${columns}, plan, trial_ends_at, owner_phone` : columns)
     .order("created_at", { ascending: false });
-  const shops = (data ?? []) as unknown as ShopRow[];
+  const everyShop = (data ?? []) as unknown as ShopRow[];
+  // The public demo shops are on the top plan for ever; counting them would inflate every figure here.
+  const shops = everyShop.filter((s) => !isDemoShopName(s.legal_name));
+  const demoHidden = everyShop.length - shops.length;
 
   const withPlan = shops.map((s) => ({ ...s, eff: effectivePlan({ plan: s.plan, subscription_valid_until: s.subscription_valid_until, trial_ends_at: s.trial_ends_at }) }));
 
@@ -97,6 +101,7 @@ export default async function AdminDashboardPage({ searchParams }: { searchParam
   return (
     <div className="flex flex-col gap-4">
       <h1 className="text-lg font-semibold">All shops</h1>
+      {demoHidden > 0 && <p className="-mt-2 text-xs text-gray-500">{demoHidden} public demo shops are left out of these numbers.</p>}
 
       {!plansReady && (
         <div className="flex flex-col gap-2 rounded-xl border border-amber-700/50 bg-amber-900/20 p-4">
