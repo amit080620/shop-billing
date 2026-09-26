@@ -4,6 +4,7 @@ import { createSupabaseAdminClient } from "../supabase/admin";
 import { normalizePhone } from "../phone";
 import { getRedis } from "../redis";
 import { requireSession } from "../auth";
+import { isDemoSession } from "../demo/guard";
 
 export type NetworkReliability = { shopsVisited: number; tier: "new" | "building" | "trusted" };
 
@@ -21,8 +22,13 @@ const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // recompute at most once a day per ph
 async function computeReliability(phone: string): Promise<NetworkReliability> {
   const admin = createSupabaseAdminClient();
 
-  const { data: customers } = await admin.from("customers").select("id, shop_id").eq("phone", phone);
-  const shopsVisited = new Set((customers ?? []).map((c) => c.shop_id)).size;
+  const { data: allCustomers } = await admin.from("customers").select("id, shop_id").eq("phone", phone);
+  // The public demo shops (lib/demo) hold made-up customers: they must never count towards a real person's record.
+  const shopIds = [...new Set((allCustomers ?? []).map((c) => c.shop_id))];
+  const { data: demoShops } = shopIds.length ? await admin.from("shops").select("id").in("id", shopIds).like("legal_name", "% (demo)") : { data: [] as { id: string }[] };
+  const demoIds = new Set((demoShops ?? []).map((d) => d.id));
+  const customers = (allCustomers ?? []).filter((c) => !demoIds.has(c.shop_id));
+  const shopsVisited = new Set(customers.map((c) => c.shop_id)).size;
   if (!customers || customers.length === 0 || shopsVisited < 2) {
     return { shopsVisited, tier: "new" };
   }
@@ -53,7 +59,9 @@ async function computeReliability(phone: string): Promise<NetworkReliability> {
  * read on every single one even on a "cache hit". */
 export async function getNetworkReliabilityAction(rawPhone: string): Promise<NetworkReliability | null> {
   // Cross-shop signal — only for a logged-in shop, never an anonymous caller.
-  await requireSession();
+  const session = await requireSession();
+  // A demo shop's customers are made up, and the real network's numbers stay out of the demo.
+  if (isDemoSession(session)) return null;
   const phone = normalizePhone(rawPhone);
   if (!phone) return null;
 
