@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, type ReactNode } from "react";
 import { ContactPickerButton } from "./ContactPickerButton";
 import { useT } from "@/lib/i18n/LangContext";
 
@@ -17,6 +17,8 @@ type Field = {
 
 export function InlineQuickAdd<T>({
   triggerLabel,
+  triggerClassName,
+  triggerIcon,
   fields,
   onSubmit,
   onCreated,
@@ -24,6 +26,12 @@ export function InlineQuickAdd<T>({
   phoneAutofill,
 }: {
   triggerLabel: string;
+  /** Overrides the trigger's look — e.g. to sit as a pill alongside other
+   * pill buttons instead of the default bare text link. */
+  triggerClassName?: string;
+  /** Shown before triggerLabel — e.g. a lucide icon, to match icon+text
+   * pill buttons sitting next to this one. */
+  triggerIcon?: ReactNode;
   fields: Field[];
   onSubmit: (values: Record<string, string>) => Promise<{ data?: T; error?: string }>;
   onCreated: (data: T) => void;
@@ -73,15 +81,16 @@ export function InlineQuickAdd<T>({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="self-start text-sm font-medium text-brand"
+        className={triggerClassName ?? "self-start text-sm font-medium text-brand"}
       >
+        {triggerIcon}
         {triggerLabel}
       </button>
     );
   }
 
   return (
-    <div className="flex flex-col gap-2 rounded-lg border border-border bg-surface p-3">
+    <div className="flex w-full flex-col gap-2 rounded-lg border border-border bg-surface p-3">
       {contactFields && (
         <ContactPickerButton
           onPick={(name, phone) =>

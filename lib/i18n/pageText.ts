@@ -34,6 +34,7 @@ export const PAGE_TEXT: Record<string, [hi: string, mr: string]> = {
   ],
   "Reason (e.g. entered by mistake, duplicate)": ["वजह (जैसे: गलती से डाला, डुप्लीकेट)", "कारण (उदा: चुकून टाकले, डुप्लिकेट)"],
   "Payments": ["भुगतान", "पेमेंट"],
+  "Add transport charge": ["ट्रांसपोर्ट चार्ज जोड़ें", "ट्रान्सपोर्ट चार्ज जोडा"],
   "Save & add another": ["सेव करें और अगला जोड़ें", "सेव्ह करा व पुढचे जोडा"],
   "{name} added — type the next one": ["{name} जुड़ गया — अगला लिखें", "{name} जोडले — पुढचे लिहा"],
   "{name} added": ["{name} जुड़ गया", "{name} जोडले"],

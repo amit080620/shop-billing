@@ -16,11 +16,12 @@ import { useSyncCalculatorAmount } from "@/lib/calculatorAmount";
 import { SearchableSelect } from "@/app/components/SearchableSelect";
 import { InlineQuickAdd } from "@/app/components/InlineQuickAdd";
 import { Spinner } from "@/app/components/Spinner";
-import { Zap, Package, AlertTriangle, Pill, Truck, Gem, Recycle, Mic, ScanBarcode, ShoppingCart, Sparkles, X } from "lucide-react";
+import { Zap, Package, AlertTriangle, Pill, Truck, Gem, Recycle, Mic, ScanBarcode, ShoppingCart, Sparkles, X, Plus } from "lucide-react";
 import { barcodeFromQuery } from "@/lib/barcodeQuery";
 import dynamic from "next/dynamic";
 const CameraBarcodeScanner = dynamic(() => import("@/app/components/CameraBarcodeScanner").then((m) => m.CameraBarcodeScanner), { ssr: false });
 import { useTranslation } from "@/lib/i18n/useTranslation";
+import { useT } from "@/lib/i18n/LangContext";
 import { useOnlineStatus } from "@/lib/useOnlineStatus";
 import type { Lang } from "@/lib/i18n/dictionary";
 import { parseVoiceOrderAction } from "@/lib/actions/voiceOrder";
@@ -699,32 +700,34 @@ export function NewBillClient({
               </button>
             )}
             {voiceSupported && <AIStatusBadge ref={voiceStatusRef} provider="voice" />}
+            <InlineQuickAdd<Product>
+              triggerLabel={t("bill.addNewProduct").replace("+ ", "")}
+              triggerIcon={<Plus size={13} />}
+              triggerClassName="flex shrink-0 items-center gap-1.5 rounded-full border border-border bg-surface px-3 py-1.5 text-xs font-medium text-brand-text"
+              fields={[
+                { name: "name", label: t("bill.addNewProduct").replace("+ ", ""), required: true },
+                { name: "price", label: t("Price (₹)"), type: "number", required: true },
+                { name: "unit", label: t("Unit"), options: [...UNITS], defaultValue: "NOS" },
+                { name: "gstPercent", label: "GST %", type: "number" },
+              ]}
+              onSubmit={async (v) => {
+                const r = await quickCreateProductAction(
+                  v.name,
+                  Number(v.price) || 0,
+                  Number(v.gstPercent) || 0,
+                  v.unit || "NOS",
+                );
+                return {
+                  data: r.product
+                    ? { ...r.product, packPrice: r.product.price, trackInventory: false, stockQuantity: 0, lowStockThreshold: 0, requiresPrescription: false, unitsPerPack: null, looseUnitName: null, metalType: null, purity: null, makingChargeType: null, makingChargeValue: null, wastagePercent: null, bulkMinQty: null, bulkPrice: null, hallmarkNumber: null }
+                    : undefined,
+                  error: r.error,
+                };
+              }}
+              onCreated={addProduct}
+            />
           </div>
           {voiceStatus && <p className="text-center text-xs font-medium text-brand-text">{voiceStatus}</p>}
-          <InlineQuickAdd<Product>
-            triggerLabel={t("bill.addNewProduct")}
-            fields={[
-              { name: "name", label: t("bill.addNewProduct").replace("+ ", ""), required: true },
-              { name: "price", label: t("Price (₹)"), type: "number", required: true },
-              { name: "unit", label: t("Unit"), options: [...UNITS], defaultValue: "NOS" },
-              { name: "gstPercent", label: "GST %", type: "number" },
-            ]}
-            onSubmit={async (v) => {
-              const r = await quickCreateProductAction(
-                v.name,
-                Number(v.price) || 0,
-                Number(v.gstPercent) || 0,
-                v.unit || "NOS",
-              );
-              return {
-                data: r.product
-                  ? { ...r.product, packPrice: r.product.price, trackInventory: false, stockQuantity: 0, lowStockThreshold: 0, requiresPrescription: false, unitsPerPack: null, looseUnitName: null, metalType: null, purity: null, makingChargeType: null, makingChargeValue: null, wastagePercent: null, bulkMinQty: null, bulkPrice: null, hallmarkNumber: null }
-                  : undefined,
-                error: r.error,
-              };
-            }}
-            onCreated={addProduct}
-          />
         </section>
 
         {vehicles.length > 0 && <TransportChargePicker vehicles={vehicles} onAdd={addTransportCharge} />}
@@ -1418,6 +1421,7 @@ function TransportChargePicker({
     loadUnit: string,
   ) => void;
 }) {
+  const { t } = useT();
   const [open, setOpen] = useState(false);
   const [vehicleId, setVehicleId] = useState(vehicles[0]?.id ?? "");
   const [km, setKm] = useState<number | "">("");
@@ -1430,8 +1434,12 @@ function TransportChargePicker({
 
   if (!open) {
     return (
-      <button type="button" onClick={() => setOpen(true)} className="flex items-center gap-1.5 self-start text-sm font-medium text-brand">
-        <Truck size={15} /> Add transport charge
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="flex shrink-0 items-center gap-1.5 self-start rounded-full border border-border bg-surface px-3 py-1.5 text-xs font-medium text-brand-text"
+      >
+        <Truck size={13} /> {t("Add transport charge")}
       </button>
     );
   }
