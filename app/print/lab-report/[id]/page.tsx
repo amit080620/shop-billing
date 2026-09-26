@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { requireSession } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
-import { formatDateTime } from "@/lib/format";
+import { formatDateTime, withDr } from "@/lib/format";
 import { PrintButton } from "@/app/print/bill/[id]/PrintButton";
 import { getTranslator } from "@/lib/i18n/server";
 
@@ -71,7 +71,7 @@ export default async function LabReportPrintPage({
         </div>
         <div>
           <p className="text-[10px] text-gray-500">Referring doctor</p>
-          <p className="font-medium text-gray-900">{order.referring_doctor_name ? `Dr. ${order.referring_doctor_name}` : "Self"}</p>
+          <p className="font-medium text-gray-900">{order.referring_doctor_name ? withDr(order.referring_doctor_name) : "Self"}</p>
         </div>
       </div>
 

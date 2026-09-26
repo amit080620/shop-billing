@@ -145,13 +145,13 @@ export async function insertVendors(ctx: SeedCtx, names: { name: string; stateCo
 }
 
 /** Buys stock from vendors the way the Purchase screen does (stock goes up, ITC recorded). */
-export async function seedPurchases(ctx: SeedCtx, vendors: SeededVendor[], products: SeededProduct[], plan: { daysAgo: number; vendorIndex: number; productIndexes: number[]; qty: number; paidShare: number }[]) {
+export async function seedPurchases(ctx: SeedCtx, vendors: SeededVendor[], products: SeededProduct[], plan: { daysAgo: number; vendorIndex: number; productIndexes: number[]; qty: number; paidShare: number; /** 0.82 by default; above about 1.3 the goods cost more than they sell for. */ costFactor?: number }[]) {
   let n = 1;
   for (const p of plan) {
     const vendor = vendors[p.vendorIndex % vendors.length];
     const items = p.productIndexes.map((idx) => {
       const product = products[idx % products.length];
-      const cost = Math.round((product.price / (1 + product.gst / 100)) * 0.82 * 100) / 100;
+      const cost = Math.round((product.price / (1 + product.gst / 100)) * (p.costFactor ?? 0.82) * 100) / 100;
       return { productId: product.id, description: product.name, quantity: p.qty, unitPrice: cost, gstPercent: product.gst };
     });
     const subtotal = items.reduce((s, i) => s + i.quantity * i.unitPrice, 0);
@@ -299,4 +299,71 @@ export const STANDARD_PETTY_CASH = [
 export async function enableCatalog(ctx: SeedCtx, banner: string, delivery = true) {
   const { error } = await ctx.admin.from("catalog_settings").upsert({ shop_id: ctx.shopId, is_enabled: true, banner_text: banner, delivery_enabled: delivery, delivery_charge: 30 });
   if (error) throw new Error(`demo: catalogue: ${error.message}`);
+}
+
+/** Old credit that was never paid back (30 days and more), so Udhaar aging has its older groups
+ * and the Profit-leak screen has money that is stuck. */
+export async function seedOldUdhaar(ctx: SeedCtx, products: SeededProduct[], customers: SeededCustomer[], entries: { customerIndex: number; daysAgo: number; productIndexes: number[]; qty: number }[]) {
+  for (const e of entries) {
+    const customer = customers[e.customerIndex % customers.length];
+    const items = e.productIndexes.map((i) => {
+      const p = products[i % products.length];
+      return { productId: p.id, description: p.name, quantity: e.qty, unitPrice: p.price, gstPercent: p.gst };
+    });
+    const result = await createBillCore(ctx.session, { customerId: customer.id, items, discountType: "percent", discountValue: 0, paidAmount: 0, paymentMethod: "cash" });
+    if ("error" in result) throw new Error(`demo: old udhaar bill: ${result.error}`);
+    await ctx.admin.from("bills").update({ created_at: isoAt(e.daysAgo, 12, 15) }).eq("id", result.billId);
+  }
+}
+
+/** Orders customers placed from the shop's online catalogue link, waiting for the owner to accept. */
+export async function seedCatalogOrders(ctx: SeedCtx, products: SeededProduct[]) {
+  const orders = [
+    { hoursAgo: 3, delivery: true, picks: [0, 3, 5], qty: [2, 1, 1] },
+    { hoursAgo: 20, delivery: false, picks: [1, 2], qty: [1, 3] },
+  ];
+  for (const [n, o] of orders.entries()) {
+    const { data: request, error } = await ctx.admin
+      .from("catalog_order_requests")
+      .insert({
+        shop_id: ctx.shopId,
+        customer_name: personName(ctx.random),
+        customer_phone: fakePhone(700 + n),
+        notes: o.delivery ? "Please deliver after 6 pm" : null,
+        status: "pending",
+        wants_delivery: o.delivery,
+        delivery_charge: o.delivery ? 30 : 0,
+        created_at: new Date(Date.now() - o.hoursAgo * 3600e3).toISOString(),
+      })
+      .select("id")
+      .single();
+    if (error || !request) throw new Error(`demo: catalogue order: ${error?.message}`);
+    const rows = o.picks.map((idx, k) => {
+      const p = products[idx % products.length];
+      return { request_id: request.id, product_id: p.id, product_name: p.name, quantity: o.qty[k], price_at_request: p.price };
+    });
+    const { error: itemError } = await ctx.admin.from("catalog_order_request_items").insert(rows);
+    if (itemError) throw new Error(`demo: catalogue order items: ${itemError.message}`);
+  }
+}
+
+/** "Customer asked for something you did not have": logged so the owner can tell them when it arrives. */
+export async function seedItemRequests(ctx: SeedCtx, customers: SeededCustomer[], wanted: { item: string; advance?: number; daysAhead?: number }[]) {
+  const rows = wanted.map((w, i) => {
+    const c = customers[(i + 2) % customers.length];
+    return {
+      shop_id: ctx.shopId,
+      staff_id: ctx.session.userId,
+      customer_id: c.id,
+      customer_name: c.name,
+      customer_phone: c.phone,
+      item_description: w.item,
+      advance_amount: w.advance ?? 0,
+      expected_date: w.daysAhead ? dateOffset(w.daysAhead) : null,
+      status: "pending" as const,
+      created_at: isoAt(1 + i, 15, 0),
+    };
+  });
+  const { error } = await ctx.admin.from("item_requests").insert(rows);
+  if (error) throw new Error(`demo: item requests: ${error.message}`);
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { paymentMethodLabel } from "@/lib/format";
+import { paymentMethodLabel, withDr } from "@/lib/format";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { markTreatmentItemDoneAction, convertTreatmentPlanToBillAction } from "@/lib/actions/treatmentPlans";
@@ -53,7 +53,7 @@ export function TreatmentPlanDetailClient({ plan, items: initialItems }: { plan:
       <PageHeader title={plan.patientName} icon={<ClipboardList size={18} strokeWidth={1.8} />} />
 
       <div className="neu-card flex flex-col gap-1 p-3.5">
-        {plan.doctorName && <p className="text-sm text-muted">Dr. {plan.doctorName}</p>}
+        {plan.doctorName && <p className="text-sm text-muted">{withDr(plan.doctorName)}</p>}
         {plan.patientPhone && <p className="text-sm text-muted">{plan.patientPhone}</p>}
         <p className="mt-1 text-xs text-muted">
           {completedCount} of {items.length} treatments completed

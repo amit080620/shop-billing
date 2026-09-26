@@ -3,6 +3,7 @@ import { requireSession } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { PrintButton } from "@/app/print/bill/[id]/PrintButton";
 import { getTranslator } from "@/lib/i18n/server";
+import { withDr } from "@/lib/format";
 import { ToothChartStatic } from "@/app/components/ToothChart";
 
 export default async function PrintTreatmentPlanPage({ params }: { params: Promise<{ id: string }> }) {
@@ -62,7 +63,7 @@ export default async function PrintTreatmentPlanPage({ params }: { params: Promi
         {plan.doctor_name && (
           <div>
             <p className="text-gray-500">Doctor</p>
-            <p className="font-medium">Dr. {plan.doctor_name}</p>
+            <p className="font-medium">{withDr(plan.doctor_name)}</p>
           </div>
         )}
         <div>

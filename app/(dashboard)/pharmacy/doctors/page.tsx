@@ -1,6 +1,6 @@
 import { requireSession } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
-import { formatMoney } from "@/lib/format";
+import { formatMoney, withDr } from "@/lib/format";
 import { getTranslator } from "@/lib/i18n/server";
 import { PageHeader } from "@/app/components/PageHeader";
 import { EmptyState } from "@/app/components/EmptyState";
@@ -48,7 +48,7 @@ export default async function DoctorsReportPage() {
           {doctors.map(([name, stats]) => (
             <li key={name} className="neu-card px-4 py-3">
               <div className="flex items-center justify-between">
-                <p className="text-sm font-medium text-foreground">{t("doctors.drPrefix", { name })}</p>
+                <p className="text-sm font-medium text-foreground">{t("doctors.drPrefix", { name: withDr(name).slice(4) })}</p>
                 <p className="text-sm font-semibold text-foreground">{formatMoney(stats.total)}</p>
               </div>
               <p className="text-xs text-muted">

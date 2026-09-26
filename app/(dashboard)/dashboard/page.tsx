@@ -58,7 +58,8 @@ export default async function DashboardPage() {
   const [{ count: productCount }, { count: customerCount }, { data: anyBill }, { count: tableCount }, { count: roomCount }] = await Promise.all([
     admin.from("products").select("id", { count: "exact", head: true }).eq("shop_id", session.shopId),
     admin.from("customers").select("id", { count: "exact", head: true }).eq("shop_id", session.shopId),
-    admin.from("bills").select("id").eq("shop_id", session.shopId).limit(1),
+    // A restaurant settles orders rather than writing bills, so its first order is its first sale.
+    isRestaurant ? admin.from("restaurant_orders").select("id").eq("shop_id", session.shopId).limit(1) : admin.from("bills").select("id").eq("shop_id", session.shopId).limit(1),
     isRestaurant
       ? admin.from("restaurant_tables").select("id", { count: "exact", head: true }).eq("shop_id", session.shopId).eq("is_deleted", false)
       : Promise.resolve({ count: 0 }),

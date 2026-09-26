@@ -15,13 +15,13 @@ import { BackLink } from "@/app/components/BackLink";
 // Full day names — deliberately not the three-letter short forms used
 // elsewhere (Sun, Mon…), since these are the row labels here, not chips.
 const DAYS: { key: string; label: string }[] = [
-  { key: "mon", label: "day.monday" },
-  { key: "tue", label: "day.tuesday" },
-  { key: "wed", label: "day.wednesday" },
-  { key: "thu", label: "day.thursday" },
-  { key: "fri", label: "day.friday" },
-  { key: "sat", label: "day.saturday" },
-  { key: "sun", label: "day.sunday" },
+  { key: "mon", label: "Monday" },
+  { key: "tue", label: "Tuesday" },
+  { key: "wed", label: "Wednesday" },
+  { key: "thu", label: "Thursday" },
+  { key: "fri", label: "Friday" },
+  { key: "sat", label: "Saturday" },
+  { key: "sun", label: "Sunday" },
 ];
 
 export function BookingSettingsClient({

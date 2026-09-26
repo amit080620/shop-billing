@@ -1,3 +1,8 @@
+/** "Dr. Anil" and "Anil" both give "Dr. Anil", so a name typed with its own "Dr." is not shown as "Dr. Dr. Anil". */
+export function withDr(name: string): string {
+  return `Dr. ${name.replace(/^\s*dr\.?\s+/i, "").trim()}`;
+}
+
 export function formatMoney(n: number) {
   return `₹${Number(n).toLocaleString("en-IN", {
     minimumFractionDigits: 2,

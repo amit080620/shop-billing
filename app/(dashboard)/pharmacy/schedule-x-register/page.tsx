@@ -7,6 +7,7 @@ import { ExportRegisterButton } from "./ExportRegisterButton";
 import { BookOpen } from "lucide-react";
 import { todayIso } from "@/lib/dateHelpers";
 import { BackLink } from "@/app/components/BackLink";
+import { withDr } from "@/lib/format";
 
 function startOfMonthIso() {
   const d = new Date();
@@ -123,7 +124,7 @@ export default async function ScheduleXRegisterPage({
                 </p>
                 <p className="text-xs text-muted">
                   {r.customerName}{r.customerPhone ? ` (${r.customerPhone})` : ""}
-                  {r.doctorName ? ` · Dr. ${r.doctorName}` : ""}
+                  {r.doctorName ? ` · ${withDr(r.doctorName)}` : ""}
                   {r.patientName ? ` · Patient: ${r.patientName}` : ""}
                 </p>
               </li>

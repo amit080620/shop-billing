@@ -5,6 +5,7 @@ import { EmptyState } from "@/app/components/EmptyState";
 import { ClipboardList } from "lucide-react";
 import { getTranslator } from "@/lib/i18n/server";
 import { BackLink } from "@/app/components/BackLink";
+import { withDr } from "@/lib/format";
 
 const STATUS_STYLE: Record<string, string> = {
   draft: "bg-gray-100 text-gray-600",
@@ -43,7 +44,7 @@ export default async function TreatmentPlansPage() {
                   <p className="truncate text-sm font-medium text-foreground">{p.patientName}</p>
                   <p className="text-xs text-muted">
                     {p.itemCount} treatment{p.itemCount === 1 ? "" : "s"} · ₹{p.totalEstimate.toLocaleString("en-IN")}
-                    {p.doctorName ? ` · Dr. ${p.doctorName}` : ""}
+                    {p.doctorName ? ` · ${withDr(p.doctorName)}` : ""}
                   </p>
                 </div>
                 <span className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold ${STATUS_STYLE[p.status] ?? STATUS_STYLE.draft}`}>

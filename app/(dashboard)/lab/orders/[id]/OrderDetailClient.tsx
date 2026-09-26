@@ -5,7 +5,7 @@ import { useT } from "@/lib/i18n/LangContext";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { updateLabOrderStatusAction, saveTestResultAction, billLabOrderAction } from "@/lib/actions/lab";
-import { formatMoney } from "@/lib/format";
+import { formatMoney, withDr } from "@/lib/format";
 import { PageHeader } from "@/app/components/PageHeader";
 import { FlaskConical, Printer } from "lucide-react";
 import { BackLink } from "@/app/components/BackLink";
@@ -115,7 +115,7 @@ export function OrderDetailClient({ order, items }: { order: Order; items: Item[
         <p className="text-muted">
           {order.patientAge ? `${order.patientAge}y · ` : ""}
           {order.patientGender ?? ""}
-          {order.referringDoctorName ? ` · Ref by Dr. ${order.referringDoctorName}` : ""}
+          {order.referringDoctorName ? ` · Ref by ${withDr(order.referringDoctorName)}` : ""}
         </p>
         <p className="text-muted">
           {order.collectionType === "home_collection" ? `Home collection${order.homeAddress ? ` — ${order.homeAddress}` : ""}` : "Walk-in"}
