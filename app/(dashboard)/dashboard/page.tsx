@@ -40,6 +40,7 @@ import {
   Home,
   Check,
   ChevronRight,
+  Sparkles,
 } from "lucide-react";
 
 export default async function DashboardPage() {
@@ -100,6 +101,19 @@ export default async function DashboardPage() {
       <PlanBanner />
 
       <RayScoreCard shopId={session.shopId} businessType={session.businessType} lang={lang} t={t} />
+
+      <Link
+        href="/shop-highlight"
+        className="flex items-center gap-3 rounded-xl px-4 py-3.5 text-white"
+        style={{ background: "linear-gradient(135deg, #4f46e5, #7c3aed)" }}
+      >
+        <Sparkles size={20} className="shrink-0" />
+        <span className="min-w-0 flex-1">
+          <span className="block text-sm font-semibold">{t("Share today's highlight")}</span>
+          <span className="block truncate text-xs text-white/75">{t("A card for your WhatsApp Status or Instagram Story")}</span>
+        </span>
+        <ChevronRight size={16} className="shrink-0" />
+      </Link>
 
       {catalogEnabled && (pendingCatalogOrders ?? 0) > 0 && (
         <Link

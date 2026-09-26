@@ -969,4 +969,15 @@ export const PAGE_TEXT: Record<string, [hi: string, mr: string]> = {
   "Something's not working": ["कुछ काम नहीं कर रहा", "काहीतरी काम करत नाही"],
   "Feature request": ["नया feature चाहिए", "नवीन feature हवं"],
   "Something else": ["कुछ और", "आणखी काही"],
+
+  // Shop highlight (shareable daily card)
+  "Share today's highlight": ["आज की highlight शेयर करें", "आजची highlight शेअर करा"],
+  "A card for your WhatsApp Status or Instagram Story": ["आपकी WhatsApp Status या Instagram Story के लिए एक कार्ड", "तुमच्या WhatsApp Status किंवा Instagram Story साठी एक कार्ड"],
+  "Today's highlight": ["आज की highlight", "आजची highlight"],
+  "A shareable card for your WhatsApp Status or Instagram Story": ["आपकी WhatsApp Status या Instagram Story के लिए एक शेयर करने लायक कार्ड", "तुमच्या WhatsApp Status किंवा Instagram Story साठी शेअर करण्यायोग्य कार्ड"],
+  "Couldn't create today's card — try again in a moment.": ["आज का कार्ड नहीं बन पाया — थोड़ी देर में फिर कोशिश करें।", "आजचं कार्ड बनू शकलं नाही — थोड्या वेळाने पुन्हा प्रयत्न करा."],
+  "Today at {shop}": ["{shop} में आज", "{shop} मध्ये आज"],
+  "Today's shop highlight": ["आज की दुकान की highlight", "आजची दुकानाची highlight"],
+  "Download": ["डाउनलोड करें", "डाउनलोड करा"],
+  "Share": ["शेयर करें", "शेअर करा"],
 };
