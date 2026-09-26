@@ -1399,6 +1399,21 @@ async function HotelHome({ shopId, ready }: { shopId: string; ready: boolean }) 
     );
   }
   const fd = await loadFrontDesk(createSupabaseAdminClient(), shopId, todayIso());
+  // Before any room exists the numbers below would all be zero — point at set-up instead.
+  if (fd.sellableRooms + fd.blockedRooms === 0) {
+    return (
+      <Link href="/hotel/setup" className="neu-card flex items-center gap-3 p-3.5">
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-brand-soft text-brand-text">
+          <BedDouble size={18} />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block text-sm font-semibold text-foreground">{t("Add your rooms to begin")}</span>
+          <span className="block text-xs text-muted">{t("Set up rooms")}</span>
+        </span>
+        <ChevronRight size={16} className="shrink-0 text-muted" />
+      </Link>
+    );
+  }
   const stays = fd.arrivals.length + fd.lateArrivals.length;
   const leaving = fd.departures.length + fd.overstays.length;
 
