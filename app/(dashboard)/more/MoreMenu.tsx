@@ -113,6 +113,9 @@ export async function MoreMenu() {
             <MenuLink href="/hotel/reports" label="Hotel reports" sub="Occupancy, ADR, commissions, guest register" icon={BarChart3} />
             <MenuLink href="/hotel/setup" label="Rooms & rates set-up" sub="Room types, room numbers, tariffs, GST" icon={Settings} />
             <MenuLink href="/restaurant" label="Restaurant & room service" sub="Tables, kitchen and orders charged to rooms" icon={ChefHat} />
+            <MenuLink href="/restaurant-kds" label="Kitchen display (TV)" sub="Big-screen view for the kitchen" icon={MonitorPlay} />
+            <MenuLink href="/restaurant/kds-settings" label="Kitchen display settings" sub="Cards per row, text size" icon={Settings} />
+            <MenuLink href="/restaurant/combos" label="Combo deals" sub="Bundle menu items at a set price" icon={Package} />
           </MenuGroup>
         )}
 

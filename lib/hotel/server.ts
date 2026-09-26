@@ -353,7 +353,7 @@ export async function loadBookingList(
 export async function currentGuestForRoom(admin: Admin, shopId: string, roomId: string) {
   const { data } = await admin
     .from("hotel_booking_rooms")
-    .select("booking_id, hotel_bookings!inner ( id, guest_name, status, check_out_date )")
+    .select("booking_id, hotel_bookings!inner ( id, guest_name, guest_phone, status, check_out_date )")
     .eq("shop_id", shopId)
     .eq("room_id", roomId)
     .eq("hotel_bookings.status", "checked_in")
@@ -361,7 +361,14 @@ export async function currentGuestForRoom(admin: Admin, shopId: string, roomId: 
   const row = data?.[0];
   if (!row) return null;
   const b = Array.isArray(row.hotel_bookings) ? row.hotel_bookings[0] : row.hotel_bookings;
-  return { bookingId: b.id, guestName: b.guest_name, checkOut: b.check_out_date };
+  return { bookingId: b.id, guestName: b.guest_name, guestPhone: b.guest_phone, checkOut: b.check_out_date };
+}
+
+/** The guest staying in the room a restaurant table stands for (null for an ordinary table). */
+export async function roomGuestForTable(admin: Admin, shopId: string, tableId: string) {
+  const { data: table } = await admin.from("restaurant_tables").select("hotel_room_id").eq("id", tableId).eq("shop_id", shopId).maybeSingle();
+  if (!table?.hotel_room_id) return null;
+  return currentGuestForRoom(admin, shopId, table.hotel_room_id);
 }
 
 export type BoardEntry = {

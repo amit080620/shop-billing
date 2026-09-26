@@ -56,6 +56,7 @@ export default async function RestaurantPage() {
   return (
     <TablesClient
       lang={lang}
+      showKitchenLink={session.businessType === "hotel"}
       tables={(tables ?? []).map((t) => {
         const order = orderByTable.get(t.id);
         const reservation = reservationByTable.get(t.id);

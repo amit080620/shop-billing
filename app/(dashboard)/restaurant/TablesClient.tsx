@@ -11,7 +11,7 @@ import {
   rejectTableOrderRequestAction,
   getTableQrImageAction,
 } from "@/lib/actions/table-orders";
-import { LayoutGrid, Layers, CalendarClock, Smartphone, Check, X, Bell, QrCode, Minus, Plus } from "lucide-react";
+import { LayoutGrid, Layers, CalendarClock, Smartphone, Check, X, Bell, QrCode, Minus, Plus, ChefHat } from "lucide-react";
 import { formatMoney } from "@/lib/format";
 import { PageHeader } from "@/app/components/PageHeader";
 import { useToast } from "@/app/components/Toast";
@@ -127,7 +127,7 @@ function TableTile({
   );
 }
 
-export function TablesClient({ tables, lang }: { tables: Table[]; lang: Lang }) {
+export function TablesClient({ tables, lang, showKitchenLink = false }: { tables: Table[]; lang: Lang; showKitchenLink?: boolean }) {
   const { t } = useTranslation(lang);
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -245,6 +245,20 @@ export function TablesClient({ tables, lang }: { tables: Table[]; lang: Lang }) 
   function handleTableTap(table: Table) {
     if (table.openOrderId) {
       router.push(`/restaurant/orders/${table.openOrderId}`);
+      return;
+    }
+    // A room's table belongs to the guest staying there: the order starts straight
+    // away with the name and mobile from their booking, nothing to type.
+    if (table.isRoom) {
+      setError(null);
+      startTransition(async () => {
+        const result = await startOrderAction(table.id);
+        if (result.error) {
+          setError(result.error);
+          return;
+        }
+        router.push(`/restaurant/orders/${result.orderId}`);
+      });
       return;
     }
     // Genuinely open the booking popup instead of starting the order
@@ -388,6 +402,19 @@ export function TablesClient({ tables, lang }: { tables: Table[]; lang: Lang }) 
         >
           <CalendarClock size={13} /> {t("Reservations")}
         </Link>
+        {showKitchenLink && (
+          <Link
+            href="/restaurant-kds"
+            className="flex shrink-0 items-center gap-1.5 rounded-2xl px-3 py-1.5 text-xs font-semibold text-foreground transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97]"
+            style={{
+              background: "var(--surface)",
+              boxShadow: "var(--elev-sm)",
+              border: "1px solid var(--border)",
+            }}
+          >
+            <ChefHat size={13} /> {t("Kitchen display")}
+          </Link>
+        )}
       </div>
 
       {/* Genuine legend — explains exactly what each table color means, with a

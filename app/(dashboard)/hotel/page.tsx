@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BedDouble, CalendarDays, ClipboardList, LogIn, LogOut, Settings2, LayoutGrid, BarChart3, TriangleAlert } from "lucide-react";
+import { BedDouble, CalendarDays, ChefHat, ClipboardList, LogIn, LogOut, Settings2, LayoutGrid, BarChart3, TriangleAlert } from "lucide-react";
 import { requireSession } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { getTranslator } from "@/lib/i18n/server";
@@ -26,6 +26,7 @@ export default async function FrontDeskPage() {
     { href: "/hotel/rooms", label: t("Rooms"), icon: LayoutGrid },
     { href: "/hotel/calendar", label: t("Calendar"), icon: CalendarDays },
     { href: "/hotel/bookings", label: t("All bookings"), icon: ClipboardList },
+    { href: "/restaurant-kds", label: t("Kitchen display"), icon: ChefHat },
     { href: "/hotel/reports", label: t("Reports"), icon: BarChart3 },
     { href: "/hotel/setup", label: t("Set-up"), icon: Settings2 },
   ];

@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { requireSession, requireOwner } from "../auth";
+import { roomGuestForTable } from "../hotel/server";
 import { createSupabaseAdminClient } from "../supabase/admin";
 import { determineSupplyType, financialYearFor, round2, splitTax, splitTaxInclusive } from "../gst";
 import { invalidateCache } from "../cache";
@@ -261,6 +262,16 @@ export async function startOrderAction(
 
   if (!session.shopStateCode) {
     return { error: "Add your shop's state in Settings before taking orders." };
+  }
+
+  // Room service: the order belongs to the guest staying in that room, so their
+  // name and mobile come from the booking instead of being asked again.
+  if (session.businessType === "hotel") {
+    const guest = await roomGuestForTable(admin, session.shopId, tableId);
+    if (guest) {
+      customerName = guest.guestName;
+      customerPhone = guest.guestPhone ?? undefined;
+    }
   }
 
   // Genuinely optional — a table can be booked with zero customer

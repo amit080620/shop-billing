@@ -112,6 +112,9 @@ export function OrderClient({
   const [error, setError] = useState<string | null>(null);
   const [kotItems, setKotItems] = useState<{ name: string; quantity: number; modifiers: { group: string; choice: string; price: number }[] }[] | null>(null);
   const [showBillPrint, setShowBillPrint] = useState(false);
+  // Set once the bill has been charged to a room: the bill then stays on screen to
+  // print, and closing it leaves the order.
+  const [chargedToRoom, setChargedToRoom] = useState(false);
   const [showSettle, setShowSettle] = useState(false);
   const [showCancel, setShowCancel] = useState(false);
   const [showMerge, setShowMerge] = useState(false);
@@ -516,7 +519,26 @@ export function OrderClient({
       )}
 
       {showBillPrint && (
-        <BillPrintView shopName={shopName} shopGstin={shopGstin} order={order} items={activeItems} onClose={() => setShowBillPrint(false)} t={t} />
+        <BillPrintView
+          shopName={shopName}
+          shopGstin={shopGstin}
+          order={order}
+          items={activeItems}
+          roomNote={roomCharge && (chargedToRoom || order.status === "settled") ? t("Charged to Room {room} — {guest}. Payable at check-out.", { room: roomCharge.roomNumber, guest: roomCharge.guestName }) : null}
+          onSettle={
+            order.status === "open" && !chargedToRoom
+              ? () => {
+                  setShowBillPrint(false);
+                  setShowSettle(true);
+                }
+              : null
+          }
+          onClose={() => {
+            setShowBillPrint(false);
+            if (chargedToRoom) leaveToTables();
+          }}
+          t={t}
+        />
       )}
       {showSettle && (
         <SettleModal
@@ -532,7 +554,9 @@ export function OrderClient({
           roomCharge={roomCharge}
           onCharged={() => {
             showToast(t("Charged to Room {room}", { room: roomCharge?.roomNumber ?? "" }));
-            leaveToTables();
+            setChargedToRoom(true);
+            setShowSettle(false);
+            setShowBillPrint(true);
           }}
           hidden={showBillPrint}
           t={t}
@@ -878,6 +902,8 @@ function BillPrintView({
   shopGstin,
   order,
   items,
+  roomNote,
+  onSettle,
   onClose,
   t,
 }: {
@@ -885,6 +911,10 @@ function BillPrintView({
   shopGstin: string | null;
   order: Order;
   items: Item[];
+  /** Shown on the bill when it is charged to a hotel room instead of paid now. */
+  roomNote?: string | null;
+  /** Lets the bill go straight to payment (or to the room) without closing it first. */
+  onSettle?: (() => void) | null;
   onClose: () => void;
   t: Translator;
 }) {
@@ -968,6 +998,17 @@ function BillPrintView({
             getBytes={buildReceiptBytes}
             className="flex items-center justify-center gap-1.5 rounded-lg border border-brand px-3 py-1.5 text-xs font-medium text-brand"
           />
+          <button
+            onClick={() => window.print()}
+            className="flex items-center justify-center gap-1.5 rounded-lg border border-brand px-3 py-1.5 text-xs font-medium text-brand"
+          >
+            <Printer size={13} /> {t("Print")}
+          </button>
+          {onSettle && (
+            <button onClick={onSettle} className="flex items-center justify-center gap-1.5 rounded-lg bg-brand px-3 py-1.5 text-xs font-semibold text-white">
+              <Wallet size={13} /> {t("order.settle")}
+            </button>
+          )}
           <button onClick={onClose} className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-muted">
             {t("order.close")}
           </button>
@@ -1076,6 +1117,7 @@ function BillPrintView({
             <img src={qrDataUrl} alt="UPI payment QR code" className="h-32 w-32" />
           </div>
         )}
+        {roomNote && <p className="mt-2 border-t border-dashed border-gray-400 pt-2 text-center text-xs font-semibold">{roomNote}</p>}
         <p className="mt-3 text-center text-[10px]">{t("order.thankYou")}</p>
       </div>
       <style jsx global>{`
