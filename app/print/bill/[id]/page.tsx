@@ -18,6 +18,8 @@ import { BluetoothPrintButton } from "./BluetoothPrintButton";
 import { BillSuccessSound } from "./BillSuccessSound";
 import { InfoTooltip } from "@/app/components/InfoTooltip";
 import { ThermalRenderer, type ThermalReceiptData } from "@/lib/print/ThermalRenderer";
+import { thermalFormatFor } from "@/lib/print/thermalFormat";
+import { getThermalPrintSettingsAction } from "@/lib/actions/settings";
 import { A4Renderer, type A4InvoiceData } from "@/lib/print/A4Renderer";
 
 export default async function PrintBillPage({
@@ -143,6 +145,9 @@ export default async function PrintBillPage({
     creditAmount: Number(bill.credit_amount),
     footerText: null,
   };
+
+  // The owner's shop-name / item / total styling (Settings → Thermal print settings).
+  const thermalFormat = isThermal ? thermalFormatFor(await getThermalPrintSettingsAction(), is58mm ? 58 : 80) : undefined;
 
   const thermalData: ThermalReceiptData = {
     shopName: session.shopName,
@@ -391,7 +396,7 @@ export default async function PrintBillPage({
 
       <div id="invoice-capture-area" className={`${isFreshBill === "1" ? "animate-print-slip" : ""} bg-white text-black`}>
       {isThermal ? (
-        <ThermalRenderer data={thermalData} paperWidth={is58mm ? 58 : 80} />
+        <ThermalRenderer data={thermalData} paperWidth={is58mm ? 58 : 80} format={thermalFormat} />
       ) : (
         <A4Renderer data={a4Data} />
       )}

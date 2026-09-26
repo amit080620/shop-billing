@@ -1,5 +1,6 @@
 import { THERMAL_58_DEFAULT, THERMAL_80_DEFAULT, type ThermalPrinterProfile } from "./printerProfile";
 import { buildItemRowLines, buildHeaderRow, buildTwoColumnRow, buildDivider } from "./textGrid";
+import { DEFAULT_THERMAL_FORMAT, sizeEm, type ThermalFormat } from "./thermalFormat";
 
 export type ThermalReceiptItem = {
   name: string;
@@ -54,23 +55,28 @@ function money(n: number): string {
 export function ThermalRenderer({
   data,
   paperWidth,
+  format = DEFAULT_THERMAL_FORMAT,
 }: {
   data: ThermalReceiptData;
   paperWidth: 58 | 80;
+  /** The owner's look for the shop name, item table and total (Settings → Thermal print settings). */
+  format?: ThermalFormat;
 }) {
   const profile: ThermalPrinterProfile = paperWidth === 58 ? THERMAL_58_DEFAULT : THERMAL_80_DEFAULT;
+  // The item table (header + rows) is styled on its own; the totals below it are not.
+  const itemLines: string[] = [];
   const lines: string[] = [];
 
-  lines.push(buildHeaderRow(profile));
-  lines.push(buildDivider(profile));
+  itemLines.push(buildHeaderRow(profile));
+  itemLines.push(buildDivider(profile));
   for (const item of data.items) {
     if (item.mrp != null && item.mrp > item.rate) {
-      lines.push(`  MRP Rs.${money(item.mrp)}`);
+      itemLines.push(`  MRP Rs.${money(item.mrp)}`);
     }
-    lines.push(...buildItemRowLines(item.name, String(item.qty), money(item.rate), money(item.amount), profile));
-    if (item.warrantyText) lines.push(`  ${item.warrantyText}`);
+    itemLines.push(...buildItemRowLines(item.name, String(item.qty), money(item.rate), money(item.amount), profile));
+    if (item.warrantyText) itemLines.push(`  ${item.warrantyText}`);
   }
-  lines.push(buildDivider(profile));
+  itemLines.push(buildDivider(profile));
 
   if (data.savingsOffMrp && data.savingsOffMrp > 0) {
     lines.push(buildTwoColumnRow("You saved (off MRP)", `Rs.${money(data.savingsOffMrp)}`, profile));
@@ -116,7 +122,16 @@ export function ThermalRenderer({
         </div>
       )}
 
-      <div className="text-center font-bold" style={{ fontSize: "1.25em" }}>
+      <div
+        style={{
+          fontSize: `${sizeEm(format.shopNameSize)}em`,
+          fontWeight: format.shopNameBold ? 700 : 400,
+          fontStyle: format.shopNameItalic ? "italic" : "normal",
+          textAlign: format.shopNameAlign,
+          whiteSpace: "normal",
+          lineHeight: 1.2,
+        }}
+      >
         {data.shopName}
       </div>
       {data.tagline && <div className="text-center">{data.tagline}</div>}
@@ -132,13 +147,34 @@ export function ThermalRenderer({
       <div>{data.placeOfSupplyText}</div>
       <div>{buildDivider(profile)}</div>
 
+      <div style={{ fontWeight: format.itemsBold ? 700 : 400 }}>
+        {itemLines.map((line, i) => (
+          <div key={i}>{line}</div>
+        ))}
+      </div>
       {lines.map((line, i) => (
         <div key={i}>{line}</div>
       ))}
 
-      <div className="mt-1 text-center font-bold" style={{ fontSize: "1.15em" }}>
-        {buildTwoColumnRow("TOTAL RS", `Rs.${money(data.total)}`, profile)}
-      </div>
+      {(() => {
+        const totalStyle = {
+          fontSize: `${sizeEm(format.totalSize)}em`,
+          fontWeight: format.totalBold ? 700 : 400,
+          fontStyle: format.totalItalic ? ("italic" as const) : ("normal" as const),
+          whiteSpace: "normal" as const,
+          lineHeight: 1.25,
+        };
+        return format.totalAlign === "left" ? (
+          <div className="mt-1 flex justify-between gap-2" style={totalStyle}>
+            <span>TOTAL</span>
+            <span>Rs.{money(data.total)}</span>
+          </div>
+        ) : (
+          <div className="mt-1" style={{ ...totalStyle, textAlign: format.totalAlign }}>
+            TOTAL Rs.{money(data.total)}
+          </div>
+        );
+      })()}
       <div>{paidLine}</div>
       {creditLine && <div className="font-bold">{creditLine}</div>}
 

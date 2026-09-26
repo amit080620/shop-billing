@@ -1011,4 +1011,23 @@ export const PAGE_TEXT: Record<string, [hi: string, mr: string]> = {
   "Today's shop highlight": ["आज की दुकान की highlight", "आजची दुकानाची highlight"],
   "Download": ["डाउनलोड करें", "डाउनलोड करा"],
   "Share": ["शेयर करें", "शेअर करा"],
+
+  // Thermal print settings
+  "Live preview": ["लाइव प्रिव्यू", "लाइव्ह प्रिव्ह्यू"],
+  "Small": ["छोटा", "लहान"],
+  "Normal": ["सामान्य", "सामान्य"],
+  "Large": ["बड़ा", "मोठा"],
+  "Larger": ["और बड़ा", "आणखी मोठा"],
+  "Big": ["बहुत बड़ा", "खूप मोठा"],
+  "Extra big": ["extra बड़ा", "extra मोठा"],
+  "Huge": ["विशाल", "प्रचंड"],
+  "Giant": ["सबसे बड़ा", "सर्वात मोठा"],
+  "This is how a bill looks when you print it from the browser, a USB printer or a phone's print option, and on the screen.": [
+    "browser, USB printer या फ़ोन के print option से छापने पर और screen पर bill ऐसा दिखेगा।",
+    "browser, USB printer किंवा फोनच्या print option मधून छापल्यावर आणि screen वर bill असे दिसेल.",
+  ],
+  "A Bluetooth thermal printer draws its own built-in text, so it takes only some of these: bold and alignment are sent to it (a Large size or above prints bold), and the item table bold. Size and italic depend on the printer model and can print stray characters, so they are not sent to it. 58mm and 80mm paper are set separately.": [
+    "Bluetooth thermal printer अपना बना-बनाया text छापता है, इसलिए उसे इनमें से कुछ ही भेजे जाते हैं: bold और alignment जाते हैं (Large या उससे ऊपर का size bold छपता है), और item table का bold भी। Size और italic printer के model पर निर्भर हैं और अजीब अक्षर छाप सकते हैं, इसलिए वे नहीं भेजे जाते। 58mm और 80mm paper के settings अलग हैं।",
+    "Bluetooth thermal printer स्वतःचा अंगभूत text छापतो, म्हणून त्याला यातले काही च पाठवले जातात: bold आणि alignment जातात (Large किंवा त्यापुढील size bold छापतो), आणि item table चा bold ही. Size आणि italic printer च्या model वर अवलंबून आहेत आणि विचित्र अक्षरे छापू शकतात, म्हणून ते पाठवले जात नाहीत. 58mm आणि 80mm paper चे settings वेगळे आहेत.",
+  ],
 };

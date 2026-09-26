@@ -7,6 +7,30 @@ import { Printer } from "lucide-react";
 import { useT } from "@/lib/i18n/LangContext";
 import { BackLink } from "@/app/components/BackLink";
 import Link from "next/link";
+import { ThermalRenderer, type ThermalReceiptData } from "@/lib/print/ThermalRenderer";
+import { THERMAL_SIZE_LEVELS, thermalFormatFor } from "@/lib/print/thermalFormat";
+
+// A made-up receipt, so the look can be judged without making a real bill.
+const SAMPLE_RECEIPT: ThermalReceiptData = {
+  shopName: "Sharma General Store",
+  gstin: "27ABCDE1234F1Z5",
+  invoiceNumber: "2026-27/00042",
+  dateText: "26 Sept 2026, 4:12 pm",
+  placeOfSupplyText: "Same state (CGST + SGST)",
+  items: [
+    { name: "Basmati Rice 5kg", qty: 1, rate: 620, amount: 620 },
+    { name: "Amul Butter 500g", qty: 2, rate: 275, amount: 550 },
+    { name: "Tata Salt 1kg", qty: 3, rate: 28, amount: 84 },
+  ],
+  subtotal: 1254,
+  taxableAmount: 1194.29,
+  isIntraState: true,
+  cgstAmount: 29.86,
+  sgstAmount: 29.85,
+  total: 1254,
+  paidAmount: 1254,
+  paymentLabel: "Cash",
+};
 
 function Toggle({ label, checked, onChange }: { label: string; checked: boolean; onChange: (v: boolean) => void }) {
   return (
@@ -32,51 +56,22 @@ function Toggle({ label, checked, onChange }: { label: string; checked: boolean;
   );
 }
 
-// Maps a chosen pt value to the nearest hardware level this printer
-// command set can actually produce. Multiple adjacent pt values can
-// legitimately map to the same physical level — that's a genuine
-// hardware limit, not a bug — but every pt from 5-36 is offered so it
-// can be tried on the actual printer rather than pre-filtered by an
-// assumption about what it supports.
-const PT_ANCHORS = [6, 9, 18, 27, 36, 45, 54, 63]; // level 0..7
-function ptToLevel(pt: number): number {
-  let best = 0;
-  let bestDist = Infinity;
-  PT_ANCHORS.forEach((anchor, level) => {
-    const dist = Math.abs(pt - anchor);
-    if (dist < bestDist) {
-      bestDist = dist;
-      best = level;
-    }
-  });
-  return best;
-}
-function levelToPt(level: number): number {
-  return PT_ANCHORS[level] ?? PT_ANCHORS[0];
-}
-
 function SizeSelect({ value, onChange }: { value: number; onChange: (v: number) => void }) {
   const { t } = useT();
-  const allPt = Array.from({ length: 32 }, (_, i) => i + 5); // 5pt..36pt
   return (
-    <div className="flex flex-col gap-1 py-1">
-      <div className="flex items-center justify-between">
-        <span className="text-sm text-foreground">{t("Font size")}</span>
-        <select
-          value={levelToPt(value)}
-          onChange={(e) => onChange(ptToLevel(Number(e.target.value)))}
-          className="rounded-lg border border-border bg-background px-2.5 py-1.5 text-sm outline-none focus:border-brand"
-        >
-          {allPt.map((pt) => (
-            <option key={pt} value={pt}>
-              {pt}pt
-            </option>
-          ))}
-        </select>
-      </div>
-      <p className="text-right text-[11px] text-muted">
-        {t("Every printer's hardware is a bit different — some nearby sizes may print identically on yours. Try a few and keep what looks right.")}
-      </p>
+    <div className="flex items-center justify-between py-1">
+      <span className="text-sm text-foreground">{t("Font size")}</span>
+      <select
+        value={Math.min(THERMAL_SIZE_LEVELS.length - 1, Math.max(0, value))}
+        onChange={(e) => onChange(Number(e.target.value))}
+        className="rounded-lg border border-border bg-background px-2.5 py-1.5 text-sm outline-none focus:border-brand"
+      >
+        {THERMAL_SIZE_LEVELS.map((l) => (
+          <option key={l.level} value={l.level}>
+            {t(l.label)}
+          </option>
+        ))}
+      </select>
     </div>
   );
 }
@@ -170,6 +165,7 @@ export function ThermalPrintSettingsClient({ initial, initialDefaultFormat }: { 
   const [defaultFormat, setDefaultFormat] = useState(initialDefaultFormat);
   const [isPending, startTransition] = useTransition();
   const [saved, setSaved] = useState(false);
+  const [previewPaper, setPreviewPaper] = useState<58 | 80>(58);
 
   function update<K extends keyof ThermalPrintSettings>(key: K, value: ThermalPrintSettings[K]) {
     setSettings((prev) => ({ ...prev, [key]: value }));
@@ -226,8 +222,35 @@ export function ThermalPrintSettingsClient({ initial, initialDefaultFormat }: { 
         </div>
       </div>
 
+      <div className="rounded-xl border border-border bg-surface p-3.5">
+        <div className="mb-2 flex items-center justify-between gap-2">
+          <p className="text-sm font-semibold text-foreground">{t("Live preview")}</p>
+          <div className="flex gap-1">
+            {([58, 80] as const).map((w) => (
+              <button
+                key={w}
+                type="button"
+                onClick={() => setPreviewPaper(w)}
+                aria-pressed={previewPaper === w}
+                className={`rounded-full px-3 py-1 text-xs font-medium ${previewPaper === w ? "bg-brand text-white" : "border border-border text-muted"}`}
+              >
+                {w}mm
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="flex justify-center overflow-x-auto rounded-lg bg-surface-2 p-3">
+          <div className="shadow-sm">
+            <ThermalRenderer data={SAMPLE_RECEIPT} paperWidth={previewPaper} format={thermalFormatFor(settings, previewPaper)} />
+          </div>
+        </div>
+        <p className="mt-2 text-xs text-muted">
+          {t("This is how a bill looks when you print it from the browser, a USB printer or a phone's print option, and on the screen.")}
+        </p>
+      </div>
+
       <p className="text-xs text-muted">
-        {t("A Bluetooth thermal printer renders its own fixed characters — size is a genuine multiplier of the base font (1× is normal, 2× is double, and so on), not a point-size like a word processor. Italic uses the standard printer command, though support varies a little by printer model. 58mm and 80mm paper are configured separately since receipts on each often want different emphasis.")}
+        {t("A Bluetooth thermal printer draws its own built-in text, so it takes only some of these: bold and alignment are sent to it (a Large size or above prints bold), and the item table bold. Size and italic depend on the printer model and can print stray characters, so they are not sent to it. 58mm and 80mm paper are set separately.")}
       </p>
 
       <PaperSizeSection
