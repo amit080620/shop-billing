@@ -288,10 +288,10 @@ export function BookingClient({
           <div className="mx-auto flex max-w-lg items-center gap-2 md:max-w-3xl">
             {b.status === "reserved" ? (
               <>
-                <button type="button" onClick={() => setSheet("checkin")} className="btn-primary flex flex-1 items-center justify-center gap-2">
+                <button type="button" onClick={() => setSheet("checkin")} className="btn-primary flex min-w-0 flex-1 items-center justify-center gap-2 whitespace-nowrap px-3">
                   <LogIn size={16} /> {t("Check in")}
                 </button>
-                <button type="button" onClick={() => setSheet("payment")} className="flex items-center gap-1.5 rounded-lg border border-border px-3 py-2.5 text-sm font-medium text-foreground">
+                <button type="button" onClick={() => setSheet("payment")} className="flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg border border-border px-3 py-2.5 text-sm font-medium text-foreground">
                   <Wallet size={15} /> {t("Advance")}
                 </button>
                 {canManage && (
@@ -302,10 +302,10 @@ export function BookingClient({
               </>
             ) : (
               <>
-                <button type="button" onClick={() => setSheet("checkout")} className="btn-primary flex flex-1 items-center justify-center gap-2">
+                <button type="button" onClick={() => setSheet("checkout")} className="btn-primary flex min-w-0 flex-1 items-center justify-center gap-2 whitespace-nowrap px-3">
                   <LogOut size={16} /> {t("Check out")}
                 </button>
-                <button type="button" onClick={() => setSheet("payment")} className="flex items-center gap-1.5 rounded-lg border border-border px-3 py-2.5 text-sm font-medium text-foreground">
+                <button type="button" onClick={() => setSheet("payment")} className="flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg border border-border px-3 py-2.5 text-sm font-medium text-foreground">
                   <Wallet size={15} /> {t("Payment")}
                 </button>
                 <button
@@ -317,7 +317,7 @@ export function BookingClient({
                     else setSheet("roomservice");
                   }}
                   aria-label={t("Room service")}
-                  className="rounded-lg border border-border px-3 py-2.5 text-foreground"
+                  className="shrink-0 rounded-lg border border-border px-3 py-2.5 text-foreground"
                 >
                   <ConciergeBell size={16} />
                 </button>

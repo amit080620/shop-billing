@@ -48,7 +48,7 @@ export default async function HotelReportsPage({ searchParams }: { searchParams:
             {s.bySource.map((x) => (
               <div key={x.source} className="flex items-center justify-between gap-3 text-sm">
                 <div className="min-w-0">
-                  <p className="truncate font-medium text-foreground">{t(sourceLabel(x.source))}</p>
+                  <p className="break-words font-medium text-foreground">{t(sourceLabel(x.source))}</p>
                   <p className="text-xs text-muted">
                     {x.bookings} {x.bookings === 1 ? t("booking") : t("bookings")} · {x.roomNights} {x.roomNights === 1 ? t("room-night") : t("room-nights")}
                   </p>
