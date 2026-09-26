@@ -5,7 +5,8 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { revalidateStaffCache } from "@/lib/auth";
 import { checkRateLimitAsync } from "@/lib/rateLimit";
 import { isDemoType } from "@/lib/demo/config";
-import { ensureDemoShop } from "@/lib/demo";
+import { demoEmail } from "@/lib/demo/config";
+import { demoPassword, demoShopIsFresh, ensureDemoShop } from "@/lib/demo";
 
 export const dynamic = "force-dynamic";
 // Filling a demo shop from scratch (the first visit after a nightly reset) can take a minute.
@@ -27,21 +28,28 @@ export async function GET(request: Request, { params }: { params: Promise<{ type
     return page("Too many tries", "Please wait a few minutes and open the demo again.", 429);
   }
 
-  let login: Awaited<ReturnType<typeof ensureDemoShop>>;
-  try {
-    login = await ensureDemoShop(type);
-  } catch (error) {
-    console.error("Demo could not be prepared", type, error);
-    return page("The demo is warming up", "This demo is being refreshed right now. Please try again in a minute.", 503);
-  }
-
+  // Normal case: the demo already exists and is fresh, so just sign in (two quick calls).
+  const email = demoEmail(type);
+  const password = demoPassword(email);
   const supabase = await createSupabaseServerClient();
-  const { error } = await supabase.auth.signInWithPassword({ email: login.email, password: login.password });
-  if (error) {
-    console.error("Demo sign-in failed", type, error.message);
+  let signedIn = await supabase.auth.signInWithPassword({ email, password });
+  let userId = signedIn.data.user?.id ?? null;
+  if (!userId || !(await demoShopIsFresh(userId, type))) {
+    // First visit, or the nightly refill has not happened: create / refill it (can take a minute).
+    try {
+      const login = await ensureDemoShop(type);
+      userId = login.userId;
+    } catch (error) {
+      console.error("Demo could not be prepared", type, error);
+      return page("The demo is warming up", "This demo is being refreshed right now. Please try again in a minute.", 503);
+    }
+    if (!signedIn.data.user) signedIn = await supabase.auth.signInWithPassword({ email, password });
+  }
+  if (signedIn.error || !userId) {
+    console.error("Demo sign-in failed", type, signedIn.error?.message);
     return page("The demo is warming up", "Could not open the demo just now. Please try again in a minute.", 503);
   }
-  await revalidateStaffCache(login.userId);
+  await revalidateStaffCache(userId);
   const cookieStore = await cookies();
   cookieStore.delete("kitchen_only");
   cookieStore.delete("hide_home");

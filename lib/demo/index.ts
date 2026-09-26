@@ -40,6 +40,10 @@ async function ensureDemoUser(admin: Admin, type: DemoType): Promise<{ id: strin
   throw new Error(`demo: could not set up the login for ${type}`);
 }
 
+export async function demoShopIsFresh(userId: string, type: DemoType): Promise<boolean> {
+  return shopIsFresh(createSupabaseAdminClient(), userId, type);
+}
+
 async function shopIsFresh(admin: Admin, userId: string, type: DemoType): Promise<boolean> {
   const { data } = await admin.from("staff").select("shops ( created_at, business_type )").eq("id", userId).maybeSingle();
   const shop = Array.isArray(data?.shops) ? data?.shops[0] : data?.shops;
