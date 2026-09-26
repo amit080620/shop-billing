@@ -49,6 +49,16 @@ export default async function OrderPage({
 
   const table = Array.isArray(order.restaurant_tables) ? order.restaurant_tables[0] : order.restaurant_tables;
 
+  // An order already charged to a room: which room and guest, for the bill's note.
+  let chargedTo: { roomNumber: string; guestName: string } | null = null;
+  if (session.businessType === "hotel" && order.status === "settled") {
+    const { data: link } = await admin.from("restaurant_orders").select("hotel_booking_id").eq("id", id).maybeSingle();
+    if (link?.hotel_booking_id) {
+      const { data: booking } = await admin.from("hotel_bookings").select("guest_name").eq("id", link.hotel_booking_id).maybeSingle();
+      chargedTo = { roomNumber: (table?.name ?? "").replace(/^Rooms+/i, ""), guestName: booking?.guest_name ?? "" };
+    }
+  }
+
   return (
     <OrderClient
       shopName={session.shopName}
@@ -94,6 +104,7 @@ export default async function OrderPage({
         category: Array.isArray(p.categories) ? p.categories[0]?.name ?? "Other" : (p.categories as { name: string } | null)?.name ?? "Other",
       }))}
       roomCharge={roomCharge ? { roomNumber: roomCharge.roomNumber, guestName: roomCharge.guestName } : null}
+      chargedTo={chargedTo}
       combos={(combos ?? []).map((c) => ({ id: c.id, name: c.name, price: Number(c.price) }))}
       otherTables={(otherOpenOrders ?? []).map((o) => ({
         orderId: o.id,

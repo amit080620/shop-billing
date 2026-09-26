@@ -94,6 +94,7 @@ export function OrderClient({
   combos,
   otherTables,
   roomCharge = null,
+  chargedTo = null,
 }: {
   shopName: string;
   shopGstin: string | null;
@@ -104,6 +105,8 @@ export function OrderClient({
   combos: Combo[];
   otherTables: { orderId: string; tableName: string }[];
   roomCharge?: { roomNumber: string; guestName: string } | null;
+  /** Set once the order has been charged to a room. */
+  chargedTo?: { roomNumber: string; guestName: string } | null;
 }) {
   const { t } = useTranslation(lang);
   const router = useRouter();
@@ -524,7 +527,10 @@ export function OrderClient({
           shopGstin={shopGstin}
           order={order}
           items={activeItems}
-          roomNote={roomCharge && (chargedToRoom || order.status === "settled") ? t("Charged to Room {room} — {guest}. Payable at check-out.", { room: roomCharge.roomNumber, guest: roomCharge.guestName }) : null}
+          roomNote={(() => {
+            const target = chargedTo ?? (chargedToRoom ? roomCharge : null);
+            return target ? t("Charged to Room {room} — {guest}. Payable at check-out.", { room: target.roomNumber, guest: target.guestName }) : null;
+          })()}
           onSettle={
             order.status === "open" && !chargedToRoom
               ? () => {

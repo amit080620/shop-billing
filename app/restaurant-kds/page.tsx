@@ -10,12 +10,19 @@ export default async function KdsPage() {
   const { lang } = await getTranslator();
   const admin = createSupabaseAdminClient();
 
-  const { data: orders } = await admin
+  let ordersQuery = admin
     .from("restaurant_orders")
     .select("id, order_number, created_at, revised_at, restaurant_tables ( name ), restaurant_order_items ( id, product_name, quantity, status, created_at, selected_modifiers )")
-    .eq("shop_id", session.shopId)
-    .eq("status", "open")
-    .order("created_at", { ascending: true });
+    .eq("shop_id", session.shopId);
+  if (session.businessType === "hotel") {
+    // A room's order is charged to the guest's account as soon as it is taken, so it
+    // leaves "open" at once — keep it on the kitchen screen until its items are ready.
+    const since = new Date(Date.now() - 18 * 3600 * 1000).toISOString();
+    ordersQuery = ordersQuery.or(`status.eq.open,and(status.eq.settled,hotel_booking_id.not.is.null,settled_at.gte.${since})`);
+  } else {
+    ordersQuery = ordersQuery.eq("status", "open");
+  }
+  const { data: orders } = await ordersQuery.order("created_at", { ascending: true });
 
   const tickets = (orders ?? []).map((o) => {
     const table = Array.isArray(o.restaurant_tables) ? o.restaurant_tables[0] : o.restaurant_tables;
