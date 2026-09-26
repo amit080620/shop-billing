@@ -74,12 +74,12 @@ export function DateRangeControls({
     go(iso(start), iso(end));
   }
 
-  const pillClass = "shrink-0 rounded-full bg-background px-3 py-1.5 text-xs font-medium text-muted";
+  const pillClass = "rounded-full bg-background px-3 py-1.5 text-xs font-medium text-muted";
   const pillStyle = { boxShadow: "var(--elev-xs)" };
 
   return (
     <div className="flex flex-col gap-2">
-      <div className="flex gap-2 overflow-x-auto scroll-hide pb-0.5">
+      <div className="flex flex-wrap gap-2">
         <button onClick={setToday} className={pillClass} style={pillStyle}>
           {t("rreports.today")}
         </button>
