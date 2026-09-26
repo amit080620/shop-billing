@@ -38,7 +38,7 @@ export function VoidBillButton({ billId, invoiceNumber }: { billId: string; invo
     return (
       <button
         onClick={() => setOpen(true)}
-        className="no-print rounded-full border border-red-200 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50"
+        className="no-print rounded-full border border-danger/30 px-3 py-1.5 text-xs font-medium text-danger hover:bg-danger-soft"
       >
         {t("Void invoice")}
       </button>
@@ -48,7 +48,7 @@ export function VoidBillButton({ billId, invoiceNumber }: { billId: string; invo
   return (
     <form
       action={formAction}
-      className="flex flex-col gap-2 rounded-lg border border-danger bg-red-50 p-3"
+      className="flex flex-col gap-2 rounded-lg border border-danger bg-danger-soft p-3"
     >
       <input type="hidden" name="billId" value={billId} />
       <p className="text-sm font-medium text-danger">

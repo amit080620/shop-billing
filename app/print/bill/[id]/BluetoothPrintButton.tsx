@@ -76,18 +76,18 @@ export function BluetoothPrintButton({ receipt, paperWidth }: { receipt: Receipt
             }}
             aria-label={t("billPage.changePrinter")}
             title={t("billPage.changePrinter")}
-            className="rounded-full p-1.5 text-gray-400"
+            className="rounded-full p-1.5 text-muted"
           >
             <RotateCcw size={12} />
           </button>
         )}
       </div>
       {bluetoothSupported && !remembered && (
-        <p className="max-w-[220px] whitespace-normal break-words text-[11px] text-gray-500">
+        <p className="max-w-[220px] whitespace-normal break-words text-[11px] text-muted">
           {t("billPage.firstPrintHint")}
         </p>
       )}
-      {error && <p className="max-w-[220px] whitespace-normal break-words text-[11px] text-red-600">{error}</p>}
+      {error && <p className="max-w-[220px] whitespace-normal break-words text-[11px] text-danger">{error}</p>}
     </div>
   );
 }

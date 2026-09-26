@@ -512,8 +512,9 @@ label.neu-card:active {
     opacity: 0.5;
   }
 
-  /* Main actions on the bill page (Print, PDF). That page is always
-     light, since it shows the printed invoice. */
+  /* Main actions on the bill page (Print, PDF) — part of the on-screen
+     toolbar around the invoice, not the invoice itself, so it follows
+     the app's theme like every other button. */
   .bill-action {
     display: inline-flex;
     width: 100%;
@@ -521,16 +522,16 @@ label.neu-card:active {
     justify-content: center;
     gap: 0.4rem;
     border-radius: 0.75rem;
-    border: 1px solid #e5e7eb;
-    background: #fff;
+    border: 1px solid var(--border);
+    background: var(--surface);
     padding: 0.7rem 1rem;
     font-size: 0.875rem;
     font-weight: 600;
-    color: #1f2937;
+    color: var(--foreground);
     transition: background-color 0.15s ease, transform 0.1s ease;
   }
   .bill-action:hover:not(:disabled) {
-    background: #f9fafb;
+    background: var(--surface-2);
   }
   .bill-action:active:not(:disabled) {
     transform: scale(0.98);

@@ -240,7 +240,7 @@ export default async function PrintBillPage({
         }
       `}</style>
     <div
-      className={`relative mx-auto bg-white text-black ${isThermal ? "" : "max-w-2xl p-8"}`}
+      className={`relative mx-auto bg-background text-foreground ${isThermal ? "" : "max-w-2xl p-8"}`}
     >
       {bill.status === "voided" && !isThermal && (
         <div
@@ -263,7 +263,7 @@ export default async function PrintBillPage({
             another sale. "/" routes to the right billing screen for this
             business type. */}
         <div className="flex items-center justify-between gap-3">
-          <Link href="/bills/all" className="text-sm font-medium text-gray-500 hover:text-gray-900">
+          <Link href="/bills/all" className="text-sm font-medium text-muted hover:text-foreground">
             {t("← All bills")}
           </Link>
           <Link href="/" className="btn-primary-sm">
@@ -271,20 +271,20 @@ export default async function PrintBillPage({
           </Link>
         </div>
 
-        <section className="flex flex-col gap-3 rounded-2xl border border-gray-200 bg-gray-50/70 p-3.5">
+        <section className="flex flex-col gap-3 rounded-2xl border border-border bg-surface-2 p-3.5">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <p className="truncate text-sm font-semibold text-gray-900">{customer?.name ?? t("common.walkinCustomer")}</p>
-            <p className="text-xs text-gray-500">
+            <p className="truncate text-sm font-semibold text-foreground">{customer?.name ?? t("common.walkinCustomer")}</p>
+            <p className="text-xs text-muted">
               {bill.invoice_number} · {formatDateTime(bill.created_at)}
             </p>
           </div>
           <div className="shrink-0 text-right">
-            <p className="text-lg font-bold leading-tight text-gray-900">{formatMoney(bill.total)}</p>
+            <p className="text-lg font-bold leading-tight text-foreground">{formatMoney(bill.total)}</p>
             {Number(bill.credit_amount) > 0 ? (
-              <p className="text-xs font-medium text-amber-700">{t("common.due", { amount: formatMoney(bill.credit_amount) })}</p>
+              <p className="text-xs font-medium text-credit">{t("common.due", { amount: formatMoney(bill.credit_amount) })}</p>
             ) : (
-              <p className="text-xs font-medium text-emerald-700">{t("common.paid")}</p>
+              <p className="text-xs font-medium text-success">{t("common.paid")}</p>
             )}
           </div>
         </div>
@@ -311,8 +311,8 @@ export default async function PrintBillPage({
         </div>
 
         <div className="flex items-center justify-between gap-2">
-          <span className="text-xs font-medium text-gray-500">{t("billPage.paperSize")}</span>
-          <div role="group" aria-label={t("billPage.paperSize")} className="flex rounded-full border border-gray-200 bg-white p-0.5">
+          <span className="text-xs font-medium text-muted">{t("billPage.paperSize")}</span>
+          <div role="group" aria-label={t("billPage.paperSize")} className="flex rounded-full border border-border bg-surface p-0.5">
             <FormatPill href={`/print/bill/${id}?format=full`} label="A4" active={!isThermal} />
             <FormatPill href={`/print/bill/${id}?format=thermal58`} label="58mm" active={is58mm} />
             <FormatPill href={`/print/bill/${id}?format=thermal`} label="80mm" active={isThermal && !is58mm} />
@@ -325,7 +325,7 @@ export default async function PrintBillPage({
             {hasPermission(session, "process_returns") && (
               <Link
                 href={`/returns/new?billId=${bill.id}`}
-                className="inline-flex items-center gap-1 rounded-full border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50"
+                className="inline-flex items-center gap-1 rounded-full border border-border px-3 py-1.5 text-xs font-medium text-muted hover:bg-surface-2"
               >
                 {t("↩ Return")}
               </Link>
@@ -343,7 +343,7 @@ export default async function PrintBillPage({
       </div>
 
       {bill.status === "voided" && (
-        <div className="no-print mb-4 rounded-lg border border-danger bg-red-50 px-4 py-3 text-sm text-danger">
+        <div className="no-print mb-4 rounded-lg border border-danger bg-danger-soft px-4 py-3 text-sm text-danger">
           <p className="font-semibold">This invoice has been voided.</p>
           <p className="mt-0.5">
             Reason: {bill.void_reason} · {bill.voided_at ? formatDateTime(bill.voided_at) : ""}
@@ -364,7 +364,7 @@ export default async function PrintBillPage({
         </div>
       )}
 
-      <div id="invoice-capture-area" className="animate-print-slip bg-white">
+      <div id="invoice-capture-area" className="animate-print-slip bg-white text-black">
       {isThermal ? (
         <ThermalRenderer data={thermalData} paperWidth={is58mm ? 58 : 80} />
       ) : (
@@ -396,7 +396,7 @@ function FormatPill({ href, label, active }: { href: string; label: string; acti
     <a
       href={href}
       aria-current={active ? "true" : undefined}
-      className={`rounded-full px-3 py-1 text-xs font-medium ${active ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-900"}`}
+      className={`rounded-full px-3 py-1 text-xs font-medium ${active ? "bg-surface text-foreground shadow-sm" : "text-muted hover:text-foreground"}`}
     >
       {label}
     </a>

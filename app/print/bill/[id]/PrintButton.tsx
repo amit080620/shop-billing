@@ -26,7 +26,7 @@ export function PrintButton({ labels }: { labels?: { print: string; printing: st
         {justClicked ? text.printing : text.print}
       </button>
       {/* Kiosk printing is a laptop/desktop setup; phones can't use it. */}
-      <Link href="/fast-print-setup" className="hidden text-[11px] text-gray-400 underline md:inline">
+      <Link href="/fast-print-setup" className="hidden text-[11px] text-muted underline md:inline">
         {text.kioskHint}
       </Link>
     </div>
