@@ -55,7 +55,7 @@ export default async function OrderPage({
     const { data: link } = await admin.from("restaurant_orders").select("hotel_booking_id").eq("id", id).maybeSingle();
     if (link?.hotel_booking_id) {
       const { data: booking } = await admin.from("hotel_bookings").select("guest_name").eq("id", link.hotel_booking_id).maybeSingle();
-      chargedTo = { roomNumber: (table?.name ?? "").replace(/^Rooms+/i, ""), guestName: booking?.guest_name ?? "" };
+      chargedTo = { roomNumber: (table?.name ?? "").replace(/^Room\s+/i, ""), guestName: booking?.guest_name ?? "" };
     }
   }
 
