@@ -72,7 +72,7 @@ export function RoomBoardClient({ rooms, canManage }: { rooms: BoardRoom[]; canM
       {floors.map((floor) => (
         <section key={floor || "none"} className="flex flex-col gap-2">
           {floors.length > 1 && <h2 className="text-xs font-semibold uppercase tracking-wide text-muted">{floor ? `${t("Floor")} ${floor}` : t("Rooms")}</h2>}
-          <ul className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 md:grid-cols-4">
+          <ul className="grid grid-cols-[repeat(auto-fill,minmax(128px,1fr))] gap-2.5">
             {shown
               .filter((r) => (r.floor ?? "") === floor)
               .map((r) => {

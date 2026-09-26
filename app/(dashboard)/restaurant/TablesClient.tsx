@@ -146,7 +146,7 @@ export function TablesClient({ tables, lang, showKitchenLink = false }: { tables
     if (table.isRoom) return sectionFilter === "all" && !!table.openOrderId;
     return sectionFilter === "all" || (table.section ?? "inside") === sectionFilter;
   });
-  // Long names ("Room 101") need wider tiles than "T1", so narrow phones get two columns unless every name is short.
+  // Long names ("Room 101") need wider tiles than "T1"; the columns fill whatever width the screen gives.
   const longNames = visibleTables.some((x) => x.name.length > 5);
   const [error, setError] = useState<string | null>(null);
   const [qrTable, setQrTable] = useState<Table | null>(null);
@@ -590,7 +590,7 @@ export function TablesClient({ tables, lang, showKitchenLink = false }: { tables
         visibleTables.length === 0 ? (
           <p className="rounded-xl border border-dashed border-border px-3.5 py-6 text-center text-xs text-muted">{t("Nothing here yet.")}</p>
         ) : (
-        <div className={`grid gap-3 md:grid-cols-5 md:gap-4 ${longNames ? "grid-cols-2 min-[380px]:grid-cols-3" : "grid-cols-3"}`}>
+        <div className={`grid gap-3 md:gap-4 md:grid-cols-[repeat(auto-fill,minmax(150px,1fr))] ${longNames ? "grid-cols-[repeat(auto-fill,minmax(110px,1fr))]" : "grid-cols-[repeat(auto-fill,minmax(96px,1fr))]"}`}>
           {visibleTables.map((table) => (
             <TableTile
               key={table.id}
