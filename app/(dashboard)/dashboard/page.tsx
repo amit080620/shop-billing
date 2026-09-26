@@ -13,6 +13,7 @@ import { FESTIVALS } from "@/lib/festivals";
 import { getProfitLeakAction } from "@/lib/actions/profitLeak";
 import { getTerminology, customerNounFor } from "@/lib/businessType";
 import { getShopMoneySummary } from "@/lib/moneyBalances";
+import { hotelSchemaReady, loadFrontDesk } from "@/lib/hotel/server";
 import {
   Plus,
   AlertTriangle,
@@ -32,6 +33,9 @@ import {
   ChefHat,
   CheckCircle2,
   ClipboardList,
+  BedDouble,
+  LogIn,
+  LogOut,
   Dumbbell,
   PenLine,
   Rocket,
@@ -49,12 +53,17 @@ export default async function DashboardPage() {
   const admin = createSupabaseAdminClient();
 
   const isRestaurant = session.businessType === "restaurant";
-  const [{ count: productCount }, { count: customerCount }, { data: anyBill }, { count: tableCount }] = await Promise.all([
+  const isHotel = session.businessType === "hotel";
+  const hotelReady = isHotel ? await hotelSchemaReady(admin) : false;
+  const [{ count: productCount }, { count: customerCount }, { data: anyBill }, { count: tableCount }, { count: roomCount }] = await Promise.all([
     admin.from("products").select("id", { count: "exact", head: true }).eq("shop_id", session.shopId),
     admin.from("customers").select("id", { count: "exact", head: true }).eq("shop_id", session.shopId),
     admin.from("bills").select("id").eq("shop_id", session.shopId).limit(1),
     isRestaurant
       ? admin.from("restaurant_tables").select("id", { count: "exact", head: true }).eq("shop_id", session.shopId).eq("is_deleted", false)
+      : Promise.resolve({ count: 0 }),
+    hotelReady
+      ? admin.from("hotel_rooms").select("id", { count: "exact", head: true }).eq("shop_id", session.shopId).eq("is_active", true)
       : Promise.resolve({ count: 0 }),
   ]);
 
@@ -73,10 +82,14 @@ export default async function DashboardPage() {
   const setupSteps = [
     { done: !!session.shopStateCode, label: t("Set your shop's GST state"), href: "/settings" },
     { done: (productCount ?? 0) > 0, label: t("home.addFirst", { item: t(terms.productSingular.toLowerCase()) }), href: "/products" },
-    isRestaurant
+    isHotel
+      ? { done: (roomCount ?? 0) > 0, label: t("Add your rooms"), href: "/hotel/setup" }
+      : isRestaurant
       ? { done: (tableCount ?? 0) > 0, label: t("Add your tables"), href: "/restaurant" }
       : { done: (customerCount ?? 0) > 0, label: t("home.addOne", { who: t(customerNounFor(session.businessType).toLowerCase()) }), href: "/customers" },
-    { done: (anyBill?.length ?? 0) > 0, label: t("Create your first bill"), href: "/" },
+    isHotel
+      ? { done: (anyBill?.length ?? 0) > 0, label: t("Check in your first guest"), href: "/hotel" }
+      : { done: (anyBill?.length ?? 0) > 0, label: t("Create your first bill"), href: "/" },
   ];
   const doneCount = setupSteps.filter((s) => s.done).length;
   const setupComplete = doneCount === setupSteps.length;
@@ -164,6 +177,8 @@ export default async function DashboardPage() {
 
       {session.businessType === "restaurant" ? (
         <RestaurantHome shopId={session.shopId} />
+      ) : session.businessType === "hotel" ? (
+        <HotelHome shopId={session.shopId} ready={hotelReady} />
       ) : session.businessType === "rental" ? (
         <RentalHome shopId={session.shopId} />
       ) : session.businessType === "pharmacy" ? (
@@ -207,7 +222,7 @@ export default async function DashboardPage() {
 }
 
 // Festival prompts are about stocking up — irrelevant to a clinic or gym.
-const STOCK_BUSINESSES = new Set(["grocery", "mart", "hardware", "general", "pharmacy", "jewellery", "restaurant"]);
+const STOCK_BUSINESSES = new Set(["grocery", "mart", "hardware", "general", "pharmacy", "jewellery", "restaurant", "hotel"]);
 
 function QuickLinks({ businessType, t }: { businessType: string; t: (key: string) => string }) {
   const links = [
@@ -1362,6 +1377,66 @@ async function RestaurantHome({ shopId }: { shopId: string }) {
           </ul>
         )}
       </section>
+    </>
+  );
+}
+
+// ─── Hotel ─────────────────────────────────────────────────────────────────
+async function HotelHome({ shopId, ready }: { shopId: string; ready: boolean }) {
+  const { t } = await getTranslator();
+  if (!ready) {
+    return (
+      <Link href="/hotel" className="neu-card flex items-center gap-3 p-3.5">
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-warning-soft text-warning">
+          <BedDouble size={18} />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block text-sm font-semibold text-foreground">{t("Finish the one-time hotel set-up")}</span>
+          <span className="block text-xs text-muted">{t("Open the front desk — it shows the single step still needed.")}</span>
+        </span>
+        <ChevronRight size={16} className="shrink-0 text-muted" />
+      </Link>
+    );
+  }
+  const fd = await loadFrontDesk(createSupabaseAdminClient(), shopId, todayIso());
+  const stays = fd.arrivals.length + fd.lateArrivals.length;
+  const leaving = fd.departures.length + fd.overstays.length;
+
+  return (
+    <>
+      <section className="grid grid-cols-2 gap-3 md:grid-cols-4">
+        <StatCard label={t("Occupancy")} value={`${fd.occupancyPercent}% · ${fd.occupiedRooms}/${fd.sellableRooms}`} href="/hotel/rooms" icon={BedDouble} />
+        <StatCard label={t("Received today")} value={formatMoney(fd.receivedToday)} href="/hotel/reports" icon={Wallet} />
+        <StatCard label={t("Arriving today")} value={String(stays)} href="/hotel" icon={LogIn} tone={fd.lateArrivals.length > 0 ? "credit" : "default"} />
+        <StatCard label={t("Leaving today")} value={String(leaving)} href="/hotel" icon={LogOut} tone={fd.overstays.length > 0 ? "credit" : "default"} />
+      </section>
+
+      <div className="grid grid-cols-2 gap-3">
+        <Link
+          href="/hotel/bookings/new"
+          className="hover-lift flex items-center justify-center gap-2 rounded-xl px-4 py-4 text-center font-semibold text-white"
+          style={{ background: "var(--brand)", boxShadow: "var(--elev-sm)" }}
+        >
+          <PlusIcon />
+          {t("New booking")}
+        </Link>
+        <Link href="/hotel" className="neu-card flex items-center justify-center gap-2 px-4 py-4 text-center font-semibold text-foreground">
+          <BedDouble size={18} />
+          {t("Front desk")}
+        </Link>
+      </div>
+
+      {fd.dirtyRooms > 0 && (
+        <Link href="/hotel/rooms" className="neu-card flex items-center gap-3 p-3.5">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-warning-soft text-warning">
+            <AlertTriangle size={18} />
+          </span>
+          <span className="min-w-0 flex-1 text-sm font-semibold text-foreground">
+            {fd.dirtyRooms} {t(fd.dirtyRooms === 1 ? "room needs cleaning" : "rooms need cleaning")}
+          </span>
+          <ChevronRight size={16} className="shrink-0 text-muted" />
+        </Link>
+      )}
     </>
   );
 }

@@ -6,6 +6,7 @@ import { createSupabaseServerClient } from "../supabase/server";
 import { createSupabaseAdminClient } from "../supabase/admin";
 import { signupSchema, loginSchema } from "../validation/schemas";
 import { revalidateStaffCache } from "../auth";
+import { hotelSchemaReady } from "../hotel/server";
 
 /** redirectTo: where the browser should go next. Login/signup finish with
  * a full page load instead of a server-action redirect — the redirect path
@@ -34,6 +35,12 @@ export async function signupAction(
   const { shopName, businessType, stateCode, ownerName, ownerPhone, email, password } = parsed.data;
 
   const admin = createSupabaseAdminClient();
+
+  // A hotel shop needs the hotel tables (migration 0041); without them the
+  // shop insert would fail after the auth user was already created.
+  if (businessType === "hotel" && !(await hotelSchemaReady(admin))) {
+    return { error: "Hotel accounts are not switched on yet. Please pick another business type for now." };
+  }
 
   // Max 10 signups per IP per hour — guards against a bot mass-creating
   // fake shops, distinct from login_attempts (credential brute-forcing).

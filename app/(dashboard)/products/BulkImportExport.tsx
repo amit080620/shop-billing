@@ -225,6 +225,11 @@ function sampleRowsFor(businessType: string): (string | number)[][] {
   const blank20 = (row: (string | number)[]) => [...row, ...Array(20 - row.length).fill("")];
 
   switch (businessType) {
+    case "hotel":
+      return [
+        blank20(["Veg Thali", "220", "5", "PLATE", "", "", "Meals", "FALSE", "", ""]),
+        blank20(["Laundry (per piece)", "30", "18", "NOS", "", "", "Services", "FALSE", "", ""]),
+      ];
     case "restaurant":
       return [
         blank20(["Butter Chicken", "280", "5", "PLATE", "", "", "Main Course", "FALSE", "", ""]),

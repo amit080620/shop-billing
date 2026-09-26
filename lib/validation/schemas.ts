@@ -98,7 +98,7 @@ export const LOGO_ALLOWED_TYPES = ["image/png", "image/jpeg", "image/webp", "ima
 export const shopSettingsSchema = z.object({
   name: z.string().trim().min(1, "Shop name is required").max(120),
   businessType: z
-    .enum(["grocery", "restaurant", "mart", "hardware", "pharmacy", "rental", "transport", "service", "salon", "jewellery", "clinic", "gym", "lab", "general"])
+    .enum(["grocery", "restaurant", "mart", "hardware", "pharmacy", "rental", "transport", "service", "salon", "jewellery", "clinic", "gym", "lab", "hotel", "general"])
     .default("general"),
   legalName: optionalText(160),
   gstin: optionalGstin,
@@ -199,7 +199,7 @@ export const staffInviteSchema = z.object({
 export const signupSchema = z.object({
   shopName: z.string().trim().min(1, "Shop name is required").max(120),
   businessType: z
-    .enum(["grocery", "restaurant", "mart", "hardware", "pharmacy", "rental", "transport", "service", "salon", "jewellery", "clinic", "gym", "lab", "general"])
+    .enum(["grocery", "restaurant", "mart", "hardware", "pharmacy", "rental", "transport", "service", "salon", "jewellery", "clinic", "gym", "lab", "hotel", "general"])
     .default("general"),
   // Asked at signup so a new shop can bill immediately — billing is
   // blocked until the state is known (it decides CGST+SGST vs IGST).

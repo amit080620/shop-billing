@@ -420,6 +420,7 @@ export interface Database {
           paid_amount: number;
           credit_amount: number;
           branch_id: string | null;
+          hotel_booking_id: string | null;
           edited_at: string | null;
           edited_by: string | null;
           edit_reason: string | null;
@@ -456,6 +457,7 @@ export interface Database {
           paid_amount?: number;
           credit_amount?: number;
           branch_id?: string | null;
+          hotel_booking_id?: string | null;
           edited_at?: string | null;
           edited_by?: string | null;
           edit_reason?: string | null;
@@ -492,6 +494,7 @@ export interface Database {
           paid_amount?: number;
           credit_amount?: number;
           branch_id?: string | null;
+          hotel_booking_id?: string | null;
           edited_at?: string | null;
           edited_by?: string | null;
           edit_reason?: string | null;
@@ -1719,10 +1722,63 @@ export interface Database {
           { foreignKeyName: "medicine_batches_product_id_fkey"; columns: ["product_id"]; isOneToOne: false; referencedRelation: "products"; referencedColumns: ["id"] },
         ];
       };
+      hotel_room_types: {
+        Row: { id: string; shop_id: string; name: string; description: string | null; base_rate: number; max_adults: number; max_children: number; amenities: string | null; gst_percent: number | null; is_active: boolean; created_at: string; };
+        Insert: { id?: string; shop_id: string; name: string; description?: string | null; base_rate?: number; max_adults?: number; max_children?: number; amenities?: string | null; gst_percent?: number | null; is_active?: boolean; created_at?: string; };
+        Update: { id?: string; shop_id?: string; name?: string; description?: string | null; base_rate?: number; max_adults?: number; max_children?: number; amenities?: string | null; gst_percent?: number | null; is_active?: boolean; created_at?: string; };
+        Relationships: [
+          { foreignKeyName: "hotel_room_types_shop_id_fkey"; columns: ["shop_id"]; isOneToOne: false; referencedRelation: "shops"; referencedColumns: ["id"] },
+        ];
+      };
+      hotel_rooms: {
+        Row: { id: string; shop_id: string; room_type_id: string; room_number: string; floor: string | null; housekeeping: "clean" | "dirty"; is_blocked: boolean; block_reason: string | null; is_active: boolean; created_at: string; };
+        Insert: { id?: string; shop_id: string; room_type_id: string; room_number: string; floor?: string | null; housekeeping?: "clean" | "dirty"; is_blocked?: boolean; block_reason?: string | null; is_active?: boolean; created_at?: string; };
+        Update: { id?: string; shop_id?: string; room_type_id?: string; room_number?: string; floor?: string | null; housekeeping?: "clean" | "dirty"; is_blocked?: boolean; block_reason?: string | null; is_active?: boolean; created_at?: string; };
+        Relationships: [
+          { foreignKeyName: "hotel_rooms_shop_id_fkey"; columns: ["shop_id"]; isOneToOne: false; referencedRelation: "shops"; referencedColumns: ["id"] },
+          { foreignKeyName: "hotel_rooms_room_type_id_fkey"; columns: ["room_type_id"]; isOneToOne: false; referencedRelation: "hotel_room_types"; referencedColumns: ["id"] },
+        ];
+      };
+      hotel_bookings: {
+        Row: { id: string; shop_id: string; booking_number: string; financial_year: string; customer_id: string | null; guest_name: string; guest_phone: string | null; guest_email: string | null; nationality: string; adults: number; children: number; source: string; source_ref: string | null; agent_name: string | null; commission_percent: number; meal_plan: "EP" | "CP" | "MAP" | "AP"; check_in_date: string; check_out_date: string; status: "reserved" | "checked_in" | "checked_out" | "cancelled" | "no_show"; id_proof_type: string | null; id_proof_number: string | null; special_requests: string | null; discount: number; checked_in_at: string | null; checked_out_at: string | null; cancelled_at: string | null; cancel_reason: string | null; bill_id: string | null; created_by: string | null; created_at: string; };
+        Insert: { id?: string; shop_id: string; booking_number: string; financial_year: string; customer_id?: string | null; guest_name: string; guest_phone?: string | null; guest_email?: string | null; nationality?: string; adults?: number; children?: number; source?: string; source_ref?: string | null; agent_name?: string | null; commission_percent?: number; meal_plan?: "EP" | "CP" | "MAP" | "AP"; check_in_date: string; check_out_date: string; status?: "reserved" | "checked_in" | "checked_out" | "cancelled" | "no_show"; id_proof_type?: string | null; id_proof_number?: string | null; special_requests?: string | null; discount?: number; checked_in_at?: string | null; checked_out_at?: string | null; cancelled_at?: string | null; cancel_reason?: string | null; bill_id?: string | null; created_by?: string | null; created_at?: string; };
+        Update: { id?: string; shop_id?: string; booking_number?: string; financial_year?: string; customer_id?: string | null; guest_name?: string; guest_phone?: string | null; guest_email?: string | null; nationality?: string; adults?: number; children?: number; source?: string; source_ref?: string | null; agent_name?: string | null; commission_percent?: number; meal_plan?: "EP" | "CP" | "MAP" | "AP"; check_in_date?: string; check_out_date?: string; status?: "reserved" | "checked_in" | "checked_out" | "cancelled" | "no_show"; id_proof_type?: string | null; id_proof_number?: string | null; special_requests?: string | null; discount?: number; checked_in_at?: string | null; checked_out_at?: string | null; cancelled_at?: string | null; cancel_reason?: string | null; bill_id?: string | null; created_by?: string | null; created_at?: string; };
+        Relationships: [
+          { foreignKeyName: "hotel_bookings_shop_id_fkey"; columns: ["shop_id"]; isOneToOne: false; referencedRelation: "shops"; referencedColumns: ["id"] },
+          { foreignKeyName: "hotel_bookings_customer_id_fkey"; columns: ["customer_id"]; isOneToOne: false; referencedRelation: "customers"; referencedColumns: ["id"] },
+          { foreignKeyName: "hotel_bookings_bill_id_fkey"; columns: ["bill_id"]; isOneToOne: false; referencedRelation: "bills"; referencedColumns: ["id"] },
+        ];
+      };
+      hotel_booking_rooms: {
+        Row: { id: string; booking_id: string; shop_id: string; room_type_id: string; room_id: string | null; rate_per_night: number; created_at: string; };
+        Insert: { id?: string; booking_id: string; shop_id: string; room_type_id: string; room_id?: string | null; rate_per_night: number; created_at?: string; };
+        Update: { id?: string; booking_id?: string; shop_id?: string; room_type_id?: string; room_id?: string | null; rate_per_night?: number; created_at?: string; };
+        Relationships: [
+          { foreignKeyName: "hotel_booking_rooms_booking_id_fkey"; columns: ["booking_id"]; isOneToOne: false; referencedRelation: "hotel_bookings"; referencedColumns: ["id"] },
+          { foreignKeyName: "hotel_booking_rooms_room_type_id_fkey"; columns: ["room_type_id"]; isOneToOne: false; referencedRelation: "hotel_room_types"; referencedColumns: ["id"] },
+          { foreignKeyName: "hotel_booking_rooms_room_id_fkey"; columns: ["room_id"]; isOneToOne: false; referencedRelation: "hotel_rooms"; referencedColumns: ["id"] },
+        ];
+      };
+      hotel_charges: {
+        Row: { id: string; booking_id: string; shop_id: string; kind: string; description: string; amount: number; gst_percent: number; posted_by: string | null; created_at: string; };
+        Insert: { id?: string; booking_id: string; shop_id: string; kind?: string; description: string; amount: number; gst_percent?: number; posted_by?: string | null; created_at?: string; };
+        Update: { id?: string; booking_id?: string; shop_id?: string; kind?: string; description?: string; amount?: number; gst_percent?: number; posted_by?: string | null; created_at?: string; };
+        Relationships: [
+          { foreignKeyName: "hotel_charges_booking_id_fkey"; columns: ["booking_id"]; isOneToOne: false; referencedRelation: "hotel_bookings"; referencedColumns: ["id"] },
+        ];
+      };
+      hotel_payments: {
+        Row: { id: string; booking_id: string; shop_id: string; kind: "advance" | "payment" | "refund"; amount: number; payment_method: "cash" | "card" | "upi" | "online" | "other"; reference: string | null; created_by: string | null; created_at: string; };
+        Insert: { id?: string; booking_id: string; shop_id: string; kind?: "advance" | "payment" | "refund"; amount: number; payment_method?: "cash" | "card" | "upi" | "online" | "other"; reference?: string | null; created_by?: string | null; created_at?: string; };
+        Update: { id?: string; booking_id?: string; shop_id?: string; kind?: "advance" | "payment" | "refund"; amount?: number; payment_method?: "cash" | "card" | "upi" | "online" | "other"; reference?: string | null; created_by?: string | null; created_at?: string; };
+        Relationships: [
+          { foreignKeyName: "hotel_payments_booking_id_fkey"; columns: ["booking_id"]; isOneToOne: false; referencedRelation: "hotel_bookings"; referencedColumns: ["id"] },
+        ];
+      };
       restaurant_tables: {
-        Row: { id: string; shop_id: string; name: string; status: "free" | "occupied"; section: "inside" | "outside" | "takeaway" | null; is_virtual: boolean; is_deleted: boolean; qr_token: string; created_at: string };
-        Insert: { id?: string; shop_id: string; name: string; status?: "free" | "occupied"; section?: "inside" | "outside" | "takeaway" | null; is_virtual?: boolean; is_deleted?: boolean; qr_token?: string; created_at?: string };
-        Update: { id?: string; shop_id?: string; name?: string; status?: "free" | "occupied"; section?: "inside" | "outside" | "takeaway" | null; is_virtual?: boolean; is_deleted?: boolean; qr_token?: string; created_at?: string };
+        Row: { id: string; shop_id: string; name: string; status: "free" | "occupied"; section: "inside" | "outside" | "takeaway" | null; is_virtual: boolean; is_deleted: boolean; hotel_room_id: string | null; qr_token: string; created_at: string };
+        Insert: { id?: string; shop_id: string; name: string; status?: "free" | "occupied"; section?: "inside" | "outside" | "takeaway" | null; is_virtual?: boolean; is_deleted?: boolean; hotel_room_id?: string | null; qr_token?: string; created_at?: string };
+        Update: { id?: string; shop_id?: string; name?: string; status?: "free" | "occupied"; section?: "inside" | "outside" | "takeaway" | null; is_virtual?: boolean; is_deleted?: boolean; hotel_room_id?: string | null; qr_token?: string; created_at?: string };
         Relationships: [
           { foreignKeyName: "restaurant_tables_shop_id_fkey"; columns: ["shop_id"]; isOneToOne: false; referencedRelation: "shops"; referencedColumns: ["id"] },
         ];
@@ -1780,6 +1836,7 @@ export interface Database {
           table_id: string;
           staff_id: string;
           customer_id: string | null;
+          hotel_booking_id: string | null;
           order_number: string;
           financial_year: string;
           status: "open" | "settled" | "cancelled";
@@ -1815,6 +1872,7 @@ export interface Database {
           table_id: string;
           staff_id: string;
           customer_id?: string | null;
+          hotel_booking_id?: string | null;
           order_number: string;
           financial_year: string;
           status?: "open" | "settled" | "cancelled";
@@ -1850,6 +1908,7 @@ export interface Database {
           table_id?: string;
           staff_id?: string;
           customer_id?: string | null;
+          hotel_booking_id?: string | null;
           order_number?: string;
           financial_year?: string;
           status?: "open" | "settled" | "cancelled";
@@ -2479,6 +2538,10 @@ export interface Database {
       shop_money_summary: {
         Args: { p_shop_id: string };
         Returns: { customer_outstanding: number; customers_with_dues: number; vendor_payable: number }[];
+      };
+      next_hotel_booking_number: {
+        Args: { p_shop_id: string; p_financial_year: string };
+        Returns: number;
       };
       next_invoice_number: {
         Args: { p_shop_id: string; p_financial_year: string };

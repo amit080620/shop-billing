@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Search, X, User, Package, Receipt, LayoutGrid, ClipboardList, Compass, Loader2 } from "lucide-react";
+import { Search, X, User, Package, Receipt, LayoutGrid, ClipboardList, Compass, Loader2, BedDouble } from "lucide-react";
 import { universalSearchAction, type SearchResult } from "@/lib/actions/search";
 import { useT } from "@/lib/i18n/LangContext";
 
@@ -12,6 +12,7 @@ const GROUP_ICON: Record<string, typeof User> = {
   Bills: Receipt,
   Tables: LayoutGrid,
   Orders: ClipboardList,
+  Bookings: BedDouble,
   Pages: Compass,
 };
 

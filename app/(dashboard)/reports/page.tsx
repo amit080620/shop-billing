@@ -108,7 +108,9 @@ export default async function ReportsPage() {
 
       <section className="flex flex-col gap-2">
         <h2 className="px-1 text-xs font-semibold uppercase tracking-wide text-muted">
-          {t(session.businessType === "restaurant"
+          {t(session.businessType === "hotel"
+            ? "Hotel"
+            : session.businessType === "restaurant"
             ? "Restaurant"
             : session.businessType === "transport"
               ? "Transport"
@@ -131,6 +133,25 @@ export default async function ReportsPage() {
                               : "Sales")}
         </h2>
         <div className="neu-card flex flex-col divide-y divide-border overflow-hidden">
+          {session.businessType === "hotel" && (
+            <>
+              <ReportLink
+                href="/hotel/reports"
+                label="Hotel reports"
+                sub="Occupancy, ADR, RevPAR, commissions and the guest register"
+              />
+              <ReportLink
+                href="/restaurant/reports"
+                label="Restaurant sales"
+                sub="Kitchen and room-service orders by date range"
+              />
+              <ReportLink
+                href="/restaurant/reports/items"
+                label="Item-wise sales"
+                sub="Which dishes actually sell, by quantity and revenue"
+              />
+            </>
+          )}
           {session.businessType === "restaurant" && (
             <>
               <ReportLink
@@ -215,7 +236,7 @@ export default async function ReportsPage() {
               pharmacy block above already has its own copy alongside
               its pharmacy-specific reports, so this is skipped there
               to avoid listing it twice. */}
-          {!["restaurant", "transport", "rental", "pharmacy"].includes(session.businessType) && (
+          {!["restaurant", "hotel", "transport", "rental", "pharmacy"].includes(session.businessType) && (
             <>
               <ReportLink href="/pharmacy/expiry" label="Expiry alerts" sub="Batches expiring soon — act before it's stock loss" />
               <ReportLink href="/pharmacy/write-offs" label="Write-off history" sub="Stock lost to expiry or damage" />

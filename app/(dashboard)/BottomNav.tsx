@@ -18,6 +18,8 @@ import {
   CalendarPlus,
   House,
   Users,
+  BedDouble,
+  ConciergeBell,
 } from "lucide-react";
 import { useTranslation } from "@/lib/i18n/useTranslation";
 import { activeTabHref } from "@/lib/activeTab";
@@ -49,6 +51,16 @@ export function tabsFor(businessType: string, t: (key: string) => string, permis
     { href: "/restaurant", label: t("nav.tables"), icon: TableIcon },
     { href: "/restaurant-kds", label: t("nav.kitchen"), icon: KitchenIcon },
     { href: "/purchases", label: t("nav.buy"), icon: BuyIcon },
+    reportsTab,
+    ...fastBillingTab,
+  ];
+
+  // Front desk is the hotel's home; Bookings, Calendar and hotel reports sit
+  // one tap away on it, so the bar keeps the room board and the restaurant.
+  const HOTEL_TABS = [
+    { href: "/hotel", label: t("Front desk"), icon: HotelNavIcon },
+    { href: "/hotel/rooms", label: t("Rooms"), icon: RoomsNavIcon },
+    { href: "/restaurant", label: t("nav.tables"), icon: TableIcon },
     reportsTab,
     ...fastBillingTab,
   ];
@@ -118,6 +130,7 @@ export function tabsFor(businessType: string, t: (key: string) => string, permis
   ];
 
   if (businessType === "restaurant") return RESTAURANT_TABS;
+  if (businessType === "hotel") return HOTEL_TABS;
   if (businessType === "rental") return RENTAL_TABS;
   if (businessType === "transport") return TRANSPORT_TABS;
   if (businessType === "service") return SERVICE_TABS;
@@ -211,6 +224,12 @@ function ClinicAppointmentIcon({ active }: { active: boolean }) {
 }
 function JewelleryNavIcon({ active }: { active: boolean }) {
   return <Gem size={22} strokeWidth={active ? 2.3 : 1.8} />;
+}
+function HotelNavIcon({ active }: { active: boolean }) {
+  return <ConciergeBell size={22} strokeWidth={active ? 2.3 : 1.8} />;
+}
+function RoomsNavIcon({ active }: { active: boolean }) {
+  return <BedDouble size={22} strokeWidth={active ? 2.3 : 1.8} />;
 }
 function ClinicNavIcon({ active }: { active: boolean }) {
   return <Stethoscope size={22} strokeWidth={active ? 2.3 : 1.8} />;

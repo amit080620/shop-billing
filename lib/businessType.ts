@@ -1,7 +1,7 @@
 import type { LucideIcon } from "lucide-react";
-import { ShoppingCart, Store, Wrench, Pill, UtensilsCrossed, Repeat, Truck, Hammer, Scissors, Gem, Stethoscope, Dumbbell, FlaskConical, Building2 } from "lucide-react";
+import { ShoppingCart, Store, Wrench, Pill, UtensilsCrossed, Repeat, Truck, Hammer, Scissors, Gem, Stethoscope, Dumbbell, FlaskConical, Building2, BedDouble } from "lucide-react";
 
-export type BusinessType = "grocery" | "restaurant" | "mart" | "hardware" | "pharmacy" | "rental" | "transport" | "service" | "salon" | "jewellery" | "clinic" | "gym" | "lab" | "general";
+export type BusinessType = "grocery" | "restaurant" | "mart" | "hardware" | "pharmacy" | "rental" | "transport" | "service" | "salon" | "jewellery" | "clinic" | "gym" | "lab" | "hotel" | "general";
 
 export const BUSINESS_TYPES: { value: BusinessType; label: string; icon: LucideIcon; colors: [string, string] }[] = [
   { value: "grocery", label: "Grocery / Kirana", icon: ShoppingCart, colors: ["#34D399", "#059669"] },
@@ -17,6 +17,7 @@ export const BUSINESS_TYPES: { value: BusinessType; label: string; icon: LucideI
   { value: "clinic", label: "Clinic / Doctor", icon: Stethoscope, colors: ["#2DD4BF", "#0D9488"] },
   { value: "gym", label: "Gym / Fitness", icon: Dumbbell, colors: ["#F97316", "#C2410C"] },
   { value: "lab", label: "Lab / Diagnostics", icon: FlaskConical, colors: ["#22D3EE", "#0891B2"] },
+  { value: "hotel", label: "Hotel / Lodge", icon: BedDouble, colors: ["#A78BFA", "#6D28D9"] },
   { value: "general", label: "General / Other", icon: Building2, colors: ["#94A3B8", "#475569"] },
 ];
 
@@ -121,6 +122,12 @@ const TERMINOLOGY: Record<BusinessType, Terminology> = {
     productSub: "Consumables, kits — name, price, GST%",
     addProductLabel: "+ Product",
   },
+  hotel: {
+    productPlural: "Menu & extras",
+    productSingular: "Item",
+    productSub: "Restaurant menu, minibar, laundry — name, price, GST%",
+    addProductLabel: "+ Item",
+  },
   general: {
     productPlural: "Products",
     productSingular: "Product",
@@ -133,6 +140,7 @@ const TERMINOLOGY: Record<BusinessType, Terminology> = {
  * "make a sale" screen. Matches the first bottom-nav tab (BottomNav.tsx). */
 export function homePathFor(businessType: string, fastBillingEnabled = false): string {
   if (businessType === "restaurant") return "/restaurant";
+  if (businessType === "hotel") return "/hotel";
   if (businessType === "clinic") return "/clinic/prescriptions/new";
   if (businessType === "gym") return "/gym/members/new";
   if (businessType === "lab") return "/lab/orders/new";
@@ -147,6 +155,7 @@ const NAME_EXAMPLE: Record<BusinessType, string> = {
   hardware: "PVC pipe 1 inch",
   pharmacy: "Paracetamol 500mg",
   restaurant: "Paneer Butter Masala",
+  hotel: "Veg thali",
   rental: "Plastic chair",
   transport: "River sand",
   service: "AC service",
@@ -162,7 +171,7 @@ const NAME_EXAMPLE: Record<BusinessType, string> = {
  * assume — a kirana store sells both loose kilos and sealed packets, and
  * starting those on KG prices a 500ml milk packet per kilo. */
 export function defaultUnitFor(businessType: string): string {
-  return businessType === "restaurant" ? "PLATE" : "NOS";
+  return businessType === "restaurant" || businessType === "hotel" ? "PLATE" : "NOS";
 }
 
 export function nameExampleFor(businessType: string): string {
@@ -198,6 +207,7 @@ const UNIT_PRIORITY: Record<BusinessType, string[]> = {
   hardware: ["PCS", "NOS", "MTR", "BOX", "KG", "SET"],
   grocery: ["KG", "GM", "LTR", "ML", "NOS", "PKT", "BOX", "DZN"],
   mart: ["KG", "GM", "LTR", "ML", "NOS", "PKT", "BOX", "DZN"],
+  hotel: ["PLATE", "NOS", "BOWL", "GLASS", "PCS", "KG", "LTR"],
   general: [],
 };
 

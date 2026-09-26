@@ -2,6 +2,7 @@ import { requireSession } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { getTranslator } from "@/lib/i18n/server";
 import { notFound } from "next/navigation";
+import { roomChargeTargetForTable } from "@/lib/hotel/server";
 import { OrderClient } from "./OrderClient";
 
 export default async function OrderPage({
@@ -17,7 +18,7 @@ export default async function OrderPage({
   const { data: order } = await admin
     .from("restaurant_orders")
     .select(
-      "id, order_number, status, subtotal, taxable_amount, discount_amount, cgst_amount, sgst_amount, igst_amount, round_off_amount, total, order_type, waiter_name, reservation_id, created_at, first_ready_at, served_at, settled_at, restaurant_tables ( name )",
+      "id, table_id, order_number, status, subtotal, taxable_amount, discount_amount, cgst_amount, sgst_amount, igst_amount, round_off_amount, total, order_type, waiter_name, reservation_id, created_at, first_ready_at, served_at, settled_at, restaurant_tables ( name )",
     )
     .eq("id", id)
     .eq("shop_id", session.shopId)
@@ -42,6 +43,9 @@ export default async function OrderPage({
     .eq("shop_id", session.shopId)
     .eq("status", "open")
     .neq("id", id);
+
+  // In a hotel, an order on a room's table can be charged to the guest staying there.
+  const roomCharge = session.businessType === "hotel" && order.status === "open" ? await roomChargeTargetForTable(admin, session.shopId, order.table_id) : null;
 
   const table = Array.isArray(order.restaurant_tables) ? order.restaurant_tables[0] : order.restaurant_tables;
 
@@ -89,6 +93,7 @@ export default async function OrderPage({
         hasOptions: productsWithOptions.has(p.id),
         category: Array.isArray(p.categories) ? p.categories[0]?.name ?? "Other" : (p.categories as { name: string } | null)?.name ?? "Other",
       }))}
+      roomCharge={roomCharge ? { roomNumber: roomCharge.roomNumber, guestName: roomCharge.guestName } : null}
       combos={(combos ?? []).map((c) => ({ id: c.id, name: c.name, price: Number(c.price) }))}
       otherTables={(otherOpenOrders ?? []).map((o) => ({
         orderId: o.id,

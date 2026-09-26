@@ -52,7 +52,7 @@ export function canGoBackInApp(): boolean {
 // Back link there, same as any app's main tabs.
 const TAB_ROOTS = new Set([
   "/dashboard", "/bills/new", "/customers", "/purchases", "/reports", "/fast-billing",
-  "/restaurant", "/restaurant-kds", "/rentals/new", "/transport/vehicles", "/service",
+  "/restaurant", "/restaurant-kds", "/hotel", "/hotel/rooms", "/rentals/new", "/transport/vehicles", "/service",
   "/salon/appointments", "/jewellery/rates", "/clinic/prescriptions/new", "/clinic/appointments",
   "/gym/members/new", "/gym/members", "/lab/orders/new", "/lab/orders",
 ]);

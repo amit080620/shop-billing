@@ -24,6 +24,7 @@ import {
   type SettlePayment,
 } from "@/lib/actions/restaurant";
 import { addComboToOrderAction } from "@/lib/actions/combos";
+import { chargeOrderToRoomAction } from "@/lib/actions/hotel";
 import { formatMoney } from "@/lib/format";
 import { useTranslation } from "@/lib/i18n/useTranslation";
 import type { Lang } from "@/lib/i18n/dictionary";
@@ -92,6 +93,7 @@ export function OrderClient({
   products,
   combos,
   otherTables,
+  roomCharge = null,
 }: {
   shopName: string;
   shopGstin: string | null;
@@ -101,6 +103,7 @@ export function OrderClient({
   products: Product[];
   combos: Combo[];
   otherTables: { orderId: string; tableName: string }[];
+  roomCharge?: { roomNumber: string; guestName: string } | null;
 }) {
   const { t } = useTranslation(lang);
   const router = useRouter();
@@ -526,6 +529,11 @@ export function OrderClient({
             leaveToTables();
           }}
           onShowBill={() => setShowBillPrint(true)}
+          roomCharge={roomCharge}
+          onCharged={() => {
+            showToast(t("Charged to Room {room}", { room: roomCharge?.roomNumber ?? "" }));
+            leaveToTables();
+          }}
           hidden={showBillPrint}
           t={t}
         />
@@ -1096,6 +1104,8 @@ function SettleModal({
   onClose,
   onDone,
   onShowBill,
+  roomCharge,
+  onCharged,
   hidden,
   t,
 }: {
@@ -1105,6 +1115,8 @@ function SettleModal({
   onClose: () => void;
   onDone: (paidAmount: number) => void;
   onShowBill: () => void;
+  roomCharge: { roomNumber: string; guestName: string } | null;
+  onCharged: () => void;
   hidden?: boolean;
   t: Translator;
 }) {
@@ -1143,6 +1155,17 @@ function SettleModal({
     });
   }
 
+  function chargeToRoom() {
+    startTransition(async () => {
+      const result = await chargeOrderToRoomAction(orderId, discountValue);
+      if (result.error) {
+        setError(result.error);
+        return;
+      }
+      onCharged();
+    });
+  }
+
   if (hidden) return null;
 
   return (
@@ -1176,6 +1199,19 @@ function SettleModal({
                 className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-brand"
               />
             </label>
+
+            {roomCharge && (
+              <div className="mt-3 rounded-lg border border-brand bg-brand-soft px-3.5 py-3">
+                <p className="text-xs text-brand-text">
+                  {t("Room {room} — {guest} is staying here", { room: roomCharge.roomNumber, guest: roomCharge.guestName })}
+                </p>
+                <button onClick={chargeToRoom} disabled={isPending} className="btn-primary mt-2 w-full text-center disabled:opacity-60">
+                  {isPending ? t("products.saving") : t("Charge to Room {room}", { room: roomCharge.roomNumber })}
+                </button>
+                <p className="mt-1.5 text-[11px] text-muted">{t("Adds this bill to the guest's account — they pay it at check-out.")}</p>
+              </div>
+            )}
+            {error && <p className="mt-2 text-xs text-danger">{error}</p>}
 
             <div className="mt-4 flex gap-2">
               <button

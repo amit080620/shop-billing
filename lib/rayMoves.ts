@@ -42,7 +42,8 @@ export async function computeTodaysMoves(shopId: string, businessType: string, l
       businessType === "rental" ? idleAssetsMove(admin, shopId, t) : null,
       businessType === "hardware" ? mismatchedStockMove(admin, shopId, t) : null,
       businessType === "jewellery" ? metalRateMove(admin, shopId, t) : null,
-      businessType === "restaurant" ? stuckOrdersMove(admin, shopId, t) : null,
+      businessType === "restaurant" || businessType === "hotel" ? stuckOrdersMove(admin, shopId, t) : null,
+      businessType === "hotel" ? hotelStaysMove(admin, shopId, t) : null,
       businessType === "salon" ? noShowMove(admin, shopId, t) : null,
       businessType === "lab" ? tatBreachMove(admin, shopId, t) : null,
     ])
@@ -445,6 +446,27 @@ async function stuckOrdersMove(admin: Admin, shopId: string, t: T): Promise<Move
     detail: t("move.stuckorders.detail"),
     href: "/restaurant",
     penalty: Math.min(25, count * 8),
+  };
+}
+
+/** A guest still in the room after their check-out date is unbilled money
+ * (another night nobody charged), and a reservation whose arrival date has
+ * passed without a check-in holds a room that could be sold. Both quietly
+ * sit inside the bookings list; this puts them in front of the owner. */
+async function hotelStaysMove(admin: Admin, shopId: string, t: T): Promise<Move | null> {
+  const today = todayIso();
+  const [{ count: overstays }, { count: late }] = await Promise.all([
+    admin.from("hotel_bookings").select("id", { count: "exact", head: true }).eq("shop_id", shopId).eq("status", "checked_in").lt("check_out_date", today),
+    admin.from("hotel_bookings").select("id", { count: "exact", head: true }).eq("shop_id", shopId).eq("status", "reserved").lt("check_in_date", today),
+  ]);
+  const count = (overstays ?? 0) + (late ?? 0);
+  if (count === 0) return null;
+  return {
+    id: "hotelstays",
+    title: t("move.hotelstays.title", { n: count }),
+    detail: t("move.hotelstays.detail"),
+    href: "/hotel",
+    penalty: Math.min(25, count * 6),
   };
 }
 

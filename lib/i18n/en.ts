@@ -144,6 +144,8 @@ const en: Record<string, string> = {
   "move.metalrate.detail": "Every bill today needs it to be accurate",
   "move.stuckorders.title": "{n} order(s) open for over 90 minutes",
   "move.stuckorders.detail": "Check if these tables were forgotten",
+  "move.hotelstays.title": "{n} overdue arrival(s) or check-out(s)",
+  "move.hotelstays.detail": "Extend the stay, check them out, or mark the no-show",
   "move.noshow.title": "{n} appointment(s) likely no-shows",
   "move.noshow.detail": "Booked, past time, nobody marked arrived — worth a call",
   "move.tatbreach.title": "{n} sample(s) pending for over 48 hours",

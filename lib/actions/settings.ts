@@ -5,6 +5,7 @@ import { requireOwner, requireSession, revalidateStaffCache } from "../auth";
 import { createSupabaseAdminClient } from "../supabase/admin";
 import { shopSettingsSchema, LOGO_MAX_BYTES, LOGO_ALLOWED_TYPES } from "../validation/schemas";
 import { stateNameForCode } from "../constants/states";
+import { hotelSchemaReady } from "../hotel/server";
 
 export type ActionState = { error?: string; success?: boolean } | null;
 
@@ -47,6 +48,10 @@ export async function updateShopSettingsAction(
   const businessType = currentShop?.business_type_locked
     ? currentShop.business_type
     : parsed.data.businessType;
+
+  if (businessType === "hotel" && currentShop?.business_type !== "hotel" && !(await hotelSchemaReady(admin))) {
+    return { error: "Hotel accounts are not switched on yet. Please pick another business type for now." };
+  }
 
   const { error } = await admin
     .from("shops")

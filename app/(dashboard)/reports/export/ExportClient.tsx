@@ -21,7 +21,8 @@ export function ExportClient({ businessType }: { businessType: string }) {
   const { t } = useT();
   // A restaurant's sales live in restaurant_orders, not bills — but that
   // option is meaningless noise for every other business type.
-  const dataTypes = DATA_TYPES.filter((d) => !d.onlyFor || d.onlyFor === businessType);
+  // A hotel's kitchen and room service run on the same restaurant orders.
+  const dataTypes = DATA_TYPES.filter((d) => !d.onlyFor || d.onlyFor === businessType || (d.onlyFor === "restaurant" && businessType === "hotel"));
   const [dataType, setDataType] = useState<ExportDataType>("bills");
   const [from, setFrom] = useState(isoDaysAgo(7));
   const [to, setTo] = useState(todayIso());

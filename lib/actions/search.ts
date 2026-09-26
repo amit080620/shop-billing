@@ -4,7 +4,7 @@ import { requireSession } from "../auth";
 import { createSupabaseAdminClient } from "../supabase/admin";
 
 export type SearchResult = {
-  group: "Customers" | "Products" | "Bills" | "Tables" | "Orders" | "Pages";
+  group: "Customers" | "Products" | "Bills" | "Tables" | "Orders" | "Bookings" | "Pages";
   id: string;
   title: string;
   subtitle: string;
@@ -68,6 +68,13 @@ const STATIC_PAGES: { title: string; subtitle: string; href: string; keywords: s
   { title: "Kitchen display", subtitle: "Live order tickets", href: "/restaurant-kds", keywords: ["kitchen", "kds", "kot"] },
   { title: "Combos", subtitle: "Bundle deals for the menu", href: "/restaurant/combos", keywords: ["combo", "bundle"] },
   { title: "Restaurant reports", subtitle: "Sales by item, table turnover", href: "/restaurant/reports", keywords: ["restaurant report"] },
+  { title: "Front desk", subtitle: "Hotel arrivals, departures, in-house guests", href: "/hotel", keywords: ["hotel", "front desk", "check in", "check out", "arrival", "guest"] },
+  { title: "New booking", subtitle: "Room booking — walk-in, phone, MakeMyTrip, Booking.com", href: "/hotel/bookings/new", keywords: ["room booking", "new booking", "reservation", "makemytrip", "booking.com", "goibibo", "ota"] },
+  { title: "Hotel bookings", subtitle: "Search every reservation", href: "/hotel/bookings", keywords: ["bookings", "reservations", "hotel booking"] },
+  { title: "Room board", subtitle: "Vacant, occupied and dirty rooms", href: "/hotel/rooms", keywords: ["rooms", "housekeeping", "room board", "vacant"] },
+  { title: "Room calendar", subtitle: "Tape chart of every room, 14 days", href: "/hotel/calendar", keywords: ["calendar", "tape chart", "availability"] },
+  { title: "Hotel reports", subtitle: "Occupancy, ADR, commissions, guest register", href: "/hotel/reports", keywords: ["occupancy", "adr", "revpar", "commission", "guest register", "hotel report"] },
+  { title: "Rooms & rates set-up", subtitle: "Room types, room numbers, tariffs", href: "/hotel/setup", keywords: ["room type", "tariff", "room rate", "hotel setup"] },
   { title: "Service jobs", subtitle: "Repair job tracking", href: "/service", keywords: ["job", "repair", "service"] },
   { title: "New job", subtitle: "Receive an item for repair", href: "/service/new", keywords: ["new job", "receive repair"] },
   { title: "Service reports", subtitle: "Technician performance, turnaround", href: "/service/reports", keywords: ["service report"] },
@@ -211,12 +218,35 @@ export async function universalSearchAction(query: string): Promise<SearchResult
     }));
   }
 
+  async function searchBookings(): Promise<SearchResult[]> {
+    const s = q.replace(/[%,()]/g, " ").trim();
+    if (!s) return [];
+    const { data } = await admin
+      .from("hotel_bookings")
+      .select("id, booking_number, guest_name, status, check_in_date, check_out_date")
+      .eq("shop_id", session.shopId)
+      .or(`guest_name.ilike.%${s}%,guest_phone.ilike.%${s}%,booking_number.ilike.%${s}%,source_ref.ilike.%${s}%`)
+      .order("check_in_date", { ascending: false })
+      .limit(6);
+    return (data ?? []).map((b) => ({
+      group: "Bookings" as const,
+      id: b.id,
+      title: b.guest_name,
+      subtitle: `${b.booking_number} · ${b.check_in_date} → ${b.check_out_date} · ${b.status.replace("_", " ")}`,
+      href: `/hotel/bookings/${b.id}`,
+    }));
+  }
+
   const queries = [searchCustomers(), searchProducts(), searchBills()];
   // Restaurant-only entities — only worth querying for shops that
   // actually have this module, so a grocery/pharmacy search stays fast
   // and doesn't hit tables that will always come back empty for them.
   if (session.businessType === "restaurant") {
     queries.push(searchTables(), searchOrders());
+  }
+  if (session.businessType === "hotel") {
+    // Room-service orders and room tables live in the restaurant module.
+    queries.push(searchTables(), searchOrders(), searchBookings());
   }
   if (session.businessType === "service") {
     queries.push(searchServiceJobs());

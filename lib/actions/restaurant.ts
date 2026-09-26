@@ -65,10 +65,20 @@ export async function setTableSectionAction(tableId: string, section: "inside" |
   return {};
 }
 
+/** A hotel room's room-service table follows the room — it is created, named
+ * and archived from the hotel set-up, not from the table list. */
+async function roomTableGuard(admin: ReturnType<typeof createSupabaseAdminClient>, session: { businessType: string; shopId: string }, tableId: string): Promise<string | null> {
+  if (session.businessType !== "hotel") return null;
+  const { data } = await admin.from("restaurant_tables").select("hotel_room_id").eq("id", tableId).eq("shop_id", session.shopId).maybeSingle();
+  return data?.hotel_room_id ? "This table belongs to a hotel room. Rename or archive the room in Hotel set-up instead." : null;
+}
+
 export async function renameTableAction(tableId: string, newName: string): Promise<{ error?: string }> {
   const session = await requireSession();
   if (!newName.trim()) return { error: "Enter a table name/number" };
   const admin = createSupabaseAdminClient();
+  const roomBlock = await roomTableGuard(admin, session, tableId);
+  if (roomBlock) return { error: roomBlock };
   const { error } = await admin
     .from("restaurant_tables")
     .update({ name: newName.trim() })
@@ -83,6 +93,8 @@ export async function deleteTableAction(tableId: string): Promise<{ error?: stri
   const session = await requireSession();
   if (session.role !== "owner") return { error: "Only the owner can delete a table." };
   const admin = createSupabaseAdminClient();
+  const roomBlock = await roomTableGuard(admin, session, tableId);
+  if (roomBlock) return { error: roomBlock };
 
   const { data: table } = await admin
     .from("restaurant_tables")

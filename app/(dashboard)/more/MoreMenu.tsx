@@ -9,6 +9,7 @@ import { planFor } from "@/lib/plans";
 import {
   AlertTriangle,
   BarChart3,
+  BedDouble,
   Bell,
   BookOpen,
   Building2,
@@ -16,6 +17,7 @@ import {
   CalendarClock,
   CalendarDays,
   ChefHat,
+  ConciergeBell,
   ChevronRight,
   ClipboardCheck,
   ClipboardList,
@@ -98,6 +100,19 @@ export async function MoreMenu() {
             <MenuLink href="/restaurant/kds-settings" label="Kitchen display settings" sub="Cards per row, text size" icon={ChefHat} />
             <MenuLink href="/restaurant/combos" label="Combo deals" sub="Bundle menu items at a set price" icon={Package} />
             <MenuLink href="/restaurant/reports" label="Restaurant sales" sub="Day-wise & month-wise reports" icon={BarChart3} />
+          </MenuGroup>
+        )}
+
+        {type === "hotel" && (
+          <MenuGroup title="Hotel">
+            <MenuLink href="/hotel" label="Front desk" sub="Arrivals, departures and who is in-house" icon={ConciergeBell} />
+            <MenuLink href="/hotel/bookings/new" label="New booking" sub="Walk-in, phone, MakeMyTrip, Booking.com..." icon={CalendarClock} />
+            <MenuLink href="/hotel/bookings" label="All bookings" sub="Search and filter every reservation" icon={ClipboardList} />
+            <MenuLink href="/hotel/calendar" label="Room calendar" sub="14-day chart of every room and guest" icon={CalendarDays} />
+            <MenuLink href="/hotel/rooms" label="Room board" sub="Vacant, occupied, needs cleaning" icon={BedDouble} />
+            <MenuLink href="/hotel/reports" label="Hotel reports" sub="Occupancy, ADR, commissions, guest register" icon={BarChart3} />
+            <MenuLink href="/hotel/setup" label="Rooms & rates set-up" sub="Room types, room numbers, tariffs, GST" icon={Settings} />
+            <MenuLink href="/restaurant" label="Restaurant & room service" sub="Tables, kitchen and orders charged to rooms" icon={ChefHat} />
           </MenuGroup>
         )}
 
@@ -185,7 +200,7 @@ export async function MoreMenu() {
           <MenuLink href="/reorder" label="Reorder stock" sub="Send low-stock items to a vendor" icon={PackagePlus} />
           {/* Batch/expiry tracking is a per-product option any shop can use;
               doctor-wise sales and Schedule X are pharmacy-only. */}
-          {!["restaurant", "transport", "rental"].includes(type) && (
+          {!["restaurant", "hotel", "transport", "rental"].includes(type) && (
             <>
               <MenuLink href="/pharmacy/expiry" label="Expiry alerts" sub="Batches nearing or past expiry" icon={CalendarClock} />
               <MenuLink href="/pharmacy/write-offs" label="Write-off history" sub="Stock lost to expiry or damage" icon={Trash2} />

@@ -22,6 +22,14 @@ export default async function RestaurantPage() {
     tables = (fallback.data ?? []).map((t) => ({ ...t, section: null as "inside" | "outside" | "takeaway" | null }));
   }
 
+  // A hotel's rooms each have a table for room service; the screen keeps them
+  // apart from the restaurant's own tables.
+  const roomTableIds = new Set<string>();
+  if (session.businessType === "hotel") {
+    const { data: roomTables } = await admin.from("restaurant_tables").select("id").eq("shop_id", session.shopId).eq("is_deleted", false).not("hotel_room_id", "is", null);
+    for (const r of roomTables ?? []) roomTableIds.add(r.id);
+  }
+
   const [{ data: openOrders }, { data: reservations }] = await Promise.all([
     admin.from("restaurant_orders").select("id, table_id, total, created_at").eq("shop_id", session.shopId).eq("status", "open"),
     admin
@@ -56,6 +64,7 @@ export default async function RestaurantPage() {
           name: t.name,
           status: t.status,
           section: t.section,
+          isRoom: roomTableIds.has(t.id),
           openOrderId: order?.id ?? null,
           openOrderTotal: order?.total ? Number(order.total) : 0,
           qrToken: t.qr_token,

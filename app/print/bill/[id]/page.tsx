@@ -65,6 +65,14 @@ export default async function PrintBillPage({
     .filter(Boolean)
     .join(", ") || null;
 
+  // A hotel stay invoice belongs to a booking: its lines come from the folio, so
+  // quantity edits and returns are not offered (only asked when the shop is a hotel,
+  // since the column exists only after the hotel migration).
+  const hotelBookingId =
+    session.businessType === "hotel"
+      ? ((await admin.from("bills").select("hotel_booking_id").eq("id", id).eq("shop_id", session.shopId).maybeSingle()).data?.hotel_booking_id ?? null)
+      : null;
+
   const { data: bill } = await admin
     .from("bills")
     .select(
@@ -332,7 +340,15 @@ export default async function PrintBillPage({
 
         {bill.status === "active" && (
           <div className="flex flex-wrap gap-2">
-            {hasPermission(session, "process_returns") && (
+            {hotelBookingId && (
+              <Link
+                href={`/hotel/bookings/${hotelBookingId}`}
+                className="inline-flex items-center gap-1 rounded-full border border-border px-3 py-1.5 text-xs font-medium text-muted hover:bg-surface-2"
+              >
+                {t("View booking")}
+              </Link>
+            )}
+            {!hotelBookingId && hasPermission(session, "process_returns") && (
               <Link
                 href={`/returns/new?billId=${bill.id}`}
                 className="inline-flex items-center gap-1 rounded-full border border-border px-3 py-1.5 text-xs font-medium text-muted hover:bg-surface-2"
@@ -340,7 +356,7 @@ export default async function PrintBillPage({
                 {t("↩ Return")}
               </Link>
             )}
-            {hasPermission(session, "edit_bills") && (
+            {!hotelBookingId && hasPermission(session, "edit_bills") && (
               <EditBillButton
                 billId={bill.id}
                 invoiceNumber={bill.invoice_number}

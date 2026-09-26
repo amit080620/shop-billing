@@ -18,6 +18,7 @@ import {
   Dumbbell,
   FlaskConical,
   Building2,
+  BedDouble,
   type LucideIcon,
 } from "lucide-react";
 
@@ -31,6 +32,7 @@ const BUSINESS_ICON_MAP: Record<string, LucideIcon> = {
   hardware: Wrench,
   pharmacy: Pill,
   restaurant: UtensilsCrossed,
+  hotel: BedDouble,
   rental: Repeat,
   transport: Truck,
   service: Hammer,

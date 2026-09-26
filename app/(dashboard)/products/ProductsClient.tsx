@@ -129,8 +129,8 @@ export function ProductsClient({
   // verticals where it's clearly never relevant, which is the actual
   // complaint this was fixing: a restaurant seeing "medicine batch
   // tracking" or a transport business seeing "available for rent".
-  const showRentalSection = !["restaurant", "pharmacy", "transport"].includes(businessType);
-  const showPharmaSection = !["restaurant", "transport", "rental"].includes(businessType);
+  const showRentalSection = !["restaurant", "hotel", "pharmacy", "transport"].includes(businessType);
+  const showPharmaSection = !["restaurant", "hotel", "transport", "rental"].includes(businessType);
   const showWarrantySection = sellsWarrantyItems(businessType);
   const showMrpField = ["grocery", "mart", "general"].includes(businessType);
   const showBulkPricingField = ["grocery", "mart", "hardware", "general"].includes(businessType);
@@ -964,7 +964,7 @@ export function ProductsClient({
                       <ShieldCheck size={10} /> {p.warrantyMonths}mo warranty
                     </span>
                   )}
-                  {businessType === "restaurant" && (
+                  {(businessType === "restaurant" || businessType === "hotel") && (
                     <button
                       type="button"
                       onClick={(e) => {

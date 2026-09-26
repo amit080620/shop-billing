@@ -34,7 +34,7 @@ export default async function DailySummaryPage({
 
   let billsQuery = admin
     .from("bills")
-    .select("payment_method, paid_amount, credit_amount")
+    .select("payment_method, paid_amount, credit_amount, hotel_booking_id")
     .eq("shop_id", session.shopId)
     .eq("status", "active")
     .gte("created_at", startOfDay.toISOString())
@@ -48,6 +48,7 @@ export default async function DailySummaryPage({
     { data: vendorPayments },
     { data: restaurantOrders },
     { data: rentals },
+    { data: hotelPayments },
   ] = await Promise.all([
     billsQuery,
     admin
@@ -72,7 +73,7 @@ export default async function DailySummaryPage({
     // completely invisible here even though real money changed hands.
     admin
       .from("restaurant_orders")
-      .select("id, credit_amount, restaurant_order_payments ( payment_method, amount )")
+      .select("id, credit_amount, hotel_booking_id, restaurant_order_payments ( payment_method, amount )")
       .eq("shop_id", session.shopId)
       .eq("status", "settled")
       .gte("settled_at", startOfDay.toISOString())
@@ -86,16 +87,31 @@ export default async function DailySummaryPage({
       .neq("status", "cancelled")
       .gte("created_at", startOfDay.toISOString())
       .lte("created_at", endOfDay.toISOString()),
+    // Hotel money is counted here, on the day it was actually received or
+    // handed back (an advance on the booking day, the rest at check-out) —
+    // not from the stay invoice, which is only created at check-out.
+    admin
+      .from("hotel_payments")
+      .select("kind, payment_method, amount")
+      .eq("shop_id", session.shopId)
+      .gte("created_at", startOfDay.toISOString())
+      .lte("created_at", endOfDay.toISOString()),
   ]);
 
   const salesByMethod = emptyTotals();
   let newCreditGiven = 0;
   for (const b of bills ?? []) {
-    salesByMethod[b.payment_method as Method] += Number(b.paid_amount);
+    // A hotel stay invoice's paid amount is already in hotel_payments below.
+    if (!b.hotel_booking_id) salesByMethod[b.payment_method as Method] += Number(b.paid_amount);
     newCreditGiven += Number(b.credit_amount);
   }
+  for (const p of hotelPayments ?? []) {
+    salesByMethod[p.payment_method as Method] += p.kind === "refund" ? -Number(p.amount) : Number(p.amount);
+  }
   for (const order of restaurantOrders ?? []) {
-    const orderPayments = Array.isArray(order.restaurant_order_payments) ? order.restaurant_order_payments : [];
+    // An order charged to a hotel room was closed against the guest's account —
+    // the money arrives (and is counted) with their hotel payments.
+    const orderPayments = !order.hotel_booking_id && Array.isArray(order.restaurant_order_payments) ? order.restaurant_order_payments : [];
     for (const p of orderPayments) {
       const method = p.payment_method === "card" || p.payment_method === "cash" || p.payment_method === "upi" || p.payment_method === "online" ? p.payment_method : "other";
       salesByMethod[method as Method] += Number(p.amount);

@@ -1195,6 +1195,143 @@ const RENTAL_MR: HelpSection = {
   ],
 };
 
+
+const HOTEL_EN: HelpSection = {
+  title: "Hotel — Rooms, bookings & room service",
+  items: [
+    {
+      q: "How do I set up my rooms?",
+      a: "Open Front desk → Set-up. First add a room type (for example Deluxe AC at ₹3,000 a night), then tap Add rooms under it and type the numbers — a range like 101-110 adds ten at once. Every room also gets its own table in the Restaurant automatically, for room service.",
+    },
+    {
+      q: "How do I take a booking — walk-in, phone, or from MakeMyTrip / Booking.com?",
+      a: "Tap + New booking, choose the dates, tap + on the room types you want, then fill in the guest. Under 'Where did this booking come from?' pick Walk-in, Phone, an online agent (MakeMyTrip, Goibibo, Booking.com, Agoda, OYO...) or a travel agent. For online agents add their booking ID and the commission % — it shows in your reports so you know what each agent really earns you.",
+    },
+    {
+      q: "What do the Rooms and Calendar screens show?",
+      a: "Rooms is the live board: green vacant, blue occupied (with the guest's name), amber needs cleaning, grey out of service. Tap a room to mark it clean, take a room-service order or block it for repairs. Calendar is the classic reservation chart — every room across 14 days with each guest as a bar, and the free-room count for each type above its rooms. Tap an empty cell to book that room for that day.",
+    },
+    {
+      q: "How does check-in work?",
+      a: "Open the booking and tap Check in. Pick a room if none is assigned yet, and note the guest's ID (Aadhaar, passport, ...). A room that housekeeping hasn't marked clean is flagged — you can still check in after ticking the box. An advance taken earlier is already on the guest's account.",
+    },
+    {
+      q: "How do I add laundry, an extra bed or other charges?",
+      a: "On the booking tap Add charge, pick what it is, enter the amount before tax and the GST %. It goes on the guest's account and onto the final invoice. Remove a wrongly added one with the ×.",
+    },
+    {
+      q: "How does room service work?",
+      a: "Tap the bell on the booking (or the room on the Rooms board) to take an order for that room — it goes to the kitchen like any table. When the order is ready to bill, tap Settle and choose Charge to room instead of taking payment. The food is billed with its own restaurant GST and simply appears on the guest's account to be paid at check-out.",
+    },
+    {
+      q: "How do I check a guest out?",
+      a: "Tap Check out. You see the whole bill: rooms, extras, GST and room service, minus what they already paid. Enter what they pay now (split across cash / UPI / card if needed), add a discount if you're allowed, and confirm. If the guest hasn't paid everything you can keep the rest as udhaar on their account. A GST invoice is made and the rooms turn 'needs cleaning'. If they paid more than the bill, the extra is returned as a refund.",
+    },
+    {
+      q: "What GST is charged on a room?",
+      a: "It's worked out from the nightly rate before tax: up to ₹1,000 no GST, ₹1,001–₹7,500 5%, above ₹7,500 18% — added automatically to the room, split into CGST and SGST. If your CA advises a different rate, set it on the room type. Extra charges carry the GST % you enter. The stay invoice appears in your GST reports like any other bill.",
+    },
+    {
+      q: "A guest cancelled or didn't turn up — what now?",
+      a: "Open the booking and tap the bin. Choose Cancelled or No-show. If they paid an advance you can keep a cancellation charge (a GST invoice is made for it) and the rest is refunded. The rooms become free again straight away.",
+    },
+    {
+      q: "Where do I see occupancy, commissions and the guest register?",
+      a: "Front desk → Reports: occupancy %, ADR and RevPAR for any period, revenue by booking source with the commission owed to each OTA or agent, extra income, and the guest register (with ID details) that you can export as a file for police or FRRO checks.",
+    },
+  ],
+};
+const HOTEL_HI: HelpSection = {
+  title: "Hotel — Rooms, Bookings और Room service",
+  items: [
+    {
+      q: "Rooms कैसे set up करूँ?",
+      a: "Front desk → Set-up खोलें। पहले room type जोड़ें (जैसे Deluxe AC, ₹3,000 प्रति रात), फिर उसके नीचे Add rooms दबाकर numbers लिखें — 101-110 जैसा range लिखने से दस rooms एक साथ बन जाते हैं। हर room के लिए Restaurant में उसका अपना table भी अपने-आप बन जाता है, room service के लिए।",
+    },
+    {
+      q: "Booking कैसे लूँ — walk-in, phone, या MakeMyTrip / Booking.com से?",
+      a: "+ New booking दबाएँ, dates चुनें, जो room types चाहिए उन पर + दबाएँ, फिर guest की details भरें। 'Where did this booking come from?' में Walk-in, Phone, online agent (MakeMyTrip, Goibibo, Booking.com, Agoda, OYO...) या travel agent चुनें। Online agent के लिए उनका booking ID और commission % भरें — यह आपकी reports में दिखता है ताकि पता रहे हर agent से असल में कितनी कमाई होती है।",
+    },
+    {
+      q: "Rooms और Calendar screen में क्या दिखता है?",
+      a: "Rooms live board है: हरा खाली, नीला भरा हुआ (guest के नाम के साथ), पीला सफ़ाई चाहिए, ग्रे बंद। किसी room पर दबाकर उसे साफ़ mark करें, room-service order लें या मरम्मत के लिए बंद करें। Calendar पुराना reservation chart है — हर room 14 दिन में, हर guest एक पट्टी की तरह, और हर type के ऊपर खाली rooms की गिनती। खाली खाने पर दबाकर उस दिन का booking बनाएँ।",
+    },
+    {
+      q: "Check-in कैसे होता है?",
+      a: "Booking खोलकर Check in दबाएँ। अगर room तय नहीं है तो चुनें, और guest की ID (Aadhaar, passport...) लिखें। जिस room को housekeeping ने साफ़ mark नहीं किया, उस पर चेतावनी आती है — box tick करके फिर भी check in कर सकते हैं। पहले लिया advance guest के account में पहले से जुड़ा रहता है।",
+    },
+    {
+      q: "Laundry, extra bed या दूसरे charges कैसे जोड़ूँ?",
+      a: "Booking पर Add charge दबाएँ, प्रकार चुनें, tax से पहले की रकम और GST % भरें। यह guest के account और final invoice में जुड़ जाता है। गलत जुड़ गया हो तो × से हटाएँ।",
+    },
+    {
+      q: "Room service कैसे चलती है?",
+      a: "Booking पर घंटी (bell) दबाएँ (या Rooms board पर room दबाएँ) — उस room का order बनेगा और kitchen में किसी भी table की तरह जाएगा। Bill करना हो तो Settle दबाएँ और payment लेने की जगह Charge to room चुनें। खाने का bill अपने restaurant GST के साथ बनता है और guest के account में जुड़ जाता है, जो check-out पर चुकाया जाता है।",
+    },
+    {
+      q: "Guest को check-out कैसे करूँ?",
+      a: "Check out दबाएँ। पूरा bill दिखेगा: rooms, extras, GST और room service, और जो पहले चुका चुके हैं वो घटकर। अभी जो देंगे वो भरें (ज़रूरत हो तो cash / UPI / card में बाँटकर), अनुमति हो तो discount दें, और confirm करें। अगर guest ने पूरा नहीं चुकाया तो बाकी उनके account में udhaar रख सकते हैं। GST invoice बन जाता है और rooms 'सफ़ाई चाहिए' हो जाते हैं। अगर bill से ज़्यादा दिया हो तो फ़र्क refund के रूप में लौटाया जाता है।",
+    },
+    {
+      q: "Room पर कितना GST लगता है?",
+      a: "यह tax से पहले की प्रति रात की दर से तय होता है: ₹1,000 तक कोई GST नहीं, ₹1,001–₹7,500 पर 5%, ₹7,500 से ऊपर 18% — अपने-आप जुड़ता है और CGST व SGST में बँटता है। अगर आपका CA कोई और दर बताए तो room type पर बदल लें। Extra charges पर वही GST % लगता है जो आप भरते हैं। Stay invoice आपकी GST reports में बाकी bills की तरह आता है।",
+    },
+    {
+      q: "Guest ने cancel कर दिया या आया ही नहीं — अब क्या?",
+      a: "Booking खोलकर dustbin दबाएँ। Cancelled या No-show चुनें। अगर advance लिया था तो cancellation charge रख सकते हैं (उसका GST invoice बनता है) और बाकी लौटा दिया जाता है। Rooms तुरंत फिर खाली हो जाते हैं।",
+    },
+    {
+      q: "Occupancy, commission और guest register कहाँ देखूँ?",
+      a: "Front desk → Reports: किसी भी अवधि का occupancy %, ADR और RevPAR, booking source के हिसाब से कमाई और हर OTA / agent को देने वाली commission, extra income, और guest register (ID details के साथ) जिसे police या FRRO जाँच के लिए file में export कर सकते हैं।",
+    },
+  ],
+};
+const HOTEL_MR: HelpSection = {
+  title: "Hotel — Rooms, Bookings आणि Room service",
+  items: [
+    {
+      q: "Rooms कसे set up करू?",
+      a: "Front desk → Set-up उघडा. आधी room type जोडा (उदा. Deluxe AC, ₹3,000 प्रति रात्र), मग त्याखाली Add rooms दाबून numbers लिहा — 101-110 सारखी range लिहिल्यास दहा rooms एकदम तयार होतात. प्रत्येक room साठी Restaurant मध्ये त्याचा स्वतःचा table आपोआप तयार होतो, room service साठी.",
+    },
+    {
+      q: "Booking कशी घेऊ — walk-in, phone, किंवा MakeMyTrip / Booking.com वरून?",
+      a: "+ New booking दाबा, dates निवडा, हव्या त्या room types वर + दाबा, मग guest ची माहिती भरा. 'Where did this booking come from?' मध्ये Walk-in, Phone, online agent (MakeMyTrip, Goibibo, Booking.com, Agoda, OYO...) किंवा travel agent निवडा. Online agent साठी त्यांचा booking ID आणि commission % भरा — तो तुमच्या reports मध्ये दिसतो, म्हणजे प्रत्येक agent कडून खरी कमाई किती ते कळते.",
+    },
+    {
+      q: "Rooms आणि Calendar screen वर काय दिसते?",
+      a: "Rooms हा live board आहे: हिरवा रिकामा, निळा भरलेला (guest च्या नावासह), पिवळा स्वच्छता हवी, राखाडी बंद. कोणत्याही room वर दाबून तो स्वच्छ mark करा, room-service order घ्या किंवा दुरुस्तीसाठी बंद करा. Calendar हा जुना reservation chart आहे — प्रत्येक room 14 दिवसांत, प्रत्येक guest एका पट्टीसारखा, आणि प्रत्येक type वर रिकाम्या rooms ची संख्या. रिकाम्या रकान्यावर दाबून त्या दिवसाचे booking करा.",
+    },
+    {
+      q: "Check-in कसे होते?",
+      a: "Booking उघडून Check in दाबा. room ठरलेला नसेल तर निवडा, आणि guest चा ID (Aadhaar, passport...) नोंदवा. ज्या room ला housekeeping ने स्वच्छ mark केलेले नाही त्याबद्दल इशारा येतो — box tick करून तरीही check in करू शकता. आधी घेतलेला advance guest च्या account मध्ये आधीच जमा असतो.",
+    },
+    {
+      q: "Laundry, extra bed किंवा इतर charges कसे जोडू?",
+      a: "Booking वर Add charge दाबा, प्रकार निवडा, tax आधीची रक्कम आणि GST % भरा. ते guest च्या account आणि final invoice मध्ये जोडले जाते. चुकून जोडले असल्यास × ने काढा.",
+    },
+    {
+      q: "Room service कशी चालते?",
+      a: "Booking वरील घंटा (bell) दाबा (किंवा Rooms board वर room दाबा) — त्या room चा order तयार होईल आणि कोणत्याही table प्रमाणे kitchen मध्ये जाईल. Bill करायचे असेल तेव्हा Settle दाबा आणि पेमेंट घेण्याऐवजी Charge to room निवडा. जेवणाचे bill स्वतःच्या restaurant GST सह तयार होते आणि guest च्या account मध्ये जोडले जाते, जे check-out ला भरले जाते.",
+    },
+    {
+      q: "Guest ला check-out कसे करू?",
+      a: "Check out दाबा. पूर्ण bill दिसेल: rooms, extras, GST आणि room service, आणि आधी भरलेले वजा करून. आता जे देणार ते भरा (गरज असल्यास cash / UPI / card मध्ये वाटून), परवानगी असल्यास discount द्या, आणि confirm करा. Guest ने सगळे भरले नसेल तर उरलेले त्यांच्या account वर udhaar म्हणून ठेवू शकता. GST invoice तयार होतो आणि rooms 'स्वच्छता हवी' होतात. bill पेक्षा जास्त दिले असल्यास फरक refund म्हणून परत केला जातो.",
+    },
+    {
+      q: "Room वर किती GST लागतो?",
+      a: "तो tax आधीच्या प्रति रात्रीच्या दरावरून ठरतो: ₹1,000 पर्यंत GST नाही, ₹1,001–₹7,500 वर 5%, ₹7,500 पेक्षा जास्त 18% — आपोआप जोडला जातो आणि CGST व SGST मध्ये विभागला जातो. तुमचा CA दुसरा दर सांगत असेल तर room type वर बदला. Extra charges वर तुम्ही भरलेला GST % लागतो. Stay invoice तुमच्या GST reports मध्ये इतर bills सारखा येतो.",
+    },
+    {
+      q: "Guest ने cancel केले किंवा आलाच नाही — आता काय?",
+      a: "Booking उघडून कचरापेटी दाबा. Cancelled किंवा No-show निवडा. Advance घेतला असेल तर cancellation charge ठेवू शकता (त्याचा GST invoice तयार होतो) आणि बाकी परत केले जाते. Rooms लगेच पुन्हा रिकामे होतात.",
+    },
+    {
+      q: "Occupancy, commission आणि guest register कुठे पाहू?",
+      a: "Front desk → Reports: कोणत्याही कालावधीचा occupancy %, ADR आणि RevPAR, booking source नुसार कमाई आणि प्रत्येक OTA / agent ला द्यायची commission, extra income, आणि guest register (ID माहितीसह) जो police किंवा FRRO तपासणीसाठी file मध्ये export करू शकता.",
+    },
+  ],
+};
+
 /** Shown ABOVE the generic sections above, so the first thing a shop
  * sees under Help is what's actually different about running THEIR
  * kind of business — not the same Home/Sell/Buy walkthrough every
@@ -1207,6 +1344,7 @@ export const BUSINESS_HELP_SECTION: Record<BusinessType, Record<Lang, HelpSectio
   hardware: { en: HARDWARE_EN, hi: HARDWARE_HI, mr: HARDWARE_MR },
   pharmacy: { en: PHARMACY_EN, hi: PHARMACY_HI, mr: PHARMACY_MR },
   restaurant: { en: RESTAURANT_EN, hi: RESTAURANT_HI, mr: RESTAURANT_MR },
+  hotel: { en: HOTEL_EN, hi: HOTEL_HI, mr: HOTEL_MR },
   rental: { en: RENTAL_EN, hi: RENTAL_HI, mr: RENTAL_MR },
   transport: { en: TRANSPORT_EN, hi: TRANSPORT_HI, mr: TRANSPORT_MR },
   service: { en: SERVICE_EN, hi: SERVICE_HI, mr: SERVICE_MR },

@@ -30,6 +30,8 @@ import {
   CheckCircle2,
   Scale,
   Undo2,
+  BedDouble,
+  ConciergeBell,
   type LucideIcon,
 } from "lucide-react";
 
@@ -104,6 +106,51 @@ const RESTAURANT_SLIDES: Slide[] = [
     icon: Settings,
     title: "One last thing",
     body: "If you haven't already, set your shop's state under More → GST & shop profile — billing is blocked until that's filled in, since it decides CGST+SGST vs IGST on every invoice.",
+    cta: { label: "Go to GST profile", href: "/settings" },
+  },
+];
+
+const HOTEL_SLIDES: Slide[] = [
+  {
+    icon: Hand,
+    title: "Welcome — this app is set up for a hotel",
+    body: "A quick 30-second look at where everything lives — you can always come back to this from More → Help.",
+  },
+  {
+    icon: BedDouble,
+    title: "Rooms & rates",
+    body: "Start at Front desk → Set-up: add a room type with its nightly rate, then type the room numbers (101-110 adds ten at once). Every room also gets its own table in the Restaurant, for room service.",
+    cta: { label: "Set up rooms", href: "/hotel/setup" },
+  },
+  {
+    icon: ConciergeBell,
+    title: "Bookings from anywhere",
+    body: "Tap + New booking for a walk-in, a phone call, or a guest from MakeMyTrip, Booking.com, Goibibo or a travel agent. Note the agent's booking ID and commission % and your reports show what each source really earns you.",
+  },
+  {
+    icon: ClipboardList,
+    title: "Check-in",
+    body: "Open the booking, pick the room, note the guest's ID and tap Check in. The Rooms board shows vacant, occupied and needs-cleaning rooms; the Calendar shows every room across 14 days.",
+  },
+  {
+    icon: UtensilsCrossed,
+    title: "Room service",
+    body: "Take the order from the booking or the room, send it to the kitchen, and when it's ready to bill choose Charge to room. The food goes on the guest's account with its own GST and is paid at check-out.",
+  },
+  {
+    icon: Wallet,
+    title: "Check-out",
+    body: "Check out shows rooms, extras and food together minus any advance. Take payment split across cash / UPI / card, or keep the rest as udhaar. A GST invoice is made and the room goes to housekeeping.",
+  },
+  {
+    icon: BarChart3,
+    title: "Reports",
+    body: "Front desk → Reports has occupancy, ADR, RevPAR, revenue and commission by booking source, and the guest register you can export. GSTR-1 and GSTR-3B are under Reports.",
+  },
+  {
+    icon: Settings,
+    title: "One last thing",
+    body: "If you haven't already, set your shop's state under More → GST & shop profile — it decides CGST+SGST vs IGST on every invoice.",
     cta: { label: "Go to GST profile", href: "/settings" },
   },
 ];
@@ -372,6 +419,7 @@ const LAB_SLIDES: Slide[] = [
 
 function slidesFor(businessType: string) {
   if (businessType === "restaurant") return RESTAURANT_SLIDES;
+  if (businessType === "hotel") return HOTEL_SLIDES;
   if (businessType === "rental") return RENTAL_SLIDES;
   if (businessType === "transport") return TRANSPORT_SLIDES;
   if (businessType === "service") return SERVICE_SLIDES;

@@ -25,6 +25,8 @@ type Table = {
   name: string;
   status: "free" | "occupied";
   section: "inside" | "outside" | "takeaway" | null;
+  /** A hotel room's room-service table. */
+  isRoom?: boolean;
   openOrderId: string | null;
   openOrderTotal: number;
   readyCount: number;
@@ -80,8 +82,10 @@ function TableTile({
       <div className="flex items-start justify-between gap-1">
         <div className="min-w-0">
           <p className="truncate text-base font-bold leading-tight text-foreground md:text-lg">{table.name}</p>
-          <p className="text-[11px] text-muted">{t(SECTION_LABEL[table.section ?? "inside"])}</p>
+          <p className="text-[11px] text-muted">{table.isRoom ? t("Room service") : t(SECTION_LABEL[table.section ?? "inside"])}</p>
         </div>
+        {/* A room's table is managed from the hotel set-up, not from here. */}
+        {!table.isRoom && (
         <button
           onClick={(e) => {
             e.stopPropagation();
@@ -92,6 +96,7 @@ function TableTile({
         >
           <QrCode size={16} />
         </button>
+        )}
       </div>
       <div className="flex flex-col gap-1">
         {table.readyCount > 0 && (
@@ -130,7 +135,17 @@ export function TablesClient({ tables, lang }: { tables: Table[]; lang: Lang }) 
   const [newTableName, setNewTableName] = useState("");
   const [newTableSection, setNewTableSection] = useState<"inside" | "outside" | "takeaway">("inside");
   const [bulkCount, setBulkCount] = useState(tables.length === 0 ? 10 : 5);
-  const [sectionFilter, setSectionFilter] = useState<"all" | "inside" | "outside" | "takeaway">("all");
+  const [sectionFilter, setSectionFilter] = useState<"all" | "inside" | "outside" | "takeaway" | "rooms">(
+    // A hotel with no dining tables of its own starts on its rooms, not an empty grid.
+    tables.length > 0 && tables.every((x) => x.isRoom) ? "rooms" : "all",
+  );
+  // Room tables have their own tab; on the main view only a room with a live
+  // order shows, so room service is never missed.
+  const visibleTables = tables.filter((table) => {
+    if (sectionFilter === "rooms") return !!table.isRoom;
+    if (table.isRoom) return sectionFilter === "all" && !!table.openOrderId;
+    return sectionFilter === "all" || (table.section ?? "inside") === sectionFilter;
+  });
   const [error, setError] = useState<string | null>(null);
   const [qrTable, setQrTable] = useState<Table | null>(null);
   const [renameValue, setRenameValue] = useState("");
@@ -515,7 +530,7 @@ export function TablesClient({ tables, lang }: { tables: Table[]; lang: Lang }) 
 
       {tables.length > 0 && (
         <div className="flex gap-2 overflow-x-auto scroll-hide pb-1">
-          {(["all", "inside", "outside", "takeaway"] as const).map((s) => (
+          {(["all", ...(tables.some((x) => x.isRoom) ? (["rooms"] as const) : []), "inside", "outside", "takeaway"] as const).map((s) => (
             <button
               key={s}
               type="button"
@@ -525,7 +540,7 @@ export function TablesClient({ tables, lang }: { tables: Table[]; lang: Lang }) 
                 sectionFilter === s ? "border-brand/30 bg-brand-soft text-brand-text" : "border-border bg-surface text-muted hover:text-foreground"
               }`}
             >
-              {s === "all" ? t("All tables") : t(SECTION_LABEL[s])}
+              {s === "all" ? t("All tables") : s === "rooms" ? t("Rooms") : t(SECTION_LABEL[s])}
             </button>
           ))}
         </div>
@@ -543,10 +558,11 @@ export function TablesClient({ tables, lang }: { tables: Table[]; lang: Lang }) 
           }
         />
       ) : (
+        visibleTables.length === 0 ? (
+          <p className="rounded-xl border border-dashed border-border px-3.5 py-6 text-center text-xs text-muted">{t("Nothing here yet.")}</p>
+        ) : (
         <div className="grid grid-cols-3 gap-3 md:grid-cols-5 md:gap-4">
-          {tables
-            .filter((table) => sectionFilter === "all" || (table.section ?? "inside") === sectionFilter)
-            .map((table) => (
+          {visibleTables.map((table) => (
             <TableTile
               key={table.id}
               table={table}
@@ -559,6 +575,7 @@ export function TablesClient({ tables, lang }: { tables: Table[]; lang: Lang }) 
             />
           ))}
         </div>
+        )
       )}
 
       {qrTable && (

@@ -1,6 +1,7 @@
 import { SCREEN_STRINGS } from "./screens";
 import { MENU_TEXT } from "./menuText";
 import { PAGE_TEXT } from "./pageText";
+import { HOTEL_TEXT } from "./hotelText";
 import en from "./en";
 import hi from "./hi";
 import mr from "./mr";
@@ -18,7 +19,7 @@ for (const [key, [enText, hiText, mrText]] of Object.entries(SCREEN_STRINGS)) {
   translations.mr[key] ??= mrText;
 }
 // Menu/report text is keyed by its English wording (English falls back to the key).
-for (const [english, [hiText, mrText]] of [...Object.entries(MENU_TEXT), ...Object.entries(PAGE_TEXT)]) {
+for (const [english, [hiText, mrText]] of [...Object.entries(MENU_TEXT), ...Object.entries(PAGE_TEXT), ...Object.entries(HOTEL_TEXT)]) {
   translations.hi[english] ??= hiText;
   translations.mr[english] ??= mrText;
 }
