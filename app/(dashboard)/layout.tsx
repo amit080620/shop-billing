@@ -47,6 +47,7 @@ export default async function DashboardLayout({
         permissions={session.permissions}
         fastBillingEnabled={fastBillingEnabled}
         plan={session.plansReady ? session.plan : undefined}
+        onTrial={session.plansReady && session.onTrial}
       />
 
       {/* One sticky top bar for both breakpoints. On mobile it carries the
@@ -77,6 +78,11 @@ export default async function DashboardLayout({
               <span className="flex items-center gap-1.5">
                 <span className="truncate text-sm font-semibold leading-tight text-foreground">{session.shopName}</span>
                 {session.plansReady && <PlanBadge plan={session.plan} size="xs" className="shrink-0" />}
+                {session.plansReady && session.onTrial && (
+                  <span className="shrink-0 rounded-full bg-brand-soft px-1.5 py-px text-[10px] font-semibold text-brand-text">
+                    {translate(lang, "Trial")}
+                  </span>
+                )}
               </span>
               <span className="block truncate text-xs leading-tight text-muted">
                 {session.staffName} · {roleLabel}

@@ -30,7 +30,7 @@ export async function RayScoreCard({ shopId, businessType, lang, t }: { shopId: 
             <Sparkles size={14} style={{ color }} />
             {t("rayScore.title")}
           </p>
-          {moves.length === 0 && <p className="mt-0.5 text-xs text-muted">{t("rayScore.allCaughtUp")}</p>}
+          {score === 100 && <p className="mt-0.5 text-xs text-muted">{t("rayScore.allCaughtUp")}</p>}
         </div>
       </div>
 

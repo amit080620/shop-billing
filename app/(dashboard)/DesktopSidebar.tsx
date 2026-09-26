@@ -22,6 +22,7 @@ export function DesktopSidebar({
   permissions = [],
   fastBillingEnabled = false,
   plan,
+  onTrial = false,
 }: {
   lang: Lang;
   businessType: string;
@@ -32,6 +33,7 @@ export function DesktopSidebar({
   permissions?: string[];
   plan?: PlanKey;
   fastBillingEnabled?: boolean;
+  onTrial?: boolean;
 }) {
   const pathname = usePathname();
   const { t } = useTranslation(lang);
@@ -51,7 +53,16 @@ export function DesktopSidebar({
           )}
           <span className="min-w-0 flex-1">
             <span className="line-clamp-2 block text-sm font-semibold leading-snug text-foreground">{shopName}</span>
-            {plan && <PlanBadge plan={plan} size="xs" className="mb-0.5 mt-0.5" />}
+            {plan && (
+              <span className="mb-0.5 mt-0.5 inline-flex items-center gap-1">
+                <PlanBadge plan={plan} size="xs" />
+                {onTrial && (
+                  <span className="rounded-full bg-brand-soft px-1.5 py-px text-[10px] font-semibold text-brand-text">
+                    {t("Trial")}
+                  </span>
+                )}
+              </span>
+            )}
             <span className="block truncate text-xs text-muted">
               {staffName} · {roleLabel}
             </span>

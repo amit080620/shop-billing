@@ -50,7 +50,13 @@ export async function computeTodaysMoves(shopId: string, businessType: string, l
 
   const penalty = candidates.reduce((s, m) => s + m.penalty, 0);
   const score = Math.max(0, Math.round(100 - Math.min(100, penalty)));
-  const moves = candidates.sort((a, b) => b.penalty - a.penalty).slice(0, 3);
+  // The jewellery Home already shows an unmissable "rate not set" banner
+  // of its own every day — counted in the score above, but left out of
+  // the list below so the owner isn't told the same thing twice in a row.
+  const moves = candidates
+    .filter((m) => m.id !== "metalrate")
+    .sort((a, b) => b.penalty - a.penalty)
+    .slice(0, 3);
   return { score, moves };
 }
 

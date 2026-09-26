@@ -34,6 +34,10 @@ export async function PlanBanner() {
     tone = trialLeft <= 2 ? "danger" : "warn";
     icon = <Clock size={16} />;
     text = t("Your free trial ends in {n} days. After that the shop stays on Free.", { n: Math.max(0, trialLeft) });
+  } else if (trialLeft !== null) {
+    tone = "info";
+    icon = <Crown size={16} />;
+    text = t("You're trying everything in Pro + for {n} more days. After that your shop stays on Free, with your data intact.", { n: Math.max(0, trialLeft) });
   } else if (limit !== null) {
     const usage = await planUsage(session);
     const pct = usage.billsThisMonth / limit;
