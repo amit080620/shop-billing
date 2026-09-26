@@ -81,7 +81,7 @@ function TableTile({
     >
       <div className="flex items-start justify-between gap-1">
         <div className="min-w-0">
-          <p className="truncate text-base font-bold leading-tight text-foreground md:text-lg">{table.name}</p>
+          <p className="break-words text-base font-bold leading-tight text-foreground md:text-lg">{table.name}</p>
           <p className="text-[11px] text-muted">{table.isRoom ? t("Room service") : t(SECTION_LABEL[table.section ?? "inside"])}</p>
         </div>
         {/* A room's table is managed from the hotel set-up, not from here. */}
@@ -146,6 +146,8 @@ export function TablesClient({ tables, lang, showKitchenLink = false }: { tables
     if (table.isRoom) return sectionFilter === "all" && !!table.openOrderId;
     return sectionFilter === "all" || (table.section ?? "inside") === sectionFilter;
   });
+  // Long names ("Room 101") need wider tiles than "T1", so narrow phones get two columns unless every name is short.
+  const longNames = visibleTables.some((x) => x.name.length > 5);
   const [error, setError] = useState<string | null>(null);
   const [qrTable, setQrTable] = useState<Table | null>(null);
   const [renameValue, setRenameValue] = useState("");
@@ -588,7 +590,7 @@ export function TablesClient({ tables, lang, showKitchenLink = false }: { tables
         visibleTables.length === 0 ? (
           <p className="rounded-xl border border-dashed border-border px-3.5 py-6 text-center text-xs text-muted">{t("Nothing here yet.")}</p>
         ) : (
-        <div className="grid grid-cols-3 gap-3 md:grid-cols-5 md:gap-4">
+        <div className={`grid gap-3 md:grid-cols-5 md:gap-4 ${longNames ? "grid-cols-2 min-[380px]:grid-cols-3" : "grid-cols-3"}`}>
           {visibleTables.map((table) => (
             <TableTile
               key={table.id}
