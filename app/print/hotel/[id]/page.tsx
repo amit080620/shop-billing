@@ -7,7 +7,8 @@ import { formatStayDateLong } from "@/lib/hotel/dates";
 import { MEAL_PLANS } from "@/lib/hotel/constants";
 import { hotelSchemaReady, loadBookingDetail } from "@/lib/hotel/server";
 import { PrintButton } from "@/app/print/bill/[id]/PrintButton";
-import { BackLink } from "@/app/components/BackLink";
+import Link from "next/link";
+import { ChevronLeft } from "lucide-react";
 
 /** The guest's running statement: rooms, extras, room service, what they have
  * paid and what is left — an itemised copy to hand over at any point of the stay
@@ -26,7 +27,9 @@ export default async function PrintFolioPage({ params }: { params: Promise<{ id:
   return (
     <div className="relative mx-auto max-w-2xl bg-white p-8 text-black">
       <div className="no-print mb-4">
-        <BackLink fallback={`/hotel/bookings/${b.id}`} />
+        <Link href={`/hotel/bookings/${b.id}`} className="inline-flex items-center gap-1 text-sm font-medium text-gray-600 hover:text-gray-900">
+          <ChevronLeft size={16} /> {t("common.back")}
+        </Link>
       </div>
       <div className="flex items-start justify-between gap-4 border-b-2 border-gray-800 pb-4">
         <div>
