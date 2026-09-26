@@ -1,4 +1,5 @@
 import type { DemoType } from "../config";
+import { isoAt } from "../util";
 import { GENERAL, GROCERY, HARDWARE, MART, type Catalog, type CatalogItem } from "./catalogs";
 import {
   insertCatalog,
@@ -108,7 +109,7 @@ export async function seedRetail(ctx: SeedCtx): Promise<void> {
     { daysAgo: 3, vendorIndex: 2, productIndexes: [2 % n], qty: 10, paidShare: 1, costFactor: 1.3 },
   ]);
 
-  await seedBills(ctx, products, customers, { count: cfg.bills, days: 30, customerShare: 0.55, udhaarShare: 0.2 });
+  const billIds = await seedBills(ctx, products, customers, { count: cfg.bills, days: 30, customerShare: 0.55, udhaarShare: 0.2 });
   await seedUdhaarPayments(ctx, customers);
   await seedVendorPayment(ctx, vendors[2], 4000);
   await seedPettyCash(ctx, STANDARD_PETTY_CASH);
@@ -118,8 +119,14 @@ export async function seedRetail(ctx: SeedCtx): Promise<void> {
     { customerIndex: 3, daysAgo: 41, productIndexes: [0, 1, 2], qty: 2 },
     { customerIndex: 5, daysAgo: 57, productIndexes: [3, 4], qty: 3 },
   ]);
-  await insertCatalog(ctx, [{ category: "Slow movers", items: cfg.slowMovers }]);
+  await insertCatalog(ctx, [{ category: "Slow movers", items: cfg.slowMovers }], { fastBilling: false });
   await seedItemRequests(ctx, customers, cfg.wanted);
+
+  // Two entries in the audit log, so the screen is not empty before anyone has voided or changed a bill.
+  await ctx.admin.from("audit_logs").insert([
+    { shop_id: ctx.shopId, staff_id: ctx.session.userId, action: "bill_quantities_edited", entity_type: "bill", entity_id: billIds[Math.max(0, billIds.length - 4)], details: { reason: "Customer took one packet less", changes: [] }, created_at: isoAt(3, 17, 20) },
+    { shop_id: ctx.shopId, staff_id: ctx.session.userId, action: "bill_voided", entity_type: "bill", entity_id: billIds[Math.max(0, billIds.length - 9)], details: { reason: "Bill was entered twice" }, created_at: isoAt(6, 11, 5) },
+  ]);
 
   await leaveSomeStockLow(ctx, products, 3);
   if (ctx.type === "grocery" || ctx.type === "mart") {

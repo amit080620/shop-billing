@@ -39,7 +39,7 @@ export async function ignoreRedirect<T>(fn: () => Promise<T>): Promise<T | null>
 }
 
 /** `track: false` is for things that are not counted in stock (a restaurant menu, a salon's services). */
-export async function insertCatalog(ctx: SeedCtx, catalog: Catalog, opts: { track?: boolean } = {}): Promise<SeededProduct[]> {
+export async function insertCatalog(ctx: SeedCtx, catalog: Catalog, opts: { track?: boolean; fastBilling?: boolean } = {}): Promise<SeededProduct[]> {
   const track = opts.track ?? true;
   const out: SeededProduct[] = [];
   // Barcodes must be unique within the shop, also across several catalogue calls.
@@ -87,7 +87,7 @@ export async function insertCatalog(ctx: SeedCtx, catalog: Catalog, opts: { trac
       units_per_pack: item.pharma?.units ?? null,
       loose_unit_name: item.pharma?.loose ?? null,
       show_in_catalog: true,
-      show_in_fast_billing: out.length < 12,
+      show_in_fast_billing: (opts.fastBilling ?? true) && out.length < 12,
       fast_billing_order: out.length,
     }));
     const { data, error } = await ctx.admin.from("products").insert(rows).select("id, name, price, gst_percent");
