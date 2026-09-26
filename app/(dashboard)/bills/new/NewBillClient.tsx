@@ -643,7 +643,7 @@ export function NewBillClient({
         <section className="flex flex-col gap-1.5">
           <p className="text-xs font-semibold text-muted">{t("bill.addProducts")}</p>
           {frequentProducts.length > 0 && (
-            <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1">
+            <div className="-mx-4 flex gap-2 overflow-x-auto scroll-hide px-4 pb-1">
               {frequentProducts.map((p) => (
                 <button
                   key={p.id}

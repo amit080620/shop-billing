@@ -283,7 +283,7 @@ export function FastBillingClient({
         )}
         {voiceStatus && <p className="text-center text-xs font-medium text-brand-text">{voiceStatus}</p>}
         {categories.length > 0 && (
-          <div className="flex gap-1.5 overflow-x-auto pb-0.5">
+          <div className="flex gap-1.5 overflow-x-auto scroll-hide pb-0.5">
             <CategoryPill label="All" active={activeCategory === null} onClick={() => setActiveCategory(null)} />
             {categories.map((c) => (
               <CategoryPill key={c} label={c} active={activeCategory === c} onClick={() => setActiveCategory(c)} />

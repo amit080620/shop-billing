@@ -75,7 +75,7 @@ export default async function AdminEnquiriesPage({ searchParams }: { searchParam
         </ul>
       </section>
 
-      <div className="flex gap-1.5 overflow-x-auto">
+      <div className="flex gap-1.5 overflow-x-auto scroll-hide">
         {["new", "contacted", "won", "lost", "all"].map((s) => (
           <Link
             key={s}

@@ -31,7 +31,7 @@ export function DateRangeControls({ from, to, basePath }: { from: string; to: st
 
   return (
     <div className="flex flex-col gap-2">
-      <div className="flex gap-2 overflow-x-auto pb-0.5">
+      <div className="flex gap-2 overflow-x-auto scroll-hide pb-0.5">
         {presets.map((p) => {
           const active = !showCustom && from === p.from && to === today;
           return (

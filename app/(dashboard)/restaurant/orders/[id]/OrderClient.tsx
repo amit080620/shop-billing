@@ -301,7 +301,7 @@ export function OrderClient({
           {!isReadOnly && combos.length > 0 && (
             <section className="no-print flex flex-col gap-2">
               <p className="text-sm font-semibold text-foreground">{t("order.combos")}</p>
-              <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 md:mx-0 md:px-0">
+              <div className="-mx-4 flex gap-2 overflow-x-auto scroll-hide px-4 pb-1 md:mx-0 md:px-0">
                 {combos.map((c) => (
                   <button
                     key={c.id}
@@ -345,7 +345,7 @@ export function OrderClient({
               </div>
 
               {categories.length > 1 && (
-                <div className="-mx-4 flex gap-1.5 overflow-x-auto px-4 pb-0.5 md:mx-0 md:flex-wrap md:px-0">
+                <div className="-mx-4 flex gap-1.5 overflow-x-auto scroll-hide px-4 pb-0.5 md:mx-0 md:flex-wrap md:px-0">
                   {[null, ...categories].map((cat) => (
                     <button
                       key={cat ?? "all"}
@@ -1423,7 +1423,7 @@ function OrderTimeline({ order, t }: { order: Order; t: Translator }) {
     new Date(iso).toLocaleTimeString("en-IN", { timeZone: "Asia/Kolkata", hour: "numeric", minute: "2-digit", hour12: true });
 
   return (
-    <div className="no-print flex items-center gap-1 overflow-x-auto rounded-lg border border-border bg-surface px-3 py-2 text-xs">
+    <div className="no-print flex items-center gap-1 overflow-x-auto scroll-hide rounded-lg border border-border bg-surface px-3 py-2 text-xs">
       {steps.map((s, i) => (
         <div key={s.label} className="flex shrink-0 items-center gap-1">
           {i > 0 && <span className="mx-1 h-px w-3 bg-border" />}

@@ -146,7 +146,7 @@ export function ExportClient({ businessType }: { businessType: string }) {
 
       <div className="neu-card flex flex-col gap-3 p-4">
         <p className="text-xs font-medium text-muted">{t("Date range")}</p>
-        <div className="flex gap-2 overflow-x-auto pb-0.5">
+        <div className="flex gap-2 overflow-x-auto scroll-hide pb-0.5">
           <button onClick={() => preset("today")} className="shrink-0 rounded-full bg-background px-3 py-1.5 text-xs font-medium text-muted" style={{ boxShadow: "var(--elev-xs)" }}>
             Today
           </button>

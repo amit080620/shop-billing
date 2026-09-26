@@ -100,7 +100,7 @@ export function PublicBookingClient({
         </div>
       </div>
 
-      <div className="flex gap-2 overflow-x-auto pb-1">
+      <div className="flex gap-2 overflow-x-auto scroll-hide pb-1">
         {days.map((day) => (
           <button
             key={day.date}

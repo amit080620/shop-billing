@@ -145,7 +145,7 @@ export default async function DailySummaryPage({
         action={<DatePicker date={date} />}
       />
       {branches && branches.length > 0 && (
-        <form className="flex gap-2 overflow-x-auto pb-1">
+        <form className="flex gap-2 overflow-x-auto scroll-hide pb-1">
           <input type="hidden" name="date" value={date} />
           <button
             type="submit"

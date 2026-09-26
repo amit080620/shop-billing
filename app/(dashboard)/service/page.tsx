@@ -62,7 +62,7 @@ export default async function ServiceJobsPage({
         icon={<Wrench size={18} strokeWidth={1.8} />}
       />
 
-      <div className="flex gap-2 overflow-x-auto pb-1">
+      <div className="flex gap-2 overflow-x-auto scroll-hide pb-1">
         <Link href="/service" className={`shrink-0 rounded-full border px-3.5 py-1.5 text-xs font-medium ${!activeFilter ? "border-brand bg-brand-soft text-brand-text" : "border-border text-muted"}`}>
           {t("Open jobs")}
         </Link>

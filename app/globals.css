@@ -305,6 +305,21 @@ input[type="radio"] {
   accent-color: var(--brand);
 }
 
+/* A swipeable strip of pills/chips/tabs should feel like a native app's
+ * horizontal list — swipe with a finger, no visible track or arrow
+ * buttons. Genuinely still scrollable (mouse-drag, trackpad, touch),
+ * just without the desktop-style scrollbar chrome that made these rows
+ * look like an unstyled HTML page. Not used on wide data tables or
+ * copyable code blocks, where a visible scrollbar is the useful hint
+ * that there's more content to the side. */
+.scroll-hide {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.scroll-hide::-webkit-scrollbar {
+  display: none;
+}
+
 /* Global tactile feedback — buttons get a small press-down. Links do
  * not: a whole list row or nav item shrinking under the finger reads as
  * wobbly rather than solid. */

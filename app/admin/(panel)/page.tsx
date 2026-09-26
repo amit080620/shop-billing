@@ -159,7 +159,7 @@ export default async function AdminDashboardPage({ searchParams }: { searchParam
       </div>
 
       {plansReady && (
-        <div className="flex gap-1.5 overflow-x-auto pb-1">
+        <div className="flex gap-1.5 overflow-x-auto scroll-hide pb-1">
           {FILTERS.map((f) => {
             const n = f.key === "all" ? total : f.key === "expired" ? withPlan.filter((s) => s.eff.expired).length : (counts[f.key] ?? 0);
             return (

@@ -48,8 +48,8 @@ export function PurchaseHubClient({ purchases, payments }: { purchases: Purchase
               <button
                 key={tab}
                 onClick={() => setPurchaseTab(tab)}
-                className={`flex-1 rounded-lg py-1.5 text-sm font-medium ${
-                  purchaseTab === tab ? "bg-brand-soft text-brand-text" : "text-muted"
+                className={`flex-1 rounded-lg py-1.5 text-sm font-semibold ${
+                  purchaseTab === tab ? "bg-brand text-white" : "border border-border text-muted"
                 }`}
               >
                 {tab === "add" ? t("Add Purchase") : t("Make Payment")}
@@ -115,11 +115,11 @@ export function PurchaseHubClient({ purchases, payments }: { purchases: Purchase
               <button
                 key={tab}
                 onClick={() => setHistoryTab(tab)}
-                className={`flex-1 rounded-lg py-2 text-sm font-medium ${
-                  historyTab === tab ? "bg-brand-soft text-brand-text" : "text-muted"
+                className={`flex-1 rounded-lg py-2 text-sm font-semibold ${
+                  historyTab === tab ? "bg-brand text-white" : "border border-border text-muted"
                 }`}
               >
-                {tab === "purchase" ? "Purchase" : "Payments"}
+                {tab === "purchase" ? t("Purchase") : t("Payments")}
               </button>
             ))}
           </div>

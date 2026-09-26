@@ -79,7 +79,7 @@ export function DateRangeControls({
 
   return (
     <div className="flex flex-col gap-2">
-      <div className="flex gap-2 overflow-x-auto pb-0.5">
+      <div className="flex gap-2 overflow-x-auto scroll-hide pb-0.5">
         <button onClick={setToday} className={pillClass} style={pillStyle}>
           {t("rreports.today")}
         </button>

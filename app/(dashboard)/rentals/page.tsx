@@ -40,7 +40,7 @@ export default async function RentalsPage() {
         icon={<Repeat size={18} strokeWidth={1.8} />}
       />
 
-      <div className="flex gap-2 overflow-x-auto">
+      <div className="flex gap-2 overflow-x-auto scroll-hide">
         <Link
           href="/rentals/history"
           className="shrink-0 rounded-full border border-border px-3 py-1.5 text-xs font-medium text-muted"

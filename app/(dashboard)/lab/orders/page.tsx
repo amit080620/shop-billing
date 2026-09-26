@@ -62,7 +62,7 @@ export default async function LabOrdersPage({
         <ClipboardList size={14} /> {t("Test catalog & packages")}
       </Link>
 
-      <div className="flex gap-2 overflow-x-auto pb-1">
+      <div className="flex gap-2 overflow-x-auto scroll-hide pb-1">
         <Link
           href="/lab/orders"
           className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium ${!status || status === "all" ? "border-brand bg-brand-soft text-brand-text" : "border-border text-muted"}`}

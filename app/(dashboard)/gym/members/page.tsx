@@ -66,7 +66,7 @@ export default async function GymMembersPage({
         }
         icon={<Users size={18} strokeWidth={1.8} />}
       />
-      <div className="flex gap-2 overflow-x-auto pb-1">
+      <div className="flex gap-2 overflow-x-auto scroll-hide pb-1">
         {session.role !== "owner" && (
           <>
             <Link

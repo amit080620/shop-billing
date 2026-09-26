@@ -308,7 +308,7 @@ export function ProductsClient({
         </label>
         {scanNotice && <p className="text-xs text-credit">{scanNotice}</p>}
         {/* Secondary catalog tools — one scrollable row of pills. */}
-        <div className="-mx-4 flex items-center gap-2 overflow-x-auto whitespace-nowrap px-4 pb-1 md:mx-0 md:flex-wrap md:px-0">
+        <div className="-mx-4 flex items-center gap-2 overflow-x-auto scroll-hide whitespace-nowrap px-4 pb-1 md:mx-0 md:flex-wrap md:px-0">
           {barcodeScanMode !== "hardware" && barcodeScanMode !== "off" && (
             <div className="shrink-0 has-[.bg-black]:basis-full">
               <CameraBarcodeScanner onScan={handleInventoryScan} compact />
@@ -874,7 +874,7 @@ export function ProductsClient({
       )}
 
       {categories.length > 0 && (
-        <div className="flex gap-2 overflow-x-auto pb-1">
+        <div className="flex gap-2 overflow-x-auto scroll-hide pb-1">
           <Chip active={filter === "all"} onClick={() => setFilter("all")}>
             {t("products.all")}
           </Chip>

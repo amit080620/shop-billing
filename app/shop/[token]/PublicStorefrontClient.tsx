@@ -272,7 +272,7 @@ export function PublicStorefrontClient({
       </div>
 
       {categories.length > 0 && (
-        <div className="flex gap-2 overflow-x-auto pb-1">
+        <div className="flex gap-2 overflow-x-auto scroll-hide pb-1">
           <button
             onClick={() => setActiveCategory("all")}
             className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium ${

@@ -65,7 +65,7 @@ export default async function CatalogOrdersPage({
         icon={<ShoppingBag size={17} strokeWidth={1.8} />}
       />
 
-      <div className="flex gap-2 overflow-x-auto pb-1">
+      <div className="flex gap-2 overflow-x-auto scroll-hide pb-1">
         {(["pending", "accepted", "rejected"] as const).map((s) => (
           <Link
             key={s}
