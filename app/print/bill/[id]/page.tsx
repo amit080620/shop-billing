@@ -25,10 +25,10 @@ export default async function PrintBillPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ format?: string }>;
+  searchParams: Promise<{ format?: string; new?: string }>;
 }) {
   const { id } = await params;
-  const { format: formatParam } = await searchParams;
+  const { format: formatParam, new: isFreshBill } = await searchParams;
 
   const session = await requireSession();
   const { lang, t } = await getTranslator();
@@ -101,6 +101,14 @@ export default async function PrintBillPage({
     upiQrDataUrl = await generateQrDataUrl(upiLink);
   }
 
+  const totalMrpSavings = (items ?? []).reduce(
+    (s, item) => s + (item.mrp != null && item.mrp > item.unit_price ? (item.mrp - item.unit_price) * item.quantity : 0),
+    0,
+  );
+
+  // Same fields the on-screen thermal preview (thermalData, below) shows —
+  // a customer's physical Bluetooth-printed receipt must carry the same
+  // GST breakdown the owner previewed, not a collapsed "Tax" line.
   const receiptData = {
     shopName: session.shopName,
     gstin: session.shopGstin,
@@ -113,18 +121,20 @@ export default async function PrintBillPage({
       price: Number(it.unit_price),
       lineTotal: Number(it.line_total),
     })),
-    subtotal: (items ?? []).reduce((s, it) => s + Number(it.line_total), 0),
-    taxTotal: (items ?? []).reduce((s, it) => s + Number(it.cgst_amount) + Number(it.sgst_amount) + Number(it.igst_amount), 0),
+    subtotal: Number(bill.subtotal),
+    discount: Number(bill.discount_amount) || undefined,
+    taxableAmount: Number(bill.taxable_amount),
+    isIntraState: isIntra,
+    cgstAmount: Number(bill.cgst_amount) || undefined,
+    sgstAmount: Number(bill.sgst_amount) || undefined,
+    igstAmount: Number(bill.igst_amount) || undefined,
+    roundOffAmount: Number(bill.round_off_amount) || undefined,
+    savingsOffMrp: totalMrpSavings || undefined,
     total: Number(bill.total),
     paidAmount: Number(bill.paid_amount),
     creditAmount: Number(bill.credit_amount),
     footerText: null,
   };
-
-  const totalMrpSavings = (items ?? []).reduce(
-    (s, item) => s + (item.mrp != null && item.mrp > item.unit_price ? (item.mrp - item.unit_price) * item.quantity : 0),
-    0,
-  );
 
   const thermalData: ThermalReceiptData = {
     shopName: session.shopName,
@@ -302,7 +312,7 @@ export default async function PrintBillPage({
             creditAmount={Number(bill.credit_amount)}
             upiLink={upiLink}
           />
-          <InfoTooltip message="WhatsApp text messages can't carry a file — download the PDF, then attach it yourself in the WhatsApp chat for a clean copy. If there's a balance due, the QR area in that PDF is also tappable in most PDF viewers, opening the customer's UPI app directly." />
+          <InfoTooltip message={t("WhatsApp text messages can't carry a file — download the PDF, then attach it yourself in the WhatsApp chat for a clean copy. If there's a balance due, the QR area in that PDF is also tappable in most PDF viewers, opening the customer's UPI app directly.")} />
         </div>
 
         <div className="grid grid-cols-2 items-start gap-2">
@@ -344,27 +354,26 @@ export default async function PrintBillPage({
 
       {bill.status === "voided" && (
         <div className="no-print mb-4 rounded-lg border border-danger bg-danger-soft px-4 py-3 text-sm text-danger">
-          <p className="font-semibold">This invoice has been voided.</p>
+          <p className="font-semibold">{t("This invoice has been voided.")}</p>
           <p className="mt-0.5">
-            Reason: {bill.void_reason} · {bill.voided_at ? formatDateTime(bill.voided_at) : ""}
+            {t("Reason: {reason} · {date}", { reason: bill.void_reason ?? "", date: bill.voided_at ? formatDateTime(bill.voided_at) : "" })}
           </p>
           <p className="mt-1 text-xs">
-            It&apos;s excluded from all totals, balances, and GST reports. Kept here only for
-            record-keeping — nothing prints on it below except as a reference copy.
+            {t("It's excluded from all totals, balances, and GST reports. Kept here only for record-keeping — nothing prints on it below except as a reference copy.")}
           </p>
         </div>
       )}
 
       {bill.edited_at && (
         <div className="no-print mb-4 rounded-lg border border-credit bg-credit-soft px-4 py-3 text-sm text-credit">
-          <p className="font-semibold">This invoice was corrected after it was first created.</p>
+          <p className="font-semibold">{t("This invoice was corrected after it was first created.")}</p>
           <p className="mt-0.5">
-            Reason: {bill.edit_reason} · {formatDateTime(bill.edited_at)}
+            {t("Reason: {reason} · {date}", { reason: bill.edit_reason ?? "", date: formatDateTime(bill.edited_at) })}
           </p>
         </div>
       )}
 
-      <div id="invoice-capture-area" className="animate-print-slip bg-white text-black">
+      <div id="invoice-capture-area" className={`${isFreshBill === "1" ? "animate-print-slip" : ""} bg-white text-black`}>
       {isThermal ? (
         <ThermalRenderer data={thermalData} paperWidth={is58mm ? 58 : 80} />
       ) : (

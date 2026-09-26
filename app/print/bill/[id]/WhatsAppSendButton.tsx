@@ -86,7 +86,7 @@ export function WhatsAppSendButton({
       className="flex items-center justify-center gap-2 rounded-xl bg-[#25D366] px-4 py-3.5 text-center font-medium text-white shadow-sm active:opacity-90"
     >
       <WhatsAppIcon />
-      Send invoice on WhatsApp
+      {t("wa.billSendButton")}
     </a>
   );
 }

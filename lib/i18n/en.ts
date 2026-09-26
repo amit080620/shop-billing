@@ -519,6 +519,7 @@ const en: Record<string, string> = {
   "wa.billBalanceDue": "Balance due: {amount}",
   "wa.billPayNow": "Pay now: {link}",
   "wa.billThanks": "Thank you for your business!",
+  "wa.billSendButton": "Send invoice on WhatsApp",
   "wa.requestAvailable": "Hi {name}, good news from {shop} — the item you asked for ({item}) is now available.{advance} Please visit to collect it. Thank you!",
   "wa.offerDefault": "Special offer at {shop}! Visit us this week for great deals. See you soon!",
   "wa.requestAdvanceNote": " Your advance of {amount} is on file.",

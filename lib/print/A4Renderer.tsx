@@ -243,7 +243,7 @@ export function A4Renderer({ data }: { data: A4InvoiceData }) {
             <div className="mt-4 flex flex-col items-end gap-1.5">
               <p className="text-[11px] text-neutral-400">Scan to pay</p>
               {/* eslint-disable-next-line @next/next/no-img-element -- static data URL, print page */}
-              <img src={data.upiQrDataUrl} alt="UPI payment QR code" className="h-24 w-24" />
+              <img id="upi-qr-block" src={data.upiQrDataUrl} alt="UPI payment QR code" className="h-24 w-24" />
               {data.upiId && <p className="text-[10px] text-neutral-400">{data.upiId}</p>}
             </div>
           )}

@@ -20,7 +20,7 @@ export function EditBillButton({ billId, invoiceNumber, items }: { billId: strin
 
   function save() {
     if (!hasChanges) {
-      setError("Change at least one quantity first");
+      setError(t("Change at least one quantity first"));
       return;
     }
     startTransition(async () => {
@@ -53,9 +53,9 @@ export function EditBillButton({ billId, invoiceNumber, items }: { billId: strin
       {open && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 sm:items-center" onClick={() => setOpen(false)}>
           <div className="flex max-h-[85vh] w-full max-w-md flex-col gap-3 overflow-y-auto rounded-t-2xl bg-surface p-5 sm:rounded-2xl" onClick={(e) => e.stopPropagation()}>
-            <p className="text-sm font-semibold text-foreground">Edit invoice #{invoiceNumber}</p>
+            <p className="text-sm font-semibold text-foreground">{t("Edit invoice #{number}", { number: invoiceNumber })}</p>
             <p className="text-xs text-muted">
-              Only quantities can be corrected here — to add or remove a different item, void this bill and create a new one instead. The invoice number stays the same; who edited it and why is recorded.
+              {t("Only quantities can be corrected here — to add or remove a different item, void this bill and create a new one instead. The invoice number stays the same; who edited it and why is recorded.")}
             </p>
 
             <div className="flex flex-col gap-2">
@@ -75,11 +75,11 @@ export function EditBillButton({ billId, invoiceNumber, items }: { billId: strin
             </div>
 
             <label className="flex flex-col gap-1.5 text-sm">
-              <span className="font-medium text-foreground">Reason for this edit</span>
+              <span className="font-medium text-foreground">{t("Reason for this edit")}</span>
               <input
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
-                placeholder="e.g. Customer said quantity was wrong"
+                placeholder={t("e.g. Customer said quantity was wrong")}
                 className="rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-brand"
               />
             </label>
@@ -87,10 +87,10 @@ export function EditBillButton({ billId, invoiceNumber, items }: { billId: strin
             {error && <p className="text-sm text-danger">{error}</p>}
             <div className="flex gap-2">
               <button onClick={save} disabled={isPending} className="btn-primary-sm flex-1 disabled:opacity-60">
-                {isPending ? "Saving…" : "Save changes"}
+                {isPending ? t("Saving…") : t("Save changes")}
               </button>
               <button onClick={() => setOpen(false)} className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-muted">
-                Cancel
+                {t("common.cancel")}
               </button>
             </div>
           </div>

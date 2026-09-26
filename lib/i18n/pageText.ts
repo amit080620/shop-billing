@@ -4,6 +4,35 @@
  * goes to customers and to the CA. Merged into `translations` by
  * dictionary.ts. */
 export const PAGE_TEXT: Record<string, [hi: string, mr: string]> = {
+  "This invoice has been voided.": ["यह इनवॉइस रद्द कर दिया गया है।", "हे इनव्हॉइस रद्द केले आहे."],
+  "This invoice was corrected after it was first created.": ["यह इनवॉइस बनने के बाद ठीक किया गया था।", "हे इनव्हॉइस तयार झाल्यानंतर दुरुस्त केले होते."],
+  "Reason: {reason} · {date}": ["कारण: {reason} · {date}", "कारण: {reason} · {date}"],
+  "It's excluded from all totals, balances, and GST reports. Kept here only for record-keeping — nothing prints on it below except as a reference copy.": [
+    "यह सभी टोटल, बैलेंस और GST रिपोर्ट से बाहर है। सिर्फ रिकॉर्ड के लिए यहाँ रखा गया है — नीचे सिर्फ रेफरेंस कॉपी के तौर पर दिखता है, प्रिंट नहीं होता।",
+    "हे सर्व टोटल, बॅलन्स आणि GST अहवालातून वगळलेले आहे. फक्त रेकॉर्डसाठी इथे ठेवले आहे — खाली फक्त संदर्भ प्रत म्हणून दिसते, प्रिंट होत नाही.",
+  ],
+  "WhatsApp text messages can't carry a file — download the PDF, then attach it yourself in the WhatsApp chat for a clean copy. If there's a balance due, the QR area in that PDF is also tappable in most PDF viewers, opening the customer's UPI app directly.": [
+    "WhatsApp मैसेज में फाइल नहीं जा सकती — पहले PDF डाउनलोड करें, फिर उसे WhatsApp चैट में खुद अटैच करें ताकि साफ कॉपी मिले। अगर बैलेंस बाकी है, तो उस PDF का QR भी ज़्यादातर PDF व्यूअर में टैप करने लायक है, जो सीधे ग्राहक की UPI ऐप खोल देता है।",
+    "WhatsApp मेसेजमध्ये फाइल जाऊ शकत नाही — आधी PDF डाउनलोड करा, नंतर ती WhatsApp चॅटमध्ये स्वतः जोडा म्हणजे स्वच्छ प्रत मिळेल. जर बॅलन्स बाकी असेल, तर त्या PDF मधील QR सुद्धा बहुतांश PDF व्ह्यूअरमध्ये टॅप करण्यायोग्य आहे, जो थेट ग्राहकाचे UPI अ‍ॅप उघडतो.",
+  ],
+  "Change at least one quantity first": ["पहले कम से कम एक मात्रा बदलें", "आधी किमान एक प्रमाण बदला"],
+  "Edit invoice #{number}": ["इनवॉइस #{number} बदलें", "इनव्हॉइस #{number} बदला"],
+  "Only quantities can be corrected here — to add or remove a different item, void this bill and create a new one instead. The invoice number stays the same; who edited it and why is recorded.": [
+    "यहाँ सिर्फ मात्रा ठीक की जा सकती है — कोई और आइटम जोड़ने/हटाने के लिए यह बिल रद्द करें और नया बनाएं। इनवॉइस नंबर वही रहता है; किसने और क्यों बदला, यह रिकॉर्ड होता है।",
+    "इथे फक्त प्रमाण दुरुस्त करता येते — दुसरे आयटम जोडण्यासाठी/काढण्यासाठी हे बिल रद्द करून नवीन तयार करा. इनव्हॉइस नंबर तोच राहतो; कोणी आणि का बदलले हे नोंदवले जाते.",
+  ],
+  "Reason for this edit": ["इस बदलाव की वजह", "या बदलाचे कारण"],
+  "e.g. Customer said quantity was wrong": ["जैसे: ग्राहक ने कहा मात्रा गलत थी", "उदा: ग्राहकाने सांगितले प्रमाण चुकीचे होते"],
+  "Save changes": ["बदलाव सेव करें", "बदल सेव्ह करा"],
+  "Voiding…": ["रद्द किया जा रहा है…", "रद्द केले जात आहे…"],
+  "Confirm void": ["रद्द करना पक्का करें", "रद्द करण्याची खात्री करा"],
+  "Invoice voided": ["इनवॉइस रद्द हुआ", "इनव्हॉइस रद्द झाले"],
+  "Void invoice #{number}?": ["इनवॉइस #{number} रद्द करें?", "इनव्हॉइस #{number} रद्द करायचे?"],
+  "This can't be undone. The invoice number stays reserved (never reused), stock is restored, and it's excluded from all totals and GST reports. Use this for genuine mistakes — issue a fresh corrected invoice afterward if the sale still happened.": [
+    "यह वापस नहीं हो सकता। इनवॉइस नंबर रिज़र्व रहता है (दोबारा इस्तेमाल नहीं होता), स्टॉक वापस आ जाता है, और यह सभी टोटल व GST रिपोर्ट से बाहर हो जाता है। सिर्फ सच्ची गलती के लिए इस्तेमाल करें — अगर सेल हुई ही थी तो बाद में नया सही इनवॉइस बनाएं।",
+    "हे परत केले जाऊ शकत नाही. इनव्हॉइस नंबर राखीव राहतो (पुन्हा वापरला जात नाही), स्टॉक परत येतो, आणि हे सर्व टोटल व GST अहवालातून वगळले जाते. फक्त खऱ्या चुकीसाठी वापरा — विक्री खरोखर झाली असेल तर नंतर नवीन बरोबर इनव्हॉइस तयार करा.",
+  ],
+  "Reason (e.g. entered by mistake, duplicate)": ["वजह (जैसे: गलती से डाला, डुप्लीकेट)", "कारण (उदा: चुकून टाकले, डुप्लिकेट)"],
   "Save & add another": ["सेव करें और अगला जोड़ें", "सेव्ह करा व पुढचे जोडा"],
   "{name} added — type the next one": ["{name} जुड़ गया — अगला लिखें", "{name} जोडले — पुढचे लिहा"],
   "{name} added": ["{name} जुड़ गया", "{name} जोडले"],

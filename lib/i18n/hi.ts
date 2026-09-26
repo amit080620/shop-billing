@@ -519,6 +519,7 @@ const hi: Record<string, string> = {
   "wa.billBalanceDue": "बकाया राशि: {amount}",
   "wa.billPayNow": "अभी भुगतान करें: {link}",
   "wa.billThanks": "आपके व्यापार के लिए धन्यवाद!",
+  "wa.billSendButton": "WhatsApp पर बिल भेजें",
   "wa.requestAvailable": "नमस्ते {name}, {shop} की तरफ़ से खुशख़बरी — आपने जो item माँगा था ({item}) वह अब उपलब्ध है।{advance} कृपया लेने आ जाएँ। धन्यवाद!",
   "wa.offerDefault": "{shop} में ख़ास ऑफ़र! इस हफ़्ते हमसे मिलें, बढ़िया deals पाएँ। मिलते हैं!",
   "wa.requestAdvanceNote": " आपका {amount} एडवांस दर्ज है।",

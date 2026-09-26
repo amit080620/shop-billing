@@ -10,13 +10,14 @@ import { useT } from "@/lib/i18n/LangContext";
 
 function SubmitButton() {
   const { pending } = useFormStatus();
+  const { t } = useT();
   return (
     <button
       type="submit"
       disabled={pending}
       className="btn-destructive text-sm"
     >
-      {pending ? "Voiding…" : "Confirm void"}
+      {pending ? t("Voiding…") : t("Confirm void")}
     </button>
   );
 }
@@ -28,7 +29,7 @@ export function VoidBillButton({ billId, invoiceNumber }: { billId: string; invo
   const [state, formAction] = useActionState(
     keepValuesOnError(async (prev: { error?: string } | null, formData: FormData) => {
       const result = await voidBillAction(prev, formData);
-      if (!result?.error) showToast("Invoice voided", "info");
+      if (!result?.error) showToast(t("Invoice voided"), "info");
       return result;
     }),
     null,
@@ -52,17 +53,15 @@ export function VoidBillButton({ billId, invoiceNumber }: { billId: string; invo
     >
       <input type="hidden" name="billId" value={billId} />
       <p className="text-sm font-medium text-danger">
-        Void invoice #{invoiceNumber}?
+        {t("Void invoice #{number}?", { number: invoiceNumber })}
       </p>
       <p className="text-xs text-danger/80">
-        This can&apos;t be undone. The invoice number stays reserved (never reused), stock is
-        restored, and it&apos;s excluded from all totals and GST reports. Use this for genuine
-        mistakes — issue a fresh corrected invoice afterward if the sale still happened.
+        {t("This can't be undone. The invoice number stays reserved (never reused), stock is restored, and it's excluded from all totals and GST reports. Use this for genuine mistakes — issue a fresh corrected invoice afterward if the sale still happened.")}
       </p>
       <input
         name="reason"
         required
-        placeholder="Reason (e.g. entered by mistake, duplicate)"
+        placeholder={t("Reason (e.g. entered by mistake, duplicate)")}
         className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-danger"
       />
       {state?.error && <p className="text-xs text-danger">{state.error}</p>}
@@ -73,7 +72,7 @@ export function VoidBillButton({ billId, invoiceNumber }: { billId: string; invo
           onClick={() => setOpen(false)}
           className="rounded border border-border px-3 py-1.5 text-sm font-medium text-muted"
         >
-          Cancel
+          {t("common.cancel")}
         </button>
       </div>
     </form>

@@ -4,7 +4,7 @@
 // abstraction layer. Builds a Uint8Array ready to send to a printer
 // over Bluetooth, USB, or serial.
 
-import type { ThermalPrinterProfile } from "./print/printerProfile";
+import { THERMAL_58_DEFAULT, THERMAL_80_DEFAULT } from "./print/printerProfile";
 import { buildDivider, buildHeaderRow, buildItemRowLines } from "./print/textGrid";
 
 const ESC = 0x1b;
@@ -162,7 +162,22 @@ export type ReceiptData = {
   items: ReceiptItem[];
   subtotal: number;
   discount?: number;
+  /** Combined-tax fallback for callers (KOT tickets, order slips) that
+   * don't need a GST-compliant breakdown. Ignored whenever taxableAmount
+   * is present, in favour of the detailed lines below. */
   taxTotal?: number;
+  /** Detailed GST breakdown — when present, printed the same way as the
+   * on-screen thermal preview (Taxable Value, then CGST+SGST or IGST,
+   * then Round Off) instead of one combined "Tax" line, so a customer's
+   * physical receipt shows the same tax split GST invoices are expected
+   * to carry, not just less detail than what the owner previewed. */
+  taxableAmount?: number;
+  isIntraState?: boolean;
+  cgstAmount?: number;
+  sgstAmount?: number;
+  igstAmount?: number;
+  roundOffAmount?: number;
+  savingsOffMrp?: number;
   total: number;
   paidAmount?: number;
   creditAmount?: number;
@@ -204,16 +219,10 @@ const DEFAULT_FORMAT_SETTINGS: ReceiptFormatSettings = {
  * the owner's own thermal print settings, not hardcoded, since a
  * Bluetooth printer renders its own text with no CSS involved. */
 export function buildReceiptEscPos(data: ReceiptData, charsWide: 32 | 48 = 32, format: ReceiptFormatSettings = DEFAULT_FORMAT_SETTINGS): Uint8Array {
-  const profile: ThermalPrinterProfile = {
-    paperWidthMm: charsWide === 32 ? 58 : 80,
-    charactersPerLine: charsWide,
-    fontMode: "A",
-    leftMarginChars: 0,
-    rightMarginChars: 0,
-    boldSupport: true,
-    doubleWidthSupport: true,
-    doubleHeightSupport: true,
-  };
+  // Same profile objects the on-screen thermal preview is built from
+  // (lib/print/ThermalRenderer.tsx) — a printer-width tweak there is
+  // never silently unmatched here.
+  const profile = charsWide === 32 ? THERMAL_58_DEFAULT : THERMAL_80_DEFAULT;
 
   const b = new EscPosBuilder();
   b.init();
@@ -238,9 +247,24 @@ export function buildReceiptEscPos(data: ReceiptData, charsWide: 32 | 48 = 32, f
   b.bold(false);
   b.text(buildDivider(profile)).newline();
 
+  if (data.savingsOffMrp) b.row("You saved (off MRP)", `Rs.${data.savingsOffMrp.toFixed(2)}`, charsWide);
   b.row("Subtotal", `Rs.${data.subtotal.toFixed(2)}`, charsWide);
   if (data.discount) b.row("Discount", `-Rs.${data.discount.toFixed(2)}`, charsWide);
-  if (data.taxTotal) b.row("Tax", `Rs.${data.taxTotal.toFixed(2)}`, charsWide);
+  if (data.taxableAmount != null) {
+    b.row("Taxable Value", `Rs.${data.taxableAmount.toFixed(2)}`, charsWide);
+    if (data.isIntraState) {
+      if (data.cgstAmount) b.row("CGST", `+Rs.${data.cgstAmount.toFixed(2)}`, charsWide);
+      if (data.sgstAmount) b.row("SGST", `+Rs.${data.sgstAmount.toFixed(2)}`, charsWide);
+    } else if (data.igstAmount) {
+      b.row("IGST", `+Rs.${data.igstAmount.toFixed(2)}`, charsWide);
+    }
+    if (data.roundOffAmount && Math.abs(data.roundOffAmount) > 0.001) {
+      const sign = data.roundOffAmount > 0 ? "+" : "-";
+      b.row("Round Off", `${sign}Rs.${Math.abs(data.roundOffAmount).toFixed(2)}`, charsWide);
+    }
+  } else if (data.taxTotal) {
+    b.row("Tax", `Rs.${data.taxTotal.toFixed(2)}`, charsWide);
+  }
 
   b.bold(format.totalBold || format.totalSize >= 2).italic(format.totalItalic).sizeLevel(format.totalSize);
   if (format.totalAlign === "left") {

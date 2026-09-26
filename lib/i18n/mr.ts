@@ -509,6 +509,7 @@ const mr: Record<string, string> = {
   "wa.billBalanceDue": "बाकी रक्कम: {amount}",
   "wa.billPayNow": "आता भरणा करा: {link}",
   "wa.billThanks": "आपल्या व्यवसायासाठी धन्यवाद!",
+  "wa.billSendButton": "WhatsApp वर बिल पाठवा",
   "wa.requestAvailable": "नमस्कार {name}, {shop} कडून आनंदाची बातमी — आपण मागितलेला item ({item}) आता उपलब्ध आहे.{advance} कृपया घेण्यासाठी या. धन्यवाद!",
   "wa.offerDefault": "{shop} मध्ये खास ऑफर! या आठवड्यात भेट द्या, उत्तम सवलती मिळवा. भेटूया!",
   "wa.requestAdvanceNote": " आपले {amount} advance नोंदवलेले आहे.",
