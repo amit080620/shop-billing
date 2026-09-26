@@ -6,6 +6,8 @@ import { createSupabaseServerClient } from "../supabase/server";
 import { createSupabaseAdminClient } from "../supabase/admin";
 import { signupSchema, loginSchema } from "../validation/schemas";
 import { revalidateStaffCache } from "../auth";
+import { getAuthenticatedUser } from "../supabase/server";
+import { isDemoEmail } from "../demo/config";
 import { hotelSchemaReady } from "../hotel/server";
 
 /** redirectTo: where the browser should go next. Login/signup finish with
@@ -222,7 +224,9 @@ export async function logoutThisDeviceAction() {
  * device was lost or a password was just changed for safety. */
 export async function logoutAllDevicesAction() {
   const supabase = await createSupabaseServerClient();
-  await supabase.auth.signOut({ scope: "global" });
+  // Every visitor of a demo shop is the same login: signing out "everywhere" would log the others out too.
+  const user = await getAuthenticatedUser();
+  await supabase.auth.signOut({ scope: isDemoEmail(user?.email) ? "local" : "global" });
   const cookieStore = await cookies();
   cookieStore.delete("kitchen_only");
   cookieStore.delete("hide_home");

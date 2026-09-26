@@ -20,7 +20,8 @@ export async function GET(request: Request) {
   if (!apiKey) return NextResponse.json({ skipped: "Assistant AI not configured" });
 
   const admin = createSupabaseAdminClient();
-  const { data: shops } = await admin.from("shops").select("id");
+  // The demo shops (see lib/demo) are refilled nightly and need no AI briefing.
+  const { data: shops } = await admin.from("shops").select("id").or('legal_name.is.null,legal_name.not.like."* (demo)"');
   const today = todayIso();
 
   let processed = 0;

@@ -84,11 +84,15 @@ export async function updateShopSettingsAction(
   return { success: true };
 }
 
+import { demoLocked } from "../demo/guard";
+
 export async function uploadLogoAction(
   _prev: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
   const session = await requireOwner();
+  const demoBlock = demoLocked(session);
+  if (demoBlock) return { error: demoBlock };
 
   const file = formData.get("logo");
   if (!(file instanceof File) || file.size === 0) {
@@ -177,6 +181,8 @@ type SettingsImageKind = "invoice_header" | "invoice_footer" | "prescription_hea
  * buckets), just a different destination column per kind. */
 export async function uploadSettingsImageAction(kind: SettingsImageKind, formData: FormData): Promise<{ error?: string; url?: string }> {
   const session = await requireOwner();
+  const demoBlock = demoLocked(session);
+  if (demoBlock) return { error: demoBlock };
   const admin = createSupabaseAdminClient();
 
   const file = formData.get("image");

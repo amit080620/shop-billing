@@ -1,5 +1,6 @@
 import "server-only";
 
+import { AsyncLocalStorage } from "node:async_hooks";
 import { redirect } from "next/navigation";
 import { unstable_cache, revalidateTag } from "next/cache";
 import { getAuthenticatedUser } from "./supabase/server";
@@ -164,7 +165,25 @@ export async function revalidateStaffCache(userId?: string) {
   if (userId) await invalidateCache(`ray:cache:staff-and-shop:${userId}`);
 }
 
+/** Runs a block of code as a given shop's owner without a browser session. Used
+ * only by the demo seeder (lib/demo), so the app's own server actions can fill a
+ * demo shop exactly the way a person would. Nothing outside that code path sets it. */
+const sessionOverride = new AsyncLocalStorage<SessionContext>();
+export function runAsSession<T>(session: SessionContext, fn: () => Promise<T>): Promise<T> {
+  return sessionOverride.run(session, fn);
+}
+
+/** The session for a user, read fresh from the database (no cache). */
+export async function buildSessionForUser(userId: string, email: string | null): Promise<SessionContext | null> {
+  const { staff, error } = await fetchStaffAndShop(userId);
+  if (error || !staff) return null;
+  return sessionFromStaff(userId, email, staff);
+}
+
 export async function requireSession(): Promise<SessionContext> {
+  const override = sessionOverride.getStore();
+  if (override) return override;
+
   const user = await getAuthenticatedUser();
 
   if (!user) {
@@ -177,6 +196,12 @@ export async function requireSession(): Promise<SessionContext> {
     redirect("/login");
   }
 
+  return sessionFromStaff(user.id, user.email ?? null, staff);
+}
+
+type StaffAndShop = NonNullable<Awaited<ReturnType<typeof fetchStaffAndShop>>["staff"]>;
+
+function sessionFromStaff(userId: string, email: string | null, staff: StaffAndShop): SessionContext {
   const shop = Array.isArray(staff.shops) ? staff.shops[0] : staff.shops;
 
   // A lapsed plan no longer locks the shop out: it drops to Free (see
@@ -201,8 +226,8 @@ export async function requireSession(): Promise<SessionContext> {
     : { billsPerMonth: null, products: null, staff: null, branches: null };
 
   return {
-    userId: user.id,
-    email: user.email ?? null,
+    userId,
+    email,
     shopId: staff.shop_id,
     shopName: shop?.name ?? "My Shop",
     staffName: staff.name,

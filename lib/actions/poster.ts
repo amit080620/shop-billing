@@ -1,6 +1,7 @@
 "use server";
 
 import { requireSession } from "../auth";
+import { isDemoSession } from "../demo/guard";
 
 const GROQ_MODEL = "openai/gpt-oss-120b";
 const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
@@ -17,7 +18,8 @@ export type PosterText = { headline: string; offerLine: string; ctaLine: string 
  * template for the visual layout gives a consistent, on-brand result
  * every single time, for free, with no risk of garbled output. */
 export async function generatePosterTextAction(occasion: string, discountPercent: number | null): Promise<{ text?: PosterText; error?: string }> {
-  await requireSession();
+  const session = await requireSession();
+  if (isDemoSession(session)) return { error: "not_configured" };
   const apiKey = process.env.GROQ_API_KEY?.trim();
   if (!apiKey) return { error: "not_configured" };
 

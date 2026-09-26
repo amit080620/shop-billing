@@ -53,7 +53,7 @@ export async function parseVoiceOrderAction(transcript: string): Promise<{
   if (!apiKey) return { error: "not_configured", errorType: "not_configured" };
   if (!transcript.trim()) return { items: [] };
 
-  const quota = await checkAiQuota(session.shopId, "voice");
+  const quota = await checkAiQuota(session.shopId, "voice", session.email);
   if (!quota.allowed) return { error: "Today's voice billing limit is used up. Try again tomorrow.", errorType: "quota_exceeded" };
 
   const admin = createSupabaseAdminClient();

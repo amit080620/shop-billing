@@ -1,6 +1,7 @@
 "use server";
 
 import { requireSession } from "../auth";
+import { isDemoSession } from "../demo/guard";
 import { createSupabaseAdminClient } from "../supabase/admin";
 
 const MODEL = "gemini-3.5-flash-lite";
@@ -34,6 +35,7 @@ export async function createShelfWatchAction(name: string): Promise<{ id?: strin
  * than last time" is genuinely something they're good at. */
 export async function checkShelfPhotoAction(shelfId: string, newPhotoBase64: string, mimeType: string): Promise<{ changes?: ShelfChange[]; error?: string; errorType?: string }> {
   const session = await requireSession();
+  if (isDemoSession(session)) return { error: "not_configured", errorType: "not_configured" };
   const apiKey = process.env.GEMINI_API_KEY?.trim();
   if (!apiKey) return { error: "not_configured", errorType: "not_configured" };
 

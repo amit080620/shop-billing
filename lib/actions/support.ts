@@ -14,11 +14,14 @@ export type SupportCategory = "billing" | "technical" | "feature" | "other";
  * `kind` column is constrained to a fixed set of values a migration would
  * be needed to extend). The row's own id becomes a short reference number
  * the shop can quote — no separate ticket-numbering sequence needed. */
+import { demoLocked } from "../demo/guard";
+
 export async function submitSupportRequestAction(
   category: SupportCategory,
   message: string,
 ): Promise<{ ok: boolean; ticketId?: string; error?: string }> {
   const session = await requireSession();
+  if (demoLocked(session)) return { ok: false, error: "Support requests are switched off in the demo shop." };
   const trimmed = message.trim();
   if (!trimmed) return { ok: false, error: "Please describe the issue first." };
 

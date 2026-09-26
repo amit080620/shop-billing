@@ -2,6 +2,7 @@
 
 import { createSupabaseAdminClient } from "../supabase/admin";
 import { requireSession } from "../auth";
+import { isDemoSession } from "../demo/guard";
 
 const GROQ_MODEL = "openai/gpt-oss-120b";
 const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
@@ -17,6 +18,7 @@ export async function generatePersonalizedBirthdayMessageAction(
   isToday: boolean,
 ): Promise<{ message: string }> {
   const session = await requireSession();
+  if (isDemoSession(session)) return { message: "" };
   const admin = createSupabaseAdminClient();
   const { data: customerNameRow } = await admin.from("customers").select("name").eq("id", customerId).eq("shop_id", session.shopId).maybeSingle();
   if (!customerNameRow) return { message: "" };

@@ -9,11 +9,15 @@ import { logAuditEvent } from "../audit";
 
 export type ActionState = { error?: string } | null;
 
+import { demoLocked } from "../demo/guard";
+
 export async function addStaffAction(
   _prev: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
   const session = await requireOwner(); // only the shop owner can add staff
+  const demoBlock = demoLocked(session);
+  if (demoBlock) return { error: demoBlock };
   const overLimit = await staffLimitError(session);
   if (overLimit) return { error: overLimit };
 
@@ -70,6 +74,8 @@ export async function updateStaffAction(
   formData: FormData,
 ): Promise<ActionState> {
   const session = await requireOwner();
+  const demoBlock = demoLocked(session);
+  if (demoBlock) return { error: demoBlock };
 
   const name = formData.get("name");
   const role = formData.get("role");
@@ -122,6 +128,8 @@ export async function updateStaffAction(
 
 export async function removeStaffAction(staffId: string): Promise<{ error?: string }> {
   const session = await requireOwner();
+  const demoBlock = demoLocked(session);
+  if (demoBlock) return { error: demoBlock };
   if (staffId === session.userId) return { error: "You can't remove yourself." };
 
   const admin = createSupabaseAdminClient();
@@ -158,6 +166,8 @@ export async function removeStaffAction(staffId: string): Promise<{ error?: stri
 
 export async function savePermissionsAction(staffId: string, permissions: string[]): Promise<{ error?: string }> {
   const session = await requireOwner();
+  const demoBlock = demoLocked(session);
+  if (demoBlock) return { error: demoBlock };
 
   if (staffId === session.userId) return { error: "The owner account always has every permission — nothing to change here." };
 

@@ -490,6 +490,8 @@ export async function addGrowthLogAction(input: {
 const PHOTO_MAX_BYTES = 4 * 1024 * 1024;
 const PHOTO_ALLOWED_TYPES = ["image/png", "image/jpeg", "image/webp"];
 
+import { demoLocked } from "../demo/guard";
+
 export async function uploadPatientPhotoAction(
   patientId: string,
   label: "before" | "after" | "other",
@@ -497,6 +499,8 @@ export async function uploadPatientPhotoAction(
   formData: FormData,
 ): Promise<{ error?: string }> {
   const session = await requireSession();
+  const demoBlock = demoLocked(session);
+  if (demoBlock) return { error: demoBlock };
   const admin = createSupabaseAdminClient();
 
   const file = formData.get("image");

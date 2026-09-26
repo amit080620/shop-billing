@@ -1,6 +1,7 @@
 "use server";
 
 import { requireSession } from "../auth";
+import { isDemoSession } from "../demo/guard";
 import { createSupabaseAdminClient } from "../supabase/admin";
 
 const GROQ_MODEL = "openai/gpt-oss-120b";
@@ -15,6 +16,7 @@ export type PriceSuggestion = { price: number | null; gstPercent: number | null;
  * says so honestly rather than inventing a number. */
 export async function suggestProductPriceAction(productName: string): Promise<{ suggestion?: PriceSuggestion; error?: string }> {
   const session = await requireSession();
+  if (isDemoSession(session)) return { error: "not_configured" };
   const apiKey = process.env.GROQ_API_KEY?.trim();
   if (!apiKey) return { error: "not_configured" };
   if (!productName.trim()) return { error: "No product name given" };

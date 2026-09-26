@@ -6,6 +6,7 @@ import { createSupabaseAdminClient } from "../supabase/admin";
 import { buildWhatsAppLink } from "../whatsapp";
 import { formatMoney } from "../format";
 import { checkAiQuota } from "../aiQuota";
+import { isDemoSession } from "../demo/guard";
 
 // Groq hosts genuinely open-source models (Meta's Llama) — this is a
 // deliberate choice over Gemini for the assistant specifically: this
@@ -715,7 +716,7 @@ export async function askAssistantAction(question: string, history: ChatMessage[
   const apiKey = process.env.GROQ_API_KEY?.trim();
   if (!apiKey) return { error: "not_configured" };
 
-  const quota = await checkAiQuota(session.shopId, "assistant");
+  const quota = await checkAiQuota(session.shopId, "assistant", session.email);
   if (!quota.allowed) return { error: "Aaj ke liye assistant ki daily limit khatam ho gayi — kal phir try karein." };
 
   const messages: GroqMessage[] = [
@@ -774,6 +775,7 @@ export async function computeBriefing(shopId: string, apiKey: string): Promise<{
  * notable. */
 export async function getProactiveBriefingAction(): Promise<{ answer?: string; error?: string }> {
   const session = await requireSession();
+  if (isDemoSession(session)) return { error: "not_configured" }; // the demo keeps the AI for chat only
   const apiKey = process.env.GROQ_API_KEY?.trim();
   if (!apiKey) return { error: "not_configured" };
 

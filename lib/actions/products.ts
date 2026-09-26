@@ -1,5 +1,6 @@
 "use server";
 
+import { demoLocked } from "../demo/guard";
 import { revalidatePath } from "next/cache";
 import { requireSession, requireOwner } from "../auth";
 import { createSupabaseAdminClient } from "../supabase/admin";
@@ -499,6 +500,8 @@ const PRODUCT_IMAGE_ALLOWED_TYPES = ["image/png", "image/jpeg", "image/webp"];
 
 export async function uploadProductImageAction(productId: string, formData: FormData): Promise<{ error?: string; imageUrl?: string }> {
   const session = await requireSession();
+  const demoBlock = demoLocked(session);
+  if (demoBlock) return { error: demoBlock };
   const admin = createSupabaseAdminClient();
 
   const file = formData.get("image");

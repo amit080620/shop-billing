@@ -1,5 +1,6 @@
 import { Ratelimit } from "@upstash/ratelimit";
 import { getRedis } from "./redis";
+import { isDemoEmail } from "./demo/config";
 
 // Generous by design — these exist to catch a genuine runaway (a bug
 // looping, or one shop hammering a feature) rather than to pinch
@@ -11,21 +12,25 @@ const DAILY_LIMITS = {
   scan: 100, // Gemini scan calls (products/purchase/khata/sales-history) per shop per day
 } as const;
 
+// The public demo shops share the app's AI key with everyone, so they get a small taste only.
+const DEMO_DAILY_LIMITS = { assistant: 12, voice: 8, scan: 5 } as const;
+
 export type AiQuotaFeature = keyof typeof DAILY_LIMITS;
 
 const limiters = new Map<AiQuotaFeature, Ratelimit>();
 
-function getLimiter(feature: AiQuotaFeature): Ratelimit | null {
+function getLimiter(feature: AiQuotaFeature, demo: boolean): Ratelimit | null {
   const redis = getRedis();
   if (!redis) return null;
-  const existing = limiters.get(feature);
+  const key = `${demo ? "demo:" : ""}${feature}` as AiQuotaFeature;
+  const existing = limiters.get(key);
   if (existing) return existing;
   const limiter = new Ratelimit({
     redis,
-    limiter: Ratelimit.slidingWindow(DAILY_LIMITS[feature], "1 d"),
-    prefix: `ray:aiquota:${feature}`,
+    limiter: Ratelimit.slidingWindow((demo ? DEMO_DAILY_LIMITS : DAILY_LIMITS)[feature], "1 d"),
+    prefix: `ray:aiquota:${demo ? "demo:" : ""}${feature}`,
   });
-  limiters.set(feature, limiter);
+  limiters.set(key, limiter);
   return limiter;
 }
 
@@ -36,14 +41,17 @@ function getLimiter(feature: AiQuotaFeature): Ratelimit | null {
  * infrastructure piece is unavailable. Without Upstash configured,
  * this is simply a no-op and every call is allowed, exactly as
  * before this existed. */
-export async function checkAiQuota(shopId: string, feature: AiQuotaFeature): Promise<{ allowed: boolean; remaining: number; limit: number }> {
-  const limiter = getLimiter(feature);
-  if (!limiter) return { allowed: true, remaining: DAILY_LIMITS[feature], limit: DAILY_LIMITS[feature] };
+export async function checkAiQuota(shopId: string, feature: AiQuotaFeature, email?: string | null): Promise<{ allowed: boolean; remaining: number; limit: number }> {
+  const demo = isDemoEmail(email);
+  const limit = (demo ? DEMO_DAILY_LIMITS : DAILY_LIMITS)[feature];
+  const limiter = getLimiter(feature, demo);
+  // Without Redis a demo has no counter to lean on, so the AI stays off there rather than open.
+  if (!limiter) return { allowed: !demo, remaining: limit, limit };
   try {
     const result = await limiter.limit(shopId);
-    return { allowed: result.success, remaining: result.remaining, limit: DAILY_LIMITS[feature] };
+    return { allowed: result.success, remaining: result.remaining, limit };
   } catch (err) {
     console.error(`AI quota check failed for ${feature}`, err);
-    return { allowed: true, remaining: DAILY_LIMITS[feature], limit: DAILY_LIMITS[feature] };
+    return { allowed: !demo, remaining: limit, limit };
   }
 }

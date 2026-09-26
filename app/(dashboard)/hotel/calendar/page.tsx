@@ -100,8 +100,8 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
             <section className="flex flex-col gap-2">
               <h2 className="text-sm font-semibold text-foreground">{t("Bookings still needing a room")}</h2>
               <ul className="flex flex-col gap-2">
-                {cal.unassigned.map((b) => (
-                  <li key={`${b.bookingId}-${b.roomTypeName}`}>
+                {cal.unassigned.map((b, i) => (
+                  <li key={`${b.bookingId}-${b.roomTypeName}-${i}`}>
                     <Link href={`/hotel/bookings/${b.bookingId}`} className="neu-card flex items-center justify-between gap-3 p-3 text-sm">
                       <span className="min-w-0 truncate font-medium text-foreground">{b.guestName}</span>
                       <span className="shrink-0 text-xs text-muted">
