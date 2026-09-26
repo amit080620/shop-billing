@@ -78,14 +78,14 @@ export function RoomBoardClient({ rooms, canManage }: { rooms: BoardRoom[]; canM
               .map((r) => {
                 const s = STATE[r.state];
                 return (
-                  <li key={r.id}>
+                  <li key={r.id} className="min-w-0">
                     <button type="button" onClick={() => setOpen(r)} className={`flex min-h-[92px] w-full flex-col items-start gap-0.5 rounded-xl border p-3 text-left ${s.tile}`}>
                       <span className="flex w-full items-center justify-between">
                         <span className="text-lg font-bold tracking-tight text-foreground">{r.roomNumber}</span>
                         <span className={`h-2 w-2 rounded-full ${s.dot}`} />
                       </span>
-                      <span className="text-[11px] text-muted">{r.roomTypeName}</span>
-                      <span className="mt-auto truncate text-xs font-medium text-foreground">
+                      <span className="max-w-full truncate text-[11px] text-muted">{r.roomTypeName}</span>
+                      <span className="mt-auto max-w-full truncate text-xs font-medium text-foreground">
                         {r.state === "occupied" && r.guest ? r.guest.name : r.state === "arriving" && r.arrival ? r.arrival.name : t(s.label)}
                       </span>
                       {r.state === "occupied" && r.guest && <span className="text-[11px] text-muted">{t("till")} {formatStayDate(r.guest.checkOut)}</span>}
