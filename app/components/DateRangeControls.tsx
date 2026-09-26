@@ -26,12 +26,12 @@ export function DateRangeControls({ from, to, basePath }: { from: string; to: st
     { label: t("range.last30"), from: isoDaysAgo(29) },
   ];
   const pill = (active: boolean) =>
-    `shrink-0 rounded-full bg-background px-3 py-1.5 text-xs font-medium ${active ? "text-brand-text" : "text-muted"}`;
+    `rounded-full bg-background px-3 py-1.5 text-xs font-medium ${active ? "text-brand-text" : "text-muted"}`;
   const activeStyle = { boxShadow: "var(--elev-xs)" };
 
   return (
     <div className="flex flex-col gap-2">
-      <div className="flex gap-2 overflow-x-auto scroll-hide pb-0.5">
+      <div className="flex flex-wrap gap-2">
         {presets.map((p) => {
           const active = !showCustom && from === p.from && to === today;
           return (

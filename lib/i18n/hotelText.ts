@@ -168,6 +168,7 @@ export const HOTEL_TEXT: Record<string, [hi: string, mr: string]> = {
   "Calendar": ["Calendar", "Calendar"],
   "Earlier": ["पहले", "आधी"],
   "Later": ["बाद में", "नंतर"],
+  "Swipe sideways to see the next week": ["अगला हफ़्ता देखने के लिए साइड में स्वाइप करें", "पुढचा आठवडा पाहण्यासाठी बाजूला स्वाइप करा"],
   "Add rooms first to see them here.": ["Rooms यहाँ देखने के लिए पहले जोड़ें।", "Rooms इथे पाहण्यासाठी आधी जोडा."],
   "Set up rooms": ["Rooms set up करें", "Rooms set up करा"],
   "In-house": ["In-house (ठहरे हुए)", "In-house (मुक्कामी)"],

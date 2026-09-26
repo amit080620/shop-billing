@@ -30,17 +30,18 @@ export function SourceChip({ source, t }: { source: string; t: T }) {
 export function BookingRow({ b, t, note }: { b: BookingListRow; t: T; note?: React.ReactNode }) {
   return (
     <li>
-      <Link href={`/hotel/bookings/${b.id}`} className="neu-card flex items-center justify-between gap-3 p-3 hover-lift">
-        <div className="min-w-0">
-          <p className="truncate text-sm font-semibold text-foreground">{b.guestName}</p>
-          <p className="truncate text-xs text-muted">
+      <Link href={`/hotel/bookings/${b.id}`} className="neu-card flex flex-col gap-1 p-3 hover-lift">
+        <div className="flex items-start justify-between gap-2">
+          <p className="min-w-0 truncate text-sm font-semibold text-foreground">{b.guestName}</p>
+          {note ?? <StatusChip status={b.status} t={t} />}
+        </div>
+        {/* The details wrap instead of being cut off; the source chip drops below when there is no room beside them. */}
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+          <p className="min-w-0 break-words text-xs text-muted">
             {b.roomLabels.length ? b.roomLabels.map((r, i) => (b.roomAssigned[i] ? `${t("Room")} ${r}` : r)).join(", ") : t("No room yet")}
             {" · "}
             {formatStayDate(b.checkIn)} → {formatStayDate(b.checkOut)} ({b.nights} {b.nights === 1 ? t("night") : t("nights")})
           </p>
-        </div>
-        <div className="flex shrink-0 flex-col items-end gap-1">
-          {note ?? <StatusChip status={b.status} t={t} />}
           <SourceChip source={b.source} t={t} />
         </div>
       </Link>

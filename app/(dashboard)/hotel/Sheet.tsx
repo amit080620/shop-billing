@@ -18,7 +18,7 @@ export function Sheet({ title, onClose, children, wide = false }: { title: strin
       <div
         role="dialog"
         aria-label={title}
-        className={`flex max-h-[90vh] w-full flex-col gap-3 overflow-y-auto rounded-t-2xl bg-surface p-5 sm:rounded-2xl ${wide ? "max-w-lg" : "max-w-md"}`}
+        className={`flex max-h-[90vh] max-h-[90dvh] w-full flex-col gap-3 overflow-y-auto overscroll-contain rounded-t-2xl bg-surface p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:rounded-2xl ${wide ? "max-w-lg" : "max-w-md"}`}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-start justify-between gap-3">

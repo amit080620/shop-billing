@@ -54,13 +54,13 @@ export function RoomBoardClient({ rooms, canManage }: { rooms: BoardRoom[]; canM
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="-mx-4 flex gap-2 overflow-x-auto scroll-hide px-4 pb-1 md:mx-0 md:px-0">
+      <div className="flex flex-wrap gap-2">
         {chips.map((c) => (
           <button
             key={c.key}
             type="button"
             onClick={() => setFilter(c.key)}
-            className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium ${filter === c.key ? "border-brand bg-brand-soft text-brand-text" : "border-border text-muted"}`}
+            className={`rounded-full border px-3 py-1.5 text-xs font-medium ${filter === c.key ? "border-brand bg-brand-soft text-brand-text" : "border-border text-muted"}`}
           >
             {c.label} <span className="opacity-70">{c.count}</span>
           </button>

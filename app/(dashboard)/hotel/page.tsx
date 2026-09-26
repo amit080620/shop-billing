@@ -45,9 +45,9 @@ export default async function FrontDeskPage() {
         }
       />
 
-      <div className="-mx-4 flex gap-2 overflow-x-auto scroll-hide px-4 pb-1 md:mx-0 md:px-0">
+      <div className="flex flex-wrap gap-2">
         {nav.map((n) => (
-          <Link key={n.href} href={n.href} className="flex shrink-0 items-center gap-1.5 rounded-full border border-border bg-surface px-3 py-1.5 text-xs font-medium text-foreground hover:bg-surface-2">
+          <Link key={n.href} href={n.href} className="flex items-center gap-1.5 rounded-full border border-border bg-surface px-3 py-1.5 text-xs font-medium text-foreground hover:bg-surface-2">
             <n.icon size={13} /> {n.label}
           </Link>
         ))}
@@ -141,9 +141,9 @@ const TONES = {
 
 function Kpi({ label, value, sub, tone }: { label: string; value: string; sub: string; tone: keyof typeof TONES }) {
   return (
-    <div className="neu-card flex flex-col gap-0.5 p-3.5">
+    <div className="neu-card flex min-w-0 flex-col gap-0.5 p-3.5">
       <p className="text-xs font-medium text-muted">{label}</p>
-      <p className={`text-2xl font-bold tracking-tight ${TONES[tone]}`}>{value}</p>
+      <p className={`break-words text-lg font-bold tracking-tight min-[360px]:text-xl min-[400px]:text-2xl ${TONES[tone]}`}>{value}</p>
       <p className="text-[11px] text-muted">{sub}</p>
     </div>
   );

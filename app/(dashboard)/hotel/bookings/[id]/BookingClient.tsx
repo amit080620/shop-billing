@@ -284,7 +284,7 @@ export function BookingClient({
       )}
 
       {open && (
-        <div className="fixed inset-x-0 bottom-[var(--bottom-nav-h,4rem)] z-30 border-t border-border bg-surface/95 px-4 py-3 backdrop-blur md:bottom-0 md:left-72">
+        <div className="fixed inset-x-0 bottom-[calc(var(--bottom-nav-h,4rem)+env(safe-area-inset-bottom))] z-30 border-t border-border bg-surface/95 px-4 py-3 backdrop-blur md:bottom-0 md:left-72">
           <div className="mx-auto flex max-w-lg items-center gap-2 md:max-w-3xl">
             {b.status === "reserved" ? (
               <>

@@ -4,7 +4,7 @@ import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { getTranslator } from "@/lib/i18n/server";
 import { formatMoney, paymentMethodLabel } from "@/lib/format";
 import { isoDaysAgo, todayIso } from "@/lib/dateHelpers";
-import { isIsoDate } from "@/lib/hotel/dates";
+import { formatStayDate, isIsoDate } from "@/lib/hotel/dates";
 import { sourceLabel } from "@/lib/hotel/constants";
 import { hotelSchemaReady, loadHotelReport } from "@/lib/hotel/server";
 import { PageHeader } from "@/app/components/PageHeader";
@@ -105,13 +105,14 @@ export default async function HotelReportsPage({ searchParams }: { searchParams:
               <li key={g.bookingNumber} className="flex items-center justify-between gap-3 py-2 text-sm">
                 <div className="min-w-0">
                   <p className="truncate font-medium text-foreground">{g.guestName}</p>
-                  <p className="truncate text-xs text-muted">
+                  <p className="break-words text-xs text-muted">
                     {g.rooms ? `${t("Room")} ${g.rooms} · ` : ""}
                     {g.idProofType ? `${g.idProofType} ${g.idProofNumber ?? ""}` : t("No ID recorded")}
                   </p>
                 </div>
-                <p className="shrink-0 text-xs text-muted">
-                  {g.checkIn.slice(5)} → {g.checkOut.slice(5)}
+                <p className="shrink-0 whitespace-nowrap text-right text-xs text-muted">
+                  {formatStayDate(g.checkIn)}
+                  <br />→ {formatStayDate(g.checkOut)}
                 </p>
               </li>
             ))}
@@ -125,9 +126,9 @@ export default async function HotelReportsPage({ searchParams }: { searchParams:
 
 function Stat({ label, value, sub }: { label: string; value: string; sub: string }) {
   return (
-    <div className="neu-card flex flex-col gap-0.5 p-3.5">
+    <div className="neu-card flex min-w-0 flex-col gap-0.5 p-3.5">
       <p className="text-xs font-medium text-muted">{label}</p>
-      <p className="text-xl font-bold tracking-tight text-foreground">{value}</p>
+      <p className="break-words text-base font-bold tracking-tight text-foreground min-[360px]:text-lg min-[400px]:text-xl">{value}</p>
       <p className="text-[11px] text-muted">{sub}</p>
     </div>
   );

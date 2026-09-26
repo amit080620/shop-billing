@@ -67,14 +67,24 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
             </span>
           </div>
 
-          <div className="-mx-4 overflow-x-auto scroll-hide px-4 md:mx-0 md:px-0">
-            <table className="w-max min-w-full border-separate border-spacing-0 text-xs">
+          <p className="text-[11px] text-muted md:hidden">{t("Swipe sideways to see the next week")}</p>
+
+          {/* On a phone one week fits the screen exactly (--day is a seventh of what is left after the room column);
+              the second week is a swipe away. From tablet width every day gets a fixed width. */}
+          <div className="snap-x snap-proximity scroll-pl-16 overflow-x-auto overscroll-x-contain rounded-xl border border-border bg-surface scroll-hide [--day:calc((100vw-34px-64px)/7)] md:[--day:52px]">
+            <table className="min-w-full table-fixed border-separate border-spacing-0 text-xs" style={{ width: "calc(64px + 14 * var(--day))" }}>
+              <colgroup>
+                <col style={{ width: 64 }} />
+                {cal.days.map((d) => (
+                  <col key={d} style={{ width: "var(--day)" }} />
+                ))}
+              </colgroup>
               <thead>
                 <tr>
-                  <th className="sticky left-0 z-10 min-w-[84px] border-b border-border bg-background px-2 py-2 text-left font-semibold text-muted">{t("Room")}</th>
-                  {cal.days.map((d) => (
-                    <th key={d} className={`min-w-[52px] border-b border-border px-1 py-1.5 text-center font-medium ${d === today ? "bg-brand-soft text-brand-text" : "text-muted"}`}>
-                      <div className="text-[10px] uppercase">{weekdayShort(d)}</div>
+                  <th className="sticky left-0 z-10 border-b border-r border-border bg-surface px-1.5 py-2 text-left font-semibold text-muted">{t("Room")}</th>
+                  {cal.days.map((d, i) => (
+                    <th key={d} className={`border-b border-border px-0 py-1.5 text-center font-medium ${i === 0 || i === 7 ? "snap-start" : ""} ${d === today ? "bg-brand-soft text-brand-text" : "text-muted"}`}>
+                      <div className="text-[9px] uppercase">{weekdayShort(d)}</div>
                       <div className="text-sm font-semibold">{Number(d.slice(8))}</div>
                     </th>
                   ))}
@@ -102,9 +112,9 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
               <ul className="flex flex-col gap-2">
                 {cal.unassigned.map((b, i) => (
                   <li key={`${b.bookingId}-${b.roomTypeName}-${i}`}>
-                    <Link href={`/hotel/bookings/${b.bookingId}`} className="neu-card flex items-center justify-between gap-3 p-3 text-sm">
+                    <Link href={`/hotel/bookings/${b.bookingId}`} className="neu-card flex flex-col gap-0.5 p-3 text-sm">
                       <span className="min-w-0 truncate font-medium text-foreground">{b.guestName}</span>
-                      <span className="shrink-0 text-xs text-muted">
+                      <span className="text-xs text-muted">
                         {b.roomTypeName} · {formatStayDate(b.checkIn)} → {formatStayDate(b.checkOut)}
                       </span>
                     </Link>
@@ -119,6 +129,13 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
   );
 }
 
+/** "Ritu Sharma" → "RS": the only thing that fits in a one-night bar on a phone. */
+function initials(name: string): string {
+  const parts = name.replace(/[^\p{L}\p{N} ]/gu, "").trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "•";
+  return (parts.length === 1 ? parts[0].slice(0, 2) : parts[0][0] + parts[1][0]).toUpperCase();
+}
+
 function Legend({ cls, label }: { cls: string; label: string }) {
   return (
     <span className="flex items-center gap-1">
@@ -131,7 +148,9 @@ function TypeBlock({ typeName, free, days, today, children }: { typeName: string
   return (
     <>
       <tr>
-        <td className="sticky left-0 z-10 bg-surface-2 px-2 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted">{typeName}</td>
+        <td title={typeName} className="sticky left-0 z-10 truncate border-r border-border bg-surface-2 px-1.5 py-1.5 text-[10px] font-semibold text-muted">
+          {typeName}
+        </td>
         {days.map((d, i) => (
           <td key={d} className={`bg-surface-2 py-1.5 text-center text-[11px] font-semibold ${free[i] === 0 ? "text-danger" : "text-success"} ${d === today ? "underline" : ""}`}>
             {free[i]}
@@ -153,7 +172,7 @@ function RoomRow({ roomId, label, sub, days, today, bars, blocked }: { roomId: s
       cells.push(
         <td key={day} className={`border-b border-border/60 p-0.5 ${day === today ? "bg-brand-soft/40" : ""} ${blocked ? "bg-surface-2" : ""}`}>
           {!blocked && (
-            <Link href={`/hotel/bookings/new?room=${roomId}&in=${day}`} aria-label={`${label} ${day}`} className="block h-8 rounded text-center text-[10px] leading-8 text-transparent hover:bg-surface-2 hover:text-muted">
+            <Link href={`/hotel/bookings/new?room=${roomId}&in=${day}`} aria-label={`${label} ${day}`} className="block h-9 rounded text-center text-[10px] leading-9 text-transparent hover:bg-surface-2 hover:text-muted">
               +
             </Link>
           )}
@@ -171,10 +190,11 @@ function RoomRow({ roomId, label, sub, days, today, bars, blocked }: { roomId: s
         <Link
           href={`/hotel/bookings/${bar.bookingId}`}
           title={`${bar.guestName} · ${formatStayDate(bar.checkIn)} → ${formatStayDate(bar.checkOut)}`}
-          className={`flex h-8 items-center gap-1 truncate border px-2 text-[11px] font-semibold ${bar.overstay ? "border-danger bg-danger-soft text-danger" : (BAR_STYLE[bar.status] ?? BAR_STYLE.reserved)} ${continuesLeft ? "rounded-l-none border-l-0" : "rounded-l-lg"} ${continuesRight ? "rounded-r-none border-r-0" : "rounded-r-lg"}`}
+          aria-label={`${bar.guestName} · ${formatStayDate(bar.checkIn)} → ${formatStayDate(bar.checkOut)}`}
+          className={`flex h-9 items-center gap-1 overflow-hidden border px-1.5 text-[11px] font-semibold ${bar.overstay ? "border-danger bg-danger-soft text-danger" : (BAR_STYLE[bar.status] ?? BAR_STYLE.reserved)} ${continuesLeft ? "rounded-l-none border-l-0" : "rounded-l-lg"} ${continuesRight ? "rounded-r-none border-r-0" : "rounded-r-lg"}`}
         >
-          {sourceIsOta(bar.source) && <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-info" />}
-          <span className="truncate">{bar.guestName}</span>
+          {span > 1 && sourceIsOta(bar.source) && <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-info" />}
+          <span className="truncate">{span > 1 ? bar.guestName : initials(bar.guestName)}</span>
         </Link>
       </td>,
     );
@@ -182,9 +202,11 @@ function RoomRow({ roomId, label, sub, days, today, bars, blocked }: { roomId: s
   }
   return (
     <tr>
-      <td className="sticky left-0 z-10 border-b border-border/60 bg-background px-2 py-1 text-sm font-semibold text-foreground">
-        {label}
-        {sub && <div className="text-[10px] font-normal text-muted">{sub}</div>}
+      <td className="sticky left-0 z-10 border-b border-r border-border/60 bg-surface px-1.5 py-1 text-sm font-semibold text-foreground">
+        <div className="truncate" title={label}>
+          {label}
+        </div>
+        {sub && <div className="text-[9px] font-normal leading-tight text-muted">{sub}</div>}
       </td>
       {cells}
     </tr>
