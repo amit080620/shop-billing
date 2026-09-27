@@ -230,6 +230,8 @@ export function NewBillClient({
     ratePerGram: number;
     value: number;
   } | null>(null);
+  // Old gold or silver handed over pays part of the bill; paidAmount stays the cash (or UPI, card...) only.
+  const exchangeValue = exchangeInfo?.value ?? 0;
   const [tripInfo, setTripInfo] = useState<{ vehicleId: string; km: number; driverName: string; loadWeight: number | null; loadUnit: string } | null>(null);
 
   const supplyType = useMemo(
@@ -263,11 +265,11 @@ export function NewBillClient({
         })),
         discountType,
         discountValue: discountType === "flat" ? discountValue + redemptionValue : discountValue,
-        paidAmount: typeof paidAmount === "number" ? paidAmount : 0,
+        paidAmount: (typeof paidAmount === "number" ? paidAmount : 0) + exchangeValue,
         supplyType,
         priceMode: shopContext.priceIncludesGst ? "inclusive" : "exclusive",
       }),
-    [cart, discountType, discountValue, redemptionValue, paidAmount, supplyType, shopContext.priceIncludesGst],
+    [cart, discountType, discountValue, redemptionValue, paidAmount, exchangeValue, supplyType, shopContext.priceIncludesGst],
   );
 
   const [state, formAction] = useActionState(keepValuesOnError(createBillAction), null);
@@ -1126,9 +1128,9 @@ export function NewBillClient({
         <div className="flex gap-2">
           <button
             type="button"
-            onClick={() => setPaidAmount(totals.total)}
+            onClick={() => setPaidAmount(Math.max(0, totals.total - exchangeValue))}
             className={`flex-1 rounded-lg border px-3 py-2 text-sm font-medium ${
-              paidAmount === totals.total
+              typeof paidAmount === "number" && paidAmount + exchangeValue === totals.total
                 ? "border-brand bg-brand-soft text-brand-text"
                 : "border-border text-muted"
             }`}
