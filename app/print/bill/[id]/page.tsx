@@ -99,6 +99,21 @@ export default async function PrintBillPage({
   const isIntra = bill.supply_type === "intra";
   const paymentLabel = paymentMethodLabel(bill.payment_method);
 
+  // Old gold or silver taken in exchange pays part of the bill, and is stored inside paid_amount:
+  // the invoice shows it as its own line and prints only the rest as the money that was paid.
+  const { data: exchangeRow } = await admin
+    .from("jewellery_exchanges")
+    .select("metal_type, gross_weight, purity_percent, exchange_value")
+    .eq("bill_id", id)
+    .eq("shop_id", session.shopId)
+    .limit(1)
+    .maybeSingle();
+  const exchangeAmount = exchangeRow ? Number(exchangeRow.exchange_value) : 0;
+  const exchangeLabel = exchangeRow
+    ? `Old ${exchangeRow.metal_type} exchange (${Number(exchangeRow.gross_weight)} g @ ${Number(exchangeRow.purity_percent)}%)`
+    : null;
+  const cashPaid = Math.max(0, Number(bill.paid_amount) - exchangeAmount);
+
   let upiLink: string | null = null;
   let upiQrDataUrl: string | null = null;
   if (session.shopUpiId && Number(bill.credit_amount) > 0 && bill.status === "active") {
@@ -180,7 +195,9 @@ export default async function PrintBillPage({
     igstAmount: Number(bill.igst_amount),
     roundOffAmount: Number(bill.round_off_amount),
     total: Number(bill.total),
-    paidAmount: Number(bill.paid_amount),
+    exchangeLabel,
+    exchangeAmount,
+    paidAmount: cashPaid,
     paymentLabel,
     creditAmount: Number(bill.credit_amount),
     tagline: invoiceSettings?.tagline ?? null,
@@ -228,7 +245,9 @@ export default async function PrintBillPage({
     igstAmount: Number(bill.igst_amount),
     roundOffAmount: Number(bill.round_off_amount),
     total: Number(bill.total),
-    paidAmount: Number(bill.paid_amount),
+    exchangeLabel,
+    exchangeAmount,
+    paidAmount: cashPaid,
     paymentLabel,
     creditAmount: Number(bill.credit_amount),
     bankDetails: invoiceSettings?.bank_details ?? null,

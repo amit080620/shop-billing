@@ -42,6 +42,8 @@ export type A4InvoiceData = {
   igstAmount?: number;
   roundOffAmount?: number;
   total: number;
+  exchangeLabel?: string | null;
+  exchangeAmount?: number;
   paidAmount: number;
   paymentLabel: string;
   creditAmount?: number;
@@ -230,6 +232,9 @@ export function A4Renderer({ data }: { data: A4InvoiceData }) {
           <p className="mt-1.5 text-right text-[11px] italic text-neutral-500">{amountInWords(data.total)}</p>
 
           <div className="mt-3 text-[12px] text-neutral-500">
+            {data.exchangeLabel && data.exchangeAmount != null && data.exchangeAmount > 0 && (
+              <SummaryLine label={data.exchangeLabel} value={`− ${money(data.exchangeAmount)}`} />
+            )}
             <SummaryLine label={`Paid (${data.paymentLabel})`} value={money(data.paidAmount)} />
             {data.creditAmount != null && data.creditAmount > 0 && (
               <div className="mt-1 flex items-baseline justify-between font-medium text-amber-700">

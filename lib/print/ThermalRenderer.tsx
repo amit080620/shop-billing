@@ -33,6 +33,8 @@ export type ThermalReceiptData = {
   igstAmount?: number;
   roundOffAmount?: number;
   total: number;
+  exchangeLabel?: string | null;
+  exchangeAmount?: number;
   paidAmount: number;
   paymentLabel: string;
   creditAmount?: number;
@@ -98,6 +100,10 @@ export function ThermalRenderer({
   }
   lines.push(buildDivider(profile));
 
+  const exchangeLine =
+    data.exchangeLabel && data.exchangeAmount && data.exchangeAmount > 0
+      ? buildTwoColumnRow(data.exchangeLabel, `- Rs.${money(data.exchangeAmount)}`, profile)
+      : null;
   const paidLine = buildTwoColumnRow(`Paid (${data.paymentLabel})`, `Rs.${money(data.paidAmount)}`, profile);
   const creditLine =
     data.creditAmount && data.creditAmount > 0
@@ -175,6 +181,7 @@ export function ThermalRenderer({
           </div>
         );
       })()}
+      {exchangeLine && <div>{exchangeLine}</div>}
       <div>{paidLine}</div>
       {creditLine && <div className="font-bold">{creditLine}</div>}
 
