@@ -43,7 +43,9 @@ export async function removeDemoShop(admin: Admin, userId: string): Promise<void
   const shopId = staff.shop_id;
   // A hotel stay and its bill point at each other; cut that link first.
   await admin.from("bills").update({ hotel_booking_id: null }).eq("shop_id", shopId).not("hotel_booking_id", "is", null);
-  for (const table of ["restaurant_orders", "combos", "rentals", "service_jobs", "lab_orders", "prescriptions", "treatment_plans", "purchases", "bills"] as const) {
+  // Anything a visitor can create while trying the demo (a stock count, a return, a QR order...) must be emptied too,
+  // or the shop cannot be deleted and the demo stays down until someone cleans it by hand.
+  for (const table of ["stock_audits", "batch_writeoffs", "table_order_requests", "returns", "jewellery_exchanges", "transport_trips", "appointments", "clinic_appointments", "restaurant_reservations", "restaurant_orders", "combos", "rentals", "service_jobs", "lab_orders", "prescriptions", "treatment_plans", "purchases", "bills"] as const) {
     await admin.from(table).delete().eq("shop_id", shopId);
   }
   const { error } = await admin.from("shops").delete().eq("id", shopId);
