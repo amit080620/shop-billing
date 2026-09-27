@@ -1,21 +1,22 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useSearchParams, useRouter, usePathname } from "next/navigation";
+import { useSearchParams, usePathname } from "next/navigation";
 
 export function BillCreatedConfirmation({ amount, pointsEarned }: { amount?: string; pointsEarned?: number }) {
   const searchParams = useSearchParams();
-  const router = useRouter();
   const pathname = usePathname();
   const [visible, setVisible] = useState(searchParams.get("new") === "1");
 
   useEffect(() => {
     if (!visible) return;
-    // Auto-dismiss, then strip the ?new=1 flag so refreshing/sharing
-    // this link never re-triggers the celebration.
+    // Auto-dismiss, then strip the ?new=1 flag so refreshing/sharing this link never
+    // re-triggers the celebration. Done via the native History API, not router.replace:
+    // that would re-navigate this server-rendered page, flashing the already-rendered
+    // invoice back to the loading skeleton while it refetches from scratch.
     const timer = setTimeout(() => {
       setVisible(false);
-      router.replace(pathname);
+      window.history.replaceState(null, "", pathname);
     }, 2200);
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps

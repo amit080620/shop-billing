@@ -36,7 +36,7 @@ export function ProfitLeakClient() {
       label: "Expire hone wala stock",
       sub: `${data.expiringStockCount} batch${data.expiringStockCount === 1 ? "" : "es"} — within 30 days`,
       value: data.expiringStockValue,
-      href: "/expiry-alerts",
+      href: "/pharmacy/expiry",
     },
     {
       icon: <Package size={18} />,
