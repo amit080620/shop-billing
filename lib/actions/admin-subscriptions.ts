@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { requireSuperAdmin } from "../admin-auth";
 import { createSupabaseAdminClient } from "../supabase/admin";
 import { hotelSchemaReady } from "../hotel/server";
+import { emptyShopForDeletion } from "../shopDeletion";
 
 export type ActionState = { error?: string; success?: boolean } | null;
 
@@ -125,11 +126,10 @@ export async function adminSetShopModulesAction(shopId: string, enabledModules: 
 /** Permanently deletes a shop, all of its data, and its staff logins.
  * Super-admin only, and the exact shop name must be typed to confirm.
  *
- * Every table's shop_id cascades on delete. purchases.vendor_id is ON
- * DELETE RESTRICT, which could fail the cascade depending on the order
- * Postgres removes rows in, so purchases (their items/payments cascade)
- * are removed first as a precaution. Staff rows go with the shop; their
- * auth users are removed afterwards so the emails can sign up again. */
+ * Every table's shop_id cascades on delete, but some rows also point at the shop's own bills,
+ * products or vendors without cascading, which fails the one-statement delete; those tables are
+ * emptied first (emptyShopForDeletion). Staff rows go with the shop; their auth users are removed
+ * afterwards so the emails can sign up again. */
 export async function adminDeleteShopAction(shopId: string, confirmName: string): Promise<{ error?: string }> {
   await requireSuperAdmin();
   const db = createSupabaseAdminClient();
@@ -140,11 +140,7 @@ export async function adminDeleteShopAction(shopId: string, confirmName: string)
 
   const { data: staff } = await db.from("staff").select("id").eq("shop_id", shopId);
 
-  const { error: purchasesError } = await db.from("purchases").delete().eq("shop_id", shopId);
-  if (purchasesError) {
-    console.error("Could not delete shop purchases", purchasesError);
-    return { error: `Could not delete purchases: ${purchasesError.message}` };
-  }
+  await emptyShopForDeletion(db, shopId);
   const { error } = await db.from("shops").delete().eq("id", shopId);
   if (error) {
     console.error("Could not delete shop", error);

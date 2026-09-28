@@ -1,6 +1,7 @@
 import { buildSessionForUser, runAsSession } from "@/lib/auth";
 import { demoBusiness, DEMO_TYPES, type DemoType } from "../config";
 import { rng } from "../util";
+import { emptyShopForDeletion } from "@/lib/shopDeletion";
 import type { Admin, SeedCtx } from "./common";
 import { seedRetail } from "./retail";
 import { seedRestaurant } from "./restaurant";
@@ -35,19 +36,12 @@ const SEEDERS: Record<DemoType, (ctx: SeedCtx) => Promise<void>> = {
   lab: seedLab,
 };
 
-/** Removes the demo shop a user owns (if any). The tables that point at bills or
- * customers without cascading are emptied first, like the admin "delete shop". */
+/** Removes the demo shop a user owns (if any), the same way the admin "delete shop" does. */
 export async function removeDemoShop(admin: Admin, userId: string): Promise<void> {
   const { data: staff } = await admin.from("staff").select("shop_id").eq("id", userId).maybeSingle();
   if (!staff) return;
   const shopId = staff.shop_id;
-  // A hotel stay and its bill point at each other; cut that link first.
-  await admin.from("bills").update({ hotel_booking_id: null }).eq("shop_id", shopId).not("hotel_booking_id", "is", null);
-  // Anything a visitor can create while trying the demo (a stock count, a return, a QR order...) must be emptied too,
-  // or the shop cannot be deleted and the demo stays down until someone cleans it by hand.
-  for (const table of ["stock_audits", "batch_writeoffs", "table_order_requests", "returns", "jewellery_exchanges", "transport_trips", "appointments", "clinic_appointments", "restaurant_reservations", "restaurant_orders", "combos", "rentals", "service_jobs", "lab_orders", "prescriptions", "treatment_plans", "purchases", "bills"] as const) {
-    await admin.from(table).delete().eq("shop_id", shopId);
-  }
+  await emptyShopForDeletion(admin, shopId);
   const { error } = await admin.from("shops").delete().eq("id", shopId);
   if (error) throw new Error(`demo: could not remove old shop: ${error.message}`);
 }
