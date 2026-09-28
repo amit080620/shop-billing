@@ -54,6 +54,7 @@ export function Gstr1Client({
   b2b,
   b2cLarge,
   b2cSmall,
+  nilRated,
   hsnSummary,
   creditNotesRegistered,
   creditNotesUnregistered,
@@ -64,6 +65,7 @@ export function Gstr1Client({
   b2b: B2B[];
   b2cLarge: B2CLarge[];
   b2cSmall: B2CSmall[];
+  nilRated: { label: string; value: number }[];
   hsnSummary: HsnRow[];
   creditNotesRegistered: CreditNote[];
   creditNotesUnregistered: CreditNote[];
@@ -147,6 +149,27 @@ export function Gstr1Client({
         )}
         <p className="mt-2 text-xs text-muted">
           {t("Shown net of returns (credit notes) to walk-in customers this month, as GSTR-1 expects. A minus figure means more came back than was sold at that rate this month — check it with your CA before filing.")}
+        </p>
+      </Section>
+
+      <Section
+        title="Table 8 — Nil rated, exempt and non-GST"
+        sub={t("Everything sold at 0% GST — kept out of Tables 4, 5 and 7")}
+        action={
+          <ExportCsvButton
+            filename={`gstr1-exemp-${period}.csv`}
+            headers={["Description", "Nil Rated Supplies", "Exempted (other than nil rated/non GST supply)", "Non-GST Supplies"]}
+            rows={nilRated.map((r) => [r.label, r.value.toFixed(2), "0.00", "0.00"])}
+          />
+        }
+      >
+        {nilRated.length === 0 ? (
+          <Empty text={t("No 0% GST sales this period.")} />
+        ) : (
+          <Table headers={["Supply", "Value"]} rows={nilRated.map((r) => [r.label, formatMoney(r.value)])} />
+        )}
+        <p className="mt-2 text-xs text-muted">
+          {t("The app can't tell nil-rated, exempt and non-GST items apart, so every 0% item is shown as nil-rated. Your CA can move any exempt or non-GST items (like petrol or liquor) into their own column.")}
         </p>
       </Section>
 

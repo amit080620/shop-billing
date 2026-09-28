@@ -28,6 +28,9 @@ import { parseVoiceOrderAction } from "@/lib/actions/voiceOrder";
 import { getSpeechRecognition, speechLocaleFor, voiceErrorMessages, type SpeechRecognitionLike } from "@/lib/speechRecognition";
 import { AIStatusBadge, type AIStatusBadgeHandle } from "@/app/components/AIStatusBadge";
 
+/** Business types whose items are goods even when no HSN code was entered (e-way bill reminder). */
+const GOODS_BUSINESSES = new Set(["grocery", "mart", "hardware", "pharmacy", "jewellery", "general", "transport"]);
+
 type Product = {
   id: string;
   name: string;
@@ -274,6 +277,15 @@ export function NewBillClient({
       }),
     [cart, discountType, discountValue, redemptionValue, paidAmount, exchangeValue, supplyType, shopContext.priceIncludesGst, shopContext.gstScheme],
   );
+
+  // An e-way bill is needed before goods (not services) worth over ₹50,000 move by vehicle. A line
+  // counts as goods when its code isn't a service (SAC) code, which all start with 99; a line with
+  // no code counts only in a business that sells goods, so a big gym or clinic bill isn't flagged.
+  const ewayGoodsValue = cart.reduce((sum, line, i) => {
+    const isGoods = line.hsnCode ? !line.hsnCode.startsWith("99") : GOODS_BUSINESSES.has(businessType);
+    const charged = totals.lines[i];
+    return isGoods && charged ? sum + charged.lineSubtotal + charged.lineGst : sum;
+  }, 0);
 
   const [state, formAction] = useActionState(keepValuesOnError(createBillAction), null);
 
@@ -1197,12 +1209,14 @@ export function NewBillClient({
           </p>
         )}
 
-        {tripInfo && totals.total > 50000 && (
+        {ewayGoodsValue > 50000 && (
           <p className="flex items-start gap-1.5 rounded-lg border border-credit/25 bg-credit-soft px-3.5 py-2.5 text-xs text-credit">
             <AlertTriangle size={13} className="mt-0.5 shrink-0" />
-            This delivery is over ₹50,000 — an E-way Bill is legally required for goods
-            movement above this value. Generate one on the GST e-way bill portal before the
-            vehicle leaves.
+            {tripInfo
+              ? t("This delivery carries goods worth over ₹50,000 — an e-way bill is legally required before the vehicle leaves. Generate it on ewaybillgst.gov.in.")
+              : supplyType === "inter"
+                ? t("Goods worth over ₹50,000 going to another state need an e-way bill before they are moved. Generate it on ewaybillgst.gov.in before dispatch.")
+                : t("Goods worth over ₹50,000 need an e-way bill before they are moved by vehicle (within some states the limit is ₹1 lakh). Generate it on ewaybillgst.gov.in before dispatch.")}
           </p>
         )}
 

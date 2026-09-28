@@ -144,6 +144,33 @@ export default async function Gstr1Page({
     return { ...row, customer: customer ?? null };
   });
 
+  // 0% items (nil-rated, exempt or non-GST) are reported only in Table 8 — never in Tables 4, 5
+  // or 7. `nilByBill` is the 0% part of each bill, taken out of that bill's B2B/B2CL row.
+  const nilByBill = new Map<string, number>();
+  for (const item of items ?? []) {
+    if (Number(item.gst_percent) === 0) nilByBill.set(item.bill_id, round2((nilByBill.get(item.bill_id) ?? 0) + Number(item.line_subtotal)));
+  }
+  const nilByRental = new Map<string, number>();
+  for (const item of rentalItems ?? []) {
+    if (Number(item.gst_percent) === 0) nilByRental.set(item.rental_id, round2((nilByRental.get(item.rental_id) ?? 0) + Number(item.line_subtotal)));
+  }
+  const table8 = new Map<string, number>();
+  const addNil = (registered: boolean, inter: boolean, value: number) => {
+    const key = `${inter ? "Inter" : "Intra"}-state supplies to ${registered ? "registered" : "unregistered"} persons`;
+    table8.set(key, round2((table8.get(key) ?? 0) + value));
+  };
+  for (const b of normalizedBills) {
+    const nil = nilByBill.get(b.id);
+    if (nil) addNil(!!b.customer?.gstin, b.supply_type === "inter", nil);
+  }
+  for (const r of normalizedRentals) {
+    const nil = nilByRental.get(r.id);
+    if (nil) addNil(!!r.customer?.gstin, r.supply_type === "inter", nil);
+  }
+  for (const item of restaurantItems ?? []) {
+    if (Number(item.gst_percent) === 0) addNil(false, false, Number(item.line_subtotal));
+  }
+
   const b2b = normalizedBills.filter((b) => b.customer?.gstin);
   const b2cLarge = normalizedBills.filter(
     (b) => !b.customer?.gstin && b.supply_type === "inter" && Number(b.total) > 250000,
@@ -164,6 +191,7 @@ export default async function Gstr1Page({
   for (const bill of b2cSmall) {
     const billItems = (items ?? []).filter((i) => i.bill_id === bill.id);
     for (const item of billItems) {
+      if (Number(item.gst_percent) === 0) continue; // Table 8
       const state = bill.customer?.state ?? "Same state (walk-in)";
       const key = `${state}__${item.gst_percent}`;
       const g = b2cSmallGroups.get(key) ?? { state, rate: Number(item.gst_percent), taxable: 0, cgst: 0, sgst: 0, igst: 0 };
@@ -177,7 +205,7 @@ export default async function Gstr1Page({
 
   const rentalB2cSmallIds = new Set(rentalB2cSmall.map((r) => r.id));
   for (const item of rentalItems ?? []) {
-    if (!rentalB2cSmallIds.has(item.rental_id)) continue;
+    if (!rentalB2cSmallIds.has(item.rental_id) || Number(item.gst_percent) === 0) continue;
     const rental = rentalB2cSmall.find((r) => r.id === item.rental_id);
     const state = rental?.customer?.state ?? "Same state (walk-in)";
     const key = `${state}__${item.gst_percent}`;
@@ -190,6 +218,7 @@ export default async function Gstr1Page({
   }
 
   for (const item of restaurantItems ?? []) {
+    if (Number(item.gst_percent) === 0) continue; // Table 8
     const key = `Same state (walk-in)__${item.gst_percent}`;
     const g = b2cSmallGroups.get(key) ?? { state: "Same state (walk-in)", rate: Number(item.gst_percent), taxable: 0, cgst: 0, sgst: 0, igst: 0 };
     g.taxable += Number(item.line_subtotal);
@@ -274,7 +303,9 @@ export default async function Gstr1Page({
   const cdnur = creditNotes.filter((cn) => isCdnur(cn)).map(toNoteRow);
   const nettedInB2cs = new Set(creditNotes.filter((cn) => !cn.customer?.gstin && !isCdnur(cn)).map((cn) => cn.id));
   for (const l of creditNoteLines) {
-    if (nettedInB2cs.has(l.returnId)) {
+    if (nettedInB2cs.has(l.returnId) && l.rate === 0) {
+      addNil(false, creditNotes.find((x) => x.id === l.returnId)!.bill!.supply_type === "inter", -l.taxable);
+    } else if (nettedInB2cs.has(l.returnId)) {
       const cn = creditNotes.find((x) => x.id === l.returnId)!;
       const state = cn.customer?.state ?? "Same state (walk-in)";
       const key = `${state}__${l.rate}`;
@@ -344,7 +375,7 @@ export default async function Gstr1Page({
               name: b.customer!.name,
               invoiceNumber: b.invoice_number,
               date: b.created_at,
-              taxable: Number(b.taxable_amount),
+              taxable: round2(Number(b.taxable_amount) - (nilByBill.get(b.id) ?? 0)),
               cgst: Number(b.cgst_amount),
               sgst: Number(b.sgst_amount),
               igst: Number(b.igst_amount),
@@ -356,19 +387,21 @@ export default async function Gstr1Page({
                 name: r.customer!.name,
                 invoiceNumber: r.rental_number,
                 date: r.created_at,
-                taxable: Number(r.subtotal),
+                taxable: round2(Number(r.subtotal) - (nilByRental.get(r.id) ?? 0)),
                 cgst: Number(r.cgst_amount),
                 sgst: Number(r.sgst_amount),
                 igst: Number(r.igst_amount),
                 total: Number(r.total),
               })),
-            )}
+            )
+            // an invoice with nothing but 0% items belongs only in Table 8
+            .filter((row) => row.taxable > 0)}
           b2cLarge={b2cLarge
             .map((b) => ({
               invoiceNumber: b.invoice_number,
               date: b.created_at,
               state: b.customer?.state ?? "—",
-              taxable: Number(b.taxable_amount),
+              taxable: round2(Number(b.taxable_amount) - (nilByBill.get(b.id) ?? 0)),
               igst: Number(b.igst_amount),
               total: Number(b.total),
             }))
@@ -377,12 +410,14 @@ export default async function Gstr1Page({
                 invoiceNumber: r.rental_number,
                 date: r.created_at,
                 state: r.customer?.state ?? "—",
-                taxable: Number(r.subtotal),
+                taxable: round2(Number(r.subtotal) - (nilByRental.get(r.id) ?? 0)),
                 igst: Number(r.igst_amount),
                 total: Number(r.total),
               })),
-            )}
+            )
+            .filter((row) => row.taxable > 0)}
           b2cSmall={[...b2cSmallGroups.values()].map(roundGroup)}
+          nilRated={[...table8.entries()].map(([label, value]) => ({ label, value }))}
           hsnSummary={[...hsnGroups.values()].map((h) => ({ ...roundGroup(h), qty: Math.round(h.qty * 1000) / 1000 }))}
           creditNotesRegistered={cdnr}
           creditNotesUnregistered={cdnur}
