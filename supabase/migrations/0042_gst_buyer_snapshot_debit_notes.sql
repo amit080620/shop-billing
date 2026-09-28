@@ -105,7 +105,7 @@ create or replace function customer_balances(p_shop_id uuid, p_customer_ids uuid
 returns table (customer_id uuid, balance numeric)
 language sql
 stable
-as $
+as $$
   select x.customer_id, sum(x.amount) as balance
   from (
     select b.customer_id, b.credit_amount as amount
@@ -131,7 +131,7 @@ as $
   ) x
   where p_customer_ids is null or x.customer_id = any(p_customer_ids)
   group by x.customer_id;
-$;
+$$;
 revoke all on function customer_balances(uuid, uuid[]) from public, anon, authenticated;
 grant execute on function customer_balances(uuid, uuid[]) to service_role;
 
