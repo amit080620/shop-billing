@@ -25,6 +25,29 @@ type B2CLarge = {
 };
 type B2CSmall = { state: string; rate: number; taxable: number; cgst: number; sgst: number; igst: number };
 type HsnRow = { hsn: string; rate: number; qty: number; taxable: number; cgst: number; sgst: number; igst: number };
+type CreditNote = {
+  gstin: string | null;
+  name: string;
+  noteNumber: string;
+  date: string;
+  againstInvoice: string;
+  againstDate: string;
+  placeOfSupply: string;
+  value: number;
+  rates: { rate: number; taxable: number; cgst: number; sgst: number; igst: number }[];
+};
+
+/** GSTR-1 wants one row per note per tax rate. */
+function noteCsvRows(notes: CreditNote[], registered: boolean) {
+  return notes.flatMap((n) =>
+    n.rates.map((r) => [
+      ...(registered ? [n.gstin ?? "", n.name] : ["B2CL"]),
+      n.noteNumber, n.date.slice(0, 10), "C", n.placeOfSupply, ...(registered ? ["N"] : []), "Regular",
+      n.value.toFixed(2), `${r.rate}`, r.taxable.toFixed(2), r.cgst.toFixed(2), r.sgst.toFixed(2), r.igst.toFixed(2),
+      n.againstInvoice, n.againstDate.slice(0, 10),
+    ]),
+  );
+}
 
 export function Gstr1Client({
   period,
@@ -32,14 +55,20 @@ export function Gstr1Client({
   b2cLarge,
   b2cSmall,
   hsnSummary,
+  creditNotesRegistered,
+  creditNotesUnregistered,
   invoiceNumbers,
+  creditNoteNumbers,
 }: {
   period: string;
   b2b: B2B[];
   b2cLarge: B2CLarge[];
   b2cSmall: B2CSmall[];
   hsnSummary: HsnRow[];
+  creditNotesRegistered: CreditNote[];
+  creditNotesUnregistered: CreditNote[];
   invoiceNumbers: string[];
+  creditNoteNumbers: string[];
 }) {
   const { t } = useT();
   return (
@@ -116,6 +145,48 @@ export function Gstr1Client({
             rows={b2cSmall.map((r) => [r.state, `${r.rate}%`, formatMoney(r.taxable), formatMoney(r.cgst), formatMoney(r.sgst), formatMoney(r.igst)])}
           />
         )}
+        <p className="mt-2 text-xs text-muted">
+          {t("Shown net of returns (credit notes) to walk-in customers this month, as GSTR-1 expects. A minus figure means more came back than was sold at that rate this month — check it with your CA before filing.")}
+        </p>
+      </Section>
+
+      <Section
+        title="Table 9B — Credit notes"
+        sub={t("Returns against sales to registered buyers, and against B2C Large invoices")}
+        action={
+          <div className="flex flex-col items-end gap-1">
+            <ExportCsvButton
+              filename={`gstr1-cdnr-${period}.csv`}
+              headers={["GSTIN/UIN of Recipient", "Receiver Name", "Note Number", "Note Date", "Note Type", "Place Of Supply", "Reverse Charge", "Note Supply Type", "Note Value", "Rate", "Taxable Value", "CGST", "SGST", "IGST", "Original Invoice Number", "Original Invoice Date"]}
+              rows={noteCsvRows(creditNotesRegistered, true)}
+            />
+            <ExportCsvButton
+              filename={`gstr1-cdnur-${period}.csv`}
+              headers={["UR Type", "Note Number", "Note Date", "Note Type", "Place Of Supply", "Note Supply Type", "Note Value", "Rate", "Taxable Value", "CGST", "SGST", "IGST", "Original Invoice Number", "Original Invoice Date"]}
+              rows={noteCsvRows(creditNotesUnregistered, false)}
+            />
+          </div>
+        }
+      >
+        {creditNotesRegistered.length === 0 && creditNotesUnregistered.length === 0 ? (
+          <Empty text={t("No credit notes to report here this period.")} />
+        ) : (
+          <Table
+            headers={["Note #", "To", "Against invoice", "Taxable", "Tax", "Value"]}
+            rows={[...creditNotesRegistered, ...creditNotesUnregistered].map((n) => {
+              const taxable = n.rates.reduce((s, r) => s + r.taxable, 0);
+              const tax = n.rates.reduce((s, r) => s + r.cgst + r.sgst + r.igst, 0);
+              return [
+                n.noteNumber,
+                <span key="to" className="block max-w-[110px] truncate">{n.gstin ?? `${n.name} (B2CL)`}</span>,
+                n.againstInvoice,
+                formatMoney(taxable),
+                formatMoney(tax),
+                formatMoney(n.value),
+              ];
+            })}
+          />
+        )}
       </Section>
 
       <Section
@@ -148,6 +219,11 @@ export function Gstr1Client({
             <> — {invoiceNumbers[0]} to {invoiceNumbers[invoiceNumbers.length - 1]}</>
           )}
         </p>
+        {creditNoteNumbers.length > 0 && (
+          <p className="mt-1 text-sm text-foreground">
+            {creditNoteNumbers.length} credit note{creditNoteNumbers.length === 1 ? "" : "s"} issued — {creditNoteNumbers[0]} to {creditNoteNumbers[creditNoteNumbers.length - 1]}
+          </p>
+        )}
         <p className="mt-1 text-xs text-muted">
           {t("Cancelled invoices aren't tracked separately in this app yet — review for gaps before filing.")}
         </p>

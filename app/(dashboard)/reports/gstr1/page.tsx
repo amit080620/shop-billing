@@ -1,6 +1,7 @@
 import { requireSession } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { formatMoney } from "@/lib/format";
+import { round2 } from "@/lib/gst";
 import { istMonthRange, istYearMonth, MONTHS } from "@/lib/dateHelpers";
 import { PeriodPicker } from "../PeriodPicker";
 import { Gstr1Client } from "./Gstr1Client";
@@ -24,7 +25,7 @@ export default async function Gstr1Page({
   // Month boundaries at IST midnight, not the UTC server's.
   const { start, end } = istMonthRange(year, month);
 
-  const [{ data: bills }, { data: restaurantOrders }, { data: rentals }] = await Promise.all([
+  const [{ data: bills }, { data: restaurantOrders }, { data: rentals }, { data: returnsRaw }] = await Promise.all([
     admin
       .from("bills")
       .select(
@@ -55,7 +56,39 @@ export default async function Gstr1Page({
       .neq("status", "cancelled")
       .gte("created_at", start.toISOString())
       .lt("created_at", end.toISOString()),
+    // Credit notes (returns) belong to the month they're issued in, whatever month the
+    // original sale was — and are classified by who that original sale was to.
+    admin
+      .from("returns")
+      .select("id, return_number, created_at, total, cgst_amount, sgst_amount, igst_amount, bills ( invoice_number, created_at, status, supply_type, total, customers ( name, gstin, state, state_code ) )")
+      .eq("shop_id", session.shopId)
+      .gte("created_at", start.toISOString())
+      .lt("created_at", end.toISOString())
+      .order("return_number"),
   ]);
+
+  type ReturnBill = { invoice_number: string; created_at: string; status: string; supply_type: "intra" | "inter"; total: number; customers: BillRow["customers"] };
+  const creditNotes = (returnsRaw ?? [])
+    .map((r) => {
+      const bill = (Array.isArray(r.bills) ? r.bills[0] : r.bills) as unknown as ReturnBill | null;
+      const customer = bill ? (Array.isArray(bill.customers) ? bill.customers[0] : bill.customers) : null;
+      return { ...r, bill, customer: customer ?? null };
+    })
+    // A bill voided after being partly returned is already out of the report entirely;
+    // its credit note must not reduce the tax a second time.
+    .filter((r) => r.bill && r.bill.status === "active");
+  const creditNoteIds = creditNotes.map((r) => r.id);
+  const { data: creditNoteItems } = creditNoteIds.length
+    ? await admin
+        .from("return_items")
+        .select("return_id, quantity, gst_percent, line_total, cgst_amount, sgst_amount, igst_amount, bill_items ( hsn_code )")
+        .in("return_id", creditNoteIds)
+    : { data: [] as never[] };
+  const creditNoteLines = (creditNoteItems ?? []).map((i) => {
+    const billItem = Array.isArray(i.bill_items) ? i.bill_items[0] : i.bill_items;
+    const cgst = Number(i.cgst_amount), sgst = Number(i.sgst_amount), igst = Number(i.igst_amount);
+    return { returnId: i.return_id, hsn: (billItem as { hsn_code: string | null } | null)?.hsn_code ?? "—", rate: Number(i.gst_percent), qty: Number(i.quantity), taxable: Number(i.line_total) - cgst - sgst - igst, cgst, sgst, igst };
+  });
 
   const billIds = (bills ?? []).map((b) => b.id);
   const restaurantOrderIds = (restaurantOrders ?? []).map((o) => o.id);
@@ -211,15 +244,71 @@ export default async function Gstr1Page({
     hsnGroups.set(key, g);
   }
 
+  // Credit notes. Registered buyer → Table 9B CDNR; unregistered but the original sale was
+  // B2C Large → Table 9B CDNUR; every other B2C return is netted out of Table 7, which is
+  // reported net of credit notes. Table 12 (HSN) is reported net of all of them.
+  const isCdnur = (cn: (typeof creditNotes)[number]) => !cn.customer?.gstin && cn.bill!.supply_type === "inter" && Number(cn.bill!.total) > 250000;
+  const toNoteRow = (cn: (typeof creditNotes)[number]) => {
+    const rates = new Map<number, { rate: number; taxable: number; cgst: number; sgst: number; igst: number }>();
+    for (const l of creditNoteLines.filter((x) => x.returnId === cn.id)) {
+      const g = rates.get(l.rate) ?? { rate: l.rate, taxable: 0, cgst: 0, sgst: 0, igst: 0 };
+      g.taxable = round2(g.taxable + l.taxable);
+      g.cgst = round2(g.cgst + l.cgst);
+      g.sgst = round2(g.sgst + l.sgst);
+      g.igst = round2(g.igst + l.igst);
+      rates.set(l.rate, g);
+    }
+    return {
+      gstin: cn.customer?.gstin ?? null,
+      name: cn.customer?.name ?? "Unregistered",
+      noteNumber: cn.return_number,
+      date: cn.created_at,
+      againstInvoice: cn.bill!.invoice_number,
+      againstDate: cn.bill!.created_at,
+      placeOfSupply: cn.customer?.state ?? "Same state",
+      value: Number(cn.total),
+      rates: [...rates.values()],
+    };
+  };
+  const cdnr = creditNotes.filter((cn) => cn.customer?.gstin).map(toNoteRow);
+  const cdnur = creditNotes.filter((cn) => isCdnur(cn)).map(toNoteRow);
+  const nettedInB2cs = new Set(creditNotes.filter((cn) => !cn.customer?.gstin && !isCdnur(cn)).map((cn) => cn.id));
+  for (const l of creditNoteLines) {
+    if (nettedInB2cs.has(l.returnId)) {
+      const cn = creditNotes.find((x) => x.id === l.returnId)!;
+      const state = cn.customer?.state ?? "Same state (walk-in)";
+      const key = `${state}__${l.rate}`;
+      const g = b2cSmallGroups.get(key) ?? { state, rate: l.rate, taxable: 0, cgst: 0, sgst: 0, igst: 0 };
+      g.taxable -= l.taxable;
+      g.cgst -= l.cgst;
+      g.sgst -= l.sgst;
+      g.igst -= l.igst;
+      b2cSmallGroups.set(key, g);
+    }
+    const key = `${l.hsn}__${l.rate}`;
+    const h = hsnGroups.get(key) ?? { hsn: l.hsn, rate: l.rate, qty: 0, taxable: 0, cgst: 0, sgst: 0, igst: 0 };
+    h.qty -= l.qty;
+    h.taxable -= l.taxable;
+    h.cgst -= l.cgst;
+    h.sgst -= l.sgst;
+    h.igst -= l.igst;
+    hsnGroups.set(key, h);
+  }
+  const roundGroup = <T extends { taxable: number; cgst: number; sgst: number; igst: number }>(g: T): T => ({ ...g, taxable: round2(g.taxable), cgst: round2(g.cgst), sgst: round2(g.sgst), igst: round2(g.igst) });
+  const creditNoteTaxable = round2(creditNoteLines.reduce((s, l) => s + l.taxable, 0));
+  const creditNoteTax = round2(creditNoteLines.reduce((s, l) => s + l.cgst + l.sgst + l.igst, 0));
+
   const invoiceNumbers = normalizedBills.map((b) => b.invoice_number).sort();
   const totalTaxable =
     normalizedBills.reduce((s, b) => s + Number(b.taxable_amount), 0) +
     (restaurantOrders ?? []).reduce((s, o) => s + Number(o.taxable_amount), 0) +
-    normalizedRentals.reduce((s, r) => s + Number(r.subtotal), 0);
+    normalizedRentals.reduce((s, r) => s + Number(r.subtotal), 0) -
+    creditNoteTaxable;
   const totalTax =
     normalizedBills.reduce((s, b) => s + Number(b.cgst_amount) + Number(b.sgst_amount) + Number(b.igst_amount), 0) +
     (restaurantOrders ?? []).reduce((s, o) => s + Number(o.cgst_amount) + Number(o.sgst_amount) + Number(o.igst_amount), 0) +
-    normalizedRentals.reduce((s, r) => s + Number(r.cgst_amount) + Number(r.sgst_amount) + Number(r.igst_amount), 0);
+    normalizedRentals.reduce((s, r) => s + Number(r.cgst_amount) + Number(r.sgst_amount) + Number(r.igst_amount), 0) -
+    creditNoteTax;
 
   return (
     <div className="flex flex-col gap-4">
@@ -236,8 +325,13 @@ export default async function Gstr1Page({
         <SummaryCard label={t("Taxable value")} value={formatMoney(totalTaxable)} />
         <SummaryCard label={t("Total tax")} value={formatMoney(totalTax)} />
       </div>
+      {creditNotes.length > 0 && (
+        <p className="-mt-2 text-xs text-muted">
+          {t("Net of credit notes issued this month")}: {creditNotes.length} · −{formatMoney(creditNoteTax)} {t("tax")}
+        </p>
+      )}
 
-      {normalizedBills.length === 0 && (restaurantOrders ?? []).length === 0 && normalizedRentals.length === 0 ? (
+      {normalizedBills.length === 0 && (restaurantOrders ?? []).length === 0 && normalizedRentals.length === 0 && creditNotes.length === 0 ? (
         <p className="rounded-lg border border-dashed border-border px-4 py-6 text-center text-sm text-muted">
           No sales invoices in this period.
         </p>
@@ -288,9 +382,12 @@ export default async function Gstr1Page({
                 total: Number(r.total),
               })),
             )}
-          b2cSmall={[...b2cSmallGroups.values()]}
-          hsnSummary={[...hsnGroups.values()]}
+          b2cSmall={[...b2cSmallGroups.values()].map(roundGroup)}
+          hsnSummary={[...hsnGroups.values()].map((h) => ({ ...roundGroup(h), qty: Math.round(h.qty * 1000) / 1000 }))}
+          creditNotesRegistered={cdnr}
+          creditNotesUnregistered={cdnur}
           invoiceNumbers={invoiceNumbers}
+          creditNoteNumbers={creditNotes.map((cn) => cn.return_number).sort()}
         />
       )}
     </div>

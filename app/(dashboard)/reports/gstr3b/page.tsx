@@ -24,7 +24,7 @@ export default async function Gstr3bPage({
   // Month boundaries at IST midnight, not the UTC server's.
   const { start, end, startDate, endDate } = istMonthRange(year, month);
 
-  const [{ data: bills }, { data: purchases }, { data: restaurantOrders }, { data: rentals }] = await Promise.all([
+  const [{ data: bills }, { data: purchases }, { data: restaurantOrders }, { data: rentals }, { data: returnsRaw }] = await Promise.all([
     admin
       .from("bills")
       .select("taxable_amount, cgst_amount, sgst_amount, igst_amount")
@@ -55,13 +55,32 @@ export default async function Gstr3bPage({
       .neq("status", "cancelled")
       .gte("created_at", start.toISOString())
       .lt("created_at", end.toISOString()),
+    // Credit notes issued this month reduce this month's output tax, whatever month the
+    // original sale was in (same rule GSTR-1 Table 9B follows).
+    admin
+      .from("returns")
+      .select("total, cgst_amount, sgst_amount, igst_amount, bills ( status )")
+      .eq("shop_id", session.shopId)
+      .gte("created_at", start.toISOString())
+      .lt("created_at", end.toISOString()),
   ]);
 
-  const outward = sumFields([
+  const creditNotes = sumFields(
+    (returnsRaw ?? [])
+      .filter((r) => (Array.isArray(r.bills) ? r.bills[0] : r.bills)?.status === "active")
+      .map((r) => ({ taxable_amount: Number(r.total) - Number(r.cgst_amount) - Number(r.sgst_amount) - Number(r.igst_amount), cgst_amount: r.cgst_amount, sgst_amount: r.sgst_amount, igst_amount: r.igst_amount })),
+  );
+  const sales = sumFields([
     ...(bills ?? []),
     ...(restaurantOrders ?? []),
     ...(rentals ?? []).map((r) => ({ taxable_amount: r.subtotal, cgst_amount: r.cgst_amount, sgst_amount: r.sgst_amount, igst_amount: r.igst_amount })),
   ]);
+  const outward = {
+    taxable: round2(sales.taxable - creditNotes.taxable),
+    cgst: round2(sales.cgst - creditNotes.cgst),
+    sgst: round2(sales.sgst - creditNotes.sgst),
+    igst: round2(sales.igst - creditNotes.igst),
+  };
   const rcmPurchases = (purchases ?? []).filter((p) => p.reverse_charge);
   const rcm = sumFields(rcmPurchases);
   const itcPurchases = (purchases ?? []).filter((p) => p.itc_eligible);
@@ -104,6 +123,11 @@ export default async function Gstr3bPage({
           />
         </div>
         <TotalsGrid taxable={outward.taxable} cgst={outward.cgst} sgst={outward.sgst} igst={outward.igst} />
+        {creditNotes.cgst + creditNotes.sgst + creditNotes.igst + creditNotes.taxable > 0 && (
+          <p className="mt-2 text-xs text-muted">
+            {t("Net of credit notes (returns) issued this month")}: −{formatMoney(creditNotes.taxable)} {t("taxable")}, −{formatMoney(round2(creditNotes.cgst + creditNotes.sgst + creditNotes.igst))} {t("tax")}
+          </p>
+        )}
       </section>
 
       <section className="neu-card p-4">

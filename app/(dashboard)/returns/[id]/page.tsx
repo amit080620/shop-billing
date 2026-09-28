@@ -36,12 +36,17 @@ export default async function ReturnDetailPage({
         ← Original bill
       </Link>
 
-      <div>
-        <h1 className="text-lg font-bold tracking-tight text-foreground md:text-2xl">Return #{ret.return_number}</h1>
-        <p className="text-xs text-muted">
-          Against invoice #{bill?.invoice_number} · {formatDateTime(ret.created_at)}
-        </p>
-        {customer && <p className="text-xs text-muted">{customer.name} {customer.phone ? `· ${customer.phone}` : ""}</p>}
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h1 className="text-lg font-bold tracking-tight text-foreground md:text-2xl">Credit note {ret.return_number}</h1>
+          <p className="text-xs text-muted">
+            Against invoice #{bill?.invoice_number} · {formatDateTime(ret.created_at)}
+          </p>
+          {customer && <p className="text-xs text-muted">{customer.name} {customer.phone ? `· ${customer.phone}` : ""}</p>}
+        </div>
+        <Link href={`/print/return/${id}`} className="btn-primary shrink-0 px-3 py-2 text-sm">
+          Print credit note
+        </Link>
       </div>
 
       <ul className="flex flex-col gap-2">
@@ -54,7 +59,7 @@ export default async function ReturnDetailPage({
       </ul>
 
       <div className="neu-card p-4">
-        <Row label="Subtotal" value={formatMoney(ret.subtotal)} />
+        <Row label="Taxable value" value={formatMoney(Number(ret.total) - Number(ret.cgst_amount) - Number(ret.sgst_amount) - Number(ret.igst_amount))} />
         <Row label="GST" value={formatMoney(Number(ret.cgst_amount) + Number(ret.sgst_amount) + Number(ret.igst_amount))} />
         <Row label="Total refund" value={formatMoney(ret.total)} bold />
         <Row label="Refunded via" value={ret.refund_method === "credit_adjustment" ? "Adjusted against credit" : ret.refund_method} />

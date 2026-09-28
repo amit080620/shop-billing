@@ -6,6 +6,7 @@ import { useFormStatus } from "react-dom";
 import Link from "next/link";
 import { createReturnAction } from "@/lib/actions/returns";
 import { formatMoney } from "@/lib/format";
+import { returnFigures, type LineFigures } from "@/lib/returnMath";
 
 type BillItem = {
   id: string;
@@ -14,6 +15,10 @@ type BillItem = {
   alreadyReturned: number;
   unitPrice: number;
   gstPercent: number;
+  /** What the line was actually charged, and what has already gone back — the same
+   * figures the server uses, so this preview always matches the saved credit note. */
+  original: LineFigures;
+  returned: LineFigures;
 };
 
 function SubmitButton() {
@@ -51,14 +56,9 @@ export function ReturnClient({
     .filter((l) => l.quantity > 0);
 
   const totals = useMemo(() => {
-    let subtotal = 0;
-    let gst = 0;
-    for (const line of selectedLines) {
-      const lineSubtotal = line.quantity * line.item.unitPrice;
-      subtotal += lineSubtotal;
-      gst += lineSubtotal * (line.item.gstPercent / 100);
-    }
-    return { subtotal: Math.round(subtotal * 100) / 100, total: Math.round((subtotal + gst) * 100) / 100 };
+    let total = 0;
+    for (const line of selectedLines) total += returnFigures(line.item.original, line.item.returned, line.quantity).total;
+    return { total: Math.round(total * 100) / 100 };
   }, [selectedLines]);
 
   const lines = JSON.stringify(selectedLines.map((l) => ({ billItemId: l.item.id, quantity: l.quantity })));
@@ -102,7 +102,7 @@ export function ReturnClient({
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium text-foreground">{item.productName}</p>
                 <p className="text-xs text-muted">
-                  {formatMoney(item.unitPrice)}/unit · {remaining} of {item.originalQuantity} returnable
+                  {formatMoney((item.original.taxable + item.original.cgst + item.original.sgst + item.original.igst) / item.original.quantity)}/unit paid · {remaining} of {item.originalQuantity} returnable
                 </p>
               </div>
               <div className="flex shrink-0 items-center gap-1.5">

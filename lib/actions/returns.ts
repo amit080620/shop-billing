@@ -4,7 +4,8 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { requireSession, hasPermission } from "../auth";
 import { createSupabaseAdminClient } from "../supabase/admin";
-import { splitTax, splitTaxInclusive, financialYearFor, round2 } from "../gst";
+import { financialYearFor, round2 } from "../gst";
+import { NO_FIGURES, returnFigures, sumReturned, type LineFigures } from "../returnMath";
 
 export type ActionState = { error?: string } | null;
 
@@ -50,7 +51,7 @@ export async function createReturnAction(
 
   const { data: bill } = await admin
     .from("bills")
-    .select("id, customer_id, status, supply_type, price_includes_gst")
+    .select("id, customer_id, status")
     .eq("id", billId)
     .eq("shop_id", session.shopId)
     .single();
@@ -60,7 +61,7 @@ export async function createReturnAction(
   const billItemIds = lines.map((l) => l.billItemId);
   const { data: billItems } = await admin
     .from("bill_items")
-    .select("id, product_id, product_name, quantity, unit_price, gst_percent, batch_id")
+    .select("id, product_id, product_name, quantity, unit_price, gst_percent, batch_id, line_subtotal, cgst_amount, sgst_amount, igst_amount")
     .in("id", billItemIds)
     .eq("bill_id", billId);
   if (!billItems || billItems.length !== billItemIds.length) {
@@ -68,47 +69,46 @@ export async function createReturnAction(
   }
   const billItemMap = new Map(billItems.map((i) => [i.id, i]));
 
-  // Prevent returning more than what's left un-returned on each line —
-  // sum whatever's already been returned against this bill_item before.
+  // Everything already returned against each line — both to stop returning more than
+  // is left, and so the last units get exactly what remains of the line's value.
   const { data: existingReturnItems } = await admin
     .from("return_items")
-    .select("bill_item_id, quantity")
+    .select("bill_item_id, quantity, line_total, cgst_amount, sgst_amount, igst_amount")
     .in("bill_item_id", billItemIds);
-  const alreadyReturned = new Map<string, number>();
-  for (const ri of existingReturnItems ?? []) {
-    alreadyReturned.set(ri.bill_item_id, (alreadyReturned.get(ri.bill_item_id) ?? 0) + Number(ri.quantity));
+  const alreadyReturned = new Map<string, LineFigures>();
+  for (const id of billItemIds) {
+    alreadyReturned.set(id, sumReturned((existingReturnItems ?? []).filter((ri) => ri.bill_item_id === id)));
   }
 
   for (const line of lines) {
     const original = billItemMap.get(line.billItemId);
     if (!original) return { error: "Item not found on this bill" };
-    const returnedSoFar = alreadyReturned.get(line.billItemId) ?? 0;
-    const remaining = round2(Number(original.quantity) - returnedSoFar);
+    const remaining = round2(Number(original.quantity) - (alreadyReturned.get(line.billItemId)?.quantity ?? 0));
     if (line.quantity > remaining) {
       return { error: `Only ${remaining} × "${original.product_name}" left to return on this bill.` };
     }
   }
 
-  const supplyType = bill.supply_type as "intra" | "inter";
-
-  // Reverse the refund exactly the way the ORIGINAL bill was charged —
-  // using the bill's own stored mode, not the shop's current setting,
-  // so a refund never comes out to more (or less) than was actually paid.
-  const inclusive = bill.price_includes_gst;
+  // Each line gives back its share of what that line was actually charged — the bill's
+  // discount, loyalty redemption and GST-inclusive pricing are already in those figures —
+  // so the credit note never refunds or reverses more tax than the sale collected.
   let subtotal = 0;
   let cgstAmount = 0;
   let sgstAmount = 0;
   let igstAmount = 0;
+  let total = 0;
   const itemRows = lines.map((line) => {
     const original = billItemMap.get(line.billItemId)!;
-    const lineAmount = round2(line.quantity * Number(original.unit_price));
-    const split = inclusive
-      ? splitTaxInclusive(lineAmount, Number(original.gst_percent), supplyType)
-      : splitTax(lineAmount, Number(original.gst_percent), supplyType);
-    subtotal = round2(subtotal + lineAmount);
-    cgstAmount = round2(cgstAmount + split.cgst);
-    sgstAmount = round2(sgstAmount + split.sgst);
-    igstAmount = round2(igstAmount + split.igst);
+    const f = returnFigures(
+      { quantity: Number(original.quantity), taxable: Number(original.line_subtotal), cgst: Number(original.cgst_amount), sgst: Number(original.sgst_amount), igst: Number(original.igst_amount) },
+      alreadyReturned.get(line.billItemId) ?? NO_FIGURES,
+      line.quantity,
+    );
+    subtotal = round2(subtotal + f.taxable);
+    cgstAmount = round2(cgstAmount + f.cgst);
+    sgstAmount = round2(sgstAmount + f.sgst);
+    igstAmount = round2(igstAmount + f.igst);
+    total = round2(total + f.total);
     return {
       bill_item_id: line.billItemId,
       product_id: original.product_id,
@@ -116,16 +116,13 @@ export async function createReturnAction(
       quantity: line.quantity,
       unit_price: original.unit_price,
       gst_percent: original.gst_percent,
-      line_subtotal: lineAmount,
-      cgst_amount: split.cgst,
-      sgst_amount: split.sgst,
-      igst_amount: split.igst,
-      line_total: inclusive ? lineAmount : round2(lineAmount + split.cgst + split.sgst + split.igst),
+      line_subtotal: f.taxable,
+      cgst_amount: f.cgst,
+      sgst_amount: f.sgst,
+      igst_amount: f.igst,
+      line_total: f.total,
     };
   });
-  // Inclusive: subtotal is already the gross refund (tax is a
-  // backed-out component). Exclusive: tax genuinely adds on top.
-  const total = inclusive ? subtotal : round2(subtotal + cgstAmount + sgstAmount + igstAmount);
 
   const financialYear = financialYearFor(new Date());
   const { data: issuedNumber, error: numberError } = await admin.rpc("next_return_number", {

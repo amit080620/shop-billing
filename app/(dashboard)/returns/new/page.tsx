@@ -2,6 +2,7 @@ import Link from "next/link";
 import { requireSession } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { ReturnClient } from "./ReturnClient";
+import { NO_FIGURES, sumReturned, type LineFigures } from "@/lib/returnMath";
 
 export default async function NewReturnPage({
   searchParams,
@@ -40,17 +41,17 @@ export default async function NewReturnPage({
 
   const { data: billItems } = await admin
     .from("bill_items")
-    .select("id, product_name, quantity, unit_price, gst_percent")
+    .select("id, product_name, quantity, unit_price, gst_percent, line_subtotal, cgst_amount, sgst_amount, igst_amount")
     .eq("bill_id", billId);
 
   const billItemIds = (billItems ?? []).map((i) => i.id);
   const { data: existingReturnItems } = billItemIds.length
-    ? await admin.from("return_items").select("bill_item_id, quantity").in("bill_item_id", billItemIds)
+    ? await admin.from("return_items").select("bill_item_id, quantity, line_total, cgst_amount, sgst_amount, igst_amount").in("bill_item_id", billItemIds)
     : { data: [] };
 
-  const returnedByItem = new Map<string, number>();
-  for (const ri of existingReturnItems ?? []) {
-    returnedByItem.set(ri.bill_item_id, (returnedByItem.get(ri.bill_item_id) ?? 0) + Number(ri.quantity));
+  const returnedByItem = new Map<string, LineFigures>();
+  for (const id of billItemIds) {
+    returnedByItem.set(id, sumReturned((existingReturnItems ?? []).filter((ri) => ri.bill_item_id === id)));
   }
 
   const customer = Array.isArray(bill.customers) ? bill.customers[0] : bill.customers;
@@ -62,14 +63,19 @@ export default async function NewReturnPage({
       customerName={customer?.name ?? null}
       businessType={session.businessType}
       items={(billItems ?? [])
-        .map((item) => ({
-          id: item.id,
-          productName: item.product_name,
-          originalQuantity: Number(item.quantity),
-          alreadyReturned: returnedByItem.get(item.id) ?? 0,
-          unitPrice: Number(item.unit_price),
-          gstPercent: Number(item.gst_percent),
-        }))
+        .map((item) => {
+          const returned = returnedByItem.get(item.id) ?? NO_FIGURES;
+          return {
+            id: item.id,
+            productName: item.product_name,
+            originalQuantity: Number(item.quantity),
+            alreadyReturned: returned.quantity,
+            unitPrice: Number(item.unit_price),
+            gstPercent: Number(item.gst_percent),
+            original: { quantity: Number(item.quantity), taxable: Number(item.line_subtotal), cgst: Number(item.cgst_amount), sgst: Number(item.sgst_amount), igst: Number(item.igst_amount) },
+            returned,
+          };
+        })
         .filter((item) => item.originalQuantity - item.alreadyReturned > 0)}
     />
   );
