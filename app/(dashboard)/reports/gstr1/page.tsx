@@ -2,6 +2,7 @@ import { requireSession } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { formatMoney } from "@/lib/format";
 import { round2 } from "@/lib/gst";
+import { INDIAN_STATES } from "@/lib/constants/states";
 import { istMonthRange, istYearMonth, MONTHS } from "@/lib/dateHelpers";
 import { PeriodPicker } from "../PeriodPicker";
 import { Gstr1Client } from "./Gstr1Client";
@@ -24,6 +25,9 @@ export default async function Gstr1Page({
 
   // Month boundaries at IST midnight, not the UTC server's.
   const { start, end } = istMonthRange(year, month);
+  // Place of supply for a walk-in sale is the shop's own state; naming it keeps walk-ins and local
+  // customers in one Table 7 row per rate, the way the GST portal expects.
+  const shopState = INDIAN_STATES.find((s) => s.code === session.shopStateCode)?.name ?? "Same state";
 
   const [{ data: bills }, { data: restaurantOrders }, { data: rentals }, { data: returnsRaw }] = await Promise.all([
     admin
@@ -192,7 +196,7 @@ export default async function Gstr1Page({
     const billItems = (items ?? []).filter((i) => i.bill_id === bill.id);
     for (const item of billItems) {
       if (Number(item.gst_percent) === 0) continue; // Table 8
-      const state = bill.customer?.state ?? "Same state (walk-in)";
+      const state = bill.customer?.state ?? shopState;
       const key = `${state}__${item.gst_percent}`;
       const g = b2cSmallGroups.get(key) ?? { state, rate: Number(item.gst_percent), taxable: 0, cgst: 0, sgst: 0, igst: 0 };
       g.taxable += Number(item.line_subtotal);
@@ -207,7 +211,7 @@ export default async function Gstr1Page({
   for (const item of rentalItems ?? []) {
     if (!rentalB2cSmallIds.has(item.rental_id) || Number(item.gst_percent) === 0) continue;
     const rental = rentalB2cSmall.find((r) => r.id === item.rental_id);
-    const state = rental?.customer?.state ?? "Same state (walk-in)";
+    const state = rental?.customer?.state ?? shopState;
     const key = `${state}__${item.gst_percent}`;
     const g = b2cSmallGroups.get(key) ?? { state, rate: Number(item.gst_percent), taxable: 0, cgst: 0, sgst: 0, igst: 0 };
     g.taxable += Number(item.line_subtotal);
@@ -219,8 +223,8 @@ export default async function Gstr1Page({
 
   for (const item of restaurantItems ?? []) {
     if (Number(item.gst_percent) === 0) continue; // Table 8
-    const key = `Same state (walk-in)__${item.gst_percent}`;
-    const g = b2cSmallGroups.get(key) ?? { state: "Same state (walk-in)", rate: Number(item.gst_percent), taxable: 0, cgst: 0, sgst: 0, igst: 0 };
+    const key = `${shopState}__${item.gst_percent}`;
+    const g = b2cSmallGroups.get(key) ?? { state: shopState, rate: Number(item.gst_percent), taxable: 0, cgst: 0, sgst: 0, igst: 0 };
     g.taxable += Number(item.line_subtotal);
     g.cgst += Number(item.cgst_amount);
     g.sgst += Number(item.sgst_amount);
@@ -294,7 +298,7 @@ export default async function Gstr1Page({
       date: cn.created_at,
       againstInvoice: cn.bill!.invoice_number,
       againstDate: cn.bill!.created_at,
-      placeOfSupply: cn.customer?.state ?? "Same state",
+      placeOfSupply: cn.customer?.state ?? shopState,
       value: Number(cn.total),
       rates: [...rates.values()],
     };
@@ -307,7 +311,7 @@ export default async function Gstr1Page({
       addNil(false, creditNotes.find((x) => x.id === l.returnId)!.bill!.supply_type === "inter", -l.taxable);
     } else if (nettedInB2cs.has(l.returnId)) {
       const cn = creditNotes.find((x) => x.id === l.returnId)!;
-      const state = cn.customer?.state ?? "Same state (walk-in)";
+      const state = cn.customer?.state ?? shopState;
       const key = `${state}__${l.rate}`;
       const g = b2cSmallGroups.get(key) ?? { state, rate: l.rate, taxable: 0, cgst: 0, sgst: 0, igst: 0 };
       g.taxable -= l.taxable;
