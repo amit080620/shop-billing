@@ -42,7 +42,7 @@ export function FastBillingSettingsClient({ enabled, productCount }: { enabled: 
           }}
         >
           <span
-            className={`absolute top-1 flex h-6 w-6 items-center justify-center rounded-full transition-transform ${isOn ? "translate-x-6 bg-brand" : "translate-x-0 bg-background"}`}
+            className={`absolute left-1 top-1 flex h-6 w-6 items-center justify-center rounded-full transition-transform ${isOn ? "translate-x-6 bg-brand" : "translate-x-0 bg-background"}`}
             style={{
               boxShadow: isOn
                 ? "-2px -2px 5px rgba(255,255,255,0.35), 2px 2px 5px rgba(0,0,0,0.25)"

@@ -1058,11 +1058,11 @@ export function NewBillClient({
               role="switch"
               aria-checked={b2bOn}
               aria-label={t("B2B invoice")}
-              className="relative h-8 w-14 shrink-0 rounded-full p-1"
+              className={`relative h-8 w-14 shrink-0 rounded-full p-1 transition-colors ${b2bOn ? "bg-brand-soft" : ""}`}
               style={{ boxShadow: "var(--elev-inset)" }}
             >
               <span
-                className={`absolute top-1 h-6 w-6 rounded-full transition-transform ${b2bOn ? "translate-x-6 bg-brand" : "translate-x-0 bg-background"}`}
+                className={`absolute left-1 top-1 h-6 w-6 rounded-full transition-transform ${b2bOn ? "translate-x-6 bg-brand" : "translate-x-0 bg-background"}`}
                 style={{ boxShadow: "var(--elev-xs)" }}
               />
             </button>

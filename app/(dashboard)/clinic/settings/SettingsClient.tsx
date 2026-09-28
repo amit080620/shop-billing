@@ -6,7 +6,7 @@ import { savePrescriptionSettingsAction } from "@/lib/actions/clinic";
 import { uploadSettingsImageAction } from "@/lib/actions/settings";
 import { PageHeader } from "@/app/components/PageHeader";
 import { Stethoscope } from "lucide-react";
-import { useT } from "@/lib/i18n/LangContext";
+import { useT } from "@/lib/i18n/LangContext";
 import { BackLink } from "@/app/components/BackLink";
 
 export function SettingsClient({
@@ -277,7 +277,7 @@ function FieldToggle({ label, checked, onChange }: { label: string; checked: boo
         style={{ boxShadow: "var(--elev-inset)" }}
       >
         <span
-          className={`absolute top-1 flex h-5 w-5 items-center justify-center rounded-full transition-transform ${checked ? "translate-x-5 bg-brand" : "translate-x-0 bg-background"}`}
+          className={`absolute left-1 top-1 flex h-5 w-5 items-center justify-center rounded-full transition-transform ${checked ? "translate-x-5 bg-brand" : "translate-x-0 bg-background"}`}
           style={{
             boxShadow: checked
               ? "-2px -2px 4px rgba(255,255,255,0.35), 2px 2px 4px rgba(0,0,0,0.25)"
