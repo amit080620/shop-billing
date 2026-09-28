@@ -40,6 +40,16 @@ export function round2(n: number) {
   return Math.round((n + Number.EPSILON) * 100) / 100;
 }
 
+/** True once a bill has moved into an earlier calendar month than today — the point past
+ * which Void or an Edit would silently rewrite a period that may already be filed with the
+ * government. GST law has no "undo" for a filed invoice; the correction has to be a visible
+ * credit/debit note instead. Same month is still open (nothing may have been filed yet), so
+ * same-day and same-month corrections are left alone — only a genuinely past month is blocked. */
+export function isPastGstPeriod(createdAt: string | Date, now: Date = new Date()): boolean {
+  const created = typeof createdAt === "string" ? new Date(createdAt) : createdAt;
+  return created.getFullYear() !== now.getFullYear() || created.getMonth() !== now.getMonth();
+}
+
 /** Indian financial year: 1 Apr – 31 Mar. Returns e.g. "2026-27". */
 export function financialYearFor(date: Date): string {
   const year = date.getFullYear();

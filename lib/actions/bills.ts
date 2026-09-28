@@ -6,7 +6,7 @@ import { revalidatePath } from "next/cache";
 import { requireSession, hasPermission, type SessionContext } from "../auth";
 import { createSupabaseAdminClient } from "../supabase/admin";
 import { billSchema, calculateTransactionTotals, type BillInput } from "../validation/schemas";
-import { determineSupplyType, financialYearFor, round2 } from "../gst";
+import { determineSupplyType, financialYearFor, isPastGstPeriod, round2 } from "../gst";
 import { logAuditEvent } from "../audit";
 import { findOrCreateCustomerByPhone, awardLoyaltyPoints } from "./customers";
 import { invalidateCache } from "../cache";
@@ -398,12 +398,15 @@ export async function voidBillAction(
 
   const { data: bill } = await admin
     .from("bills")
-    .select("id, status")
+    .select("id, status, created_at")
     .eq("id", billId)
     .eq("shop_id", session.shopId)
     .single();
   if (!bill) return { error: "Bill not found" };
   if (bill.status === "voided") return { error: "This bill is already voided" };
+  if (isPastGstPeriod(bill.created_at)) {
+    return { error: "This bill is from an earlier month, which may already be filed with the government — voiding it now would silently change that month's GST reports. Process a Return (credit note) instead; it keeps a proper record of the correction." };
+  }
 
   // Restore stock for any tracked products on this bill before marking it voided.
   const { data: items } = await admin
@@ -484,12 +487,15 @@ export async function editBillQuantitiesAction(
 
   const { data: bill } = await admin
     .from("bills")
-    .select("id, shop_id, status, discount_type, discount_value, supply_type, paid_amount, price_includes_gst")
+    .select("id, shop_id, status, created_at, discount_type, discount_value, supply_type, paid_amount, price_includes_gst")
     .eq("id", billId)
     .eq("shop_id", session.shopId)
     .single();
   if (!bill) return { error: "Bill not found" };
   if (bill.status !== "active") return { error: "Can't edit a voided bill" };
+  if (isPastGstPeriod(bill.created_at)) {
+    return { error: "This bill is from an earlier month, which may already be filed with the government — editing it now would silently change that month's GST reports. Process a Return (credit note) for the wrong quantity instead, then bill the correct one fresh." };
+  }
 
   const { data: items } = await admin
     .from("bill_items")

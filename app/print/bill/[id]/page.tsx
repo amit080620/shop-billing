@@ -7,6 +7,7 @@ import { LangProvider } from "@/lib/i18n/LangContext";
 import { messagesFor } from "@/lib/i18n/dictionary";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { formatMoney, formatDateTime } from "@/lib/format";
+import { isPastGstPeriod } from "@/lib/gst";
 import { buildUpiLink, generateQrDataUrl } from "@/lib/qr";
 import { PrintButton } from "./PrintButton";
 import { WhatsAppSendButton } from "./WhatsAppSendButton";
@@ -85,6 +86,9 @@ export default async function PrintBillPage({
     .single();
 
   if (!bill) notFound();
+  // Same rule the Edit/Void actions enforce server-side; checked here too so those buttons
+  // aren't offered at all on a bill they would refuse.
+  const periodClosed = isPastGstPeriod(bill.created_at);
 
   const { data: items } = await admin
     .from("bill_items")
@@ -382,15 +386,20 @@ export default async function PrintBillPage({
                 {t("↩ Return")}
               </Link>
             )}
-            {!hotelBookingId && hasPermission(session, "edit_bills") && (
+            {!periodClosed && !hotelBookingId && hasPermission(session, "edit_bills") && (
               <EditBillButton
                 billId={bill.id}
                 invoiceNumber={bill.invoice_number}
                 items={(items ?? []).map((i) => ({ id: i.id, productName: i.product_name, quantity: Number(i.quantity) }))}
               />
             )}
-            {hasPermission(session, "void_bills") && <VoidBillButton billId={bill.id} invoiceNumber={bill.invoice_number} />}
+            {!periodClosed && hasPermission(session, "void_bills") && <VoidBillButton billId={bill.id} invoiceNumber={bill.invoice_number} />}
           </div>
+        )}
+        {bill.status === "active" && periodClosed && (hasPermission(session, "edit_bills") || hasPermission(session, "void_bills")) && (
+          <p className="mt-2 text-xs text-muted">
+            {t("This bill is from an earlier month, so it can't be edited or voided — that month may already be filed. Use Return for any correction.")}
+          </p>
         )}
       </div>
 
