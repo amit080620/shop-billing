@@ -124,6 +124,9 @@ export function NewBillClient({
     /** Shop setting: prices already include GST. Must match what the
      * server uses, or the checkout total differs from the invoice. */
     priceIncludesGst: boolean;
+    /** "composition": the live preview must show ₹0 tax too, matching what
+     * createBillCore actually charges — composition dealers can't collect GST. */
+    gstScheme: "regular" | "composition";
   };
 }) {
   const { t } = useTranslation(lang);
@@ -261,7 +264,7 @@ export function NewBillClient({
         items: cart.map((c) => ({
           quantity: c.quantity,
           unitPrice: c.price,
-          gstPercent: c.gstPercent,
+          gstPercent: shopContext.gstScheme === "composition" ? 0 : c.gstPercent,
         })),
         discountType,
         discountValue: discountType === "flat" ? discountValue + redemptionValue : discountValue,
@@ -269,7 +272,7 @@ export function NewBillClient({
         supplyType,
         priceMode: shopContext.priceIncludesGst ? "inclusive" : "exclusive",
       }),
-    [cart, discountType, discountValue, redemptionValue, paidAmount, exchangeValue, supplyType, shopContext.priceIncludesGst],
+    [cart, discountType, discountValue, redemptionValue, paidAmount, exchangeValue, supplyType, shopContext.priceIncludesGst, shopContext.gstScheme],
   );
 
   const [state, formAction] = useActionState(keepValuesOnError(createBillAction), null);

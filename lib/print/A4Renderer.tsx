@@ -17,6 +17,9 @@ export type A4InvoiceData = {
   shopAddress?: string | null;
   shopPhone?: string | null;
   gstin?: string | null;
+  /** A composition-scheme dealer can't charge GST separately — the document becomes a
+   * "Bill of Supply" (not a Tax Invoice) with no tax break-up shown, per GST law. */
+  isComposition?: boolean;
   tagline?: string | null;
   accentColor?: string | null;
 
@@ -129,11 +132,16 @@ export function A4Renderer({ data }: { data: A4InvoiceData }) {
             <p className="text-[12px] text-neutral-500">
               {[data.shopPhone, data.gstin ? `GSTIN ${data.gstin}` : null].filter(Boolean).join("  ·  ")}
             </p>
+            {data.isComposition && (
+              <p className="mt-1 text-[11px] font-medium text-neutral-500">
+                Composition taxable person, not eligible to collect tax on supplies
+              </p>
+            )}
           </div>
         </div>
         <div className="text-right">
           <p className="whitespace-nowrap text-[20px] font-semibold tracking-tight" style={{ color: accent }}>
-            {data.gstin ? "TAX INVOICE" : "INVOICE"}
+            {data.isComposition ? "BILL OF SUPPLY" : data.gstin ? "TAX INVOICE" : "INVOICE"}
           </p>
           <p className="mt-1 text-[12px] text-neutral-500">
             Invoice No. <span className="whitespace-nowrap">{data.invoiceNumber}</span>
@@ -207,14 +215,18 @@ export function A4Renderer({ data }: { data: A4InvoiceData }) {
           {data.discountAmount != null && data.discountAmount > 0 && (
             <SummaryLine label={data.discountLabel ?? "Discount"} value={`− ${money(data.discountAmount)}`} />
           )}
-          <SummaryLine label="Taxable Value" value={money(data.taxableAmount)} />
-          {data.isIntraState ? (
+          {!data.isComposition && (
             <>
-              {data.cgstAmount != null && <SummaryLine label="CGST" value={money(data.cgstAmount)} />}
-              {data.sgstAmount != null && <SummaryLine label="SGST" value={money(data.sgstAmount)} />}
+              <SummaryLine label="Taxable Value" value={money(data.taxableAmount)} />
+              {data.isIntraState ? (
+                <>
+                  {data.cgstAmount != null && <SummaryLine label="CGST" value={money(data.cgstAmount)} />}
+                  {data.sgstAmount != null && <SummaryLine label="SGST" value={money(data.sgstAmount)} />}
+                </>
+              ) : (
+                data.igstAmount != null && <SummaryLine label="IGST" value={money(data.igstAmount)} />
+              )}
             </>
-          ) : (
-            data.igstAmount != null && <SummaryLine label="IGST" value={money(data.igstAmount)} />
           )}
           {data.roundOffAmount != null && Math.abs(data.roundOffAmount) > 0.001 && (
             <SummaryLine

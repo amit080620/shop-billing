@@ -14,6 +14,9 @@ export type ThermalReceiptItem = {
 export type ThermalReceiptData = {
   shopName: string;
   gstin?: string | null;
+  /** Same meaning as A4Renderer — no separate tax line items or split on a
+   * composition dealer's receipt, per GST law. */
+  isComposition?: boolean;
   invoiceNumber: string;
   dateText: string;
   customerName?: string | null;
@@ -87,12 +90,14 @@ export function ThermalRenderer({
   if (data.discountAmount && data.discountAmount > 0) {
     lines.push(buildTwoColumnRow(data.discountLabel ?? "Discount", `- Rs.${money(data.discountAmount)}`, profile));
   }
-  lines.push(buildTwoColumnRow("Taxable Value", `Rs.${money(data.taxableAmount)}`, profile));
-  if (data.isIntraState) {
-    if (data.cgstAmount) lines.push(buildTwoColumnRow("CGST", `+ Rs.${money(data.cgstAmount)}`, profile));
-    if (data.sgstAmount) lines.push(buildTwoColumnRow("SGST", `+ Rs.${money(data.sgstAmount)}`, profile));
-  } else if (data.igstAmount) {
-    lines.push(buildTwoColumnRow("IGST", `+ Rs.${money(data.igstAmount)}`, profile));
+  if (!data.isComposition) {
+    lines.push(buildTwoColumnRow("Taxable Value", `Rs.${money(data.taxableAmount)}`, profile));
+    if (data.isIntraState) {
+      if (data.cgstAmount) lines.push(buildTwoColumnRow("CGST", `+ Rs.${money(data.cgstAmount)}`, profile));
+      if (data.sgstAmount) lines.push(buildTwoColumnRow("SGST", `+ Rs.${money(data.sgstAmount)}`, profile));
+    } else if (data.igstAmount) {
+      lines.push(buildTwoColumnRow("IGST", `+ Rs.${money(data.igstAmount)}`, profile));
+    }
   }
   if (data.roundOffAmount && Math.abs(data.roundOffAmount) > 0.001) {
     const sign = data.roundOffAmount > 0 ? "+" : "-";
@@ -142,6 +147,7 @@ export function ThermalRenderer({
       </div>
       {data.tagline && <div className="text-center">{data.tagline}</div>}
       {data.gstin && <div className="text-center">GSTIN: {data.gstin}</div>}
+      {data.isComposition && <div className="text-center">Composition taxable person, not eligible to collect tax</div>}
       <div className="text-center">{buildDivider(profile, "=")}</div>
 
       <div>{buildTwoColumnRow("Bill No:", data.invoiceNumber, profile)}</div>

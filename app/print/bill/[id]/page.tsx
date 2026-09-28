@@ -167,6 +167,7 @@ export default async function PrintBillPage({
   const thermalData: ThermalReceiptData = {
     shopName: session.shopName,
     gstin: session.shopGstin,
+    isComposition: session.gstScheme === "composition",
     invoiceNumber: bill.invoice_number,
     dateText: formatDateTime(bill.created_at),
     customerName: customer?.name ?? null,
@@ -212,6 +213,7 @@ export default async function PrintBillPage({
     shopLogoUrl: session.shopLogoUrl,
     shopAddress: shopAddressText,
     gstin: session.shopGstin,
+    isComposition: session.gstScheme === "composition",
     tagline: invoiceSettings?.tagline ?? null,
     accentColor: invoiceSettings?.accent_color ?? null,
     invoiceNumber: bill.invoice_number,

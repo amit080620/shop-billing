@@ -49,6 +49,7 @@ export default async function FastBillingPage() {
       products={items}
       loyaltyRedemptionValue={loyaltyRedemptionValue}
       priceIncludesGst={session.priceIncludesGst}
+      gstScheme={session.gstScheme}
       lang={lang}
     />
   );

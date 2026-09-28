@@ -77,6 +77,12 @@ export async function createBillCore(
 
   const supplyType = determineSupplyType(session.shopStateCode, customerStateCode);
 
+  // A composition-scheme dealer is legally barred from charging GST separately on
+  // an invoice at all (their tax is a flat percentage of turnover, paid out of their
+  // own margin via CMP-08 — never itemized to the customer). Zeroing every line's
+  // rate here is what makes the saved bill, its printed Bill of Supply, and every
+  // GST report built from `bills`/`bill_items` all agree that nothing was charged.
+  const isComposition = session.gstScheme === "composition";
   const verifiedItems = items.map((item) => {
     const product = item.productId ? productMap.get(item.productId) : undefined;
     return {
@@ -86,7 +92,7 @@ export async function createBillCore(
       quantity: item.quantity,
       stockQuantity: item.stockQuantity ?? item.quantity,
       unitPrice: product ? Number(product.price) : item.unitPrice,
-      gstPercent: product ? Number(product.gst_percent) : item.gstPercent,
+      gstPercent: isComposition ? 0 : product ? Number(product.gst_percent) : item.gstPercent,
       warrantyMonths: product?.has_warranty ? product.warranty_months : null,
       mrp: product?.mrp ? Number(product.mrp) : null,
     };

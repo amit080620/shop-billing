@@ -170,7 +170,7 @@ export async function loadBookingDetail(admin: Admin, shopId: string, bookingId:
   const { data: b } = await admin.from("hotel_bookings").select("*").eq("id", bookingId).eq("shop_id", shopId).maybeSingle();
   if (!b) return null;
 
-  const [{ data: bookingRooms }, { data: charges }, { data: payments }, { data: orders }, { data: types }] = await Promise.all([
+  const [{ data: bookingRooms }, { data: charges }, { data: payments }, { data: orders }, { data: types }, { data: shopRow }] = await Promise.all([
     admin.from("hotel_booking_rooms").select("id, room_type_id, room_id, rate_per_night").eq("booking_id", bookingId).order("created_at"),
     admin.from("hotel_charges").select("id, kind, description, amount, gst_percent, created_at").eq("booking_id", bookingId).order("created_at"),
     admin.from("hotel_payments").select("id, kind, amount, payment_method, reference, created_at").eq("booking_id", bookingId).order("created_at"),
@@ -182,7 +182,12 @@ export async function loadBookingDetail(admin: Admin, shopId: string, bookingId:
       .neq("status", "cancelled")
       .order("settled_at"),
     admin.from("hotel_room_types").select("id, name, gst_percent").eq("shop_id", shopId),
+    admin.from("shops").select("gst_scheme").eq("id", shopId).maybeSingle(),
   ]);
+  // A composition-scheme hotel can't itemize GST at all (see createBillCore) — folded
+  // to 0 here too, so this "live running total" the staff sees during the stay already
+  // matches what checkout will actually charge, instead of a GST figure that vanishes later.
+  const isComposition = shopRow?.gst_scheme === "composition";
 
   const roomIds = [...new Set((bookingRooms ?? []).map((r) => r.room_id).filter(Boolean))] as string[];
   const { data: roomRows } = roomIds.length
@@ -270,8 +275,8 @@ export async function loadBookingDetail(admin: Admin, shopId: string, bookingId:
     payments: paymentRows,
     roomService,
     folio: computeFolio({
-      rooms: folioRooms,
-      charges: chargeRows,
+      rooms: isComposition ? folioRooms.map((r) => ({ ...r, gstPercent: 0 })) : folioRooms,
+      charges: isComposition ? chargeRows.map((c) => ({ ...c, gstPercent: 0 })) : chargeRows,
       roomService,
       payments: paymentRows,
       discount: Number(b.discount),

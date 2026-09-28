@@ -41,11 +41,15 @@ export function FastBillingClient({
   products,
   loyaltyRedemptionValue,
   priceIncludesGst,
+  gstScheme,
   lang,
 }: {
   products: FastProduct[];
   loyaltyRedemptionValue: number;
   priceIncludesGst: boolean;
+  /** "composition": the checkout preview must show ₹0 tax too, matching what
+   * createBillCore actually charges. */
+  gstScheme: "regular" | "composition";
   lang?: import("@/lib/i18n/dictionary").Lang;
 }) {
   const router = useRouter();
@@ -371,6 +375,7 @@ export function FastBillingClient({
           onClose={() => setShowBill(false)}
           loyaltyRedemptionValue={loyaltyRedemptionValue}
           priceIncludesGst={priceIncludesGst}
+          gstScheme={gstScheme}
           voiceCustomer={voiceCustomer}
         />
       )}
@@ -398,9 +403,11 @@ function FastBillSheet({
   onClose,
   loyaltyRedemptionValue,
   priceIncludesGst,
+  gstScheme,
   voiceCustomer,
 }: {
   priceIncludesGst: boolean;
+  gstScheme: "regular" | "composition";
   cart: FastCartLine[];
   onUpdateQty: (productId: string, qty: number) => void;
   onClose: () => void;
@@ -467,7 +474,7 @@ function FastBillSheet({
             <span className="text-muted">Subtotal</span>
             <span className="font-semibold text-foreground">{formatMoney(subtotal)}</span>
           </div>
-          <FastCheckoutButton cart={cart} loyaltyRedemptionValue={loyaltyRedemptionValue} priceIncludesGst={priceIncludesGst} voiceCustomer={voiceCustomer} />
+          <FastCheckoutButton cart={cart} loyaltyRedemptionValue={loyaltyRedemptionValue} priceIncludesGst={priceIncludesGst} gstScheme={gstScheme} voiceCustomer={voiceCustomer} />
         </div>
       )}
 
@@ -494,11 +501,13 @@ function FastCheckoutButton({
   cart,
   loyaltyRedemptionValue,
   priceIncludesGst,
+  gstScheme,
   voiceCustomer,
 }: {
   cart: FastCartLine[];
   loyaltyRedemptionValue: number;
   priceIncludesGst: boolean;
+  gstScheme: "regular" | "composition";
   voiceCustomer: { id: string; name: string; phone: string | null; loyaltyPoints: number } | null;
 }) {
   const [discountType, setDiscountType] = useState<"percent" | "flat">("flat");
@@ -546,7 +555,7 @@ function FastCheckoutButton({
   // server uses, so it includes GST (when prices exclude it), discount
   // and round-off — exactly what the invoice will say.
   const payable = calculateTransactionTotals({
-    items: cart.map((l) => ({ quantity: l.qty, unitPrice: l.price, gstPercent: l.gstPercent })),
+    items: cart.map((l) => ({ quantity: l.qty, unitPrice: l.price, gstPercent: gstScheme === "composition" ? 0 : l.gstPercent })),
     discountType,
     discountValue: discountType === "flat" ? discountValue + redemptionValue : discountValue,
     paidAmount: 0,

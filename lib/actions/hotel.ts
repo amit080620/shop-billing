@@ -778,9 +778,17 @@ export async function checkOutAction(input: {
 
   const priorPayments = detail.payments;
   const newPayments = input.payments.map((p, i) => ({ id: `new-${i}`, kind: "payment" as const, amount: round2(p.amount), method: p.method }));
+  // A composition-scheme hotel can't charge GST separately either — same rule as
+  // regular billing (see the comment in createBillCore), applied across every folio
+  // line (room nights, add-on charges, room service) before the totals are worked out.
+  const isComposition = session.gstScheme === "composition";
+  const foldGst = <T extends { gstPercent: number }>(rows: T[]): T[] => (isComposition ? rows.map((r) => ({ ...r, gstPercent: 0 })) : rows);
   const folio = computeFolio({
-    rooms: toFolioRooms(detail.rooms, detail.nights),
-    charges: detail.charges,
+    rooms: foldGst(toFolioRooms(detail.rooms, detail.nights)),
+    charges: foldGst(detail.charges),
+    // Room service isn't folded — those orders carry their own restaurant invoice
+    // (already taxed, or not, by the restaurant module's own GST handling) and are
+    // only added here as an already-settled total, per computeFolio's own contract.
     roomService: detail.roomService,
     payments: [...priorPayments, ...newPayments],
     discount,
@@ -911,7 +919,7 @@ export async function cancelBookingAction(input: {
     const limitError = await billLimitError(session);
     if (limitError) return { error: limitError };
     const avgRate = detail.rooms.length ? detail.rooms.reduce((s, r) => s + r.ratePerNight, 0) / detail.rooms.length : 0;
-    const gst = detail.rooms[0] ? roomGstPercent(detail.rooms[0].ratePerNight, null) : accommodationGstPercent(avgRate);
+    const gst = session.gstScheme === "composition" ? 0 : detail.rooms[0] ? roomGstPercent(detail.rooms[0].ratePerNight, null) : accommodationGstPercent(avgRate);
     const items: FolioInvoiceItem[] = [{ description: `Cancellation charges — ${detail.bookingNumber}`, hsnCode: ACCOMMODATION_SAC, quantity: 1, unitPrice: keep, gstPercent: gst }];
     const totals = calculateTransactionTotals({
       items: items.map((i) => ({ quantity: i.quantity, unitPrice: i.unitPrice, gstPercent: i.gstPercent })),
