@@ -8,6 +8,7 @@ import { DatePicker } from "./DatePicker";
 import { todayIso } from "@/lib/dateHelpers";
 import { getTranslator } from "@/lib/i18n/server";
 import { BackLink } from "@/app/components/BackLink";
+import { buyerSchemaReady } from "@/lib/gstBuyer";
 
 const METHODS = ["cash", "card", "upi", "online", "other"] as const;
 type Method = (typeof METHODS)[number];
@@ -34,7 +35,7 @@ export default async function DailySummaryPage({
 
   let billsQuery = admin
     .from("bills")
-    .select("payment_method, paid_amount, credit_amount, hotel_booking_id")
+    .select("id, total, gst_amount, payment_method, paid_amount, credit_amount, hotel_booking_id, customers ( gstin )")
     .eq("shop_id", session.shopId)
     .eq("status", "active")
     .gte("created_at", startOfDay.toISOString())
@@ -49,6 +50,7 @@ export default async function DailySummaryPage({
     { data: restaurantOrders },
     { data: rentals },
     { data: hotelPayments },
+    { data: refundsRaw },
   ] = await Promise.all([
     billsQuery,
     admin
@@ -73,7 +75,7 @@ export default async function DailySummaryPage({
     // completely invisible here even though real money changed hands.
     admin
       .from("restaurant_orders")
-      .select("id, credit_amount, hotel_booking_id, restaurant_order_payments ( payment_method, amount )")
+      .select("id, total, cgst_amount, sgst_amount, igst_amount, credit_amount, hotel_booking_id, restaurant_order_payments ( payment_method, amount )")
       .eq("shop_id", session.shopId)
       .eq("status", "settled")
       .gte("settled_at", startOfDay.toISOString())
@@ -82,7 +84,7 @@ export default async function DailySummaryPage({
     // orders above.
     admin
       .from("rentals")
-      .select("payment_method, paid_amount, credit_amount")
+      .select("total, cgst_amount, sgst_amount, igst_amount, payment_method, paid_amount, credit_amount, customers ( gstin )")
       .eq("shop_id", session.shopId)
       .neq("status", "cancelled")
       .gte("created_at", startOfDay.toISOString())
@@ -96,7 +98,41 @@ export default async function DailySummaryPage({
       .eq("shop_id", session.shopId)
       .gte("created_at", startOfDay.toISOString())
       .lte("created_at", endOfDay.toISOString()),
+    // Money handed back for returns today — it leaves the drawer (or the UPI account) the same day.
+    admin
+      .from("returns")
+      .select("refund_method, total, bills ( status )")
+      .eq("shop_id", session.shopId)
+      .gte("created_at", startOfDay.toISOString())
+      .lte("created_at", endOfDay.toISOString()),
   ]);
+
+  // Today's invoices split into B2B (made out to a GSTIN) and B2C, by what was frozen on each
+  // bill — so the owner sees at a glance how much went to businesses that will claim the GST.
+  const buyerReady = await buyerSchemaReady(admin);
+  const { data: billBuyers } = buyerReady && (bills ?? []).length
+    ? await admin.from("bills").select("id, buyer_name, buyer_gstin").in("id", (bills ?? []).map((b) => b.id))
+    : { data: [] as never[] };
+  const { data: orderBuyers } = buyerReady && (restaurantOrders ?? []).length
+    ? await admin.from("restaurant_orders").select("id").in("id", (restaurantOrders ?? []).map((o) => o.id)).not("buyer_gstin", "is", null)
+    : { data: [] as never[] };
+  const b2bOrderIds = new Set((orderBuyers ?? []).map((o) => o.id));
+  const buyerGstinByBill = new Map((billBuyers ?? []).map((b) => [b.id, b]));
+  const invoiceMix = { b2b: { count: 0, value: 0, gst: 0 }, b2c: { count: 0, value: 0, gst: 0 } };
+  const addToMix = (isB2b: boolean, value: number, gst: number) => {
+    const k = isB2b ? invoiceMix.b2b : invoiceMix.b2c;
+    k.count += 1;
+    k.value = round2(k.value + value);
+    k.gst = round2(k.gst + gst);
+  };
+  const gstinOf = (c: unknown) => (Array.isArray(c) ? c[0] : c) as { gstin: string | null } | null;
+  for (const b of bills ?? []) {
+    const frozen = buyerGstinByBill.get(b.id);
+    const gstin = frozen && (frozen.buyer_name != null || frozen.buyer_gstin != null) ? frozen.buyer_gstin : gstinOf(b.customers)?.gstin;
+    addToMix(!!gstin, Number(b.total), Number(b.gst_amount));
+  }
+  for (const o of restaurantOrders ?? []) addToMix(b2bOrderIds.has(o.id), Number(o.total), Number(o.cgst_amount) + Number(o.sgst_amount) + Number(o.igst_amount));
+  for (const r of rentals ?? []) addToMix(!!gstinOf(r.customers)?.gstin, Number(r.total), Number(r.cgst_amount) + Number(r.sgst_amount) + Number(r.igst_amount));
 
   const salesByMethod = emptyTotals();
   let newCreditGiven = 0;
@@ -125,7 +161,32 @@ export default async function DailySummaryPage({
 
   const oldCreditCollected = emptyTotals();
   for (const p of paymentsReceived ?? []) {
+    // A return adjusted against udhaar lowers what's owed, but no money came in.
+    if (!METHODS.includes(p.payment_method as Method)) continue;
     oldCreditCollected[p.payment_method as Method] += Number(p.amount);
+  }
+
+  // Extra collected today through debit notes (an invoice's value raised afterwards).
+  const { data: debitToday } = buyerReady
+    ? await admin
+        .from("debit_notes")
+        .select("payment_method, paid_amount, credit_amount, bills ( status )")
+        .eq("shop_id", session.shopId)
+        .gte("created_at", startOfDay.toISOString())
+        .lte("created_at", endOfDay.toISOString())
+    : { data: [] as never[] };
+  const debitNotesByMethod = emptyTotals();
+  for (const d of debitToday ?? []) {
+    if ((Array.isArray(d.bills) ? d.bills[0] : d.bills)?.status !== "active") continue;
+    if (METHODS.includes(d.payment_method as Method)) debitNotesByMethod[d.payment_method as Method] += Number(d.paid_amount);
+    newCreditGiven += Number(d.credit_amount);
+  }
+
+  const refundsByMethod = emptyTotals();
+  for (const r of refundsRaw ?? []) {
+    const billStatus = (Array.isArray(r.bills) ? r.bills[0] : r.bills)?.status;
+    if (billStatus !== "active" || !METHODS.includes(r.refund_method as Method)) continue;
+    refundsByMethod[r.refund_method as Method] += Number(r.total);
   }
 
   const purchasesPaidByMethod = emptyTotals();
@@ -144,8 +205,8 @@ export default async function DailySummaryPage({
   const totalOut = emptyTotals();
   const net = emptyTotals();
   for (const m of METHODS) {
-    totalIn[m] = round2(salesByMethod[m] + oldCreditCollected[m]);
-    totalOut[m] = round2(purchasesPaidByMethod[m] + vendorPaymentsByMethod[m]);
+    totalIn[m] = round2(salesByMethod[m] + oldCreditCollected[m] + debitNotesByMethod[m]);
+    totalOut[m] = round2(purchasesPaidByMethod[m] + vendorPaymentsByMethod[m] + refundsByMethod[m]);
     net[m] = round2(totalIn[m] - totalOut[m]);
   }
 
@@ -202,7 +263,7 @@ export default async function DailySummaryPage({
         </p>
         <p className="mt-1 text-2xl font-bold text-white">{formatMoney(net.cash)}</p>
         <p className="mt-1 text-xs text-white/70">
-          {t("Cash sales + cash udhaar collected − cash paid for purchases − cash paid to vendors")}
+          {t("Cash sales + cash udhaar collected − cash paid for purchases, to vendors and as refunds")}
         </p>
       </section>
 
@@ -213,6 +274,7 @@ export default async function DailySummaryPage({
         </h2>
         <BreakdownTable title={t("Sales collected today")} byMethod={salesByMethod} t={t} />
         <BreakdownTable title={t("Old udhaar collected today")} byMethod={oldCreditCollected} t={t} />
+        <BreakdownTable title={t("Debit notes collected today")} byMethod={debitNotesByMethod} t={t} />
         {newCreditGiven > 0 && (
           <p className="text-xs text-credit">
             + {formatMoney(newCreditGiven)} sold on fresh credit today (not cash yet — tracked in Reminders)
@@ -220,10 +282,32 @@ export default async function DailySummaryPage({
         )}
       </section>
 
+      {invoiceMix.b2b.count + invoiceMix.b2c.count > 0 && (
+        <section className="neu-card flex flex-col gap-2 p-4">
+          <div className="flex items-center justify-between gap-2">
+            <h2 className="text-sm font-semibold text-foreground">{t("Today's invoices: B2B and B2C")}</h2>
+            <Link href="/reports/gstr1" className="text-xs font-medium text-brand-text">{t("GST reports →")}</Link>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            {([["B2C", t("Customers without GSTIN"), invoiceMix.b2c], ["B2B", t("Made out to a GSTIN"), invoiceMix.b2b]] as const).map(([label, sub, mix]) => (
+              <div key={label} className="rounded-lg bg-background p-3">
+                <p className="text-xs font-semibold text-foreground">{label}</p>
+                <p className="text-[11px] text-muted">{sub}</p>
+                <p className="mt-1 text-lg font-bold text-foreground">{formatMoney(mix.value)}</p>
+                <p className="text-[11px] text-muted">
+                  {mix.count} {mix.count === 1 ? t("invoice") : t("invoices")} · GST {formatMoney(mix.gst)}
+                </p>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
       <section className="neu-card flex flex-col gap-2 p-4">
         <h2 className="flex items-center gap-1.5 text-sm font-semibold text-foreground"><Receipt size={14} /> {t("daily.moneyOut", { amount: formatMoney(grandTotalOut) })}</h2>
         <BreakdownTable title={t("Purchases paid today")} byMethod={purchasesPaidByMethod} t={t} />
         <BreakdownTable title={t("Vendor payments made today")} byMethod={vendorPaymentsByMethod} t={t} />
+        <BreakdownTable title={t("Refunds given for returns today")} byMethod={refundsByMethod} t={t} />
         {newPayableCreated > 0 && (
           <p className="text-xs text-credit">
             + {formatMoney(newPayableCreated)} bought on credit from vendors today (not paid yet)

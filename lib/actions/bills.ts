@@ -10,6 +10,7 @@ import { determineSupplyType, financialYearFor, isPastGstPeriod, round2 } from "
 import { logAuditEvent } from "../audit";
 import { findOrCreateCustomerByPhone, awardLoyaltyPoints } from "./customers";
 import { invalidateCache } from "../cache";
+import { buyerSchemaReady, stateFromGstin, type Buyer } from "../gstBuyer";
 
 export type ActionState = { error?: string } | null;
 
@@ -26,7 +27,7 @@ export async function createBillCore(
   const overLimit = await billLimitError(session);
   if (overLimit) return { error: overLimit };
 
-  const { customerId, items, discountType, discountValue, paidAmount, paymentMethod, doctorName, patientName, tripVehicleId, tripKm, tripDriverName, tripLoadWeight, tripLoadUnit, serviceProviderName, exchangeMetal, exchangeDescription, exchangeGrossWeight, exchangePurityPercent, exchangeRatePerGram, exchangeValue, redeemedPoints } = parsedData;
+  const { customerId, items, discountType, discountValue, paidAmount, paymentMethod, doctorName, patientName, tripVehicleId, tripKm, tripDriverName, tripLoadWeight, tripLoadUnit, serviceProviderName, exchangeMetal, exchangeDescription, exchangeGrossWeight, exchangePurityPercent, exchangeRatePerGram, exchangeValue, redeemedPoints, b2b, buyerName, buyerGstin, buyerAddress } = parsedData;
 
   // Old-gold/silver exchange is money-equivalent handed over at the
   // counter — it counts toward what's "paid", same as cash, without
@@ -57,16 +58,16 @@ export async function createBillCore(
     return { error: "One or more items need a prescription — enter the doctor's and patient's name." };
   }
 
-  let customerStateCode: string | null = null;
+  let customer: { name: string; gstin: string | null; address: string | null; state: string | null; state_code: string | null } | null = null;
   if (customerId) {
-    const { data: customer } = await admin
+    const { data } = await admin
       .from("customers")
-      .select("id, state_code")
+      .select("id, name, gstin, address, state, state_code")
       .eq("id", customerId)
       .eq("shop_id", session.shopId)
       .single();
-    if (!customer) return { error: "Customer not found" };
-    customerStateCode = customer.state_code;
+    if (!data) return { error: "Customer not found" };
+    customer = data;
   }
 
   if (!session.shopStateCode) {
@@ -75,7 +76,18 @@ export async function createBillCore(
     };
   }
 
-  const supplyType = determineSupplyType(session.shopStateCode, customerStateCode);
+  // Who the invoice is made out to. With the B2B switch on, the business typed in (it can differ
+  // from the customer, e.g. their employer); switched off, a plain B2C sale even for a customer who
+  // has a GSTIN; not given at all (offline sync, other modules), the customer as before.
+  const buyer: Buyer | null =
+    b2b && buyerName && buyerGstin
+      ? { name: buyerName, gstin: buyerGstin, address: buyerAddress ?? (customer?.gstin === buyerGstin ? customer.address : null), state: stateFromGstin(buyerGstin).name, stateCode: stateFromGstin(buyerGstin).code }
+      : customer
+        ? { name: customer.name, gstin: b2b === false ? null : customer.gstin, address: customer.address, state: customer.state, stateCode: customer.state_code }
+        : null;
+
+  // Place of supply: the B2B buyer's registered state, else the customer's state (walk-in: local).
+  const supplyType = determineSupplyType(session.shopStateCode, buyer?.stateCode ?? null);
 
   // A composition-scheme dealer is legally barred from charging GST separately on
   // an invoice at all (their tax is a flat percentage of turnover, paid out of their
@@ -150,6 +162,10 @@ export async function createBillCore(
       doctor_name: needsPrescription ? doctorName : null,
       patient_name: needsPrescription ? patientName : null,
       service_provider_name: serviceProviderName ?? null,
+      // Frozen here so a later edit of the customer never changes an invoice already issued.
+      ...((await buyerSchemaReady(admin))
+        ? { buyer_name: buyer?.name ?? null, buyer_gstin: buyer?.gstin ?? null, buyer_address: buyer?.address ?? null, buyer_state: buyer?.state ?? null, buyer_state_code: buyer?.stateCode ?? null }
+        : {}),
     })
     .select("id")
     .single();

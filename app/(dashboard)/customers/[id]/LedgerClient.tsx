@@ -40,7 +40,8 @@ type Bill = {
   href?: string;
 };
 type Payment = { id: string; amount: number; paymentMethod: string; note: string | null; createdAt: string };
-type Return = { id: string; returnNumber: string; total: number; createdAt: string; invoiceNumber: string };
+/** A credit note (a return — value down) or, with kind "debit", a debit note (value up). */
+type Return = { id: string; returnNumber: string; total: number; createdAt: string; invoiceNumber: string; kind?: "debit" };
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -349,21 +350,21 @@ export function LedgerClient({
 
       {returns.length > 0 && (
         <section className="flex flex-col gap-2">
-          <p className="text-sm font-medium text-foreground">Returns</p>
+          <p className="text-sm font-medium text-foreground">{returns.some((r) => r.kind === "debit") ? "Returns and debit notes" : "Returns"}</p>
           <ul className="flex flex-col gap-2">
             {returns.map((r) => (
               <li key={r.id}>
                 <Link
-                  href={`/returns/${r.id}`}
+                  href={r.kind === "debit" ? `/print/debit-note/${r.id}` : `/returns/${r.id}`}
                   className="flex items-center justify-between neu-card px-3.5 py-2.5"
                 >
                   <div>
-                    <p className="text-sm font-medium text-foreground">↩️ #{r.returnNumber}</p>
+                    <p className="text-sm font-medium text-foreground">{r.kind === "debit" ? "➕" : "↩️"} #{r.returnNumber}</p>
                     <p className="text-xs text-muted">
                       Against #{r.invoiceNumber} · {formatDateTime(r.createdAt)}
                     </p>
                   </div>
-                  <p className="text-sm font-semibold text-danger">− {formatMoney(r.total)}</p>
+                  <p className={`text-sm font-semibold ${r.kind === "debit" ? "text-foreground" : "text-danger"}`}>{r.kind === "debit" ? "+" : "−"} {formatMoney(r.total)}</p>
                 </Link>
               </li>
             ))}

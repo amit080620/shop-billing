@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { requireSession } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { getCustomerBalances } from "@/lib/moneyBalances";
+import { buyerSchemaReady } from "@/lib/gstBuyer";
 import { getTranslator } from "@/lib/i18n/server";
 import { LedgerClient } from "./LedgerClient";
 
@@ -73,6 +74,11 @@ export default async function CustomerLedgerPage({
       .neq("status", "cancelled"),
     getCustomerBalances(admin, session.shopId, [id]),
   ]);
+
+  // Debit notes (migration 0042) sit with the returns: both change what was billed.
+  const { data: debitNotes } = (await buyerSchemaReady(admin))
+    ? await admin.from("debit_notes").select("id, note_number, total, created_at, bills ( invoice_number )").eq("customer_id", id).eq("shop_id", session.shopId).order("created_at", { ascending: false })
+    : { data: [] as never[] };
 
   const billIds = (bills ?? []).map((b) => b.id);
   const { data: items } = billIds.length
@@ -174,7 +180,16 @@ export default async function CustomerLedgerPage({
         total: Number(r.total),
         createdAt: r.created_at,
         invoiceNumber: (Array.isArray(r.bills) ? r.bills[0]?.invoice_number : (r.bills as { invoice_number: string } | null)?.invoice_number) ?? "",
-      }))}
+      })).concat(
+        (debitNotes ?? []).map((d) => ({
+          id: d.id,
+          returnNumber: d.note_number,
+          total: Number(d.total),
+          createdAt: d.created_at,
+          invoiceNumber: (Array.isArray(d.bills) ? d.bills[0]?.invoice_number : (d.bills as { invoice_number: string } | null)?.invoice_number) ?? "",
+          kind: "debit" as const,
+        })),
+      )}
     />
   );
 }

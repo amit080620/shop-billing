@@ -40,6 +40,7 @@ export default async function StaffPerformancePage({
       .from("payments")
       .select("staff_id, amount")
       .eq("shop_id", session.shopId)
+      .neq("payment_method", "adjustment") // a return set against udhaar, not money collected
       .gte("created_at", startRange)
       .lte("created_at", endRange),
   ]);

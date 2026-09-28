@@ -21,6 +21,7 @@ import {
   markItemServedAction,
   mergeTableAction,
   getOrderUpiQrAction,
+  setOrderBuyerAction,
   type SettlePayment,
 } from "@/lib/actions/restaurant";
 import { addComboToOrderAction } from "@/lib/actions/combos";
@@ -71,6 +72,10 @@ type Order = {
   firstReadyAt: string | null;
   servedAt: string | null;
   settledAt: string | null;
+  /** A business the bill is made out to (B2B) — its GST can be claimed back. */
+  buyerName?: string | null;
+  buyerGstin?: string | null;
+  buyerAddress?: string | null;
 };
 
 /** ₹220 for whole rupees, ₹22.50 otherwise — menu tiles stay short. */
@@ -95,6 +100,7 @@ export function OrderClient({
   otherTables,
   roomCharge = null,
   chargedTo = null,
+  b2bAvailable = false,
 }: {
   shopName: string;
   shopGstin: string | null;
@@ -107,6 +113,8 @@ export function OrderClient({
   roomCharge?: { roomNumber: string; guestName: string } | null;
   /** Set once the order has been charged to a room. */
   chargedTo?: { roomNumber: string; guestName: string } | null;
+  /** Whether a company name + GSTIN can be put on the bill (needs migration 0042). */
+  b2bAvailable?: boolean;
 }) {
   const { t } = useTranslation(lang);
   const router = useRouter();
@@ -526,6 +534,7 @@ export function OrderClient({
           shopName={shopName}
           shopGstin={shopGstin}
           order={order}
+          b2bAvailable={b2bAvailable}
           items={activeItems}
           roomNote={(() => {
             const target = chargedTo ?? (chargedToRoom ? roomCharge : null);
@@ -907,6 +916,7 @@ function BillPrintView({
   shopName,
   shopGstin,
   order,
+  b2bAvailable,
   items,
   roomNote,
   onSettle,
@@ -916,6 +926,7 @@ function BillPrintView({
   shopName: string;
   shopGstin: string | null;
   order: Order;
+  b2bAvailable: boolean;
   items: Item[];
   /** Shown on the bill when it is charged to a hotel room instead of paid now. */
   roomNote?: string | null;
@@ -930,6 +941,22 @@ function BillPrintView({
   const [customerPhone, setCustomerPhone] = useState("");
   const [paperWidth, setPaperWidth] = useState<32 | 48>(32);
   const [showWhatsAppShare, setShowWhatsAppShare] = useState(false);
+  // Company GSTIN on the bill (B2B): editable while the order is open.
+  const router = useRouter();
+  const [editingBuyer, setEditingBuyer] = useState(false);
+  const [buyerDraft, setBuyerDraft] = useState({ name: order.buyerName ?? "", gstin: order.buyerGstin ?? "", address: order.buyerAddress ?? "" });
+  const [buyerError, setBuyerError] = useState<string | null>(null);
+  const [savingBuyer, setSavingBuyer] = useState(false);
+  async function saveBuyer(clear: boolean) {
+    setSavingBuyer(true);
+    setBuyerError(null);
+    const result = await setOrderBuyerAction(order.id, clear ? null : buyerDraft);
+    setSavingBuyer(false);
+    if (result.error) return setBuyerError(result.error);
+    if (clear) setBuyerDraft({ name: "", gstin: "", address: "" });
+    setEditingBuyer(false);
+    router.refresh();
+  }
 
   useEffect(() => {
     getOrderUpiQrAction(order.id).then((result) => {
@@ -953,6 +980,8 @@ function BillPrintView({
     const receipt: ReceiptData = {
       shopName,
       gstin: shopGstin,
+      customerName: order.buyerName ?? null,
+      customerGstin: order.buyerGstin ?? null,
       invoiceNumber: `${order.orderNumber} · ${order.tableName}`,
       dateText: new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata", dateStyle: "medium", timeStyle: "short" }),
       items: items.map((i) => ({
@@ -1019,6 +1048,26 @@ function BillPrintView({
             {t("order.close")}
           </button>
         </div>
+        {b2bAvailable && order.status === "open" && (
+          editingBuyer ? (
+            <div className="flex flex-col gap-1.5 rounded-lg border border-border p-2">
+              <p className="text-xs font-semibold text-foreground">{t("Company GST bill")}</p>
+              <input value={buyerDraft.name} onChange={(e) => setBuyerDraft((b) => ({ ...b, name: e.target.value }))} placeholder={t("Business name (as registered)")} className="rounded-lg border border-border px-2.5 py-1.5 text-xs outline-none focus:border-brand" />
+              <input value={buyerDraft.gstin} onChange={(e) => setBuyerDraft((b) => ({ ...b, gstin: e.target.value.toUpperCase().replace(/s/g, "").slice(0, 15) }))} placeholder="GSTIN — 27ABCDE1234F1Z5" className="rounded-lg border border-border px-2.5 py-1.5 font-mono text-xs uppercase outline-none focus:border-brand" />
+              <input value={buyerDraft.address} onChange={(e) => setBuyerDraft((b) => ({ ...b, address: e.target.value }))} placeholder={t("Billing address (optional)")} className="rounded-lg border border-border px-2.5 py-1.5 text-xs outline-none focus:border-brand" />
+              {buyerError && <p className="text-xs text-danger">{buyerError}</p>}
+              <div className="flex gap-1.5">
+                <button disabled={savingBuyer} onClick={() => saveBuyer(false)} className="rounded-lg bg-brand px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-50">{t("Save")}</button>
+                {order.buyerGstin && <button disabled={savingBuyer} onClick={() => saveBuyer(true)} className="rounded-lg border border-border px-3 py-1.5 text-xs text-muted">{t("Remove")}</button>}
+                <button onClick={() => setEditingBuyer(false)} className="rounded-lg border border-border px-3 py-1.5 text-xs text-muted">{t("Cancel")}</button>
+              </div>
+            </div>
+          ) : (
+            <button onClick={() => setEditingBuyer(true)} className="self-start text-xs font-medium text-brand">
+              {order.buyerGstin ? t("Change the company GSTIN on this bill") : t("Company GST bill? Add their GSTIN")}
+            </button>
+          )
+        )}
         <button onClick={() => setShowWhatsAppShare((v) => !v)} className="self-start text-xs font-medium text-brand">
           {showWhatsAppShare ? t("Hide WhatsApp share") : t("Also send this bill on WhatsApp")}
         </button>
@@ -1049,6 +1098,13 @@ function BillPrintView({
         {shopGstin && <p className="text-center text-xs">GSTIN: {shopGstin}</p>}
         <p className="text-center text-xs">Invoice #{order.orderNumber} · {order.tableName}</p>
         <p className="text-center text-xs">{new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata", dateStyle: "medium", timeStyle: "short" })}</p>
+        {order.buyerGstin && (
+          <div className="mt-1.5 text-xs">
+            <p>Bill to: <strong>{order.buyerName}</strong></p>
+            <p>GSTIN: {order.buyerGstin}</p>
+            {order.buyerAddress && <p>{order.buyerAddress}</p>}
+          </div>
+        )}
         <hr className="my-2 border-dashed" />
         <table className="w-full text-xs">
           <thead>

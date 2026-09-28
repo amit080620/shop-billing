@@ -3,6 +3,7 @@ import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { formatMoney } from "@/lib/format";
 import { round2 } from "@/lib/gst";
 import { INDIAN_STATES } from "@/lib/constants/states";
+import { buyerOf, buyerSchemaReady } from "@/lib/gstBuyer";
 import { istMonthRange, istYearMonth, MONTHS } from "@/lib/dateHelpers";
 import { PeriodPicker } from "../PeriodPicker";
 import { Gstr1Client } from "./Gstr1Client";
@@ -47,7 +48,7 @@ export default async function Gstr1Page({
     // HSN/SAC summary, same as any other unregistered walk-in sale.
     admin
       .from("restaurant_orders")
-      .select("id, taxable_amount, cgst_amount, sgst_amount, igst_amount, total")
+      .select("id, order_number, settled_at, taxable_amount, cgst_amount, sgst_amount, igst_amount, total")
       .eq("shop_id", session.shopId)
       .eq("status", "settled")
       .gte("settled_at", start.toISOString())
@@ -64,19 +65,33 @@ export default async function Gstr1Page({
     // original sale was — and are classified by who that original sale was to.
     admin
       .from("returns")
-      .select("id, return_number, created_at, total, cgst_amount, sgst_amount, igst_amount, bills ( invoice_number, created_at, status, supply_type, total, customers ( name, gstin, state, state_code ) )")
+      .select("id, return_number, created_at, total, cgst_amount, sgst_amount, igst_amount, bill_id, bills ( invoice_number, created_at, status, supply_type, total, customers ( name, gstin, state, state_code ) )")
       .eq("shop_id", session.shopId)
       .gte("created_at", start.toISOString())
       .lt("created_at", end.toISOString())
       .order("return_number"),
   ]);
 
+  // Who each invoice was made out to, as frozen on the bill (a B2B bill can name a different
+  // business than the customer). Bills from before that existed fall back to the customer.
+  const buyerReady = await buyerSchemaReady(admin);
+  const buyerBillIds = [...new Set([...(bills ?? []).map((b) => b.id), ...(returnsRaw ?? []).map((r) => r.bill_id)])];
+  const { data: billBuyers } = buyerReady && buyerBillIds.length
+    ? await admin.from("bills").select("id, buyer_name, buyer_gstin, buyer_address, buyer_state, buyer_state_code").in("id", buyerBillIds)
+    : { data: [] as never[] };
+  const buyerByBill = new Map((billBuyers ?? []).map((b) => [b.id, b]));
+  type PartyShape = { name: string; gstin: string | null; state: string | null; state_code: string | null };
+  const partyFor = (billId: string, customer: PartyShape | null | undefined): PartyShape | null => {
+    const p = buyerOf(buyerByBill.get(billId) ?? {}, customer);
+    return p ? { name: p.name ?? "", gstin: p.gstin, state: p.state, state_code: p.stateCode } : null;
+  };
+
   type ReturnBill = { invoice_number: string; created_at: string; status: string; supply_type: "intra" | "inter"; total: number; customers: BillRow["customers"] };
   const creditNotes = (returnsRaw ?? [])
     .map((r) => {
       const bill = (Array.isArray(r.bills) ? r.bills[0] : r.bills) as unknown as ReturnBill | null;
       const customer = bill ? (Array.isArray(bill.customers) ? bill.customers[0] : bill.customers) : null;
-      return { ...r, bill, customer: customer ?? null };
+      return { ...r, bill, customer: partyFor(r.bill_id, customer) };
     })
     // A bill voided after being partly returned is already out of the report entirely;
     // its credit note must not reduce the tax a second time.
@@ -96,6 +111,11 @@ export default async function Gstr1Page({
 
   const billIds = (bills ?? []).map((b) => b.id);
   const restaurantOrderIds = (restaurantOrders ?? []).map((o) => o.id);
+  // A restaurant bill made out to a company's GSTIN (B2B) goes to Table 4 like any B2B invoice.
+  const { data: orderBuyers } = (await buyerSchemaReady(admin)) && restaurantOrderIds.length
+    ? await admin.from("restaurant_orders").select("id, buyer_name, buyer_gstin").in("id", restaurantOrderIds).not("buyer_gstin", "is", null)
+    : { data: [] as never[] };
+  const restaurantB2b = new Map((orderBuyers ?? []).map((o) => [o.id, o]));
   const rentalIds = (rentals ?? []).map((r) => r.id);
 
   // Each of these depends only on its own parent above, so they're
@@ -145,7 +165,7 @@ export default async function Gstr1Page({
   const normalizedBills = (bills ?? []).map((b) => {
     const row = b as unknown as BillRow;
     const customer = Array.isArray(row.customers) ? row.customers[0] : row.customers;
-    return { ...row, customer: customer ?? null };
+    return { ...row, customer: partyFor(row.id, customer) };
   });
 
   // 0% items (nil-rated, exempt or non-GST) are reported only in Table 8 — never in Tables 4, 5
@@ -171,8 +191,11 @@ export default async function Gstr1Page({
     const nil = nilByRental.get(r.id);
     if (nil) addNil(!!r.customer?.gstin, r.supply_type === "inter", nil);
   }
+  const nilByOrder = new Map<string, number>();
   for (const item of restaurantItems ?? []) {
-    if (Number(item.gst_percent) === 0) addNil(false, false, Number(item.line_subtotal));
+    if (Number(item.gst_percent) !== 0) continue;
+    nilByOrder.set(item.order_id, round2((nilByOrder.get(item.order_id) ?? 0) + Number(item.line_subtotal)));
+    addNil(restaurantB2b.has(item.order_id), false, Number(item.line_subtotal));
   }
 
   const b2b = normalizedBills.filter((b) => b.customer?.gstin);
@@ -222,7 +245,7 @@ export default async function Gstr1Page({
   }
 
   for (const item of restaurantItems ?? []) {
-    if (Number(item.gst_percent) === 0) continue; // Table 8
+    if (Number(item.gst_percent) === 0 || restaurantB2b.has(item.order_id)) continue; // Table 8, or Table 4
     const key = `${shopState}__${item.gst_percent}`;
     const g = b2cSmallGroups.get(key) ?? { state: shopState, rate: Number(item.gst_percent), taxable: 0, cgst: 0, sgst: 0, igst: 0 };
     g.taxable += Number(item.line_subtotal);
@@ -301,6 +324,7 @@ export default async function Gstr1Page({
       placeOfSupply: cn.customer?.state ?? shopState,
       value: Number(cn.total),
       rates: [...rates.values()],
+      noteType: "C" as const,
     };
   };
   const cdnr = creditNotes.filter((cn) => cn.customer?.gstin).map(toNoteRow);
@@ -329,6 +353,59 @@ export default async function Gstr1Page({
     h.igst -= l.igst;
     hsnGroups.set(key, h);
   }
+  // Debit notes (an invoice's value raised afterwards): classified exactly like credit notes, but
+  // they add instead of taking away. One rate each, and no quantity, so not in the HSN summary.
+  type DebitNoteBill = { invoice_number: string; created_at: string; status: string; supply_type: "intra" | "inter"; total: number; buyer_name: string | null; buyer_gstin: string | null; buyer_address: string | null; buyer_state: string | null; buyer_state_code: string | null; customers: BillRow["customers"] };
+  const { data: debitRaw } = buyerReady
+    ? await admin
+        .from("debit_notes")
+        .select("id, note_number, created_at, taxable_amount, gst_percent, cgst_amount, sgst_amount, igst_amount, total, bills ( invoice_number, created_at, status, supply_type, total, buyer_name, buyer_gstin, buyer_address, buyer_state, buyer_state_code, customers ( name, gstin, state, state_code ) )")
+        .eq("shop_id", session.shopId)
+        .gte("created_at", start.toISOString())
+        .lt("created_at", end.toISOString())
+        .order("note_number")
+    : { data: [] as never[] };
+  const debitNotes = (debitRaw ?? [])
+    .map((d) => {
+      const bill = (Array.isArray(d.bills) ? d.bills[0] : d.bills) as unknown as DebitNoteBill | null;
+      const customer = bill ? (Array.isArray(bill.customers) ? bill.customers[0] : bill.customers) : null;
+      const p = bill ? buyerOf(bill, customer) : null;
+      return { ...d, bill, party: p ? { name: p.name ?? "", gstin: p.gstin, state: p.state } : null };
+    })
+    .filter((d) => d.bill?.status === "active");
+  const debitIsB2cl = (d: (typeof debitNotes)[number]) => !d.party?.gstin && d.bill!.supply_type === "inter" && Number(d.bill!.total) > 250000;
+  const toDebitRow = (d: (typeof debitNotes)[number]) => ({
+    gstin: d.party?.gstin ?? null,
+    name: d.party?.name ?? "Unregistered",
+    noteNumber: d.note_number,
+    date: d.created_at,
+    againstInvoice: d.bill!.invoice_number,
+    againstDate: d.bill!.created_at,
+    placeOfSupply: d.party?.state ?? shopState,
+    value: Number(d.total),
+    rates: [{ rate: Number(d.gst_percent), taxable: Number(d.taxable_amount), cgst: Number(d.cgst_amount), sgst: Number(d.sgst_amount), igst: Number(d.igst_amount) }],
+    noteType: "D" as const,
+  });
+  const dnr = debitNotes.filter((d) => d.party?.gstin).map(toDebitRow);
+  const dnur = debitNotes.filter((d) => debitIsB2cl(d)).map(toDebitRow);
+  for (const d of debitNotes.filter((x) => !x.party?.gstin && !debitIsB2cl(x))) {
+    const rate = Number(d.gst_percent);
+    if (rate === 0) {
+      addNil(false, d.bill!.supply_type === "inter", Number(d.taxable_amount));
+      continue;
+    }
+    const state = d.party?.state ?? shopState;
+    const key = `${state}__${rate}`;
+    const g = b2cSmallGroups.get(key) ?? { state, rate, taxable: 0, cgst: 0, sgst: 0, igst: 0 };
+    g.taxable += Number(d.taxable_amount);
+    g.cgst += Number(d.cgst_amount);
+    g.sgst += Number(d.sgst_amount);
+    g.igst += Number(d.igst_amount);
+    b2cSmallGroups.set(key, g);
+  }
+  const debitNoteTaxable = round2(debitNotes.reduce((s, d) => s + Number(d.taxable_amount), 0));
+  const debitNoteTax = round2(debitNotes.reduce((s, d) => s + Number(d.cgst_amount) + Number(d.sgst_amount) + Number(d.igst_amount), 0));
+
   const roundGroup = <T extends { taxable: number; cgst: number; sgst: number; igst: number }>(g: T): T => ({ ...g, taxable: round2(g.taxable), cgst: round2(g.cgst), sgst: round2(g.sgst), igst: round2(g.igst) });
   const creditNoteTaxable = round2(creditNoteLines.reduce((s, l) => s + l.taxable, 0));
   const creditNoteTax = round2(creditNoteLines.reduce((s, l) => s + l.cgst + l.sgst + l.igst, 0));
@@ -338,12 +415,14 @@ export default async function Gstr1Page({
     normalizedBills.reduce((s, b) => s + Number(b.taxable_amount), 0) +
     (restaurantOrders ?? []).reduce((s, o) => s + Number(o.taxable_amount), 0) +
     normalizedRentals.reduce((s, r) => s + Number(r.subtotal), 0) -
-    creditNoteTaxable;
+    creditNoteTaxable +
+    debitNoteTaxable;
   const totalTax =
     normalizedBills.reduce((s, b) => s + Number(b.cgst_amount) + Number(b.sgst_amount) + Number(b.igst_amount), 0) +
     (restaurantOrders ?? []).reduce((s, o) => s + Number(o.cgst_amount) + Number(o.sgst_amount) + Number(o.igst_amount), 0) +
     normalizedRentals.reduce((s, r) => s + Number(r.cgst_amount) + Number(r.sgst_amount) + Number(r.igst_amount), 0) -
-    creditNoteTax;
+    creditNoteTax +
+    debitNoteTax;
 
   return (
     <div className="flex flex-col gap-4">
@@ -360,13 +439,13 @@ export default async function Gstr1Page({
         <SummaryCard label={t("Taxable value")} value={formatMoney(totalTaxable)} />
         <SummaryCard label={t("Total tax")} value={formatMoney(totalTax)} />
       </div>
-      {creditNotes.length > 0 && (
+      {creditNotes.length + debitNotes.length > 0 && (
         <p className="-mt-2 text-xs text-muted">
-          {t("Net of credit notes issued this month")}: {creditNotes.length} · −{formatMoney(creditNoteTax)} {t("tax")}
+          {t("Includes this month's notes")}: {creditNotes.length} {t("credit")} (−{formatMoney(creditNoteTax)} {t("tax")}){debitNotes.length > 0 && <>, {debitNotes.length} {t("debit")} (+{formatMoney(debitNoteTax)} {t("tax")})</>}
         </p>
       )}
 
-      {normalizedBills.length === 0 && (restaurantOrders ?? []).length === 0 && normalizedRentals.length === 0 && creditNotes.length === 0 ? (
+      {normalizedBills.length === 0 && (restaurantOrders ?? []).length === 0 && normalizedRentals.length === 0 && creditNotes.length === 0 && debitNotes.length === 0 ? (
         <p className="rounded-lg border border-dashed border-border px-4 py-6 text-center text-sm text-muted">
           No sales invoices in this period.
         </p>
@@ -398,6 +477,21 @@ export default async function Gstr1Page({
                 total: Number(r.total),
               })),
             )
+            .concat(
+              (restaurantOrders ?? [])
+                .filter((o) => restaurantB2b.has(o.id))
+                .map((o) => ({
+                  gstin: restaurantB2b.get(o.id)!.buyer_gstin!,
+                  name: restaurantB2b.get(o.id)!.buyer_name ?? "",
+                  invoiceNumber: o.order_number,
+                  date: o.settled_at ?? "",
+                  taxable: round2(Number(o.taxable_amount) - (nilByOrder.get(o.id) ?? 0)),
+                  cgst: Number(o.cgst_amount),
+                  sgst: Number(o.sgst_amount),
+                  igst: Number(o.igst_amount),
+                  total: Number(o.total),
+                })),
+            )
             // an invoice with nothing but 0% items belongs only in Table 8
             .filter((row) => row.taxable > 0)}
           b2cLarge={b2cLarge
@@ -423,10 +517,11 @@ export default async function Gstr1Page({
           b2cSmall={[...b2cSmallGroups.values()].map(roundGroup)}
           nilRated={[...table8.entries()].map(([label, value]) => ({ label, value }))}
           hsnSummary={[...hsnGroups.values()].map((h) => ({ ...roundGroup(h), qty: Math.round(h.qty * 1000) / 1000 }))}
-          creditNotesRegistered={cdnr}
-          creditNotesUnregistered={cdnur}
+          creditNotesRegistered={[...cdnr, ...dnr]}
+          creditNotesUnregistered={[...cdnur, ...dnur]}
           invoiceNumbers={invoiceNumbers}
           creditNoteNumbers={creditNotes.map((cn) => cn.return_number).sort()}
+          debitNoteNumbers={debitNotes.map((d) => d.note_number).sort()}
         />
       )}
     </div>

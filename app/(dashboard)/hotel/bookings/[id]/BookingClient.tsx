@@ -28,12 +28,15 @@ export function BookingClient({
   shopName,
   canManage,
   canDiscount,
+  b2bAvailable = false,
 }: {
   booking: BookingDetail;
   freeByBookingRoom: Record<string, FreeRoom[]>;
   tableByRoom: Record<string, string>;
   shopName: string;
   canManage: boolean;
+  /** Company GST invoice at check-out — needs migration 0042. */
+  b2bAvailable?: boolean;
   canDiscount: boolean;
 }) {
   const { t } = useT();
@@ -332,7 +335,7 @@ export function BookingClient({
       {sheet === "payment" && <PaymentSheet booking={b} canRefund={canManage} onClose={() => setSheet(null)} />}
       {sheet === "dates" && <DatesSheet booking={b} onClose={() => setSheet(null)} />}
       {sheet === "guest" && <GuestSheet booking={b} onClose={() => setSheet(null)} />}
-      {sheet === "checkout" && <CheckOutSheet booking={b} canDiscount={canDiscount} onClose={() => setSheet(null)} />}
+      {sheet === "checkout" && <CheckOutSheet booking={b} canDiscount={canDiscount} b2bAvailable={b2bAvailable} onClose={() => setSheet(null)} />}
       {sheet === "cancel" && <CancelSheet booking={b} onClose={() => setSheet(null)} />}
       {sheet === "roomservice" && (
         <Sheet title={t("Room service — which room?")} onClose={() => setSheet(null)}>

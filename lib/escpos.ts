@@ -159,6 +159,8 @@ export type ReceiptData = {
   invoiceNumber: string;
   dateText: string;
   customerName?: string | null;
+  /** The buyer's GSTIN on a B2B bill (printed under the customer's name). */
+  customerGstin?: string | null;
   items: ReceiptItem[];
   subtotal: number;
   discount?: number;
@@ -236,6 +238,7 @@ export function buildReceiptEscPos(data: ReceiptData, charsWide: 32 | 48 = 32, f
   b.text(`Bill: ${data.invoiceNumber}`).newline();
   b.text(data.dateText).newline();
   if (data.customerName) b.text(`Customer: ${data.customerName}`).newline();
+  if (data.customerGstin) b.text(`GSTIN: ${data.customerGstin}`).newline();
   b.text(buildDivider(profile)).newline();
 
   b.bold(format.itemsBold);

@@ -4,6 +4,7 @@ import { requireSession } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { formatMoney, formatDateTime } from "@/lib/format";
 import { round2 } from "@/lib/gst";
+import { buyerOf, buyerSchemaReady } from "@/lib/gstBuyer";
 import { PrintButton } from "@/app/print/bill/[id]/PrintButton";
 import { getTranslator } from "@/lib/i18n/server";
 
@@ -35,7 +36,13 @@ export default async function PrintCreditNotePage({ params }: { params: Promise<
 
   type Customer = { name: string; phone: string | null; gstin: string | null; address: string | null; state: string | null };
   const bill = (Array.isArray(ret.bills) ? ret.bills[0] : ret.bills) as unknown as { invoice_number: string; created_at: string; supply_type: "intra" | "inter"; customers: Customer | Customer[] | null } | null;
-  const customer = bill ? (Array.isArray(bill.customers) ? bill.customers[0] : bill.customers) : null;
+  const billCustomer = bill ? (Array.isArray(bill.customers) ? bill.customers[0] : bill.customers) : null;
+  // Issued to whoever the original invoice was made out to (frozen on that bill).
+  const { data: buyerRow } = (await buyerSchemaReady(admin))
+    ? await admin.from("bills").select("buyer_name, buyer_gstin, buyer_address, buyer_state, buyer_state_code").eq("id", ret.bill_id).maybeSingle()
+    : { data: null };
+  const party = buyerOf(buyerRow ?? {}, billCustomer ? { ...billCustomer, state_code: null } : null);
+  const customer = party ? { name: party.name ?? "", phone: billCustomer?.phone ?? null, gstin: party.gstin, address: party.address, state: party.state } : null;
   const shopAddress = [shop?.address_line1, shop?.address_line2, shop?.city, shop?.state, shop?.pincode].filter(Boolean).join(", ");
   const accent = invoiceSettings?.accent_color ?? "#0f6b5c";
   const cgst = Number(ret.cgst_amount), sgst = Number(ret.sgst_amount), igst = Number(ret.igst_amount);

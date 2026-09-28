@@ -4,7 +4,8 @@ import { revalidatePath } from "next/cache";
 import { requireSession, hasPermission, type SessionContext } from "../auth";
 import { createSupabaseAdminClient } from "../supabase/admin";
 import { calculateTransactionTotals } from "../validation/schemas";
-import { financialYearFor, round2 } from "../gst";
+import { financialYearFor, GSTIN_REGEX, round2 } from "../gst";
+import { buyerSchemaReady, stateFromGstin, type Buyer } from "../gstBuyer";
 import { todayIso } from "../dateHelpers";
 import { normalizePhone } from "../phone";
 import { logAuditEvent } from "../audit";
@@ -648,6 +649,28 @@ export async function addPaymentAction(input: { bookingId: string; kind: "advanc
 
 // ─── The stay's GST invoice ────────────────────────────────────────────
 
+/** Who a stay invoice is made out to: the company typed in at check-out (a corporate guest),
+ * else the guest's customer record, else just the guest's name. Accommodation is taxed where the
+ * hotel is, so a company from another state still gets CGST + SGST. */
+async function stayBuyer(
+  admin: Admin,
+  shopId: string,
+  customerId: string | null,
+  guestName: string,
+  typed: { name: string; gstin: string; address: string } | null,
+): Promise<Buyer | null> {
+  if (typed) {
+    const gstin = typed.gstin.trim().toUpperCase();
+    const state = stateFromGstin(gstin);
+    return { name: typed.name.trim(), gstin, address: typed.address.trim() || null, state: state.name, stateCode: state.code };
+  }
+  if (customerId) {
+    const { data: c } = await admin.from("customers").select("name, gstin, address, state, state_code").eq("id", customerId).eq("shop_id", shopId).maybeSingle();
+    if (c) return { name: c.name, gstin: c.gstin, address: c.address, state: c.state, stateCode: c.state_code };
+  }
+  return guestName ? { name: guestName, gstin: null, address: null, state: null, stateCode: null } : null;
+}
+
 async function insertStayBill(
   admin: Admin,
   session: SessionContext,
@@ -660,6 +683,8 @@ async function insertStayBill(
     priceIncludesGst: boolean;
     creditAmount: number;
     paymentMethod: PaymentMethod;
+    /** Who the invoice is made out to — frozen on the bill (see createBillCore). */
+    buyer: Buyer | null;
   },
 ): Promise<{ billId: string; invoiceNumber: string } | { error: string }> {
   const financialYear = financialYearFor(new Date());
@@ -694,6 +719,9 @@ async function insertStayBill(
       total: p.totals.total,
       paid_amount: round2(p.totals.total - p.creditAmount),
       credit_amount: p.creditAmount,
+      ...((await buyerSchemaReady(admin))
+        ? { buyer_name: p.buyer?.name ?? null, buyer_gstin: p.buyer?.gstin ?? null, buyer_address: p.buyer?.address ?? null, buyer_state: p.buyer?.state ?? null, buyer_state_code: p.buyer?.stateCode ?? null }
+        : {}),
     })
     .select("id")
     .single();
@@ -745,6 +773,8 @@ export async function checkOutAction(input: {
   leaveUnpaid: boolean;
   /** How to hand back money when the guest has paid more than the bill. */
   refundMethod?: PaymentMethod;
+  /** A company the stay invoice is made out to (a corporate guest), with its GSTIN. */
+  buyer?: { name: string; gstin: string; address: string } | null;
 }): Promise<HotelResult & { billId?: string }> {
   const ctx = await open();
   if ("error" in ctx) return ctx;
@@ -759,6 +789,10 @@ export async function checkOutAction(input: {
   for (const p of input.payments) {
     const invalid = validPayment(p);
     if (invalid) return { error: invalid };
+  }
+  if (input.buyer) {
+    if (!input.buyer.name.trim()) return { error: "Enter the company name the invoice is made out to." };
+    if (!GSTIN_REGEX.test(input.buyer.gstin.trim().toUpperCase())) return { error: "Enter a valid 15-character GSTIN, like 27ABCDE1234F1Z5." };
   }
 
   // Open room-service orders must be closed first, or their food would be
@@ -845,6 +879,7 @@ export async function checkOutAction(input: {
     const result = await insertStayBill(admin, session, {
       bookingId: detail.id,
       customerId,
+      buyer: await stayBuyer(admin, session.shopId, customerId, detail.guestName, input.buyer ?? null),
       items: folio.items,
       totals: folio.totals,
       discount,
@@ -933,6 +968,7 @@ export async function cancelBookingAction(input: {
     const result = await insertStayBill(admin, session, {
       bookingId: detail.id,
       customerId: detail.customerId,
+      buyer: await stayBuyer(admin, session.shopId, detail.customerId, detail.guestName, null),
       items,
       totals,
       discount: 0,

@@ -35,6 +35,8 @@ type CreditNote = {
   placeOfSupply: string;
   value: number;
   rates: { rate: number; taxable: number; cgst: number; sgst: number; igst: number }[];
+  /** C = credit note (value down), D = debit note (value up). */
+  noteType: "C" | "D";
 };
 
 /** GSTR-1 wants one row per note per tax rate. */
@@ -42,7 +44,7 @@ function noteCsvRows(notes: CreditNote[], registered: boolean) {
   return notes.flatMap((n) =>
     n.rates.map((r) => [
       ...(registered ? [n.gstin ?? "", n.name] : ["B2CL"]),
-      n.noteNumber, n.date.slice(0, 10), "C", n.placeOfSupply, ...(registered ? ["N"] : []), "Regular",
+      n.noteNumber, n.date.slice(0, 10), n.noteType, n.placeOfSupply, ...(registered ? ["N"] : []), "Regular",
       n.value.toFixed(2), `${r.rate}`, r.taxable.toFixed(2), r.cgst.toFixed(2), r.sgst.toFixed(2), r.igst.toFixed(2),
       n.againstInvoice, n.againstDate.slice(0, 10),
     ]),
@@ -60,6 +62,7 @@ export function Gstr1Client({
   creditNotesUnregistered,
   invoiceNumbers,
   creditNoteNumbers,
+  debitNoteNumbers,
 }: {
   period: string;
   b2b: B2B[];
@@ -71,6 +74,7 @@ export function Gstr1Client({
   creditNotesUnregistered: CreditNote[];
   invoiceNumbers: string[];
   creditNoteNumbers: string[];
+  debitNoteNumbers: string[];
 }) {
   const { t } = useT();
   return (
@@ -174,8 +178,8 @@ export function Gstr1Client({
       </Section>
 
       <Section
-        title="Table 9B — Credit notes"
-        sub={t("Returns against sales to registered buyers, and against B2C Large invoices")}
+        title="Table 9B — Credit and debit notes"
+        sub={t("Returns (credit) and value increases (debit) on sales to registered buyers, and on B2C Large invoices")}
         action={
           <div className="flex flex-col items-end gap-1">
             <ExportCsvButton
@@ -195,12 +199,13 @@ export function Gstr1Client({
           <Empty text={t("No credit notes to report here this period.")} />
         ) : (
           <Table
-            headers={["Note #", "To", "Against invoice", "Taxable", "Tax", "Value"]}
+            headers={["Note #", "Type", "To", "Against invoice", "Taxable", "Tax", "Value"]}
             rows={[...creditNotesRegistered, ...creditNotesUnregistered].map((n) => {
               const taxable = n.rates.reduce((s, r) => s + r.taxable, 0);
               const tax = n.rates.reduce((s, r) => s + r.cgst + r.sgst + r.igst, 0);
               return [
                 n.noteNumber,
+                n.noteType === "C" ? "Credit" : "Debit",
                 <span key="to" className="block max-w-[110px] truncate">{n.gstin ?? `${n.name} (B2CL)`}</span>,
                 n.againstInvoice,
                 formatMoney(taxable),
@@ -242,6 +247,11 @@ export function Gstr1Client({
             <> — {invoiceNumbers[0]} to {invoiceNumbers[invoiceNumbers.length - 1]}</>
           )}
         </p>
+        {debitNoteNumbers.length > 0 && (
+          <p className="mt-1 text-sm text-foreground">
+            {debitNoteNumbers.length} debit note{debitNoteNumbers.length === 1 ? "" : "s"} issued — {debitNoteNumbers[0]} to {debitNoteNumbers[debitNoteNumbers.length - 1]}
+          </p>
+        )}
         {creditNoteNumbers.length > 0 && (
           <p className="mt-1 text-sm text-foreground">
             {creditNoteNumbers.length} credit note{creditNoteNumbers.length === 1 ? "" : "s"} issued — {creditNoteNumbers[0]} to {creditNoteNumbers[creditNoteNumbers.length - 1]}

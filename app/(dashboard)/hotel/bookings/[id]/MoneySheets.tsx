@@ -76,7 +76,7 @@ export function PaymentSheet({ booking: b, canRefund, onClose }: { booking: Book
 type PayRow = { key: number; method: PaymentMethod; amount: string };
 let rowSeq = 0;
 
-export function CheckOutSheet({ booking: b, canDiscount, onClose }: { booking: BookingDetail; canDiscount: boolean; onClose: () => void }) {
+export function CheckOutSheet({ booking: b, canDiscount, b2bAvailable = false, onClose }: { booking: BookingDetail; canDiscount: boolean; b2bAvailable?: boolean; onClose: () => void }) {
   const { t } = useT();
   const router = useRouter();
   const { showToast } = useToast();
@@ -86,6 +86,9 @@ export function CheckOutSheet({ booking: b, canDiscount, onClose }: { booking: B
   const [rows, setRows] = useState<PayRow[]>([{ key: ++rowSeq, method: "cash", amount: b.folio.balance > 0 ? String(b.folio.balance) : "" }]);
   const [leaveUnpaid, setLeaveUnpaid] = useState(false);
   const [refundMethod, setRefundMethod] = useState<PaymentMethod>("cash");
+  // A corporate guest: the stay invoice made out to their company and its GSTIN.
+  const [companyBill, setCompanyBill] = useState(false);
+  const [company, setCompany] = useState({ name: "", gstin: "", address: "" });
 
   const discountNumber = Math.max(0, Number(discount) || 0);
   const newPayments = rows.filter((r) => Number(r.amount) > 0).map((r) => ({ method: r.method, amount: Number(r.amount) }));
@@ -114,7 +117,7 @@ export function CheckOutSheet({ booking: b, canDiscount, onClose }: { booking: B
   function submit() {
     setError(null);
     startTransition(async () => {
-      const r = await checkOutAction({ bookingId: b.id, discount: discountNumber, payments: newPayments, leaveUnpaid, refundMethod });
+      const r = await checkOutAction({ bookingId: b.id, discount: discountNumber, payments: newPayments, leaveUnpaid, refundMethod, buyer: b2bAvailable && companyBill ? company : null });
       if (r.error) return setError(r.error);
       showToast(t("Checked out"));
       onClose();
@@ -167,6 +170,23 @@ export function CheckOutSheet({ booking: b, canDiscount, onClose }: { booking: B
           <span>{formatMoney(withoutNew.balance)}</span>
         </div>
       </div>
+
+      {b2bAvailable && (
+        <div className="flex flex-col gap-2 rounded-xl border border-border p-3">
+          <label className="flex items-center gap-2 text-sm font-medium text-foreground">
+            <input type="checkbox" checked={companyBill} onChange={(e) => setCompanyBill(e.target.checked)} className="h-4 w-4 accent-[var(--brand)]" />
+            {t("Company GST invoice (corporate guest)")}
+          </label>
+          {companyBill && (
+            <>
+              <input value={company.name} onChange={(e) => setCompany((c) => ({ ...c, name: e.target.value }))} placeholder={t("Company name (as registered)")} className={HOTEL_INPUT} />
+              <input value={company.gstin} onChange={(e) => setCompany((c) => ({ ...c, gstin: e.target.value.toUpperCase().replace(/s/g, "").slice(0, 15) }))} placeholder="GSTIN — 27ABCDE1234F1Z5" className={`${HOTEL_INPUT} font-mono uppercase`} />
+              <input value={company.address} onChange={(e) => setCompany((c) => ({ ...c, address: e.target.value }))} placeholder={t("Company address (optional)")} className={HOTEL_INPUT} />
+              <p className="text-xs text-muted">{t("Hotel stays are taxed where the hotel is, so it stays CGST + SGST even for a company from another state.")}</p>
+            </>
+          )}
+        </div>
+      )}
 
       {canDiscount && (
         <label className={HOTEL_LABEL}>

@@ -1,6 +1,7 @@
 import "server-only";
 
 import type { createSupabaseAdminClient } from "./supabase/admin";
+import { buyerSchemaReady } from "./gstBuyer";
 
 type Admin = ReturnType<typeof createSupabaseAdminClient>;
 
@@ -46,7 +47,13 @@ export async function getCreditEntries(admin: Admin, shopId: string): Promise<{ 
     admin.from("rentals").select("customer_id, credit_amount, created_at").eq("shop_id", shopId).neq("status", "cancelled").gt("credit_amount", 0).not("customer_id", "is", null),
   ]);
   for (const r of [bills, orders, rentals]) if (r.error) throw new Error(`credit entries: ${r.error.message}`);
-  return [...(bills.data ?? []), ...(orders.data ?? []), ...(rentals.data ?? [])]
+  // Debit notes left on udhaar (migration 0042) are credit too — customer_balances() counts them.
+  const debit = (await buyerSchemaReady(admin))
+    ? ((await admin.from("debit_notes").select("customer_id, credit_amount, created_at, bills ( status )").eq("shop_id", shopId).gt("credit_amount", 0).not("customer_id", "is", null)).data ?? [])
+        .filter((d) => (Array.isArray(d.bills) ? d.bills[0] : d.bills)?.status === "active")
+        .map((d) => ({ customer_id: d.customer_id, credit_amount: d.credit_amount, created_at: d.created_at }))
+    : [];
+  return [...(bills.data ?? []), ...(orders.data ?? []), ...(rentals.data ?? []), ...debit]
     .map((r) => ({ customerId: r.customer_id as string, credit: Number(r.credit_amount), createdAt: r.created_at as string }))
     .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
 }

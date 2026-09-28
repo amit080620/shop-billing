@@ -65,6 +65,7 @@ create table if not exists debit_notes (
   shop_id uuid not null references shops(id) on delete cascade,
   -- Cascades so deleting a shop (which removes its bills) can never be blocked by a debit note.
   bill_id uuid not null references bills(id) on delete cascade,
+  customer_id uuid references customers(id) on delete set null,
   staff_id uuid not null references staff(id),
   note_number text not null,
   financial_year text not null,
@@ -75,10 +76,63 @@ create table if not exists debit_notes (
   sgst_amount numeric(12, 2) not null default 0,
   igst_amount numeric(12, 2) not null default 0,
   total numeric(12, 2) not null,
+  -- Collected on the spot, or (udhar) added to what the customer owes.
+  payment_method text not null default 'cash' check (payment_method in ('cash', 'card', 'upi', 'online', 'other', 'udhar')),
+  paid_amount numeric(12, 2) not null default 0,
+  credit_amount numeric(12, 2) not null default 0,
   created_at timestamptz not null default now()
 );
+-- (Safe if an earlier copy of this file already created the table without these.)
+alter table debit_notes add column if not exists customer_id uuid references customers(id) on delete set null;
+alter table debit_notes add column if not exists payment_method text not null default 'cash';
+alter table debit_notes add column if not exists paid_amount numeric(12, 2) not null default 0;
+alter table debit_notes add column if not exists credit_amount numeric(12, 2) not null default 0;
 alter table debit_notes enable row level security;
 create index if not exists idx_debit_notes_shop_created on debit_notes(shop_id, created_at);
 create index if not exists idx_debit_notes_bill on debit_notes(bill_id);
+
+-- ─── Returns adjusted against udhaar ─────────────────────────────────────
+-- A return refunded as "adjust against credit" only said so on the credit note; the customer's
+-- udhaar never went down. It now writes an adjustment entry in payments (method 'adjustment'):
+-- every balance, reminder and ledger already counts payments, while the daily cash summary
+-- leaves it out, since no money changed hands.
+alter table payments drop constraint if exists payments_payment_method_check;
+alter table payments add constraint payments_payment_method_check
+  check (payment_method in ('cash', 'card', 'upi', 'online', 'other', 'adjustment'));
+
+-- ─── Customer balances include debit notes left on udhar ───────────────
+create or replace function customer_balances(p_shop_id uuid, p_customer_ids uuid[] default null)
+returns table (customer_id uuid, balance numeric)
+language sql
+stable
+as $
+  select x.customer_id, sum(x.amount) as balance
+  from (
+    select b.customer_id, b.credit_amount as amount
+      from bills b
+     where b.shop_id = p_shop_id and b.status = 'active' and b.customer_id is not null and b.credit_amount <> 0
+    union all
+    select o.customer_id, o.credit_amount
+      from restaurant_orders o
+     where o.shop_id = p_shop_id and o.status = 'settled' and o.customer_id is not null and o.credit_amount <> 0
+    union all
+    select r.customer_id, r.credit_amount
+      from rentals r
+     where r.shop_id = p_shop_id and r.status <> 'cancelled' and r.customer_id is not null and r.credit_amount <> 0
+    union all
+    select d.customer_id, d.credit_amount
+      from debit_notes d
+      join bills db on db.id = d.bill_id and db.status = 'active'
+     where d.shop_id = p_shop_id and d.customer_id is not null and d.credit_amount <> 0
+    union all
+    select p.customer_id, -p.amount
+      from payments p
+     where p.shop_id = p_shop_id
+  ) x
+  where p_customer_ids is null or x.customer_id = any(p_customer_ids)
+  group by x.customer_id;
+$;
+revoke all on function customer_balances(uuid, uuid[]) from public, anon, authenticated;
+grant execute on function customer_balances(uuid, uuid[]) to service_role;
 
 insert into schema_migrations (version) values ('0042_gst_buyer_snapshot_debit_notes') on conflict (version) do nothing;

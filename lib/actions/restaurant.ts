@@ -4,7 +4,8 @@ import { revalidatePath } from "next/cache";
 import { requireSession, requireOwner } from "../auth";
 import { roomGuestForTable } from "../hotel/server";
 import { createSupabaseAdminClient } from "../supabase/admin";
-import { determineSupplyType, financialYearFor, round2, splitTax, splitTaxInclusive } from "../gst";
+import { determineSupplyType, financialYearFor, GSTIN_REGEX, round2, splitTax, splitTaxInclusive } from "../gst";
+import { buyerSchemaReady, stateFromGstin } from "../gstBuyer";
 import { invalidateCache } from "../cache";
 import { findOrCreateCustomerByPhone, awardLoyaltyPoints } from "./customers";
 
@@ -613,6 +614,38 @@ export async function applyOrderDiscountAction(
   await admin.from("restaurant_orders").update({ discount_type: discountType, discount_value: discountValue }).eq("id", orderId);
   await recalcOrderTotals(orderId);
 
+  revalidatePath(`/restaurant/orders/${orderId}`);
+  return {};
+}
+
+/** Puts a business's name and GSTIN on an open order's bill — a company lunch or banquet whose
+ * GST the business will claim back — or takes it off again. Only while the order is open: once
+ * it is settled the invoice is final. Restaurant service is always taxed where the restaurant is,
+ * so the buyer's state never changes CGST+SGST to IGST. */
+export async function setOrderBuyerAction(
+  orderId: string,
+  buyer: { name: string; gstin: string; address: string } | null,
+): Promise<{ error?: string }> {
+  const session = await requireSession();
+  const admin = createSupabaseAdminClient();
+  if (!(await buyerSchemaReady(admin))) return { error: "Company GST bills need a quick database update first — ask the owner to run migration 0042." };
+
+  const { data: order } = await admin.from("restaurant_orders").select("id, status").eq("id", orderId).eq("shop_id", session.shopId).single();
+  if (!order) return { error: "Order not found" };
+  if (order.status !== "open") return { error: "This bill is already settled — a company GSTIN can only be added before payment." };
+
+  let fields: { buyer_name: string | null; buyer_gstin: string | null; buyer_address: string | null; buyer_state: string | null; buyer_state_code: string | null } = {
+    buyer_name: null, buyer_gstin: null, buyer_address: null, buyer_state: null, buyer_state_code: null,
+  };
+  if (buyer) {
+    const gstin = buyer.gstin.trim().toUpperCase();
+    if (!buyer.name.trim()) return { error: "Enter the business name the bill is made out to" };
+    if (!GSTIN_REGEX.test(gstin)) return { error: "Enter a valid 15-character GSTIN, like 27ABCDE1234F1Z5" };
+    const state = stateFromGstin(gstin);
+    fields = { buyer_name: buyer.name.trim(), buyer_gstin: gstin, buyer_address: buyer.address.trim() || null, buyer_state: state.name, buyer_state_code: state.code };
+  }
+  const { error } = await admin.from("restaurant_orders").update(fields).eq("id", orderId);
+  if (error) return { error: "Could not save the company details" };
   revalidatePath(`/restaurant/orders/${orderId}`);
   return {};
 }

@@ -5,6 +5,7 @@ import { getLang } from "@/lib/i18n/server";
 import { NewBillClient } from "./NewBillClient";
 import { getBarcodeScanModeAction } from "@/lib/actions/settings";
 import { computeAffinityMap } from "@/lib/basketAffinity";
+import { buyerSchemaReady } from "@/lib/gstBuyer";
 
 export default async function NewBillPage() {
   const session = await requireSession();
@@ -97,6 +98,7 @@ export default async function NewBillPage() {
         shopStateCode={session.shopStateCode}
         lang={lang}
         barcodeScanMode={barcodeScanMode}
+        b2bAvailable={await buyerSchemaReady(admin)}
       loyaltyRedemptionValue={Number(shop?.loyalty_redemption_value ?? 1)}
       shopContext={{
         shopId: session.shopId,

@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { buyerSchemaReady } from "@/lib/gstBuyer";
 import { ClipboardList } from "lucide-react";
 import { requireSession, hasPermission } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
@@ -49,6 +50,7 @@ export default async function BookingPage({ params }: { params: Promise<{ id: st
         shopName={session.shopName}
         canManage={session.role === "owner" || session.role === "manager"}
         canDiscount={hasPermission(session, "give_discounts")}
+        b2bAvailable={await buyerSchemaReady(admin)}
       />
     </div>
   );

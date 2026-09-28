@@ -390,6 +390,11 @@ export interface Database {
       };
       bills: {
         Row: {
+          buyer_name: string | null;
+          buyer_gstin: string | null;
+          buyer_address: string | null;
+          buyer_state: string | null;
+          buyer_state_code: string | null;
           id: string;
           shop_id: string;
           customer_id: string | null;
@@ -427,6 +432,11 @@ export interface Database {
           created_at: string;
         };
         Insert: {
+          buyer_name?: string | null;
+          buyer_gstin?: string | null;
+          buyer_address?: string | null;
+          buyer_state?: string | null;
+          buyer_state_code?: string | null;
           id?: string;
           shop_id: string;
           customer_id?: string | null;
@@ -464,6 +474,11 @@ export interface Database {
           created_at?: string;
         };
         Update: {
+          buyer_name?: string | null;
+          buyer_gstin?: string | null;
+          buyer_address?: string | null;
+          buyer_state?: string | null;
+          buyer_state_code?: string | null;
           id?: string;
           shop_id?: string;
           customer_id?: string | null;
@@ -572,9 +587,9 @@ export interface Database {
         ];
       };
       payments: {
-        Row: { id: string; shop_id: string; customer_id: string; staff_id: string; amount: number; payment_method: "cash" | "card" | "upi" | "online" | "other"; note: string | null; created_at: string };
-        Insert: { id?: string; shop_id: string; customer_id: string; staff_id: string; amount: number; payment_method?: "cash" | "card" | "upi" | "online" | "other"; note?: string | null; created_at?: string };
-        Update: { id?: string; shop_id?: string; customer_id?: string; staff_id?: string; amount?: number; payment_method?: "cash" | "card" | "upi" | "online" | "other"; note?: string | null; created_at?: string };
+        Row: { id: string; shop_id: string; customer_id: string; staff_id: string; amount: number; payment_method: "cash" | "card" | "upi" | "online" | "other" | "adjustment"; note: string | null; created_at: string };
+        Insert: { id?: string; shop_id: string; customer_id: string; staff_id: string; amount: number; payment_method?: "cash" | "card" | "upi" | "online" | "other" | "adjustment"; note?: string | null; created_at?: string };
+        Update: { id?: string; shop_id?: string; customer_id?: string; staff_id?: string; amount?: number; payment_method?: "cash" | "card" | "upi" | "online" | "other" | "adjustment"; note?: string | null; created_at?: string };
         Relationships: [
           { foreignKeyName: "payments_shop_id_fkey"; columns: ["shop_id"]; isOneToOne: false; referencedRelation: "shops"; referencedColumns: ["id"] },
           { foreignKeyName: "payments_customer_id_fkey"; columns: ["customer_id"]; isOneToOne: false; referencedRelation: "customers"; referencedColumns: ["id"] },
@@ -1831,6 +1846,11 @@ export interface Database {
       };
       restaurant_orders: {
         Row: {
+          buyer_name: string | null;
+          buyer_gstin: string | null;
+          buyer_address: string | null;
+          buyer_state: string | null;
+          buyer_state_code: string | null;
           id: string;
           shop_id: string;
           table_id: string;
@@ -1867,6 +1887,11 @@ export interface Database {
           created_at: string;
         };
         Insert: {
+          buyer_name?: string | null;
+          buyer_gstin?: string | null;
+          buyer_address?: string | null;
+          buyer_state?: string | null;
+          buyer_state_code?: string | null;
           id?: string;
           shop_id: string;
           table_id: string;
@@ -1903,6 +1928,11 @@ export interface Database {
           created_at?: string;
         };
         Update: {
+          buyer_name?: string | null;
+          buyer_gstin?: string | null;
+          buyer_address?: string | null;
+          buyer_state?: string | null;
+          buyer_state_code?: string | null;
           id?: string;
           shop_id?: string;
           table_id?: string;
@@ -2022,6 +2052,15 @@ export interface Database {
         Relationships: [
           { foreignKeyName: "restaurant_order_items_order_id_fkey"; columns: ["order_id"]; isOneToOne: false; referencedRelation: "restaurant_orders"; referencedColumns: ["id"] },
           { foreignKeyName: "restaurant_order_items_product_id_fkey"; columns: ["product_id"]; isOneToOne: false; referencedRelation: "products"; referencedColumns: ["id"] },
+        ];
+      };
+      debit_notes: {
+        Row: { id: string; shop_id: string; bill_id: string; customer_id: string | null; payment_method: "cash" | "card" | "upi" | "online" | "other" | "udhar"; paid_amount: number; credit_amount: number; staff_id: string; note_number: string; financial_year: string; reason: string; taxable_amount: number; gst_percent: number; cgst_amount: number; sgst_amount: number; igst_amount: number; total: number; created_at: string };
+        Insert: { id?: string; shop_id: string; bill_id: string; customer_id?: string | null; payment_method?: "cash" | "card" | "upi" | "online" | "other" | "udhar"; paid_amount?: number; credit_amount?: number; staff_id: string; note_number: string; financial_year: string; reason: string; taxable_amount: number; gst_percent?: number; cgst_amount?: number; sgst_amount?: number; igst_amount?: number; total: number; created_at?: string };
+        Update: { id?: string; shop_id?: string; bill_id?: string; customer_id?: string | null; payment_method?: "cash" | "card" | "upi" | "online" | "other" | "udhar"; paid_amount?: number; credit_amount?: number; staff_id?: string; note_number?: string; financial_year?: string; reason?: string; taxable_amount?: number; gst_percent?: number; cgst_amount?: number; sgst_amount?: number; igst_amount?: number; total?: number; created_at?: string };
+        Relationships: [
+          { foreignKeyName: "debit_notes_shop_id_fkey"; columns: ["shop_id"]; isOneToOne: false; referencedRelation: "shops"; referencedColumns: ["id"] },
+          { foreignKeyName: "debit_notes_bill_id_fkey"; columns: ["bill_id"]; isOneToOne: false; referencedRelation: "bills"; referencedColumns: ["id"] },
         ];
       };
       returns: {
@@ -2552,6 +2591,10 @@ export interface Database {
         Returns: number;
       };
       next_restaurant_order_number: {
+        Args: { p_shop_id: string; p_financial_year: string };
+        Returns: number;
+      };
+      next_debit_note_number: {
         Args: { p_shop_id: string; p_financial_year: string };
         Returns: number;
       };

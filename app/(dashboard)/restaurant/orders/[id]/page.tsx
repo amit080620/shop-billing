@@ -4,6 +4,7 @@ import { getTranslator } from "@/lib/i18n/server";
 import { notFound } from "next/navigation";
 import { roomChargeTargetForTable } from "@/lib/hotel/server";
 import { OrderClient } from "./OrderClient";
+import { buyerSchemaReady } from "@/lib/gstBuyer";
 
 export default async function OrderPage({
   params,
@@ -49,6 +50,12 @@ export default async function OrderPage({
 
   const table = Array.isArray(order.restaurant_tables) ? order.restaurant_tables[0] : order.restaurant_tables;
 
+  // A company the bill is made out to (B2B), once the database can hold it.
+  const b2bAvailable = await buyerSchemaReady(admin);
+  const { data: buyer } = b2bAvailable
+    ? await admin.from("restaurant_orders").select("buyer_name, buyer_gstin, buyer_address").eq("id", id).maybeSingle()
+    : { data: null };
+
   // An order already charged to a room: which room and guest, for the bill's note.
   let chargedTo: { roomNumber: string; guestName: string } | null = null;
   if (session.businessType === "hotel" && order.status === "settled") {
@@ -84,7 +91,11 @@ export default async function OrderPage({
         firstReadyAt: order.first_ready_at,
         servedAt: order.served_at,
         settledAt: order.settled_at,
+        buyerName: buyer?.buyer_name ?? null,
+        buyerGstin: buyer?.buyer_gstin ?? null,
+        buyerAddress: buyer?.buyer_address ?? null,
       }}
+      b2bAvailable={b2bAvailable}
       items={(items ?? []).map((i) => ({
         id: i.id,
         productId: i.product_id,

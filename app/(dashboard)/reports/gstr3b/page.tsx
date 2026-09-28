@@ -6,6 +6,7 @@ import { PeriodPicker } from "../PeriodPicker";
 import { ExportCsvButton } from "@/app/components/ExportCsvButton";
 import { getTranslator } from "@/lib/i18n/server";
 import { BackLink } from "@/app/components/BackLink";
+import { buyerSchemaReady } from "@/lib/gstBuyer";
 
 export default async function Gstr3bPage({
   searchParams,
@@ -70,16 +71,26 @@ export default async function Gstr3bPage({
       .filter((r) => (Array.isArray(r.bills) ? r.bills[0] : r.bills)?.status === "active")
       .map((r) => ({ taxable_amount: Number(r.total) - Number(r.cgst_amount) - Number(r.sgst_amount) - Number(r.igst_amount), cgst_amount: r.cgst_amount, sgst_amount: r.sgst_amount, igst_amount: r.igst_amount })),
   );
+  // Debit notes issued this month raise it again (the other half of the same rule).
+  const { data: debitRaw } = (await buyerSchemaReady(admin))
+    ? await admin
+        .from("debit_notes")
+        .select("taxable_amount, cgst_amount, sgst_amount, igst_amount, bills ( status )")
+        .eq("shop_id", session.shopId)
+        .gte("created_at", start.toISOString())
+        .lt("created_at", end.toISOString())
+    : { data: [] as never[] };
+  const debitNotes = sumFields((debitRaw ?? []).filter((d) => (Array.isArray(d.bills) ? d.bills[0] : d.bills)?.status === "active"));
   const sales = sumFields([
     ...(bills ?? []),
     ...(restaurantOrders ?? []),
     ...(rentals ?? []).map((r) => ({ taxable_amount: r.subtotal, cgst_amount: r.cgst_amount, sgst_amount: r.sgst_amount, igst_amount: r.igst_amount })),
   ]);
   const outward = {
-    taxable: round2(sales.taxable - creditNotes.taxable),
-    cgst: round2(sales.cgst - creditNotes.cgst),
-    sgst: round2(sales.sgst - creditNotes.sgst),
-    igst: round2(sales.igst - creditNotes.igst),
+    taxable: round2(sales.taxable - creditNotes.taxable + debitNotes.taxable),
+    cgst: round2(sales.cgst - creditNotes.cgst + debitNotes.cgst),
+    sgst: round2(sales.sgst - creditNotes.sgst + debitNotes.sgst),
+    igst: round2(sales.igst - creditNotes.igst + debitNotes.igst),
   };
   const rcmPurchases = (purchases ?? []).filter((p) => p.reverse_charge);
   const rcm = sumFields(rcmPurchases);
@@ -126,6 +137,11 @@ export default async function Gstr3bPage({
         {creditNotes.cgst + creditNotes.sgst + creditNotes.igst + creditNotes.taxable > 0 && (
           <p className="mt-2 text-xs text-muted">
             {t("Net of credit notes (returns) issued this month")}: −{formatMoney(creditNotes.taxable)} {t("taxable")}, −{formatMoney(round2(creditNotes.cgst + creditNotes.sgst + creditNotes.igst))} {t("tax")}
+          </p>
+        )}
+        {debitNotes.taxable > 0 && (
+          <p className="mt-1 text-xs text-muted">
+            {t("Includes debit notes issued this month")}: +{formatMoney(debitNotes.taxable)} {t("taxable")}, +{formatMoney(round2(debitNotes.cgst + debitNotes.sgst + debitNotes.igst))} {t("tax")}
           </p>
         )}
       </section>

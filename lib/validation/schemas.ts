@@ -165,6 +165,18 @@ export const billSchema = z.object({
   exchangeRatePerGram: z.coerce.number().min(0).nullable().optional(),
   exchangeValue: z.coerce.number().min(0).nullable().optional(),
   redeemedPoints: z.coerce.number().min(0).nullable().optional(),
+  // The B2B switch on the bill screen. Absent (offline sync, other modules' bills): a customer with
+  // a GSTIN makes it a B2B bill, as always. false: this sale is B2C even for such a customer.
+  // true: the invoice is made out to buyerName / buyerGstin, which can be a different business
+  // than the customer — an employee buying for their company, who claims the input tax credit.
+  b2b: z.boolean().optional(),
+  buyerName: optionalText(120),
+  buyerGstin: optionalGstin.optional(),
+  buyerAddress: optionalText(250),
+}).superRefine((bill, ctx) => {
+  if (!bill.b2b) return;
+  if (!bill.buyerName) ctx.addIssue({ code: "custom", path: ["buyerName"], message: "Enter the business name the invoice is made out to" });
+  if (!bill.buyerGstin) ctx.addIssue({ code: "custom", path: ["buyerGstin"], message: "Enter the business's 15-character GSTIN for a B2B invoice" });
 });
 export type BillInput = z.infer<typeof billSchema>;
 

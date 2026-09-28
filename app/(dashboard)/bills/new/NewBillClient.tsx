@@ -9,7 +9,8 @@ import { createBillAction } from "@/lib/actions/bills";
 import { quickCreateCustomerAction, lookupCustomerByPhoneAction } from "@/lib/actions/customers";
 import { quickCreateProductAction } from "@/lib/actions/products";
 import { calculateTransactionTotals } from "@/lib/validation/schemas";
-import { determineSupplyType, round2 } from "@/lib/gst";
+import { determineSupplyType, GSTIN_REGEX, round2 } from "@/lib/gst";
+import { INDIAN_STATES } from "@/lib/constants/states";
 import { UNITS } from "@/lib/constants/states";
 import { formatMoney, unitLabel } from "@/lib/format";
 import { useSyncCalculatorAmount } from "@/lib/calculatorAmount";
@@ -104,6 +105,7 @@ export function NewBillClient({
   silverRate,
   loyaltyRedemptionValue,
   barcodeScanMode = "both",
+  b2bAvailable = false,
 }: {
   shopStateCode: string;
   products: Product[];
@@ -117,6 +119,8 @@ export function NewBillClient({
   barcodeScanMode?: "camera" | "hardware" | "both" | "off";
   silverRate: number | null;
   loyaltyRedemptionValue: number;
+  /** The B2B invoice switch — shown once the database can freeze the buyer on each bill. */
+  b2bAvailable?: boolean;
   shopContext: {
     shopId: string;
     shopName: string;
@@ -240,13 +244,28 @@ export function NewBillClient({
   const exchangeValue = exchangeInfo?.value ?? 0;
   const [tripInfo, setTripInfo] = useState<{ vehicleId: string; km: number; driverName: string; loadWeight: number | null; loadUnit: string } | null>(null);
 
+  // B2B invoice: made out to a business and its GSTIN, which the buyer uses to claim input tax
+  // credit. Switches itself on (and fills in) for a customer who has a GSTIN; can be a different
+  // business than the customer — an employee buying for their company.
+  const [b2bOn, setB2bOn] = useState(false);
+  const [buyer, setBuyer] = useState({ name: "", gstin: "", address: "" });
+  const buyerGstinValid = GSTIN_REGEX.test(buyer.gstin.trim().toUpperCase());
+  const customerForB2b = customerMode === "existing" ? selectedCustomer : null;
+  useEffect(() => {
+    setB2bOn(!!customerForB2b?.gstin);
+    setBuyer({ name: customerForB2b?.gstin ? customerForB2b.name : "", gstin: customerForB2b?.gstin ?? "", address: "" });
+  }, [customerForB2b?.id, customerForB2b?.gstin, customerForB2b?.name]);
+  const b2bInvalid = b2bAvailable && b2bOn && (!buyer.name.trim() || !buyerGstinValid);
+
   const supplyType = useMemo(
     () =>
       determineSupplyType(
         shopStateCode,
-        customerMode === "existing" ? selectedCustomer?.state_code ?? null : null,
+        b2bAvailable && b2bOn && buyerGstinValid
+          ? buyer.gstin.trim().slice(0, 2)
+          : customerMode === "existing" ? selectedCustomer?.state_code ?? null : null,
       ),
-    [shopStateCode, customerMode, selectedCustomer],
+    [shopStateCode, customerMode, selectedCustomer, b2bAvailable, b2bOn, buyerGstinValid, buyer.gstin],
   );
 
   const cartSubtotal = cart.reduce((s, c) => s + c.quantity * c.price, 0);
@@ -982,6 +1001,9 @@ export function NewBillClient({
     exchangePurityPercent: exchangeInfo?.purityPercent ?? null,
     exchangeRatePerGram: exchangeInfo?.ratePerGram ?? null,
     exchangeValue: exchangeInfo?.value ?? null,
+    ...(b2bAvailable
+      ? { b2b: b2bOn, buyerName: b2bOn ? buyer.name : "", buyerGstin: b2bOn ? buyer.gstin : "", buyerAddress: b2bOn ? buyer.address : "" }
+      : {}),
   });
 
   return (
@@ -1022,6 +1044,71 @@ export function NewBillClient({
           ))}
         </ul>
       </section>
+
+      {b2bAvailable && (
+        <section className="neu-card flex flex-col gap-3 p-4">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-sm font-medium text-foreground">{t("B2B invoice (with the buyer's GSTIN)")}</p>
+              <p className="text-xs text-muted">{t("For a business that will claim the GST back. It can be a different company than the customer — like their employer.")}</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setB2bOn((on) => !on)}
+              role="switch"
+              aria-checked={b2bOn}
+              aria-label={t("B2B invoice")}
+              className="relative h-8 w-14 shrink-0 rounded-full p-1"
+              style={{ boxShadow: "var(--elev-inset)" }}
+            >
+              <span
+                className={`absolute top-1 h-6 w-6 rounded-full transition-transform ${b2bOn ? "translate-x-6 bg-brand" : "translate-x-0 bg-background"}`}
+                style={{ boxShadow: "var(--elev-xs)" }}
+              />
+            </button>
+          </div>
+          {b2bOn && (
+            <div className="flex flex-col gap-2.5">
+              <label className="flex flex-col gap-1 text-xs font-medium text-muted">
+                {t("Business name (as registered)")}
+                <input
+                  value={buyer.name}
+                  onChange={(e) => setBuyer((b) => ({ ...b, name: e.target.value }))}
+                  placeholder={t("e.g. ABC Traders Pvt Ltd")}
+                  className="rounded-lg border border-border bg-surface px-3.5 py-2.5 text-sm font-normal text-foreground outline-none focus:border-brand"
+                />
+              </label>
+              <label className="flex flex-col gap-1 text-xs font-medium text-muted">
+                GSTIN
+                <input
+                  value={buyer.gstin}
+                  onChange={(e) => setBuyer((b) => ({ ...b, gstin: e.target.value.toUpperCase().replace(/s/g, "").slice(0, 15) }))}
+                  placeholder="27ABCDE1234F1Z5"
+                  autoCapitalize="characters"
+                  className="rounded-lg border border-border bg-surface px-3.5 py-2.5 font-mono text-sm font-normal uppercase text-foreground outline-none focus:border-brand"
+                />
+              </label>
+              <label className="flex flex-col gap-1 text-xs font-medium text-muted">
+                {t("Billing address (optional)")}
+                <input
+                  value={buyer.address}
+                  onChange={(e) => setBuyer((b) => ({ ...b, address: e.target.value }))}
+                  placeholder={t("Company address for the invoice")}
+                  className="rounded-lg border border-border bg-surface px-3.5 py-2.5 text-sm font-normal text-foreground outline-none focus:border-brand"
+                />
+              </label>
+              {buyer.gstin.length > 0 && !buyerGstinValid ? (
+                <p className="text-xs text-danger">{t("Check the GSTIN — it should be 15 characters, like 27ABCDE1234F1Z5.")}</p>
+              ) : buyerGstinValid ? (
+                <p className="text-xs text-muted">
+                  {INDIAN_STATES.find((st) => st.code === buyer.gstin.slice(0, 2))?.name ?? buyer.gstin.slice(0, 2)} ·{" "}
+                  {supplyType === "inter" ? t("another state, so IGST") : t("same state, so CGST + SGST")}
+                </p>
+              ) : null}
+            </div>
+          )}
+        </section>
+      )}
 
       <section className="flex flex-col gap-3 neu-card p-4">
         <p className="text-sm font-medium text-foreground">{t("bill.discount")}</p>
@@ -1265,7 +1352,7 @@ export function NewBillClient({
         </p>
       )}
 
-      <SubmitButton blocked={customerMode === "walkin" && totals.balanceAmount > 0} generatingLabel={t("bill.generating")} submitLabel={t("bill.generateInvoice")} />
+      <SubmitButton blocked={(customerMode === "walkin" && totals.balanceAmount > 0) || b2bInvalid} generatingLabel={t("bill.generating")} submitLabel={t("bill.generateInvoice")} />
     </form>
   );
 }

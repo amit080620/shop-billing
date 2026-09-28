@@ -20,7 +20,7 @@ export function formatDateTime(iso: string) {
   });
 }
 
-const PAYMENT_LABELS: Record<string, string> = { upi: "UPI", udhar: "Udhar", cash: "Cash", card: "Card", online: "Online", other: "Other" };
+const PAYMENT_LABELS: Record<string, string> = { upi: "UPI", udhar: "Udhar", cash: "Cash", card: "Card", online: "Online", other: "Other", adjustment: "Adjusted (return)" };
 
 /** Display name for a stored payment method ("upi" → "UPI"). CSS
  * capitalize turned it into "Upi". */

@@ -6,6 +6,7 @@ import { requireSession, hasPermission } from "../auth";
 import { createSupabaseAdminClient } from "../supabase/admin";
 import { financialYearFor, round2 } from "../gst";
 import { NO_FIGURES, returnFigures, sumReturned, type LineFigures } from "../returnMath";
+import { buyerSchemaReady } from "../gstBuyer";
 
 export type ActionState = { error?: string } | null;
 
@@ -164,6 +165,23 @@ export async function createReturnAction(
   if (itemsError) {
     await admin.from("returns").delete().eq("id", newReturn.id);
     return { error: "Could not save return items" };
+  }
+
+  // "Adjust against credit": the refund comes off what the customer owes. Written as an
+  // adjustment entry in payments, which every balance, reminder and ledger already counts, and
+  // the daily cash summary leaves out (no money changed hands). Needs migration 0042, which
+  // allows that payment method; before it, the credit note only records the choice.
+  if (refundMethod === "credit_adjustment" && bill.customer_id && total > 0 && (await buyerSchemaReady(admin))) {
+    await admin.from("payments").insert({
+      shop_id: session.shopId,
+      customer_id: bill.customer_id,
+      staff_id: session.userId,
+      amount: total,
+      payment_method: "adjustment",
+      note: `Return ${returnNumber} adjusted against udhaar`,
+    });
+    revalidatePath("/customers");
+    revalidatePath("/reminders");
   }
 
   // Restore stock for tracked products — best-effort, matches the same

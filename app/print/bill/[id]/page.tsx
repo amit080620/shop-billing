@@ -8,6 +8,7 @@ import { messagesFor } from "@/lib/i18n/dictionary";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { formatMoney, formatDateTime } from "@/lib/format";
 import { isPastGstPeriod } from "@/lib/gst";
+import { buyerOf, buyerSchemaReady } from "@/lib/gstBuyer";
 import { buildUpiLink, generateQrDataUrl } from "@/lib/qr";
 import { PrintButton } from "./PrintButton";
 import { WhatsAppSendButton } from "./WhatsAppSendButton";
@@ -100,6 +101,14 @@ export default async function PrintBillPage({
     ? bill.customers[0]
     : (bill.customers as { name: string; phone: string; gstin: string | null; address: string | null } | null);
 
+  // The "Bill to" frozen on the bill when it was issued (a B2B bill can name a different business
+  // than the customer); a bill from before that existed shows the customer as before.
+  const { data: buyerRow } = (await buyerSchemaReady(admin))
+    ? await admin.from("bills").select("buyer_name, buyer_gstin, buyer_address, buyer_state, buyer_state_code").eq("id", id).maybeSingle()
+    : { data: null };
+  const party = buyerOf(buyerRow ?? {}, customer ? { ...customer, state: null, state_code: null } : null);
+  const debitNotesReady = bill.status === "active" && (await buyerSchemaReady(admin));
+
   const isIntra = bill.supply_type === "intra";
   const paymentLabel = paymentMethodLabel(bill.payment_method);
 
@@ -143,7 +152,7 @@ export default async function PrintBillPage({
     gstin: session.shopGstin,
     invoiceNumber: bill.invoice_number,
     dateText: formatDateTime(bill.created_at),
-    customerName: customer?.name ?? null,
+    customerName: party?.name ?? null,
     items: (items ?? []).map((it) => ({
       name: it.product_name,
       qty: Number(it.quantity),
@@ -174,11 +183,11 @@ export default async function PrintBillPage({
     isComposition: session.gstScheme === "composition",
     invoiceNumber: bill.invoice_number,
     dateText: formatDateTime(bill.created_at),
-    customerName: customer?.name ?? null,
+    customerName: party?.name ?? null,
     customerPhone: customer?.phone ?? null,
-    customerGstin: customer?.gstin ?? null,
+    customerGstin: party?.gstin ?? null,
     serviceProviderName: bill.service_provider_name,
-    placeOfSupplyText: isIntra ? "Place: Same state (CGST+SGST)" : "Place: Different state (IGST)",
+    placeOfSupplyText: isIntra ? "Place: Same state (CGST+SGST)" : `Place: ${party?.state ?? "Different state"} (IGST)`,
     items: (items ?? []).map((it) => ({
       name: it.product_name,
       qty: Number(it.quantity),
@@ -222,12 +231,12 @@ export default async function PrintBillPage({
     accentColor: invoiceSettings?.accent_color ?? null,
     invoiceNumber: bill.invoice_number,
     dateText: formatDateTime(bill.created_at),
-    customerName: customer?.name ?? null,
-    customerAddress: customer?.address ?? null,
+    customerName: party?.name ?? null,
+    customerAddress: party?.address ?? null,
     customerPhone: customer?.phone ?? null,
-    customerGstin: customer?.gstin ?? null,
+    customerGstin: party?.gstin ?? null,
     serviceProviderName: bill.service_provider_name,
-    placeOfSupplyText: isIntra ? "Same state (CGST + SGST)" : "Different state (IGST)",
+    placeOfSupplyText: isIntra ? "Same state (CGST + SGST)" : `${party?.state ?? "Different state"} (IGST)`,
     items: (items ?? []).map((it) => ({
       name: it.product_name,
       hsnCode: it.hsn_code,
@@ -386,6 +395,14 @@ export default async function PrintBillPage({
                 {t("↩ Return")}
               </Link>
             )}
+            {debitNotesReady && hasPermission(session, "edit_bills") && (
+              <Link
+                href={`/debit-notes/new?billId=${bill.id}`}
+                className="inline-flex items-center gap-1 rounded-full border border-border px-3 py-1.5 text-xs font-medium text-muted hover:bg-surface-2"
+              >
+                {t("+ Debit note")}
+              </Link>
+            )}
             {!periodClosed && !hotelBookingId && hasPermission(session, "edit_bills") && (
               <EditBillButton
                 billId={bill.id}
@@ -398,7 +415,7 @@ export default async function PrintBillPage({
         )}
         {bill.status === "active" && periodClosed && (hasPermission(session, "edit_bills") || hasPermission(session, "void_bills")) && (
           <p className="mt-2 text-xs text-muted">
-            {t("This bill is from an earlier month, so it can't be edited or voided — that month may already be filed. Use Return for any correction.")}
+            {t("This bill is from an earlier month, so it can't be edited or voided — that month may already be filed. Use Return (value down) or Debit note (value up) for any correction.")}
           </p>
         )}
       </div>

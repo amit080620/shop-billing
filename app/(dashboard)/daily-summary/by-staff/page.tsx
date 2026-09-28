@@ -41,6 +41,7 @@ export default async function StaffCashSummaryPage({
         .from("payments")
         .select("staff_id, amount")
         .eq("shop_id", session.shopId)
+        .neq("payment_method", "adjustment") // a return set against udhaar, not money collected
         .gte("created_at", startOfDay.toISOString())
         .lte("created_at", endOfDay.toISOString()),
       admin
