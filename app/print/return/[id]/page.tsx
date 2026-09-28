@@ -65,7 +65,7 @@ export default async function PrintCreditNotePage({ params }: { params: Promise<
         </div>
         <div className="text-right">
           <p className="text-lg font-semibold tracking-tight" style={{ color: accent }}>CREDIT NOTE</p>
-          <p className="text-xs text-gray-600">No. {ret.return_number}</p>
+          <p className="whitespace-nowrap text-xs text-gray-600">No. {ret.return_number}</p>
           <p className="text-xs text-gray-600">{formatDateTime(ret.created_at)}</p>
         </div>
       </div>
@@ -86,30 +86,32 @@ export default async function PrintCreditNotePage({ params }: { params: Promise<
         </div>
       </div>
 
-      <table className="mt-5 w-full text-sm">
+      <div className="mt-5 overflow-x-auto">
+      <table className="w-full min-w-[420px] text-sm">
         <thead>
           <tr className="border-b border-gray-300 text-left text-[11px] text-gray-500">
             <th className="pb-1.5">Item returned</th>
-            <th className="pb-1.5">HSN</th>
-            <th className="pb-1.5 text-right">Qty</th>
-            <th className="pb-1.5 text-right">Taxable</th>
-            <th className="pb-1.5 text-right">GST</th>
-            <th className="pb-1.5 text-right">Amount</th>
+            <th className="pb-1.5 pl-3">HSN</th>
+            <th className="pb-1.5 pl-3 text-right">Qty</th>
+            <th className="pb-1.5 pl-3 text-right">Taxable</th>
+            <th className="pb-1.5 pl-3 text-right">GST</th>
+            <th className="pb-1.5 pl-3 text-right">Amount</th>
           </tr>
         </thead>
         <tbody>
           {lines.map((l, i) => (
             <tr key={i} className="border-b border-dashed border-gray-200">
               <td className="py-1.5 text-gray-900">{l.name}</td>
-              <td className="py-1.5 text-gray-600">{l.hsn}</td>
-              <td className="py-1.5 text-right text-gray-600">{l.qty}</td>
-              <td className="py-1.5 text-right text-gray-600">{formatMoney(l.taxable)}</td>
-              <td className="py-1.5 text-right text-gray-600">{l.rate}%</td>
-              <td className="py-1.5 text-right text-gray-900">{formatMoney(l.amount)}</td>
+              <td className="py-1.5 pl-3 text-gray-600">{l.hsn}</td>
+              <td className="py-1.5 pl-3 text-right text-gray-600">{l.qty}</td>
+              <td className="whitespace-nowrap py-1.5 pl-3 text-right text-gray-600">{formatMoney(l.taxable)}</td>
+              <td className="py-1.5 pl-3 text-right text-gray-600">{l.rate}%</td>
+              <td className="whitespace-nowrap py-1.5 pl-3 text-right text-gray-900">{formatMoney(l.amount)}</td>
             </tr>
           ))}
         </tbody>
       </table>
+      </div>
 
       <div className="ml-auto mt-4 flex max-w-[260px] flex-col gap-1 text-sm">
         <Row label="Taxable value" value={formatMoney(taxable)} />
