@@ -222,7 +222,8 @@ export default async function PrintBillPage({
             invoiceNumber={bill.invoice_number}
             items={(items ?? []).map((it) => ({ name: it.product_name, quantity: Number(it.quantity), unitPrice: Number(it.unit_price), lineTotal: Number(it.line_total), gstPercent: Number(it.gst_percent) }))}
             total={Number(bill.total)}
-            paidAmount={Number(bill.paid_amount)}
+            paidAmount={cashPaid}
+            exchange={exchangeLabel && exchangeAmount > 0 ? { label: exchangeLabel, amount: exchangeAmount } : null}
             creditAmount={Number(bill.credit_amount)}
             upiLink={upiLink}
             invoiceUrl={bill.status === "active" ? customerInvoiceUrl : null}

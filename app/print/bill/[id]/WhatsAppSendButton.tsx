@@ -34,6 +34,7 @@ export function WhatsAppSendButton({
   items,
   total,
   paidAmount,
+  exchange,
   creditAmount,
   upiLink,
   invoiceUrl,
@@ -46,7 +47,10 @@ export function WhatsAppSendButton({
   invoiceNumber: string;
   items: BillItem[];
   total: number;
+  /** Money actually paid — without old gold taken in exchange or a gold scheme used. */
   paidAmount: number;
+  /** Old gold handed over and/or a gold scheme used: part of the payment, shown as its own line. */
+  exchange?: { label: string; amount: number } | null;
   creditAmount: number;
   upiLink?: string | null;
   /** The customer's own copy of this invoice, to open or save as a PDF — no login needed. */
@@ -115,11 +119,14 @@ export function WhatsAppSendButton({
   }
 
   lines.push(`*${t("wa.billTotalLabel")}: ${formatMoney(total)}*`);
-  lines.push(
-    fullInvoice && details.paymentLabel && paidAmount > 0
-      ? `${t("Paid")} (${details.paymentLabel}): ${formatMoney(paidAmount)}`
-      : t("wa.billPaid", { amount: formatMoney(paidAmount) }),
-  );
+  if (exchange && exchange.amount > 0) lines.push(`${exchange.label}: −${formatMoney(exchange.amount)}`);
+  // (Nothing more paid when the old gold or the scheme covered it all.)
+  if (paidAmount > 0 || !exchange?.amount)
+    lines.push(
+      fullInvoice && details.paymentLabel && paidAmount > 0
+        ? `${t("Paid")} (${details.paymentLabel}): ${formatMoney(paidAmount)}`
+        : t("wa.billPaid", { amount: formatMoney(paidAmount) }),
+    );
   if (creditAmount > 0) {
     lines.push(`*${t("wa.billBalanceDue", { amount: formatMoney(creditAmount) })}*`);
     if (upiLink) {

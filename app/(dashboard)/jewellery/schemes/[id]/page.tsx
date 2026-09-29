@@ -39,9 +39,14 @@ export default async function GoldSchemePage({ params }: { params: Promise<{ id:
   return (
     <div className="flex flex-col gap-4">
       <BackLink fallback="/jewellery/schemes" />
-      <PageHeader title={s.customer_name} subtitle={s.scheme_number} icon={<PiggyBank size={18} strokeWidth={1.8} />} />
+      <PageHeader title={s.customer_name} icon={<PiggyBank size={18} strokeWidth={1.8} />} />
 
       <section className="neu-card flex flex-col gap-2 p-4">
+        {/* The number the customer quotes at the counter, in plain sight. */}
+        <p className="text-xs font-semibold tracking-wide text-brand-text">
+          {s.scheme_number}
+          {s.customer_phone ? ` · ${s.customer_phone}` : ""}
+        </p>
         <div className="flex items-baseline justify-between">
           <p className="text-sm text-muted">
             {formatMoney(s.installment_amount)} × {s.total_installments} · {t("started")} {formatIsoDate(s.start_date)}
