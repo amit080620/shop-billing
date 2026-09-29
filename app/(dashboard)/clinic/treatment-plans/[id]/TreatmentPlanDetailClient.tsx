@@ -22,6 +22,7 @@ export function TreatmentPlanDetailClient({ plan, items: initialItems }: { plan:
   const [isPending, startTransition] = useTransition();
   const [showBillConfirm, setShowBillConfirm] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<"cash" | "card" | "upi" | "online" | "other">("cash");
+  const [paidNow, setPaidNow] = useState<number | "">("");
 
   const total = items.reduce((s, it) => s + it.estimatedCost, 0);
   const completedCount = items.filter((it) => it.status === "completed" || it.status === "billed").length;
@@ -37,7 +38,7 @@ export function TreatmentPlanDetailClient({ plan, items: initialItems }: { plan:
 
   function convertToBill() {
     startTransition(async () => {
-      const result = await convertTreatmentPlanToBillAction(plan.id, paymentMethod);
+      const result = await convertTreatmentPlanToBillAction(plan.id, paymentMethod, typeof paidNow === "number" ? paidNow : undefined);
       if (result.error) {
         showToast(result.error);
         return;
@@ -119,6 +120,19 @@ export function TreatmentPlanDetailClient({ plan, items: initialItems }: { plan:
               </button>
             ))}
           </div>
+          <label className="flex flex-col gap-1 text-xs text-muted">
+            Paid now (₹) — leave empty if the full amount is paid; the rest goes on the patient&apos;s udhaar
+            <input
+              type="number"
+              min={0}
+              max={total}
+              step="0.01"
+              value={paidNow}
+              onChange={(e) => setPaidNow(e.target.value === "" ? "" : Number(e.target.value))}
+              placeholder={String(total)}
+              className="rounded-lg border border-border px-3 py-2 text-sm text-foreground outline-none focus:border-brand"
+            />
+          </label>
           <button onClick={convertToBill} disabled={isPending} className="btn-primary w-full text-center disabled:opacity-60">
             {isPending ? "Creating bill…" : `Confirm — bill ₹${total.toLocaleString("en-IN")}`}
           </button>

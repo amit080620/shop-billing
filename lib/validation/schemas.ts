@@ -137,6 +137,9 @@ const lineItemSchema = z.object({
   // tablets sold off a 10-tablet strip decrements 0.3 packs, not 3).
   // Falls back to `quantity` when omitted, so non-pharma items are unaffected.
   stockQuantity: z.coerce.number().min(0).nullable().optional(),
+  // A rate the counter set on purpose (said out loud to voice billing) instead of the catalogue
+  // price — honoured only for staff allowed to give discounts.
+  priceOverride: z.boolean().optional(),
   // Batch details — only meaningful on a purchase line for a pharma
   // product; ignored everywhere else.
   batchNumber: optionalText(60),

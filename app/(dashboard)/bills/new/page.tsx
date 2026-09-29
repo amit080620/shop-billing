@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { requireSession } from "@/lib/auth";
+import { hasPermission, requireSession } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { getLang } from "@/lib/i18n/server";
 import { NewBillClient } from "./NewBillClient";
@@ -34,7 +34,7 @@ export default async function NewBillPage() {
   const [{ data: products }, { data: customers }, { data: recentBills }, { data: shop }, { data: vehicles }, { data: metalRates }] = await Promise.all([
     admin
       .from("products")
-      .select("id, name, price, gst_percent, hsn_code, barcode, unit, track_inventory, stock_quantity, low_stock_threshold, requires_prescription, units_per_pack, loose_unit_name, metal_type, purity, making_charge_type, making_charge_value, wastage_percent, bulk_min_qty, bulk_price, hallmark_number")
+      .select("id, name, price, offer_price, gst_percent, hsn_code, barcode, unit, track_inventory, stock_quantity, low_stock_threshold, requires_prescription, units_per_pack, loose_unit_name, metal_type, purity, making_charge_type, making_charge_value, wastage_percent, bulk_min_qty, bulk_price, hallmark_number")
       .eq("shop_id", session.shopId)
       .order("name"),
     admin
@@ -109,11 +109,13 @@ export default async function NewBillPage() {
         invoicePrefix: shop?.invoice_prefix ?? "INV",
         priceIncludesGst: session.priceIncludesGst,
         gstScheme: session.gstScheme,
+        canDiscount: hasPermission(session, "give_discounts"),
       }}
       products={(products ?? []).map((p) => ({
         id: p.id,
         name: p.name,
-        price: Number(p.price),
+        // An offer price, while one is set, is what the counter charges (the server charges the same).
+        price: p.offer_price != null && Number(p.offer_price) > 0 ? Number(p.offer_price) : Number(p.price),
         gstPercent: Number(p.gst_percent),
         hsnCode: p.hsn_code,
         barcode: p.barcode,

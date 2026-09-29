@@ -183,6 +183,9 @@ export async function markTreatmentItemDoneAction(itemId: string, done: boolean)
 export async function convertTreatmentPlanToBillAction(
   planId: string,
   paymentMethod: "cash" | "card" | "upi" | "online" | "other",
+  /** Paid at this visit — a long plan is usually paid over several sittings, the rest goes on the
+   * patient's udhaar. Everything, when not given. */
+  paidNow?: number,
 ): Promise<{ billId?: string; error?: string }> {
   const session = await requireSession();
   const admin = createSupabaseAdminClient();
@@ -218,7 +221,7 @@ export async function convertTreatmentPlanToBillAction(
     })),
     discountType: "flat",
     discountValue: 0,
-    paidAmount: total,
+    paidAmount: paidNow == null ? total : Math.max(0, Math.min(total, paidNow)),
     paymentMethod,
   });
 

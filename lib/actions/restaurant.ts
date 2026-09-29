@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { requireSession, requireOwner } from "../auth";
+import { hasPermission, requireSession, requireOwner } from "../auth";
 import { roomGuestForTable } from "../hotel/server";
 import { createSupabaseAdminClient } from "../supabase/admin";
 import { determineSupplyType, financialYearFor, GSTIN_REGEX, round2, splitTax, splitTaxInclusive } from "../gst";
@@ -613,6 +613,9 @@ export async function applyOrderDiscountAction(
 ): Promise<{ error?: string }> {
   const session = await requireSession();
   const admin = createSupabaseAdminClient();
+  if (discountValue > 0 && !hasPermission(session, "give_discounts")) {
+    return { error: "You don't have permission to give a discount — ask the owner." };
+  }
 
   const { data: order } = await admin
     .from("restaurant_orders")
@@ -681,7 +684,12 @@ export async function settleOrderAction(
   if (!order) return { error: "Order not found" };
   if (order.status !== "open") return { error: "This order is already closed" };
 
-  if (discountValue !== Number(order.discount_value) || discountType !== order.discount_type) {
+  // A new or changed discount needs the "Give discounts" switch on this login (the owner always has it).
+  const discountChanged = discountValue !== Number(order.discount_value) || discountType !== order.discount_type;
+  if (discountChanged && discountValue > 0 && !hasPermission(session, "give_discounts")) {
+    return { error: "You don't have permission to give a discount — ask the owner." };
+  }
+  if (discountChanged) {
     await admin.from("restaurant_orders").update({ discount_type: discountType, discount_value: discountValue }).eq("id", orderId);
     await recalcOrderTotals(orderId);
   }

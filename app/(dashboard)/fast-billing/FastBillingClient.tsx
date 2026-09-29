@@ -15,11 +15,14 @@ import { AIStatusBadge, type AIStatusBadgeHandle } from "@/app/components/AIStat
 import { useTranslation } from "@/lib/i18n/useTranslation";
 import { QuantityGrid } from "./QuantityGrid";
 import { calculateTransactionTotals } from "@/lib/validation/schemas";
+import { productLinePrice } from "@/lib/linePrice";
 
 export type FastProduct = {
   id: string;
   name: string;
   price: number;
+  bulkMinQty: number | null;
+  bulkPrice: number | null;
   gstPercent: number;
   hsnCode: string | null;
   imageUrl: string | null;
@@ -32,19 +35,34 @@ export type FastCartLine = {
   productId: string;
   name: string;
   price: number;
+  /** The catalogue (or offer) price and bulk rate the line price is worked out from. */
+  basePrice: number;
+  bulkMinQty: number | null;
+  bulkPrice: number | null;
+  /** A rate said to voice billing — kept through quantity changes. */
+  priceOverride?: boolean;
   gstPercent: number;
   hsnCode: string | null;
   qty: number;
 };
+
+/** Same rule the server charges: the bulk rate from its minimum quantity. */
+function fastLinePrice(l: { basePrice: number; bulkMinQty: number | null; bulkPrice: number | null; priceOverride?: boolean; price: number }, qty: number) {
+  if (l.priceOverride) return l.price;
+  return productLinePrice({ price: l.basePrice, bulk_min_qty: l.bulkMinQty, bulk_price: l.bulkPrice }, { quantity: qty });
+}
 
 export function FastBillingClient({
   products,
   loyaltyRedemptionValue,
   priceIncludesGst,
   gstScheme,
+  canDiscount,
   lang,
 }: {
   products: FastProduct[];
+  /** Staff with "Give discounts" (and the owner): discounts and spoken rates. The server checks too. */
+  canDiscount: boolean;
   loyaltyRedemptionValue: number;
   priceIncludesGst: boolean;
   /** "composition": the checkout preview must show ₹0 tax too, matching what
@@ -135,9 +153,9 @@ export function FastBillingClient({
         addToCart(product, item.quantity);
         // Same reasoning as the Sell screen: a rate said out loud is
         // deliberate and should override the catalog price.
-        if (item.spokenUnitPrice !== null) {
+        if (item.spokenUnitPrice !== null && canDiscount) {
           const spokenRate = item.spokenUnitPrice;
-          setCart((prev) => prev.map((c) => (c.productId === product.id ? { ...c, price: spokenRate } : c)));
+          setCart((prev) => prev.map((c) => (c.productId === product.id ? { ...c, price: spokenRate, priceOverride: true } : c)));
           pricesOverridden.push(`${product.name} @ ₹${spokenRate}`);
         }
       }
@@ -227,9 +245,10 @@ export function FastBillingClient({
     setCart((prev) => {
       const existing = prev.find((l) => l.productId === product.id);
       if (existing) {
-        return prev.map((l) => (l.productId === product.id ? { ...l, qty: l.qty + qty } : l));
+        return prev.map((l) => (l.productId === product.id ? { ...l, qty: l.qty + qty, price: fastLinePrice(l, l.qty + qty) } : l));
       }
-      return [...prev, { productId: product.id, name: product.name, price: product.price, gstPercent: product.gstPercent, hsnCode: product.hsnCode, qty }];
+      const line = { productId: product.id, name: product.name, price: product.price, basePrice: product.price, bulkMinQty: product.bulkMinQty, bulkPrice: product.bulkPrice, gstPercent: product.gstPercent, hsnCode: product.hsnCode, qty };
+      return [...prev, { ...line, price: fastLinePrice(line, qty) }];
     });
     setSelectedProduct(null);
   }
@@ -239,7 +258,7 @@ export function FastBillingClient({
       setCart((prev) => prev.filter((l) => l.productId !== productId));
       return;
     }
-    setCart((prev) => prev.map((l) => (l.productId === productId ? { ...l, qty } : l)));
+    setCart((prev) => prev.map((l) => (l.productId === productId ? { ...l, qty, price: fastLinePrice(l, qty) } : l)));
   }
 
   if (products.length === 0) {
@@ -377,6 +396,7 @@ export function FastBillingClient({
           priceIncludesGst={priceIncludesGst}
           gstScheme={gstScheme}
           voiceCustomer={voiceCustomer}
+          canDiscount={canDiscount}
         />
       )}
     </div>
@@ -405,7 +425,9 @@ function FastBillSheet({
   priceIncludesGst,
   gstScheme,
   voiceCustomer,
+  canDiscount,
 }: {
+  canDiscount: boolean;
   priceIncludesGst: boolean;
   gstScheme: "regular" | "composition";
   cart: FastCartLine[];
@@ -474,7 +496,7 @@ function FastBillSheet({
             <span className="text-muted">Subtotal</span>
             <span className="font-semibold text-foreground">{formatMoney(subtotal)}</span>
           </div>
-          <FastCheckoutButton cart={cart} loyaltyRedemptionValue={loyaltyRedemptionValue} priceIncludesGst={priceIncludesGst} gstScheme={gstScheme} voiceCustomer={voiceCustomer} />
+          <FastCheckoutButton cart={cart} loyaltyRedemptionValue={loyaltyRedemptionValue} priceIncludesGst={priceIncludesGst} gstScheme={gstScheme} voiceCustomer={voiceCustomer} canDiscount={canDiscount} />
         </div>
       )}
 
@@ -503,7 +525,9 @@ function FastCheckoutButton({
   priceIncludesGst,
   gstScheme,
   voiceCustomer,
+  canDiscount,
 }: {
+  canDiscount: boolean;
   cart: FastCartLine[];
   loyaltyRedemptionValue: number;
   priceIncludesGst: boolean;
@@ -590,6 +614,7 @@ function FastCheckoutButton({
       unitPrice: l.price,
       gstPercent: l.gstPercent,
       stockQuantity: l.qty,
+      priceOverride: l.priceOverride || undefined,
     })),
     discountType,
     // Points redemption combines with any manual flat discount,
@@ -685,7 +710,7 @@ function FastCheckoutButton({
           this behind an extra tap; now it's one tap to open (or zero,
           once a discount is already set — the summary itself stays
           tappable to change it), directly on this screen. */}
-      {showDiscountInput ? (
+      {!canDiscount ? null : showDiscountInput ? (
         <div className="flex flex-col gap-2 rounded-lg border border-border p-2.5">
           <div className="flex items-center justify-between">
             <p className="text-xs font-medium text-muted">Discount</p>

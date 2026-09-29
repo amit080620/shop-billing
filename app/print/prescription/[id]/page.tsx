@@ -58,14 +58,16 @@ export default async function PrintPrescriptionPage({
   // the billing action itself uses.
   const { data: catalogMatches } =
     medicineNames.length > 0
-      ? await admin.from("products").select("name, price").eq("shop_id", session.shopId).in("name", medicineNames)
+      ? await admin.from("products").select("name, price, gst_percent").eq("shop_id", session.shopId).in("name", medicineNames)
       : { data: [] };
   const priceByName = new Map((catalogMatches ?? []).map((p) => [p.name.toLowerCase(), Number(p.price)]));
+  const gstByName = new Map((catalogMatches ?? []).map((p) => [p.name.toLowerCase(), Number(p.gst_percent ?? 0)]));
   const billLines = (items ?? []).map((it) => ({
     medicineName: it.medicine_name,
     quantity: it.quantity && it.quantity > 0 ? Number(it.quantity) : 1,
     unitPrice: priceByName.get(it.medicine_name.toLowerCase()) ?? Number(detailsByName.get(it.medicine_name)?.price ?? 0),
     inCatalog: priceByName.has(it.medicine_name.toLowerCase()),
+    gstPercent: gstByName.get(it.medicine_name.toLowerCase()) ?? 0,
   }));
 
   const customer = Array.isArray(prescription.customers)
@@ -230,6 +232,7 @@ export default async function PrintPrescriptionPage({
             alreadyBilled={!!prescription.bill_id}
             existingBillId={prescription.bill_id}
             initialLines={billLines}
+            priceIncludesGst={session.priceIncludesGst}
             labels={{
               title: t("Bill these medicines"),
               qty: t("order.qty"),

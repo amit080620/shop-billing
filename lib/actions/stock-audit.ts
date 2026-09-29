@@ -90,17 +90,24 @@ export async function completeAuditAction(auditId: string): Promise<{ error?: st
 
   const { data: items } = await admin
     .from("stock_audit_items")
-    .select("id, product_id, counted_quantity")
+    .select("id, product_id, counted_quantity, system_quantity")
     .eq("audit_id", auditId)
     .not("counted_quantity", "is", null);
 
+  // Apply only the difference the count found (counted − what the system showed when counting
+  // began), on top of today's stock. Setting the stock straight to the counted number wiped out
+  // every sale and purchase made while staff were still counting — the shop stays open meanwhile.
+  const { data: owned } = await admin
+    .from("products")
+    .select("id")
+    .eq("shop_id", session.shopId)
+    .in("id", (items ?? []).map((i) => i.product_id).filter(Boolean) as string[]);
+  const ownedIds = new Set((owned ?? []).map((p) => p.id));
   for (const item of items ?? []) {
-    if (item.counted_quantity == null) continue;
-    await admin
-      .from("products")
-      .update({ stock_quantity: item.counted_quantity })
-      .eq("id", item.product_id)
-      .eq("shop_id", session.shopId);
+    if (item.counted_quantity == null || !item.product_id || !ownedIds.has(item.product_id)) continue;
+    const difference = Number(item.counted_quantity) - Number(item.system_quantity);
+    if (difference > 0) await admin.rpc("increment_stock", { p_product_id: item.product_id, p_quantity: difference });
+    else if (difference < 0) await admin.rpc("decrement_stock", { p_product_id: item.product_id, p_quantity: -difference });
   }
 
   await admin

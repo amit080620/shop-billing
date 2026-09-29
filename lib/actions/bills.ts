@@ -12,6 +12,7 @@ import { findOrCreateCustomerByPhone, awardLoyaltyPoints } from "./customers";
 import { invalidateCache } from "../cache";
 import { buyerSchemaReady, stateFromGstin, type Buyer } from "../gstBuyer";
 import { todayIso } from "../dateHelpers";
+import { isLooseLine, productLinePrice } from "../linePrice";
 
 export type ActionState = { error?: string } | null;
 
@@ -37,6 +38,20 @@ export async function createBillCore(
 
   const admin = createSupabaseAdminClient();
 
+  // The "Give discounts" switch on a staff account means something: without it, the only money
+  // off a bill is the customer's own loyalty points, at exactly what they are worth. (It used to
+  // be checked only for hotel stays — any staff could give any discount everywhere else.)
+  if (discountValue > 0 && !hasPermission(session, "give_discounts")) {
+    let pointsWorth = 0;
+    if (discountType === "flat" && customerId && redeemedPoints && redeemedPoints > 0) {
+      const { data: loyalty } = await admin.from("shops").select("loyalty_redemption_value").eq("id", session.shopId).single();
+      pointsWorth = Math.floor(redeemedPoints) * Number(loyalty?.loyalty_redemption_value ?? 0);
+    }
+    if (discountType !== "flat" || discountValue - pointsWorth > 0.5) {
+      return { error: "You don't have permission to give a discount — ask the owner." };
+    }
+  }
+
   // Verify every product id actually belongs to this shop, and pull the
   // authoritative price/GST/HSN from the DB rather than trusting client
   // values (client values only drive the live on-screen preview).
@@ -44,7 +59,7 @@ export async function createBillCore(
   const { data: dbProducts, error: productsError } = productIds.length
     ? await admin
         .from("products")
-        .select("id, name, price, gst_percent, hsn_code, track_inventory, stock_quantity, is_pharma, requires_prescription, has_warranty, warranty_months, mrp")
+        .select("id, name, price, offer_price, units_per_pack, bulk_min_qty, bulk_price, gst_percent, hsn_code, track_inventory, stock_quantity, is_pharma, requires_prescription, has_warranty, warranty_months, mrp")
         .eq("shop_id", session.shopId)
         .in("id", productIds)
     : { data: [], error: null };
@@ -57,6 +72,25 @@ export async function createBillCore(
   const needsPrescription = items.some((item) => item.productId && productMap.get(item.productId)?.requires_prescription);
   if (needsPrescription && (!doctorName || !patientName)) {
     return { error: "One or more items need a prescription — enter the doctor's and patient's name." };
+  }
+
+  // A medicine whose stock is only in expired batches can't be sold. (A medicine with no batches
+  // recorded at all is left alone — the shop simply doesn't track its batches.)
+  const pharmaIds = [...new Set(items.map((i) => i.productId).filter((id): id is string => !!id && !!productMap.get(id)?.is_pharma && !!productMap.get(id)?.track_inventory))];
+  if (pharmaIds.length) {
+    const today = todayIso();
+    const { data: batchRows } = await admin.from("medicine_batches").select("product_id, quantity, expiry_date").in("product_id", pharmaIds).gt("quantity", 0);
+    for (const id of pharmaIds) {
+      const rows = (batchRows ?? []).filter((b) => b.product_id === id);
+      if (!rows.length) continue;
+      const usable = rows.filter((b) => !b.expiry_date || b.expiry_date >= today).reduce((s, b) => s + Number(b.quantity), 0);
+      const expired = rows.filter((b) => b.expiry_date && b.expiry_date < today).reduce((s, b) => s + Number(b.quantity), 0);
+      const wanted = items.filter((i) => i.productId === id).reduce((s, i) => s + Number(i.stockQuantity ?? i.quantity), 0);
+      if (expired > 0 && wanted > usable) {
+        const name = productMap.get(id)?.name ?? "A medicine";
+        return { error: usable > 0 ? `${name}: only ${usable} left within expiry — ${expired} more has expired and can't be sold. Write off the expired batch.` : `${name}: all the stock left has expired and can't be sold. Write off the expired batch under Pharmacy → Expiry.` };
+      }
+    }
   }
 
   let customer: { name: string; gstin: string | null; address: string | null; state: string | null; state_code: string | null } | null = null;
@@ -102,13 +136,17 @@ export async function createBillCore(
   const isComposition = session.gstScheme === "composition";
   const verifiedItems = items.map((item) => {
     const product = item.productId ? productMap.get(item.productId) : undefined;
+    // The price it is really sold at — offer, bulk rate, or a loose unit's share of the pack —
+    // worked out here from the catalogue, never taken from the browser.
+    const loose = product ? isLooseLine(product, item) : false;
+    const overridden = !!product && item.priceOverride === true && item.unitPrice > 0 && hasPermission(session, "give_discounts");
     return {
       productId: product?.id ?? null,
       productName: product?.name ?? item.description,
       hsnCode: product?.hsn_code ?? null,
       quantity: item.quantity,
-      stockQuantity: item.stockQuantity ?? item.quantity,
-      unitPrice: product ? Number(product.price) : item.unitPrice,
+      stockQuantity: product && loose ? round2(item.quantity / Number(product.units_per_pack)) : product ? item.quantity : (item.stockQuantity ?? item.quantity),
+      unitPrice: overridden ? item.unitPrice : product ? productLinePrice(product, { quantity: item.quantity, loose }) : item.unitPrice,
       gstPercent: isComposition ? 0 : product ? Number(product.gst_percent) : item.gstPercent,
       warrantyMonths: product?.has_warranty ? product.warranty_months : null,
       mrp: product?.mrp ? Number(product.mrp) : null,
@@ -277,11 +315,13 @@ export async function createBillCore(
       if (!product?.track_inventory) return;
 
       if (product.is_pharma) {
+        // Earliest expiry first, never an expired batch (checked above before billing).
         const { data: batches } = await admin
           .from("medicine_batches")
           .select("id, quantity")
           .eq("product_id", product.id)
           .gt("quantity", 0)
+          .or(`expiry_date.is.null,expiry_date.gte.${todayIso()}`)
           .order("expiry_date", { ascending: true });
 
         let remaining = item.stockQuantity;

@@ -75,6 +75,8 @@ type CartLine = {
   regularPrice: number;
   bulkMinQty: number | null;
   bulkPrice: number | null;
+  /** A rate set on purpose (said to voice billing) — kept through quantity changes. */
+  priceOverride?: boolean;
 };
 
 function SubmitButton({ blocked, generatingLabel, submitLabel }: { blocked: boolean; generatingLabel: string; submitLabel: string }) {
@@ -134,6 +136,8 @@ export function NewBillClient({
     /** "composition": the live preview must show ₹0 tax too, matching what
      * createBillCore actually charges — composition dealers can't collect GST. */
     gstScheme: "regular" | "composition";
+    /** Staff with "Give discounts" (and the owner): discounts and spoken rates. The server checks too. */
+    canDiscount: boolean;
   };
 }) {
   const { t } = useTranslation(lang);
@@ -425,9 +429,11 @@ export function NewBillClient({
         // A rate said out loud is a deliberate instruction ("lays 10
         // packet, 10 rupees each") and should win over the catalog
         // price — that's the whole reason someone would say it.
-        if (item.spokenUnitPrice !== null) {
+        // Only for staff allowed to give discounts — anyone else keeps the catalogue price, which
+        // is also what the server would charge.
+        if (item.spokenUnitPrice !== null && shopContext.canDiscount) {
           const spokenRate = item.spokenUnitPrice;
-          setCart((prev) => prev.map((c) => (c.productId === product.id ? { ...c, price: spokenRate, regularPrice: spokenRate, packPrice: spokenRate } : c)));
+          setCart((prev) => prev.map((c) => (c.productId === product.id ? { ...c, price: spokenRate, regularPrice: spokenRate, packPrice: spokenRate, priceOverride: true } : c)));
           pricesOverridden.push(`${product.name} @ ₹${spokenRate}`);
         }
       }
@@ -565,7 +571,7 @@ export function NewBillClient({
               ? {
                   ...c,
                   quantity,
-                  price: c.saleMode === "pack" ? priceForQuantity(c.regularPrice, c.bulkMinQty, c.bulkPrice, quantity) : c.price,
+                  price: c.saleMode === "pack" && !c.priceOverride ? priceForQuantity(c.regularPrice, c.bulkMinQty, c.bulkPrice, quantity) : c.price,
                 }
               : c,
           ),
@@ -774,6 +780,7 @@ export function NewBillClient({
             goldRate={goldRate}
             silverRate={silverRate}
             lang={lang}
+            priceIncludesGst={shopContext.priceIncludesGst}
             onAdd={addJewelleryItem}
           />
         )}
@@ -981,6 +988,7 @@ export function NewBillClient({
       unitPrice: c.price,
       gstPercent: c.gstPercent,
       stockQuantity: c.saleMode === "loose" && c.unitsPerPack ? round2(c.quantity / c.unitsPerPack) : c.quantity,
+      priceOverride: c.priceOverride || undefined,
     })),
     discountType,
     discountValue: discountType === "flat" ? discountValue + redemptionValue : discountValue,
@@ -1112,6 +1120,8 @@ export function NewBillClient({
 
       <section className="flex flex-col gap-3 neu-card p-4">
         <p className="text-sm font-medium text-foreground">{t("bill.discount")}</p>
+        {!shopContext.canDiscount && <p className="text-xs text-muted">{t("Only loyalty points can be taken off — ask the owner to allow discounts for your login.")}</p>}
+        {shopContext.canDiscount && (<>
         <div className="flex gap-2">
           <button
             type="button"
@@ -1146,6 +1156,7 @@ export function NewBillClient({
           placeholder={discountType === "flat" ? "e.g. 20" : "e.g. 10"}
           className="rounded-lg border border-border px-3.5 py-2.5 text-sm outline-none focus:border-brand"
         />
+        </>)}
 
         {customerMode === "existing" && selectedCustomer && (selectedCustomer.loyalty_points ?? 0) > 0 && (
           <p className="text-xs font-medium text-brand-text">
@@ -1631,12 +1642,14 @@ function JewelleryCalculator({
   goldRate,
   silverRate,
   lang,
+  priceIncludesGst,
   onAdd,
 }: {
   products: Product[];
   goldRate: number | null;
   silverRate: number | null;
   lang: Lang;
+  priceIncludesGst: boolean;
   onAdd: (name: string, amount: number, gstPercent: number) => void;
 }) {
   const [open, setOpen] = useState(false);
@@ -1670,6 +1683,12 @@ function JewelleryCalculator({
         ? Number(makingChargeValue) || 0
         : round2((metalValue + wastageAmount) * ((Number(makingChargeValue) || 0) / 100));
   const total = round2(metalValue + wastageAmount + makingCharge);
+  // Metal at today's rate plus making is the price before GST — jewellery GST (3%) is added on top.
+  // A shop that prices "GST inclusive" gets the line with the GST already in it, so the bill
+  // backs out exactly this GST instead of taking 3% out of the jeweller's own price.
+  const gst = typeof gstPercent === "number" ? gstPercent : 0;
+  const gstAmount = round2(total * (gst / 100));
+  const priceWithGst = round2(total + gstAmount);
 
   function round2(n: number) {
     return Math.round((n + Number.EPSILON) * 100) / 100;
@@ -1782,7 +1801,9 @@ function JewelleryCalculator({
           <div className="flex justify-between"><span>Metal value ({w}g × ₹{rate})</span><span>{formatMoney(metalValue)}</span></div>
           {wastageAmount > 0 && <div className="flex justify-between"><span>Wastage ({wastagePercent}%)</span><span>{formatMoney(wastageAmount)}</span></div>}
           <div className="flex justify-between"><span>Making charge</span><span>{formatMoney(makingCharge)}</span></div>
-          <div className="mt-1 flex justify-between border-t border-border pt-1 font-semibold"><span>Total</span><span>{formatMoney(total)}</span></div>
+          <div className="mt-1 flex justify-between border-t border-border pt-1"><span>Before GST</span><span>{formatMoney(total)}</span></div>
+          {gstAmount > 0 && <div className="flex justify-between"><span>GST ({gst}%)</span><span>{formatMoney(gstAmount)}</span></div>}
+          <div className="mt-1 flex justify-between border-t border-border pt-1 font-semibold"><span>Total</span><span>{formatMoney(priceWithGst)}</span></div>
         </div>
       ) : (
         <p className="text-xs text-danger">Set today&apos;s {metalType} rate first (More → Jewellery → Today&apos;s rate).</p>
@@ -1794,7 +1815,7 @@ function JewelleryCalculator({
           disabled={!rate || !itemName.trim() || w <= 0 || total <= 0}
           onClick={() => {
             const fullName = hallmarkNumber.trim() ? `${itemName.trim()} (HUID: ${hallmarkNumber.trim()})` : itemName.trim();
-            onAdd(fullName, total, typeof gstPercent === "number" ? gstPercent : 0);
+            onAdd(fullName, priceIncludesGst ? priceWithGst : total, gst);
             setOpen(false);
             setItemName("");
             setHallmarkNumber("");

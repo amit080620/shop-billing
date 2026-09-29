@@ -6,7 +6,8 @@ import { requireSession } from "../auth";
 import { createSupabaseAdminClient } from "../supabase/admin";
 import { logError } from "../audit";
 import { checkRateLimitAsync } from "../rateLimit";
-import { financialYearFor, round2 } from "../gst";
+import { financialYearFor } from "../gst";
+import { calculateTransactionTotals } from "../validation/schemas";
 import { findOrCreateCustomerByPhone } from "./customers";
 
 export type ActionState = { error?: string } | null;
@@ -419,7 +420,16 @@ export async function generateBillFromPrescriptionAction(
       gstPercent: match ? Number(match.gst_percent) : 0,
     };
   });
-  const billTotal = round2(billItems.reduce((sum, i) => sum + i.quantity * i.unitPrice, 0));
+  // What the invoice comes to, GST included the way this shop prices — a plain sum left any GST
+  // added on top unpaid, so it went on the patient's udhaar.
+  const billTotal = calculateTransactionTotals({
+    items: billItems.map((i) => ({ quantity: i.quantity, unitPrice: i.unitPrice, gstPercent: i.gstPercent })),
+    discountType: "flat",
+    discountValue: 0,
+    paidAmount: 0,
+    supplyType: "intra",
+    priceMode: session.priceIncludesGst ? "inclusive" : "exclusive",
+  }).total;
 
   const { createBillCore } = await import("./bills");
   const result = await createBillCore(session, {

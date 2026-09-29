@@ -5,8 +5,9 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { generateBillFromPrescriptionAction } from "@/lib/actions/clinic";
 import { formatMoney, paymentMethodLabel } from "@/lib/format";
+import { calculateTransactionTotals } from "@/lib/validation/schemas";
 
-type Line = { medicineName: string; quantity: number; unitPrice: number; inCatalog: boolean };
+type Line = { medicineName: string; quantity: number; unitPrice: number; inCatalog: boolean; gstPercent: number };
 
 /** Bills the medicines on a prescription. Prices come from the catalog
  * where the names match; anything else starts at zero and is typed here,
@@ -16,12 +17,14 @@ export function GenerateBillButton({
   alreadyBilled,
   existingBillId,
   initialLines,
+  priceIncludesGst,
   labels,
 }: {
   prescriptionId: string;
   alreadyBilled: boolean;
   existingBillId: string | null;
   initialLines: Line[];
+  priceIncludesGst: boolean;
   labels: Record<string, string>;
 }) {
   const router = useRouter();
@@ -39,7 +42,15 @@ export function GenerateBillButton({
     );
   }
 
-  const total = lines.reduce((sum, l) => sum + l.quantity * l.unitPrice, 0);
+  // The invoice total, GST included the way this shop prices — the same figure the bill will show.
+  const total = calculateTransactionTotals({
+    items: lines.map((l) => ({ quantity: l.quantity, unitPrice: l.unitPrice, gstPercent: l.gstPercent })),
+    discountType: "flat",
+    discountValue: 0,
+    paidAmount: 0,
+    supplyType: "intra",
+    priceMode: priceIncludesGst ? "inclusive" : "exclusive",
+  }).total;
   const unpriced = lines.filter((l) => l.unitPrice <= 0).length;
 
   return (
