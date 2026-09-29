@@ -52,6 +52,9 @@ export async function seedJewellery(ctx: SeedCtx): Promise<void> {
   const silverRates = Array.from({ length: 30 }, (_, i) => ({ shop_id: ctx.shopId, metal_type: "silver" as const, rate_per_gram: SILVER_RATE - 3 + ((i * 11) % 8), effective_date: dateOffset(-(29 - i)) }));
   await ctx.admin.from("metal_rates").insert([...goldRates.slice(0, 29), ...silverRates.slice(0, 29)]);
   await setTodaysMetalRateAction("gold", GOLD_RATE);
+  // 24K and 18K alongside the 22K rate (no-ops until migration 0047 adds rates per karat).
+  await setTodaysMetalRateAction("gold", Math.round((GOLD_RATE * 24) / 22), "24K");
+  await setTodaysMetalRateAction("gold", Math.round((GOLD_RATE * 18) / 22), "18K");
   await setTodaysMetalRateAction("silver", SILVER_RATE);
 
   const products = await insertCatalog(ctx, STOCK);

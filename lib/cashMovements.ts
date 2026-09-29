@@ -4,7 +4,7 @@ type Admin = ReturnType<typeof createSupabaseAdminClient>;
 
 export type CashMethod = "cash" | "card" | "upi" | "online" | "other";
 export type CashMovementKind = "advance_received" | "advance_applied" | "refund_given";
-export type CashMovementSource = "service_job" | "reservation" | "rental" | "item_request";
+export type CashMovementSource = "service_job" | "reservation" | "rental" | "item_request" | "gold_scheme";
 
 export function asCashMethod(value: unknown): CashMethod {
   return value === "card" || value === "upi" || value === "online" || value === "other" ? value : "cash";

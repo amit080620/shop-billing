@@ -1,38 +1,28 @@
 import { todayIso } from "@/lib/dateHelpers";
 import { requireSession } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { KARATS, karatRatesReady, loadRateRows, type Karat } from "@/lib/metalRates";
 import { RatesClient } from "./RatesClient";
 
 export default async function MetalRatesPage() {
   const session = await requireSession();
   const admin = createSupabaseAdminClient();
-
   const today = todayIso();
-  const { data: rates } = await admin
-    .from("metal_rates")
-    .select("metal_type, rate_per_gram")
-    .eq("shop_id", session.shopId)
-    .eq("effective_date", today);
+  const [rows, karatsAvailable] = await Promise.all([loadRateRows(admin, session.shopId), karatRatesReady(admin)]);
 
-  const { data: history } = await admin
-    .from("metal_rates")
-    .select("metal_type, rate_per_gram, effective_date")
-    .eq("shop_id", session.shopId)
-    .order("effective_date", { ascending: false })
-    .limit(14);
-
-  const gold = rates?.find((r) => r.metal_type === "gold");
-  const silver = rates?.find((r) => r.metal_type === "silver");
+  // Only what was actually saved today fills the boxes; older days show in the history.
+  const todays = rows.filter((r) => r.effective_date === today);
+  const todayGold = Object.fromEntries(
+    KARATS.map((k) => [k, (() => { const r = todays.find((x) => x.metal_type === "gold" && (x.purity || "22K") === k); return r ? Number(r.rate_per_gram) : null; })()]),
+  ) as Record<Karat, number | null>;
+  const silver = todays.find((r) => r.metal_type === "silver");
 
   return (
     <RatesClient
-      todayGold={gold ? Number(gold.rate_per_gram) : null}
+      todayGold={todayGold}
       todaySilver={silver ? Number(silver.rate_per_gram) : null}
-      history={(history ?? []).map((h) => ({
-        metalType: h.metal_type,
-        rate: Number(h.rate_per_gram),
-        date: h.effective_date,
-      }))}
+      karatsAvailable={karatsAvailable}
+      history={rows.slice(0, 24).map((h) => ({ metalType: h.metal_type, purity: h.purity ?? "", rate: Number(h.rate_per_gram), date: h.effective_date }))}
     />
   );
 }

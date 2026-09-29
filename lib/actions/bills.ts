@@ -13,6 +13,8 @@ import { invalidateCache } from "../cache";
 import { buyerSchemaReady, stateFromGstin, type Buyer } from "../gstBuyer";
 import { todayIso } from "../dateHelpers";
 import { priceLines } from "../billPricing";
+import { loadSchemes } from "../goldSchemeData";
+import { asCashMethod, recordCashMovement } from "../cashMovements";
 
 export type ActionState = { error?: string } | null;
 
@@ -31,12 +33,23 @@ export async function createBillCore(
 
   const { customerId, items, discountType, discountValue, paidAmount, paymentMethod, doctorName, patientName, tripVehicleId, tripKm, tripDriverName, tripLoadWeight, tripLoadUnit, serviceProviderName, exchangeMetal, exchangeDescription, exchangeGrossWeight, exchangePurityPercent, exchangeRatePerGram, exchangeValue, redeemedPoints, b2b, buyerName, buyerGstin, buyerAddress } = parsedData;
 
+  const admin = createSupabaseAdminClient();
+
+  // A gold saving scheme used in this bill: what the customer paid into it (plus the bonus once
+  // every instalment is in) pays for the jewellery, like cash already in hand.
+  let scheme: { id: string; number: string; value: number } | null = null;
+  if (parsedData.goldSchemeId) {
+    const [view] = await loadSchemes(admin, session.shopId, { id: parsedData.goldSchemeId });
+    if (!view || view.scheme.status !== "active") return { error: "This gold scheme can't be used — it is closed or already used." };
+    if (view.scheme.customer_id && view.scheme.customer_id !== customerId) return { error: "Bill the scheme's own customer to use their scheme." };
+    if (view.figures.value <= 0) return { error: "Nothing has been paid into this scheme yet." };
+    scheme = { id: view.scheme.id, number: view.scheme.scheme_number, value: view.figures.value };
+  }
+
   // Old-gold/silver exchange is money-equivalent handed over at the
   // counter — it counts toward what's "paid", same as cash, without
-  // touching the taxable value of the new item being sold.
-  const effectivePaidAmount = round2(paidAmount + (exchangeValue ?? 0));
-
-  const admin = createSupabaseAdminClient();
+  // touching the taxable value of the new item being sold. A scheme's value likewise.
+  const effectivePaidAmount = round2(paidAmount + (exchangeValue ?? 0) + (scheme?.value ?? 0));
 
   // The "Give discounts" switch on a staff account means something: without it, the only money
   // off a bill is the customer's own loyalty points, at exactly what they are worth. (It used to
@@ -140,6 +153,11 @@ export async function createBillCore(
     supplyType,
     priceMode: session.priceIncludesGst ? "inclusive" : "exclusive",
   });
+  // A scheme is used whole: the jewellery must be worth at least its value (checked before the
+  // invoice number is taken).
+  if (scheme && totals.total + 0.005 < scheme.value) {
+    return { error: `The scheme is worth ${scheme.value} — pick jewellery worth at least that much.` };
+  }
 
   const financialYear = financialYearFor(new Date());
   const { data: issuedNumber, error: numberError } = await admin.rpc(
@@ -348,6 +366,26 @@ export async function createBillCore(
       p_points: Math.floor(redeemedPoints),
     });
     if (redeemError) console.error("Could not redeem loyalty points", customerId, redeemError);
+  }
+
+  // The scheme is used up in this bill. Its instalments were counted as money in on the days they
+  // were paid (and a bonus is never money in), so their value comes off today's takings.
+  if (scheme) {
+    await admin
+      .from("gold_schemes")
+      .update({ status: "redeemed", redeemed_bill_id: bill.id, redeemed_at: new Date().toISOString() })
+      .eq("id", scheme.id)
+      .eq("shop_id", session.shopId);
+    await recordCashMovement(admin, {
+      shopId: session.shopId,
+      staffId: session.userId,
+      kind: "advance_applied",
+      source: "gold_scheme",
+      sourceId: scheme.id,
+      method: asCashMethod(paymentMethod),
+      amount: -scheme.value,
+      note: `Scheme ${scheme.number} used in invoice ${invoiceNumber}`,
+    });
   }
 
   return { billId: bill.id, invoiceNumber };

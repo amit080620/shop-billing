@@ -1460,9 +1460,9 @@ export interface Database {
         ];
       };
       metal_rates: {
-        Row: { id: string; shop_id: string; metal_type: "gold" | "silver"; rate_per_gram: number; effective_date: string; created_at: string };
-        Insert: { id?: string; shop_id: string; metal_type: "gold" | "silver"; rate_per_gram: number; effective_date?: string; created_at?: string };
-        Update: { id?: string; shop_id?: string; metal_type?: "gold" | "silver"; rate_per_gram?: number; effective_date?: string; created_at?: string };
+        Row: { id: string; shop_id: string; metal_type: "gold" | "silver"; purity: string; rate_per_gram: number; effective_date: string; created_at: string };
+        Insert: { id?: string; shop_id: string; metal_type: "gold" | "silver"; purity?: string; rate_per_gram: number; effective_date?: string; created_at?: string };
+        Update: { id?: string; shop_id?: string; metal_type?: "gold" | "silver"; purity?: string; rate_per_gram?: number; effective_date?: string; created_at?: string };
         Relationships: [
           { foreignKeyName: "metal_rates_shop_id_fkey"; columns: ["shop_id"]; isOneToOne: false; referencedRelation: "shops"; referencedColumns: ["id"] },
         ];
@@ -2067,9 +2067,9 @@ export interface Database {
         ];
       };
       cash_movements: {
-        Row: { id: string; shop_id: string; kind: "advance_received" | "advance_applied" | "refund_given"; source: "service_job" | "reservation" | "rental" | "item_request"; source_id: string | null; payment_method: "cash" | "card" | "upi" | "online" | "other"; amount: number; note: string | null; staff_id: string | null; created_at: string };
-        Insert: { id?: string; shop_id: string; kind: "advance_received" | "advance_applied" | "refund_given"; source: "service_job" | "reservation" | "rental" | "item_request"; source_id?: string | null; payment_method?: "cash" | "card" | "upi" | "online" | "other"; amount: number; note?: string | null; staff_id?: string | null; created_at?: string };
-        Update: { id?: string; shop_id?: string; kind?: "advance_received" | "advance_applied" | "refund_given"; source?: "service_job" | "reservation" | "rental" | "item_request"; source_id?: string | null; payment_method?: "cash" | "card" | "upi" | "online" | "other"; amount?: number; note?: string | null; staff_id?: string | null; created_at?: string };
+        Row: { id: string; shop_id: string; kind: "advance_received" | "advance_applied" | "refund_given"; source: "service_job" | "reservation" | "rental" | "item_request" | "gold_scheme"; source_id: string | null; payment_method: "cash" | "card" | "upi" | "online" | "other"; amount: number; note: string | null; staff_id: string | null; created_at: string };
+        Insert: { id?: string; shop_id: string; kind: "advance_received" | "advance_applied" | "refund_given"; source: "service_job" | "reservation" | "rental" | "item_request" | "gold_scheme"; source_id?: string | null; payment_method?: "cash" | "card" | "upi" | "online" | "other"; amount: number; note?: string | null; staff_id?: string | null; created_at?: string };
+        Update: { id?: string; shop_id?: string; kind?: "advance_received" | "advance_applied" | "refund_given"; source?: "service_job" | "reservation" | "rental" | "item_request" | "gold_scheme"; source_id?: string | null; payment_method?: "cash" | "card" | "upi" | "online" | "other"; amount?: number; note?: string | null; staff_id?: string | null; created_at?: string };
         Relationships: [
           { foreignKeyName: "cash_movements_shop_id_fkey"; columns: ["shop_id"]; isOneToOne: false; referencedRelation: "shops"; referencedColumns: ["id"] },
         ];
@@ -2081,6 +2081,18 @@ export interface Database {
         Relationships: [
           { foreignKeyName: "day_closes_shop_id_fkey"; columns: ["shop_id"]; isOneToOne: false; referencedRelation: "shops"; referencedColumns: ["id"] },
         ];
+      };
+      gold_schemes: {
+        Row: { id: string; shop_id: string; scheme_number: string; customer_id: string | null; customer_name: string; customer_phone: string | null; installment_amount: number; total_installments: number; bonus_amount: number; start_date: string; status: "active" | "redeemed" | "closed"; redeemed_bill_id: string | null; redeemed_at: string | null; closed_at: string | null; refund_amount: number; notes: string | null; staff_id: string | null; created_at: string };
+        Insert: { id?: string; shop_id: string; scheme_number: string; customer_id?: string | null; customer_name: string; customer_phone?: string | null; installment_amount: number; total_installments: number; bonus_amount?: number; start_date: string; status?: "active" | "redeemed" | "closed"; redeemed_bill_id?: string | null; redeemed_at?: string | null; closed_at?: string | null; refund_amount?: number; notes?: string | null; staff_id?: string | null; created_at?: string };
+        Update: { id?: string; shop_id?: string; scheme_number?: string; customer_id?: string | null; customer_name?: string; customer_phone?: string | null; installment_amount?: number; total_installments?: number; bonus_amount?: number; start_date?: string; status?: "active" | "redeemed" | "closed"; redeemed_bill_id?: string | null; redeemed_at?: string | null; closed_at?: string | null; refund_amount?: number; notes?: string | null; staff_id?: string | null; created_at?: string };
+        Relationships: [];
+      };
+      gold_scheme_payments: {
+        Row: { id: string; shop_id: string; scheme_id: string; amount: number; payment_method: "cash" | "card" | "upi" | "online" | "other"; staff_id: string | null; created_at: string };
+        Insert: { id?: string; shop_id: string; scheme_id: string; amount: number; payment_method?: "cash" | "card" | "upi" | "online" | "other"; staff_id?: string | null; created_at?: string };
+        Update: { id?: string; shop_id?: string; scheme_id?: string; amount?: number; payment_method?: "cash" | "card" | "upi" | "online" | "other"; staff_id?: string | null; created_at?: string };
+        Relationships: [];
       };
       workers: {
         Row: { id: string; shop_id: string; staff_id: string | null; name: string; phone: string | null; designation: string | null; pay_type: "monthly" | "daily"; monthly_salary: number; daily_wage: number; joined_on: string | null; is_active: boolean; created_at: string };
@@ -2640,6 +2652,10 @@ export interface Database {
         Returns: number;
       };
       next_debit_note_number: {
+        Args: { p_shop_id: string; p_financial_year: string };
+        Returns: number;
+      };
+      next_gold_scheme_number: {
         Args: { p_shop_id: string; p_financial_year: string };
         Returns: number;
       };

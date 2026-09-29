@@ -153,6 +153,8 @@ export const billSchema = z.object({
   customerId: z.string().uuid().nullable(),
   /** The quotation this bill was made from (marked converted once the bill exists). */
   quotationId: z.string().uuid().nullable().optional(),
+  /** A jeweller's gold saving scheme whose value pays for this bill (then marked used). */
+  goldSchemeId: z.string().uuid().nullable().optional(),
   items: z.array(lineItemSchema).min(1, "Add at least one product"),
   discountType: z.enum(["percent", "flat"]),
   discountValue: z.coerce.number().min(0).default(0),

@@ -9,6 +9,7 @@ import { createBillAction } from "@/lib/actions/bills";
 import { saveQuotationAction } from "@/lib/actions/quotations";
 import { useRouter } from "next/navigation";
 import type { QuotationLine } from "@/lib/supabase/database.types";
+import { KARATS, karatOf, type Karat } from "@/lib/metalRates";
 import { quickCreateCustomerAction, lookupCustomerByPhoneAction } from "@/lib/actions/customers";
 import { quickCreateProductAction } from "@/lib/actions/products";
 import { calculateTransactionTotals } from "@/lib/validation/schemas";
@@ -106,7 +107,7 @@ export function NewBillClient({
   shopContext,
   vehicles,
   businessType,
-  goldRate,
+  goldRates,
   silverRate,
   loyaltyRedemptionValue,
   barcodeScanMode = "both",
@@ -115,7 +116,10 @@ export function NewBillClient({
   initialProvider = "",
   quotationsAvailable = false,
   fromQuote = null,
+  fromScheme = null,
 }: {
+  /** Buying jewellery with a gold saving scheme: its value pays for the bill. */
+  fromScheme?: { id: string; number: string; value: number; complete: boolean } | null;
   /** "Save as quotation" is offered once migration 0045 has run. */
   quotationsAvailable?: boolean;
   /** Billing an accepted quotation: its lines, discount and number. */
@@ -131,7 +135,8 @@ export function NewBillClient({
   affinityMap: Record<string, string>;
   vehicles: { id: string; name: string; ratePerKm: number }[];
   businessType: string;
-  goldRate: number | null;
+  /** Today's gold rate for each karat. */
+  goldRates: Record<Karat, number | null>;
   barcodeScanMode?: "camera" | "hardware" | "both" | "off";
   silverRate: number | null;
   loyaltyRedemptionValue: number;
@@ -264,7 +269,8 @@ export function NewBillClient({
     value: number;
   } | null>(null);
   // Old gold or silver handed over pays part of the bill; paidAmount stays the cash (or UPI, card...) only.
-  const exchangeValue = exchangeInfo?.value ?? 0;
+  // Old gold handed over and a gold scheme being used both pay part of the bill before any cash.
+  const exchangeValue = (exchangeInfo?.value ?? 0) + (fromScheme?.value ?? 0);
   const [tripInfo, setTripInfo] = useState<{ vehicleId: string; km: number; driverName: string; loadWeight: number | null; loadUnit: string } | null>(null);
 
   // B2B invoice: made out to a business and its GSTIN, which the buyer uses to claim input tax
@@ -793,10 +799,10 @@ export function NewBillClient({
 
         {vehicles.length > 0 && <TransportChargePicker vehicles={vehicles} onAdd={addTransportCharge} />}
 
-        {businessType === "jewellery" && (goldRate || silverRate) && (
+        {businessType === "jewellery" && (Object.values(goldRates).some(Boolean) || silverRate) && (
           <JewelleryCalculator
             products={products.filter((p) => p.metalType)}
-            goldRate={goldRate}
+            goldRates={goldRates}
             silverRate={silverRate}
             lang={lang}
             priceIncludesGst={shopContext.priceIncludesGst}
@@ -1000,6 +1006,7 @@ export function NewBillClient({
   const payload = JSON.stringify({
     customerId: customerMode === "existing" ? selectedCustomer?.id ?? null : null,
     quotationId: fromQuote?.id ?? null,
+    goldSchemeId: fromScheme?.id ?? null,
     items: cart.map((c) => ({
       productId: c.productId === "__transport_charge__" || c.productId.startsWith("__jewellery_") || c.productId.startsWith("__quote_") ? null : c.productId,
       description: c.name,
@@ -1254,6 +1261,16 @@ export function NewBillClient({
             setExchangeInfo(null);
           }}
         />
+      )}
+
+      {fromScheme && (
+        <section className="flex items-center justify-between gap-3 rounded-xl border border-brand bg-brand-soft px-4 py-3">
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-brand-text">{t("Gold scheme {number}", { number: fromScheme.number })}</p>
+            <p className="text-xs text-brand-text/80">{fromScheme.complete ? t("Instalments + bonus, used for this jewellery") : t("Instalments paid so far (no bonus yet)")}</p>
+          </div>
+          <p className="shrink-0 text-base font-bold text-brand-text">− {formatMoney(fromScheme.value)}</p>
+        </section>
       )}
 
       <section className="flex flex-col gap-3 neu-card p-4">
@@ -1748,14 +1765,14 @@ function TransportChargePicker({
 
 function JewelleryCalculator({
   products,
-  goldRate,
+  goldRates,
   silverRate,
   lang,
   priceIncludesGst,
   onAdd,
 }: {
   products: Product[];
-  goldRate: number | null;
+  goldRates: Record<Karat, number | null>;
   silverRate: number | null;
   lang: Lang;
   priceIncludesGst: boolean;
@@ -1764,7 +1781,9 @@ function JewelleryCalculator({
   const [open, setOpen] = useState(false);
   const [itemName, setItemName] = useState("");
   const [hallmarkNumber, setHallmarkNumber] = useState("");
-  const [metalType, setMetalType] = useState<"gold" | "silver">(goldRate ? "gold" : "silver");
+  const [karat, setKarat] = useState<Karat>("22K");
+  const goldRate = goldRates[karat];
+  const [metalType, setMetalType] = useState<"gold" | "silver">(goldRates["22K"] ? "gold" : "silver");
   const [weight, setWeight] = useState<number | "">("");
   const [makingChargeType, setMakingChargeType] = useState<"per_gram" | "flat" | "percent">("per_gram");
   const [makingChargeValue, setMakingChargeValue] = useState<number | "">("");
@@ -1775,6 +1794,9 @@ function JewelleryCalculator({
     setItemName(p.name);
     if (p.hallmarkNumber) setHallmarkNumber(p.hallmarkNumber);
     if (p.metalType) setMetalType(p.metalType);
+    // The design's purity picks the rate: an 18K piece at the 18K rate, not the 22K one.
+    const k = karatOf(p.purity);
+    if (k) setKarat(k);
     if (p.makingChargeType) setMakingChargeType(p.makingChargeType);
     if (p.makingChargeValue != null) setMakingChargeValue(p.makingChargeValue);
     if (p.wastagePercent != null) setWastagePercent(p.wastagePercent);
@@ -1814,7 +1836,7 @@ function JewelleryCalculator({
   return (
     <div className="flex flex-col gap-2 rounded-lg border border-border bg-surface p-3">
       <p className="text-xs text-brand-text">
-        Today&apos;s rate — {goldRate ? `Gold ₹${goldRate}/g` : "Gold not set"}
+        Today&apos;s rate — {goldRate ? `Gold ${karat} ₹${goldRate}/g` : `Gold ${karat} not set`}
         {silverRate ? ` · Silver ₹${silverRate}/g` : ""}
       </p>
 
@@ -1842,14 +1864,25 @@ function JewelleryCalculator({
       />
 
       <div className="grid grid-cols-2 gap-2">
-        <select
-          value={metalType}
-          onChange={(e) => setMetalType(e.target.value as "gold" | "silver")}
-          className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand"
-        >
-          <option value="gold">Gold</option>
-          <option value="silver">Silver</option>
-        </select>
+        <div className="flex gap-1.5">
+          <select
+            value={metalType}
+            onChange={(e) => setMetalType(e.target.value as "gold" | "silver")}
+            className="min-w-0 flex-1 rounded-lg border border-border bg-surface px-2 py-2 text-sm outline-none focus:border-brand"
+          >
+            <option value="gold">Gold</option>
+            <option value="silver">Silver</option>
+          </select>
+          {metalType === "gold" && (
+            <select value={karat} onChange={(e) => setKarat(e.target.value as Karat)} aria-label="Karat" className="w-[4.5rem] rounded-lg border border-border bg-surface px-1.5 py-2 text-sm outline-none focus:border-brand">
+              {KARATS.map((k) => (
+                <option key={k} value={k}>
+                  {k}
+                </option>
+              ))}
+            </select>
+          )}
+        </div>
         <input
           type="number"
           min={0}
@@ -1907,7 +1940,7 @@ function JewelleryCalculator({
 
       {rate ? (
         <div className="rounded-lg bg-surface px-3 py-2 text-xs text-foreground">
-          <div className="flex justify-between"><span>Metal value ({w}g × ₹{rate})</span><span>{formatMoney(metalValue)}</span></div>
+          <div className="flex justify-between"><span>Metal value ({w}g × ₹{rate}{metalType === "gold" ? ` ${karat}` : ""})</span><span>{formatMoney(metalValue)}</span></div>
           {wastageAmount > 0 && <div className="flex justify-between"><span>Wastage ({wastagePercent}%)</span><span>{formatMoney(wastageAmount)}</span></div>}
           <div className="flex justify-between"><span>Making charge</span><span>{formatMoney(makingCharge)}</span></div>
           <div className="mt-1 flex justify-between border-t border-border pt-1"><span>Before GST</span><span>{formatMoney(total)}</span></div>
@@ -1923,7 +1956,9 @@ function JewelleryCalculator({
           type="button"
           disabled={!rate || !itemName.trim() || w <= 0 || total <= 0}
           onClick={() => {
-            const fullName = hallmarkNumber.trim() ? `${itemName.trim()} (HUID: ${hallmarkNumber.trim()})` : itemName.trim();
+            // The karat on the invoice line, unless the name already says it.
+            const named = metalType === "gold" && !new RegExp(karat, "i").test(itemName) ? `${itemName.trim()} ${karat}` : itemName.trim();
+            const fullName = hallmarkNumber.trim() ? `${named} (HUID: ${hallmarkNumber.trim()})` : named;
             onAdd(fullName, priceIncludesGst ? priceWithGst : total, gst);
             setOpen(false);
             setItemName("");

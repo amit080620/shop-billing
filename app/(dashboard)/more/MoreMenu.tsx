@@ -55,6 +55,7 @@ import {
   Zap,
   FileText,
   CalendarCheck,
+  PiggyBank,
   type LucideIcon,
 } from "lucide-react";
 
@@ -152,7 +153,8 @@ export async function MoreMenu() {
 
         {type === "jewellery" && (
           <MenuGroup title="Jewellery">
-            <MenuLink href="/jewellery/rates" label="Today's rate" sub="Set gold/silver rate per gram" icon={Gem} />
+            <MenuLink href="/jewellery/rates" label="Today's rate" sub="Gold 24K / 22K / 18K and silver, per gram" icon={Gem} />
+            <MenuLink href="/jewellery/schemes" label={t("Gold saving schemes")} sub={t("Monthly instalments, a bonus at the end, jewellery at maturity")} icon={PiggyBank} />
             <MenuLink href="/jewellery/exchanges" label="Exchange history" sub="Old gold/silver taken in" icon={Repeat} />
           </MenuGroup>
         )}

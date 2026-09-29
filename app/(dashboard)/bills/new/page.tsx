@@ -7,12 +7,14 @@ import { getBarcodeScanModeAction } from "@/lib/actions/settings";
 import { computeAffinityMap } from "@/lib/basketAffinity";
 import { buyerSchemaReady } from "@/lib/gstBuyer";
 import { quotationsReady } from "@/lib/quotationsData";
+import { goldRatesFrom, loadRateRows, silverRateFrom } from "@/lib/metalRates";
+import { goldSchemesReady, loadSchemes } from "@/lib/goldSchemeData";
 import { todayIso } from "@/lib/dateHelpers";
 
-export default async function NewBillPage({ searchParams }: { searchParams: Promise<{ customer?: string; provider?: string; quote?: string }> }) {
+export default async function NewBillPage({ searchParams }: { searchParams: Promise<{ customer?: string; provider?: string; quote?: string; scheme?: string }> }) {
   // Opened from an appointment ("Bill →"): that customer and stylist come filled in. Opened from a
   // quotation ("Make bill"): its lines, customer and discount.
-  const { customer: customerParam, provider: providerParam, quote: quoteParam } = await searchParams;
+  const { customer: customerParam, provider: providerParam, quote: quoteParam, scheme: schemeParam } = await searchParams;
   const session = await requireSession();
   const lang = await getLang();
   const barcodeScanMode = await getBarcodeScanModeAction();
@@ -36,7 +38,7 @@ export default async function NewBillPage({ searchParams }: { searchParams: Prom
   const last30 = new Date();
   last30.setDate(last30.getDate() - 30);
 
-  const [{ data: products }, { data: customers }, { data: recentBills }, { data: shop }, { data: vehicles }, { data: metalRates }] = await Promise.all([
+  const [{ data: products }, { data: customers }, { data: recentBills }, { data: shop }, { data: vehicles }, rateRows] = await Promise.all([
     admin
       .from("products")
       .select("id, name, price, offer_price, gst_percent, hsn_code, barcode, unit, track_inventory, stock_quantity, low_stock_threshold, requires_prescription, units_per_pack, loose_unit_name, metal_type, purity, making_charge_type, making_charge_value, wastage_percent, bulk_min_qty, bulk_price, hallmark_number")
@@ -55,7 +57,8 @@ export default async function NewBillPage({ searchParams }: { searchParams: Prom
       .gte("created_at", last30.toISOString()),
     admin.from("shops").select("invoice_prefix, loyalty_redemption_value, fast_billing_enabled").eq("id", session.shopId).single(),
     admin.from("vehicles").select("id, name, rate_per_km").eq("shop_id", session.shopId).eq("is_active", true).order("name"),
-    admin.from("metal_rates").select("metal_type, rate_per_gram, effective_date").eq("shop_id", session.shopId).order("effective_date", { ascending: false }).limit(20),
+    // Today's rates — for gold, one per karat (see lib/metalRates).
+    session.businessType === "jewellery" ? loadRateRows(admin, session.shopId) : Promise.resolve([]),
   ]);
 
   // "Frequently sold" quick-add chips — a real speed win for repeat items
@@ -81,6 +84,16 @@ export default async function NewBillPage({ searchParams }: { searchParams: Prom
   // a platform-wide model. Shared with the low-stock "matched pair"
   // check on the dashboard, so both agree on what actually goes together.
   const affinityMap = await computeAffinityMap(admin, session.shopId);
+
+  // Opened from a gold saving scheme ("Buy jewellery with it"): its value pays for the bill.
+  const schemeView =
+    session.businessType === "jewellery" && schemeParam && /^[0-9a-f-]{36}$/i.test(schemeParam) && (await goldSchemesReady(admin))
+      ? (await loadSchemes(admin, session.shopId, { id: schemeParam }))[0]
+      : undefined;
+  const fromScheme =
+    schemeView && schemeView.scheme.status === "active" && schemeView.figures.value > 0
+      ? { id: schemeView.scheme.id, number: schemeView.scheme.scheme_number, value: schemeView.figures.value, complete: schemeView.figures.complete, customerId: schemeView.scheme.customer_id }
+      : null;
 
   const quotationsAvailable = await quotationsReady(admin);
   const { data: quote } =
@@ -162,15 +175,16 @@ export default async function NewBillPage({ searchParams }: { searchParams: Prom
       frequentProductIds={frequentProductIds}
       affinityMap={affinityMap}
       vehicles={(vehicles ?? []).map((v) => ({ id: v.id, name: v.name, ratePerKm: Number(v.rate_per_km) }))}
-      goldRate={metalRates?.find((r) => r.metal_type === "gold") ? Number(metalRates.find((r) => r.metal_type === "gold")!.rate_per_gram) : null}
-      silverRate={metalRates?.find((r) => r.metal_type === "silver") ? Number(metalRates.find((r) => r.metal_type === "silver")!.rate_per_gram) : null}
+      goldRates={goldRatesFrom(rateRows)}
+      silverRate={silverRateFrom(rateRows)}
       businessType={session.businessType}
       initialCustomerId={(() => {
-        const wanted = fromQuote ? quote?.customer_id : customerParam;
+        const wanted = fromScheme ? fromScheme.customerId : fromQuote ? quote?.customer_id : customerParam;
         return wanted && (customers ?? []).some((c) => c.id === wanted) ? wanted : null;
       })()}
-      quotationsAvailable={quotationsAvailable}
-      fromQuote={fromQuote}
+      quotationsAvailable={quotationsAvailable && !fromScheme}
+      fromQuote={fromScheme ? null : fromQuote}
+      fromScheme={fromScheme}
       initialProvider={providerParam?.slice(0, 80) ?? ""}
     />
     </div>

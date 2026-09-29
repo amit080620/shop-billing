@@ -21,6 +21,7 @@ const STATIC_PAGES: { title: string; subtitle: string; href: string; keywords: s
   { title: "New Bill", subtitle: "Sell / create a bill", href: "/bills/new", keywords: ["sell", "new bill", "billing", "invoice"] },
   { title: "All bills", subtitle: "Browse & reprint past bills", href: "/bills/all", keywords: ["bills", "reprint", "invoice history"] },
   { title: "Staff attendance & salary", subtitle: "Daily register, advances, monthly salary", href: "/staff-attendance", keywords: ["attendance", "haazri", "hajri", "salary", "advance", "staff pay", "payroll", "tankhwah"] },
+  { title: "Gold saving schemes", subtitle: "Monthly instalments, jewellery at maturity", href: "/jewellery/schemes", keywords: ["gold scheme", "kitty", "bhishi", "installment", "kisht", "saving scheme"] },
   { title: "Quotations", subtitle: "Price offers, billed in one tap when agreed", href: "/quotations", keywords: ["quotation", "quote", "estimate", "price list", "kotation"] },
   { title: "Purchases", subtitle: "Buy stock from a vendor", href: "/purchases/new", keywords: ["buy", "purchase", "stock in"] },
   { title: "Products", subtitle: "Add and manage items", href: "/products", keywords: ["product", "item", "inventory", "stock"] },

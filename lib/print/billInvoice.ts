@@ -1,6 +1,7 @@
 import { formatDateTime } from "../format";
 import { buyerOf } from "../gstBuyer";
 import { buildUpiLink, generateQrDataUrl } from "../qr";
+import { goldSchemesReady, loadSchemes } from "../goldSchemeData";
 import type { createSupabaseAdminClient } from "../supabase/admin";
 import type { A4InvoiceData } from "./A4Renderer";
 
@@ -84,10 +85,21 @@ export async function loadBillInvoice(admin: Admin, billId: string, shopId?: str
   // Within the state the place of supply is the shop's own state; across states, the buyer's.
   const placeOfSupply = isIntra ? `${shop.state ?? "Same state"} (CGST + SGST)` : `${party?.state ?? "Different state"} (IGST)`;
 
-  const exchangeAmount = exchangeRow ? Number(exchangeRow.exchange_value) : 0;
+  // A gold saving scheme used for this jewellery pays part of it, like old gold handed over:
+  // shown as its own line, and only the rest printed as money paid.
+  let schemeLine: { label: string; amount: number } | null = null;
+  if (shop.business_type === "jewellery" && (await goldSchemesReady(admin))) {
+    const { data: used } = await admin.from("gold_schemes").select("id").eq("redeemed_bill_id", bill.id).eq("shop_id", bill.shop_id).maybeSingle();
+    if (used) {
+      const [view] = await loadSchemes(admin, bill.shop_id, { id: used.id });
+      if (view) schemeLine = { label: `Gold scheme ${view.scheme.scheme_number}`, amount: view.figures.value };
+    }
+  }
+  const oldGold = exchangeRow ? Number(exchangeRow.exchange_value) : 0;
+  const exchangeAmount = oldGold + (schemeLine?.amount ?? 0);
   const exchangeLabel = exchangeRow
-    ? `Old ${exchangeRow.metal_type} exchange (${Number(exchangeRow.gross_weight)} g @ ${Number(exchangeRow.purity_percent)}%)`
-    : null;
+    ? `Old ${exchangeRow.metal_type} exchange (${Number(exchangeRow.gross_weight)} g @ ${Number(exchangeRow.purity_percent)}%)${schemeLine ? ` + ${schemeLine.label}` : ""}`
+    : (schemeLine?.label ?? null);
   const cashPaid = Math.max(0, Number(bill.paid_amount) - exchangeAmount);
 
   let upiLink: string | null = null;
