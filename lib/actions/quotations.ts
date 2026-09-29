@@ -96,6 +96,6 @@ export async function cancelQuotationAction(quotationId: string): Promise<{ erro
   const { error } = await admin.from("quotations").update({ status: "cancelled" }).eq("id", quotationId).eq("shop_id", session.shopId).eq("status", "open");
   if (error) return { error: "Could not cancel — try again." };
   revalidatePath("/quotations");
-  revalidatePath(`/quotations/${quotationId}`);
+  revalidatePath(`/print/quotation/${quotationId}`);
   return {};
 }

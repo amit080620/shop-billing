@@ -1406,7 +1406,7 @@ export function NewBillClient({
                 const r = await saveQuotationAction(payload, quoteDays, "");
                 setQuoteSaving(false);
                 if (r.error || !r.quotationId) setQuoteError(r.error ?? "Could not save");
-                else router.push(`/quotations/${r.quotationId}`);
+                else router.push(`/print/quotation/${r.quotationId}`);
               }}
               className="flex-1 rounded-lg border border-brand bg-brand-soft px-3 py-2 text-sm font-medium text-brand-text disabled:opacity-60"
             >

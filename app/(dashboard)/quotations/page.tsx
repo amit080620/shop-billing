@@ -72,7 +72,7 @@ export default async function QuotationsPage({ searchParams }: { searchParams: P
             const expired = q.status === "open" && q.valid_until && q.valid_until < today;
             return (
               <li key={q.id}>
-                <Link href={`/quotations/${q.id}`} className="neu-card flex items-center justify-between gap-3 px-3.5 py-3">
+                <Link href={`/print/quotation/${q.id}`} className="neu-card flex items-center justify-between gap-3 px-3.5 py-3">
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium text-foreground">{q.customer_name ?? t("common.walkinCustomer")}</p>
                     <p className="truncate text-xs text-muted">
