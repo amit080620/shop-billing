@@ -1248,6 +1248,7 @@ export function NewBillClient({
       {businessType === "jewellery" && (
         <ExchangeCalculator
           exchangeInfo={exchangeInfo}
+          pureRates={{ gold: goldRates["24K"], silver: silverRate }}
           // Old gold handed over pays part of the bill, so the cash still to be paid goes down by its value
           // (the server adds the exchange value to the cash paid, so it is never counted twice).
           onSet={(info) => {
@@ -1981,10 +1982,13 @@ function JewelleryCalculator({
 
 function ExchangeCalculator({
   exchangeInfo,
+  pureRates,
   onSet,
   onClear,
 }: {
   exchangeInfo: { metal: "gold" | "silver"; description: string; grossWeight: number; purityPercent: number; ratePerGram: number; value: number } | null;
+  /** Today's rate for pure metal (24K gold, silver) — what the net weight after purity is worth. */
+  pureRates: { gold: number | null; silver: number | null };
   onSet: (info: { metal: "gold" | "silver"; description: string; grossWeight: number; purityPercent: number; ratePerGram: number; value: number }) => void;
   onClear: () => void;
 }) {
@@ -1993,7 +1997,8 @@ function ExchangeCalculator({
   const [description, setDescription] = useState("");
   const [grossWeight, setGrossWeight] = useState<number | "">("");
   const [purityPercent, setPurityPercent] = useState<number | "">(91.6);
-  const [ratePerGram, setRatePerGram] = useState<number | "">("");
+  // Starts at today's pure rate; the jeweller can change it (a lower buy-back rate, say).
+  const [ratePerGram, setRatePerGram] = useState<number | "">(pureRates.gold ?? "");
 
   function round2(n: number) {
     return Math.round((n + Number.EPSILON) * 100) / 100;
@@ -2041,7 +2046,13 @@ function ExchangeCalculator({
       <div className="grid grid-cols-2 gap-2">
         <select
           value={metal}
-          onChange={(e) => setMetal(e.target.value as "gold" | "silver")}
+          onChange={(e) => {
+            const next = e.target.value as "gold" | "silver";
+            // Switch to the other metal's rate unless the jeweller typed their own.
+            if (ratePerGram === "" || ratePerGram === pureRates[metal]) setRatePerGram(pureRates[next] ?? "");
+            if (purityPercent === (metal === "gold" ? 91.6 : 92.5)) setPurityPercent(next === "gold" ? 91.6 : 92.5);
+            setMetal(next);
+          }}
           className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand"
         >
           <option value="gold">Gold</option>
@@ -2081,10 +2092,12 @@ function ExchangeCalculator({
           step="0.01"
           value={ratePerGram}
           onChange={(e) => setRatePerGram(e.target.value === "" ? "" : Number(e.target.value))}
-          placeholder="Rate ₹/g"
+          placeholder={metal === "gold" ? "24K rate ₹/g" : "Rate ₹/g"}
+          aria-label={metal === "gold" ? "Pure (24K) rate per gram" : "Silver rate per gram"}
           className="rounded-lg border border-border bg-surface px-2 py-2 text-xs outline-none focus:border-brand"
         />
       </div>
+      <p className="text-[11px] text-muted">{metal === "gold" ? "Rate is for pure (24K) gold — the purity % works out the rest." : "Rate is for pure silver — the purity % works out the rest."}</p>
 
       {netWeight > 0 && (
         <p className="text-xs text-brand-text">

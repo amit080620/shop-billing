@@ -13,6 +13,7 @@ import { FESTIVALS } from "@/lib/festivals";
 import { getProfitLeakAction } from "@/lib/actions/profitLeak";
 import { getTerminology, customerNounFor } from "@/lib/businessType";
 import { getShopMoneySummary } from "@/lib/moneyBalances";
+import { goldRatesFrom, loadRateRows } from "@/lib/metalRates";
 import { hotelSchemaReady, loadFrontDesk } from "@/lib/hotel/server";
 import {
   Plus,
@@ -706,7 +707,7 @@ async function JewelleryHome({
   const startOfWeek = istDayStart(6);
   const today = todayIso();
 
-  const [todayBills, weekBills, recentBills, { data: rates }] = await Promise.all([
+  const [todayBills, weekBills, recentBills, rateRows] = await Promise.all([
     admin.from("bills").select("total").eq("shop_id", session.shopId).eq("status", "active").gte("created_at", startOfToday.toISOString()),
     admin.from("bills").select("total, created_at").eq("shop_id", session.shopId).eq("status", "active").gte("created_at", startOfWeek.toISOString()),
     admin
@@ -716,14 +717,16 @@ async function JewelleryHome({
       .eq("status", "active")
       .order("created_at", { ascending: false })
       .limit(5),
-    admin.from("metal_rates").select("metal_type, rate_per_gram").eq("shop_id", session.shopId).eq("effective_date", today),
+    loadRateRows(admin, session.shopId),
   ]);
 
   const todayTotal = sum(todayBills.data?.map((b) => b.total));
   const trend = buildSevenDayTrend(weekBills.data ?? [], "created_at");
-  const goldRate = rates?.find((r) => r.metal_type === "gold");
-  const silverRate = rates?.find((r) => r.metal_type === "silver");
-  const rateSetToday = !!(goldRate || silverRate);
+  // Today's rates only: the 24K and 22K ones (set, or worked out from the karat that was set).
+  const rates = rateRows.filter((r) => r.effective_date === today);
+  const gold = rates.some((r) => r.metal_type === "gold") ? goldRatesFrom(rates) : null;
+  const silverRate = rates.find((r) => r.metal_type === "silver");
+  const rateSetToday = !!(gold || silverRate);
 
   return (
     <>
@@ -739,8 +742,8 @@ async function JewelleryHome({
             {rateSetToday ? "Today's rate" : "Today's rate not set yet"}
           </p>
           <p className="text-sm font-medium text-foreground">
-            {goldRate ? `Gold ${formatMoney(Number(goldRate.rate_per_gram))}/g` : ""}
-            {goldRate && silverRate ? " · " : ""}
+            {gold ? `Gold 24K ${formatMoney(gold["24K"] ?? 0)} · 22K ${formatMoney(gold["22K"] ?? 0)}/g` : ""}
+            {gold && silverRate ? " · " : ""}
             {silverRate ? `Silver ${formatMoney(Number(silverRate.rate_per_gram))}/g` : ""}
             {!rateSetToday && "Tap to set it"}
           </p>

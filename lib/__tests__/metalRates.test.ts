@@ -20,6 +20,30 @@ describe("gold rates by karat", () => {
     expect(r["14K"]).toBe(4666.67);
   });
 
+  it("works a karat out from today's rate rather than an older day's own rate", () => {
+    const r = goldRatesFrom([
+      { metal_type: "gold", purity: "22K", rate_per_gram: 7000, effective_date: "2026-09-28" },
+      { metal_type: "gold", purity: "24K", rate_per_gram: 8400, effective_date: "2026-09-29" },
+    ]);
+    expect(r["22K"]).toBe(7700);
+    expect(r["24K"]).toBe(8400);
+  });
+
+  it("takes a 22K rate over an old no-purity one saved the same day, in any order", () => {
+    const rows = [
+      { metal_type: "gold", purity: "", rate_per_gram: 7450, effective_date: "2026-09-29" },
+      { metal_type: "gold", purity: "22K", rate_per_gram: 7242, effective_date: "2026-09-29" },
+    ];
+    expect(goldRatesFrom(rows)["22K"]).toBe(7242);
+    expect(goldRatesFrom([...rows].reverse())["22K"]).toBe(7242);
+  });
+
+  it("works the rest out from 18K when only 18K was set", () => {
+    const r = goldRatesFrom([{ metal_type: "gold", purity: "18K", rate_per_gram: 6000, effective_date: "2026-09-29" }]);
+    expect(r["24K"]).toBe(8000);
+    expect(r["18K"]).toBe(6000);
+  });
+
   it("has no gold rate at all when none was ever set", () => {
     expect(goldRatesFrom([{ metal_type: "silver", purity: "", rate_per_gram: 95, effective_date: "2026-09-29" }])["22K"]).toBeNull();
     expect(silverRateFrom([{ metal_type: "silver", purity: "", rate_per_gram: 95, effective_date: "2026-09-29" }])).toBe(95);

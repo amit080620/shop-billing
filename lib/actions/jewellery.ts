@@ -30,29 +30,12 @@ export async function setTodaysMetalRateAction(
     console.error("Could not save metal rate", error);
     return { error: "Could not save rate" };
   }
+  // A 22K rate replaces today's rate saved before karats existed (read as 22K), so today has one.
+  if (withPurity && metalType === "gold" && karat === "22K") {
+    await admin.from("metal_rates").delete().eq("shop_id", session.shopId).eq("metal_type", "gold").eq("purity", "").eq("effective_date", today);
+  }
   revalidatePath("/jewellery/rates");
   revalidatePath("/bills/new");
+  revalidatePath("/dashboard");
   return {};
-}
-
-/** Returns today's rate if set, otherwise the most recent one on record
- * (so billing still works on a day the owner forgot to update it —
- * yesterday's rate is a far better default than refusing to bill). */
-export async function getLatestMetalRatesAction(): Promise<{ gold: number | null; silver: number | null }> {
-  const session = await requireSession();
-  const admin = createSupabaseAdminClient();
-
-  const { data } = await admin
-    .from("metal_rates")
-    .select("metal_type, rate_per_gram, effective_date")
-    .eq("shop_id", session.shopId)
-    .order("effective_date", { ascending: false })
-    .limit(20);
-
-  const gold = (data ?? []).find((r) => r.metal_type === "gold");
-  const silver = (data ?? []).find((r) => r.metal_type === "silver");
-  return {
-    gold: gold ? Number(gold.rate_per_gram) : null,
-    silver: silver ? Number(silver.rate_per_gram) : null,
-  };
 }
