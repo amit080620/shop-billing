@@ -2071,6 +2071,14 @@ export interface Database {
           { foreignKeyName: "cash_movements_shop_id_fkey"; columns: ["shop_id"]; isOneToOne: false; referencedRelation: "shops"; referencedColumns: ["id"] },
         ];
       };
+      day_closes: {
+        Row: { id: string; shop_id: string; branch_id: string | null; business_date: string; opening_cash: number; cash_change: number; expected_cash: number; counted_cash: number; difference: number; cash_removed: number; carry_forward: number; denominations: Record<string, number> | null; note: string | null; closed_by: string | null; closed_by_name: string | null; closed_at: string };
+        Insert: { id?: string; shop_id: string; branch_id?: string | null; business_date: string; opening_cash?: number; cash_change?: number; expected_cash: number; counted_cash: number; difference: number; cash_removed?: number; carry_forward: number; denominations?: Record<string, number> | null; note?: string | null; closed_by?: string | null; closed_by_name?: string | null; closed_at?: string };
+        Update: { id?: string; shop_id?: string; branch_id?: string | null; business_date?: string; opening_cash?: number; cash_change?: number; expected_cash?: number; counted_cash?: number; difference?: number; cash_removed?: number; carry_forward?: number; denominations?: Record<string, number> | null; note?: string | null; closed_by?: string | null; closed_by_name?: string | null; closed_at?: string };
+        Relationships: [
+          { foreignKeyName: "day_closes_shop_id_fkey"; columns: ["shop_id"]; isOneToOne: false; referencedRelation: "shops"; referencedColumns: ["id"] },
+        ];
+      };
       returns: {
         Row: {
           id: string;
