@@ -9,34 +9,46 @@ import { BarChart3 } from "lucide-react";
 import { todayIso, isoDaysAgo } from "@/lib/dateHelpers";
 import { getTranslator } from "@/lib/i18n/server";
 import { BackLink } from "@/app/components/BackLink";
+import { PartyTypeChips, parsePartyType } from "@/app/components/PartyTypeChips";
 
 export default async function SalesReportPage({
   searchParams,
 }: {
-  searchParams: Promise<{ from?: string; to?: string }>;
+  searchParams: Promise<{ from?: string; to?: string; type?: string }>;
 }) {
   const { t } = await getTranslator();
   const session = await requireSession();
-  const { from: fromParam, to: toParam } = await searchParams;
+  const { from: fromParam, to: toParam, type: typeParam } = await searchParams;
   const fromDate = fromParam || isoDaysAgo(6);
   const toDate = toParam || todayIso();
+  const partyType = parsePartyType(typeParam);
 
   const admin = createSupabaseAdminClient();
   const startOfRange = new Date(`${fromDate}T00:00:00+05:30`);
   const endOfRange = new Date(`${toDate}T23:59:59.999+05:30`);
 
-  const { data: bills } = await admin
+  const { data: allBills } = await admin
     .from("bills")
-    .select("id, invoice_number, total, paid_amount, credit_amount, payment_method, created_at, customers ( name )")
+    .select("id, invoice_number, total, taxable_amount, gst_amount, paid_amount, credit_amount, payment_method, created_at, buyer_name, buyer_gstin, customers ( name )")
     .eq("shop_id", session.shopId)
     .eq("status", "active")
     .gte("created_at", startOfRange.toISOString())
     .lte("created_at", endOfRange.toISOString())
     .order("created_at", { ascending: false });
 
-  const totalSales = (bills ?? []).reduce((s, b) => s + Number(b.total), 0);
-  const totalCredit = (bills ?? []).reduce((s, b) => s + Number(b.credit_amount), 0);
-  const billCount = bills?.length ?? 0;
+  // B2B = made out to a GSTIN (the buyer is frozen on every bill); B2C = everyone else.
+  const splitOf = (list: NonNullable<typeof allBills>) => ({
+    count: list.length,
+    total: list.reduce((s, b) => s + Number(b.total), 0),
+    gst: list.reduce((s, b) => s + Number(b.gst_amount), 0),
+  });
+  const b2bSplit = splitOf((allBills ?? []).filter((b) => b.buyer_gstin));
+  const b2cSplit = splitOf((allBills ?? []).filter((b) => !b.buyer_gstin));
+  const bills = (allBills ?? []).filter((b) => (partyType === "b2b" ? !!b.buyer_gstin : partyType === "b2c" ? !b.buyer_gstin : true));
+
+  const totalSales = bills.reduce((s, b) => s + Number(b.total), 0);
+  const totalCredit = bills.reduce((s, b) => s + Number(b.credit_amount), 0);
+  const billCount = bills.length;
 
   return (
     <div className="flex flex-col gap-4">
@@ -44,6 +56,28 @@ export default async function SalesReportPage({
       <PageHeader title={t("Sales report")} subtitle="Every bill in the period, at a glance" icon={<BarChart3 size={18} strokeWidth={1.8} />} />
 
       <DateRangeControls from={fromDate} to={toDate} basePath="/reports/sales" />
+
+      <PartyTypeChips
+        basePath="/reports/sales"
+        params={{ from: fromParam, to: toParam }}
+        current={partyType}
+        labels={{ all: t("All sales"), b2b: t("B2B (GSTIN)"), b2c: t("B2C") }}
+      />
+
+      {b2bSplit.count > 0 && partyType === "all" && (
+        <section className="grid grid-cols-2 gap-3">
+          {([["b2b", "B2B", t("Billed to a GSTIN"), b2bSplit], ["b2c", "B2C", t("Consumers, no GSTIN"), b2cSplit]] as const).map(([key, label, sub, s]) => (
+            <Link key={key} href={`/reports/sales?from=${fromDate}&to=${toDate}&type=${key}`} className="rounded-xl border border-border bg-surface p-3">
+              <p className="text-xs font-semibold text-foreground">{label}</p>
+              <p className="text-[11px] text-muted">{sub}</p>
+              <p className="mt-1 text-base font-bold text-foreground">{formatMoney(s.total)}</p>
+              <p className="text-[11px] text-muted">
+                {s.count} {t("bills")} · GST {formatMoney(s.gst)}
+              </p>
+            </Link>
+          ))}
+        </section>
+      )}
 
       <section className="grid grid-cols-2 gap-3">
         <div className="neu-card p-4">
@@ -63,7 +97,7 @@ export default async function SalesReportPage({
       </section>
 
       <section className="flex flex-col gap-2">
-        {!bills || bills.length === 0 ? (
+        {bills.length === 0 ? (
           <EmptyState text="No bills in this period." />
         ) : (
           <ul className="flex flex-col gap-2">
@@ -74,8 +108,11 @@ export default async function SalesReportPage({
                   <Link href={`/print/bill/${b.id}`} className="neu-card flex items-center justify-between px-3.5 py-3">
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-medium text-foreground">
+                        {b.buyer_gstin && (
+                          <span className="mr-1 rounded bg-brand-soft px-1 py-px text-[10px] font-semibold text-brand-text">B2B</span>
+                        )}
                         {b.invoice_number}
-                        {customer?.name ? ` · ${customer.name}` : ""}
+                        {b.buyer_gstin && b.buyer_name ? ` · ${b.buyer_name}` : customer?.name ? ` · ${customer.name}` : ""}
                       </p>
                       <p className="text-xs text-muted">{formatDateTime(b.created_at)}</p>
                     </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { todayIso, isoDaysAgo, formatIsoDate } from "@/lib/dateHelpers";
 import { useT } from "@/lib/i18n/LangContext";
@@ -15,8 +15,14 @@ export function DateRangeControls({ from, to, basePath }: { from: string; to: st
   const [showCustom, setShowCustom] = useState(false);
   const { t } = useT();
 
+  const searchParams = useSearchParams();
+
+  // Other filters on the page (a B2B/B2C pick, a search) survive a date change.
   function go(newFrom: string, newTo: string) {
-    router.push(`${basePath}?from=${newFrom}&to=${newTo}`);
+    const q = new URLSearchParams(searchParams.toString());
+    q.set("from", newFrom);
+    q.set("to", newTo);
+    router.push(`${basePath}?${q.toString()}`);
   }
 
   const today = todayIso();

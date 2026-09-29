@@ -1,15 +1,20 @@
 "use client";
 
-import { useRouter, usePathname } from "next/navigation";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 
 import { MONTHS } from "@/lib/dateHelpers";
 
 export function PeriodPicker({ year, month }: { year: number; month: number }) {
   const router = useRouter();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
 
+  // Keeps any other choice on the page (like the B2B / B2C view) when the month changes.
   function update(nextYear: number, nextMonth: number) {
-    router.push(`${pathname}?year=${nextYear}&month=${nextMonth}`);
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("year", String(nextYear));
+    params.set("month", String(nextMonth));
+    router.push(`${pathname}?${params.toString()}`);
   }
 
   const years = Array.from({ length: 6 }, (_, i) => new Date().getFullYear() - 4 + i);

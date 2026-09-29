@@ -67,6 +67,8 @@ export async function createOpeningBalanceEntriesAction(entries: KhataImportEntr
         payment_method: "other",
         paid_amount: 0,
         credit_amount: entry.amount,
+        // An old khata entry carries no GSTIN — frozen as a plain (B2C) entry.
+        buyer_name: entry.name.trim(),
       })
       .select("id")
       .single();

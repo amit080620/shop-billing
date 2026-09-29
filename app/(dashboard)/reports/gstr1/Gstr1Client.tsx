@@ -63,6 +63,7 @@ export function Gstr1Client({
   invoiceNumbers,
   creditNoteNumbers,
   debitNoteNumbers,
+  view = "all",
 }: {
   period: string;
   b2b: B2B[];
@@ -75,10 +76,20 @@ export function Gstr1Client({
   invoiceNumbers: string[];
   creditNoteNumbers: string[];
   debitNoteNumbers: string[];
+  /** Whole return, or only its B2B or only its B2C part. */
+  view?: "all" | "b2b" | "b2c";
 }) {
   const { t } = useT();
+  const nilShown = nilRated.filter((r) => view === "all" || (view === "b2b" ? r.label.includes("to registered") : r.label.includes("to unregistered")));
+  const notesShown = view === "b2b" ? creditNotesRegistered : view === "b2c" ? creditNotesUnregistered : [...creditNotesRegistered, ...creditNotesUnregistered];
   return (
     <div className="flex flex-col gap-5">
+      {view !== "all" && (
+        <p className="rounded-lg bg-surface-2 px-3.5 py-2.5 text-xs text-muted">
+          {view === "b2b" ? t("Showing only the B2B part of the return.") : t("Showing only the B2C part of the return.")} {t("The HSN summary and documents issued are for the whole return — switch to Whole return to see them.")}
+        </p>
+      )}
+      {view !== "b2c" && (
       <Section
         title="Table 4 — B2B invoices"
         sub={t("Registered customers (GSTIN on file)")}
@@ -110,7 +121,9 @@ export function Gstr1Client({
           />
         )}
       </Section>
+      )}
 
+      {view !== "b2b" && (
       <Section
         title="Table 5 — B2C Large"
         sub={t("Unregistered, inter-state, invoice value over ₹2.5 lakh")}
@@ -131,7 +144,9 @@ export function Gstr1Client({
           />
         )}
       </Section>
+      )}
 
+      {view !== "b2b" && (
       <Section
         title="Table 7 — B2C Small (consolidated)"
         sub={t("All other B2C sales, grouped by state + rate")}
@@ -155,6 +170,7 @@ export function Gstr1Client({
           {t("Shown net of returns (credit notes) to walk-in customers this month, as GSTR-1 expects. A minus figure means more came back than was sold at that rate this month — check it with your CA before filing.")}
         </p>
       </Section>
+      )}
 
       <Section
         title="Table 8 — Nil rated, exempt and non-GST"
@@ -163,14 +179,14 @@ export function Gstr1Client({
           <ExportCsvButton
             filename={`gstr1-exemp-${period}.csv`}
             headers={["Description", "Nil Rated Supplies", "Exempted (other than nil rated/non GST supply)", "Non-GST Supplies"]}
-            rows={nilRated.map((r) => [r.label, r.value.toFixed(2), "0.00", "0.00"])}
+            rows={nilShown.map((r) => [r.label, r.value.toFixed(2), "0.00", "0.00"])}
           />
         }
       >
-        {nilRated.length === 0 ? (
+        {nilShown.length === 0 ? (
           <Empty text={t("No 0% GST sales this period.")} />
         ) : (
-          <Table headers={["Supply", "Value"]} rows={nilRated.map((r) => [r.label, formatMoney(r.value)])} />
+          <Table headers={["Supply", "Value"]} rows={nilShown.map((r) => [r.label, formatMoney(r.value)])} />
         )}
         <p className="mt-2 text-xs text-muted">
           {t("The app can't tell nil-rated, exempt and non-GST items apart, so every 0% item is shown as nil-rated. Your CA can move any exempt or non-GST items (like petrol or liquor) into their own column.")}
@@ -182,25 +198,29 @@ export function Gstr1Client({
         sub={t("Returns (credit) and value increases (debit) on sales to registered buyers, and on B2C Large invoices")}
         action={
           <div className="flex flex-col items-end gap-1">
+            {view !== "b2c" && (
             <ExportCsvButton
               filename={`gstr1-cdnr-${period}.csv`}
               headers={["GSTIN/UIN of Recipient", "Receiver Name", "Note Number", "Note Date", "Note Type", "Place Of Supply", "Reverse Charge", "Note Supply Type", "Note Value", "Rate", "Taxable Value", "CGST", "SGST", "IGST", "Original Invoice Number", "Original Invoice Date"]}
               rows={noteCsvRows(creditNotesRegistered, true)}
             />
+            )}
+            {view !== "b2b" && (
             <ExportCsvButton
               filename={`gstr1-cdnur-${period}.csv`}
               headers={["UR Type", "Note Number", "Note Date", "Note Type", "Place Of Supply", "Note Supply Type", "Note Value", "Rate", "Taxable Value", "CGST", "SGST", "IGST", "Original Invoice Number", "Original Invoice Date"]}
               rows={noteCsvRows(creditNotesUnregistered, false)}
             />
+            )}
           </div>
         }
       >
-        {creditNotesRegistered.length === 0 && creditNotesUnregistered.length === 0 ? (
+        {notesShown.length === 0 ? (
           <Empty text={t("No credit notes to report here this period.")} />
         ) : (
           <Table
             headers={["Note #", "Type", "To", "Against invoice", "Taxable", "Tax", "Value"]}
-            rows={[...creditNotesRegistered, ...creditNotesUnregistered].map((n) => {
+            rows={notesShown.map((n) => {
               const taxable = n.rates.reduce((s, r) => s + r.taxable, 0);
               const tax = n.rates.reduce((s, r) => s + r.cgst + r.sgst + r.igst, 0);
               return [
@@ -217,6 +237,7 @@ export function Gstr1Client({
         )}
       </Section>
 
+      {view === "all" && (
       <Section
         title="Table 12 — HSN summary"
         sub={t("Required for every GSTR-1 filing")}
@@ -239,7 +260,9 @@ export function Gstr1Client({
           />
         )}
       </Section>
+      )}
 
+      {view === "all" && (
       <Section title="Table 13 — Documents issued" sub={t("Invoice number range for this period")}>
         <p className="text-sm text-foreground">
           {invoiceNumbers.length} invoice{invoiceNumbers.length === 1 ? "" : "s"} issued
@@ -261,6 +284,7 @@ export function Gstr1Client({
           {t("Cancelled invoices aren't tracked separately in this app yet — review for gaps before filing.")}
         </p>
       </Section>
+      )}
     </div>
   );
 }

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { requireSession } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { formatMoney } from "@/lib/format";
@@ -13,10 +14,11 @@ import { BackLink } from "@/app/components/BackLink";
 export default async function Gstr1Page({
   searchParams,
 }: {
-  searchParams: Promise<{ year?: string; month?: string }>;
+  searchParams: Promise<{ year?: string; month?: string; view?: string }>;
 }) {
   const { t } = await getTranslator();
-  const { year: yearParam, month: monthParam } = await searchParams;
+  const { year: yearParam, month: monthParam, view: viewParam } = await searchParams;
+  const view: "all" | "b2b" | "b2c" = viewParam === "b2b" || viewParam === "b2c" ? viewParam : "all";
   const now = istYearMonth();
   const year = Number(yearParam) || now.year;
   const month = Number(monthParam) || now.month; // 1-12
@@ -424,35 +426,10 @@ export default async function Gstr1Page({
     creditNoteTax +
     debitNoteTax;
 
-  return (
-    <div className="flex flex-col gap-4">
-      <BackLink fallback="/reports" />
-      <div className="flex items-center justify-between">
-        <h1 className="text-lg font-bold tracking-tight text-foreground md:text-2xl">{t("GSTR-1")}</h1>
-        <PeriodPicker year={year} month={month} />
-      </div>
-      <p className="text-sm text-muted">
-        {MONTHS[month - 1]} {year} · {t("Outward supplies")}
-      </p>
 
-      <div className="grid grid-cols-2 gap-3">
-        <SummaryCard label={t("Taxable value")} value={formatMoney(totalTaxable)} />
-        <SummaryCard label={t("Total tax")} value={formatMoney(totalTax)} />
-      </div>
-      {creditNotes.length + debitNotes.length > 0 && (
-        <p className="-mt-2 text-xs text-muted">
-          {t("Includes this month's notes")}: {creditNotes.length} {t("credit")} (−{formatMoney(creditNoteTax)} {t("tax")}){debitNotes.length > 0 && <>, {debitNotes.length} {t("debit")} (+{formatMoney(debitNoteTax)} {t("tax")})</>}
-        </p>
-      )}
-
-      {normalizedBills.length === 0 && (restaurantOrders ?? []).length === 0 && normalizedRentals.length === 0 && creditNotes.length === 0 && debitNotes.length === 0 ? (
-        <p className="rounded-lg border border-dashed border-border px-4 py-6 text-center text-sm text-muted">
-          No sales invoices in this period.
-        </p>
-      ) : (
-        <Gstr1Client
-          period={`${MONTHS[month - 1]}-${year}`}
-          b2b={b2b
+  // The two halves of GSTR-1, built once: invoices made out to a GSTIN (B2B, Table 4) and to
+  // everyone else (B2C — Table 5 for large inter-state invoices, Table 7 for the rest).
+  const b2bList = b2b
             .map((b) => ({
               gstin: b.customer!.gstin!,
               name: b.customer!.name,
@@ -493,8 +470,8 @@ export default async function Gstr1Page({
                 })),
             )
             // an invoice with nothing but 0% items belongs only in Table 8
-            .filter((row) => row.taxable > 0)}
-          b2cLarge={b2cLarge
+            .filter((row) => row.taxable > 0);
+  const b2cLargeList = b2cLarge
             .map((b) => ({
               invoiceNumber: b.invoice_number,
               date: b.created_at,
@@ -513,8 +490,80 @@ export default async function Gstr1Page({
                 total: Number(r.total),
               })),
             )
-            .filter((row) => row.taxable > 0)}
-          b2cSmall={[...b2cSmallGroups.values()].map(roundGroup)}
+            .filter((row) => row.taxable > 0);
+  const b2cSmallList = [...b2cSmallGroups.values()].map(roundGroup);
+  const b2bSummary = {
+    count: b2bList.length,
+    taxable: round2(b2bList.reduce((s, r) => s + r.taxable, 0)),
+    tax: round2(b2bList.reduce((s, r) => s + r.cgst + r.sgst + r.igst, 0)),
+  };
+  const b2cSummary = {
+    count: normalizedBills.filter((b) => !b.customer?.gstin).length + normalizedRentals.filter((r) => !r.customer?.gstin).length + (restaurantOrders ?? []).filter((o) => !restaurantB2b.has(o.id)).length,
+    taxable: round2(b2cLargeList.reduce((s, r) => s + r.taxable, 0) + b2cSmallList.reduce((s, r) => s + r.taxable, 0)),
+    tax: round2(b2cLargeList.reduce((s, r) => s + r.igst, 0) + b2cSmallList.reduce((s, r) => s + r.cgst + r.sgst + r.igst, 0)),
+  };
+
+  return (
+    <div className="flex flex-col gap-4">
+      <BackLink fallback="/reports" />
+      <div className="flex items-center justify-between">
+        <h1 className="text-lg font-bold tracking-tight text-foreground md:text-2xl">{t("GSTR-1")}</h1>
+        <PeriodPicker year={year} month={month} />
+      </div>
+      <p className="text-sm text-muted">
+        {MONTHS[month - 1]} {year} · {t("Outward supplies")}
+      </p>
+
+      <div className="grid grid-cols-2 gap-3">
+        <SummaryCard label={t("Taxable value")} value={formatMoney(totalTaxable)} />
+        <SummaryCard label={t("Total tax")} value={formatMoney(totalTax)} />
+      </div>
+
+      {/* B2B = invoices made out to a GSTIN (Table 4); B2C = everyone else (Tables 5 and 7). */}
+      <div className="grid grid-cols-2 gap-3">
+        {([["b2b", "B2B", t("To a GSTIN · Table 4"), b2bSummary], ["b2c", "B2C", t("Without GSTIN · Tables 5 and 7"), b2cSummary]] as const).map(([key, label, sub, s]) => (
+          <Link
+            key={key}
+            href={`/reports/gstr1?year=${year}&month=${month}${view === key ? "" : `&view=${key}`}`}
+            className={`rounded-xl border p-3 ${view === key ? "border-brand bg-brand-soft" : "border-border bg-surface"}`}
+          >
+            <p className="text-xs font-semibold text-foreground">{label}</p>
+            <p className="text-[11px] text-muted">{sub}</p>
+            <p className="mt-1 text-lg font-bold text-foreground">{formatMoney(s.taxable)}</p>
+            <p className="text-[11px] text-muted">
+              {s.count} {s.count === 1 ? t("invoice") : t("invoices")} · {t("tax")} {formatMoney(s.tax)}
+            </p>
+          </Link>
+        ))}
+      </div>
+      <div role="group" aria-label={t("Show")} className="flex gap-2">
+        {(["all", "b2b", "b2c"] as const).map((key) => (
+          <Link
+            key={key}
+            href={`/reports/gstr1?year=${year}&month=${month}${key === "all" ? "" : `&view=${key}`}`}
+            className={`rounded-full border px-3 py-1.5 text-xs font-medium ${view === key ? "border-brand bg-brand-soft text-brand-text" : "border-border text-muted"}`}
+          >
+            {key === "all" ? t("Whole return") : key === "b2b" ? t("Only B2B") : t("Only B2C")}
+          </Link>
+        ))}
+      </div>
+      {creditNotes.length + debitNotes.length > 0 && (
+        <p className="-mt-2 text-xs text-muted">
+          {t("Includes this month's notes")}: {creditNotes.length} {t("credit")} (−{formatMoney(creditNoteTax)} {t("tax")}){debitNotes.length > 0 && <>, {debitNotes.length} {t("debit")} (+{formatMoney(debitNoteTax)} {t("tax")})</>}
+        </p>
+      )}
+
+      {normalizedBills.length === 0 && (restaurantOrders ?? []).length === 0 && normalizedRentals.length === 0 && creditNotes.length === 0 && debitNotes.length === 0 ? (
+        <p className="rounded-lg border border-dashed border-border px-4 py-6 text-center text-sm text-muted">
+          No sales invoices in this period.
+        </p>
+      ) : (
+        <Gstr1Client
+          period={`${MONTHS[month - 1]}-${year}`}
+          b2b={b2bList}
+          b2cLarge={b2cLargeList}
+          view={view}
+          b2cSmall={b2cSmallList}
           nilRated={[...table8.entries()].map(([label, value]) => ({ label, value }))}
           hsnSummary={[...hsnGroups.values()].map((h) => ({ ...roundGroup(h), qty: Math.round(h.qty * 1000) / 1000 }))}
           creditNotesRegistered={[...cdnr, ...dnr]}

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { requireSession } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { formatMoney } from "@/lib/format";
@@ -6,7 +7,7 @@ import { PeriodPicker } from "../PeriodPicker";
 import { ExportCsvButton } from "@/app/components/ExportCsvButton";
 import { getTranslator } from "@/lib/i18n/server";
 import { BackLink } from "@/app/components/BackLink";
-import { buyerSchemaReady } from "@/lib/gstBuyer";
+import { buyerOf } from "@/lib/gstBuyer";
 
 export default async function Gstr3bPage({
   searchParams,
@@ -25,10 +26,11 @@ export default async function Gstr3bPage({
   // Month boundaries at IST midnight, not the UTC server's.
   const { start, end, startDate, endDate } = istMonthRange(year, month);
 
-  const [{ data: bills }, { data: purchases }, { data: restaurantOrders }, { data: rentals }, { data: returnsRaw }] = await Promise.all([
+  const partyCols = "buyer_name, buyer_gstin, buyer_state, buyer_state_code, customers ( name, gstin, state, state_code )";
+  const [{ data: bills }, { data: purchases }, { data: restaurantOrders }, { data: rentals }, { data: returnsRaw }, { data: debitRaw }] = await Promise.all([
     admin
       .from("bills")
-      .select("taxable_amount, cgst_amount, sgst_amount, igst_amount")
+      .select(`id, taxable_amount, cgst_amount, sgst_amount, igst_amount, supply_type, ${partyCols}`)
       .eq("shop_id", session.shopId)
       .eq("status", "active")
       .gte("created_at", start.toISOString())
@@ -43,7 +45,7 @@ export default async function Gstr3bPage({
     // restaurant's outward-supply liability isn't silently understated.
     admin
       .from("restaurant_orders")
-      .select("taxable_amount, cgst_amount, sgst_amount, igst_amount")
+      .select("id, taxable_amount, cgst_amount, sgst_amount, igst_amount, buyer_gstin")
       .eq("shop_id", session.shopId)
       .eq("status", "settled")
       .gte("settled_at", start.toISOString())
@@ -51,7 +53,7 @@ export default async function Gstr3bPage({
     // Same reasoning for rentals — their own table, never `bills`.
     admin
       .from("rentals")
-      .select("subtotal, cgst_amount, sgst_amount, igst_amount")
+      .select("id, subtotal, cgst_amount, sgst_amount, igst_amount, supply_type, customers ( name, gstin, state, state_code )")
       .eq("shop_id", session.shopId)
       .neq("status", "cancelled")
       .gte("created_at", start.toISOString())
@@ -60,38 +62,109 @@ export default async function Gstr3bPage({
     // original sale was in (same rule GSTR-1 Table 9B follows).
     admin
       .from("returns")
-      .select("total, cgst_amount, sgst_amount, igst_amount, bills ( status )")
+      .select(`id, bills ( status, supply_type, ${partyCols} )`)
+      .eq("shop_id", session.shopId)
+      .gte("created_at", start.toISOString())
+      .lt("created_at", end.toISOString()),
+    // Debit notes issued this month raise it again (the other half of the same rule).
+    admin
+      .from("debit_notes")
+      .select(`taxable_amount, gst_percent, cgst_amount, sgst_amount, igst_amount, bills ( status, supply_type, ${partyCols} )`)
       .eq("shop_id", session.shopId)
       .gte("created_at", start.toISOString())
       .lt("created_at", end.toISOString()),
   ]);
 
-  const creditNotes = sumFields(
-    (returnsRaw ?? [])
-      .filter((r) => (Array.isArray(r.bills) ? r.bills[0] : r.bills)?.status === "active")
-      .map((r) => ({ taxable_amount: Number(r.total) - Number(r.cgst_amount) - Number(r.sgst_amount) - Number(r.igst_amount), cgst_amount: r.cgst_amount, sgst_amount: r.sgst_amount, igst_amount: r.igst_amount })),
-  );
-  // Debit notes issued this month raise it again (the other half of the same rule).
-  const { data: debitRaw } = (await buyerSchemaReady(admin))
-    ? await admin
-        .from("debit_notes")
-        .select("taxable_amount, cgst_amount, sgst_amount, igst_amount, bills ( status )")
-        .eq("shop_id", session.shopId)
-        .gte("created_at", start.toISOString())
-        .lt("created_at", end.toISOString())
-    : { data: [] as never[] };
-  const debitNotes = sumFields((debitRaw ?? []).filter((d) => (Array.isArray(d.bills) ? d.bills[0] : d.bills)?.status === "active"));
-  const sales = sumFields([
-    ...(bills ?? []),
-    ...(restaurantOrders ?? []),
-    ...(rentals ?? []).map((r) => ({ taxable_amount: r.subtotal, cgst_amount: r.cgst_amount, sgst_amount: r.sgst_amount, igst_amount: r.igst_amount })),
+  // Line items, to keep 0% (nil-rated / exempt) value out of 3.1(a) and in 3.1(c).
+  const billIds = (bills ?? []).map((b) => b.id);
+  const orderIds = (restaurantOrders ?? []).map((o) => o.id);
+  const rentalIds = (rentals ?? []).map((r) => r.id);
+  const returnIds = (returnsRaw ?? []).map((r) => r.id);
+  const [{ data: billItems }, { data: orderItems }, { data: rentalItems }, { data: returnItems }] = await Promise.all([
+    billIds.length ? admin.from("bill_items").select("bill_id, gst_percent, line_subtotal").in("bill_id", billIds) : Promise.resolve({ data: [] as never[] }),
+    orderIds.length ? admin.from("restaurant_order_items").select("order_id, gst_percent, line_subtotal").in("order_id", orderIds) : Promise.resolve({ data: [] as never[] }),
+    rentalIds.length ? admin.from("rental_items").select("rental_id, gst_percent, line_subtotal").in("rental_id", rentalIds) : Promise.resolve({ data: [] as never[] }),
+    returnIds.length ? admin.from("return_items").select("return_id, gst_percent, line_total, cgst_amount, sgst_amount, igst_amount").in("return_id", returnIds) : Promise.resolve({ data: [] as never[] }),
   ]);
-  const outward = {
-    taxable: round2(sales.taxable - creditNotes.taxable + debitNotes.taxable),
-    cgst: round2(sales.cgst - creditNotes.cgst + debitNotes.cgst),
-    sgst: round2(sales.sgst - creditNotes.sgst + debitNotes.sgst),
-    igst: round2(sales.igst - creditNotes.igst + debitNotes.igst),
+  const nilTotals = (lines: { id: string; gst_percent: number; line_subtotal: number }[]) => {
+    const m = new Map<string, number>();
+    for (const l of lines) if (Number(l.gst_percent) === 0) m.set(l.id, (m.get(l.id) ?? 0) + Number(l.line_subtotal));
+    return m;
   };
+  const nilByBill = nilTotals((billItems ?? []).map((i) => ({ ...i, id: i.bill_id })));
+  const nilByOrder = nilTotals((orderItems ?? []).map((i) => ({ ...i, id: i.order_id })));
+  const nilByRental = nilTotals((rentalItems ?? []).map((i) => ({ ...i, id: i.rental_id })));
+
+  // Every supply of the month (and every note against one) as a signed row, classified the way
+  // GSTR-1 does it: B2B when the invoice was made out to a GSTIN — the buyer frozen on the bill.
+  type Party = { name: string; gstin: string | null; state: string | null; state_code: string | null };
+  type PartyRow = { buyer_name: string | null; buyer_gstin: string | null; buyer_state: string | null; buyer_state_code: string | null; customers: unknown };
+  type NoteBill = PartyRow & { status: string; supply_type: string };
+  const one = <T,>(x: unknown) => (Array.isArray(x) ? (x[0] as T | undefined) ?? null : (x as T | null));
+  const partyOf = (r: PartyRow) => buyerOf(r, one<Party>(r.customers));
+  type Row = { kind: "sale" | "cn" | "dn"; b2b: boolean; inter: boolean; state: string | null; taxable: number; nil: number; cgst: number; sgst: number; igst: number };
+  const rows: Row[] = [];
+  for (const b of bills ?? []) {
+    const p = partyOf(b);
+    const nil = nilByBill.get(b.id) ?? 0;
+    rows.push({ kind: "sale", b2b: !!p?.gstin, inter: b.supply_type === "inter", state: p?.state ?? null, taxable: Number(b.taxable_amount) - nil, nil, cgst: Number(b.cgst_amount), sgst: Number(b.sgst_amount), igst: Number(b.igst_amount) });
+  }
+  // Restaurant service is always within the state.
+  for (const o of restaurantOrders ?? []) {
+    const nil = nilByOrder.get(o.id) ?? 0;
+    rows.push({ kind: "sale", b2b: !!o.buyer_gstin, inter: false, state: null, taxable: Number(o.taxable_amount) - nil, nil, cgst: Number(o.cgst_amount), sgst: Number(o.sgst_amount), igst: Number(o.igst_amount) });
+  }
+  for (const r of rentals ?? []) {
+    const c = one<Party>(r.customers);
+    const nil = nilByRental.get(r.id) ?? 0;
+    rows.push({ kind: "sale", b2b: !!c?.gstin, inter: r.supply_type === "inter", state: c?.state ?? null, taxable: Number(r.subtotal) - nil, nil, cgst: Number(r.cgst_amount), sgst: Number(r.sgst_amount), igst: Number(r.igst_amount) });
+  }
+  for (const ret of returnsRaw ?? []) {
+    const bill = one<NoteBill>(ret.bills);
+    // A bill voided after being partly returned is already out of the report entirely; its
+    // credit note must not reduce the tax a second time.
+    if (!bill || bill.status !== "active") continue;
+    const p = partyOf(bill);
+    for (const i of (returnItems ?? []).filter((x) => x.return_id === ret.id)) {
+      const cgst = Number(i.cgst_amount), sgst = Number(i.sgst_amount), igst = Number(i.igst_amount);
+      const value = Number(i.line_total) - cgst - sgst - igst;
+      const isNil = Number(i.gst_percent) === 0;
+      rows.push({ kind: "cn", b2b: !!p?.gstin, inter: bill.supply_type === "inter", state: p?.state ?? null, taxable: isNil ? 0 : -value, nil: isNil ? -value : 0, cgst: -cgst, sgst: -sgst, igst: -igst });
+    }
+  }
+  for (const d of debitRaw ?? []) {
+    const bill = one<NoteBill>(d.bills);
+    if (!bill || bill.status !== "active") continue;
+    const p = partyOf(bill);
+    const value = Number(d.taxable_amount);
+    const isNil = Number(d.gst_percent) === 0;
+    rows.push({ kind: "dn", b2b: !!p?.gstin, inter: bill.supply_type === "inter", state: p?.state ?? null, taxable: isNil ? 0 : value, nil: isNil ? value : 0, cgst: Number(d.cgst_amount), sgst: Number(d.sgst_amount), igst: Number(d.igst_amount) });
+  }
+
+  const totalOf = (list: Row[]) => ({
+    taxable: round2(list.reduce((s, r) => s + r.taxable, 0)),
+    nil: round2(list.reduce((s, r) => s + r.nil, 0)),
+    cgst: round2(list.reduce((s, r) => s + r.cgst, 0)),
+    sgst: round2(list.reduce((s, r) => s + r.sgst, 0)),
+    igst: round2(list.reduce((s, r) => s + r.igst, 0)),
+  });
+  // 3.1(a) is taxable supplies only; the 0% part goes to 3.1(c).
+  const outward = totalOf(rows);
+  const creditNotes = totalOf(rows.filter((r) => r.kind === "cn"));
+  const debitNotes = totalOf(rows.filter((r) => r.kind === "dn"));
+  const b2bPart = totalOf(rows.filter((r) => r.b2b));
+  const b2cPart = totalOf(rows.filter((r) => !r.b2b));
+  // 3.2: the part of 3.1(a) sold inter-state to unregistered buyers, by place of supply.
+  const byState = new Map<string, { state: string; taxable: number; igst: number }>();
+  for (const r of rows) {
+    if (!r.inter || r.b2b) continue;
+    const state = r.state ?? t("State not recorded");
+    const g = byState.get(state) ?? { state, taxable: 0, igst: 0 };
+    g.taxable = round2(g.taxable + r.taxable);
+    g.igst = round2(g.igst + r.igst);
+    byState.set(state, g);
+  }
+  const table32 = [...byState.values()].filter((g) => Math.abs(g.taxable) >= 0.01).sort((x, y) => x.state.localeCompare(y.state));
   const rcmPurchases = (purchases ?? []).filter((p) => p.reverse_charge);
   const rcm = sumFields(rcmPurchases);
   const itcPurchases = (purchases ?? []).filter((p) => p.itc_eligible);
@@ -127,23 +200,91 @@ export default async function Gstr3bPage({
             headers={["Section", "Taxable Value", "CGST", "SGST", "IGST"]}
             rows={[
               ["3.1(a) Outward taxable supplies", outward.taxable.toFixed(2), outward.cgst.toFixed(2), outward.sgst.toFixed(2), outward.igst.toFixed(2)],
+              ["  of which B2B (to GSTINs) - info", b2bPart.taxable.toFixed(2), b2bPart.cgst.toFixed(2), b2bPart.sgst.toFixed(2), b2bPart.igst.toFixed(2)],
+              ["  of which B2C (unregistered) - info", b2cPart.taxable.toFixed(2), b2cPart.cgst.toFixed(2), b2cPart.sgst.toFixed(2), b2cPart.igst.toFixed(2)],
+              ["3.1(c) Nil rated / exempted", outward.nil.toFixed(2), "", "", ""],
               ["3.1(d) Inward supplies (RCM)", rcm.taxable.toFixed(2), rcm.cgst.toFixed(2), rcm.sgst.toFixed(2), rcm.igst.toFixed(2)],
+              ...table32.map((g) => [`3.2 Unregistered persons - ${g.state}`, g.taxable.toFixed(2), "", "", g.igst.toFixed(2)]),
               ["4 ITC available", itc.taxable.toFixed(2), itc.cgst.toFixed(2), itc.sgst.toFixed(2), itc.igst.toFixed(2)],
               ["Net payable (same-head, simplified)", "", netCgst.toFixed(2), netSgst.toFixed(2), netIgst.toFixed(2)],
             ]}
           />
         </div>
         <TotalsGrid taxable={outward.taxable} cgst={outward.cgst} sgst={outward.sgst} igst={outward.igst} />
-        {creditNotes.cgst + creditNotes.sgst + creditNotes.igst + creditNotes.taxable > 0 && (
+        {creditNotes.taxable + creditNotes.nil + creditNotes.cgst + creditNotes.sgst + creditNotes.igst < 0 && (
           <p className="mt-2 text-xs text-muted">
-            {t("Net of credit notes (returns) issued this month")}: −{formatMoney(creditNotes.taxable)} {t("taxable")}, −{formatMoney(round2(creditNotes.cgst + creditNotes.sgst + creditNotes.igst))} {t("tax")}
+            {t("Net of credit notes (returns) issued this month")}: −{formatMoney(-round2(creditNotes.taxable + creditNotes.nil))} {t("value")}, −{formatMoney(-round2(creditNotes.cgst + creditNotes.sgst + creditNotes.igst))} {t("tax")}
           </p>
         )}
-        {debitNotes.taxable > 0 && (
+        {debitNotes.taxable + debitNotes.nil > 0 && (
           <p className="mt-1 text-xs text-muted">
-            {t("Includes debit notes issued this month")}: +{formatMoney(debitNotes.taxable)} {t("taxable")}, +{formatMoney(round2(debitNotes.cgst + debitNotes.sgst + debitNotes.igst))} {t("tax")}
+            {t("Includes debit notes issued this month")}: +{formatMoney(round2(debitNotes.taxable + debitNotes.nil))} {t("value")}, +{formatMoney(round2(debitNotes.cgst + debitNotes.sgst + debitNotes.igst))} {t("tax")}
           </p>
         )}
+
+        <div className="mt-4 border-t border-border pt-3">
+          <p className="mb-2 text-xs font-semibold text-foreground">{t("Of which — B2B and B2C")}</p>
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs">
+              <thead>
+                <tr className="text-left text-muted">
+                  <th className="py-1 pr-2 font-medium" />
+                  <th className="py-1 pr-2 text-right font-medium">{t("Taxable")}</th>
+                  <th className="py-1 text-right font-medium">{t("Tax")}</th>
+                </tr>
+              </thead>
+              <tbody>
+                <SplitRow label={t("B2B — to GSTINs")} href={`/reports/gstr1?year=${year}&month=${month}&view=b2b`} part={b2bPart} />
+                <SplitRow label={t("B2C — consumers")} href={`/reports/gstr1?year=${year}&month=${month}&view=b2c`} part={b2cPart} />
+              </tbody>
+            </table>
+          </div>
+          <p className="mt-2 text-xs text-muted">
+            {t("GSTR-3B is filed as one total — this split is only for checking. It should match the B2B and B2C views of your GSTR-1 (tap a row).")}
+          </p>
+        </div>
+      </section>
+
+      <section className="neu-card p-4">
+        <p className="mb-3 text-sm font-semibold text-foreground">3.1(c) {t("Nil rated and exempted supplies")}</p>
+        <div className="grid grid-cols-2 gap-2 text-center text-xs">
+          <Cell label={t("Value")} value={formatMoney(outward.nil)} />
+          <Cell label={t("Tax")} value={formatMoney(0)} />
+        </div>
+        <p className="mt-2 text-xs text-muted">
+          {t("Items sold at 0% GST this month. Kept out of 3.1(a), same as Table 8 of GSTR-1.")}
+        </p>
+      </section>
+
+      <section className="neu-card p-4">
+        <p className="mb-3 text-sm font-semibold text-foreground">3.2 {t("Inter-state supplies to unregistered persons")}</p>
+        {table32.length === 0 ? (
+          <p className="text-xs text-muted">{t("None this month — every sale to a buyer in another state was to a GSTIN, or there were none.")}</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs">
+              <thead>
+                <tr className="text-left text-muted">
+                  <th className="py-1 pr-2 font-medium">{t("Place of supply")}</th>
+                  <th className="py-1 pr-2 text-right font-medium">{t("Taxable")}</th>
+                  <th className="py-1 text-right font-medium">IGST</th>
+                </tr>
+              </thead>
+              <tbody>
+                {table32.map((g) => (
+                  <tr key={g.state} className="border-t border-border">
+                    <td className="py-1.5 pr-2 text-foreground">{g.state}</td>
+                    <td className="py-1.5 pr-2 text-right text-foreground">{formatMoney(g.taxable)}</td>
+                    <td className="py-1.5 text-right text-foreground">{formatMoney(g.igst)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+        <p className="mt-2 text-xs text-muted">
+          {t("Already counted inside 3.1(a) — the portal asks for this state-wise split separately.")}
+        </p>
       </section>
 
       <section className="neu-card p-4">
@@ -212,6 +353,18 @@ function Cell({ label, value }: { label: string; value: string }) {
       <p className="text-muted">{label}</p>
       <p className="mt-0.5 font-semibold text-foreground">{value}</p>
     </div>
+  );
+}
+
+function SplitRow({ label, href, part }: { label: string; href: string; part: { taxable: number; cgst: number; sgst: number; igst: number } }) {
+  return (
+    <tr className="border-t border-border">
+      <td className="py-1.5 pr-2">
+        <Link href={href} className="font-medium text-brand-text underline-offset-2 hover:underline">{label}</Link>
+      </td>
+      <td className="py-1.5 pr-2 text-right text-foreground">{formatMoney(part.taxable)}</td>
+      <td className="py-1.5 text-right text-foreground">{formatMoney(round2(part.cgst + part.sgst + part.igst))}</td>
+    </tr>
   );
 }
 

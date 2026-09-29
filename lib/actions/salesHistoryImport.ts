@@ -67,6 +67,9 @@ export async function createHistoricalSalesAction(entries: SalesHistoryEntry[]):
         payment_method: "other",
         paid_amount: paidAmount,
         credit_amount: entry.amount - paidAmount,
+        // A register entry carries no GSTIN — frozen as a plain (B2C) sale, whatever the
+        // matched customer's profile says today.
+        buyer_name: entry.name.trim(),
       })
       .select("id")
       .single();
