@@ -240,7 +240,7 @@ export default async function Gstr3bPage({
             </table>
           </div>
           <p className="mt-2 text-xs text-muted">
-            {t("GSTR-3B is filed as one total — this split is only for checking. It should match the B2B and B2C views of your GSTR-1 (tap a row).")}
+            {t("GSTR-3B is filed as one total — this split is only for checking. Each row equals that part of your GSTR-1 (tap it): the invoices, plus this month's debit notes, minus credit notes.")}
           </p>
         </div>
       </section>
@@ -349,9 +349,10 @@ function TotalsGrid({ taxable, cgst, sgst, igst }: { taxable: number; cgst: numb
 
 function Cell({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-lg bg-background p-2">
+    <div className="rounded-lg bg-background px-1 py-2">
       <p className="text-muted">{label}</p>
-      <p className="mt-0.5 font-semibold text-foreground">{value}</p>
+      {/* Lakh amounts ("₹1,26,813.86") must fit a quarter of a phone screen. */}
+      <p className="mt-0.5 text-[11px] font-semibold tabular-nums text-foreground sm:text-xs">{value}</p>
     </div>
   );
 }

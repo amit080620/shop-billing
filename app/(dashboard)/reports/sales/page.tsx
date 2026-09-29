@@ -82,7 +82,7 @@ export default async function SalesReportPage({
       <section className="grid grid-cols-2 gap-3">
         <div className="neu-card p-4">
           <p className="text-xs text-muted">{t("Total sales")}</p>
-          <p className="mt-1 text-2xl font-bold text-foreground neu-text">{formatMoney(totalSales)}</p>
+          <p className="mt-1 text-xl font-bold text-foreground neu-text md:text-2xl">{formatMoney(totalSales)}</p>
         </div>
         <div className="neu-card p-4">
           <p className="text-xs text-muted">Bills</p>
