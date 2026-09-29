@@ -53,7 +53,7 @@ export function SalaryClient({ month, monthLabel, shopName, isOwner, rows }: { m
       r.worker.name,
       "",
       r.worker.payType === "monthly" ? `${t("Monthly salary")}: ${formatMoney(r.worker.monthlySalary)}` : `${t("Daily wage")}: ${formatMoney(r.worker.dailyWage)} × ${p.present + p.half * 0.5}`,
-      p.absent ? `${t("Absent")}: ${p.absent} ${t("days")}` : "",
+      p.absent ? `${t("Absent")}: ${p.absent} ${p.absent === 1 ? t("day") : t("days")}` : "",
       p.half ? `${t("Half days")}: ${p.half}` : "",
       p.beforeJoining ? `${t("Joined on day")} ${p.beforeJoining + 1}` : "",
       `*${t("Earned")}: ${formatMoney(p.earned)}*`,
@@ -78,7 +78,7 @@ export function SalaryClient({ month, monthLabel, shopName, isOwner, rows }: { m
               <div className="min-w-0">
                 <p className="truncate text-sm font-semibold text-foreground">{r.worker.name}</p>
                 <p className="text-xs text-muted">
-                  {r.worker.payType === "monthly" ? `${formatMoney(r.worker.monthlySalary)}/${t("mo")}` : `${formatMoney(r.worker.dailyWage)}/${t("day")} · ${p.present + p.half * 0.5} ${t("days")}`}
+                  {r.worker.payType === "monthly" ? `${formatMoney(r.worker.monthlySalary)}/${t("mo")}` : `${formatMoney(r.worker.dailyWage)}/${t("day")} · ${p.present + p.half * 0.5} ${p.present + p.half * 0.5 === 1 ? t("day") : t("days")}`}
                   {p.absent ? ` · ${t("Absent")} ${p.absent}` : ""}
                   {p.half ? ` · ${t("Half")} ${p.half}` : ""}
                   {p.leave ? ` · ${t("Leave")} ${p.leave}` : ""}
