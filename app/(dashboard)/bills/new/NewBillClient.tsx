@@ -2007,7 +2007,8 @@ function ExchangeCalculator({
   const gw = typeof grossWeight === "number" ? grossWeight : 0;
   const purity = typeof purityPercent === "number" ? purityPercent : 0;
   const rate = typeof ratePerGram === "number" ? ratePerGram : 0;
-  const netWeight = round2(gw * (purity / 100));
+  // Fine weight to the milligram, as the scale reads (the server works it out the same way).
+  const netWeight = Math.round(gw * (purity / 100) * 1000) / 1000;
   const value = round2(netWeight * rate);
 
   if (exchangeInfo) {

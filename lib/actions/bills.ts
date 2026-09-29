@@ -15,6 +15,7 @@ import { todayIso } from "../dateHelpers";
 import { priceLines } from "../billPricing";
 import { loadSchemes } from "../goldSchemeData";
 import { asCashMethod, recordCashMovement } from "../cashMovements";
+import { formatMoney } from "../format";
 
 export type ActionState = { error?: string } | null;
 
@@ -49,7 +50,13 @@ export async function createBillCore(
   // Old-gold/silver exchange is money-equivalent handed over at the
   // counter — it counts toward what's "paid", same as cash, without
   // touching the taxable value of the new item being sold. A scheme's value likewise.
-  const effectivePaidAmount = round2(paidAmount + (exchangeValue ?? 0) + (scheme?.value ?? 0));
+  // Its worth is worked out here from weight, purity and rate (fine weight to the milligram),
+  // not taken from the screen as sent.
+  const exchangeNetWeight =
+    exchangeGrossWeight && exchangeGrossWeight > 0 ? Math.round(exchangeGrossWeight * ((exchangePurityPercent ?? 100) / 100) * 1000) / 1000 : 0;
+  const exchangeWorth =
+    exchangeMetal && exchangeNetWeight > 0 && exchangeRatePerGram && exchangeRatePerGram > 0 ? round2(exchangeNetWeight * exchangeRatePerGram) : (exchangeValue ?? 0);
+  const effectivePaidAmount = round2(paidAmount + exchangeWorth + (scheme?.value ?? 0));
 
   // The "Give discounts" switch on a staff account means something: without it, the only money
   // off a bill is the customer's own loyalty points, at exactly what they are worth. (It used to
@@ -156,7 +163,7 @@ export async function createBillCore(
   // A scheme is used whole: the jewellery must be worth at least its value (checked before the
   // invoice number is taken).
   if (scheme && totals.total + 0.005 < scheme.value) {
-    return { error: `The scheme is worth ${scheme.value} — pick jewellery worth at least that much.` };
+    return { error: `The scheme is worth ${formatMoney(scheme.value)} — pick jewellery worth at least that much.` };
   }
 
   const financialYear = financialYearFor(new Date());
@@ -281,7 +288,7 @@ export async function createBillCore(
   // Jewellery — old gold/silver exchange record, for the shop's own
   // melting/refining bookkeeping. Best-effort: the bill itself is
   // already valid and correctly totalled either way.
-  if (exchangeMetal && exchangeGrossWeight && exchangeGrossWeight > 0 && exchangeValue) {
+  if (exchangeMetal && exchangeGrossWeight && exchangeGrossWeight > 0 && exchangeWorth > 0) {
     await admin.from("jewellery_exchanges").insert({
       shop_id: session.shopId,
       bill_id: bill.id,
@@ -289,9 +296,9 @@ export async function createBillCore(
       description: exchangeDescription ?? null,
       gross_weight: exchangeGrossWeight,
       purity_percent: exchangePurityPercent ?? 100,
-      net_weight: round2(exchangeGrossWeight * ((exchangePurityPercent ?? 100) / 100)),
+      net_weight: exchangeNetWeight,
       rate_per_gram: exchangeRatePerGram ?? 0,
-      exchange_value: exchangeValue,
+      exchange_value: exchangeWorth,
       customer_id: customerId,
       staff_id: session.userId,
     });
