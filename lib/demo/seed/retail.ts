@@ -109,7 +109,13 @@ export async function seedRetail(ctx: SeedCtx): Promise<void> {
     { daysAgo: 3, vendorIndex: 2, productIndexes: [2 % n], qty: 10, paidShare: 1, costFactor: 1.3 },
   ]);
 
-  const billIds = await seedBills(ctx, products, customers, { count: cfg.bills, days: 30, customerShare: 0.55, udhaarShare: 0.2 });
+  // Two recent sales to the out-of-state customers — the business one (an inter-state B2B invoice)
+  // and the consumer right after it (GSTR-3B Table 3.2) — so both show up in this month's returns.
+  const pinnedCustomers = new Map([
+    [cfg.bills - 6, customers[Math.max(0, cfg.gstinCustomers - 1)]],
+    [cfg.bills - 3, customers[cfg.gstinCustomers]],
+  ]);
+  const billIds = await seedBills(ctx, products, customers, { count: cfg.bills, days: 30, customerShare: 0.55, udhaarShare: 0.2, pinnedCustomers });
   await seedUdhaarPayments(ctx, customers);
   await seedVendorPayment(ctx, vendors[2], 4000);
   await seedPettyCash(ctx, STANDARD_PETTY_CASH);

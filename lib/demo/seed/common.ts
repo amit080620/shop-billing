@@ -100,19 +100,25 @@ export async function insertCatalog(ctx: SeedCtx, catalog: Catalog, opts: { trac
 export async function insertCustomers(ctx: SeedCtx, count: number, opts: { startIndex?: number; withGstin?: number; otherState?: number } = {}): Promise<SeededCustomer[]> {
   const start = opts.startIndex ?? 1;
   const homeState = ctx.session.shopStateCode ?? "27";
-  // A few customers from another state, so the bill shows IGST instead of CGST + SGST.
+  // A few customers from another state, so the bill shows IGST instead of CGST + SGST. They straddle
+  // the GSTIN ones — one registered business, one consumer — so GSTR-1 has an inter-state B2B
+  // invoice and GSTR-3B's Table 3.2 (inter-state sales to unregistered buyers) isn't empty.
   const otherStateCode = homeState === "24" ? "27" : "24";
+  const withGstin = opts.withGstin ?? 0;
+  const otherFrom = Math.max(0, withGstin - Math.ceil((opts.otherState ?? 0) / 2));
   const rows = Array.from({ length: count }, (_, i) => {
     const name = personName(ctx.random);
     const n = start + i;
-    const b2b = i < (opts.withGstin ?? 0);
+    const b2b = i < withGstin;
+    const stateCode = i >= otherFrom && i < otherFrom + (opts.otherState ?? 0) ? otherStateCode : homeState;
     return {
       shop_id: ctx.shopId,
       name: b2b ? `${name.split(" ")[1]} Enterprises` : name,
       phone: fakePhone(n),
-      state_code: i < (opts.otherState ?? 0) ? otherStateCode : homeState,
-      state: stateNameForCode(i < (opts.otherState ?? 0) ? otherStateCode : homeState),
-      gstin: b2b ? `${homeState}AAAPD${String(1000 + n).slice(-4)}C1Z${i % 9}` : null,
+      state_code: stateCode,
+      state: stateNameForCode(stateCode),
+      // A GSTIN starts with the code of the state it is registered in.
+      gstin: b2b ? `${stateCode}AAAPD${String(1000 + n).slice(-4)}C1Z${i % 9}` : null,
       address: `${ctx.random.int(1, 99)}, ${ctx.random.pick(["MG Road", "Station Road", "Market Yard", "Gandhi Nagar", "Nehru Chowk", "Laxmi Colony"])}`,
       date_of_birth: dateOffset(-365 * ctx.random.int(22, 60) - ctx.random.int(0, 300)),
       gender: ctx.random.chance(0.5) ? ("male" as const) : ("female" as const),
@@ -186,6 +192,8 @@ export type BillPlan = {
   udhaarShare?: number;
   /** Pick from this subset of products instead of all of them. */
   productPool?: SeededProduct[];
+  /** Bill number → the customer it must go to (a kind of sale the reports need to show). */
+  pinnedCustomers?: Map<number, SeededCustomer>;
   /** Adds fields to a bill (doctor name, service provider...). */
   decorate?: (bill: BillInput, index: number) => BillInput;
   peakHours?: number[];
@@ -208,7 +216,8 @@ export async function seedBills(ctx: SeedCtx, products: SeededProduct[], custome
     const chosen = ctx.random.shuffle(pool).slice(0, lines);
     const items = chosen.map((p) => ({ productId: p.id, description: p.name, quantity: ctx.random.int(minQty, maxQty), unitPrice: p.price, gstPercent: p.gst }));
     const withCustomer = customers.length > 0 && ctx.random.chance(plan.customerShare ?? 0.6);
-    const customer = withCustomer ? ctx.random.pick(customers) : null;
+    const picked = withCustomer ? ctx.random.pick(customers) : null;
+    const customer = plan.pinnedCustomers?.get(i) ?? picked;
     const discountPercent = ctx.random.chance(0.12) ? 5 : 0;
     let bill: BillInput = {
       customerId: customer?.id ?? null,

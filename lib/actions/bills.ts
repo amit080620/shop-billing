@@ -83,7 +83,11 @@ export async function createBillCore(
     b2b && buyerName && buyerGstin
       ? { name: buyerName, gstin: buyerGstin, address: buyerAddress ?? (customer?.gstin === buyerGstin ? customer.address : null), state: stateFromGstin(buyerGstin).name, stateCode: stateFromGstin(buyerGstin).code }
       : customer
-        ? { name: customer.name, gstin: b2b === false ? null : customer.gstin, address: customer.address, state: customer.state, stateCode: customer.state_code }
+        ? customer.gstin && b2b !== false
+          ? // A registered buyer's state is the one its GSTIN is registered in, whatever the
+            // customer's address field says — that decides IGST vs CGST + SGST.
+            { name: customer.name, gstin: customer.gstin, address: customer.address, state: stateFromGstin(customer.gstin).name ?? customer.state, stateCode: stateFromGstin(customer.gstin).code }
+          : { name: customer.name, gstin: null, address: customer.address, state: customer.state, stateCode: customer.state_code }
         : null;
 
   // Place of supply: the B2B buyer's registered state, else the customer's state (walk-in: local).
