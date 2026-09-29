@@ -108,7 +108,12 @@ export function NewBillClient({
   loyaltyRedemptionValue,
   barcodeScanMode = "both",
   b2bAvailable = false,
+  initialCustomerId = null,
+  initialProvider = "",
 }: {
+  /** Opened from an appointment: the customer and stylist to start with. */
+  initialCustomerId?: string | null;
+  initialProvider?: string;
   shopStateCode: string;
   products: Product[];
   customers: Customer[];
@@ -209,8 +214,9 @@ export function NewBillClient({
       cartEndRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
     }
   }, [cart.length]);
-  const [customerMode, setCustomerMode] = useState<"walkin" | "existing">("walkin");
-  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+  const startCustomer = initialCustomerId ? customers.find((c) => c.id === initialCustomerId) ?? null : null;
+  const [customerMode, setCustomerMode] = useState<"walkin" | "existing">(startCustomer ? "existing" : "walkin");
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(startCustomer);
   const [networkReliability, setNetworkReliability] = useState<{ shopsVisited: number; tier: "new" | "building" | "trusted" } | null>(null);
 
   useEffect(() => {
@@ -235,7 +241,7 @@ export function NewBillClient({
   const [paymentMethod, setPaymentMethod] = useState<"cash" | "card" | "upi" | "online" | "other">("cash");
   const [doctorName, setDoctorName] = useState("");
   const [patientName, setPatientName] = useState("");
-  const [serviceProviderName, setServiceProviderName] = useState("");
+  const [serviceProviderName, setServiceProviderName] = useState(initialProvider);
   const [exchangeInfo, setExchangeInfo] = useState<{
     metal: "gold" | "silver";
     description: string;

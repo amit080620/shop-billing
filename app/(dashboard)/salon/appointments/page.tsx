@@ -23,7 +23,7 @@ export default async function AppointmentsPage({
 
   const { data: appointments } = await admin
     .from("appointments")
-    .select("id, customer_name, customer_phone, service_name, stylist_name, appointment_time, status, notes")
+    .select("id, customer_id, customer_name, customer_phone, service_name, stylist_name, appointment_time, status, notes")
     .eq("shop_id", session.shopId)
     .eq("appointment_date", selectedDate)
     .order("appointment_time", { ascending: true });
@@ -70,6 +70,7 @@ export default async function AppointmentsPage({
                 customerPhone: a.customer_phone,
                 serviceName: a.service_name,
                 stylistName: a.stylist_name,
+                customerId: a.customer_id,
                 time: a.appointment_time,
                 status: a.status,
                 notes: a.notes,

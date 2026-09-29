@@ -6,6 +6,7 @@ import { updateAppointmentStatusAction, deleteAppointmentAction } from "@/lib/ac
 import { useTranslation } from "@/lib/i18n/useTranslation";
 import type { Lang } from "@/lib/i18n/dictionary";
 import { buildWhatsAppLink as buildWaLink } from "@/lib/whatsapp";
+import Link from "next/link";
 
 type Appointment = {
   id: string;
@@ -13,6 +14,7 @@ type Appointment = {
   customerPhone: string;
   serviceName: string;
   stylistName: string | null;
+  customerId: string | null;
   time: string;
   status: "booked" | "confirmed" | "arrived" | "completed" | "cancelled" | "no_show";
   notes: string | null;
@@ -75,6 +77,17 @@ export function AppointmentRow({ appointment, lang }: { appointment: Appointment
       </div>
 
       {error && <p className="mt-1 text-xs text-danger">{error}</p>}
+
+      {/* Straight to the bill with this customer and stylist filled in — the stylist's revenue
+          report reads the name from the bill, so it no longer has to be typed again. */}
+      {(appointment.status === "arrived" || appointment.status === "completed") && (
+        <Link
+          href={`/bills/new?${new URLSearchParams({ ...(appointment.customerId ? { customer: appointment.customerId } : {}), ...(appointment.stylistName ? { provider: appointment.stylistName } : {}) }).toString()}`}
+          className="mt-2 inline-block rounded-lg bg-brand px-3 py-1.5 text-xs font-medium text-white"
+        >
+          Bill {appointment.serviceName} →
+        </Link>
+      )}
 
       {appointment.status !== "completed" && appointment.status !== "cancelled" && appointment.status !== "no_show" && (
         <div className="mt-2 flex flex-wrap gap-1.5">

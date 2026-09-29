@@ -7,7 +7,9 @@ import { getBarcodeScanModeAction } from "@/lib/actions/settings";
 import { computeAffinityMap } from "@/lib/basketAffinity";
 import { buyerSchemaReady } from "@/lib/gstBuyer";
 
-export default async function NewBillPage() {
+export default async function NewBillPage({ searchParams }: { searchParams: Promise<{ customer?: string; provider?: string }> }) {
+  // Opened from an appointment ("Bill →"): that customer and stylist come filled in.
+  const { customer: customerParam, provider: providerParam } = await searchParams;
   const session = await requireSession();
   const lang = await getLang();
   const barcodeScanMode = await getBarcodeScanModeAction();
@@ -142,6 +144,8 @@ export default async function NewBillPage() {
       goldRate={metalRates?.find((r) => r.metal_type === "gold") ? Number(metalRates.find((r) => r.metal_type === "gold")!.rate_per_gram) : null}
       silverRate={metalRates?.find((r) => r.metal_type === "silver") ? Number(metalRates.find((r) => r.metal_type === "silver")!.rate_per_gram) : null}
       businessType={session.businessType}
+      initialCustomerId={customerParam && (customers ?? []).some((c) => c.id === customerParam) ? customerParam : null}
+      initialProvider={providerParam?.slice(0, 80) ?? ""}
     />
     </div>
   );
