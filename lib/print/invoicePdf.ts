@@ -15,7 +15,9 @@ export async function makeInvoicePdf({ isThermal, upiLink }: { isThermal: boolea
 
   const scale = 2; // sharper image than 1:1 capture
   const canvas = await html2canvas(element, { backgroundColor: "#ffffff", scale, useCORS: true });
-  const imgData = canvas.toDataURL("image/png");
+  // JPEG, not PNG: the same sharp text at a tenth of the size — a PNG invoice came to ~5 MB,
+  // too heavy to send a customer on WhatsApp.
+  const imgData = canvas.toDataURL("image/jpeg", 0.88);
 
   const elRect = element.getBoundingClientRect();
   const contentWidthMm = elRect.width * PX_TO_MM;
@@ -33,7 +35,7 @@ export async function makeInvoicePdf({ isThermal, upiLink }: { isThermal: boolea
   const pageHeightMm = renderHeight + margin * 2;
 
   const pdf = new jsPDF({ unit: "mm", format: [pageWidthMm, pageHeightMm], orientation: "portrait" });
-  pdf.addImage(imgData, "PNG", margin, margin, renderWidth, renderHeight);
+  pdf.addImage(imgData, "JPEG", margin, margin, renderWidth, renderHeight);
 
   // Make the UPI QR area a real tappable link in the PDF, positioned by
   // measuring the actual QR block element rather than guessing coordinates
