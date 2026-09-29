@@ -36,6 +36,7 @@ export function WhatsAppSendButton({
   paidAmount,
   creditAmount,
   upiLink,
+  invoiceUrl,
   lang,
   details,
 }: {
@@ -48,6 +49,8 @@ export function WhatsAppSendButton({
   paidAmount: number;
   creditAmount: number;
   upiLink?: string | null;
+  /** The customer's own copy of this invoice, to open or save as a PDF — no login needed. */
+  invoiceUrl?: string | null;
   lang: Lang;
   details?: WhatsAppInvoiceDetails;
 }) {
@@ -127,6 +130,8 @@ export function WhatsAppSendButton({
     }
   }
   if (fullInvoice && details.isComposition) lines.push("", `_${t("Composition taxable person, not eligible to collect tax on supplies.")}_`);
+  // A text message can't carry a file, but a link can: it opens this invoice with a PDF button.
+  if (invoiceUrl) lines.push("", `📄 ${t("Invoice PDF")}: ${invoiceUrl}`);
   lines.push("", `_${t("wa.billThanks")}_`);
 
   const href = buildWhatsAppLink(customerPhone, lines.join("\n"));
