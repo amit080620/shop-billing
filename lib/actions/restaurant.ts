@@ -8,6 +8,8 @@ import { determineSupplyType, financialYearFor, GSTIN_REGEX, round2, splitTax, s
 import { buyerSchemaReady, stateFromGstin } from "../gstBuyer";
 import { invalidateCache } from "../cache";
 import { findOrCreateCustomerByPhone, awardLoyaltyPoints } from "./customers";
+import { advanceReceived, hasCashMovement, recordCashMovement } from "../cashMovements";
+import { todayIso } from "../dateHelpers";
 
 export type ActionState = { error?: string } | null;
 
@@ -300,17 +302,28 @@ export async function startOrderAction(
   // If this table has an active reservation for today, link it —
   // whatever token was collected then automatically comes off this
   // bill at settle time, no separate step for staff to remember.
-  const todayIso = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, "0")}-${String(new Date().getDate()).padStart(2, "0")}`;
-  const { data: matchingReservation } = await admin
+  // Only a booking for about now (party up to an hour early or two hours late) — a lunch walk-in
+  // on a table booked for 9 pm used to take that booking's token off their own bill.
+  const { data: todaysBookings } = await admin
     .from("restaurant_reservations")
-    .select("id")
+    .select("id, reservation_time")
     .eq("shop_id", session.shopId)
     .eq("table_id", tableId)
-    .eq("reservation_date", todayIso)
-    .in("status", ["booked", "confirmed"])
-    .order("reservation_time", { ascending: true })
-    .limit(1)
-    .maybeSingle();
+    .eq("reservation_date", todayIso())
+    .in("status", ["booked", "confirmed"]);
+  const nowMinutes = (() => {
+    const [h, m] = new Date().toLocaleTimeString("en-GB", { timeZone: "Asia/Kolkata", hour12: false }).split(":").map(Number);
+    return h * 60 + m;
+  })();
+  const minutesOf = (time: string) => {
+    const [h, m] = time.split(":").map(Number);
+    return h * 60 + (m || 0);
+  };
+  const matchingReservation =
+    (todaysBookings ?? [])
+      .map((r) => ({ id: r.id, gap: nowMinutes - minutesOf(String(r.reservation_time)) }))
+      .filter((r) => r.gap >= -60 && r.gap <= 120)
+      .sort((a, b) => Math.abs(a.gap) - Math.abs(b.gap))[0] ?? null;
 
   const { data: shopSettings } = await admin.from("shops").select("price_includes_gst").eq("id", session.shopId).single();
 
@@ -698,6 +711,24 @@ export async function settleOrderAction(
 
   const { error: paymentsError } = await admin.from("restaurant_order_payments").insert(paymentRows);
   if (paymentsError) return { error: "Could not save payment" };
+
+  // The token row above is counted with today's takings, but that money was already counted on
+  // the day of the booking — take it back off today's figure (once).
+  if (tokenAlreadyPaid > 0 && order.reservation_id) {
+    const token = await advanceReceived(admin, "reservation", order.reservation_id);
+    if (token && !(await hasCashMovement(admin, "reservation", order.reservation_id, "advance_applied"))) {
+      await recordCashMovement(admin, {
+        shopId: session.shopId,
+        staffId: session.userId,
+        kind: "advance_applied",
+        source: "reservation",
+        sourceId: order.reservation_id,
+        method: "other",
+        amount: -Math.min(tokenAlreadyPaid, token.amount),
+        note: "Table booking token, used in the bill",
+      });
+    }
+  }
 
   await admin
     .from("restaurant_orders")

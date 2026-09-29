@@ -5,6 +5,7 @@ import { requireSession } from "../auth";
 import { createSupabaseAdminClient } from "../supabase/admin";
 import { purchaseSchema, calculateTransactionTotals } from "../validation/schemas";
 import { determineSupplyType, round2 } from "../gst";
+import { partyStateCode } from "../gstBuyer";
 import { findDuplicateProductAI } from "./duplicateCheck";
 import { invalidateCache } from "../cache";
 
@@ -144,7 +145,7 @@ export async function createPurchaseAction(
 
   const { data: vendor, error: vendorError } = await admin
     .from("vendors")
-    .select("id, state_code")
+    .select("id, state_code, gstin")
     .eq("id", vendorId)
     .eq("shop_id", session.shopId)
     .single();
@@ -239,7 +240,8 @@ export async function createPurchaseAction(
     }
   }
 
-  const supplyType = determineSupplyType(session.shopStateCode, vendor.state_code);
+  // The vendor's GSTIN state decides it, the same as on the vendor's own invoice.
+  const supplyType = determineSupplyType(session.shopStateCode, partyStateCode(vendor));
 
   const lineInputs = resolvedItems.map((item) => ({
     quantity: item.quantity,

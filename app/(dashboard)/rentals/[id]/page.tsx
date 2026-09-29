@@ -7,6 +7,7 @@ import { Printer } from "lucide-react";
 import { ReturnForm } from "./ReturnForm";
 import { EditRentalQuantitiesButton } from "./EditRentalQuantitiesButton";
 import { EditRentalChargesButton } from "./EditRentalChargesButton";
+import { CancelRentalButton } from "./CancelRentalButton";
 
 export default async function RentalDetailPage({
   params,
@@ -161,9 +162,13 @@ export default async function RentalDetailPage({
         <ReturnForm
           rentalId={rental.id}
           lang={lang}
+          depositCollected={Number(rental.security_deposit_collected)}
+          rentDue={Number(rental.credit_amount)}
           items={(items ?? []).map((i) => ({ id: i.id, name: i.product_name, quantity: Number(i.quantity) }))}
         />
       )}
+      {/* A booking that has not gone out yet can be called off (owner only, like the action). */}
+      {rental.status === "booked" && session.role === "owner" && <CancelRentalButton rentalId={rental.id} paidAmount={Number(rental.paid_amount)} />}
     </div>
   );
 }

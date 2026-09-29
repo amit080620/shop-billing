@@ -2063,6 +2063,14 @@ export interface Database {
           { foreignKeyName: "debit_notes_bill_id_fkey"; columns: ["bill_id"]; isOneToOne: false; referencedRelation: "bills"; referencedColumns: ["id"] },
         ];
       };
+      cash_movements: {
+        Row: { id: string; shop_id: string; kind: "advance_received" | "advance_applied" | "refund_given"; source: "service_job" | "reservation" | "rental" | "item_request"; source_id: string | null; payment_method: "cash" | "card" | "upi" | "online" | "other"; amount: number; note: string | null; staff_id: string | null; created_at: string };
+        Insert: { id?: string; shop_id: string; kind: "advance_received" | "advance_applied" | "refund_given"; source: "service_job" | "reservation" | "rental" | "item_request"; source_id?: string | null; payment_method?: "cash" | "card" | "upi" | "online" | "other"; amount: number; note?: string | null; staff_id?: string | null; created_at?: string };
+        Update: { id?: string; shop_id?: string; kind?: "advance_received" | "advance_applied" | "refund_given"; source?: "service_job" | "reservation" | "rental" | "item_request"; source_id?: string | null; payment_method?: "cash" | "card" | "upi" | "online" | "other"; amount?: number; note?: string | null; staff_id?: string | null; created_at?: string };
+        Relationships: [
+          { foreignKeyName: "cash_movements_shop_id_fkey"; columns: ["shop_id"]; isOneToOne: false; referencedRelation: "shops"; referencedColumns: ["id"] },
+        ];
+      };
       returns: {
         Row: {
           id: string;

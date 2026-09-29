@@ -18,7 +18,7 @@ export default async function LabOrderDetailPage({ params }: { params: Promise<{
 
   const { data: items } = await admin
     .from("lab_order_items")
-    .select("id, test_name, reference_range, unit, result_value, result_flag, price")
+    .select("id, test_name, reference_range, unit, result_value, result_flag, price, gst_percent")
     .eq("order_id", id)
     .order("test_name");
 
@@ -26,6 +26,7 @@ export default async function LabOrderDetailPage({ params }: { params: Promise<{
 
   return (
     <OrderDetailClient
+      priceIncludesGst={session.priceIncludesGst}
       order={{
         id: order.id,
         orderNumber: order.order_number,
@@ -49,6 +50,7 @@ export default async function LabOrderDetailPage({ params }: { params: Promise<{
         resultValue: i.result_value,
         resultFlag: i.result_flag,
         price: Number(i.price),
+        gstPercent: Number(i.gst_percent ?? 0),
       }))}
     />
   );

@@ -48,6 +48,7 @@ export default async function JobDetailPage({
   return (
     <JobDetailClient
       lang={lang}
+      priceIncludesGst={session.priceIncludesGst}
       job={{
         id: job.id,
         jobNumber: job.job_number,

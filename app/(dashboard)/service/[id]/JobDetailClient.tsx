@@ -11,6 +11,7 @@ import { useTranslation } from "@/lib/i18n/useTranslation";
 import { buildWhatsAppLink as buildWaLink } from "@/lib/whatsapp";
 import type { Lang } from "@/lib/i18n/dictionary";
 import { BackLink } from "@/app/components/BackLink";
+import { calculateTransactionTotals } from "@/lib/validation/schemas";
 
 type Job = {
   id: string;
@@ -56,12 +57,14 @@ export function JobDetailClient({
   parts,
   products,
   lang,
+  priceIncludesGst,
 }: {
   job: Job;
   items: JobItem[];
   parts: JobPart[];
   products: Product[];
   lang: Lang;
+  priceIncludesGst: boolean;
 }) {
   const { t } = useTranslation(lang);
   const router = useRouter();
@@ -336,6 +339,8 @@ export function JobDetailClient({
         <DeliverModal
           job={job}
           partsTotal={parts.reduce((s, p) => s + p.quantity * p.unitPrice, 0)}
+          parts={parts}
+          priceIncludesGst={priceIncludesGst}
           onClose={() => setShowDeliver(false)}
           onDone={(billId) => router.push(`/print/bill/${billId}`)}
         />
@@ -347,11 +352,15 @@ export function JobDetailClient({
 function DeliverModal({
   job,
   partsTotal,
+  parts,
+  priceIncludesGst,
   onClose,
   onDone,
 }: {
   job: Job;
   partsTotal: number;
+  parts: JobPart[];
+  priceIncludesGst: boolean;
   onClose: () => void;
   onDone: (billId: string) => void;
 }) {
@@ -361,12 +370,25 @@ function DeliverModal({
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
-  function round2(n: number) {
-    return Math.round((n + Number.EPSILON) * 100) / 100;
-  }
-
-  const total = typeof finalCost === "number" ? finalCost * (1 + (typeof gstPercent === "number" ? gstPercent : 0) / 100) : 0;
-  const balanceDue = Math.max(0, round2(total) - job.advancePaid);
+  // Exactly what the invoice will come to — the labour line plus every part, with GST worked out
+  // the way this shop prices (inside the price, or on top of it). It used to add GST on top even
+  // for a GST-inclusive shop (asking the customer for more than the bill) and leave the parts
+  // out (so they quietly went on the customer's udhaar).
+  const total =
+    typeof finalCost === "number" && finalCost > 0
+      ? calculateTransactionTotals({
+          items: [
+            { quantity: 1, unitPrice: finalCost, gstPercent: typeof gstPercent === "number" ? gstPercent : 0 },
+            ...parts.map((p) => ({ quantity: p.quantity, unitPrice: p.unitPrice, gstPercent: p.gstPercent })),
+          ],
+          discountType: "flat",
+          discountValue: 0,
+          paidAmount: 0,
+          supplyType: "intra",
+          priceMode: priceIncludesGst ? "inclusive" : "exclusive",
+        }).total
+      : 0;
+  const balanceDue = Math.max(0, Math.round((total - job.advancePaid) * 100) / 100);
 
   function submit() {
     if (typeof finalCost !== "number" || finalCost <= 0) {
@@ -418,8 +440,9 @@ function DeliverModal({
           />
         </label>
 
+        {total > 0 && <p className="mt-3 text-xs text-muted">Bill total{partsTotal > 0 ? " (with parts)" : ""}: {formatMoney(total)}</p>}
         {job.advancePaid > 0 && (
-          <p className="mt-3 text-xs text-muted">Advance already received: {formatMoney(job.advancePaid)}</p>
+          <p className="mt-1 text-xs text-muted">Advance already received: {formatMoney(job.advancePaid)}</p>
         )}
         <p className="mt-1 text-sm font-semibold text-foreground">Balance due now: {formatMoney(balanceDue)}</p>
 

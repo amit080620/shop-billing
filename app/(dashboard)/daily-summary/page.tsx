@@ -9,6 +9,7 @@ import { todayIso } from "@/lib/dateHelpers";
 import { getTranslator } from "@/lib/i18n/server";
 import { BackLink } from "@/app/components/BackLink";
 import { buyerSchemaReady } from "@/lib/gstBuyer";
+import { cashMovementsReady } from "@/lib/cashMovements";
 
 const METHODS = ["cash", "card", "upi", "online", "other"] as const;
 type Method = (typeof METHODS)[number];
@@ -81,12 +82,12 @@ export default async function DailySummaryPage({
       .gte("settled_at", startOfDay.toISOString())
       .lte("settled_at", endOfDay.toISOString()),
     // Rentals also never touch `bills` — same reasoning as restaurant
-    // orders above.
+    // orders above. A booking cancelled later still brought its money in on
+    // this day (what was handed back is counted on the day it was handed back).
     admin
       .from("rentals")
-      .select("total, cgst_amount, sgst_amount, igst_amount, payment_method, paid_amount, credit_amount, customers ( gstin )")
+      .select("status, total, cgst_amount, sgst_amount, igst_amount, payment_method, paid_amount, credit_amount, customers ( gstin )")
       .eq("shop_id", session.shopId)
-      .neq("status", "cancelled")
       .gte("created_at", startOfDay.toISOString())
       .lte("created_at", endOfDay.toISOString()),
     // Hotel money is counted here, on the day it was actually received or
@@ -132,7 +133,7 @@ export default async function DailySummaryPage({
     addToMix(!!gstin, Number(b.total), Number(b.gst_amount));
   }
   for (const o of restaurantOrders ?? []) addToMix(b2bOrderIds.has(o.id), Number(o.total), Number(o.cgst_amount) + Number(o.sgst_amount) + Number(o.igst_amount));
-  for (const r of rentals ?? []) addToMix(!!gstinOf(r.customers)?.gstin, Number(r.total), Number(r.cgst_amount) + Number(r.sgst_amount) + Number(r.igst_amount));
+  for (const r of rentals ?? []) if (r.status !== "cancelled") addToMix(!!gstinOf(r.customers)?.gstin, Number(r.total), Number(r.cgst_amount) + Number(r.sgst_amount) + Number(r.igst_amount));
 
   const salesByMethod = emptyTotals();
   let newCreditGiven = 0;
@@ -156,8 +157,40 @@ export default async function DailySummaryPage({
   }
   for (const r of rentals ?? []) {
     salesByMethod[r.payment_method as Method] += Number(r.paid_amount);
-    newCreditGiven += Number(r.credit_amount);
+    if (r.status !== "cancelled") newCreditGiven += Number(r.credit_amount);
   }
+
+  // Money that moved outside a bill today (migration 0043): advances taken for repair jobs and
+  // table bookings count on the day they came in; the part of today's invoices that is just such
+  // an earlier advance being used comes off today's sales; tokens and cancelled rentals handed
+  // back are money out. Plus petty cash and rental deposits handed back on return.
+  const [{ data: movements }, { data: pettyCash }, { data: depositsBack }] = await Promise.all([
+    (await cashMovementsReady(admin))
+      ? admin.from("cash_movements").select("kind, payment_method, amount").eq("shop_id", session.shopId).gte("created_at", startOfDay.toISOString()).lte("created_at", endOfDay.toISOString())
+      : Promise.resolve({ data: [] as never[] }),
+    admin.from("petty_cash_entries").select("payment_method, amount").eq("shop_id", session.shopId).gte("created_at", startOfDay.toISOString()).lte("created_at", endOfDay.toISOString()),
+    admin
+      .from("rentals")
+      .select("payment_method, security_deposit_returned")
+      .eq("shop_id", session.shopId)
+      .eq("status", "returned")
+      .gt("security_deposit_returned", 0)
+      .gte("actual_return_date", startOfDay.toISOString())
+      .lte("actual_return_date", endOfDay.toISOString()),
+  ]);
+  const asMethod = (m: string): Method => (METHODS.includes(m as Method) ? (m as Method) : "other");
+  const advancesByMethod = emptyTotals();
+  const advanceRefundsByMethod = emptyTotals();
+  for (const mv of movements ?? []) {
+    const m = asMethod(mv.payment_method);
+    if (mv.kind === "advance_received") advancesByMethod[m] += Number(mv.amount);
+    else if (mv.kind === "advance_applied") salesByMethod[m] += Number(mv.amount); // negative
+    else advanceRefundsByMethod[m] += -Number(mv.amount);
+  }
+  const pettyCashByMethod = emptyTotals();
+  for (const e of pettyCash ?? []) pettyCashByMethod[asMethod(e.payment_method)] += Number(e.amount);
+  const depositsBackByMethod = emptyTotals();
+  for (const r of depositsBack ?? []) depositsBackByMethod[asMethod(r.payment_method)] += Number(r.security_deposit_returned);
 
   const oldCreditCollected = emptyTotals();
   for (const p of paymentsReceived ?? []) {
@@ -205,8 +238,8 @@ export default async function DailySummaryPage({
   const totalOut = emptyTotals();
   const net = emptyTotals();
   for (const m of METHODS) {
-    totalIn[m] = round2(salesByMethod[m] + oldCreditCollected[m] + debitNotesByMethod[m]);
-    totalOut[m] = round2(purchasesPaidByMethod[m] + vendorPaymentsByMethod[m] + refundsByMethod[m]);
+    totalIn[m] = round2(salesByMethod[m] + oldCreditCollected[m] + debitNotesByMethod[m] + advancesByMethod[m]);
+    totalOut[m] = round2(purchasesPaidByMethod[m] + vendorPaymentsByMethod[m] + refundsByMethod[m] + pettyCashByMethod[m] + depositsBackByMethod[m] + advanceRefundsByMethod[m]);
     net[m] = round2(totalIn[m] - totalOut[m]);
   }
 
@@ -263,7 +296,7 @@ export default async function DailySummaryPage({
         </p>
         <p className="mt-1 text-2xl font-bold text-white">{formatMoney(net.cash)}</p>
         <p className="mt-1 text-xs text-white/70">
-          {t("Cash sales + cash udhaar collected − cash paid for purchases, to vendors and as refunds")}
+          {t("Cash sales, udhaar and advances collected − cash paid for purchases, to vendors, petty expenses, refunds and deposits handed back")}
         </p>
       </section>
 
@@ -275,6 +308,7 @@ export default async function DailySummaryPage({
         <BreakdownTable title={t("Sales collected today")} byMethod={salesByMethod} t={t} />
         <BreakdownTable title={t("Old udhaar collected today")} byMethod={oldCreditCollected} t={t} />
         <BreakdownTable title={t("Debit notes collected today")} byMethod={debitNotesByMethod} t={t} />
+        <BreakdownTable title={t("Advances taken today (repair jobs, table bookings)")} byMethod={advancesByMethod} t={t} />
         {newCreditGiven > 0 && (
           <p className="text-xs text-credit">
             + {formatMoney(newCreditGiven)} sold on fresh credit today (not cash yet — tracked in Reminders)
@@ -308,6 +342,9 @@ export default async function DailySummaryPage({
         <BreakdownTable title={t("Purchases paid today")} byMethod={purchasesPaidByMethod} t={t} />
         <BreakdownTable title={t("Vendor payments made today")} byMethod={vendorPaymentsByMethod} t={t} />
         <BreakdownTable title={t("Refunds given for returns today")} byMethod={refundsByMethod} t={t} />
+        <BreakdownTable title={t("Petty cash and expenses today")} byMethod={pettyCashByMethod} t={t} />
+        <BreakdownTable title={t("Rental deposits handed back today")} byMethod={depositsBackByMethod} t={t} />
+        <BreakdownTable title={t("Tokens and cancelled bookings refunded today")} byMethod={advanceRefundsByMethod} t={t} />
         {newPayableCreated > 0 && (
           <p className="text-xs text-credit">
             + {formatMoney(newPayableCreated)} bought on credit from vendors today (not paid yet)

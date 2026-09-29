@@ -6,6 +6,8 @@ import { useFormStatus } from "react-dom";
 import { returnRentalAction } from "@/lib/actions/rentals";
 import { useTranslation } from "@/lib/i18n/useTranslation";
 import type { Lang } from "@/lib/i18n/dictionary";
+import { formatMoney } from "@/lib/format";
+import { rentalReturnFigures } from "@/lib/rentalReturn";
 
 type Item = { id: string; name: string; quantity: number };
 type Condition = "good" | "damaged" | "missing";
@@ -19,7 +21,7 @@ function SubmitButton({ label, pendingLabel }: { label: string; pendingLabel: st
   );
 }
 
-export function ReturnForm({ rentalId, items, lang }: { rentalId: string; items: Item[]; lang: Lang }) {
+export function ReturnForm({ rentalId, items, lang, depositCollected, rentDue }: { rentalId: string; items: Item[]; lang: Lang; depositCollected: number; rentDue: number }) {
   const { t } = useTranslation(lang);
   const [conditions, setConditions] = useState<Record<string, Condition>>(
     Object.fromEntries(items.map((i) => [i.id, "good" as Condition])),
@@ -27,6 +29,15 @@ export function ReturnForm({ rentalId, items, lang }: { rentalId: string; items:
   const [notes, setNotes] = useState<Record<string, string>>({});
   const [damageCharge, setDamageCharge] = useState<number | "">("");
   const [lateFee, setLateFee] = useState<number | "">("");
+  const [useDepositForDue, setUseDepositForDue] = useState(true);
+  // What happens to the deposit, before saving — so the counter knows what to hand back.
+  const figures = rentalReturnFigures({
+    depositCollected,
+    rentDue,
+    damageCharge: typeof damageCharge === "number" ? damageCharge : 0,
+    lateFee: typeof lateFee === "number" ? lateFee : 0,
+    useDepositForRentDue: useDepositForDue,
+  });
 
   const [state, formAction] = useActionState(keepValuesOnError(returnRentalAction), null);
 
@@ -95,6 +106,22 @@ export function ReturnForm({ rentalId, items, lang }: { rentalId: string; items:
           className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand"
         />
       </label>
+
+      {rentDue > 0 && depositCollected > 0 && (
+        <label className="flex items-start gap-2 text-xs text-foreground">
+          <input type="checkbox" name="useDepositForDue" checked={useDepositForDue} onChange={(e) => setUseDepositForDue(e.target.checked)} className="mt-0.5" />
+          <span>{t("Take the unpaid rent")} ({formatMoney(rentDue)}) {t("out of the deposit")}</span>
+        </label>
+      )}
+      {depositCollected > 0 && (
+        <div className="rounded-lg bg-background px-3 py-2 text-xs">
+          <div className="flex justify-between text-muted"><span>{t("Deposit collected")}</span><span>{formatMoney(depositCollected)}</span></div>
+          {figures.charges > 0 && <div className="flex justify-between text-muted"><span>{t("Damage + late fee")}</span><span>− {formatMoney(Math.min(figures.charges, depositCollected))}</span></div>}
+          {figures.rentPaidFromDeposit > 0 && <div className="flex justify-between text-muted"><span>{t("Unpaid rent")}</span><span>− {formatMoney(figures.rentPaidFromDeposit)}</span></div>}
+          <div className="mt-1 flex justify-between border-t border-border pt-1 font-semibold text-foreground"><span>{t("Hand back to the customer")}</span><span>{formatMoney(figures.depositReturned)}</span></div>
+          {figures.creditAfter > 0 && <div className="mt-0.5 flex justify-between font-medium text-credit"><span>{t("Customer still owes")}</span><span>{formatMoney(figures.creditAfter)}</span></div>}
+        </div>
+      )}
 
       {state?.error && <p className="text-xs text-danger">{state.error}</p>}
       <SubmitButton label={t("rentalsPage.markReturned")} pendingLabel={t("rentalsPage.saving")} />

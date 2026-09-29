@@ -5,6 +5,12 @@ export function todayIso(): string {
   return new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
 }
 
+/** A calendar date (YYYY-MM-DD) moved by N days — plain date math, no time zone involved. */
+export function addDaysIso(iso: string, days: number): string {
+  const [y, m, d] = iso.slice(0, 10).split("-").map(Number);
+  return new Date(Date.UTC(y, m - 1, d + days)).toISOString().slice(0, 10);
+}
+
 /** N days before today, same IST-aware date math as todayIso(). */
 export function isoDaysAgo(days: number): string {
   const d = new Date();

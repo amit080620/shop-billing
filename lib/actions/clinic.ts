@@ -6,17 +6,11 @@ import { requireSession } from "../auth";
 import { createSupabaseAdminClient } from "../supabase/admin";
 import { logError } from "../audit";
 import { checkRateLimitAsync } from "../rateLimit";
-import { round2 } from "../gst";
+import { financialYearFor, round2 } from "../gst";
 import { findOrCreateCustomerByPhone } from "./customers";
 
 export type ActionState = { error?: string } | null;
 
-function currentFinancialYear() {
-  const now = new Date();
-  return now.getMonth() >= 3
-    ? `${now.getFullYear()}-${String((now.getFullYear() + 1) % 100).padStart(2, "0")}`
-    : `${now.getFullYear() - 1}-${String(now.getFullYear() % 100).padStart(2, "0")}`;
-}
 
 // ─── Appointments ───────────────────────────────────────────────────────
 
@@ -311,7 +305,7 @@ export async function createPrescriptionAction(input: {
     linkedPatientId = linked?.id ?? null;
   }
 
-  const financialYear = currentFinancialYear();
+  const financialYear = financialYearFor(new Date());
   const { data: issuedNumber } = await admin.rpc("next_prescription_number", {
     p_shop_id: session.shopId,
     p_financial_year: financialYear,

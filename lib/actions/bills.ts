@@ -11,6 +11,7 @@ import { logAuditEvent } from "../audit";
 import { findOrCreateCustomerByPhone, awardLoyaltyPoints } from "./customers";
 import { invalidateCache } from "../cache";
 import { buyerSchemaReady, stateFromGstin, type Buyer } from "../gstBuyer";
+import { todayIso } from "../dateHelpers";
 
 export type ActionState = { error?: string } | null;
 
@@ -180,8 +181,11 @@ export async function createBillCore(
     const line = totals.lines[i];
     let warrantyExpiresOn: string | null = null;
     if (item.warrantyMonths) {
-      const expiry = new Date();
-      expiry.setMonth(expiry.getMonth() + item.warrantyMonths);
+      // From today's date in India (the server's UTC date is yesterday before 5:30 am IST).
+      const [y, m, d] = todayIso().split("-").map(Number);
+      const expiry = new Date(Date.UTC(y, m - 1 + item.warrantyMonths, d));
+      // 31 Jan + 1 month is the last day of February, not 3 March.
+      if (expiry.getUTCDate() !== d) expiry.setUTCDate(0);
       warrantyExpiresOn = expiry.toISOString().slice(0, 10);
     }
     return {

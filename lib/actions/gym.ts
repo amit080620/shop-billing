@@ -6,6 +6,7 @@ import { createSupabaseAdminClient } from "../supabase/admin";
 import { round2 } from "../gst";
 import { logError } from "../audit";
 import { findOrCreateCustomerByPhone } from "./customers";
+import { addDaysIso, todayIso } from "../dateHelpers";
 
 export type ActionState = { error?: string } | null;
 
@@ -90,10 +91,22 @@ export async function sellMembershipAction(input: {
     memberId = result.id;
   }
 
-  const startDate = new Date();
-  const endDate = new Date();
-  endDate.setDate(endDate.getDate() + input.durationDays);
-  const toIso = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  // Dates by the calendar in India (the server runs on UTC, where a 5 am sale is still yesterday).
+  // A renewal bought while the current plan still runs starts the day after it ends, so the
+  // member doesn't lose the days already paid for.
+  const today = todayIso();
+  const { data: running } = await admin
+    .from("memberships")
+    .select("end_date")
+    .eq("shop_id", session.shopId)
+    .eq("member_id", memberId)
+    .eq("status", "active")
+    .gte("end_date", today)
+    .order("end_date", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  const startIso = running ? addDaysIso(running.end_date, 1) : today;
+  const endIso = addDaysIso(startIso, input.durationDays);
 
   const { createBillCore } = await import("./bills");
   const billResult = await createBillCore(session, {
@@ -120,8 +133,8 @@ export async function sellMembershipAction(input: {
     member_id: memberId,
     plan_id: input.planId,
     plan_name: input.planName,
-    start_date: toIso(startDate),
-    end_date: toIso(endDate),
+    start_date: startIso,
+    end_date: endIso,
     pt_sessions_total: input.ptSessionsIncluded,
     bill_id: billResult.billId,
     staff_id: session.userId,
@@ -149,18 +162,15 @@ export async function freezeMembershipAction(membershipId: string, freezeDays: n
   const session = await requireSession();
   const admin = createSupabaseAdminClient();
 
-  const { data: membership } = await admin.from("memberships").select("end_date, status").eq("id", membershipId).eq("shop_id", session.shopId).single();
+  const { data: membership } = await admin.from("memberships").select("end_date, status, frozen_days_used").eq("id", membershipId).eq("shop_id", session.shopId).single();
   if (!membership) return { error: "Membership not found" };
   if (membership.status !== "active") return { error: "Only an active membership can be frozen" };
   if (!freezeDays || freezeDays <= 0) return { error: "Enter how many days to freeze" };
 
-  const newEndDate = new Date(membership.end_date);
-  newEndDate.setDate(newEndDate.getDate() + freezeDays);
-  const toIso = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-
+  // Every freeze adds up — a second one used to overwrite the count of days already frozen.
   const { error } = await admin
     .from("memberships")
-    .update({ end_date: toIso(newEndDate), frozen_days_used: freezeDays })
+    .update({ end_date: addDaysIso(membership.end_date, freezeDays), frozen_days_used: Number(membership.frozen_days_used ?? 0) + freezeDays })
     .eq("id", membershipId)
     .eq("shop_id", session.shopId);
   if (error) return { error: "Could not freeze membership" };

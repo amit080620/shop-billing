@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { requireSession } from "../auth";
 import { createSupabaseAdminClient } from "../supabase/admin";
 import { findOrCreateCustomerByPhone } from "./customers";
+import { advanceReceived, asCashMethod, hasCashMovement, recordCashMovement } from "../cashMovements";
 
 export type ActionState = { error?: string } | null;
 
@@ -38,7 +39,8 @@ export async function createReservationAction(
     linkedCustomerId = linked?.id ?? null;
   }
 
-  const { error } = await admin.from("restaurant_reservations").insert({
+  const token = tokenAmount ? Math.max(0, Number(tokenAmount)) : 0;
+  const { data: reservation, error } = await admin.from("restaurant_reservations").insert({
     shop_id: session.shopId,
     customer_id: linkedCustomerId,
     customer_name: customerName.trim(),
@@ -47,13 +49,27 @@ export async function createReservationAction(
     reservation_date: reservationDate,
     reservation_time: reservationTime,
     table_id: typeof tableId === "string" && tableId ? tableId : null,
-    token_amount: tokenAmount ? Math.max(0, Number(tokenAmount)) : 0,
+    token_amount: token,
     notes: typeof notes === "string" && notes.trim() ? notes.trim() : null,
     staff_id: session.userId,
-  });
-  if (error) {
+  }).select("id").single();
+  if (error || !reservation) {
     console.error("Could not create reservation", error);
     return { error: "Could not book reservation" };
+  }
+
+  // The token came into the drawer today — counted now, not on the day the table is billed.
+  if (token > 0) {
+    await recordCashMovement(admin, {
+      shopId: session.shopId,
+      staffId: session.userId,
+      kind: "advance_received",
+      source: "reservation",
+      sourceId: reservation.id,
+      method: asCashMethod(formData.get("tokenMethod")),
+      amount: token,
+      note: `Table booking token — ${customerName.trim()}`,
+    });
   }
 
   revalidatePath("/restaurant/reservations");
@@ -83,6 +99,24 @@ export async function updateReservationStatusAction(
   if (error) {
     console.error("Could not update reservation", error);
     return { error: "Could not update reservation" };
+  }
+
+  // Token handed back on a cancellation or no-show: money out of the drawer today, the same way
+  // it came in. Once only, however many times the status is changed.
+  if ((status === "cancelled" || status === "no_show") && refund && refund.refundAmount > 0) {
+    const token = await advanceReceived(admin, "reservation", reservationId);
+    if (token && !(await hasCashMovement(admin, "reservation", reservationId, "refund_given"))) {
+      await recordCashMovement(admin, {
+        shopId: session.shopId,
+        staffId: session.userId,
+        kind: "refund_given",
+        source: "reservation",
+        sourceId: reservationId,
+        method: token.method,
+        amount: -Math.min(refund.refundAmount, token.amount),
+        note: "Table booking token refunded",
+      });
+    }
   }
   revalidatePath("/restaurant/reservations");
   revalidatePath("/restaurant");

@@ -52,8 +52,11 @@ export function isPastGstPeriod(createdAt: string | Date, now: Date = new Date()
 
 /** Indian financial year: 1 Apr – 31 Mar. Returns e.g. "2026-27". */
 export function financialYearFor(date: Date): string {
-  const year = date.getFullYear();
-  const month = date.getMonth(); // 0-indexed, April = 3
+  // By the date in India: the server runs on UTC, where 1 April until 5:30 am IST is still 31 March
+  // — a bill made just after midnight on 1 April would otherwise open in last year's series.
+  const ist = new Date(date.getTime() + 5.5 * 3600 * 1000);
+  const year = ist.getUTCFullYear();
+  const month = ist.getUTCMonth(); // 0-indexed, April = 3
   const startYear = month >= 3 ? year : year - 1;
   return `${startYear}-${String((startYear + 1) % 100).padStart(2, "0")}`;
 }

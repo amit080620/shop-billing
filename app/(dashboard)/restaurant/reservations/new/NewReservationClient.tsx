@@ -130,6 +130,17 @@ export function NewReservationClient({ customers, tables, lang }: { customers: C
           <span className="text-xs text-muted">Automatically deducted from their final bill when they&apos;re seated and billed.</span>
         </label>
 
+        {/* So the token is counted in today's cash drawer, under the right method. */}
+        <label className="flex flex-col gap-1.5 text-sm">
+          <span className="font-medium text-foreground">Token paid by</span>
+          <select name="tokenMethod" defaultValue="cash" className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-brand">
+            <option value="cash">Cash</option>
+            <option value="upi">UPI</option>
+            <option value="card">Card</option>
+            <option value="online">Online</option>
+          </select>
+        </label>
+
         <label className="flex flex-col gap-1.5 text-sm">
           <span className="font-medium text-foreground">Notes (optional)</span>
           <input

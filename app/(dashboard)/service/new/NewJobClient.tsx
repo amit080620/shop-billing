@@ -12,7 +12,7 @@ import { SearchableSelect } from "@/app/components/SearchableSelect";
 import { modelsFor, type DeviceModel } from "@/lib/deviceLibrary";
 import type { Lang } from "@/lib/i18n/dictionary";
 import { Wrench } from "lucide-react";
-import { useT } from "@/lib/i18n/LangContext";
+import { useT } from "@/lib/i18n/LangContext";
 import { BackLink } from "@/app/components/BackLink";
 
 type Customer = { id: string; name: string; phone: string };
@@ -278,16 +278,28 @@ export function NewJobClient({ customers, lang }: { customers: Customer[]; lang:
           </label>
         </div>
 
-        <label className="flex flex-col gap-1.5 text-sm">
-          <span className="font-medium text-foreground">{t("Advance received (₹, optional)")}</span>
-          <input
-            name="advancePaid"
-            type="number"
-            min="0"
-            step="0.01"
-            className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-brand"
-          />
-        </label>
+        <div className="grid grid-cols-2 gap-3">
+          <label className="flex flex-col gap-1.5 text-sm">
+            <span className="font-medium text-foreground">{t("Advance received (₹, optional)")}</span>
+            <input
+              name="advancePaid"
+              type="number"
+              min="0"
+              step="0.01"
+              className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-brand"
+            />
+          </label>
+          {/* So the advance is counted in today's cash drawer, under the right method. */}
+          <label className="flex flex-col gap-1.5 text-sm">
+            <span className="font-medium text-foreground">{t("Advance paid by")}</span>
+            <select name="advanceMethod" defaultValue="cash" className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-brand">
+              <option value="cash">{t("Cash")}</option>
+              <option value="upi">UPI</option>
+              <option value="card">{t("Card")}</option>
+              <option value="online">{t("Online")}</option>
+            </select>
+          </label>
+        </div>
 
         {state?.error && <p className="text-sm text-danger">{state.error}</p>}
         <SubmitButton />

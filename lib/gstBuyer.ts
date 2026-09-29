@@ -12,6 +12,17 @@ export function stateFromGstin(gstin: string): { code: string; name: string | nu
   return { code, name: INDIAN_STATES.find((s) => s.code === code)?.name ?? null };
 }
 
+/** The state a customer or vendor is in for GST: the state its GSTIN is registered in when it has
+ * one — that decides IGST vs CGST + SGST — else the state on its profile. */
+export function partyStateCode(p: { gstin?: string | null; state_code?: string | null } | null | undefined): string | null {
+  if (!p) return null;
+  if (p.gstin && p.gstin.length >= 2) {
+    const s = stateFromGstin(p.gstin);
+    if (s.name) return s.code;
+  }
+  return p.state_code ?? null;
+}
+
 type CustomerLike = { name: string; gstin: string | null; address?: string | null; state: string | null; state_code: string | null };
 type BuyerColumns = { buyer_name?: string | null; buyer_gstin?: string | null; buyer_address?: string | null; buyer_state?: string | null; buyer_state_code?: string | null };
 

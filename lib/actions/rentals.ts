@@ -6,6 +6,9 @@ import { requireSession, requireOwner, hasPermission } from "../auth";
 import { createSupabaseAdminClient } from "../supabase/admin";
 import { rentalSchema, calculateRentalTotals } from "../validation/schemas";
 import { determineSupplyType, financialYearFor, round2 } from "../gst";
+import { partyStateCode } from "../gstBuyer";
+import { recordCashMovement } from "../cashMovements";
+import { rentalReturnFigures } from "../rentalReturn";
 
 export type ActionState = { error?: string } | null;
 
@@ -102,12 +105,12 @@ export async function createRentalAction(
   if (customerId) {
     const { data: customer } = await admin
       .from("customers")
-      .select("id, state_code")
+      .select("id, state_code, gstin")
       .eq("id", customerId)
       .eq("shop_id", session.shopId)
       .single();
     if (!customer) return { error: "Customer not found" };
-    customerStateCode = customer.state_code;
+    customerStateCode = partyStateCode(customer);
   }
   if (!session.shopStateCode) {
     return { error: "Add your shop's state in Settings before renting — needed for CGST/SGST vs IGST." };
@@ -262,6 +265,7 @@ export async function returnRentalAction(
     .single();
   if (!rental) return { error: "Rental not found" };
   if (rental.status === "returned") return { error: "This rental is already marked returned" };
+  if (rental.status === "cancelled") return { error: "This rental was cancelled" };
 
   for (const item of returnItems) {
     await admin
@@ -271,12 +275,13 @@ export async function returnRentalAction(
       .eq("rental_id", rentalId);
   }
 
-  const depositCollected = Number(rental.security_deposit_collected);
-  const extraCharges = round2(damageCharge + lateFee);
-  // Deposit absorbs damage/late charges first; anything beyond the
-  // deposit becomes additional credit owed by the customer.
-  const depositReturned = Math.max(0, round2(depositCollected - extraCharges));
-  const shortfall = Math.max(0, round2(extraCharges - depositCollected));
+  const figures = rentalReturnFigures({
+    depositCollected: Number(rental.security_deposit_collected),
+    rentDue: Number(rental.credit_amount),
+    damageCharge,
+    lateFee,
+    useDepositForRentDue: formData.get("useDepositForDue") === "on",
+  });
 
   const { error } = await admin
     .from("rentals")
@@ -285,8 +290,8 @@ export async function returnRentalAction(
       actual_return_date: new Date().toISOString(),
       damage_charge: damageCharge,
       late_fee: lateFee,
-      security_deposit_returned: depositReturned,
-      credit_amount: round2(Number(rental.credit_amount) + shortfall),
+      security_deposit_returned: figures.depositReturned,
+      credit_amount: figures.creditAfter,
     })
     .eq("id", rentalId);
 
@@ -300,15 +305,48 @@ export async function returnRentalAction(
   return null;
 }
 
-export async function cancelRentalAction(rentalId: string, reason: string) {
+/** Cancels a booking that has not gone out yet. Whatever of the money paid is handed back is
+ * recorded as money out today, so the daily summary still matches the drawer. */
+export async function cancelRentalAction(
+  rentalId: string,
+  reason: string,
+  refund?: { amount: number; method: "cash" | "card" | "upi" | "online" | "other" },
+): Promise<{ error?: string }> {
   const session = await requireOwner();
   const admin = createSupabaseAdminClient();
-  await admin
+  const { data: rental } = await admin
     .from("rentals")
-    .update({ status: "cancelled", notes: reason })
+    .select("id, status, paid_amount, rental_number")
+    .eq("id", rentalId)
+    .eq("shop_id", session.shopId)
+    .single();
+  if (!rental) return { error: "Rental not found" };
+  if (rental.status !== "booked") return { error: rental.status === "active" ? "These items are out with the customer — process a return instead." : "This rental can't be cancelled now." };
+  const refundAmount = Math.max(0, round2(refund?.amount ?? 0));
+  if (refundAmount > Number(rental.paid_amount)) return { error: `Only ${Number(rental.paid_amount)} was paid — refund can't be more than that.` };
+
+  const { error } = await admin
+    .from("rentals")
+    .update({ status: "cancelled", notes: reason.trim() || "Cancelled" })
     .eq("id", rentalId)
     .eq("shop_id", session.shopId);
+  if (error) return { error: "Could not cancel this rental" };
+
+  if (refundAmount > 0) {
+    await recordCashMovement(admin, {
+      shopId: session.shopId,
+      staffId: session.userId,
+      kind: "refund_given",
+      source: "rental",
+      sourceId: rentalId,
+      method: refund?.method ?? "cash",
+      amount: -refundAmount,
+      note: `Rental ${rental.rental_number} cancelled`,
+    });
+  }
   revalidatePath("/rentals");
+  revalidatePath(`/rentals/${rentalId}`);
+  return {};
 }
 
 /** Corrects item quantities on a rental that hasn't been returned yet —

@@ -3,18 +3,13 @@
 import { revalidatePath } from "next/cache";
 import { requireSession } from "../auth";
 import { createSupabaseAdminClient } from "../supabase/admin";
-import { round2 } from "../gst";
+import { financialYearFor, round2 } from "../gst";
 import { logError } from "../audit";
 import { findOrCreateCustomerByPhone } from "./customers";
+import { advanceReceived, asCashMethod, hasCashMovement, recordCashMovement } from "../cashMovements";
 
 export type ActionState = { error?: string; jobId?: string } | null;
 
-function currentFinancialYear() {
-  const now = new Date();
-  return now.getMonth() >= 3
-    ? `${now.getFullYear()}-${String((now.getFullYear() + 1) % 100).padStart(2, "0")}`
-    : `${now.getFullYear() - 1}-${String(now.getFullYear() % 100).padStart(2, "0")}`;
-}
 
 export async function createJobAction(
   _prev: ActionState,
@@ -62,7 +57,7 @@ export async function createJobAction(
       ? items[0].name.trim()
       : `${items.length} items: ${items.map((i) => i.name.trim()).join(", ")}`;
 
-  const financialYear = currentFinancialYear();
+  const financialYear = financialYearFor(new Date());
   const { data: issuedNumber } = await admin.rpc("next_job_number", {
     p_shop_id: session.shopId,
     p_financial_year: financialYear,
@@ -102,6 +97,21 @@ export async function createJobAction(
   if (error || !job) {
     console.error("Could not create job", error);
     return { error: "Could not create job" };
+  }
+
+  // The advance came into the drawer today — the daily summary counts it now, not at delivery.
+  const advance = advancePaid ? round2(Math.max(0, Number(advancePaid))) : 0;
+  if (advance > 0) {
+    await recordCashMovement(admin, {
+      shopId: session.shopId,
+      staffId: session.userId,
+      kind: "advance_received",
+      source: "service_job",
+      sourceId: job.id,
+      method: asCashMethod(formData.get("advanceMethod")),
+      amount: advance,
+      note: `Advance for job ${jobNumber}`,
+    });
   }
 
   const { error: itemsError } = await admin.from("service_job_items").insert(
@@ -318,6 +328,22 @@ export async function deliverJobAction(
       .update({ status: "voided", voided_at: new Date().toISOString(), void_reason: "Automatic: could not link invoice to service job" })
       .eq("id", result.billId);
     return { error: "Could not finish delivering this job — the invoice was voided automatically. Please try again." };
+  }
+
+  // The invoice counts the advance as paid, under today's payment method — but that money was
+  // already counted on the day it was taken. Take it back off today's figure.
+  const advance = await advanceReceived(admin, "service_job", jobId);
+  if (advance && !(await hasCashMovement(admin, "service_job", jobId, "advance_applied"))) {
+    await recordCashMovement(admin, {
+      shopId: session.shopId,
+      staffId: session.userId,
+      kind: "advance_applied",
+      source: "service_job",
+      sourceId: jobId,
+      method: paymentMethod,
+      amount: -Math.min(advance.amount, totalPaid),
+      note: `Advance for job ${job.job_number}, used in the invoice`,
+    });
   }
 
   revalidatePath("/service");

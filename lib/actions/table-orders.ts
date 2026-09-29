@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { requireSession } from "../auth";
 import { createSupabaseAdminClient } from "../supabase/admin";
-import { round2 } from "../gst";
+import { financialYearFor, round2 } from "../gst";
 
 export type PublicMenuItem = { id: string; name: string; price: number; category: string };
 
@@ -211,11 +211,7 @@ export async function acceptTableOrderRequestAction(requestId: string): Promise<
     if (!session.shopStateCode) {
       return { error: "Add your shop's state in Settings before accepting orders." };
     }
-    const now = new Date();
-    const financialYear =
-      now.getMonth() >= 3
-        ? `${now.getFullYear()}-${String((now.getFullYear() + 1) % 100).padStart(2, "0")}`
-        : `${now.getFullYear() - 1}-${String(now.getFullYear() % 100).padStart(2, "0")}`;
+    const financialYear = financialYearFor(new Date());
     const { data: issuedNumber } = await admin.rpc("next_restaurant_order_number", {
       p_shop_id: session.shopId,
       p_financial_year: financialYear,

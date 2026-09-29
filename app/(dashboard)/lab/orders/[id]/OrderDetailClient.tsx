@@ -9,6 +9,7 @@ import { formatMoney, withDr } from "@/lib/format";
 import { PageHeader } from "@/app/components/PageHeader";
 import { FlaskConical, Printer } from "lucide-react";
 import { BackLink } from "@/app/components/BackLink";
+import { calculateTransactionTotals } from "@/lib/validation/schemas";
 
 type Order = {
   id: string;
@@ -25,7 +26,7 @@ type Order = {
   billId: string | null;
   phlebotomistName: string | null;
 };
-type Item = { id: string; testName: string; referenceRange: string | null; unit: string | null; resultValue: string | null; resultFlag: string | null; price: number };
+type Item = { id: string; testName: string; referenceRange: string | null; unit: string | null; resultValue: string | null; resultFlag: string | null; price: number; gstPercent: number };
 
 const STATUS_FLOW = ["booked", "sample_collected", "received_at_lab", "processing", "report_ready", "delivered"] as const;
 const STATUS_LABELS: Record<string, string> = {
@@ -43,7 +44,7 @@ const FLAG_STYLE: Record<string, string> = {
   normal: "text-green-700",
 };
 
-export function OrderDetailClient({ order, items }: { order: Order; items: Item[] }) {
+export function OrderDetailClient({ order, items, priceIncludesGst }: { order: Order; items: Item[]; priceIncludesGst: boolean }) {
   const { t } = useT();
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
@@ -56,7 +57,16 @@ export function OrderDetailClient({ order, items }: { order: Order; items: Item[
   const [paidAmount, setPaidAmount] = useState<number | "">("");
   const [results, setResults] = useState<Record<string, string>>(Object.fromEntries(items.map((i) => [i.id, i.resultValue ?? ""])));
 
-  const total = items.reduce((s, i) => s + i.price, 0);
+  // What the invoice will come to — GST included the way this shop prices. A plain sum of test
+  // prices left any GST added on top out, and the default "amount paid" then put it on udhaar.
+  const total = calculateTransactionTotals({
+    items: items.map((i) => ({ quantity: 1, unitPrice: i.price, gstPercent: i.gstPercent })),
+    discountType: "flat",
+    discountValue: 0,
+    paidAmount: 0,
+    supplyType: "intra",
+    priceMode: priceIncludesGst ? "inclusive" : "exclusive",
+  }).total;
   const currentIndex = STATUS_FLOW.indexOf(order.status as (typeof STATUS_FLOW)[number]);
 
   function advanceStatus() {
@@ -181,7 +191,7 @@ export function OrderDetailClient({ order, items }: { order: Order; items: Item[
         <Link href={`/print/bill/${order.billId}`} className="btn-primary flex w-full items-center justify-center gap-1.5 text-center">
           <Printer size={15} /> View invoice
         </Link>
-      ) : order.status === "report_ready" || order.status === "delivered" ? (
+      ) : order.status !== "cancelled" ? (
         <>
           {!showBillForm ? (
             <button onClick={() => setShowBillForm(true)} className="btn-primary w-full text-center">
@@ -215,7 +225,7 @@ export function OrderDetailClient({ order, items }: { order: Order; items: Item[
           )}
         </>
       ) : (
-        <p className="text-center text-xs text-muted">{t("Mark the report as ready before generating the invoice.")}</p>
+        <p className="text-center text-xs text-muted">{t("This order was cancelled.")}</p>
       )}
     </div>
   );
