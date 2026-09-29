@@ -12,7 +12,7 @@ import { findOrCreateCustomerByPhone, awardLoyaltyPoints } from "./customers";
 import { invalidateCache } from "../cache";
 import { buyerSchemaReady, stateFromGstin, type Buyer } from "../gstBuyer";
 import { todayIso } from "../dateHelpers";
-import { isLooseLine, productLinePrice } from "../linePrice";
+import { priceLines } from "../billPricing";
 
 export type ActionState = { error?: string } | null;
 
@@ -52,22 +52,22 @@ export async function createBillCore(
     }
   }
 
-  // Verify every product id actually belongs to this shop, and pull the
-  // authoritative price/GST/HSN from the DB rather than trusting client
-  // values (client values only drive the live on-screen preview).
-  const productIds = [...new Set(items.map((i) => i.productId).filter(Boolean))] as string[];
-  const { data: dbProducts, error: productsError } = productIds.length
-    ? await admin
-        .from("products")
-        .select("id, name, price, offer_price, units_per_pack, bulk_min_qty, bulk_price, gst_percent, hsn_code, track_inventory, stock_quantity, is_pharma, requires_prescription, has_warranty, warranty_months, mrp")
-        .eq("shop_id", session.shopId)
-        .in("id", productIds)
-    : { data: [], error: null };
-
-  if (productsError || !dbProducts || dbProducts.length !== productIds.length) {
-    return { error: "One or more products could not be verified" };
+  // Verify every product id actually belongs to this shop, and price every line from the
+  // catalogue rather than trusting client values (those only drive the on-screen preview).
+  // Billing a quotation that is still valid: the prices it promised stand, even if the catalogue
+  // has changed since.
+  let quoted: Map<string, { unitPrice: number; loose: boolean }> | undefined;
+  if (parsedData.quotationId) {
+    const { data: quote } = await admin.from("quotations").select("items, status, valid_until").eq("id", parsedData.quotationId).eq("shop_id", session.shopId).maybeSingle();
+    if (quote && quote.status === "open" && (!quote.valid_until || quote.valid_until >= todayIso())) {
+      quoted = new Map(
+        quote.items.filter((l) => l.productId).map((l) => [l.productId as string, { unitPrice: Number(l.unitPrice), loose: Number(l.stockQuantity) !== Number(l.quantity) }]),
+      );
+    }
   }
-  const productMap = new Map(dbProducts.map((p) => [p.id, p]));
+  const priced = await priceLines(session, admin, items, quoted);
+  if ("error" in priced) return { error: priced.error ?? "One or more products could not be verified" };
+  const { productMap } = priced;
 
   const needsPrescription = items.some((item) => item.productId && productMap.get(item.productId)?.requires_prescription);
   if (needsPrescription && (!doctorName || !patientName)) {
@@ -128,30 +128,9 @@ export async function createBillCore(
   // Place of supply: the B2B buyer's registered state, else the customer's state (walk-in: local).
   const supplyType = determineSupplyType(session.shopStateCode, buyer?.stateCode ?? null);
 
-  // A composition-scheme dealer is legally barred from charging GST separately on
-  // an invoice at all (their tax is a flat percentage of turnover, paid out of their
-  // own margin via CMP-08 — never itemized to the customer). Zeroing every line's
-  // rate here is what makes the saved bill, its printed Bill of Supply, and every
-  // GST report built from `bills`/`bill_items` all agree that nothing was charged.
-  const isComposition = session.gstScheme === "composition";
-  const verifiedItems = items.map((item) => {
-    const product = item.productId ? productMap.get(item.productId) : undefined;
-    // The price it is really sold at — offer, bulk rate, or a loose unit's share of the pack —
-    // worked out here from the catalogue, never taken from the browser.
-    const loose = product ? isLooseLine(product, item) : false;
-    const overridden = !!product && item.priceOverride === true && item.unitPrice > 0 && hasPermission(session, "give_discounts");
-    return {
-      productId: product?.id ?? null,
-      productName: product?.name ?? item.description,
-      hsnCode: product?.hsn_code ?? null,
-      quantity: item.quantity,
-      stockQuantity: product && loose ? round2(item.quantity / Number(product.units_per_pack)) : product ? item.quantity : (item.stockQuantity ?? item.quantity),
-      unitPrice: overridden ? item.unitPrice : product ? productLinePrice(product, { quantity: item.quantity, loose }) : item.unitPrice,
-      gstPercent: isComposition ? 0 : product ? Number(product.gst_percent) : item.gstPercent,
-      warrantyMonths: product?.has_warranty ? product.warranty_months : null,
-      mrp: product?.mrp ? Number(product.mrp) : null,
-    };
-  });
+  // Priced above (priceLines): catalogue prices, offer / bulk / loose, and 0% GST for a
+  // composition dealer, who is legally barred from charging GST on an invoice at all.
+  const verifiedItems = priced.lines;
 
   const totals = calculateTransactionTotals({
     items: verifiedItems,
@@ -417,6 +396,17 @@ export async function createBillAction(
 
   const result = await createBillCore(session, parsed.data);
   if ("error" in result) return { error: result.error };
+
+  // Made from a quotation: it now points to this bill (and can't be billed twice).
+  if (parsed.data.quotationId) {
+    const admin = createSupabaseAdminClient();
+    await admin
+      .from("quotations")
+      .update({ status: "converted", bill_id: result.billId })
+      .eq("id", parsed.data.quotationId)
+      .eq("shop_id", session.shopId)
+      .eq("status", "open");
+  }
 
   redirect(`/print/bill/${result.billId}?new=1`);
 }

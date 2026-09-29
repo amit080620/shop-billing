@@ -58,6 +58,9 @@ export type A4InvoiceData = {
   editedNote?: string | null;
   upiQrDataUrl?: string | null;
   upiId?: string | null;
+  /** Printed as a quotation: its own title and number label, a "valid until" date, the
+   * shop's notes, and no payment lines (nothing has been paid for a price offer). */
+  quotation?: { validUntilText: string | null; notes: string | null } | null;
 };
 
 function money(n: number): string {
@@ -141,12 +144,13 @@ export function A4Renderer({ data }: { data: A4InvoiceData }) {
         </div>
         <div className="text-right">
           <p className="whitespace-nowrap text-[20px] font-semibold tracking-tight" style={{ color: accent }}>
-            {data.isComposition ? "BILL OF SUPPLY" : data.gstin ? "TAX INVOICE" : "INVOICE"}
+            {data.quotation ? "QUOTATION" : data.isComposition ? "BILL OF SUPPLY" : data.gstin ? "TAX INVOICE" : "INVOICE"}
           </p>
           <p className="mt-1 text-[12px] text-neutral-500">
-            Invoice No. <span className="whitespace-nowrap">{data.invoiceNumber}</span>
+            {data.quotation ? "Quotation No." : "Invoice No."} <span className="whitespace-nowrap">{data.invoiceNumber}</span>
           </p>
           <p className="text-[12px] text-neutral-500">{data.dateText}</p>
+          {data.quotation?.validUntilText && <p className="text-[12px] font-medium text-neutral-600">Valid until {data.quotation.validUntilText}</p>}
         </div>
       </div>
 
@@ -155,7 +159,7 @@ export function A4Renderer({ data }: { data: A4InvoiceData }) {
       {/* Bill-to / metadata — two clean columns, no borders. */}
       <div className="mt-8 flex justify-between gap-8">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-neutral-400">Bill To</p>
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-neutral-400">{data.quotation ? "Quotation For" : "Bill To"}</p>
           <p className="mt-1.5 text-[14px] font-medium">
             {data.customerName || "Walk-in customer"}
           </p>
@@ -243,6 +247,7 @@ export function A4Renderer({ data }: { data: A4InvoiceData }) {
           </div>
           <p className="mt-1.5 text-right text-[11px] italic text-neutral-500">{amountInWords(data.total)}</p>
 
+          {!data.quotation && (
           <div className="mt-3 text-[12px] text-neutral-500">
             {data.exchangeLabel && data.exchangeAmount != null && data.exchangeAmount > 0 && (
               <SummaryLine label={data.exchangeLabel} value={`− ${money(data.exchangeAmount)}`} />
@@ -255,8 +260,9 @@ export function A4Renderer({ data }: { data: A4InvoiceData }) {
               </div>
             )}
           </div>
+          )}
 
-          {data.upiQrDataUrl && data.creditAmount != null && data.creditAmount > 0 && (
+          {!data.quotation && data.upiQrDataUrl && data.creditAmount != null && data.creditAmount > 0 && (
             <div className="mt-4 flex flex-col items-end gap-1.5">
               <p className="text-[11px] text-neutral-400">Scan to pay</p>
               {/* eslint-disable-next-line @next/next/no-img-element -- static data URL, print page */}
@@ -266,6 +272,17 @@ export function A4Renderer({ data }: { data: A4InvoiceData }) {
           )}
         </div>
       </div>
+
+      {data.quotation?.notes && (
+        <div className="mt-8" style={{ breakInside: "avoid" }}>
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-neutral-400">Notes</p>
+          {data.quotation.notes.split("\n").map((line, i) => (
+            <p key={i} className="mt-1 text-[12px] text-neutral-600">
+              {line}
+            </p>
+          ))}
+        </div>
+      )}
 
       <div className="mt-12 flex justify-end" style={{ breakInside: "avoid" }}>
         <div className="text-center">

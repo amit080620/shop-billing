@@ -1,3 +1,6 @@
+/** One line of a quotation, priced the way a bill would price it. */
+export type QuotationLine = { productId: string | null; description: string; hsnCode: string | null; quantity: number; stockQuantity: number; unitPrice: number; gstPercent: number };
+
 export type Json =
   | string
   | number
@@ -2079,6 +2082,14 @@ export interface Database {
           { foreignKeyName: "day_closes_shop_id_fkey"; columns: ["shop_id"]; isOneToOne: false; referencedRelation: "shops"; referencedColumns: ["id"] },
         ];
       };
+      quotations: {
+        Row: { id: string; shop_id: string; quote_number: string; financial_year: string; customer_id: string | null; customer_name: string | null; customer_phone: string | null; items: QuotationLine[]; discount_type: "flat" | "percent"; discount_value: number; subtotal: number; discount_amount: number; taxable_amount: number; cgst_amount: number; sgst_amount: number; igst_amount: number; round_off_amount: number; total: number; supply_type: "intra" | "inter"; valid_until: string | null; notes: string | null; status: "open" | "converted" | "cancelled"; bill_id: string | null; staff_id: string | null; created_at: string };
+        Insert: { id?: string; shop_id: string; quote_number: string; financial_year: string; customer_id?: string | null; customer_name?: string | null; customer_phone?: string | null; items: QuotationLine[]; discount_type?: "flat" | "percent"; discount_value?: number; subtotal?: number; discount_amount?: number; taxable_amount?: number; cgst_amount?: number; sgst_amount?: number; igst_amount?: number; round_off_amount?: number; total?: number; supply_type?: "intra" | "inter"; valid_until?: string | null; notes?: string | null; status?: "open" | "converted" | "cancelled"; bill_id?: string | null; staff_id?: string | null; created_at?: string };
+        Update: { id?: string; shop_id?: string; quote_number?: string; financial_year?: string; customer_id?: string | null; customer_name?: string | null; customer_phone?: string | null; items?: QuotationLine[]; discount_type?: "flat" | "percent"; discount_value?: number; subtotal?: number; discount_amount?: number; taxable_amount?: number; cgst_amount?: number; sgst_amount?: number; igst_amount?: number; round_off_amount?: number; total?: number; supply_type?: "intra" | "inter"; valid_until?: string | null; notes?: string | null; status?: "open" | "converted" | "cancelled"; bill_id?: string | null; staff_id?: string | null; created_at?: string };
+        Relationships: [
+          { foreignKeyName: "quotations_shop_id_fkey"; columns: ["shop_id"]; isOneToOne: false; referencedRelation: "shops"; referencedColumns: ["id"] },
+        ];
+      };
       returns: {
         Row: {
           id: string;
@@ -2611,6 +2622,10 @@ export interface Database {
         Returns: number;
       };
       next_debit_note_number: {
+        Args: { p_shop_id: string; p_financial_year: string };
+        Returns: number;
+      };
+      next_quotation_number: {
         Args: { p_shop_id: string; p_financial_year: string };
         Returns: number;
       };

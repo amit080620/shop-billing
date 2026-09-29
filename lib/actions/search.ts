@@ -20,6 +20,7 @@ const STATIC_PAGES: { title: string; subtitle: string; href: string; keywords: s
   { title: "Floating calculator", subtitle: "On or off, auto-fills with the bill total", href: "/more", keywords: ["calculator", "calc", "math"] },
   { title: "New Bill", subtitle: "Sell / create a bill", href: "/bills/new", keywords: ["sell", "new bill", "billing", "invoice"] },
   { title: "All bills", subtitle: "Browse & reprint past bills", href: "/bills/all", keywords: ["bills", "reprint", "invoice history"] },
+  { title: "Quotations", subtitle: "Price offers, billed in one tap when agreed", href: "/quotations", keywords: ["quotation", "quote", "estimate", "price list", "kotation"] },
   { title: "Purchases", subtitle: "Buy stock from a vendor", href: "/purchases/new", keywords: ["buy", "purchase", "stock in"] },
   { title: "Products", subtitle: "Add and manage items", href: "/products", keywords: ["product", "item", "inventory", "stock"] },
   { title: "Scan menu", subtitle: "Add items from a photo", href: "/products/scan-menu", keywords: ["scan menu", "camera", "ocr"] },

@@ -6,10 +6,13 @@ import { NewBillClient } from "./NewBillClient";
 import { getBarcodeScanModeAction } from "@/lib/actions/settings";
 import { computeAffinityMap } from "@/lib/basketAffinity";
 import { buyerSchemaReady } from "@/lib/gstBuyer";
+import { quotationsReady } from "@/lib/quotationsData";
+import { todayIso } from "@/lib/dateHelpers";
 
-export default async function NewBillPage({ searchParams }: { searchParams: Promise<{ customer?: string; provider?: string }> }) {
-  // Opened from an appointment ("Bill →"): that customer and stylist come filled in.
-  const { customer: customerParam, provider: providerParam } = await searchParams;
+export default async function NewBillPage({ searchParams }: { searchParams: Promise<{ customer?: string; provider?: string; quote?: string }> }) {
+  // Opened from an appointment ("Bill →"): that customer and stylist come filled in. Opened from a
+  // quotation ("Make bill"): its lines, customer and discount.
+  const { customer: customerParam, provider: providerParam, quote: quoteParam } = await searchParams;
   const session = await requireSession();
   const lang = await getLang();
   const barcodeScanMode = await getBarcodeScanModeAction();
@@ -79,6 +82,24 @@ export default async function NewBillPage({ searchParams }: { searchParams: Prom
   // check on the dashboard, so both agree on what actually goes together.
   const affinityMap = await computeAffinityMap(admin, session.shopId);
 
+  const quotationsAvailable = await quotationsReady(admin);
+  const { data: quote } =
+    quotationsAvailable && quoteParam && /^[0-9a-f-]{36}$/i.test(quoteParam)
+      ? await admin.from("quotations").select("id, quote_number, customer_id, items, discount_type, discount_value, status, valid_until").eq("id", quoteParam).eq("shop_id", session.shopId).maybeSingle()
+      : { data: null };
+  const fromQuote =
+    quote && quote.status === "open"
+      ? {
+          id: quote.id,
+          number: quote.quote_number,
+          lines: quote.items,
+          discountType: quote.discount_type,
+          discountValue: Number(quote.discount_value),
+          // While it is valid the quoted prices stand (the server keeps them too).
+          honourPrices: !quote.valid_until || quote.valid_until >= todayIso(),
+        }
+      : null;
+
   return (
     <div className="flex flex-col gap-3">
       {shop?.fast_billing_enabled && (
@@ -144,7 +165,12 @@ export default async function NewBillPage({ searchParams }: { searchParams: Prom
       goldRate={metalRates?.find((r) => r.metal_type === "gold") ? Number(metalRates.find((r) => r.metal_type === "gold")!.rate_per_gram) : null}
       silverRate={metalRates?.find((r) => r.metal_type === "silver") ? Number(metalRates.find((r) => r.metal_type === "silver")!.rate_per_gram) : null}
       businessType={session.businessType}
-      initialCustomerId={customerParam && (customers ?? []).some((c) => c.id === customerParam) ? customerParam : null}
+      initialCustomerId={(() => {
+        const wanted = fromQuote ? quote?.customer_id : customerParam;
+        return wanted && (customers ?? []).some((c) => c.id === wanted) ? wanted : null;
+      })()}
+      quotationsAvailable={quotationsAvailable}
+      fromQuote={fromQuote}
       initialProvider={providerParam?.slice(0, 80) ?? ""}
     />
     </div>

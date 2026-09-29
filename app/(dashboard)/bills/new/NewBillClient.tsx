@@ -6,6 +6,9 @@ import Link from "next/link";
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import { createBillAction } from "@/lib/actions/bills";
+import { saveQuotationAction } from "@/lib/actions/quotations";
+import { useRouter } from "next/navigation";
+import type { QuotationLine } from "@/lib/supabase/database.types";
 import { quickCreateCustomerAction, lookupCustomerByPhoneAction } from "@/lib/actions/customers";
 import { quickCreateProductAction } from "@/lib/actions/products";
 import { calculateTransactionTotals } from "@/lib/validation/schemas";
@@ -110,7 +113,13 @@ export function NewBillClient({
   b2bAvailable = false,
   initialCustomerId = null,
   initialProvider = "",
+  quotationsAvailable = false,
+  fromQuote = null,
 }: {
+  /** "Save as quotation" is offered once migration 0045 has run. */
+  quotationsAvailable?: boolean;
+  /** Billing an accepted quotation: its lines, discount and number. */
+  fromQuote?: { id: string; number: string; lines: QuotationLine[]; discountType: "flat" | "percent"; discountValue: number; honourPrices: boolean } | null;
   /** Opened from an appointment: the customer and stylist to start with. */
   initialCustomerId?: string | null;
   initialProvider?: string;
@@ -148,7 +157,11 @@ export function NewBillClient({
   const { t } = useTranslation(lang);
   const isOnline = useOnlineStatus();
   const [step, setStep] = useState<"cart" | "ticket">("cart");
-  const [cart, setCart] = useState<CartLine[]>([]);
+  const [cart, setCart] = useState<CartLine[]>(() => (fromQuote ? cartFromQuote(fromQuote.lines, products, fromQuote.honourPrices) : []));
+  const router = useRouter();
+  const [quoteDays, setQuoteDays] = useState(15);
+  const [quoteSaving, setQuoteSaving] = useState(false);
+  const [quoteError, setQuoteError] = useState<string | null>(null);
 
   // Refresh the offline cache every time this page loads successfully
   // (i.e. while online) — so if the connection drops mid-day, there's
@@ -234,8 +247,8 @@ export function NewBillClient({
       cancelled = true;
     };
   }, [selectedCustomer?.phone]);
-  const [discountType, setDiscountType] = useState<"percent" | "flat">("flat");
-  const [discountValue, setDiscountValue] = useState(0);
+  const [discountType, setDiscountType] = useState<"percent" | "flat">(fromQuote?.discountType ?? "flat");
+  const [discountValue, setDiscountValue] = useState(fromQuote?.discountValue ?? 0);
   const [redeemPoints, setRedeemPoints] = useState(false);
   const [paidAmount, setPaidAmount] = useState<number | "">("");
   const [paymentMethod, setPaymentMethod] = useState<"cash" | "card" | "upi" | "online" | "other">("cash");
@@ -986,8 +999,9 @@ export function NewBillClient({
   // --- Complete Ticket screen: GST + discount entered here, before the invoice is generated ---
   const payload = JSON.stringify({
     customerId: customerMode === "existing" ? selectedCustomer?.id ?? null : null,
+    quotationId: fromQuote?.id ?? null,
     items: cart.map((c) => ({
-      productId: c.productId === "__transport_charge__" || c.productId.startsWith("__jewellery_") ? null : c.productId,
+      productId: c.productId === "__transport_charge__" || c.productId.startsWith("__jewellery_") || c.productId.startsWith("__quote_") ? null : c.productId,
       description: c.name,
       hsnCode: c.hsnCode,
       quantity: c.quantity,
@@ -1370,8 +1384,97 @@ export function NewBillClient({
       )}
 
       <SubmitButton blocked={(customerMode === "walkin" && totals.balanceAmount > 0) || b2bInvalid} generatingLabel={t("bill.generating")} submitLabel={t("bill.generateInvoice")} />
+
+      {/* Not selling yet — the customer wants a price first. Same cart, saved as a quotation. */}
+      {quotationsAvailable && !fromQuote && (
+        <div className="flex flex-col gap-2 rounded-xl border border-dashed border-border p-3">
+          <p className="text-xs text-muted">{t("Customer only wants a price for now?")}</p>
+          <div className="flex items-center gap-2">
+            <select value={quoteDays} onChange={(e) => setQuoteDays(Number(e.target.value))} className="rounded-lg border border-border px-2 py-2 text-xs outline-none focus:border-brand" aria-label={t("Valid for")}>
+              {[7, 15, 30, 60].map((d) => (
+                <option key={d} value={d}>
+                  {t("Valid {n} days", { n: d })}
+                </option>
+              ))}
+            </select>
+            <button
+              type="button"
+              disabled={quoteSaving}
+              onClick={async () => {
+                setQuoteError(null);
+                setQuoteSaving(true);
+                const r = await saveQuotationAction(payload, quoteDays, "");
+                setQuoteSaving(false);
+                if (r.error || !r.quotationId) setQuoteError(r.error ?? "Could not save");
+                else router.push(`/quotations/${r.quotationId}`);
+              }}
+              className="flex-1 rounded-lg border border-brand bg-brand-soft px-3 py-2 text-sm font-medium text-brand-text disabled:opacity-60"
+            >
+              {quoteSaving ? t("Saving…") : t("Save as quotation")}
+            </button>
+          </div>
+          {quoteError && <p className="text-xs text-danger">{quoteError}</p>}
+        </div>
+      )}
+      {fromQuote && <p className="text-center text-xs text-muted">{t("Billing quotation {number}", { number: fromQuote.number })}</p>}
     </form>
   );
+}
+
+/** A quotation's lines back in the cart: catalogue items (loose where a loose share was quoted) at
+ * the quoted price while the quotation is valid, else as they are sold today; anything else as the
+ * line typed. The server prices the bill again by the same rule. */
+function cartFromQuote(lines: QuotationLine[], products: Product[], honourPrices: boolean): CartLine[] {
+  return lines.map((l, i) => {
+    const p = l.productId ? products.find((x) => x.id === l.productId) : undefined;
+    if (!p) {
+      return {
+        productId: `__quote_${i}__`,
+        name: l.description,
+        price: l.unitPrice,
+        packPrice: l.unitPrice,
+        gstPercent: l.gstPercent,
+        hsnCode: l.hsnCode,
+        unit: "item",
+        quantity: l.quantity,
+        trackInventory: false,
+        stockQuantity: 0,
+        lowStockThreshold: 0,
+        requiresPrescription: false,
+        unitsPerPack: null,
+        looseUnitName: null,
+        saleMode: "pack",
+        regularPrice: l.unitPrice,
+        bulkMinQty: null,
+        bulkPrice: null,
+      };
+    }
+    const loose = !!p.unitsPerPack && p.unitsPerPack > 1 && l.stockQuantity !== l.quantity;
+    const bulk = !loose && p.bulkMinQty && p.bulkPrice && l.quantity >= p.bulkMinQty ? p.bulkPrice : null;
+    const today = loose && p.unitsPerPack ? round2(p.price / p.unitsPerPack) : (bulk ?? p.price);
+    return {
+      productId: p.id,
+      name: p.name,
+      price: honourPrices ? l.unitPrice : today,
+      // Kept through quantity changes, like any promised price.
+      priceOverride: honourPrices || undefined,
+      packPrice: p.price,
+      gstPercent: p.gstPercent,
+      hsnCode: p.hsnCode,
+      unit: p.unit,
+      quantity: l.quantity,
+      trackInventory: p.trackInventory,
+      stockQuantity: p.stockQuantity,
+      lowStockThreshold: p.lowStockThreshold,
+      requiresPrescription: p.requiresPrescription,
+      unitsPerPack: p.unitsPerPack,
+      looseUnitName: p.looseUnitName,
+      saleMode: loose ? "loose" : "pack",
+      regularPrice: p.price,
+      bulkMinQty: p.bulkMinQty,
+      bulkPrice: p.bulkPrice,
+    };
+  });
 }
 
 /** How much +/- should move by for a given unit — whole items step by 1,

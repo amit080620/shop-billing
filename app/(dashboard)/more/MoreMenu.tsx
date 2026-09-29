@@ -53,6 +53,7 @@ import {
   WifiOff,
   Wrench,
   Zap,
+  FileText,
   type LucideIcon,
 } from "lucide-react";
 
@@ -190,6 +191,7 @@ export async function MoreMenu() {
 
         <MenuGroup title="Sales & money">
           <MenuLink href="/bills/all" label="All bills" sub="Browse & reprint any past bill" icon={Receipt} />
+          <MenuLink href="/quotations" label="Quotations" sub="Price offers — bill them in one tap when agreed" icon={FileText} />
           {mod("petty_cash") && <MenuLink href="/petty-cash" label="Petty cash" sub="Small day-to-day cash expenses" icon={Wallet} />}
           <MenuLink href="/catalog-orders" label="Catalog orders" sub="Orders from your online catalog" icon={Store} />
           {mod("public_catalog") && (
