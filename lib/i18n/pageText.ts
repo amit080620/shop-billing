@@ -138,7 +138,9 @@ export const PAGE_TEXT: Record<string, [hi: string, mr: string]> = {
   "Summary return": ["सारांश रिटर्न", "सारांश रिटर्न"],
   "Input GST / ITC": ["इनपुट GST / ITC", "इनपुट GST / ITC"],
   "Taxable value": ["टैक्स योग्य राशि", "करपात्र रक्कम"],
-  "Share PDF": ["PDF भेजें", "PDF पाठवा"],
+  "Share PDF": ["PDF शेयर करें", "PDF शेअर करा"],
+  "Send PDF": ["PDF भेजें", "PDF पाठवा"],
+  "PDF is ready — tap Send PDF.": ["PDF तैयार है — Send PDF दबाएँ।", "PDF तयार आहे — Send PDF दाबा."],
   "PDF saved — attach it in the customer's WhatsApp chat.": ["PDF सेव हो गया — ग्राहक की WhatsApp चैट में लगा दें।", "PDF सेव्ह झाले — ग्राहकाच्या WhatsApp चॅटमध्ये जोडा."],
   "Could not share the PDF. Use Save PDF instead.": ["PDF भेजा नहीं जा सका। Save PDF इस्तेमाल करें।", "PDF पाठवता आले नाही. Save PDF वापरा."],
   "The WhatsApp message goes straight to the customer's number, with a link to open or download this invoice as a PDF. Share PDF sends the PDF file itself — pick WhatsApp, then the customer.": [

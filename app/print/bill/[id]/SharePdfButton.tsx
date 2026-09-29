@@ -22,24 +22,38 @@ export function SharePdfButton({
   const { t } = useT();
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState<string | null>(null);
+  // Kept once made: a browser only opens the share sheet within a few seconds of a tap, and
+  // making the PDF can take longer on a slow phone — then the next tap shares it at once.
+  const [file, setFile] = useState<File | null>(null);
 
   async function share() {
     setNote(null);
     setBusy(true);
+    let pdfFile = file;
     try {
-      const pdf = await makeInvoicePdf({ isThermal, upiLink });
-      const file = new File([pdf.output("blob")], invoicePdfName(invoiceNumber), { type: "application/pdf" });
-      const data = { files: [file], title: `Invoice ${invoiceNumber}`, text: `Invoice ${invoiceNumber} from ${shopName}` };
-      if (typeof navigator.share === "function" && (!navigator.canShare || navigator.canShare({ files: [file] }))) {
-        await navigator.share(data);
+      if (!pdfFile) {
+        const pdf = await makeInvoicePdf({ isThermal, upiLink });
+        pdfFile = new File([pdf.output("blob")], invoicePdfName(invoiceNumber), { type: "application/pdf" });
+        setFile(pdfFile);
+      }
+      if (typeof navigator.share === "function" && (!navigator.canShare || navigator.canShare({ files: [pdfFile] }))) {
+        await navigator.share({ files: [pdfFile], title: `Invoice ${invoiceNumber}`, text: `Invoice ${invoiceNumber} from ${shopName}` });
       } else {
         // A desktop browser without file sharing: save it, to attach by hand.
-        pdf.save(invoicePdfName(invoiceNumber));
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(pdfFile);
+        a.download = pdfFile.name;
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(a.href), 10000);
         setNote(t("PDF saved — attach it in the customer's WhatsApp chat."));
       }
     } catch (err) {
-      // Closing the share sheet without picking an app is not an error.
-      if (!(err instanceof DOMException && err.name === "AbortError")) {
+      const name = err instanceof DOMException ? err.name : "";
+      if (name === "AbortError") {
+        // Closing the share sheet without picking an app is not an error.
+      } else if (name === "NotAllowedError" && pdfFile) {
+        setNote(t("PDF is ready — tap Send PDF."));
+      } else {
         console.error("Sharing the invoice PDF failed:", err);
         setNote(t("Could not share the PDF. Use Save PDF instead."));
       }
@@ -52,7 +66,7 @@ export function SharePdfButton({
     <div className="flex w-full flex-col gap-1">
       <button onClick={share} disabled={busy} className="bill-action">
         <Share2 size={15} />
-        {busy ? t("billPage.preparing") : t("Share PDF")}
+        {busy ? t("billPage.preparing") : file ? t("Send PDF") : t("Share PDF")}
       </button>
       {note && <p className="text-xs text-muted">{note}</p>}
     </div>
