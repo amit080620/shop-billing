@@ -1,17 +1,18 @@
 import { notFound } from "next/navigation";
+import { headers } from "next/headers";
 import Link from "next/link";
 import { requireSession } from "@/lib/auth";
 import { getTranslator } from "@/lib/i18n/server";
 import { LangProvider } from "@/lib/i18n/LangContext";
 import { messagesFor } from "@/lib/i18n/dictionary";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
-import { formatMoney, formatDateTime } from "@/lib/format";
-import { formatIsoDate, todayIso } from "@/lib/dateHelpers";
-import { calculateTransactionTotals } from "@/lib/validation/schemas";
+import { formatMoney } from "@/lib/format";
 import { buildWhatsAppLink } from "@/lib/whatsapp";
-import { A4Renderer, type A4InvoiceData } from "@/lib/print/A4Renderer";
+import { A4Renderer } from "@/lib/print/A4Renderer";
+import { loadQuotationDoc, quotationWhatsAppText } from "@/lib/print/quotationDoc";
 import { PrintButton } from "@/app/print/bill/[id]/PrintButton";
 import { DownloadImageButton } from "@/app/print/bill/[id]/DownloadImageButton";
+import { SharePdfButton } from "@/app/print/bill/[id]/SharePdfButton";
 import { CancelQuotationButton } from "./CancelQuotationButton";
 import { quotationsReady } from "@/lib/quotationsData";
 
@@ -22,90 +23,17 @@ export default async function QuotationPage({ params }: { params: Promise<{ id: 
   const admin = createSupabaseAdminClient();
   if (!(await quotationsReady(admin))) notFound();
 
-  const { data: q } = await admin.from("quotations").select("*").eq("id", id).eq("shop_id", session.shopId).maybeSingle();
-  if (!q) notFound();
+  const doc = await loadQuotationDoc(admin, id, session.shopId);
+  if (!doc) notFound();
+  const { q, a4Data, expired } = doc;
 
-  const [{ data: shop }, { data: invoiceSettings }, { data: customer }] = await Promise.all([
-    admin.from("shops").select("name, gstin, logo_url, gst_scheme, address_line1, address_line2, city, state, pincode").eq("id", session.shopId).single(),
-    admin.from("invoice_settings").select("tagline, footer_text, terms_and_conditions, bank_details, accent_color").eq("shop_id", session.shopId).maybeSingle(),
-    q.customer_id ? admin.from("customers").select("name, phone, gstin, address, state").eq("id", q.customer_id).maybeSingle() : Promise.resolve({ data: null }),
-  ]);
-
-  // Line amounts, worked out the way the quotation was (its own discount and place of supply).
-  const lines = calculateTransactionTotals({
-    items: q.items.map((l) => ({ quantity: l.quantity, unitPrice: l.unitPrice, gstPercent: l.gstPercent })),
-    discountType: q.discount_type,
-    discountValue: Number(q.discount_value),
-    paidAmount: 0,
-    supplyType: q.supply_type,
-    priceMode: session.priceIncludesGst ? "inclusive" : "exclusive",
-  }).lines;
-  const isIntra = q.supply_type === "intra";
-  const shopAddress = [shop?.address_line1, shop?.address_line2, shop?.city, shop?.state, shop?.pincode].filter(Boolean).join(", ") || null;
-
-  const a4Data: A4InvoiceData = {
-    shopName: shop?.name ?? session.shopName,
-    shopLogoUrl: shop?.logo_url,
-    shopAddress,
-    gstin: shop?.gstin,
-    isComposition: shop?.gst_scheme === "composition",
-    tagline: invoiceSettings?.tagline ?? null,
-    accentColor: invoiceSettings?.accent_color ?? null,
-    invoiceNumber: q.quote_number,
-    dateText: formatDateTime(q.created_at),
-    customerName: customer?.name ?? q.customer_name,
-    customerAddress: customer?.address ?? null,
-    customerPhone: customer?.phone ?? q.customer_phone,
-    customerGstin: customer?.gstin ?? null,
-    placeOfSupplyText: isIntra ? `${shop?.state ?? "Same state"} (CGST + SGST)` : `${customer?.state ?? "Different state"} (IGST)`,
-    items: q.items.map((l, i) => ({
-      name: l.description,
-      hsnCode: l.hsnCode,
-      qty: l.quantity,
-      rate: l.unitPrice,
-      taxPercent: l.gstPercent,
-      amount: Math.round(((lines[i]?.lineSubtotal ?? 0) + (lines[i]?.lineGst ?? 0)) * 100) / 100,
-    })),
-    subtotal: Number(q.subtotal),
-    discountLabel: Number(q.discount_amount) > 0 ? `Discount (${q.discount_type === "percent" ? `${Number(q.discount_value)}%` : "flat"})` : null,
-    discountAmount: Number(q.discount_amount),
-    taxableAmount: Number(q.taxable_amount),
-    isIntraState: isIntra,
-    cgstAmount: Number(q.cgst_amount),
-    sgstAmount: Number(q.sgst_amount),
-    igstAmount: Number(q.igst_amount),
-    roundOffAmount: Number(q.round_off_amount),
-    total: Number(q.total),
-    paidAmount: 0,
-    paymentLabel: "",
-    bankDetails: invoiceSettings?.bank_details ?? null,
-    termsAndConditions: invoiceSettings?.terms_and_conditions ?? null,
-    footerText: invoiceSettings?.footer_text ?? null,
-    quotation: { validUntilText: q.valid_until ? formatIsoDate(q.valid_until) : null, notes: q.notes },
-  };
-
-  const expired = q.status === "open" && !!q.valid_until && q.valid_until < todayIso();
-  const phone = customer?.phone ?? q.customer_phone;
-  const itemLines = q.items.map((l) => `${l.description} x${l.quantity} — ${formatMoney(l.unitPrice * l.quantity)}`);
-  const whatsapp = phone
-    ? buildWhatsAppLink(
-        phone,
-        [
-          `*${a4Data.shopName}*`,
-          `${t("Quotation")} ${q.quote_number}`,
-          customer?.name || q.customer_name ? `${t("For")}: ${customer?.name ?? q.customer_name}` : "",
-          "",
-          "```",
-          ...itemLines,
-          "```",
-          `*${t("Total")}: ${formatMoney(Number(q.total))}*`,
-          q.valid_until ? `${t("Valid until")} ${formatIsoDate(q.valid_until)}` : "",
-          q.notes ?? "",
-        ]
-          .filter((x, i, a) => x !== "" || (i > 0 && a[i - 1] !== ""))
-          .join("\n"),
-      )
-    : null;
+  // The customer's own copy: a link that opens this quotation (with a PDF button) without a login.
+  const h = await headers();
+  const host = h.get("x-forwarded-host") ?? h.get("host") ?? "bill.theray.in";
+  const protocol = h.get("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https");
+  const pdfUrl = q.status === "cancelled" ? null : `${protocol}://${host}/quote/${q.id}`;
+  const phone = a4Data.customerPhone;
+  const whatsapp = phone ? buildWhatsAppLink(phone, quotationWhatsAppText(doc, pdfUrl)) : null;
 
   return (
     <LangProvider lang={lang} messages={messagesFor(lang)}>
@@ -142,9 +70,10 @@ export default async function QuotationPage({ params }: { params: Promise<{ id: 
             ) : (
               <p className="rounded-lg bg-surface px-3 py-2 text-xs text-muted">{t("No phone on this quotation — pick a customer on New Bill to send it on WhatsApp.")}</p>
             )}
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-3 gap-2">
               <PrintButton />
               <DownloadImageButton invoiceNumber={q.quote_number} isThermal={false} />
+              <SharePdfButton invoiceNumber={q.quote_number} shopName={a4Data.shopName} isThermal={false} />
             </div>
             <div className="flex flex-wrap gap-2">
               {q.status === "converted" && q.bill_id && (
