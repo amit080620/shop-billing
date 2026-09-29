@@ -2082,6 +2082,24 @@ export interface Database {
           { foreignKeyName: "day_closes_shop_id_fkey"; columns: ["shop_id"]; isOneToOne: false; referencedRelation: "shops"; referencedColumns: ["id"] },
         ];
       };
+      workers: {
+        Row: { id: string; shop_id: string; staff_id: string | null; name: string; phone: string | null; designation: string | null; pay_type: "monthly" | "daily"; monthly_salary: number; daily_wage: number; joined_on: string | null; is_active: boolean; created_at: string };
+        Insert: { id?: string; shop_id: string; staff_id?: string | null; name: string; phone?: string | null; designation?: string | null; pay_type?: "monthly" | "daily"; monthly_salary?: number; daily_wage?: number; joined_on?: string | null; is_active?: boolean; created_at?: string };
+        Update: { id?: string; shop_id?: string; staff_id?: string | null; name?: string; phone?: string | null; designation?: string | null; pay_type?: "monthly" | "daily"; monthly_salary?: number; daily_wage?: number; joined_on?: string | null; is_active?: boolean; created_at?: string };
+        Relationships: [];
+      };
+      worker_attendance: {
+        Row: { id: string; shop_id: string; worker_id: string; work_date: string; status: "present" | "half" | "absent" | "leave" | "off"; marked_by: string | null; created_at: string };
+        Insert: { id?: string; shop_id: string; worker_id: string; work_date: string; status: "present" | "half" | "absent" | "leave" | "off"; marked_by?: string | null; created_at?: string };
+        Update: { id?: string; shop_id?: string; worker_id?: string; work_date?: string; status?: "present" | "half" | "absent" | "leave" | "off"; marked_by?: string | null; created_at?: string };
+        Relationships: [];
+      };
+      worker_payments: {
+        Row: { id: string; shop_id: string; worker_id: string; for_month: string; kind: "advance" | "salary" | "bonus"; amount: number; payment_method: "cash" | "card" | "upi" | "online" | "other"; note: string | null; staff_id: string | null; created_at: string };
+        Insert: { id?: string; shop_id: string; worker_id: string; for_month: string; kind: "advance" | "salary" | "bonus"; amount: number; payment_method?: "cash" | "card" | "upi" | "online" | "other"; note?: string | null; staff_id?: string | null; created_at?: string };
+        Update: { id?: string; shop_id?: string; worker_id?: string; for_month?: string; kind?: "advance" | "salary" | "bonus"; amount?: number; payment_method?: "cash" | "card" | "upi" | "online" | "other"; note?: string | null; staff_id?: string | null; created_at?: string };
+        Relationships: [];
+      };
       quotations: {
         Row: { id: string; shop_id: string; quote_number: string; financial_year: string; customer_id: string | null; customer_name: string | null; customer_phone: string | null; items: QuotationLine[]; discount_type: "flat" | "percent"; discount_value: number; subtotal: number; discount_amount: number; taxable_amount: number; cgst_amount: number; sgst_amount: number; igst_amount: number; round_off_amount: number; total: number; supply_type: "intra" | "inter"; valid_until: string | null; notes: string | null; status: "open" | "converted" | "cancelled"; bill_id: string | null; staff_id: string | null; created_at: string };
         Insert: { id?: string; shop_id: string; quote_number: string; financial_year: string; customer_id?: string | null; customer_name?: string | null; customer_phone?: string | null; items: QuotationLine[]; discount_type?: "flat" | "percent"; discount_value?: number; subtotal?: number; discount_amount?: number; taxable_amount?: number; cgst_amount?: number; sgst_amount?: number; igst_amount?: number; round_off_amount?: number; total?: number; supply_type?: "intra" | "inter"; valid_until?: string | null; notes?: string | null; status?: "open" | "converted" | "cancelled"; bill_id?: string | null; staff_id?: string | null; created_at?: string };

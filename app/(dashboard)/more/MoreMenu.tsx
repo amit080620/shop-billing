@@ -54,6 +54,7 @@ import {
   Wrench,
   Zap,
   FileText,
+  CalendarCheck,
   type LucideIcon,
 } from "lucide-react";
 
@@ -230,6 +231,9 @@ export async function MoreMenu() {
             icon={Users}
           />
           {isOwner && <MenuLink href="/staff" label={t("more.staff")} sub={t("more.staff.sub")} icon={UserCog} />}
+          {(isOwner || session.permissions.includes("manage_staff")) && (
+            <MenuLink href="/staff-attendance" label={t("Staff attendance & salary")} sub={t("Daily register, advances, monthly salary and slips")} icon={CalendarCheck} />
+          )}
           {isOwner && mod("multi_branch") && <MenuLink href="/branches" label="Branches" sub="Multiple locations, one account" icon={Building2} />}
         </MenuGroup>
 
