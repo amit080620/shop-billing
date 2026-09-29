@@ -5,7 +5,26 @@ import { useTranslation } from "@/lib/i18n/useTranslation";
 import type { Lang } from "@/lib/i18n/dictionary";
 import { buildWhatsAppLink } from "@/lib/whatsapp";
 
-type BillItem = { name: string; quantity: number; unitPrice: number; lineTotal: number };
+type BillItem = { name: string; quantity: number; unitPrice: number; lineTotal: number; gstPercent?: number };
+
+/** What a GST invoice has to say besides its lines: who issued it, who it is made out to, where the
+ * supply is and how the tax splits. Every field is optional, so a plain cash sale stays a short text. */
+export type WhatsAppInvoiceDetails = {
+  shopGstin: string | null;
+  isComposition: boolean;
+  dateText: string;
+  billTo: { name: string | null; gstin: string | null; address: string | null } | null;
+  placeOfSupply: string | null;
+  subtotal: number;
+  discountLabel: string | null;
+  discountAmount: number;
+  taxableAmount: number;
+  cgst: number;
+  sgst: number;
+  igst: number;
+  roundOff: number;
+  paymentLabel: string | null;
+};
 
 export function WhatsAppSendButton({
   customerName,
@@ -18,6 +37,7 @@ export function WhatsAppSendButton({
   creditAmount,
   upiLink,
   lang,
+  details,
 }: {
   customerName: string | null;
   customerPhone: string | null;
@@ -29,6 +49,7 @@ export function WhatsAppSendButton({
   creditAmount: number;
   upiLink?: string | null;
   lang: Lang;
+  details?: WhatsAppInvoiceDetails;
 }) {
   const { t } = useTranslation(lang);
 
@@ -40,6 +61,12 @@ export function WhatsAppSendButton({
     );
   }
 
+  const tax = details ? details.cgst + details.sgst + details.igst : 0;
+  const isB2b = !!details?.billTo?.gstin;
+  // A GST invoice (tax on it, or made out to a GSTIN) carries the full invoice in the text:
+  // both GSTINs, place of supply and the tax split — what the buyer needs to claim the credit.
+  const fullInvoice = !!details && (tax > 0 || isB2b || !!details.shopGstin);
+
   // WhatsApp text messages genuinely can't carry any color at all —
   // not for any sender, in any app, ever; it's a platform-wide
   // limitation with no code workaround. *Bold*, _italic_, and a
@@ -48,23 +75,48 @@ export function WhatsAppSendButton({
   // formatting WhatsApp supports, and are what make this look
   // deliberately put-together rather than a plain data dump.
   const itemLines = items.map((it) => {
-    const namePart = it.quantity === 1 ? it.name : `${it.name} x${it.quantity}`;
+    const rate = fullInvoice && !details?.isComposition && it.gstPercent != null ? ` @${it.gstPercent}%` : "";
+    const namePart = (it.quantity === 1 ? it.name : `${it.name} x${it.quantity}`) + rate;
     const pricePart = it.quantity === 1 ? formatMoney(it.lineTotal) : `${formatMoney(it.unitPrice)} → ${formatMoney(it.lineTotal)}`;
     const dots = ".".repeat(Math.max(1, 28 - namePart.length - pricePart.length));
     return `${namePart}${dots}${pricePart}`;
   });
 
-  const lines = [
-    `*${shopName}*`,
-    t("wa.billGreeting", { name: customerName ?? "there", shop: shopName }),
-    "",
-    t("wa.billInvoiceNo", { number: invoiceNumber }),
-    "```",
-    ...itemLines,
-    "```",
-    `*${t("wa.billTotalLabel")}: ${formatMoney(total)}*`,
-    t("wa.billPaid", { amount: formatMoney(paidAmount) }),
-  ];
+  const lines = [`*${shopName}*`];
+  if (fullInvoice && details.shopGstin) lines.push(`GSTIN: ${details.shopGstin}`);
+  lines.push(t("wa.billGreeting", { name: customerName ?? "there", shop: shopName }), "");
+
+  if (fullInvoice) {
+    const title = details.isComposition ? t("Bill of Supply") : t("Tax Invoice");
+    lines.push(`*${title}* · ${invoiceNumber}`, `${t("Date")}: ${details.dateText}`);
+    if (details.billTo?.name || details.billTo?.gstin) {
+      lines.push("", `*${t("Bill to")}:* ${details.billTo.name ?? ""}`);
+      if (details.billTo.gstin) lines.push(`GSTIN: ${details.billTo.gstin}`);
+      if (details.billTo.address) lines.push(details.billTo.address);
+    }
+    if (details.placeOfSupply && !details.isComposition) lines.push(`${t("Place of supply")}: ${details.placeOfSupply}`);
+  } else {
+    lines.push(t("wa.billInvoiceNo", { number: invoiceNumber }));
+  }
+
+  lines.push("```", ...itemLines, "```");
+
+  if (fullInvoice) {
+    if (details.discountAmount > 0 || tax > 0) lines.push(`${t("Subtotal")}: ${formatMoney(details.subtotal)}`);
+    if (details.discountAmount > 0) lines.push(`${details.discountLabel ?? t("Discount")}: −${formatMoney(details.discountAmount)}`);
+    if (!details.isComposition) lines.push(`${t("Taxable value")}: ${formatMoney(details.taxableAmount)}`);
+    if (details.cgst > 0) lines.push(`CGST: ${formatMoney(details.cgst)}`);
+    if (details.sgst > 0) lines.push(`SGST: ${formatMoney(details.sgst)}`);
+    if (details.igst > 0) lines.push(`IGST: ${formatMoney(details.igst)}`);
+    if (Math.abs(details.roundOff) >= 0.01) lines.push(`${t("Round off")}: ${details.roundOff > 0 ? "+" : "−"}${formatMoney(Math.abs(details.roundOff))}`);
+  }
+
+  lines.push(`*${t("wa.billTotalLabel")}: ${formatMoney(total)}*`);
+  lines.push(
+    fullInvoice && details.paymentLabel && paidAmount > 0
+      ? `${t("Paid")} (${details.paymentLabel}): ${formatMoney(paidAmount)}`
+      : t("wa.billPaid", { amount: formatMoney(paidAmount) }),
+  );
   if (creditAmount > 0) {
     lines.push(`*${t("wa.billBalanceDue", { amount: formatMoney(creditAmount) })}*`);
     if (upiLink) {
@@ -74,6 +126,7 @@ export function WhatsAppSendButton({
       lines.push(t("wa.billPayNow", { link: upiLink }));
     }
   }
+  if (fullInvoice && details.isComposition) lines.push("", `_${t("Composition taxable person, not eligible to collect tax on supplies.")}_`);
   lines.push("", `_${t("wa.billThanks")}_`);
 
   const href = buildWhatsAppLink(customerPhone, lines.join("\n"));

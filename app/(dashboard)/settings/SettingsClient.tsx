@@ -7,7 +7,7 @@ import Image from "next/image";
 import { updateShopSettingsAction, uploadLogoAction, removeLogoAction } from "@/lib/actions/settings";
 import { INDIAN_STATES } from "@/lib/constants/states";
 import { BUSINESS_TYPES } from "@/lib/businessType";
-import { useT } from "@/lib/i18n/LangContext";
+import { useT } from "@/lib/i18n/LangContext";
 import { BackLink } from "@/app/components/BackLink";
 
 type ShopSettings = {
@@ -57,6 +57,13 @@ function SubmitButton({ hasError }: { hasError: boolean }) {
 export function SettingsClient({ shop }: { shop: ShopSettings }) {
   const { t } = useT();
   const [state, formAction] = useActionState(keepValuesOnError(updateShopSettingsAction), null);
+  const [gstin, setGstin] = useState(shop.gstin);
+  const [stateCode, setStateCode] = useState(shop.stateCode);
+  // Set when the GSTIN's own state (its first two digits) is not the state picked below.
+  const gstinState = (() => {
+    const s = INDIAN_STATES.find((x) => x.code === gstin.trim().slice(0, 2));
+    return s && s.code !== stateCode ? s : null;
+  })();
 
   return (
     <div className="flex flex-col gap-4">
@@ -151,13 +158,22 @@ export function SettingsClient({ shop }: { shop: ShopSettings }) {
               {t("Applies to new bills/orders going forward — past ones keep whichever way they were made.")}
             </span>
           </label>
-          <Field
-            name="gstin"
-            label="GSTIN (optional if not yet registered)"
-            defaultValue={shop.gstin}
-            placeholder="22AAAAA0000A1Z5"
-            className="uppercase"
-          />
+          <label className="flex flex-col gap-1.5 text-sm">
+            <span className="font-medium text-foreground">GSTIN (optional if not yet registered)</span>
+            <input
+              name="gstin"
+              value={gstin}
+              onChange={(e) => {
+                const next = e.target.value.toUpperCase();
+                setGstin(next);
+                // The first two digits are the state the GSTIN is registered in — fill it in.
+                const code = next.slice(0, 2);
+                if (INDIAN_STATES.some((s) => s.code === code)) setStateCode(code);
+              }}
+              placeholder="22AAAAA0000A1Z5"
+              className="rounded-lg border border-border px-3 py-2 text-sm uppercase outline-none focus:border-brand"
+            />
+          </label>
         </Section>
 
         <Section title={t("Address (appears on invoices)")}>
@@ -171,9 +187,10 @@ export function SettingsClient({ shop }: { shop: ShopSettings }) {
             <span className="font-medium text-foreground">State *</span>
             <select
               name="stateCode"
-              defaultValue={shop.stateCode}
+              value={stateCode}
+              onChange={(e) => setStateCode(e.target.value)}
               required
-              className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-brand"
+              className={`rounded-lg border px-3 py-2 text-sm outline-none focus:border-brand ${gstinState ? "border-danger" : "border-border"}`}
             >
               <option value="" disabled>
                 {t("Select state")}
@@ -185,6 +202,16 @@ export function SettingsClient({ shop }: { shop: ShopSettings }) {
               ))}
             </select>
           </label>
+          {gstinState && (
+            <div className="flex items-start justify-between gap-3 rounded-lg bg-danger-soft px-3 py-2 text-xs text-danger">
+              <span>
+                {t("Your GSTIN is registered in")} <b>{gstinState.name}</b>. {t("The shop's state must match it — it decides CGST + SGST or IGST on every bill.")}
+              </span>
+              <button type="button" onClick={() => setStateCode(gstinState.code)} className="shrink-0 rounded-md bg-surface px-2 py-1 font-medium text-danger">
+                {t("Use")} {gstinState.name}
+              </button>
+            </div>
+          )}
         </Section>
 
         <Section title="Invoicing">

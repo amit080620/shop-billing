@@ -111,6 +111,10 @@ export default async function PrintBillPage({
 
   const isIntra = bill.supply_type === "intra";
   const paymentLabel = paymentMethodLabel(bill.payment_method);
+  // Within the state the place of supply is the shop's own state; across states, the buyer's.
+  const placeOfSupply = isIntra
+    ? `${shopAddressRow?.state ?? "Same state"} (CGST + SGST)`
+    : `${party?.state ?? "Different state"} (IGST)`;
 
   // Old gold or silver taken in exchange pays part of the bill, and is stored inside paid_amount:
   // the invoice shows it as its own line and prints only the rest as the money that was paid.
@@ -187,7 +191,7 @@ export default async function PrintBillPage({
     customerPhone: customer?.phone ?? null,
     customerGstin: party?.gstin ?? null,
     serviceProviderName: bill.service_provider_name,
-    placeOfSupplyText: isIntra ? "Place: Same state (CGST+SGST)" : `Place: ${party?.state ?? "Different state"} (IGST)`,
+    placeOfSupplyText: `Place: ${placeOfSupply}`,
     items: (items ?? []).map((it) => ({
       name: it.product_name,
       qty: Number(it.quantity),
@@ -236,7 +240,7 @@ export default async function PrintBillPage({
     customerPhone: customer?.phone ?? null,
     customerGstin: party?.gstin ?? null,
     serviceProviderName: bill.service_provider_name,
-    placeOfSupplyText: isIntra ? "Same state (CGST + SGST)" : `${party?.state ?? "Different state"} (IGST)`,
+    placeOfSupplyText: placeOfSupply,
     items: (items ?? []).map((it) => ({
       name: it.product_name,
       hsnCode: it.hsn_code,
@@ -353,11 +357,27 @@ export default async function PrintBillPage({
             customerPhone={customer?.phone ?? null}
             shopName={session.shopName}
             invoiceNumber={bill.invoice_number}
-            items={(items ?? []).map((it) => ({ name: it.product_name, quantity: Number(it.quantity), unitPrice: Number(it.unit_price), lineTotal: Number(it.line_total) }))}
+            items={(items ?? []).map((it) => ({ name: it.product_name, quantity: Number(it.quantity), unitPrice: Number(it.unit_price), lineTotal: Number(it.line_total), gstPercent: Number(it.gst_percent) }))}
             total={Number(bill.total)}
             paidAmount={Number(bill.paid_amount)}
             creditAmount={Number(bill.credit_amount)}
             upiLink={upiLink}
+            details={{
+              shopGstin: session.shopGstin,
+              isComposition: session.gstScheme === "composition",
+              dateText: formatDateTime(bill.created_at),
+              billTo: party ? { name: party.name, gstin: party.gstin, address: party.address } : null,
+              placeOfSupply,
+              subtotal: Number(bill.subtotal),
+              discountLabel: a4Data.discountLabel ?? null,
+              discountAmount: Number(bill.discount_amount),
+              taxableAmount: Number(bill.taxable_amount),
+              cgst: Number(bill.cgst_amount),
+              sgst: Number(bill.sgst_amount),
+              igst: Number(bill.igst_amount),
+              roundOff: Number(bill.round_off_amount),
+              paymentLabel,
+            }}
           />
           <InfoTooltip message={t("WhatsApp text messages can't carry a file — download the PDF, then attach it yourself in the WhatsApp chat for a clean copy. If there's a balance due, the QR area in that PDF is also tappable in most PDF viewers, opening the customer's UPI app directly.")} />
         </div>

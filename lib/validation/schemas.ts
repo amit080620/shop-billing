@@ -112,6 +112,12 @@ export const shopSettingsSchema = z.object({
   invoicePrefix: z.string().trim().max(10).default("INV"),
   upiId: optionalText(60),
   managerPin: optionalText(12),
+}).superRefine((v, ctx) => {
+  // A GSTIN's first two digits are the state it is registered in. The shop's state decides CGST +
+  // SGST vs IGST on every bill, so the two must agree.
+  if (v.gstin && v.gstin.slice(0, 2) !== v.stateCode) {
+    ctx.addIssue({ code: "custom", path: ["stateCode"], message: `Your GSTIN starts with ${v.gstin.slice(0, 2)}, so it is registered in that state — pick the same state under Address (or correct the GSTIN).` });
+  }
 });
 export type ShopSettingsInput = z.infer<typeof shopSettingsSchema>;
 

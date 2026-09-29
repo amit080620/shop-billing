@@ -1000,17 +1000,27 @@ function BillPrintView({
 
   function shareOnWhatsApp() {
     if (customerPhone.length !== 10) return;
-    const lines = [
-      `*${shopName}*`,
-      `Order ${order.orderNumber} (${order.tableName})`,
-      "",
-      "```",
-      ...items.map((i) => `${i.productName} x${i.quantity}...${formatMoney(i.unitPrice * i.quantity)}`),
-      "```",
-      `*Total: ${formatMoney(order.total)}*`,
-      "",
-      "_Thank you, visit again!_",
-    ];
+    // The same invoice the printed slip shows — GSTINs, "Bill to" and the tax split included, so a
+    // company bill sent on WhatsApp is enough for the company to claim its credit.
+    const tax = order.cgstAmount + order.sgstAmount + order.igstAmount;
+    const lines = [`*${shopName}*`];
+    if (shopGstin) lines.push(`GSTIN: ${shopGstin}`);
+    lines.push(`Invoice ${order.orderNumber} (${order.tableName})`, new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata", dateStyle: "medium", timeStyle: "short" }));
+    if (order.buyerGstin) {
+      lines.push("", `*Bill to:* ${order.buyerName ?? ""}`, `GSTIN: ${order.buyerGstin}`);
+      if (order.buyerAddress) lines.push(order.buyerAddress);
+    }
+    lines.push("", "```", ...items.map((i) => `${i.productName} x${i.quantity}...${formatMoney(i.unitPrice * i.quantity)}`), "```");
+    if (tax > 0 || order.discountAmount > 0 || order.buyerGstin) {
+      lines.push(`Subtotal: ${formatMoney(order.subtotal)}`);
+      if (order.discountAmount > 0) lines.push(`Discount: −${formatMoney(order.discountAmount)}`);
+      lines.push(`Taxable value: ${formatMoney(order.taxableAmount)}`);
+      if (order.cgstAmount > 0) lines.push(`CGST: ${formatMoney(order.cgstAmount)}`);
+      if (order.sgstAmount > 0) lines.push(`SGST: ${formatMoney(order.sgstAmount)}`);
+      if (order.igstAmount > 0) lines.push(`IGST: ${formatMoney(order.igstAmount)}`);
+      if (order.roundOffAmount !== 0) lines.push(`Round off: ${order.roundOffAmount > 0 ? "+" : "−"}${formatMoney(Math.abs(order.roundOffAmount))}`);
+    }
+    lines.push(`*Total: ${formatMoney(order.total)}*`, "", "_Thank you, visit again!_");
     window.open(buildWhatsAppLink(customerPhone, lines.join("\n")), "_blank");
   }
 
@@ -1053,7 +1063,7 @@ function BillPrintView({
             <div className="flex flex-col gap-1.5 rounded-lg border border-border p-2">
               <p className="text-xs font-semibold text-foreground">{t("Company GST bill")}</p>
               <input value={buyerDraft.name} onChange={(e) => setBuyerDraft((b) => ({ ...b, name: e.target.value }))} placeholder={t("Business name (as registered)")} className="rounded-lg border border-border px-2.5 py-1.5 text-xs outline-none focus:border-brand" />
-              <input value={buyerDraft.gstin} onChange={(e) => setBuyerDraft((b) => ({ ...b, gstin: e.target.value.toUpperCase().replace(/s/g, "").slice(0, 15) }))} placeholder="GSTIN — 27ABCDE1234F1Z5" className="rounded-lg border border-border px-2.5 py-1.5 font-mono text-xs uppercase outline-none focus:border-brand" />
+              <input value={buyerDraft.gstin} onChange={(e) => setBuyerDraft((b) => ({ ...b, gstin: e.target.value.toUpperCase().replace(/\s/g, "").slice(0, 15) }))} placeholder="GSTIN — 27ABCDE1234F1Z5" className="rounded-lg border border-border px-2.5 py-1.5 font-mono text-xs uppercase outline-none focus:border-brand" />
               <input value={buyerDraft.address} onChange={(e) => setBuyerDraft((b) => ({ ...b, address: e.target.value }))} placeholder={t("Billing address (optional)")} className="rounded-lg border border-border px-2.5 py-1.5 text-xs outline-none focus:border-brand" />
               {buyerError && <p className="text-xs text-danger">{buyerError}</p>}
               <div className="flex gap-1.5">
