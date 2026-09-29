@@ -28,6 +28,8 @@ export async function makeInvoicePdf({ isThermal, upiLink }: { isThermal: boolea
     onclone: (doc) => {
       const copy = doc.getElementById("invoice-capture-area");
       if (!copy) return;
+      // Room under the last line, which otherwise lost its bottom pixels to the edge.
+      copy.style.paddingBottom = "12px";
       if (!isThermal) {
         copy.style.width = `${A4_WIDTH_PX}px`;
         copy.style.maxWidth = "none";
