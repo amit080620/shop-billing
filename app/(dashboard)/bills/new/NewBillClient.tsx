@@ -8,6 +8,8 @@ import { useFormStatus } from "react-dom";
 import { createBillAction } from "@/lib/actions/bills";
 import { saveQuotationAction } from "@/lib/actions/quotations";
 import { customerBillExtrasAction } from "@/lib/actions/salonExtras";
+import { customerCreditAction } from "@/lib/actions/credit";
+import { clinicFollowUpAction } from "@/lib/actions/followUp";
 import type { PackageView } from "@/lib/salonExtras";
 import { useRouter } from "next/navigation";
 import type { QuotationLine } from "@/lib/supabase/database.types";
@@ -19,6 +21,7 @@ import { determineSupplyType, GSTIN_REGEX, round2 } from "@/lib/gst";
 import { INDIAN_STATES } from "@/lib/constants/states";
 import { UNITS } from "@/lib/constants/states";
 import { formatMoney, unitLabel } from "@/lib/format";
+import { formatIsoDate } from "@/lib/dateHelpers";
 import { useSyncCalculatorAmount } from "@/lib/calculatorAmount";
 import { SearchableSelect } from "@/app/components/SearchableSelect";
 import { InlineQuickAdd } from "@/app/components/InlineQuickAdd";
@@ -26,6 +29,8 @@ import { Spinner } from "@/app/components/Spinner";
 import { Zap, Package, AlertTriangle, Pill, Truck, Gem, Recycle, Mic, ScanBarcode, ShoppingCart, Sparkles, X, Plus } from "lucide-react";
 import { barcodeFromQuery } from "@/lib/barcodeQuery";
 import { saltKey, substitutesFor } from "@/lib/salt";
+import { freeUnits, nextFree, type Bxgy } from "@/lib/bxgy";
+import { parseScaleBarcode, pluMatches, type ScaleSettings } from "@/lib/scaleBarcode";
 import dynamic from "next/dynamic";
 const CameraBarcodeScanner = dynamic(() => import("@/app/components/CameraBarcodeScanner").then((m) => m.CameraBarcodeScanner), { ssr: false });
 import { useTranslation } from "@/lib/i18n/useTranslation";
@@ -63,6 +68,8 @@ type Product = {
   hallmarkNumber: string | null;
   /** Salt / composition (pharmacy only) — for same-salt substitutes. */
   salt?: string | null;
+  /** A "buy X get Y free" offer on the item (Offers). */
+  bxgy?: Bxgy | null;
 };
 type Customer = { id: string; name: string; phone: string; gstin: string | null; state_code: string | null; loyalty_points?: number };
 type CartLine = {
@@ -124,6 +131,8 @@ export function NewBillClient({
   initialProvider = "",
   quotationsAvailable = false,
   fromQuote = null,
+  fromChallans = null,
+  scaleBarcode = null,
   fromScheme = null,
   stylists = [],
   extrasAvailable = false,
@@ -138,6 +147,10 @@ export function NewBillClient({
   quotationsAvailable?: boolean;
   /** Billing an accepted quotation: its lines, discount and number. */
   fromQuote?: { id: string; number: string; lines: QuotationLine[]; discountType: "flat" | "percent"; discountValue: number; honourPrices: boolean } | null;
+  /** Delivery challans being billed: their goods (at today's prices), for their customer. */
+  fromChallans?: { ids: string[]; numbers: string[]; lines: QuotationLine[] } | null;
+  /** The weighing scale's label format: a scanned label bills the item at its weight or price. */
+  scaleBarcode?: ScaleSettings | null;
   /** Opened from an appointment: the customer and stylist to start with. */
   initialCustomerId?: string | null;
   initialProvider?: string;
@@ -176,7 +189,7 @@ export function NewBillClient({
   const { t } = useTranslation(lang);
   const isOnline = useOnlineStatus();
   const [step, setStep] = useState<"cart" | "ticket">("cart");
-  const [cart, setCart] = useState<CartLine[]>(() => (fromQuote ? cartFromQuote(fromQuote.lines, products, fromQuote.honourPrices) : []));
+  const [cart, setCart] = useState<CartLine[]>(() => (fromQuote ? cartFromQuote(fromQuote.lines, products, fromQuote.honourPrices) : fromChallans ? cartFromQuote(fromChallans.lines, products, false) : []));
   const router = useRouter();
   const [quoteDays, setQuoteDays] = useState(15);
   const [quoteSaving, setQuoteSaving] = useState(false);
@@ -297,6 +310,35 @@ export function NewBillClient({
     };
   }, [extrasCustomerId]);
 
+  // The customer's udhaar limit and what they owe already, to warn before this bill takes them past it.
+  const [credit, setCredit] = useState<{ limit: number | null; balance: number } | null>(null);
+  const creditCustomerId = customerMode === "existing" ? selectedCustomer?.id ?? null : null;
+  useEffect(() => {
+    setCredit(null);
+    if (!creditCustomerId) return;
+    let cancelled = false;
+    customerCreditAction(creditCustomerId).then((r) => {
+      if (!cancelled) setCredit(r);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [creditCustomerId]);
+  // Clinic: a consultation inside the free follow-up window is ₹0 (the server decides the same).
+  const [followUp, setFollowUp] = useState<{ productIds: string[]; lastPaid: string; until: string } | null>(null);
+  useEffect(() => {
+    setFollowUp(null);
+    if (!creditCustomerId || businessType !== "clinic") return;
+    let cancelled = false;
+    clinicFollowUpAction(creditCustomerId).then((r) => {
+      if (!cancelled) setFollowUp(r);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [creditCustomerId, businessType]);
+  const freeFee = useMemo(() => new Set(followUp?.productIds ?? []), [followUp]);
+
   const [discountType, setDiscountType] = useState<"percent" | "flat">(fromQuote?.discountType ?? "flat");
   const [discountValue, setDiscountValue] = useState(fromQuote?.discountValue ?? 0);
   const [redeemPoints, setRedeemPoints] = useState(false);
@@ -362,12 +404,15 @@ export function NewBillClient({
   const redeemedPointsCount =
     redemptionValue > 0 && loyaltyRedemptionValue > 0 ? Math.ceil(redemptionValue / loyaltyRedemptionValue) : 0;
 
+  // Free units of a buy-X-get-Y offer are not charged (the bill shows them on their own ₹0 line).
+  const offerById = useMemo(() => new Map(products.filter((p) => p.bxgy).map((p) => [p.id, p.bxgy as Bxgy])), [products]);
+  const freeOf = (c: CartLine) => (c.saleMode === "pack" && !c.priceOverride && !c.packageId ? freeUnits(c.quantity, offerById.get(c.productId)) : 0);
   const totals = useMemo(
     () =>
       calculateTransactionTotals({
         items: cart.map((c) => ({
-          quantity: c.quantity,
-          unitPrice: c.price,
+          quantity: c.saleMode === "pack" && !c.priceOverride && !c.packageId ? c.quantity - freeUnits(c.quantity, offerById.get(c.productId)) : c.quantity,
+          unitPrice: freeFee.has(c.productId) ? 0 : c.price,
           gstPercent: shopContext.gstScheme === "composition" ? 0 : c.gstPercent,
         })),
         discountType,
@@ -376,7 +421,7 @@ export function NewBillClient({
         supplyType,
         priceMode: shopContext.priceIncludesGst ? "inclusive" : "exclusive",
       }),
-    [cart, discountType, discountValue, redemptionValue, paidAmount, exchangeValue, supplyType, shopContext.priceIncludesGst, shopContext.gstScheme],
+    [cart, offerById, freeFee, discountType, discountValue, redemptionValue, paidAmount, exchangeValue, supplyType, shopContext.priceIncludesGst, shopContext.gstScheme],
   );
 
   // An e-way bill is needed before goods (not services) worth over ₹50,000 move by vehicle. A line
@@ -395,9 +440,20 @@ export function NewBillClient({
 
   function handleBarcodeScan(code: string) {
     const match = products.find((p) => p.barcode === code);
+    // A weighing-scale label: the item (by its code) at the weight or price printed on it.
+    const scale = match ? null : parseScaleBarcode(code, scaleBarcode);
+    const weighed = scale ? products.find((p) => pluMatches(p.barcode, scale.plu)) : undefined;
     if (match) {
       addProduct(match);
       setScanError(null);
+    } else if (scale && weighed) {
+      const qty = scale.weightKg ?? (weighed.price > 0 ? (scale.price ?? 0) / weighed.price : 0);
+      const had = cart.find((c) => c.productId === weighed.id && c.saleMode === "pack")?.quantity ?? 0;
+      addProduct(weighed);
+      updateQuantity(weighed.id, Math.round((had + qty) * 1000) / 1000);
+      setScanError(null);
+    } else if (scale) {
+      setScanError(t("Scale label for item code {code} — no item has this code as its barcode.", { code: scale.plu }));
     } else {
       setScanError(`${t("bill.noProductFound")}: "${code}"`);
     }
@@ -1024,6 +1080,22 @@ export function NewBillClient({
                           <Pill size={11} /> {t("Same salt: {n} more", { n: saltOf(line.productId) })}
                         </button>
                       )}
+                      {freeFee.has(line.productId) && followUp && (
+                        <p className="mt-0.5 text-[11px] font-medium text-success">
+                          {t("Free follow-up — paid visit on {date}, free till {until}", { date: formatIsoDate(followUp.lastPaid), until: formatIsoDate(followUp.until) })}
+                        </p>
+                      )}
+                      {(() => {
+                        const offer = offerById.get(line.productId);
+                        if (!offer || line.saleMode !== "pack" || line.priceOverride || line.packageId) return null;
+                        const free = freeOf(line);
+                        const next = nextFree(line.quantity, offer);
+                        return (
+                          <p className="mt-0.5 text-[11px] font-medium text-success">
+                            🎁 {free > 0 ? t("{n} free · {offer}", { n: free, offer: t("Buy {buy} get {free} free", { buy: offer.buy, free: offer.free }) }) : next ? t("Add {n} more — free ({offer})", { n: next.more, offer: t("Buy {buy} get {free} free", { buy: offer.buy, free: offer.free }) }) : t("Buy {buy} get {free} free", { buy: offer.buy, free: offer.free })}
+                          </p>
+                        );
+                      })()}
                     </div>
                     <div className="flex shrink-0 items-center gap-1.5">
                       <button
@@ -1151,6 +1223,7 @@ export function NewBillClient({
   const payload = JSON.stringify({
     customerId: customerMode === "existing" ? selectedCustomer?.id ?? null : null,
     quotationId: fromQuote?.id ?? null,
+    challanIds: fromChallans?.ids,
     goldSchemeId: fromScheme?.id ?? null,
     walletAmount: walletUse > 0 ? walletUse : null,
     items: cart.map((c) => ({
@@ -1522,6 +1595,19 @@ export function NewBillClient({
             {t("bill.willAddCredit", { amount: formatMoney(totals.balanceAmount) })}
           </p>
         )}
+        {totals.balanceAmount > 0 && credit?.limit != null && credit.balance + totals.balanceAmount > credit.limit && (
+          <p className="flex items-start gap-1.5 rounded-lg border border-danger/30 bg-danger-soft px-3.5 py-2.5 text-xs text-danger">
+            <AlertTriangle size={13} className="mt-0.5 shrink-0" />
+            <span>
+              {t("Over the udhaar limit: owes {owes} already, this bill adds {adds} — {total} against a limit of {limit}.", {
+                owes: formatMoney(credit.balance),
+                adds: formatMoney(totals.balanceAmount),
+                total: formatMoney(round2(credit.balance + totals.balanceAmount)),
+                limit: formatMoney(credit.limit),
+              })}
+            </span>
+          </p>
+        )}
 
         {ewayGoodsValue > 50000 && (
           <p className="flex items-start gap-1.5 rounded-lg border border-credit/25 bg-credit-soft px-3.5 py-2.5 text-xs text-credit">
@@ -1668,6 +1754,7 @@ export function NewBillClient({
         </div>
       )}
       {fromQuote && <p className="text-center text-xs text-muted">{t("Billing quotation {number}", { number: fromQuote.number })}</p>}
+      {fromChallans && <p className="text-center text-xs text-muted">{t("Billing challan(s) {numbers}", { numbers: fromChallans.numbers.join(", ") })}</p>}
     </form>
   );
 }

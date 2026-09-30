@@ -8,6 +8,9 @@ import { ReturnForm } from "./ReturnForm";
 import { EditRentalQuantitiesButton } from "./EditRentalQuantitiesButton";
 import { EditRentalChargesButton } from "./EditRentalChargesButton";
 import { CancelRentalButton } from "./CancelRentalButton";
+import { RentalPhotos } from "./RentalPhotos";
+import { gapsReady } from "@/lib/gapsData";
+import { rentalPhotoLinks } from "@/lib/rentalPhotos";
 
 export default async function RentalDetailPage({
   params,
@@ -36,6 +39,10 @@ export default async function RentalDetailPage({
     .from("rental_items")
     .select("id, product_name, quantity, line_total, rate, rate_type, duration, deposit_per_unit, condition_on_return, damage_notes")
     .eq("rental_id", id);
+
+  // Photos of the item both ways and the customer's ID (migration 0052).
+  const photosReady = await gapsReady(admin);
+  const photos = photosReady ? await rentalPhotoLinks(admin, (await admin.from("rentals").select("photos").eq("id", id).single()).data?.photos ?? []) : [];
 
   const customer = Array.isArray(rental.customers) ? rental.customers[0] : rental.customers;
 
@@ -167,6 +174,7 @@ export default async function RentalDetailPage({
           items={(items ?? []).map((i) => ({ id: i.id, name: i.product_name, quantity: Number(i.quantity) }))}
         />
       )}
+      {photosReady && rental.status !== "cancelled" && <RentalPhotos rentalId={rental.id} photos={photos} />}
       {/* A booking that has not gone out yet can be called off (owner only, like the action). */}
       {rental.status === "booked" && session.role === "owner" && <CancelRentalButton rentalId={rental.id} paidAmount={Number(rental.paid_amount)} />}
     </div>

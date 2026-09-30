@@ -2,6 +2,9 @@ import type { SessionContext } from "./auth";
 import { hasPermission } from "./auth";
 import type { createSupabaseAdminClient } from "./supabase/admin";
 import { isLooseLine, productLinePrice } from "./linePrice";
+import { isModuleEnabled } from "./modules";
+import { gapsReady } from "./gapsData";
+import { freeUnits, type Bxgy } from "./bxgy";
 
 type Admin = ReturnType<typeof createSupabaseAdminClient>;
 
@@ -41,8 +44,15 @@ export async function priceLines(
   if (error || !dbProducts || dbProducts.length !== productIds.length) return { error: "One or more products could not be verified" as const };
   const productMap = new Map(dbProducts.map((p) => [p.id, p]));
 
+  // "Buy X get Y free" offers on these items (Offers, migration 0052).
+  const offers = new Map<string, Bxgy>();
+  if (productIds.length && isModuleEnabled(session.enabledModules, "offers") && (await gapsReady(admin))) {
+    const { data: rows } = await admin.from("products").select("id, bxgy_buy, bxgy_free").in("id", productIds).not("bxgy_buy", "is", null);
+    for (const r of rows ?? []) if (r.bxgy_buy && r.bxgy_free) offers.set(r.id, { buy: r.bxgy_buy, free: r.bxgy_free });
+  }
+
   const isComposition = session.gstScheme === "composition";
-  const lines = items.map((item) => {
+  const priced = items.map((item) => {
     const product = item.productId ? productMap.get(item.productId) : undefined;
     const loose = product ? isLooseLine(product, item) : false;
     const overridden = !!product && item.priceOverride === true && item.unitPrice > 0 && hasPermission(session, "give_discounts");
@@ -58,7 +68,19 @@ export async function priceLines(
       gstPercent: isComposition ? 0 : product ? Number(product.gst_percent) : item.gstPercent,
       warrantyMonths: product?.has_warranty ? product.warranty_months : null,
       mrp: product?.mrp ? Number(product.mrp) : null,
+      // A buy-X-get-Y offer applies to whole packs sold at the catalogue price.
+      free: product && !loose && !overridden && quotedPrice == null ? freeUnits(item.quantity, offers.get(product.id)) : 0,
+      offer: product ? offers.get(product.id) : undefined,
     };
+  });
+  // The free ones go on their own ₹0 line, so the invoice shows plainly what was given free.
+  const lines = priced.flatMap(({ free, offer, ...line }) => {
+    if (!free || !offer) return [line];
+    const paid = round2(line.quantity - free);
+    return [
+      { ...line, quantity: paid, stockQuantity: paid },
+      { ...line, productName: `${line.productName} (free — buy ${offer.buy} get ${offer.free})`, quantity: free, stockQuantity: free, unitPrice: 0 },
+    ];
   });
   return { productMap, lines };
 }

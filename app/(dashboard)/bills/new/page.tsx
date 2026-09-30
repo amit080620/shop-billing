@@ -14,11 +14,13 @@ import { salonExtrasReady } from "@/lib/salonExtras";
 import { payrollReady } from "@/lib/payrollData";
 import { isModuleEnabled } from "@/lib/modules";
 import { recipesReady } from "@/lib/recipeData";
+import { gapsReady } from "@/lib/gapsData";
+import { mergeChallanLines } from "@/lib/challans";
 
-export default async function NewBillPage({ searchParams }: { searchParams: Promise<{ customer?: string; provider?: string; quote?: string; scheme?: string }> }) {
+export default async function NewBillPage({ searchParams }: { searchParams: Promise<{ customer?: string; provider?: string; quote?: string; scheme?: string; challans?: string }> }) {
   // Opened from an appointment ("Bill →"): that customer and stylist come filled in. Opened from a
   // quotation ("Make bill"): its lines, customer and discount.
-  const { customer: customerParam, provider: providerParam, quote: quoteParam, scheme: schemeParam } = await searchParams;
+  const { customer: customerParam, provider: providerParam, quote: quoteParam, scheme: schemeParam, challans: challansParam } = await searchParams;
   const session = await requireSession();
   const lang = await getLang();
   const barcodeScanMode = await getBarcodeScanModeAction();
@@ -126,6 +128,32 @@ export default async function NewBillPage({ searchParams }: { searchParams: Prom
         }
       : null;
 
+  // Billing delivery challans: their goods, added up, for their one customer, at today's prices.
+  const challanIds = (challansParam ?? "").split(",").filter((x) => /^[0-9a-f-]{36}$/i.test(x)).slice(0, 50);
+  const challanRows =
+    challanIds.length && isModuleEnabled(session.enabledModules, "delivery_challan") && (await gapsReady(admin))
+      ? ((await admin.from("delivery_challans").select("id, challan_number, customer_id, items").eq("shop_id", session.shopId).eq("status", "open").in("id", challanIds)).data ?? [])
+      : [];
+  const challanCustomer = challanRows[0]?.customer_id ?? null;
+  // "Buy X get Y free" offers, so the counter sees the free units before the bill is made.
+  const bxgyOffers = new Map<string, { buy: number; free: number }>();
+  if (isModuleEnabled(session.enabledModules, "offers") && (await gapsReady(admin))) {
+    const { data: rows } = await admin.from("products").select("id, bxgy_buy, bxgy_free").eq("shop_id", session.shopId).not("bxgy_buy", "is", null);
+    for (const r of rows ?? []) if (r.bxgy_buy && r.bxgy_free) bxgyOffers.set(r.id, { buy: r.bxgy_buy, free: r.bxgy_free });
+  }
+  // The weighing scale's label format, if the shop set one up.
+  const { data: scaleRow } = (await gapsReady(admin)) ? await admin.from("shops").select("scale_barcode_prefix, scale_barcode_mode, scale_code_digits").eq("id", session.shopId).single() : { data: null };
+  const scaleBarcode = scaleRow?.scale_barcode_prefix ? { prefix: scaleRow.scale_barcode_prefix, mode: scaleRow.scale_barcode_mode === "price" ? ("price" as const) : ("weight" as const), codeDigits: Number(scaleRow.scale_code_digits) || 5 } : null;
+  const fromChallans =
+    challanRows.length && !quote && challanRows.every((c) => c.customer_id === challanCustomer)
+      ? {
+          ids: challanRows.map((c) => c.id),
+          numbers: challanRows.map((c) => c.challan_number),
+          lines: mergeChallanLines(challanRows).map((l) => ({ productId: l.productId, description: l.name, hsnCode: null, quantity: l.quantity, stockQuantity: l.quantity, unitPrice: 0, gstPercent: 0 })),
+          customerId: challanCustomer,
+        }
+      : null;
+
   return (
     <div className="flex flex-col gap-3">
       {shop?.fast_billing_enabled && (
@@ -185,6 +213,7 @@ export default async function NewBillPage({ searchParams }: { searchParams: Prom
         hallmarkNumber: p.hallmark_number,
         // Only a pharmacy looks for same-salt substitutes.
         salt: session.businessType === "pharmacy" ? p.salt_composition : null,
+        bxgy: bxgyOffers.get(p.id) ?? null,
       }))}
       customers={customers ?? []}
       frequentProductIds={frequentProductIds}
@@ -194,11 +223,13 @@ export default async function NewBillPage({ searchParams }: { searchParams: Prom
       silverRate={silverRateFrom(rateRows)}
       businessType={session.businessType}
       initialCustomerId={(() => {
-        const wanted = fromScheme ? fromScheme.customerId : fromQuote ? quote?.customer_id : customerParam;
+        const wanted = fromScheme ? fromScheme.customerId : fromQuote ? quote?.customer_id : fromChallans ? fromChallans.customerId : customerParam;
         return wanted && (customers ?? []).some((c) => c.id === wanted) ? wanted : null;
       })()}
       quotationsAvailable={quotationsAvailable && !fromScheme}
       fromQuote={fromScheme ? null : fromQuote}
+      fromChallans={fromScheme ? null : fromChallans}
+      scaleBarcode={scaleBarcode}
       fromScheme={fromScheme}
       stylists={(stylistRows ?? []).map((w) => w.name)}
       extrasAvailable={isModuleEnabled(session.enabledModules, "customer_prepaid") && (await salonExtrasReady(admin))}

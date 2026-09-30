@@ -4,6 +4,7 @@ import { goldSchemesReady } from "./goldSchemeData";
 import { cashMovementsReady } from "./cashMovements";
 import { transportExtrasReady } from "./transportData";
 import { giveBackForBill, recipesReady } from "./recipeData";
+import { reopenChallansOfBill } from "./challanData";
 
 type Admin = ReturnType<typeof createSupabaseAdminClient>;
 
@@ -39,6 +40,8 @@ export async function undoBillUsage(admin: Admin, shopId: string, billId: string
     if (await transportExtrasReady(admin)) {
       await admin.from("consignments").update({ bill_id: null }).eq("shop_id", shopId).eq("bill_id", billId);
     }
+    // A bill made from delivery challans voided: the challans are open again.
+    await reopenChallansOfBill(admin, shopId, billId);
   } catch (error) {
     console.error("Could not undo what a voided bill used", billId, error);
   }

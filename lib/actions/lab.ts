@@ -6,6 +6,7 @@ import { createSupabaseAdminClient } from "../supabase/admin";
 import { financialYearFor, round2 } from "../gst";
 import { logError } from "../audit";
 import { findOrCreateCustomerByPhone } from "./customers";
+import { gapsReady, GAPS_NOT_READY } from "../gapsData";
 
 export type ActionState = { error?: string } | null;
 
@@ -112,6 +113,8 @@ export async function createLabOrderAction(input: {
   phlebotomistId: string | null;
   testIds: string[];
   packageIds: string[];
+  /** Home collection charge on this order (the shop's usual one when not given). */
+  collectionCharge?: number | null;
 }): Promise<{ error?: string; orderId?: string }> {
   const session = await requireSession();
   const admin = createSupabaseAdminClient();
@@ -204,6 +207,14 @@ export async function createLabOrderAction(input: {
     }
   }
 
+  // Home collection charge (migration 0052): billed as its own line.
+  if (input.collectionType === "home_collection" && (await gapsReady(admin))) {
+    const { data: shop } = await admin.from("shops").select("lab_home_collection_charge").eq("id", session.shopId).single();
+    const given = input.collectionCharge;
+    const charge = given != null && Number.isFinite(Number(given)) ? Math.max(0, Math.min(10000, Math.round(Number(given)))) : Number(shop?.lab_home_collection_charge ?? 0);
+    if (charge > 0) await admin.from("lab_orders").update({ collection_charge: charge }).eq("id", order.id);
+  }
+
   revalidatePath("/lab/orders");
   return { orderId: order.id };
 }
@@ -281,11 +292,15 @@ export async function billLabOrderAction(orderId: string, paymentMethod: "cash" 
     }
   }
   if (customerId && customerId !== order.patient_id) await admin.from("lab_orders").update({ patient_id: customerId }).eq("id", orderId);
+  const charge = (await gapsReady(admin)) ? Number((await admin.from("lab_orders").select("collection_charge").eq("id", orderId).single()).data?.collection_charge ?? 0) : 0;
 
   const { createBillCore } = await import("./bills");
   const result = await createBillCore(session, {
     customerId,
-    items: items.map((i) => ({ productId: null, description: i.test_name, hsnCode: null, quantity: 1, unitPrice: Number(i.price), gstPercent: Number(i.gst_percent) })),
+    items: [
+      ...items.map((i) => ({ productId: null, description: i.test_name, hsnCode: null, quantity: 1, unitPrice: Number(i.price), gstPercent: Number(i.gst_percent) })),
+      ...(charge > 0 ? [{ productId: null, description: "Home collection charge", hsnCode: null, quantity: 1, unitPrice: charge, gstPercent: 0 }] : []),
+    ],
     discountType: "flat",
     discountValue: 0,
     paidAmount,
@@ -309,4 +324,32 @@ export async function billLabOrderAction(orderId: string, paymentMethod: "cash" 
   }
   revalidatePath(`/lab/orders/${orderId}`);
   return { billId: result.billId };
+}
+
+/** Changes the home collection charge on an order not yet billed. */
+export async function setLabCollectionChargeAction(orderId: string, charge: number): Promise<{ error?: string }> {
+  const session = await requireSession();
+  const admin = createSupabaseAdminClient();
+  if (!(await gapsReady(admin))) return { error: GAPS_NOT_READY };
+  const value = Math.round(Number(charge));
+  if (!(value >= 0 && value <= 10000)) return { error: "Enter the charge in rupees." };
+  const { data, error } = await admin.from("lab_orders").update({ collection_charge: value }).eq("id", orderId).eq("shop_id", session.shopId).is("bill_id", null).select("id");
+  if (error || !data?.length) return { error: "Could not save — a billed order can't change." };
+  revalidatePath(`/lab/orders/${orderId}`);
+  return {};
+}
+
+/** The lab's usual home collection charge, filled in on every new home-collection order. */
+export async function saveLabHomeChargeAction(charge: number): Promise<{ error?: string }> {
+  const session = await requireSession();
+  if (session.role !== "owner") return { error: "Only the owner can change this." };
+  const admin = createSupabaseAdminClient();
+  if (!(await gapsReady(admin))) return { error: GAPS_NOT_READY };
+  const value = Math.round(Number(charge));
+  if (!(value >= 0 && value <= 10000)) return { error: "Enter the charge in rupees." };
+  const { error } = await admin.from("shops").update({ lab_home_collection_charge: value }).eq("id", session.shopId);
+  if (error) return { error: "Could not save — try again." };
+  revalidatePath("/lab/tests");
+  revalidatePath("/lab/orders/new");
+  return {};
 }

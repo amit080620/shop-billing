@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import { useT } from "@/lib/i18n/LangContext";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { updateLabOrderStatusAction, saveTestResultAction, billLabOrderAction } from "@/lib/actions/lab";
+import { updateLabOrderStatusAction, saveTestResultAction, billLabOrderAction, setLabCollectionChargeAction } from "@/lib/actions/lab";
 import { formatMoney, withDr } from "@/lib/format";
 import { PageHeader } from "@/app/components/PageHeader";
 import { Barcode, FlaskConical, Printer } from "lucide-react";
@@ -25,6 +25,8 @@ type Order = {
   status: string;
   billId: string | null;
   phlebotomistName: string | null;
+  /** Home collection charge, billed as its own line (null before migration 0052). */
+  collectionCharge: number | null;
 };
 type Item = { id: string; testName: string; referenceRange: string | null; unit: string | null; resultValue: string | null; resultFlag: string | null; price: number; gstPercent: number };
 
@@ -55,12 +57,14 @@ export function OrderDetailClient({ order, items, priceIncludesGst }: { order: O
   const [showBillForm, setShowBillForm] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<"cash" | "card" | "upi" | "online" | "other">("cash");
   const [paidAmount, setPaidAmount] = useState<number | "">("");
+  const [editingCharge, setEditingCharge] = useState(false);
+  const [chargeDraft, setChargeDraft] = useState<number | "">(order.collectionCharge ?? "");
   const [results, setResults] = useState<Record<string, string>>(Object.fromEntries(items.map((i) => [i.id, i.resultValue ?? ""])));
 
   // What the invoice will come to — GST included the way this shop prices. A plain sum of test
   // prices left any GST added on top out, and the default "amount paid" then put it on udhaar.
   const total = calculateTransactionTotals({
-    items: items.map((i) => ({ quantity: 1, unitPrice: i.price, gstPercent: i.gstPercent })),
+    items: [...items.map((i) => ({ quantity: 1, unitPrice: i.price, gstPercent: i.gstPercent })), ...(order.collectionCharge ? [{ quantity: 1, unitPrice: order.collectionCharge, gstPercent: 0 }] : [])],
     discountType: "flat",
     discountValue: 0,
     paidAmount: 0,
@@ -189,6 +193,27 @@ export function OrderDetailClient({ order, items, priceIncludesGst }: { order: O
           ))}
         </ul>
       </section>
+
+      {order.collectionCharge != null && order.collectionType === "home_collection" && (
+        <div className="flex items-center justify-between gap-2 rounded-lg border border-border px-3.5 py-2 text-sm">
+          <span className="text-foreground">{t("Home collection charge")}</span>
+          {editingCharge ? (
+            <span className="flex items-center gap-1.5">
+              <input type="number" min={0} value={chargeDraft} onChange={(e) => setChargeDraft(e.target.value === "" ? "" : Number(e.target.value))} aria-label={t("Home collection charge")} className="w-20 rounded-lg border border-border px-2 py-1 text-right text-sm" />
+              <button type="button" disabled={isPending} onClick={() => startTransition(async () => { const r = await setLabCollectionChargeAction(order.id, Number(chargeDraft) || 0); if (r.error) { setError(r.error); return; } setEditingCharge(false); router.refresh(); })} className="text-xs font-medium text-brand-text">{t("Save")}</button>
+            </span>
+          ) : (
+            <span className="flex items-center gap-2">
+              <b>{formatMoney(order.collectionCharge)}</b>
+              {!order.billId && (
+                <button type="button" onClick={() => setEditingCharge(true)} className="text-xs text-brand-text">
+                  {t("Change")}
+                </button>
+              )}
+            </span>
+          )}
+        </div>
+      )}
 
       <div className="flex justify-between rounded-lg bg-brand-soft px-3.5 py-2.5 text-sm">
         <span className="text-brand-text">{t("order.total")}</span>

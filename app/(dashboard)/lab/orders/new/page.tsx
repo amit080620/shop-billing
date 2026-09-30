@@ -2,6 +2,7 @@ import { requireSession } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { getTranslator } from "@/lib/i18n/server";
 import { NewOrderClient } from "./NewOrderClient";
+import { gapsReady } from "@/lib/gapsData";
 
 export default async function NewLabOrderPage() {
   const session = await requireSession();
@@ -15,8 +16,11 @@ export default async function NewLabOrderPage() {
     admin.from("staff").select("id, name").eq("shop_id", session.shopId).neq("role", "owner"),
   ]);
 
+  const { data: shopCharge } = (await gapsReady(admin)) ? await admin.from("shops").select("lab_home_collection_charge").eq("id", session.shopId).single() : { data: null };
+
   return (
     <NewOrderClient
+      homeCharge={shopCharge ? Number(shopCharge.lab_home_collection_charge) : null}
       lang={lang}
       tests={(tests ?? []).map((t) => ({ id: t.id, name: t.name, price: Number(t.price), sampleType: t.sample_type }))}
       packages={(packages ?? []).map((p) => ({ id: p.id, name: p.name, price: Number(p.price) }))}

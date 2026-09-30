@@ -2,6 +2,8 @@ import { requireSession } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { getTranslator } from "@/lib/i18n/server";
 import { JobDetailClient } from "./JobDetailClient";
+import { EstimateApproval } from "./EstimateApproval";
+import { gapsReady } from "@/lib/gapsData";
 
 export default async function JobDetailPage({
   params,
@@ -26,6 +28,9 @@ export default async function JobDetailPage({
     return <p className="text-sm text-muted">Job not found.</p>;
   }
 
+  // The estimate's approval (migration 0052).
+  const { data: est } = (await gapsReady(admin)) ? await admin.from("service_jobs").select("estimate_status, estimate_responded_at, estimate_note").eq("id", job.id).single() : { data: null };
+
   const { data: items } = await admin
     .from("service_job_items")
     .select("id, item_name, quantity, notes")
@@ -47,6 +52,20 @@ export default async function JobDetailPage({
 
   return (
     <JobDetailClient
+      estimateBox={est && job.estimated_cost != null && Number(job.estimated_cost) > 0 && job.status !== "delivered" && job.status !== "cancelled" ? (
+        <EstimateApproval
+          jobId={job.id}
+          jobNumber={job.job_number}
+          customerName={job.customer_name}
+          customerPhone={job.customer_phone}
+          item={job.item_description}
+          estimate={Number(job.estimated_cost)}
+          status={est.estimate_status}
+          respondedAt={est.estimate_responded_at}
+          note={est.estimate_note}
+          shopName={session.shopName}
+        />
+      ) : null}
       lang={lang}
       priceIncludesGst={session.priceIncludesGst}
       job={{

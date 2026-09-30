@@ -5,6 +5,8 @@ import { formatMoney, formatDateTime } from "@/lib/format";
 import { Inbox, Wrench, PackageCheck, CheckCircle2, XCircle, IndianRupee } from "lucide-react";
 import { buildUpiLink } from "@/lib/qr";
 import { AutoRefresh } from "@/app/components/AutoRefresh";
+import { gapsReady } from "@/lib/gapsData";
+import { EstimateResponse } from "./EstimateResponse";
 
 // Looked up by the job's own UUID — unguessable, no login, read-only.
 // Same trust model already used by the order-status and khata links.
@@ -40,6 +42,10 @@ export default async function JobTrackPage({ params }: { params: Promise<{ jobId
     { key: "ready", label: "Ready", icon: PackageCheck, note: "Ready for pickup!" },
     { key: "delivered", label: "Delivered", icon: CheckCircle2, note: "Handed back to you" },
   ] as const;
+
+  // The estimate waiting for the customer's yes or no (migration 0052).
+  const { data: est } = (await gapsReady(admin)) ? await admin.from("service_jobs").select("estimate_status, estimate_responded_at").eq("id", job.id).single() : { data: null };
+  const open = job.status !== "delivered" && job.status !== "cancelled";
 
   const currentIndex = STEPS.findIndex((s) => s.key === job.status);
   const isCancelled = job.status === "cancelled";
@@ -92,6 +98,14 @@ export default async function JobTrackPage({ params }: { params: Promise<{ jobId
             );
           })}
         </div>
+      )}
+
+      {est?.estimate_status === "sent" && open && job.estimated_cost != null && <EstimateResponse jobId={job.id} amount={formatMoney(Number(job.estimated_cost))} />}
+      {(est?.estimate_status === "approved" || est?.estimate_status === "declined") && (
+        <p className={`rounded-xl px-4 py-2.5 text-center text-sm ${est.estimate_status === "approved" ? "bg-success-soft text-success" : "bg-danger-soft text-danger"}`}>
+          {est.estimate_status === "approved" ? "You approved the estimate" : "You declined the estimate"}
+          {est.estimate_responded_at ? ` · ${formatDateTime(est.estimate_responded_at)}` : ""}
+        </p>
       )}
 
       <div className="neu-card flex flex-col gap-2 p-4 text-sm">

@@ -157,6 +157,8 @@ export const billSchema = z.object({
   customerId: z.string().uuid().nullable(),
   /** The quotation this bill was made from (marked converted once the bill exists). */
   quotationId: z.string().uuid().nullable().optional(),
+  /** Delivery challans this bill is for (marked billed once the bill exists). */
+  challanIds: z.array(z.string().uuid()).max(50).optional(),
   /** A jeweller's gold saving scheme whose value pays for this bill (then marked used). */
   goldSchemeId: z.string().uuid().nullable().optional(),
   /** Paid from the customer's prepaid balance (on top of paidAmount). */

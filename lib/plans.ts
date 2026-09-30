@@ -37,7 +37,7 @@ const ALL_MODULES: ModuleKey[] = MODULES.map((m) => m.key);
 // filing, udhaar, the day's summary and closing the drawer, and each trade's own core (tables and
 // KOT, appointments, rates by karat, bilty…). Basic adds the tools a busy counter uses every day;
 // Pro adds control and insight; Pro + adds scale.
-const BASIC_MODULES: ModuleKey[] = ["whatsapp_reminders", "bulk_import_export", "offers", "quotations", "staff_payroll", "customer_prepaid", "gold_schemes"];
+const BASIC_MODULES: ModuleKey[] = ["whatsapp_reminders", "bulk_import_export", "offers", "quotations", "delivery_challan", "staff_payroll", "customer_prepaid", "gold_schemes", "karigar_jobs"];
 const PRO_MODULES: ModuleKey[] = [...BASIC_MODULES, "advanced_reports", "public_catalog", "petty_cash", "stock_audit", "audit_log", "stylist_commission", "vehicle_profit", "recipe_stock"];
 
 export const PLANS: Record<Exclude<PlanKey, "custom">, Plan> & { custom: Plan } = {

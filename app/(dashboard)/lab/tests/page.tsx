@@ -1,6 +1,8 @@
 import { requireOwner } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { TestsClient } from "./TestsClient";
+import { HomeChargeSetting } from "./HomeChargeSetting";
+import { gapsReady } from "@/lib/gapsData";
 
 export default async function LabTestsPage() {
   const session = await requireOwner();
@@ -11,7 +13,10 @@ export default async function LabTestsPage() {
     admin.from("lab_packages").select("id, name, price, is_active, lab_package_tests ( test_id, lab_tests ( name ) )").eq("shop_id", session.shopId).order("name"),
   ]);
 
+  const { data: shopCharge } = (await gapsReady(admin)) ? await admin.from("shops").select("lab_home_collection_charge").eq("id", session.shopId).single() : { data: null };
+
   return (
+    <div className="flex flex-col gap-4">
     <TestsClient
       tests={(tests ?? []).map((t) => ({
         id: t.id,
@@ -35,5 +40,7 @@ export default async function LabTestsPage() {
           .filter((n): n is string => !!n),
       }))}
     />
+    {shopCharge && <HomeChargeSetting initial={Number(shopCharge.lab_home_collection_charge)} />}
+    </div>
   );
 }

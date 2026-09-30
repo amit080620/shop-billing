@@ -23,12 +23,15 @@ export function NewOrderClient({
   packages,
   patients,
   staff,
+  homeCharge = null,
 }: {
   lang: Lang;
   tests: Test[];
   packages: Package[];
   patients: Patient[];
   staff: { id: string; name: string }[];
+  /** The lab's usual home collection charge (null before migration 0052). */
+  homeCharge?: number | null;
 }) {
   const { t } = useT();
   const router = useRouter();
@@ -40,6 +43,7 @@ export function NewOrderClient({
   const [referringDoctorName, setReferringDoctorName] = useState("");
   const [collectionType, setCollectionType] = useState<"walk_in" | "home_collection">("walk_in");
   const [homeAddress, setHomeAddress] = useState("");
+  const [collectionCharge, setCollectionCharge] = useState<number | "">(homeCharge ?? "");
   const [collectionSlot, setCollectionSlot] = useState("");
   const [phlebotomistId, setPhlebotomistId] = useState("");
   const [selectedTestIds, setSelectedTestIds] = useState<string[]>([]);
@@ -49,7 +53,8 @@ export function NewOrderClient({
 
   const testsTotal = tests.filter((t) => selectedTestIds.includes(t.id)).reduce((s, t) => s + t.price, 0);
   const packagesTotal = packages.filter((p) => selectedPackageIds.includes(p.id)).reduce((s, p) => s + p.price, 0);
-  const total = testsTotal + packagesTotal;
+  const charge = collectionType === "home_collection" && homeCharge != null ? Number(collectionCharge) || 0 : 0;
+  const total = testsTotal + packagesTotal + charge;
 
   function toggleTest(id: string) {
     setSelectedTestIds((prev) => (prev.includes(id) ? prev.filter((t) => t !== id) : [...prev, id]));
@@ -73,6 +78,7 @@ export function NewOrderClient({
         phlebotomistId: phlebotomistId || null,
         testIds: selectedTestIds,
         packageIds: selectedPackageIds,
+        collectionCharge: homeCharge != null && collectionType === "home_collection" ? Number(collectionCharge) || 0 : null,
       });
       if (result.error || !result.orderId) {
         setError(result.error ?? "Could not create order");
@@ -137,6 +143,12 @@ export function NewOrderClient({
         </div>
         {collectionType === "home_collection" && (
           <textarea value={homeAddress} onChange={(e) => setHomeAddress(e.target.value)} placeholder={t("Full address for sample collection")} rows={2} className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-brand" />
+        )}
+        {collectionType === "home_collection" && homeCharge != null && (
+          <label className="flex items-center justify-between gap-2 text-sm text-foreground">
+            {t("Home collection charge ₹")}
+            <input type="number" min={0} value={collectionCharge} onChange={(e) => setCollectionCharge(e.target.value === "" ? "" : Number(e.target.value))} aria-label={t("Home collection charge ₹")} className="w-28 rounded-lg border border-border px-3 py-2 text-right text-sm outline-none focus:border-brand" />
+          </label>
         )}
         <div className="grid grid-cols-2 gap-2">
           <input value={collectionSlot} onChange={(e) => setCollectionSlot(e.target.value)} placeholder={t("Preferred time slot (e.g. 8-9 AM)")} className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-brand" />

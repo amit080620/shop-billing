@@ -58,6 +58,7 @@ export function JobDetailClient({
   products,
   lang,
   priceIncludesGst,
+  estimateBox = null,
 }: {
   job: Job;
   items: JobItem[];
@@ -65,6 +66,8 @@ export function JobDetailClient({
   products: Product[];
   lang: Lang;
   priceIncludesGst: boolean;
+  /** The customer's approval of the estimate (asked on WhatsApp). */
+  estimateBox?: React.ReactNode;
 }) {
   const { t } = useTranslation(lang);
   const router = useRouter();
@@ -247,6 +250,7 @@ export function JobDetailClient({
           </div>
         )}
       </div>
+      {estimateBox}
 
       <label className="flex flex-col gap-1.5 text-sm">
         <span className="font-medium text-foreground">Technician / staff working on it</span>

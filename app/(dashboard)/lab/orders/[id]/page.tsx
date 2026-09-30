@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { requireSession } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { OrderDetailClient } from "./OrderDetailClient";
+import { gapsReady } from "@/lib/gapsData";
 
 export default async function LabOrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -22,6 +23,7 @@ export default async function LabOrderDetailPage({ params }: { params: Promise<{
     .eq("order_id", id)
     .order("test_name");
 
+  const { data: chargeRow } = (await gapsReady(admin)) ? await admin.from("lab_orders").select("collection_charge").eq("id", id).single() : { data: null };
   const phlebotomist = Array.isArray(order.staff) ? order.staff[0] : (order.staff as { name: string } | null);
 
   return (
@@ -41,6 +43,7 @@ export default async function LabOrderDetailPage({ params }: { params: Promise<{
         status: order.status,
         billId: order.bill_id,
         phlebotomistName: phlebotomist?.name ?? null,
+        collectionCharge: chargeRow ? Number(chargeRow.collection_charge) : null,
       }}
       items={(items ?? []).map((i) => ({
         id: i.id,

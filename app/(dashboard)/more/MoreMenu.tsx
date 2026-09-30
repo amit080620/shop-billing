@@ -167,6 +167,7 @@ export async function MoreMenu() {
           <MenuGroup title="Jewellery">
             <MenuLink href="/jewellery/rates" label="Today's rate" sub="Gold 24K / 22K / 18K and silver, per gram" icon={Gem} />
             <MenuLink href="/jewellery/schemes" label={t("Gold saving schemes")} sub={t("Monthly instalments, a bonus at the end, jewellery at maturity")} icon={PiggyBank} locked={lock("gold_schemes")} />
+            <MenuLink href="/jewellery/karigar" label={t("Karigar register")} sub={t("Gold given to the karigar, jewellery back, wastage checked")} icon={Gem} locked={lock("karigar_jobs")} />
             <MenuLink href="/jewellery/exchanges" label="Exchange history" sub="Old gold/silver taken in" icon={Repeat} />
           </MenuGroup>
         )}
@@ -205,6 +206,9 @@ export async function MoreMenu() {
         <MenuGroup title="Sales & money">
           <MenuLink href="/bills/all" label="All bills" sub="Browse & reprint any past bill" icon={Receipt} />
           <MenuLink href="/quotations" label="Quotations" sub="Price offers — bill them in one tap when agreed" icon={FileText} locked={lock("quotations")} />
+          {["hardware", "general", "grocery", "mart"].includes(type) && (
+            <MenuLink href="/challans" label={t("Delivery challans")} sub={t("Goods go first, the bill follows — one bill for many challans")} icon={Truck} locked={lock("delivery_challan")} />
+          )}
           <MenuLink href="/prepaid" label={t("Prepaid balances")} sub={t("Money customers paid in advance, used on their bills")} icon={PiggyBank} locked={lock("customer_prepaid")} />
           <MenuLink href="/petty-cash" label="Petty cash" sub="Small day-to-day cash expenses" icon={Wallet} locked={lock("petty_cash")} />
           <MenuLink href="/catalog-settings" label="Catalog link" sub="Share a link customers can browse & order from" icon={Store} locked={lock("public_catalog")} />

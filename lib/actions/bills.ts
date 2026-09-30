@@ -17,6 +17,8 @@ import { goldSchemesReady, loadSchemes } from "../goldSchemeData";
 import { asCashMethod, recordCashMovement } from "../cashMovements";
 import { formatMoney } from "../format";
 import { undoBillUsage } from "../billUndo";
+import { settleChallansForBill } from "../challanData";
+import { freeFollowUp } from "../followUp";
 import { loadPackages, packageUsable, salonExtrasReady, walletBalance } from "../salonExtras";
 import { addDaysIso } from "../dateHelpers";
 import { isModuleEnabled } from "../modules";
@@ -216,6 +218,18 @@ export async function createBillCore(
   // Priced above (priceLines): catalogue prices, offer / bulk / loose, and 0% GST for a
   // composition dealer, who is legally barred from charging GST on an invoice at all.
   const verifiedItems = priced.lines;
+  // A clinic's free follow-up: a consultation within the window after a paid one is ₹0.
+  if (session.businessType === "clinic" && customerId) {
+    const follow = await freeFollowUp(admin, session.shopId, customerId);
+    if (follow) {
+      for (const line of verifiedItems) {
+        if (line.productId && follow.productIds.includes(line.productId) && line.unitPrice > 0) {
+          line.unitPrice = 0;
+          line.productName = `${line.productName} (free follow-up)`;
+        }
+      }
+    }
+  }
 
   const totals = calculateTransactionTotals({
     items: verifiedItems,
@@ -596,6 +610,10 @@ export async function createBillAction(
       .eq("id", parsed.data.quotationId)
       .eq("shop_id", session.shopId)
       .eq("status", "open");
+  }
+  // Made from delivery challans: they point to this bill now.
+  if (parsed.data.challanIds?.length) {
+    await settleChallansForBill(createSupabaseAdminClient(), session.shopId, parsed.data.challanIds, result.billId);
   }
 
   redirect(`/print/bill/${result.billId}?new=1`);

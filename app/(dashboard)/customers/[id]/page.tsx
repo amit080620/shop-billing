@@ -6,6 +6,8 @@ import { buyerSchemaReady } from "@/lib/gstBuyer";
 import { getTranslator } from "@/lib/i18n/server";
 import { LedgerClient } from "./LedgerClient";
 import { PrepaidCard } from "./PrepaidCard";
+import { CreditLimitCard } from "./CreditLimitCard";
+import { gapsReady } from "@/lib/gapsData";
 import { loadPackages, loadWalletEntries, salonExtrasReady, walletBalance } from "@/lib/salonExtras";
 import { isModuleEnabled } from "@/lib/modules";
 
@@ -112,12 +114,20 @@ export default async function CustomerLedgerPage({
   const [wallet, walletEntries, packages] = extrasReady
     ? await Promise.all([walletBalance(admin, session.shopId, id), loadWalletEntries(admin, session.shopId, id), loadPackages(admin, session.shopId, { customerId: id })])
     : [0, [], []];
+  // Udhaar limit (migration 0052).
+  const limitReady = await gapsReady(admin);
+  const creditLimit = limitReady ? ((await admin.from("customers").select("credit_limit").eq("id", id).single()).data?.credit_limit ?? null) : null;
 
   return (
     <LedgerClient
       lang={lang}
       isOwner={session.role === "owner"}
-      extras={extrasReady ? <PrepaidCard customerId={id} balance={wallet} entries={walletEntries} packages={packages} isOwner={session.role === "owner"} /> : null}
+      extras={
+        <>
+          {limitReady && <CreditLimitCard customerId={id} limit={creditLimit != null ? Number(creditLimit) : null} balance={balance} isOwner={session.role === "owner"} />}
+          {extrasReady && <PrepaidCard customerId={id} balance={wallet} entries={walletEntries} packages={packages} isOwner={session.role === "owner"} />}
+        </>
+      }
       hasWarranty={hasWarranty}
       specialty={specialty}
       growthLogs={(growthLogs ?? []).map((g) => ({

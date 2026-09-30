@@ -1,6 +1,8 @@
 import { requireSession } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { SettingsClient } from "./SettingsClient";
+import { FollowUpSettings } from "./FollowUpSettings";
+import { gapsReady } from "@/lib/gapsData";
 
 export default async function PrescriptionSettingsPage() {
   const session = await requireSession();
@@ -12,7 +14,17 @@ export default async function PrescriptionSettingsPage() {
     .eq("shop_id", session.shopId)
     .maybeSingle();
 
+  // Free follow-up (migration 0052): the rule, and the fees it can apply to (services, not medicines).
+  const followReady = await gapsReady(admin);
+  const [{ data: follow }, { data: fees }] = followReady
+    ? await Promise.all([
+        admin.from("prescription_settings").select("free_followup_days, consultation_product_ids").eq("shop_id", session.shopId).maybeSingle(),
+        admin.from("products").select("id, name, price").eq("shop_id", session.shopId).eq("track_inventory", false).order("name").limit(80),
+      ])
+    : [{ data: null }, { data: null }];
+
   return (
+    <div className="flex flex-col gap-4">
     <SettingsClient
       headerText={settings?.header_text ?? ""}
       footerText={settings?.footer_text ?? ""}
@@ -29,5 +41,14 @@ export default async function PrescriptionSettingsPage() {
       rxShowDrugInteractions={settings?.rx_show_drug_interactions ?? false}
       rxShowDescription={settings?.rx_show_description ?? false}
     />
+    {followReady && (
+      <FollowUpSettings
+        isOwner={session.role === "owner"}
+        days={follow?.free_followup_days ?? null}
+        selected={follow?.consultation_product_ids ?? []}
+        fees={(fees ?? []).map((p) => ({ id: p.id, name: p.name, price: Number(p.price) }))}
+      />
+    )}
+    </div>
   );
 }
