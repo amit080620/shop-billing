@@ -67,7 +67,7 @@ export default async function PlansPage() {
   const missing = relevant.filter((k) => !isModuleEnabled(session.enabledModules, k));
   const core = FREE_CORE[type];
   // Printers are not offered to restaurants for now — the owner offers one in person when it helps.
-  const hardware = HARDWARE.filter((h) => !(type === "restaurant" && (h.id.startsWith("printer") || h.id === "rolls" || h.id === "kit-restaurant")));
+  const hardware = HARDWARE.filter((h) => !(type === "restaurant" && (h.id.startsWith("printer") || h.id.startsWith("kit-") || h.id === "rolls")));
 
   return (
     <div className="flex flex-col gap-5 pb-8">
