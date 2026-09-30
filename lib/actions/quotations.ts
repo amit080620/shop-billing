@@ -36,7 +36,7 @@ export async function saveQuotationAction(payloadJson: string, validDays: number
   if (discountValue > 0 && !hasPermission(session, "give_discounts")) return { error: "You don't have permission to give a discount — ask the owner." };
   if (!session.shopStateCode) return { error: "Add your shop's state in Settings first." };
 
-  const priced = await priceLines(session, admin, items);
+  const priced = await priceLines(session, admin, items, undefined, { freeLines: false });
   if ("error" in priced) return { error: priced.error ?? "One or more products could not be verified" };
 
   let customer: { name: string; phone: string | null; gstin: string | null; state_code: string | null } | null = null;

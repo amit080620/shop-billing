@@ -18,15 +18,23 @@ export async function moveChallanStock(admin: Admin, shopId: string, items: Chal
   await invalidateCache(`ray:cache:products:${shopId}`);
 }
 
-/** A bill was made from these challans: they point to it, and the goods they had already taken
- * off stock go back — the bill has just taken them again, so they are counted once. */
+/** A bill was made from these challans: they point to it. The bill did not take their goods off
+ * stock again (createBillCore skips what they already took); any of their goods left off the bill
+ * came back, so those go back on the shelf. */
 export async function settleChallansForBill(admin: Admin, shopId: string, challanIds: string[], billId: string): Promise<void> {
   if (!challanIds.length || !(await gapsReady(admin))) return;
   const { data: rows } = await admin.from("delivery_challans").select("id, items, stock_taken").eq("shop_id", shopId).eq("status", "open").in("id", challanIds);
+  const out = new Map<string, number>();
   for (const c of rows ?? []) {
     const { data: done } = await admin.from("delivery_challans").update({ status: "billed", bill_id: billId }).eq("id", c.id).eq("status", "open").select("id");
-    if (done?.length && c.stock_taken) await moveChallanStock(admin, shopId, c.items, 1);
+    if (done?.length && c.stock_taken) for (const l of c.items) if (l.productId) out.set(l.productId, (out.get(l.productId) ?? 0) + Number(l.quantity));
   }
+  if (!out.size) return;
+  const { data: lines } = await admin.from("bill_items").select("product_id, quantity").eq("bill_id", billId);
+  const billed = new Map<string, number>();
+  for (const l of lines ?? []) if (l.product_id) billed.set(l.product_id, (billed.get(l.product_id) ?? 0) + Number(l.quantity));
+  const back = [...out].map(([productId, qty]) => ({ productId, name: "", unit: "", quantity: Math.round((qty - (billed.get(productId) ?? 0)) * 1000) / 1000 })).filter((l) => l.quantity > 0);
+  if (back.length) await moveChallanStock(admin, shopId, back, 1);
 }
 
 /** The bill made from challans was voided: they are open again and hold their goods again. */

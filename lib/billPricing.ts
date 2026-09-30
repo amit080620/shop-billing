@@ -36,6 +36,8 @@ export async function priceLines(
   /** Prices promised in a still-valid quotation this bill is made from (product → price, and
    * whether it was quoted loose): honoured over today's catalogue price. */
   quoted?: Map<string, { unitPrice: number; loose: boolean }>,
+  /** Split buy-X-get-Y free units onto their own ₹0 line (a bill does; a quotation quotes the plain price). */
+  opts: { freeLines?: boolean } = {},
 ) {
   const productIds = [...new Set(items.map((i) => i.productId).filter(Boolean))] as string[];
   const { data: dbProducts, error } = productIds.length
@@ -46,19 +48,21 @@ export async function priceLines(
 
   // "Buy X get Y free" offers on these items (Offers, migration 0052).
   const offers = new Map<string, Bxgy>();
-  if (productIds.length && isModuleEnabled(session.enabledModules, "offers") && (await gapsReady(admin))) {
+  if (opts.freeLines !== false && productIds.length && isModuleEnabled(session.enabledModules, "offers") && (await gapsReady(admin))) {
     const { data: rows } = await admin.from("products").select("id, bxgy_buy, bxgy_free").in("id", productIds).not("bxgy_buy", "is", null);
     for (const r of rows ?? []) if (r.bxgy_buy && r.bxgy_free) offers.set(r.id, { buy: r.bxgy_buy, free: r.bxgy_free });
   }
 
   const isComposition = session.gstScheme === "composition";
-  const priced = items.map((item) => {
+  const priced = items.map((item, sourceIndex) => {
     const product = item.productId ? productMap.get(item.productId) : undefined;
     const loose = product ? isLooseLine(product, item) : false;
     const overridden = !!product && item.priceOverride === true && item.unitPrice > 0 && hasPermission(session, "give_discounts");
     const promise = product ? quoted?.get(product.id) : undefined;
     const quotedPrice = promise && promise.loose === loose ? promise.unitPrice : null;
     return {
+      // Which of the given items this line came from (a free line shares its paid line's item).
+      sourceIndex,
       productId: product?.id ?? null,
       productName: product?.name ?? item.description,
       hsnCode: product?.hsn_code ?? item.hsnCode ?? null,

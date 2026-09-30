@@ -19,6 +19,7 @@ import { formatMoney } from "../format";
 import { undoBillUsage } from "../billUndo";
 import { settleChallansForBill } from "../challanData";
 import { freeFollowUp } from "../followUp";
+import { gapsReady } from "../gapsData";
 import { loadPackages, packageUsable, salonExtrasReady, walletBalance } from "../salonExtras";
 import { addDaysIso } from "../dateHelpers";
 import { isModuleEnabled } from "../modules";
@@ -302,7 +303,7 @@ export async function createBillCore(
 
   if (billError || !bill) return { error: "Could not create bill" };
 
-  const billItemsRows = verifiedItems.map((item, i) => {
+  const buildRows = () => verifiedItems.map((item, i) => {
     const line = totals.lines[i];
     let warrantyExpiresOn: string | null = null;
     if (item.warrantyMonths) {
@@ -331,9 +332,18 @@ export async function createBillCore(
       line_gst: line.lineGst,
       line_total: round2(line.lineSubtotal + line.lineGst),
       // Who did the line (when not the bill's stylist), and the package a ₹0 session came from.
-      ...(extrasReady ? { provider_name: items[i].providerName ?? null, package_id: items[i].packageId ?? null } : {}),
+      ...(extrasReady ? { provider_name: items[item.sourceIndex]?.providerName ?? null, package_id: items[item.sourceIndex]?.packageId ?? null } : {}),
     };
   });
+  // Anything going wrong here must not leave a bill with no lines behind.
+  let billItemsRows: ReturnType<typeof buildRows>;
+  try {
+    billItemsRows = buildRows();
+  } catch (e) {
+    console.error("Could not build bill items", e);
+    await admin.from("bills").delete().eq("id", bill.id);
+    return { error: "Could not save bill items" };
+  }
 
   const { error: itemsError } = await admin.from("bill_items").insert(billItemsRows);
   if (itemsError) {
@@ -409,10 +419,23 @@ export async function createBillCore(
       alsoItems: false,
     });
   }
+  // Goods that already left stock with the delivery challans being billed are not taken again.
+  const challanOut = new Map<string, number>();
+  if (parsedData.challanIds?.length && (await gapsReady(admin))) {
+    const { data: out } = await admin.from("delivery_challans").select("items, stock_taken").eq("shop_id", session.shopId).eq("status", "open").in("id", parsedData.challanIds);
+    for (const c of out ?? []) if (c.stock_taken) for (const l of c.items) if (l.productId) challanOut.set(l.productId, round2((challanOut.get(l.productId) ?? 0) + Number(l.quantity)));
+  }
+  const toTake = verifiedItems.map((item) => {
+    const out = item.productId ? (challanOut.get(item.productId) ?? 0) : 0;
+    const covered = Math.min(out, item.stockQuantity);
+    if (covered > 0) challanOut.set(item.productId as string, round2(out - covered));
+    return round2(item.stockQuantity - covered);
+  });
   await Promise.all(
-    verifiedItems.map(async (item) => {
+    verifiedItems.map(async (item, index) => {
       const product = item.productId ? productMap.get(item.productId) : undefined;
       if (!product?.track_inventory || recipeDishes.has(product.id)) return;
+      if (!(toTake[index] > 0)) return;
 
       if (product.is_pharma) {
         // Earliest expiry first, never an expired batch (checked above before billing).
@@ -449,7 +472,7 @@ export async function createBillCore(
       // not read-then-write from application code, so two concurrent
       // sales of the same product can never both read the same stale
       // stock value and silently oversell.
-      const { error: stockError } = await admin.rpc("decrement_stock", { p_product_id: product.id, p_quantity: item.stockQuantity });
+      const { error: stockError } = await admin.rpc("decrement_stock", { p_product_id: product.id, p_quantity: toTake[index] });
       if (stockError) console.error("Could not update stock for product", product.id, stockError);
     }),
   );
