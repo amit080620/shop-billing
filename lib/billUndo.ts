@@ -2,6 +2,7 @@ import type { createSupabaseAdminClient } from "./supabase/admin";
 import { salonExtrasReady } from "./salonExtras";
 import { goldSchemesReady } from "./goldSchemeData";
 import { cashMovementsReady } from "./cashMovements";
+import { transportExtrasReady } from "./transportData";
 
 type Admin = ReturnType<typeof createSupabaseAdminClient>;
 
@@ -30,6 +31,10 @@ export async function undoBillUsage(admin: Admin, shopId: string, billId: string
       for (const j of jobs ?? []) {
         await admin.from("cash_movements").delete().eq("shop_id", shopId).eq("source", "service_job").eq("source_id", j.id).eq("kind", "advance_applied");
       }
+    }
+    // A freight bill voided: its LRs are waiting to be billed again.
+    if (await transportExtrasReady(admin)) {
+      await admin.from("consignments").update({ bill_id: null }).eq("shop_id", shopId).eq("bill_id", billId);
     }
   } catch (error) {
     console.error("Could not undo what a voided bill used", billId, error);

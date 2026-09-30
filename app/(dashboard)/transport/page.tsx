@@ -1,12 +1,14 @@
 import Link from "next/link";
-import { Truck, BarChart3 } from "lucide-react";
+import { Truck, BarChart3, FileText, Fuel } from "lucide-react";
 import { PageHeader } from "@/app/components/PageHeader";
 import { getTranslator } from "@/lib/i18n/server";
 import { BackLink } from "@/app/components/BackLink";
 
 const LINKS = [
+  { href: "/transport/lr", label: "Bilty (LR)", sub: "Book a consignment, track it to delivery, bill the freight", icon: FileText },
+  { href: "/transport/expenses", label: "Vehicle expenses", sub: "Diesel, toll, driver bhatta, repairs", icon: Fuel },
   { href: "/transport/vehicles", label: "Vehicles", sub: "Fleet & document expiry", icon: Truck },
-  { href: "/transport/reports", label: "Transport reports", sub: "Rounds, km covered", icon: BarChart3 },
+  { href: "/transport/reports", label: "Vehicle profit", sub: "Earnings, running costs, diesel average", icon: BarChart3 },
 ];
 
 export default async function TransportHubPage() {
@@ -25,8 +27,8 @@ export default async function TransportHubPage() {
               <l.icon size={18} strokeWidth={1.8} />
             </span>
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-medium text-foreground">{l.label}</p>
-              <p className="truncate text-xs text-muted">{l.sub}</p>
+              <p className="truncate text-sm font-medium text-foreground">{t(l.label)}</p>
+              <p className="truncate text-xs text-muted">{t(l.sub)}</p>
             </div>
             <span className="text-muted">→</span>
           </Link>

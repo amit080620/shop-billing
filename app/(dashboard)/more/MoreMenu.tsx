@@ -138,8 +138,10 @@ export async function MoreMenu() {
 
         {type === "transport" && (
           <MenuGroup title="Transport">
+            <MenuLink href="/transport/lr" label={t("Bilty (LR)")} sub={t("Book a consignment, track it to delivery, bill the freight")} icon={FileText} />
+            <MenuLink href="/transport/expenses" label={t("Vehicle expenses")} sub={t("Diesel, toll, driver bhatta, repairs")} icon={Wallet} />
             <MenuLink href="/transport/vehicles" label="Vehicles" sub="Manage trucks & per-km rates" icon={Truck} />
-            <MenuLink href="/transport/reports" label="Vehicle-wise trips" sub="Rounds, km & earnings per vehicle" icon={BarChart3} />
+            <MenuLink href="/transport/reports" label={t("Vehicle profit")} sub={t("Earnings, running costs, diesel average")} icon={BarChart3} />
           </MenuGroup>
         )}
 

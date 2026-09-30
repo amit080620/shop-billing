@@ -2,6 +2,7 @@ import type { createSupabaseAdminClient } from "./supabase/admin";
 import { buyerSchemaReady } from "./gstBuyer";
 import { cashMovementsReady } from "./cashMovements";
 import { payrollReady } from "./payrollData";
+import { transportExtrasReady } from "./transportData";
 
 type Admin = ReturnType<typeof createSupabaseAdminClient>;
 
@@ -153,7 +154,7 @@ export async function computeDailyMoney(admin: Admin, shopId: string, date: stri
   // table bookings count on the day they came in; the part of today's invoices that is just such
   // an earlier advance being used comes off today's sales; tokens and cancelled rentals handed
   // back are money out. Plus petty cash and rental deposits handed back on return.
-  const [{ data: movements }, { data: pettyCash }, { data: depositsBack }, { data: staffPaid }] = await Promise.all([
+  const [{ data: movements }, { data: pettyCash }, { data: depositsBack }, { data: staffPaid }, { data: tripExpenses }] = await Promise.all([
     (await cashMovementsReady(admin))
       ? admin.from("cash_movements").select("kind, payment_method, amount").eq("shop_id", shopId).gte("created_at", startOfDay.toISOString()).lte("created_at", endOfDay.toISOString())
       : Promise.resolve({ data: [] as never[] }),
@@ -170,6 +171,10 @@ export async function computeDailyMoney(admin: Admin, shopId: string, date: stri
     (await payrollReady(admin))
       ? admin.from("worker_payments").select("payment_method, amount").eq("shop_id", shopId).gte("created_at", startOfDay.toISOString()).lte("created_at", endOfDay.toISOString())
       : Promise.resolve({ data: [] as never[] }),
+    // Diesel, toll, driver bhatta… paid for the vehicles on this day (migration 0049).
+    (await transportExtrasReady(admin))
+      ? admin.from("trip_expenses").select("payment_method, amount").eq("shop_id", shopId).eq("expense_date", date)
+      : Promise.resolve({ data: [] as never[] }),
   ]);
   const asMethod = (m: string): Method => (METHODS.includes(m as Method) ? (m as Method) : "other");
   const advancesByMethod = emptyTotals();
@@ -184,6 +189,8 @@ export async function computeDailyMoney(admin: Admin, shopId: string, date: stri
   for (const e of pettyCash ?? []) pettyCashByMethod[asMethod(e.payment_method)] += Number(e.amount);
   const staffPaidByMethod = emptyTotals();
   for (const p of staffPaid ?? []) staffPaidByMethod[asMethod(p.payment_method)] += Number(p.amount);
+  const tripExpensesByMethod = emptyTotals();
+  for (const e of tripExpenses ?? []) tripExpensesByMethod[asMethod(e.payment_method)] += Number(e.amount);
   const depositsBackByMethod = emptyTotals();
   for (const r of depositsBack ?? []) depositsBackByMethod[asMethod(r.payment_method)] += Number(r.security_deposit_returned);
 
@@ -234,7 +241,7 @@ export async function computeDailyMoney(admin: Admin, shopId: string, date: stri
   const net = emptyTotals();
   for (const m of METHODS) {
     totalIn[m] = round2(salesByMethod[m] + oldCreditCollected[m] + debitNotesByMethod[m] + advancesByMethod[m]);
-    totalOut[m] = round2(purchasesPaidByMethod[m] + vendorPaymentsByMethod[m] + refundsByMethod[m] + pettyCashByMethod[m] + depositsBackByMethod[m] + advanceRefundsByMethod[m] + staffPaidByMethod[m]);
+    totalOut[m] = round2(purchasesPaidByMethod[m] + vendorPaymentsByMethod[m] + refundsByMethod[m] + pettyCashByMethod[m] + depositsBackByMethod[m] + advanceRefundsByMethod[m] + staffPaidByMethod[m] + tripExpensesByMethod[m]);
     net[m] = round2(totalIn[m] - totalOut[m]);
   }
 
@@ -251,6 +258,7 @@ export async function computeDailyMoney(admin: Admin, shopId: string, date: stri
     vendorPaymentsByMethod,
     pettyCashByMethod,
     staffPaidByMethod,
+    tripExpensesByMethod,
     depositsBackByMethod,
     advanceRefundsByMethod,
     totalIn,

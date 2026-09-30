@@ -1,7 +1,10 @@
 import { createVehicleAction, updateVehicleDocumentsAction } from "@/lib/actions/transport";
-import { dateOffset, formData } from "../util";
+import { dateOffset, formData, isoAt } from "../util";
+import { transportExtrasReady } from "@/lib/transportData";
+import type { Database } from "@/lib/supabase/database.types";
+import { financialYearFor } from "@/lib/gst";
 import type { Catalog } from "./catalogs";
-import { insertCatalog, insertCustomers, insertVendors, seedBills, seedPettyCash, seedPurchases, seedUdhaarPayments, seedVendorPayment, STANDARD_PETTY_CASH, type SeedCtx } from "./common";
+import { insertCatalog, insertCustomers, insertVendors, seedBills, seedPettyCash, seedPurchases, seedUdhaarPayments, seedVendorPayment, STANDARD_PETTY_CASH, type SeedCtx, type SeededCustomer } from "./common";
 
 const MATERIALS: Catalog = [
   {
@@ -96,5 +99,93 @@ export async function seedTransport(ctx: SeedCtx): Promise<void> {
   }
   await seedUdhaarPayments(ctx, customers);
   await seedVendorPayment(ctx, vendors[2], 30000);
-  await seedPettyCash(ctx, [{ description: "Diesel for Tractor", amount: 4200, category: "Fuel", daysAgo: 2 }, { description: "Tyre puncture repair", amount: 650, category: "Maintenance", daysAgo: 5 }, { description: "Driver bhatta", amount: 1500, category: "Staff", daysAgo: 3 }, ...STANDARD_PETTY_CASH.slice(0, 2)]);
+  // Bilties and what the vehicles cost to run (migration 0049); before it, diesel and bhatta
+  // go down as petty cash.
+  const extras = await transportExtrasReady(ctx.admin);
+  if (extras) await seedBiltiesAndExpenses(ctx, customers, vehicles ?? [], drivers);
+  await seedPettyCash(ctx, [
+    ...(extras ? [] : [{ description: "Diesel for Tractor", amount: 4200, category: "Fuel", daysAgo: 2 }, { description: "Tyre puncture repair", amount: 650, category: "Maintenance", daysAgo: 5 }, { description: "Driver bhatta", amount: 1500, category: "Staff", daysAgo: 3 }]),
+    ...STANDARD_PETTY_CASH.slice(0, 2),
+  ]);
+}
+
+/** A fortnight of bilties (delivered, on the road, just booked; paid, to pay and monthly-account
+ * ones waiting for their bill) and the vehicles' diesel (with meter readings), toll, bhatta and a
+ * repair — so Bilty, Vehicle expenses and Vehicle profit open with something in them. */
+async function seedBiltiesAndExpenses(ctx: SeedCtx, customers: SeededCustomer[], vehicles: { id: string; name: string }[], drivers: string[]): Promise<void> {
+  const { admin, shopId } = ctx;
+  if (!vehicles.length || customers.length < 4) return;
+  const { data: numbers } = await admin.from("vehicles").select("id, vehicle_number").eq("shop_id", shopId);
+  const plate = new Map((numbers ?? []).map((v) => [v.id, v.vehicle_number]));
+  const routes: [string, string, string, number, number, "paid" | "to_pay" | "tbb"][] = [
+    ["Pune", "Mumbai", "Cement, 200 bags", 200, 10, "tbb"],
+    ["Pune", "Nashik", "TMT bars", 0, 6, "to_pay"],
+    ["Pune", "Satara", "Fly ash bricks", 0, 8, "paid"],
+    ["Pune", "Mumbai", "Cement, 150 bags", 150, 7.5, "tbb"],
+    ["Pune", "Ahmednagar", "River sand", 0, 12, "to_pay"],
+    ["Pune", "Kolhapur", "Concrete blocks, 900 nos", 900, 9, "tbb"],
+    ["Pune", "Mumbai", "Cement, 100 bags", 100, 5, "to_pay"],
+    ["Pune", "Solapur", "20mm aggregate", 0, 11, "paid"],
+  ];
+  const rows: Database["public"]["Tables"]["consignments"]["Insert"][] = [];
+  for (const [i, [from, to, goods, packages, tons, payBy]] of routes.entries()) {
+    const daysAgo = [14, 12, 10, 8, 6, 3, 1, 0][i];
+    const lrDate = dateOffset(-daysAgo);
+    const fy = financialYearFor(new Date(`${lrDate}T12:00:00+05:30`));
+    const { data: n } = await admin.rpc("next_lr_number", { p_shop_id: shopId, p_financial_year: fy });
+    const vehicle = vehicles[i % vehicles.length];
+    const sender = customers[i % 3];
+    const receiver = customers[3 + (i % (customers.length - 3))];
+    const status: "delivered" | "in_transit" | "booked" = daysAgo >= 3 ? "delivered" : daysAgo >= 1 ? "in_transit" : "booked";
+    rows.push({
+      shop_id: shopId,
+      lr_number: `LR/${fy}/${String(n ?? i + 1).padStart(5, "0")}`,
+      lr_date: lrDate,
+      vehicle_id: vehicle.id,
+      vehicle_number: plate.get(vehicle.id) ?? null,
+      driver_name: drivers[i % drivers.length],
+      consignor_customer_id: sender.id,
+      consignor_name: sender.name,
+      consignor_phone: sender.phone,
+      consignee_customer_id: receiver.id,
+      consignee_name: receiver.name,
+      consignee_phone: receiver.phone,
+      from_place: from,
+      to_place: to,
+      goods,
+      packages: packages || null,
+      packing: packages ? (goods.startsWith("Cement") ? "Bags" : "Loose") : "Loose",
+      actual_weight: tons,
+      charged_weight: tons,
+      weight_unit: "TON",
+      declared_value: goods.startsWith("Cement") ? packages * 390 : null,
+      freight: Math.round(tons * (to === "Mumbai" ? 1400 : 1100)),
+      other_charges: i % 3 === 0 ? 500 : 0,
+      pay_by: payBy,
+      status,
+      dispatched_at: status === "booked" ? null : isoAt(daysAgo, 9),
+      delivered_at: status === "delivered" ? isoAt(daysAgo - 1, 15) : null,
+      received_by: status === "delivered" ? receiver.name : null,
+      created_at: isoAt(daysAgo, 8),
+    });
+  }
+  const { data: lrs } = await admin.from("consignments").insert(rows).select("id, vehicle_id, lr_date");
+
+  // Diesel with meter readings on the two busiest vehicles, plus toll, bhatta and a repair.
+  const expenses: Database["public"]["Tables"]["trip_expenses"]["Insert"][] = [];
+  for (const [k, v] of vehicles.slice(0, 2).entries()) {
+    let odo = 84000 + k * 31000;
+    for (const daysAgo of [28, 21, 14, 7, 1]) {
+      odo += 380 + k * 60;
+      expenses.push({ shop_id: shopId, vehicle_id: v.id, expense_date: dateOffset(-daysAgo), category: "diesel", amount: 5800 + k * 400, litres: 62 + k * 4, odometer_km: odo, payment_method: "cash", created_at: isoAt(daysAgo, 7) });
+    }
+  }
+  for (const lr of lrs ?? []) {
+    const daysAgo = Math.round((Date.parse(`${dateOffset(0)}T00:00:00Z`) - Date.parse(`${lr.lr_date}T00:00:00Z`)) / 86400000);
+    expenses.push({ shop_id: shopId, vehicle_id: lr.vehicle_id, consignment_id: lr.id, expense_date: lr.lr_date, category: "toll", amount: 640, payment_method: "upi", created_at: isoAt(daysAgo, 11) });
+    expenses.push({ shop_id: shopId, vehicle_id: lr.vehicle_id, consignment_id: lr.id, expense_date: lr.lr_date, category: "driver", amount: 500, payment_method: "cash", created_at: isoAt(daysAgo, 12) });
+  }
+  expenses.push({ shop_id: shopId, vehicle_id: vehicles[1 % vehicles.length].id, expense_date: dateOffset(-5), category: "repair", amount: 3200, payment_method: "cash", note: "Clutch plate", created_at: isoAt(5, 16) });
+  expenses.push({ shop_id: shopId, vehicle_id: vehicles[0].id, expense_date: dateOffset(-9), category: "tyre", amount: 650, payment_method: "cash", note: "Puncture", created_at: isoAt(9, 14) });
+  await admin.from("trip_expenses").insert(expenses);
 }

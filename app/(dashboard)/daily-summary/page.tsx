@@ -25,7 +25,7 @@ export default async function DailySummaryPage({
 
   const { data: branches } = await admin.from("branches").select("id, name").eq("shop_id", session.shopId).order("name");
 
-  const { salesByMethod, oldCreditCollected, debitNotesByMethod, advancesByMethod, refundsByMethod, purchasesPaidByMethod, vendorPaymentsByMethod, pettyCashByMethod, staffPaidByMethod, depositsBackByMethod, advanceRefundsByMethod, net, grandTotalIn, grandTotalOut, newCreditGiven, newPayableCreated, invoiceMix } = await computeDailyMoney(admin, session.shopId, date, branchFilter);
+  const { salesByMethod, oldCreditCollected, debitNotesByMethod, advancesByMethod, refundsByMethod, purchasesPaidByMethod, vendorPaymentsByMethod, pettyCashByMethod, staffPaidByMethod, tripExpensesByMethod, depositsBackByMethod, advanceRefundsByMethod, net, grandTotalIn, grandTotalOut, newCreditGiven, newPayableCreated, invoiceMix } = await computeDailyMoney(admin, session.shopId, date, branchFilter);
   // Closing the day (migration 0044): the count saved for this day, and what to start from.
   const dayClose = await loadDayClose(admin, session.shopId, date, branchFilter || null);
 
@@ -79,7 +79,7 @@ export default async function DailySummaryPage({
         </p>
         <p className="mt-1 text-2xl font-bold text-white">{formatMoney(net.cash)}</p>
         <p className="mt-1 text-xs text-white/70">
-          {t("Cash sales, udhaar and advances collected − cash paid for purchases, to vendors, petty expenses, staff pay, refunds and deposits handed back")}
+          {t("Cash sales, udhaar and advances collected − cash paid for purchases, to vendors, petty and vehicle expenses, staff pay, refunds and deposits handed back")}
         </p>
       </section>
 
@@ -140,6 +140,7 @@ export default async function DailySummaryPage({
         <BreakdownTable title={t("Refunds given for returns today")} byMethod={refundsByMethod} t={t} />
         <BreakdownTable title={t("Petty cash and expenses today")} byMethod={pettyCashByMethod} t={t} />
         <BreakdownTable title={t("Staff salary and advances paid today")} byMethod={staffPaidByMethod} t={t} />
+        {Object.values(tripExpensesByMethod).some((v) => v > 0) && <BreakdownTable title={t("Vehicle expenses today (diesel, toll, driver…)")} byMethod={tripExpensesByMethod} t={t} />}
         <BreakdownTable title={t("Rental deposits handed back today")} byMethod={depositsBackByMethod} t={t} />
         <BreakdownTable title={t("Advances handed back today (tokens, cancelled bookings, schemes, prepaid)")} byMethod={advanceRefundsByMethod} t={t} />
         {newPayableCreated > 0 && (
