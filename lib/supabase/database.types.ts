@@ -14,6 +14,10 @@ export interface Database {
     Tables: {
       shops: {
         Row: {
+          lab_home_collection_charge: number;
+          scale_barcode_prefix: string | null;
+          scale_barcode_mode: "weight" | "price";
+          scale_code_digits: number;
           id: string;
           name: string;
           legal_name: string | null;
@@ -49,6 +53,10 @@ export interface Database {
           created_at: string;
         };
         Insert: {
+          lab_home_collection_charge?: number;
+          scale_barcode_prefix?: string | null;
+          scale_barcode_mode?: "weight" | "price";
+          scale_code_digits?: number;
           id?: string;
           name: string;
           legal_name?: string | null;
@@ -84,6 +92,10 @@ export interface Database {
           created_at?: string;
         };
         Update: {
+          lab_home_collection_charge?: number;
+          scale_barcode_prefix?: string | null;
+          scale_barcode_mode?: "weight" | "price";
+          scale_code_digits?: number;
           id?: string;
           name?: string;
           legal_name?: string | null;
@@ -162,6 +174,8 @@ export interface Database {
       };
       products: {
         Row: {
+          bxgy_buy: number | null;
+          bxgy_free: number | null;
           id: string;
           shop_id: string;
           category_id: string | null;
@@ -211,6 +225,8 @@ export interface Database {
           created_at: string;
         };
         Insert: {
+          bxgy_buy?: number | null;
+          bxgy_free?: number | null;
           id?: string;
           shop_id: string;
           category_id?: string | null;
@@ -260,6 +276,8 @@ export interface Database {
           created_at?: string;
         };
         Update: {
+          bxgy_buy?: number | null;
+          bxgy_free?: number | null;
           id?: string;
           shop_id?: string;
           category_id?: string | null;
@@ -333,6 +351,7 @@ export interface Database {
       };
       customers: {
         Row: {
+          credit_limit: number | null;
           id: string;
           shop_id: string;
           name: string;
@@ -353,6 +372,7 @@ export interface Database {
           created_at: string;
         };
         Insert: {
+          credit_limit?: number | null;
           id?: string;
           shop_id: string;
           name: string;
@@ -373,6 +393,7 @@ export interface Database {
           created_at?: string;
         };
         Update: {
+          credit_limit?: number | null;
           id?: string;
           shop_id?: string;
           name?: string;
@@ -852,9 +873,9 @@ export interface Database {
         Relationships: [];
       };
       prescription_settings: {
-        Row: { shop_id: string; header_text: string | null; footer_text: string | null; show_shop_logo: boolean; custom_field_labels: string[]; header_image_url: string | null; footer_image_url: string | null; specialty: "general" | "dental" | "cardiology" | "dermatology" | "physiotherapy" | "orthopedic" | "ent" | "gynecology" | "pediatric" | "psychiatry" | "ophthalmology"; rx_show_price: boolean; rx_show_manufacturer: boolean; rx_show_composition: boolean; rx_show_pack_size: boolean; rx_show_side_effects: boolean; rx_show_drug_interactions: boolean; rx_show_description: boolean; updated_at: string };
-        Insert: { shop_id: string; header_text?: string | null; footer_text?: string | null; show_shop_logo?: boolean; custom_field_labels?: string[]; header_image_url?: string | null; footer_image_url?: string | null; specialty?: "general" | "dental" | "cardiology" | "dermatology" | "physiotherapy" | "orthopedic" | "ent" | "gynecology" | "pediatric" | "psychiatry" | "ophthalmology"; rx_show_price?: boolean; rx_show_manufacturer?: boolean; rx_show_composition?: boolean; rx_show_pack_size?: boolean; rx_show_side_effects?: boolean; rx_show_drug_interactions?: boolean; rx_show_description?: boolean; updated_at?: string };
-        Update: { shop_id?: string; header_text?: string | null; footer_text?: string | null; show_shop_logo?: boolean; custom_field_labels?: string[]; header_image_url?: string | null; footer_image_url?: string | null; specialty?: "general" | "dental" | "cardiology" | "dermatology" | "physiotherapy" | "orthopedic" | "ent" | "gynecology" | "pediatric" | "psychiatry" | "ophthalmology"; rx_show_price?: boolean; rx_show_manufacturer?: boolean; rx_show_composition?: boolean; rx_show_pack_size?: boolean; rx_show_side_effects?: boolean; rx_show_drug_interactions?: boolean; rx_show_description?: boolean; updated_at?: string };
+        Row: { free_followup_days: number | null; consultation_product_ids: string[]; shop_id: string; header_text: string | null; footer_text: string | null; show_shop_logo: boolean; custom_field_labels: string[]; header_image_url: string | null; footer_image_url: string | null; specialty: "general" | "dental" | "cardiology" | "dermatology" | "physiotherapy" | "orthopedic" | "ent" | "gynecology" | "pediatric" | "psychiatry" | "ophthalmology"; rx_show_price: boolean; rx_show_manufacturer: boolean; rx_show_composition: boolean; rx_show_pack_size: boolean; rx_show_side_effects: boolean; rx_show_drug_interactions: boolean; rx_show_description: boolean; updated_at: string };
+        Insert: { free_followup_days?: number | null; consultation_product_ids?: string[]; shop_id: string; header_text?: string | null; footer_text?: string | null; show_shop_logo?: boolean; custom_field_labels?: string[]; header_image_url?: string | null; footer_image_url?: string | null; specialty?: "general" | "dental" | "cardiology" | "dermatology" | "physiotherapy" | "orthopedic" | "ent" | "gynecology" | "pediatric" | "psychiatry" | "ophthalmology"; rx_show_price?: boolean; rx_show_manufacturer?: boolean; rx_show_composition?: boolean; rx_show_pack_size?: boolean; rx_show_side_effects?: boolean; rx_show_drug_interactions?: boolean; rx_show_description?: boolean; updated_at?: string };
+        Update: { free_followup_days?: number | null; consultation_product_ids?: string[]; shop_id?: string; header_text?: string | null; footer_text?: string | null; show_shop_logo?: boolean; custom_field_labels?: string[]; header_image_url?: string | null; footer_image_url?: string | null; specialty?: "general" | "dental" | "cardiology" | "dermatology" | "physiotherapy" | "orthopedic" | "ent" | "gynecology" | "pediatric" | "psychiatry" | "ophthalmology"; rx_show_price?: boolean; rx_show_manufacturer?: boolean; rx_show_composition?: boolean; rx_show_pack_size?: boolean; rx_show_side_effects?: boolean; rx_show_drug_interactions?: boolean; rx_show_description?: boolean; updated_at?: string };
         Relationships: [];
       };
       catalog_settings: {
@@ -1015,6 +1036,7 @@ export interface Database {
       };
       lab_orders: {
         Row: {
+          collection_charge: number;
           id: string;
           shop_id: string;
           order_number: string;
@@ -1035,6 +1057,7 @@ export interface Database {
           created_at: string;
         };
         Insert: {
+          collection_charge?: number;
           id?: string;
           shop_id: string;
           order_number: string;
@@ -1055,6 +1078,7 @@ export interface Database {
           created_at?: string;
         };
         Update: {
+          collection_charge?: number;
           id?: string;
           shop_id?: string;
           order_number?: string;
@@ -1504,6 +1528,9 @@ export interface Database {
       };
       service_jobs: {
         Row: {
+          estimate_status: "sent" | "approved" | "declined" | null;
+          estimate_responded_at: string | null;
+          estimate_note: string | null;
           id: string;
           shop_id: string;
           job_number: string;
@@ -1529,6 +1556,9 @@ export interface Database {
           created_at: string;
         };
         Insert: {
+          estimate_status?: "sent" | "approved" | "declined" | null;
+          estimate_responded_at?: string | null;
+          estimate_note?: string | null;
           id?: string;
           shop_id: string;
           job_number: string;
@@ -1554,6 +1584,9 @@ export interface Database {
           created_at?: string;
         };
         Update: {
+          estimate_status?: "sent" | "approved" | "declined" | null;
+          estimate_responded_at?: string | null;
+          estimate_note?: string | null;
           id?: string;
           shop_id?: string;
           job_number?: string;
@@ -2169,6 +2202,18 @@ export interface Database {
         Update: { key?: string; value?: string; created_at?: string };
         Relationships: [];
       };
+      karigar_jobs: {
+        Row: { id: string; shop_id: string; karigar_name: string; karigar_phone: string | null; item_description: string; metal_type: "gold" | "silver"; purity_percent: number; issued_weight: number; issued_at: string; due_date: string | null; wastage_allowed_percent: number; making_charge: number; received_weight: number | null; returned_metal_weight: number; received_at: string | null; status: "with_karigar" | "received" | "cancelled"; notes: string | null; staff_id: string | null; created_at: string };
+        Insert: { id?: string; shop_id: string; karigar_name: string; karigar_phone?: string | null; item_description: string; metal_type?: "gold" | "silver"; purity_percent?: number; issued_weight: number; issued_at?: string; due_date?: string | null; wastage_allowed_percent?: number; making_charge?: number; received_weight?: number | null; returned_metal_weight?: number; received_at?: string | null; status?: "with_karigar" | "received" | "cancelled"; notes?: string | null; staff_id?: string | null; created_at?: string };
+        Update: { id?: string; shop_id?: string; karigar_name?: string; karigar_phone?: string | null; item_description?: string; metal_type?: "gold" | "silver"; purity_percent?: number; issued_weight?: number; issued_at?: string; due_date?: string | null; wastage_allowed_percent?: number; making_charge?: number; received_weight?: number | null; returned_metal_weight?: number; received_at?: string | null; status?: "with_karigar" | "received" | "cancelled"; notes?: string | null; staff_id?: string | null; created_at?: string };
+        Relationships: [];
+      };
+      delivery_challans: {
+        Row: { id: string; shop_id: string; challan_number: string; challan_date: string; customer_id: string | null; customer_name: string; customer_phone: string | null; site: string | null; items: { productId: string | null; name: string; unit: string; quantity: number }[]; vehicle: string | null; received_by: string | null; status: "open" | "billed" | "cancelled"; bill_id: string | null; stock_taken: boolean; notes: string | null; staff_id: string | null; created_at: string };
+        Insert: { id?: string; shop_id: string; challan_number: string; challan_date: string; customer_id?: string | null; customer_name: string; customer_phone?: string | null; site?: string | null; items?: { productId: string | null; name: string; unit: string; quantity: number }[]; vehicle?: string | null; received_by?: string | null; status?: "open" | "billed" | "cancelled"; bill_id?: string | null; stock_taken?: boolean; notes?: string | null; staff_id?: string | null; created_at?: string };
+        Update: { id?: string; shop_id?: string; challan_number?: string; challan_date?: string; customer_id?: string | null; customer_name?: string; customer_phone?: string | null; site?: string | null; items?: { productId: string | null; name: string; unit: string; quantity: number }[]; vehicle?: string | null; received_by?: string | null; status?: "open" | "billed" | "cancelled"; bill_id?: string | null; stock_taken?: boolean; notes?: string | null; staff_id?: string | null; created_at?: string };
+        Relationships: [];
+      };
       customer_packages: {
         Row: { id: string; shop_id: string; customer_id: string; plan_product_id: string | null; name: string; service_product_id: string | null; service_name: string; sessions_total: number; session_value: number; sold_bill_id: string | null; starts_on: string; expires_on: string | null; status: "active" | "cancelled"; created_at: string };
         Insert: { id?: string; shop_id: string; customer_id: string; plan_product_id?: string | null; name: string; service_product_id?: string | null; service_name: string; sessions_total: number; session_value?: number; sold_bill_id?: string | null; starts_on: string; expires_on?: string | null; status?: "active" | "cancelled"; created_at?: string };
@@ -2387,6 +2432,7 @@ export interface Database {
       };
       rentals: {
         Row: {
+          photos: { url: string; stage: "out" | "in" | "id"; at: string }[];
           id: string;
           shop_id: string;
           customer_id: string | null;
@@ -2421,6 +2467,7 @@ export interface Database {
           created_at: string;
         };
         Insert: {
+          photos?: { url: string; stage: "out" | "in" | "id"; at: string }[];
           id?: string;
           shop_id: string;
           customer_id?: string | null;
@@ -2455,6 +2502,7 @@ export interface Database {
           created_at?: string;
         };
         Update: {
+          photos?: { url: string; stage: "out" | "in" | "id"; at: string }[];
           id?: string;
           shop_id?: string;
           customer_id?: string | null;
@@ -2727,6 +2775,10 @@ export interface Database {
         Returns: number;
       };
       next_debit_note_number: {
+        Args: { p_shop_id: string; p_financial_year: string };
+        Returns: number;
+      };
+      next_challan_number: {
         Args: { p_shop_id: string; p_financial_year: string };
         Returns: number;
       };

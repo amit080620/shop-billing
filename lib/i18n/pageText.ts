@@ -1435,6 +1435,24 @@ export const PAGE_TEXT: Record<string, [hi: string, mr: string]> = {
   "Unlimited items, 10 logins": ["अनगिनत आइटम, 10 लॉगिन", "अमर्यादित आयटम, 10 लॉगिन"],
   "Unlimited": ["अनगिनत", "अमर्यादित"],
 
+  // Today's prices
+  "Update today's prices": ["आज के दाम बदलें", "आजचे दर बदला"],
+  "Change many prices on one screen, then save them together": ["एक ही स्क्रीन पर कई दाम बदलें, फिर एक साथ सेव करें", "एकाच स्क्रीनवर अनेक दर बदला, मग एकत्र सेव करा"],
+  "{n} prices saved — billing uses them now.": ["{n} दाम सेव हुए — बिलिंग में अब यही लगेंगे।", "{n} दर सेव झाले — बिलिंगमध्ये आता हेच लागतील."],
+  "Search items": ["आइटम खोजें", "आयटम शोधा"],
+  "No category": ["बिना कैटेगरी", "कॅटेगरीशिवाय"],
+  "Change the {n} items shown by": ["दिख रहे {n} आइटम बदलें", "दिसणारे {n} आयटम बदला"],
+  "Percent": ["प्रतिशत", "टक्के"],
+  "Apply": ["लागू करें", "लागू करा"],
+  "Item": ["आइटम", "आयटम"],
+  "Price ₹": ["दाम ₹", "दर ₹"],
+  "Offer ₹": ["ऑफर ₹", "ऑफर ₹"],
+  "price": ["दाम", "दर"],
+  "offer price": ["ऑफर दाम", "ऑफर दर"],
+  "{n} prices changed": ["{n} दाम बदले", "{n} दर बदलले"],
+  "Undo": ["वापस लें", "परत घ्या"],
+  "Save {n}": ["{n} सेव करें", "{n} सेव करा"],
+
   // Support requests
   "Your requests": ["आपके अनुरोध", "तुमच्या विनंत्या"],
   "Also send {sr} on WhatsApp": ["{sr} WhatsApp पर भी भेजें", "{sr} WhatsApp वर पण पाठवा"],
