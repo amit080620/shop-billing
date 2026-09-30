@@ -70,7 +70,7 @@ const mr: Record<string, string> = {
   "login.title": "पुन्हा स्वागत आहे",
   "login.subtitle": "तुमच्या दुकानात लॉग इन करा",
   "login.newShop": "नवीन दुकान?",
-  "login.setOneUp": "तयार करा",
+  "login.setOneUp": "आत्ता नोंदणी करा",
   "auth.email": "ईमेल",
   "auth.password": "पासवर्ड",
   "login.submit": "लॉग इन करा",

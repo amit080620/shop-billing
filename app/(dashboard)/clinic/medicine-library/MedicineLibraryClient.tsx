@@ -2,7 +2,7 @@
 
 import { useState, useTransition, useRef } from "react";
 import Link from "next/link";
-import { Trash2, Upload, Download, ChevronDown, Settings2 } from "lucide-react";
+import { Trash2, FileDown, FileUp, ChevronDown, Settings2 } from "lucide-react";
 import { deleteMedicineFromLibraryAction, bulkDeleteMedicinesFromLibraryAction, importMedicineLibraryRowsAction, exportMedicineLibraryCsvAction } from "@/lib/actions/clinic";
 import { useToast } from "@/app/components/Toast";
 import { useT } from "@/lib/i18n/LangContext";
@@ -193,13 +193,13 @@ export function MedicineLibraryClient({ medicines: initial }: { medicines: Medic
           disabled={isImporting}
           className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-border bg-surface px-3 py-2 text-xs font-medium text-foreground disabled:opacity-60"
         >
-          <Upload size={14} /> {isImporting ? "Importing…" : "Upload CSV / Excel"}
+          <FileDown size={14} /> {isImporting ? "Importing…" : "Import CSV / Excel"}
         </button>
         <button
           onClick={handleExport}
           className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-border bg-surface px-3 py-2 text-xs font-medium text-foreground"
         >
-          <Download size={14} /> {t("Export CSV")}
+          <FileUp size={14} /> {t("Export CSV")}
         </button>
       </div>
       <p className="text-[11px] text-muted">

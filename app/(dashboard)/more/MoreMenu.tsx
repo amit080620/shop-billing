@@ -24,7 +24,8 @@ import {
   ClipboardList,
   Dumbbell,
   FileClock,
-  FileUp,
+  FileDown,
+  ShoppingBag,
   FlaskConical,
   Gem,
   Gift,
@@ -278,8 +279,8 @@ export async function MoreMenu() {
         </MenuGroup>
 
         <MenuGroup title="Import & quick entry">
-          <MenuLink href="/import-khata" label="Import old khata" sub="Photograph your paper ledger, AI digitizes it" icon={FileUp} />
-          <MenuLink href="/import-sales-history" label="Import old sales register" sub="Photograph past sales, AI reads every row" icon={FileUp} />
+          <MenuLink href="/import-khata" label="Import old khata" sub="Photograph your paper ledger, AI digitizes it" icon={FileDown} />
+          <MenuLink href="/import-sales-history" label="Import old sales register" sub="Photograph past sales, AI reads every row" icon={FileDown} />
           <MenuLink href="/bulk-sale-entry" label="Bulk sale entry" sub="Fast table entry for several sales at once" icon={Table2} />
           <MenuLink href="/fast-billing-settings" label="Fast billing" sub="Tap-to-add counter for busy hours" icon={Zap} />
         </MenuGroup>
@@ -287,7 +288,7 @@ export async function MoreMenu() {
         <MenuGroup title="Settings & help">
           <MenuLink href="/profile" label="Shop settings" sub="GST profile, invoice, printer, preferences" icon={Settings} />
           <MenuLink href="/fast-print-setup" label="One-click print setup" sub="Print from a laptop without the dialog" icon={Printer} />
-          {type !== "restaurant" && <MenuLink href="/plans#hardware" label="Printers & counter hardware" sub="Bluetooth printers, scanners and starter kits" icon={Printer} />}
+          {type !== "restaurant" && <MenuLink href="/plans#hardware" label="Printers & counter hardware" sub="Bluetooth printers, scanners and starter kits" icon={ShoppingBag} />}
           <MenuLink href="/offline-bill" label="Offline billing" sub="Keep billing with no connection — syncs when you're back" icon={WifiOff} />
           {isOwner && <MenuLink href="/audit-log" label="Audit log" sub="Who did what, and when" icon={FileClock} locked={lock("audit_log")} />}
           {isOwner && mod("audit_log") && <MenuLink href="/error-log" label="Error log" sub="Unexpected failures caught automatically" icon={AlertTriangle} />}

@@ -80,7 +80,7 @@ const hi: Record<string, string> = {
   "login.title": "वापसी पर स्वागत है",
   "login.subtitle": "अपनी दुकान में लॉग इन करें",
   "login.newShop": "नई दुकान?",
-  "login.setOneUp": "अभी बनाएं",
+  "login.setOneUp": "अभी रजिस्टर करें",
   "auth.email": "ईमेल",
   "auth.password": "पासवर्ड",
   "login.submit": "लॉग इन करें",

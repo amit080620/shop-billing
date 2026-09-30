@@ -80,7 +80,7 @@ const en: Record<string, string> = {
   "login.title": "Welcome back",
   "login.subtitle": "Log in to your shop",
   "login.newShop": "New shop?",
-  "login.setOneUp": "Set one up",
+  "login.setOneUp": "Register now",
   "auth.email": "Email",
   "auth.password": "Password",
   "login.submit": "Log in",
