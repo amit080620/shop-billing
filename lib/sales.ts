@@ -132,13 +132,8 @@ export const UPCOMING: UpcomingItem[] = [
   },
   {
     id: "e-invoice",
-    name: "E-invoice and e-way bill",
-    description: "Generate the government IRN and e-way bill straight from a sale.",
-  },
-  {
-    id: "tally-export",
-    name: "Tally export",
-    description: "Hand your CA a Tally-ready file instead of spreadsheets.",
+    name: "IRN and e-way bill straight from a sale",
+    description: "Today the app makes the government JSON for the portal (Reports → E-invoice & e-way bill). Next: the IRN and e-way bill without opening the portal.",
   },
 ];
 

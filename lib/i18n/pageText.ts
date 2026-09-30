@@ -1689,4 +1689,23 @@ export const PAGE_TEXT: Record<string, [hi: string, mr: string]> = {
   "Goods sent for delivery. Not a bill — the tax invoice follows.": ["डिलीवरी के लिए भेजा माल। यह बिल नहीं है — टैक्स इनवॉइस बाद में आएगा।", "डिलिव्हरीसाठी पाठवलेला माल. हे बिल नाही — टॅक्स इनव्हॉइस नंतर येईल."],
   "Received the goods in good condition": ["माल सही हालत में मिला", "माल चांगल्या स्थितीत मिळाला"],
   "For {shop}": ["{shop} के लिए", "{shop} साठी"],
+
+  // Tally export, e-invoice / e-way bill JSON
+  "For the same period: party ledgers, and Sales, Receipt, Purchase and Payment vouchers with GST. In Tally: Import → Masters (file 1), then Import → Transactions (file 2).": ["इसी अवधि के: पार्टी लेजर, और GST के साथ Sales, Receipt, Purchase, Payment वाउचर। Tally में: Import → Masters (फ़ाइल 1), फिर Import → Transactions (फ़ाइल 2)।", "याच कालावधीचे: पार्टी लेजर, आणि GST सह Sales, Receipt, Purchase, Payment व्हाउचर. Tally मध्ये: Import → Masters (फाइल 1), मग Import → Transactions (फाइल 2)."],
+  "1. Masters (ledgers)": ["1. Masters (लेजर)", "1. Masters (लेजर)"],
+  "2. Vouchers": ["2. वाउचर", "2. व्हाउचर"],
+  "E-invoice & e-way bill": ["ई-इनवॉइस और ई-वे बिल", "ई-इनव्हॉइस आणि ई-वे बिल"],
+  "Government JSON for your B2B bills — upload it on the portal to get the IRN or the e-way bill": ["आपके B2B बिलों का सरकारी JSON — पोर्टल पर अपलोड करें, IRN या ई-वे बिल मिल जाएगा", "तुमच्या B2B बिलांचे सरकारी JSON — पोर्टलवर अपलोड करा, IRN किंवा ई-वे बिल मिळेल"],
+  "Show": ["दिखाएं", "दाखवा"],
+  "E-invoice: on einvoice1.gst.gov.in, use the bulk upload (IRN generation) and upload the file. E-way bill: on ewaybillgst.gov.in, Generate → Bulk, upload the file, then add the vehicle.": ["ई-इनवॉइस: einvoice1.gst.gov.in पर bulk upload (IRN generation) में फ़ाइल अपलोड करें। ई-वे बिल: ewaybillgst.gov.in पर Generate → Bulk में फ़ाइल अपलोड करें, फिर गाड़ी जोड़ें।", "ई-इनव्हॉइस: einvoice1.gst.gov.in वर bulk upload (IRN generation) मध्ये फाइल अपलोड करा. ई-वे बिल: ewaybillgst.gov.in वर Generate → Bulk मध्ये फाइल अपलोड करा, मग गाडी जोडा."],
+  "Getting the IRN straight from the app needs a GSP account — tell us if you want it.": ["IRN सीधे ऐप से लेने के लिए GSP अकाउंट चाहिए — चाहिए तो बताएं।", "IRN थेट ॲपमधून घेण्यासाठी GSP खाते लागते — हवे असल्यास सांगा."],
+  "No B2B bills (with the buyer's GSTIN) in these dates.": ["इन तारीख़ों में कोई B2B बिल (खरीदार के GSTIN वाला) नहीं।", "या तारखांमध्ये कोणतेही B2B बिल (खरेदीदाराच्या GSTIN सह) नाही."],
+  "E-invoice JSON ({n})": ["ई-इनवॉइस JSON ({n})", "ई-इनव्हॉइस JSON ({n})"],
+  "E-way bill JSON ({n})": ["ई-वे बिल JSON ({n})", "ई-वे बिल JSON ({n})"],
+  "e-way bill needed": ["ई-वे बिल ज़रूरी", "ई-वे बिल आवश्यक"],
+  "Your shop's GSTIN is missing or wrong (Settings).": ["आपकी दुकान का GSTIN नहीं है या ग़लत है (Settings)।", "तुमच्या दुकानाचा GSTIN नाही किंवा चुकीचा आहे (Settings)."],
+  "Your shop's PIN code is missing (Settings).": ["आपकी दुकान का PIN कोड नहीं है (Settings)।", "तुमच्या दुकानाचा PIN कोड नाही (Settings)."],
+  "The buyer's GSTIN is missing or wrong.": ["खरीदार का GSTIN नहीं है या ग़लत है।", "खरेदीदाराचा GSTIN नाही किंवा चुकीचा आहे."],
+  "The buyer's PIN code is missing — add it to their address.": ["खरीदार का PIN कोड नहीं — उनके पते में जोड़ें।", "खरेदीदाराचा PIN कोड नाही — त्यांच्या पत्त्यात जोडा."],
+  "An item has no HSN / SAC code.": ["किसी आइटम का HSN / SAC कोड नहीं है।", "एखाद्या आयटमचा HSN / SAC कोड नाही."],
 };

@@ -30,7 +30,8 @@ export async function loadRecipeMap(admin: Admin, shopId: string, dishIds?: stri
   return map;
 }
 
-/** Each item's latest buying price, from the shop's purchases (newest first). */
+/** Each item's latest buying price, from the shop's purchases (newest first) — per unit received:
+ * a scheme's free goods ("10 + 5") spread the price over every unit that came in. */
 export async function latestCosts(admin: Admin, shopId: string, productIds: string[]): Promise<Map<string, number>> {
   const costs = new Map<string, number>();
   if (!productIds.length) return costs;
@@ -38,12 +39,15 @@ export async function latestCosts(admin: Admin, shopId: string, productIds: stri
   for (let i = 0; i < productIds.length; i += 200) {
     const { data } = await admin
       .from("purchase_items")
-      .select("product_id, unit_price, purchases!inner(shop_id, purchase_date, created_at)")
+      .select("product_id, unit_price, quantity, free_quantity, purchases!inner(shop_id, purchase_date, created_at)")
       .in("product_id", productIds.slice(i, i + 200))
       .eq("purchases.shop_id", shopId);
     for (const r of data ?? []) {
       const p = (Array.isArray(r.purchases) ? r.purchases[0] : r.purchases) as { purchase_date: string | null; created_at: string } | null;
-      rows.push({ product_id: r.product_id, unit_price: Number(r.unit_price), at: `${p?.purchase_date ?? ""}|${p?.created_at ?? ""}` });
+      const paid = Number(r.quantity);
+      const free = Number(r.free_quantity ?? 0);
+      const perUnit = free > 0 && paid > 0 ? Math.round(((Number(r.unit_price) * paid) / (paid + free)) * 100) / 100 : Number(r.unit_price);
+      rows.push({ product_id: r.product_id, unit_price: perUnit, at: `${p?.purchase_date ?? ""}|${p?.created_at ?? ""}` });
     }
   }
   rows.sort((a, b) => (a.at < b.at ? 1 : -1));

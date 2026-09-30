@@ -275,6 +275,11 @@ export default async function ReportsPage() {
             sub="Monthly summary — output tax, ITC, net payable"
           />
           <ReportLink
+            href="/reports/einvoice"
+            label="E-invoice & e-way bill"
+            sub="Government JSON for B2B bills — upload on the portal for the IRN / e-way bill"
+          />
+          <ReportLink
             href="/reports/purchase-register"
             label="Purchase register (ITC)"
             sub="Vendor-wise input tax credit — your GSTR-2B equivalent"
@@ -300,6 +305,7 @@ const REPORT_ICONS: Record<string, LucideIcon> = {
   "/reports/gstr1": FileText,
   "/reports/gstr3b": Landmark,
   "/reports/purchase-register": BookOpen,
+  "/reports/einvoice": FileText,
   "/restaurant/reports": UtensilsCrossed,
   "/restaurant/reports/items": ChefHat,
   "/transport/reports": Truck,

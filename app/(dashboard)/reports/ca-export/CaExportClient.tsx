@@ -135,6 +135,21 @@ export function CaExportClient() {
       <p className="text-center text-xs text-muted">
         {t("Two files will download — forward both to your accountant as-is.")}
       </p>
+
+      <div className="neu-card flex flex-col gap-2.5 p-4">
+        <p className="text-sm font-semibold text-foreground">{t("Tally export")}</p>
+        <p className="text-xs text-muted">
+          {t("For the same period: party ledgers, and Sales, Receipt, Purchase and Payment vouchers with GST. In Tally: Import → Masters (file 1), then Import → Transactions (file 2).")}
+        </p>
+        <div className="grid grid-cols-2 gap-2">
+          <a href={`/api/export/tally?part=masters&from=${from}&to=${to}`} className="rounded-lg border border-brand px-3 py-2 text-center text-xs font-semibold text-brand-text">
+            {t("1. Masters (ledgers)")}
+          </a>
+          <a href={`/api/export/tally?part=vouchers&from=${from}&to=${to}`} className="rounded-lg border border-brand px-3 py-2 text-center text-xs font-semibold text-brand-text">
+            {t("2. Vouchers")}
+          </a>
+        </div>
+      </div>
     </div>
   );
 }
