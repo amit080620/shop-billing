@@ -36,6 +36,8 @@ export function LrActions({
   const [note, setNote] = useState("");
   const [gst, setGst] = useState(0);
   const [paid, setPaid] = useState<number | "">(payBy === "tbb" ? 0 : total);
+  // The bill comes to the freight plus GST on top (rounded to the rupee, as every bill is).
+  const billTotal = Math.round(total * (1 + gst / 100));
   const [method, setMethod] = useState<Method>("cash");
   const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
@@ -89,10 +91,22 @@ export function LrActions({
         </Link>
       ) : mode === "bill" ? (
         <div className="neu-card flex flex-col gap-2 p-3.5">
-          <p className="text-sm font-semibold text-foreground">{t("Freight bill")} · {formatMoney(total)}</p>
+          <p className="text-sm font-semibold text-foreground">
+            {t("Freight bill")} · {formatMoney(billTotal)}
+            {gst > 0 && <span className="text-xs font-normal text-muted"> ({formatMoney(total)} + GST {gst}%)</span>}
+          </p>
           <label className="flex flex-col gap-1 text-[11px] text-muted">
             GST
-            <select value={gst} onChange={(e) => setGst(Number(e.target.value))} className={input}>
+            <select
+              value={gst}
+              onChange={(e) => {
+                const next = Number(e.target.value);
+                // Still asking for the whole bill? Keep it the whole bill at the new GST.
+                if (paid === billTotal) setPaid(Math.round(total * (1 + next / 100)));
+                setGst(next);
+              }}
+              className={input}
+            >
               <option value={0}>{t("0% — reverse charge (the party pays GST)")}</option>
               <option value={5}>5%</option>
               <option value={12}>12%</option>

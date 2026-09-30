@@ -222,10 +222,13 @@ export async function billConsignmentsAction(input: {
   }
 
   const gst = [0, 5, 12, 18].includes(Number(input.gstPercent)) ? Number(input.gstPercent) : 0;
+  // Freight is quoted before GST, which goes on top. A shop whose prices include GST gets the
+  // line with the GST already in it, so the bill backs out exactly this GST, not a share of the freight.
+  const charge = (amount: number) => (session.priceIncludesGst && session.gstScheme !== "composition" && gst > 0 ? round2(amount * (1 + gst / 100)) : amount);
   const weight = (c: Consignment) => (c.charged_weight ?? c.actual_weight ? `, ${Number(c.charged_weight ?? c.actual_weight)} ${c.weight_unit}` : "");
   const items = lrs.flatMap((c) => [
-    { productId: null, description: `Freight ${c.lr_number}: ${c.from_place} → ${c.to_place} (${c.goods}${weight(c)})`.slice(0, 250), hsnCode: "9965", quantity: 1, unitPrice: Number(c.freight), gstPercent: gst },
-    ...(Number(c.other_charges) > 0 ? [{ productId: null, description: `Other charges ${c.lr_number} (loading, hamali…)`, hsnCode: "9965", quantity: 1, unitPrice: Number(c.other_charges), gstPercent: gst }] : []),
+    { productId: null, description: `Freight ${c.lr_number}: ${c.from_place} → ${c.to_place} (${c.goods}${weight(c)})`.slice(0, 250), hsnCode: "9965", quantity: 1, unitPrice: charge(Number(c.freight)), gstPercent: gst },
+    ...(Number(c.other_charges) > 0 ? [{ productId: null, description: `Other charges ${c.lr_number} (loading, hamali…)`, hsnCode: "9965", quantity: 1, unitPrice: charge(Number(c.other_charges)), gstPercent: gst }] : []),
   ]).filter((i) => i.unitPrice > 0);
   if (!items.length) return { error: "These LRs have no freight to bill." };
 
