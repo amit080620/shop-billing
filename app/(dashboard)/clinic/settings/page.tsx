@@ -19,7 +19,7 @@ export default async function PrescriptionSettingsPage() {
   const [{ data: follow }, { data: fees }] = followReady
     ? await Promise.all([
         admin.from("prescription_settings").select("free_followup_days, consultation_product_ids").eq("shop_id", session.shopId).maybeSingle(),
-        admin.from("products").select("id, name, price").eq("shop_id", session.shopId).eq("track_inventory", false).order("name").limit(80),
+        admin.from("products").select("id, name, price").eq("shop_id", session.shopId).order("name").limit(200),
       ])
     : [{ data: null }, { data: null }];
 
@@ -46,7 +46,10 @@ export default async function PrescriptionSettingsPage() {
         isOwner={session.role === "owner"}
         days={follow?.free_followup_days ?? null}
         selected={follow?.consultation_product_ids ?? []}
-        fees={(fees ?? []).map((p) => ({ id: p.id, name: p.name, price: Number(p.price) }))}
+        // Consultation-looking fees first; any item can be ticked.
+        fees={(fees ?? [])
+          .map((p) => ({ id: p.id, name: p.name, price: Number(p.price) }))
+          .sort((a, b) => Number(/consult|follow|visit|opd/i.test(b.name)) - Number(/consult|follow|visit|opd/i.test(a.name)))}
       />
     )}
     </div>
