@@ -13,6 +13,7 @@ import { todayIso } from "@/lib/dateHelpers";
 import { salonExtrasReady } from "@/lib/salonExtras";
 import { payrollReady } from "@/lib/payrollData";
 import { isModuleEnabled } from "@/lib/modules";
+import { recipesReady } from "@/lib/recipeData";
 
 export default async function NewBillPage({ searchParams }: { searchParams: Promise<{ customer?: string; provider?: string; quote?: string; scheme?: string }> }) {
   // Opened from an appointment ("Bill →"): that customer and stylist come filled in. Opened from a
@@ -38,6 +39,10 @@ export default async function NewBillPage({ searchParams }: { searchParams: Prom
 
   const admin = createSupabaseAdminClient();
 
+  // Raw materials (migration 0050) are stock for the kitchen, never sold on a bill.
+  const rawIds = new Set(
+    (await recipesReady(admin)) ? ((await admin.from("products").select("id").eq("shop_id", session.shopId).eq("is_raw_material", true)).data ?? []).map((p) => p.id) : [],
+  );
   const last30 = new Date();
   last30.setDate(last30.getDate() - 30);
 
@@ -155,7 +160,7 @@ export default async function NewBillPage({ searchParams }: { searchParams: Prom
         gstScheme: session.gstScheme,
         canDiscount: hasPermission(session, "give_discounts"),
       }}
-      products={(products ?? []).map((p) => ({
+      products={(products ?? []).filter((p) => !rawIds.has(p.id)).map((p) => ({
         id: p.id,
         name: p.name,
         // An offer price, while one is set, is what the counter charges (the server charges the same).

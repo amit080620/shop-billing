@@ -2,6 +2,7 @@ import { requireSession } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { getTranslator } from "@/lib/i18n/server";
 import { CombosClient } from "./CombosClient";
+import { recipesReady } from "@/lib/recipeData";
 
 export default async function CombosPage() {
   const session = await requireSession();
@@ -9,7 +10,9 @@ export default async function CombosPage() {
   const admin = createSupabaseAdminClient();
 
   const [{ data: products }, { data: combos }] = await Promise.all([
-    admin.from("products").select("id, name, price").eq("shop_id", session.shopId).order("name"),
+    (await recipesReady(admin))
+      ? admin.from("products").select("id, name, price").eq("shop_id", session.shopId).eq("is_raw_material", false).order("name")
+      : admin.from("products").select("id, name, price").eq("shop_id", session.shopId).order("name"),
     admin.from("combos").select("id, name, price, gst_percent, is_active").eq("shop_id", session.shopId).order("created_at", { ascending: false }),
   ]);
 

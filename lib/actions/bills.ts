@@ -21,6 +21,7 @@ import { loadPackages, packageUsable, salonExtrasReady, walletBalance } from "..
 import { addDaysIso } from "../dateHelpers";
 import { isModuleEnabled } from "../modules";
 import { moduleLockMessage } from "../plans";
+import { dishesWithRecipes, recipesReady, takeForSale } from "../recipeData";
 
 export type ActionState = { error?: string } | null;
 
@@ -383,10 +384,21 @@ export async function createBillCore(
   // rather than one-at-a-time — the FEFO batch loop for pharma items
   // stays sequential WITHIN itself since it tracks a running
   // "remaining" counter across a single product's own batches.
+  const recipesOn = isModuleEnabled(session.enabledModules, "recipe_stock");
+  const recipeDishes = recipesOn ? await dishesWithRecipes(admin, session.shopId, [...productMap.keys()]) : new Set<string>();
+  if (recipeDishes.size) {
+    await takeForSale(admin, {
+      shopId: session.shopId,
+      staffId: session.userId,
+      billId: bill.id,
+      lines: verifiedItems.filter((i) => i.productId && recipeDishes.has(i.productId)).map((i) => ({ productId: i.productId, quantity: Number(i.quantity) })),
+      alsoItems: false,
+    });
+  }
   await Promise.all(
     verifiedItems.map(async (item) => {
       const product = item.productId ? productMap.get(item.productId) : undefined;
-      if (!product?.track_inventory) return;
+      if (!product?.track_inventory || recipeDishes.has(product.id)) return;
 
       if (product.is_pharma) {
         // Earliest expiry first, never an expired batch (checked above before billing).
@@ -654,11 +666,17 @@ export async function voidBillAction(
       .in("id", productIds);
     const productMap = new Map((products ?? []).map((p) => [p.id, p]));
 
+    // A dish sold by its recipe took its raw materials, not itself (they go back with the void
+    // below) — known from the kitchen's ledger having this bill in it.
+    const { count: recipeUse } = (await recipesReady(admin))
+      ? await admin.from("kitchen_usage").select("id", { count: "exact", head: true }).eq("bill_id", billId)
+      : { count: 0 };
+    const recipeDishes = (recipeUse ?? 0) > 0 ? await dishesWithRecipes(admin, session.shopId, productIds) : new Set<string>();
     // Genuinely independent per item (different products, atomic RPC),
     // so restoring them concurrently is safe and faster than one-at-a-time.
     await Promise.all(
       (items ?? []).map(async (item) => {
-        if (!item.product_id) return;
+        if (!item.product_id || recipeDishes.has(item.product_id)) return;
         const product = productMap.get(item.product_id);
         if (!product?.track_inventory) return;
         await admin.rpc("increment_stock", { p_product_id: item.product_id, p_quantity: Number(item.quantity) });

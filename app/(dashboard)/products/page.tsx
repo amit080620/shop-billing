@@ -6,6 +6,7 @@ import { ProductsClient } from "./ProductsClient";
 import { isModuleEnabled } from "@/lib/modules";
 import { getBarcodeScanModeAction } from "@/lib/actions/settings";
 import { cached } from "@/lib/cache";
+import { recipesReady } from "@/lib/recipeData";
 
 export default async function ProductsPage() {
   const session = await requireSession();
@@ -31,8 +32,12 @@ export default async function ProductsPage() {
     ]),
   );
 
+  // Raw materials (migration 0050) are marked in the list: their price is what they cost to buy.
+  const rawMaterialIds = (await recipesReady(admin)) ? ((await admin.from("products").select("id").eq("shop_id", session.shopId).eq("is_raw_material", true)).data ?? []).map((p) => p.id) : [];
+
   return (
     <ProductsClient
+      rawMaterialIds={rawMaterialIds}
       lang={lang}
       businessType={session.businessType}
       isOwner={session.role === "owner"}

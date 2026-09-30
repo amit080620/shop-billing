@@ -19,6 +19,7 @@ export const MODULES = [
   { key: "gold_schemes", label: "Gold saving schemes", description: "Monthly instalments with a bonus, used to buy jewellery", href: "/jewellery/schemes", businessTypes: ["jewellery"] },
   { key: "advanced_reports", label: "Advanced reports", description: "Insights, profit, CA export pack, staff reports", href: "/reports" },
   { key: "stylist_commission", label: "Stylist commission", description: "Work done by each stylist, and their commission added to salary", href: "/salon", businessTypes: ["salon"] },
+  { key: "recipe_stock", label: "Recipes & kitchen stock", description: "Raw materials come off stock as dishes sell; food cost per plate, wastage and staff meals", href: "/restaurant/recipes", businessTypes: ["restaurant", "hotel"] },
   { key: "vehicle_profit", label: "Vehicle expenses & profit", description: "Diesel, toll and bhatta per vehicle; each vehicle's profit and diesel average", href: "/transport/expenses", businessTypes: ["transport"] },
   { key: "self_checkin_kiosk", label: "Self check-in kiosk", description: "Gym: member self check-in tablet", href: "/gym/kiosk-settings", businessTypes: ["gym"] },
   { key: "leads_crm", label: "Leads tracker", description: "Gym: trial enquiries and walk-in tracking", href: "/gym/leads", businessTypes: ["gym"] },

@@ -201,6 +201,7 @@ export interface Database {
           package_service_id: string | null;
           package_sessions: number | null;
           package_validity_days: number | null;
+          is_raw_material: boolean;
           image_url: string | null;
           offer_price: number | null;
           offer_label: string | null;
@@ -249,6 +250,7 @@ export interface Database {
           package_service_id?: string | null;
           package_sessions?: number | null;
           package_validity_days?: number | null;
+          is_raw_material?: boolean;
           image_url?: string | null;
           offer_price?: number | null;
           offer_label?: string | null;
@@ -297,6 +299,7 @@ export interface Database {
           package_service_id?: string | null;
           package_sessions?: number | null;
           package_validity_days?: number | null;
+          is_raw_material?: boolean;
           image_url?: string | null;
           offer_price?: number | null;
           offer_label?: string | null;
@@ -2020,6 +2023,7 @@ export interface Database {
           kot_printed: boolean;
           selected_modifiers: { group: string; choice: string; price: number }[];
           item_note: string | null;
+          combo_id: string | null;
           status: "pending" | "ready" | "served" | "cancelled";
           ready_at: string | null;
           served_at: string | null;
@@ -2041,6 +2045,7 @@ export interface Database {
           kot_printed?: boolean;
           selected_modifiers?: { group: string; choice: string; price: number }[];
           item_note?: string | null;
+          combo_id?: string | null;
           status?: "pending" | "ready" | "served" | "cancelled";
           ready_at?: string | null;
           served_at?: string | null;
@@ -2062,6 +2067,7 @@ export interface Database {
           kot_printed?: boolean;
           selected_modifiers?: { group: string; choice: string; price: number }[];
           item_note?: string | null;
+          combo_id?: string | null;
           status?: "pending" | "ready" | "served" | "cancelled";
           ready_at?: string | null;
           served_at?: string | null;
@@ -2137,6 +2143,18 @@ export interface Database {
         Row: { id: string; shop_id: string; vehicle_id: string | null; consignment_id: string | null; expense_date: string; category: "diesel" | "toll" | "driver" | "loading" | "repair" | "tyre" | "police" | "other"; amount: number; payment_method: "cash" | "card" | "upi" | "online" | "other"; litres: number | null; odometer_km: number | null; note: string | null; staff_id: string | null; created_at: string };
         Insert: { id?: string; shop_id: string; vehicle_id?: string | null; consignment_id?: string | null; expense_date: string; category: "diesel" | "toll" | "driver" | "loading" | "repair" | "tyre" | "police" | "other"; amount: number; payment_method?: "cash" | "card" | "upi" | "online" | "other"; litres?: number | null; odometer_km?: number | null; note?: string | null; staff_id?: string | null; created_at?: string };
         Update: { id?: string; shop_id?: string; vehicle_id?: string | null; consignment_id?: string | null; expense_date?: string; category?: "diesel" | "toll" | "driver" | "loading" | "repair" | "tyre" | "police" | "other"; amount?: number; payment_method?: "cash" | "card" | "upi" | "online" | "other"; litres?: number | null; odometer_km?: number | null; note?: string | null; staff_id?: string | null; created_at?: string };
+        Relationships: [];
+      };
+      recipe_lines: {
+        Row: { id: string; shop_id: string; dish_id: string; ingredient_id: string; quantity: number; created_at: string };
+        Insert: { id?: string; shop_id: string; dish_id: string; ingredient_id: string; quantity: number; created_at?: string };
+        Update: { id?: string; shop_id?: string; dish_id?: string; ingredient_id?: string; quantity?: number; created_at?: string };
+        Relationships: [];
+      };
+      kitchen_usage: {
+        Row: { id: string; shop_id: string; ingredient_id: string; kind: "sale" | "wastage" | "staff_meal"; quantity: number; order_id: string | null; bill_id: string | null; note: string | null; staff_id: string | null; created_at: string };
+        Insert: { id?: string; shop_id: string; ingredient_id: string; kind: "sale" | "wastage" | "staff_meal"; quantity: number; order_id?: string | null; bill_id?: string | null; note?: string | null; staff_id?: string | null; created_at?: string };
+        Update: { id?: string; shop_id?: string; ingredient_id?: string; kind?: "sale" | "wastage" | "staff_meal"; quantity?: number; order_id?: string | null; bill_id?: string | null; note?: string | null; staff_id?: string | null; created_at?: string };
         Relationships: [];
       };
       customer_packages: {

@@ -11,6 +11,8 @@ import { findOrCreateCustomerByPhone, awardLoyaltyPoints } from "./customers";
 import { advanceReceived, hasCashMovement, recordCashMovement } from "../cashMovements";
 import { todayIso } from "../dateHelpers";
 import { billLimitError } from "../planLimits";
+import { isModuleEnabled } from "../modules";
+import { recipesReady, takeForSale } from "../recipeData";
 
 export type ActionState = { error?: string } | null;
 
@@ -777,21 +779,35 @@ export async function settleOrderAction(
   // is the equivalent of a bill being created, and is the point where
   // this genuinely becomes a completed sale rather than an order that
   // could still be cancelled.
-  const { data: items } = await admin
-    .from("restaurant_order_items")
-    .select("product_id, quantity")
-    .eq("order_id", orderId)
-    .neq("status", "cancelled")
-    .not("product_id", "is", null);
-  // Genuinely independent per item, so this runs concurrently rather
-  // than one product's DB round-trip at a time.
-  await Promise.all(
-    (items ?? []).map(async (item) => {
-      const { data: product } = await admin.from("products").select("id, track_inventory").eq("id", item.product_id).single();
-      if (!product?.track_inventory) return;
-      await admin.rpc("decrement_stock", { p_product_id: product.id, p_quantity: Number(item.quantity) });
-    }),
-  );
+  // With recipes (Pro, migration 0050), a dish takes its raw materials off stock instead — a combo
+  // by the recipes of what is in it — and the kitchen's ledger writes them down.
+  const recipesOn = isModuleEnabled(session.enabledModules, "recipe_stock") && (await recipesReady(admin));
+  if (recipesOn) {
+    const { data: lines } = await admin.from("restaurant_order_items").select("product_id, combo_id, quantity").eq("order_id", orderId).neq("status", "cancelled");
+    await takeForSale(admin, {
+      shopId: session.shopId,
+      staffId: session.userId,
+      orderId,
+      lines: (lines ?? []).map((l) => ({ productId: l.product_id, comboId: l.combo_id, quantity: Number(l.quantity) })),
+      alsoItems: true,
+    });
+  } else {
+    const { data: items } = await admin
+      .from("restaurant_order_items")
+      .select("product_id, quantity")
+      .eq("order_id", orderId)
+      .neq("status", "cancelled")
+      .not("product_id", "is", null);
+    // Genuinely independent per item, so this runs concurrently rather
+    // than one product's DB round-trip at a time.
+    await Promise.all(
+      (items ?? []).map(async (item) => {
+        const { data: product } = await admin.from("products").select("id, track_inventory").eq("id", item.product_id).single();
+        if (!product?.track_inventory) return;
+        await admin.rpc("decrement_stock", { p_product_id: product.id, p_quantity: Number(item.quantity) });
+      }),
+    );
+  }
   await invalidateCache(`ray:cache:products:${session.shopId}`);
 
   revalidatePath("/restaurant");

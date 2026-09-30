@@ -10,6 +10,8 @@ import { DateRangeControls } from "@/app/components/DateRangeControls";
 import { todayIso, isoDaysAgo } from "@/lib/dateHelpers";
 import { getTranslator } from "@/lib/i18n/server";
 import { BackLink } from "@/app/components/BackLink";
+import { ingredientCosts, latestCosts, loadRecipeMap, recipesReady } from "@/lib/recipeData";
+import { plateCost } from "@/lib/recipes";
 
 export default async function ProfitPage({
   searchParams,
@@ -83,19 +85,17 @@ export default async function ProfitPage({
   // understandable when they check it against a recent vendor bill.
   const productIds = [...new Set((soldItems ?? []).map((i) => i.product_id).filter((id): id is string => !!id))];
 
-  const { data: purchaseItems } = productIds.length
-    ? await admin
-        .from("purchase_items")
-        .select("product_id, unit_price, purchases!inner(shop_id, created_at)")
-        .in("product_id", productIds)
-        .eq("purchases.shop_id", session.shopId)
-        .order("created_at", { referencedTable: "purchases", ascending: false })
-    : { data: [] as { product_id: string | null; unit_price: number }[] };
-
-  const costByProduct = new Map<string, number>();
-  for (const pi of purchaseItems ?? []) {
-    if (pi.product_id && !costByProduct.has(pi.product_id)) {
-      costByProduct.set(pi.product_id, Number(pi.unit_price));
+  // (Newest purchase by its date — sorting the joined purchase alone left the row order as it came.)
+  const costByProduct = await latestCosts(admin, session.shopId, productIds);
+  // A dish costs what its recipe's raw materials cost (Recipes & kitchen stock).
+  if (isModuleEnabled(session.enabledModules, "recipe_stock") && (await recipesReady(admin))) {
+    const recipes = await loadRecipeMap(admin, session.shopId, productIds.filter((id) => !costByProduct.has(id)));
+    if (recipes.size) {
+      const rawCosts = await ingredientCosts(admin, session.shopId, [...new Set([...recipes.values()].flat().map((r) => r.ingredientId))]);
+      for (const [dishId, recipe] of recipes) {
+        const { cost, missing } = plateCost(recipe, rawCosts);
+        if (!missing.length) costByProduct.set(dishId, cost);
+      }
     }
   }
 

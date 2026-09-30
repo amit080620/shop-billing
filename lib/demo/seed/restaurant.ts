@@ -16,6 +16,7 @@ import { createReservationAction } from "@/lib/actions/reservations";
 import { dateOffset, fakePhone, formData, isoAt, personName } from "../util";
 import type { Catalog } from "./catalogs";
 import { enableCatalog, insertCatalog, insertVendors, seedPettyCash, seedPurchases, STANDARD_PETTY_CASH, type SeedCtx, type SeededProduct } from "./common";
+import { recipesReady } from "@/lib/recipeData";
 
 export const RESTAURANT_MENU: Catalog = [
   {
@@ -96,6 +97,10 @@ export async function seedRestaurant(ctx: SeedCtx): Promise<void> {
   await createTableAction("Takeaway", "takeaway");
   const tables = await tableIds(ctx);
   const dineTables = tables.filter((t) => t.name !== "Takeaway");
+
+  // The kitchen's raw materials and recipes (migration 0050) — set up before the day's orders, so
+  // settling them takes the raw materials off stock like it does in a real kitchen.
+  await seedKitchen(ctx, byName);
 
   // Choices on a dish: spice level and add-ons, like the real menu screen.
   const biryani = byName("Chicken Biryani");
@@ -197,5 +202,57 @@ export async function seedRestaurant(ctx: SeedCtx): Promise<void> {
     { description: "LPG cylinder", amount: 1850, category: "Kitchen", daysAgo: 3 },
     { description: "Vegetables from market", amount: 2200, category: "Kitchen", daysAgo: 1 },
     ...STANDARD_PETTY_CASH.slice(0, 3),
+  ]);
+}
+
+/** Raw materials with their buying price and stock, recipes for the best sellers, and a little
+ * wastage and a staff meal — so Recipes, Kitchen stock and food cost open with real figures. */
+async function seedKitchen(ctx: SeedCtx, byName: (n: string) => { id: string }): Promise<void> {
+  const { admin, shopId } = ctx;
+  if (!(await recipesReady(admin))) return;
+  const RAW: [string, string, number, number, number][] = [
+    // name, unit, ₹ per unit, stock now, alert below
+    ["Paneer", "KG", 380, 6, 2],
+    ["Chicken (boneless)", "KG", 260, 9, 3],
+    ["Basmati rice", "KG", 110, 25, 5],
+    ["Maida", "KG", 38, 20, 5],
+    ["Wheat atta", "KG", 34, 18, 5],
+    ["Butter", "KG", 520, 4, 1],
+    ["Fresh cream", "LTR", 220, 3, 1],
+    ["Refined oil", "LTR", 150, 15, 4],
+    ["Onion", "KG", 32, 20, 5],
+    ["Tomato", "KG", 28, 14, 4],
+    ["Milk", "LTR", 60, 12, 4],
+    ["Tea leaves", "KG", 480, 1.2, 0.3],
+    ["Sugar", "KG", 44, 10, 2],
+  ];
+  const { data: raws } = await admin
+    .from("products")
+    .insert(RAW.map(([name, unit, price, stock, low]) => ({ shop_id: shopId, name, unit, price, gst_percent: 0, track_inventory: true, stock_quantity: stock, low_stock_threshold: low, is_raw_material: true, show_in_catalog: false })))
+    .select("id, name");
+  const raw = (n: string) => (raws ?? []).find((r) => r.name === n)?.id;
+  const RECIPES: Record<string, [string, number][]> = {
+    "Paneer Tikka": [["Paneer", 0.18], ["Refined oil", 0.02], ["Onion", 0.05]],
+    "Paneer Butter Masala": [["Paneer", 0.15], ["Butter", 0.03], ["Fresh cream", 0.04], ["Tomato", 0.15], ["Onion", 0.08]],
+    "Butter Chicken": [["Chicken (boneless)", 0.25], ["Butter", 0.04], ["Fresh cream", 0.05], ["Tomato", 0.15]],
+    "Chicken 65": [["Chicken (boneless)", 0.22], ["Refined oil", 0.06], ["Maida", 0.03]],
+    "Chicken Biryani": [["Chicken (boneless)", 0.2], ["Basmati rice", 0.18], ["Onion", 0.1], ["Refined oil", 0.03]],
+    "Veg Biryani": [["Basmati rice", 0.18], ["Onion", 0.1], ["Tomato", 0.05], ["Refined oil", 0.03]],
+    "Jeera Rice": [["Basmati rice", 0.16], ["Refined oil", 0.015]],
+    "Butter Naan": [["Maida", 0.09], ["Butter", 0.01]],
+    "Garlic Naan": [["Maida", 0.09], ["Butter", 0.012]],
+    "Tandoori Roti": [["Wheat atta", 0.07]],
+    "Masala Chai": [["Milk", 0.12], ["Tea leaves", 0.004], ["Sugar", 0.012]],
+  };
+  const lines = Object.entries(RECIPES).flatMap(([dish, items]) =>
+    items.map(([name, quantity]) => ({ shop_id: shopId, dish_id: byName(dish).id, ingredient_id: raw(name) as string, quantity })).filter((l) => l.ingredient_id),
+  );
+  await admin.from("recipe_lines").insert(lines);
+  const loss = (name: string, kind: "wastage" | "staff_meal", quantity: number, note: string, daysAgo: number) => ({ shop_id: shopId, ingredient_id: raw(name) as string, kind, quantity, note, created_at: isoAt(daysAgo, 22) });
+  await admin.from("kitchen_usage").insert([
+    loss("Milk", "wastage", 1.5, "Curdled — left out overnight", 2),
+    loss("Tomato", "wastage", 1.2, "Spoilt in the heat", 4),
+    loss("Basmati rice", "staff_meal", 1.5, "Staff lunch", 1),
+    loss("Wheat atta", "staff_meal", 1, "Staff lunch", 1),
   ]);
 }

@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { requireSession } from "../auth";
 import { createSupabaseAdminClient } from "../supabase/admin";
 import { financialYearFor, round2 } from "../gst";
+import { recipesReady } from "../recipeData";
 
 export type PublicMenuItem = { id: string; name: string; price: number; category: string };
 
@@ -25,11 +26,10 @@ export async function getTableMenuAction(
 
   const shop = Array.isArray(table.shops) ? table.shops[0] : table.shops;
 
-  const { data: products } = await admin
-    .from("products")
-    .select("id, name, price, categories ( name )")
-    .eq("shop_id", table.shop_id)
-    .order("name");
+  const raw = await recipesReady(admin);
+  const { data: products } = raw
+    ? await admin.from("products").select("id, name, price, categories ( name )").eq("shop_id", table.shop_id).eq("is_raw_material", false).order("name")
+    : await admin.from("products").select("id, name, price, categories ( name )").eq("shop_id", table.shop_id).order("name");
 
   const { data: pending } = await admin
     .from("table_order_requests")

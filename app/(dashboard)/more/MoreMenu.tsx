@@ -107,6 +107,8 @@ export async function MoreMenu() {
             <MenuLink href="/restaurant-kds" label="Kitchen display (TV)" sub="Big-screen view for the kitchen" icon={MonitorPlay} />
             <MenuLink href="/restaurant/kds-settings" label="Kitchen display settings" sub="Cards per row, text size" icon={ChefHat} />
             <MenuLink href="/restaurant/combos" label="Combo deals" sub="Bundle menu items at a set price" icon={Package} />
+            <MenuLink href="/restaurant/recipes" label={t("Recipes & food cost")} sub={t("What each plate takes and costs")} icon={ChefHat} locked={lock("recipe_stock")} />
+            <MenuLink href="/restaurant/kitchen" label={t("Kitchen stock")} sub={t("Raw materials left, wastage, staff meals")} icon={ClipboardCheck} locked={lock("recipe_stock")} />
             <MenuLink href="/restaurant/reports" label="Restaurant sales" sub="Day-wise & month-wise reports" icon={BarChart3} />
           </MenuGroup>
         )}
@@ -123,6 +125,8 @@ export async function MoreMenu() {
             <MenuLink href="/restaurant" label="Restaurant & room service" sub="Tables, kitchen and orders charged to rooms" icon={ChefHat} />
             <MenuLink href="/restaurant-kds" label="Kitchen display (TV)" sub="Big-screen view for the kitchen" icon={MonitorPlay} />
             <MenuLink href="/restaurant/kds-settings" label="Kitchen display settings" sub="Cards per row, text size" icon={Settings} />
+            <MenuLink href="/restaurant/recipes" label={t("Recipes & food cost")} sub={t("What each plate takes and costs")} icon={ChefHat} locked={lock("recipe_stock")} />
+            <MenuLink href="/restaurant/kitchen" label={t("Kitchen stock")} sub={t("Raw materials left, wastage, staff meals")} icon={ClipboardCheck} locked={lock("recipe_stock")} />
             <MenuLink href="/restaurant/combos" label="Combo deals" sub="Bundle menu items at a set price" icon={Package} />
           </MenuGroup>
         )}

@@ -112,7 +112,10 @@ export function ProductsClient({
   isOwner,
   bulkImportExportEnabled,
   barcodeScanMode = "both",
+  rawMaterialIds = [],
 }: {
+  /** Kitchen raw materials — shown with a tag, their price being what they cost to buy. */
+  rawMaterialIds?: string[];
   initialProducts: Product[];
   categories: Category[];
   terminology: { productPlural: string; productSingular: string; productSub: string; addProductLabel: string };
@@ -943,7 +946,10 @@ export function ProductsClient({
                     if (e.key === "Enter") openEditProductForm(p);
                   }}
                 >
-                  <p className="truncate text-sm font-medium text-foreground">{p.name}</p>
+                  <p className="truncate text-sm font-medium text-foreground">
+                    {p.name}
+                    {rawMaterialIds.includes(p.id) && <span className="ml-1.5 rounded-full bg-surface-2 px-1.5 py-0.5 align-middle text-[10px] font-semibold text-muted">{t("Raw material")}</span>}
+                  </p>
                   <p className="text-xs text-muted">
                     {p.categoryName ?? t("products.noCategory")} · GST {p.gstPercent}% · {unitLabel(p.unit)}
                     {p.hsnCode ? ` · HSN ${p.hsnCode}` : ""}

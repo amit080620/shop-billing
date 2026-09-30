@@ -3,6 +3,7 @@ import { salonExtrasReady } from "./salonExtras";
 import { goldSchemesReady } from "./goldSchemeData";
 import { cashMovementsReady } from "./cashMovements";
 import { transportExtrasReady } from "./transportData";
+import { giveBackForBill, recipesReady } from "./recipeData";
 
 type Admin = ReturnType<typeof createSupabaseAdminClient>;
 
@@ -32,6 +33,8 @@ export async function undoBillUsage(admin: Admin, shopId: string, billId: string
         await admin.from("cash_movements").delete().eq("shop_id", shopId).eq("source", "service_job").eq("source_id", j.id).eq("kind", "advance_applied");
       }
     }
+    // Raw materials a recipe took for it go back on the shelf.
+    if (await recipesReady(admin)) await giveBackForBill(admin, shopId, billId);
     // A freight bill voided: its LRs are waiting to be billed again.
     if (await transportExtrasReady(admin)) {
       await admin.from("consignments").update({ bill_id: null }).eq("shop_id", shopId).eq("bill_id", billId);

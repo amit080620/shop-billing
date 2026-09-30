@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { roomChargeTargetForTable } from "@/lib/hotel/server";
 import { OrderClient } from "./OrderClient";
 import { buyerSchemaReady } from "@/lib/gstBuyer";
+import { recipesReady } from "@/lib/recipeData";
 
 export default async function OrderPage({
   params,
@@ -29,7 +30,9 @@ export default async function OrderPage({
 
   const [{ data: items }, { data: products }, { data: combos }, { data: linkedReservation }, { data: optionGroups }] = await Promise.all([
     admin.from("restaurant_order_items").select("id, product_id, product_name, quantity, unit_price, line_total, status, selected_modifiers, kot_printed").eq("order_id", id).order("created_at"),
-    admin.from("products").select("id, name, price, gst_percent, category_id, categories ( name )").eq("shop_id", session.shopId).order("name"),
+    (await recipesReady(admin))
+      ? admin.from("products").select("id, name, price, gst_percent, category_id, categories ( name )").eq("shop_id", session.shopId).eq("is_raw_material", false).order("name")
+      : admin.from("products").select("id, name, price, gst_percent, category_id, categories ( name )").eq("shop_id", session.shopId).order("name"),
     admin.from("combos").select("id, name, price").eq("shop_id", session.shopId).eq("is_active", true).order("name"),
     order.reservation_id
       ? admin.from("restaurant_reservations").select("token_amount").eq("id", order.reservation_id).maybeSingle()

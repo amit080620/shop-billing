@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { requireSession } from "../auth";
 import { createSupabaseAdminClient } from "../supabase/admin";
 import { round2 } from "../gst";
+import { recipesReady } from "../recipeData";
 
 export type ActionState = { error?: string } | null;
 
@@ -146,6 +147,7 @@ export async function addComboToOrderAction(orderId: string, comboId: string): P
     gst_percent: combo.gst_percent,
     line_subtotal: round2(combo.price),
     line_total: round2(combo.price),
+    ...((await recipesReady(admin)) ? { combo_id: combo.id } : {}),
   });
   if (error) {
     console.error("Could not add combo to order", error);

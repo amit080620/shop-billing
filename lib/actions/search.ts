@@ -82,6 +82,8 @@ const STATIC_PAGES: { title: string; subtitle: string; href: string; keywords: s
   { title: "New job", subtitle: "Receive an item for repair", href: "/service/new", keywords: ["new job", "receive repair"] },
   { title: "Service reports", subtitle: "Technician performance, turnaround", href: "/service/reports", keywords: ["service report"] },
   { title: "Salon appointments", subtitle: "Booking calendar", href: "/salon/appointments", keywords: ["salon", "appointment", "booking"] },
+  { title: "Recipes & food cost", subtitle: "What each plate takes and costs", href: "/restaurant/recipes", keywords: ["recipe", "food cost", "raw material", "kachcha maal", "ingredient", "plate cost"] },
+  { title: "Kitchen stock", subtitle: "Raw materials, wastage, staff meals", href: "/restaurant/kitchen", keywords: ["kitchen stock", "raw material", "wastage", "staff meal", "inventory", "kachcha maal"] },
   { title: "Bilty (LR)", subtitle: "Lorry receipt: book, track, bill the freight", href: "/transport/lr", keywords: ["bilty", "lr", "lorry receipt", "consignment", "gc note", "builty", "challan", "freight"] },
   { title: "Vehicle expenses", subtitle: "Diesel, toll, driver bhatta, repairs", href: "/transport/expenses", keywords: ["diesel", "toll", "bhatta", "trip expense", "vehicle expense", "tyre", "repair", "kharcha"] },
   { title: "Vehicle profit", subtitle: "Earnings, running costs, diesel average", href: "/transport/reports", keywords: ["vehicle profit", "truck profit", "average", "mileage", "km per litre", "munafa"] },
