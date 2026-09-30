@@ -49,7 +49,7 @@ export default async function NewBillPage({ searchParams }: { searchParams: Prom
   const [{ data: products }, { data: customers }, { data: recentBills }, { data: shop }, { data: vehicles }, rateRows] = await Promise.all([
     admin
       .from("products")
-      .select("id, name, price, offer_price, gst_percent, hsn_code, barcode, unit, track_inventory, stock_quantity, low_stock_threshold, requires_prescription, units_per_pack, loose_unit_name, metal_type, purity, making_charge_type, making_charge_value, wastage_percent, bulk_min_qty, bulk_price, hallmark_number")
+      .select("id, name, price, offer_price, gst_percent, hsn_code, barcode, unit, track_inventory, stock_quantity, low_stock_threshold, requires_prescription, units_per_pack, loose_unit_name, metal_type, purity, making_charge_type, making_charge_value, wastage_percent, bulk_min_qty, bulk_price, hallmark_number, salt_composition")
       .eq("shop_id", session.shopId)
       .order("name"),
     admin
@@ -183,6 +183,8 @@ export default async function NewBillPage({ searchParams }: { searchParams: Prom
         bulkMinQty: p.bulk_min_qty !== null ? Number(p.bulk_min_qty) : null,
         bulkPrice: p.bulk_price !== null ? Number(p.bulk_price) : null,
         hallmarkNumber: p.hallmark_number,
+        // Only a pharmacy looks for same-salt substitutes.
+        salt: session.businessType === "pharmacy" ? p.salt_composition : null,
       }))}
       customers={customers ?? []}
       frequentProductIds={frequentProductIds}

@@ -260,7 +260,7 @@ export function ProductsClient({
     if (!search.trim()) return byCategory;
     const q = search.toLowerCase();
     return byCategory.filter(
-      (p) => p.name.toLowerCase().includes(q) || (p.barcode ?? "").toLowerCase().includes(q),
+      (p) => p.name.toLowerCase().includes(q) || (p.barcode ?? "").toLowerCase().includes(q) || (p.saltComposition ?? "").toLowerCase().includes(q),
     );
   }, [initialProducts, filter, search]);
 

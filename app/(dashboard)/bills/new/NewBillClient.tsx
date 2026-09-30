@@ -25,6 +25,7 @@ import { InlineQuickAdd } from "@/app/components/InlineQuickAdd";
 import { Spinner } from "@/app/components/Spinner";
 import { Zap, Package, AlertTriangle, Pill, Truck, Gem, Recycle, Mic, ScanBarcode, ShoppingCart, Sparkles, X, Plus } from "lucide-react";
 import { barcodeFromQuery } from "@/lib/barcodeQuery";
+import { saltKey, substitutesFor } from "@/lib/salt";
 import dynamic from "next/dynamic";
 const CameraBarcodeScanner = dynamic(() => import("@/app/components/CameraBarcodeScanner").then((m) => m.CameraBarcodeScanner), { ssr: false });
 import { useTranslation } from "@/lib/i18n/useTranslation";
@@ -60,6 +61,8 @@ type Product = {
   bulkMinQty: number | null;
   bulkPrice: number | null;
   hallmarkNumber: string | null;
+  /** Salt / composition (pharmacy only) — for same-salt substitutes. */
+  salt?: string | null;
 };
 type Customer = { id: string; name: string; phone: string; gstin: string | null; state_code: string | null; loyalty_points?: number };
 type CartLine = {
@@ -209,6 +212,20 @@ export function NewBillClient({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const [scanError, setScanError] = useState<string | null>(null);
+  // A medicine whose same-salt substitutes are on show (picked out of stock, or asked for).
+  const [subsFor, setSubsFor] = useState<string | null>(null);
+  // How many medicines share each salt, so a bill line can offer "same salt" only when there is one.
+  const saltOf = useMemo(() => {
+    const keyById = new Map<string, string>();
+    const count = new Map<string, number>();
+    for (const p of products) {
+      const k = saltKey(p.salt);
+      if (!k) continue;
+      keyById.set(p.id, k);
+      count.set(k, (count.get(k) ?? 0) + 1);
+    }
+    return (id: string) => { const k = keyById.get(id); return k ? (count.get(k) ?? 1) - 1 : 0; };
+  }, [products]);
   const frequentProducts = frequentProductIds
     .map((id) => products.find((p) => p.id === id))
     .filter((p): p is Product => Boolean(p));
@@ -674,6 +691,15 @@ export function NewBillClient({
     );
   }
 
+  /** Gives a same-salt medicine instead of the one on the bill, for the same quantity. */
+  function swapLine(fromId: string, to: Product) {
+    const qty = cart.find((c) => c.productId === fromId && c.saleMode === "pack")?.quantity ?? 1;
+    const already = cart.find((c) => c.productId === to.id)?.quantity ?? 0;
+    setCart((prev) => prev.filter((c) => c.productId !== fromId));
+    addProduct(to);
+    if (already + qty !== 1) updateQuantity(to.id, already + qty);
+  }
+
   function toggleSaleMode(productId: string, mode: "pack" | "loose") {
     setCart((prev) =>
       prev.map((c) => {
@@ -838,7 +864,7 @@ export function NewBillClient({
             items={products}
             getKey={(p) => p.id}
             getLabel={(p) => p.name}
-            getKeywords={(p) => p.barcode ?? ""}
+            getKeywords={(p) => [p.barcode, p.salt].filter(Boolean).join(" ")}
             leadingIcon={<ScanBarcode size={17} />}
             onEnter={(text) => {
               const code = barcodeScanMode === "off" ? null : barcodeFromQuery(text, products);
@@ -851,10 +877,13 @@ export function NewBillClient({
             onSelect={(p) => {
               setScanError(null);
               addProduct(p);
+              // Out of stock? Offer another brand of the same salt.
+              setSubsFor(p.salt && p.trackInventory && p.stockQuantity <= 0 && substitutesFor(p, products).length ? p.id : null);
             }}
             placeholder={barcodeScanMode === "off" ? t("bill.searchProducts") : t("bill.searchOrScan")}
           />
           {scanError && <p className="text-xs text-credit">{scanError}</p>}
+          {subsFor && <SameSaltPanel item={products.find((p) => p.id === subsFor) ?? null} products={products} cart={cart} onSwap={(from, to) => { swapLine(from, to); setSubsFor(null); }} onClose={() => setSubsFor(null)} />}
           {/* Secondary ways to add items — one compact row instead of a
               stack of full-width controls under the search box. */}
           <div className="flex flex-wrap items-center gap-2">
@@ -989,6 +1018,11 @@ export function NewBillClient({
                           threshold={line.lowStockThreshold}
                           unit={line.unit}
                         />
+                      )}
+                      {!line.packageId && saltOf(line.productId) > 0 && (
+                        <button type="button" onClick={() => setSubsFor(line.productId)} className="mt-0.5 flex items-center gap-1 text-[11px] font-medium text-brand-text">
+                          <Pill size={11} /> {t("Same salt: {n} more", { n: saltOf(line.productId) })}
+                        </button>
                       )}
                     </div>
                     <div className="flex shrink-0 items-center gap-1.5">
@@ -2321,6 +2355,49 @@ function ExchangeCalculator({
           Cancel
         </button>
       </div>
+    </div>
+  );
+}
+
+/** Other brands of the same salt and strength: in stock first, then cheapest. "Give this instead"
+ * swaps the bill line for the same quantity. */
+function SameSaltPanel({ item, products, cart, onSwap, onClose }: { item: Product | null; products: Product[]; cart: CartLine[]; onSwap: (fromId: string, to: Product) => void; onClose: () => void }) {
+  const { t } = useT();
+  if (!item) return null;
+  const subs = substitutesFor(item, products).slice(0, 6);
+  if (!subs.length) return null;
+  const out = item.trackInventory && item.stockQuantity <= 0;
+  const onBill = cart.some((c) => c.productId === item.id);
+  return (
+    <div className="flex flex-col gap-2 rounded-xl border border-brand bg-brand-soft p-3">
+      <div className="flex items-start justify-between gap-2">
+        <p className="text-xs text-brand-text">
+          <b>{item.name}</b> {out ? t("is out of stock.") : ""} {t("Same salt ({salt}):", { salt: item.salt ?? "" })}
+        </p>
+        <button type="button" onClick={onClose} aria-label={t("Close")} className="shrink-0 text-muted">
+          <X size={15} />
+        </button>
+      </div>
+      <ul className="flex flex-col gap-1.5">
+        {subs.map((p) => {
+          const inStock = !p.trackInventory || p.stockQuantity > 0;
+          return (
+            <li key={p.id} className="flex items-center justify-between gap-2 rounded-lg bg-surface px-3 py-2">
+              <div className="min-w-0">
+                <p className="truncate text-sm text-foreground">{p.name}</p>
+                <p className={`text-[11px] ${inStock ? "text-muted" : "text-danger"}`}>
+                  {formatMoney(p.price)} · {p.trackInventory ? (inStock ? t("{n} in stock", { n: p.stockQuantity }) : t("out of stock")) : t("in stock")}
+                </p>
+              </div>
+              {onBill && (
+                <button type="button" onClick={() => onSwap(item.id, p)} className="shrink-0 rounded-lg border border-brand px-2.5 py-1 text-xs font-semibold text-brand-text">
+                  {t("Give this instead")}
+                </button>
+              )}
+            </li>
+          );
+        })}
+      </ul>
     </div>
   );
 }

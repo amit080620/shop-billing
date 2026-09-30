@@ -39,6 +39,18 @@ export const PHARMACY: Catalog = [
     ],
   },
   {
+    // Brands that share a salt with each other or with a generic above — New Bill offers them as
+    // substitutes. Dolo 650 is sold out on purpose, so picking it shows Calpol 650 instead.
+    category: "Popular brands",
+    items: [
+      { name: "Dolo 650 (15 tab)", price: 34, gst: 12, hsn: "3004", unit: "STRIP", stock: 0, low: 20, pharma: P("Paracetamol 650mg", "otc", "A1", { units: 15, loose: "tablet" }) },
+      { name: "Calpol 650 (15 tab)", price: 33, gst: 12, hsn: "3004", unit: "STRIP", stock: 0, low: 15, pharma: P("Paracetamol 650 mg", "otc", "A1", { units: 15, loose: "tablet" }) },
+      { name: "Crocin 500 (15 tab)", price: 30, gst: 12, hsn: "3004", unit: "STRIP", stock: 0, low: 15, pharma: P("Paracetamol 500 mg", "otc", "A1", { units: 15, loose: "tablet" }) },
+      { name: "Okacet 10mg (10 tab)", price: 21, gst: 12, hsn: "3004", unit: "STRIP", stock: 0, low: 10, pharma: P("Cetirizine 10 mg", "otc", "A1", { units: 10, loose: "tablet" }) },
+      { name: "Pan 40 (15 tab)", price: 158, gst: 12, hsn: "3004", unit: "STRIP", stock: 0, low: 8, pharma: P("Pantoprazole 40 mg", "h", "B3", { units: 15, loose: "tablet", rx: true }) },
+    ],
+  },
+  {
     category: "Devices & Wellness",
     items: [
       { name: "Omron BP Monitor HEM-7120", price: 1850, gst: 18, hsn: "9018", unit: "NOS", mrp: 2400, stock: 6, low: 2, warrantyMonths: 24 },
@@ -63,6 +75,7 @@ export async function seedPharmacy(ctx: SeedCtx): Promise<void> {
   const monthsAhead = (m: number) => addDays(today, m * 30);
   const batchPlan: { productIndex: number; vendor: number; qty: number; expiry: string; batch: string; mfg: string; daysAgo: number }[] = [];
   pharma.forEach((p, i) => {
+    if (p.name.startsWith("Dolo 650")) return; // sold out: its same-salt substitute shows on New Bill
     batchPlan.push({ productIndex: i, vendor: i % 3, qty: 40 + (i % 4) * 15, expiry: monthsAhead(10 + (i % 9)), batch: `B${2410 + i}A`, mfg: addDays(today, -60 - i), daysAgo: 20 });
   });
   // Near-expiry and expired batches on a few medicines — added after the sales below,
@@ -97,8 +110,8 @@ export async function seedPharmacy(ctx: SeedCtx): Promise<void> {
   await receive(batchPlan);
 
   // A month of sales. Prescription medicines carry the doctor's and patient's name.
-  const rxIds = new Set(products.filter((p) => p.category !== "OTC & Everyday" && p.category !== "Devices & Wellness").map((p) => p.id));
-  await seedBills(ctx, products, customers, {
+  const rxIds = new Set(products.filter((p) => (p.category !== "OTC & Everyday" && p.category !== "Devices & Wellness" && p.category !== "Popular brands") || p.name.startsWith("Pan 40")).map((p) => p.id));
+  await seedBills(ctx, products.filter((p) => !p.name.startsWith("Dolo 650")), customers, {
     count: 58,
     days: 30,
     itemsPerBill: [1, 3],

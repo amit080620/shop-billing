@@ -1520,4 +1520,12 @@ export const PAGE_TEXT: Record<string, [hi: string, mr: string]> = {
   "Raw material": ["कच्चा माल", "कच्चा माल"],
   "What each plate takes and costs": ["हर प्लेट में क्या लगता है और कितने का", "प्रत्येक प्लेटला काय लागते आणि किती खर्च"],
   "Raw materials left, wastage, staff meals": ["बचा कच्चा माल, बर्बादी, स्टाफ खाना", "उरलेला कच्चा माल, वाया, स्टाफ जेवण"],
+
+  // Pharmacy: same-salt substitutes
+  "Same salt: {n} more": ["इसी सॉल्ट की {n} और दवा", "याच सॉल्टची आणखी {n} औषधे"],
+  "is out of stock.": ["स्टॉक में नहीं है।", "स्टॉकमध्ये नाही."],
+  "Same salt ({salt}):": ["इसी सॉल्ट ({salt}) की दवा:", "याच सॉल्टची ({salt}) औषधे:"],
+  "{n} in stock": ["स्टॉक में {n}", "स्टॉकमध्ये {n}"],
+  "out of stock": ["स्टॉक ख़त्म", "स्टॉक संपला"],
+  "Give this instead": ["इसकी जगह यह दें", "त्याऐवजी हे द्या"],
 };

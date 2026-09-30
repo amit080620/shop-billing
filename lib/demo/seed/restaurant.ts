@@ -212,8 +212,8 @@ async function seedKitchen(ctx: SeedCtx, byName: (n: string) => { id: string }):
   if (!(await recipesReady(admin))) return;
   const RAW: [string, string, number, number, number][] = [
     // name, unit, ₹ per unit, stock now, alert below
-    ["Paneer", "KG", 380, 6, 2],
-    ["Chicken (boneless)", "KG", 260, 9, 3],
+    ["Paneer", "KG", 380, 14, 3],
+    ["Chicken (boneless)", "KG", 260, 15, 4],
     ["Basmati rice", "KG", 110, 25, 5],
     ["Maida", "KG", 38, 20, 5],
     ["Wheat atta", "KG", 34, 18, 5],
