@@ -29,6 +29,7 @@
     "recharts": "^3.10.1",
     "server-only": "^0.0.1",
     "tesseract.js": "^7.0.0",
+    "web-push": "^3.6.7",
     "xlsx": "^0.18.5",
     "zod": "^4.4.3"
   },
@@ -39,6 +40,7 @@
     "@types/qrcode": "^1.5.6",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/web-push": "^3.6.4",
     "@vitest/ui": "^4.1.11",
     "eslint": "^9",
     "eslint-config-next": "^15.5.25",

@@ -8,6 +8,9 @@ import { WatchTourButton } from "./WatchTourButton";
 import { ContactSupport } from "./ContactSupport";
 import { HelpCircle } from "lucide-react";
 import { BackLink } from "@/app/components/BackLink";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { formatDateTime } from "@/lib/format";
+import { srNumber, SUPPORT_PREFIX, SUPPORT_STATUS, supportParts } from "@/lib/support";
 
 export default async function HelpPage() {
   const session = await requireSession();
@@ -16,6 +19,19 @@ export default async function HelpPage() {
   // Shown first — what's actually different about running THIS kind
   // of business, not the same walkthrough every business type gets.
   const businessSection = BUSINESS_HELP_SECTION[session.businessType as BusinessType]?.[lang];
+
+  // The shop's own support requests and where each one stands (set by The Ray's team).
+  const { data: requests } = session.plansReady
+    ? await createSupabaseAdminClient()
+        .from("sales_enquiries")
+        .select("id, item, status, created_at")
+        .eq("shop_id", session.shopId)
+        .eq("kind", "custom")
+        .like("item", `${SUPPORT_PREFIX}%`)
+        .order("created_at", { ascending: false })
+        .limit(10)
+    : { data: [] };
+  const myRequests = (requests ?? []).map((r) => ({ id: r.id, status: r.status, createdAt: r.created_at, ...supportParts(r.item) }));
 
   return (
     <div className="flex flex-col gap-4">
@@ -46,6 +62,29 @@ export default async function HelpPage() {
       ))}
 
       <ContactSupport shopName={session.shopName} ownerPhone={session.ownerPhone ?? null} />
+
+      {myRequests.length > 0 && (
+        <section className="flex flex-col gap-2">
+          <h2 className="text-sm font-semibold text-foreground">{t("Your requests")}</h2>
+          <ul className="flex flex-col gap-1.5">
+            {myRequests.map((r) => (
+              <li key={r.id} className="neu-card flex items-start justify-between gap-3 px-3.5 py-2.5">
+                <div className="min-w-0">
+                  <p className="text-xs text-muted">
+                    <span className="font-mono font-semibold text-foreground">{srNumber(r.id)}</span> · {t(r.category)} · {formatDateTime(r.createdAt)}
+                  </p>
+                  <p className="line-clamp-2 text-sm text-foreground">{r.message}</p>
+                </div>
+                <span
+                  className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold ${r.status === "won" ? "bg-success-soft text-success" : r.status === "contacted" ? "bg-brand-soft text-brand-text" : "bg-surface-2 text-muted"}`}
+                >
+                  {t(SUPPORT_STATUS[r.status] ?? r.status)}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
     </div>
   );
 }

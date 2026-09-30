@@ -10,6 +10,7 @@ import type { EnquiryKind } from "../sales";
  * a failure here (or the table not existing before migration 0040) must
  * never stop the shop reaching us. */
 import { demoLocked } from "../demo/guard";
+import { notifyTeam } from "../push";
 
 export async function recordEnquiryAction(kind: EnquiryKind, item: string): Promise<{ ok: boolean }> {
   try {
@@ -17,6 +18,11 @@ export async function recordEnquiryAction(kind: EnquiryKind, item: string): Prom
     if (demoLocked(session)) return { ok: true };
     const admin = createSupabaseAdminClient();
     const { error } = await admin.from("sales_enquiries").insert({ shop_id: session.shopId, kind, item: item.slice(0, 200) });
+    // Someone wants to buy: the team's phones hear about it ("Notify me" interest is only counted).
+    if (!error && kind !== "upcoming") {
+      const what = kind === "plan" ? `upgrade to ${item}` : kind === "hardware" ? `hardware: ${item}` : kind === "service" ? `service: ${item}` : item;
+      await notifyTeam(admin, { title: "New enquiry", body: `${session.shopName} wants ${what}`, url: "/admin/enquiries" });
+    }
     return { ok: !error };
   } catch {
     return { ok: false };

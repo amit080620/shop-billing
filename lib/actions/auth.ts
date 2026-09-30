@@ -9,6 +9,7 @@ import { revalidateStaffCache } from "../auth";
 import { getAuthenticatedUser } from "../supabase/server";
 import { isDemoEmail } from "../demo/config";
 import { hotelSchemaReady } from "../hotel/server";
+import { notifyTeam } from "../push";
 
 /** redirectTo: where the browser should go next. Login/signup finish with
  * a full page load instead of a server-action redirect — the redirect path
@@ -130,6 +131,8 @@ export async function signupAction(
   }
 
   await revalidateStaffCache(authData.user.id);
+  // A new shop: the team's phones hear about it, with the owner's number to welcome them.
+  await notifyTeam(admin, { title: "New shop signed up", body: `${shopName} (${businessType}) · ${ownerName} · ${ownerPhone}`, url: `/admin/shops/${shop.id}` });
   return { redirectTo: "/" };
 }
 

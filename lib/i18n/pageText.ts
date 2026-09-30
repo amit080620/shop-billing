@@ -1435,6 +1435,14 @@ export const PAGE_TEXT: Record<string, [hi: string, mr: string]> = {
   "Unlimited items, 10 logins": ["अनगिनत आइटम, 10 लॉगिन", "अमर्यादित आयटम, 10 लॉगिन"],
   "Unlimited": ["अनगिनत", "अमर्यादित"],
 
+  // Support requests
+  "Your requests": ["आपके अनुरोध", "तुमच्या विनंत्या"],
+  "Also send {sr} on WhatsApp": ["{sr} WhatsApp पर भी भेजें", "{sr} WhatsApp वर पण पाठवा"],
+  "Being worked on": ["काम चल रहा है", "काम सुरू आहे"],
+  "Resolved": ["हल हो गया", "सुटले"],
+  "Closed": ["बंद", "बंद"],
+  "Billing / payment": ["बिलिंग / भुगतान", "बिलिंग / पेमेंट"],
+
   // Restaurant: recipes, kitchen stock
   "Recipes & food cost": ["रेसिपी और फ़ूड कॉस्ट", "रेसिपी आणि फूड कॉस्ट"],
   "Recipes & kitchen stock": ["रेसिपी और किचन स्टॉक", "रेसिपी आणि किचन स्टॉक"],

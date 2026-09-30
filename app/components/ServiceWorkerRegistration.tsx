@@ -22,7 +22,10 @@ export function ServiceWorkerRegistration() {
     if (!("serviceWorker" in navigator)) return;
 
     navigator.serviceWorker.getRegistrations().then((registrations) => {
-      registrations.forEach((registration) => registration.unregister());
+      // The platform team's notification worker (admin panel only, no caching) is the one kept.
+      registrations
+        .filter((registration) => !(registration.active ?? registration.waiting ?? registration.installing)?.scriptURL.endsWith("/admin-push-sw.js"))
+        .forEach((registration) => registration.unregister());
     });
     if ("caches" in window) {
       caches.keys().then((keys) => keys.forEach((key) => caches.delete(key)));

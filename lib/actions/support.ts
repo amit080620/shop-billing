@@ -15,6 +15,8 @@ export type SupportCategory = "billing" | "technical" | "feature" | "other";
  * be needed to extend). The row's own id becomes a short reference number
  * the shop can quote — no separate ticket-numbering sequence needed. */
 import { demoLocked } from "../demo/guard";
+import { notifyTeam } from "../push";
+import { srNumber } from "../support";
 
 export async function submitSupportRequestAction(
   category: SupportCategory,
@@ -33,5 +35,8 @@ export async function submitSupportRequestAction(
     .single();
 
   if (error || !data) return { ok: false, error: "Could not send — please try again, or WhatsApp us directly." };
-  return { ok: true, ticketId: `SR-${data.id.slice(0, 8).toUpperCase()}` };
+  const ticketId = srNumber(data.id);
+  // The team's phones hear about it straight away (Admin → Support → Turn on notifications).
+  await notifyTeam(admin, { title: `New support request ${ticketId}`, body: `${session.shopName} (${category}): ${trimmed}`, url: "/admin/support", tag: ticketId });
+  return { ok: true, ticketId };
 }

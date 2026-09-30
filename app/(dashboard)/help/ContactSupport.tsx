@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { MessageCircle, Send, CheckCircle2 } from "lucide-react";
 import { submitSupportRequestAction, type SupportCategory } from "@/lib/actions/support";
 import { salesLink } from "@/lib/sales";
@@ -26,12 +27,18 @@ export function ContactSupport({ shopName, ownerPhone }: { shopName: string; own
   const [message, setMessage] = useState("");
   const [pending, startTransition] = useTransition();
   const [result, setResult] = useState<{ ticketId?: string; error?: string } | null>(null);
+  const [sentMessage, setSentMessage] = useState("");
+  const router = useRouter();
 
   function submit() {
     startTransition(async () => {
       const res = await submitSupportRequestAction(category, message);
       setResult(res.ok ? { ticketId: res.ticketId } : { error: res.error });
-      if (res.ok) setMessage("");
+      if (res.ok) {
+        setSentMessage(message.trim().slice(0, 300));
+        setMessage("");
+        router.refresh(); // it appears under "Your requests"
+      }
     });
   }
 
@@ -71,6 +78,18 @@ export function ContactSupport({ shopName, ownerPhone }: { shopName: string; own
               <span className="text-xs opacity-90">{t("help.contact.sentSub")}</span>
             </span>
           </p>
+        )}
+        {result?.ticketId && (
+          // The same request on WhatsApp too, quoting its number, for anything that can't wait.
+          <a
+            href={salesLink(`Hi, this is ${shopName}${ownerPhone ? ` (${ownerPhone})` : ""}. My support request ${result.ticketId}: ${sentMessage}`)}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center justify-center gap-2 rounded-lg bg-[#25D366] px-3.5 py-2.5 text-sm font-semibold text-white"
+          >
+            <MessageCircle size={15} />
+            {t("Also send {sr} on WhatsApp", { sr: result.ticketId })}
+          </a>
         )}
 
         <button onClick={submit} disabled={pending || !message.trim()} className="btn-primary flex items-center justify-center gap-2 disabled:opacity-60">

@@ -2157,6 +2157,18 @@ export interface Database {
         Update: { id?: string; shop_id?: string; ingredient_id?: string; kind?: "sale" | "wastage" | "staff_meal"; quantity?: number; order_id?: string | null; bill_id?: string | null; note?: string | null; staff_id?: string | null; created_at?: string };
         Relationships: [];
       };
+      admin_push_subscriptions: {
+        Row: { id: string; endpoint: string; p256dh: string; auth: string; label: string | null; created_at: string };
+        Insert: { id?: string; endpoint: string; p256dh: string; auth: string; label?: string | null; created_at?: string };
+        Update: { id?: string; endpoint?: string; p256dh?: string; auth?: string; label?: string | null; created_at?: string };
+        Relationships: [];
+      };
+      app_secrets: {
+        Row: { key: string; value: string; created_at: string };
+        Insert: { key: string; value: string; created_at?: string };
+        Update: { key?: string; value?: string; created_at?: string };
+        Relationships: [];
+      };
       customer_packages: {
         Row: { id: string; shop_id: string; customer_id: string; plan_product_id: string | null; name: string; service_product_id: string | null; service_name: string; sessions_total: number; session_value: number; sold_bill_id: string | null; starts_on: string; expires_on: string | null; status: "active" | "cancelled"; created_at: string };
         Insert: { id?: string; shop_id: string; customer_id: string; plan_product_id?: string | null; name: string; service_product_id?: string | null; service_name: string; sessions_total: number; session_value?: number; sold_bill_id?: string | null; starts_on: string; expires_on?: string | null; status?: "active" | "cancelled"; created_at?: string };
