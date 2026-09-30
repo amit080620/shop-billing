@@ -503,6 +503,7 @@ const mr: Record<string, string> = {
   "wa.jobReady": "नमस्कार {name}, आपले {item} (Job #{jobNumber}) तयार आहे, घेऊन जाऊ शकता!",
   "wa.ledgerReminder": "नमस्कार {name}, आठवण करून देत आहोत — आपले {amount} बाकी आहे. कृपया लवकर भरणा करा. धन्यवाद!",
   "wa.gymExpiryReminder": "नमस्कार {name}, तुमची gym membership ({plan}) {date} रोजी संपत आहे. फिटनेस सुरू ठेवण्यासाठी लवकर renew करा! ",
+  "wa.appointmentTomorrow": "नमस्कार {name}, {shop} कडून आठवण: तुमची {what} ची appointment उद्या, {date}, {time} वाजता आहे. वेळ बदलायची असल्यास इथेच उत्तर द्या.",
   "wa.billGreeting": "नमस्कार {name}, हे आहे आपले {shop} कडील बिल.",
   "wa.billInvoiceNo": "बिल क्रमांक #{number}",
   "wa.billTotal": "एकूण: {amount}",

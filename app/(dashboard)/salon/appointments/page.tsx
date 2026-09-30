@@ -40,6 +40,9 @@ export default async function AppointmentsPage({
         }
         icon={<Calendar size={18} strokeWidth={1.8} />}
       />
+      <Link href="/reminders?tab=appointments" className="self-start text-xs font-medium text-brand-text">
+        {t("Remind tomorrow's appointments on WhatsApp →")}
+      </Link>
 
       <form className="flex items-center gap-2" action="/salon/appointments">
         <input

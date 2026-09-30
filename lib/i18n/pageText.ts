@@ -1528,4 +1528,30 @@ export const PAGE_TEXT: Record<string, [hi: string, mr: string]> = {
   "{n} in stock": ["स्टॉक में {n}", "स्टॉकमध्ये {n}"],
   "out of stock": ["स्टॉक ख़त्म", "स्टॉक संपला"],
   "Give this instead": ["इसकी जगह यह दें", "त्याऐवजी हे द्या"],
+
+  // Reminders: memberships and tomorrow's appointments
+  "{amount} due": ["{amount} बाकी", "{amount} बाकी"],
+  "{n}d pending": ["{n} दिन से बाकी", "{n} दिवसांपासून बाकी"],
+  "Ended {n}d ago": ["{n} दिन पहले ख़त्म", "{n} दिवसांपूर्वी संपली"],
+  "Ends today": ["आज ख़त्म", "आज संपते"],
+  "Ends in {n}d": ["{n} दिन में ख़त्म", "{n} दिवसांत संपते"],
+  "— {shop}": ["— {shop}", "— {shop}"],
+  "Memberships ending this week or just ended": ["इस हफ़्ते ख़त्म होने वाली या अभी ख़त्म हुई मेंबरशिप", "या आठवड्यात संपणाऱ्या किंवा नुकत्याच संपलेल्या मेंबरशिप"],
+  "the doctor": ["डॉक्टर", "डॉक्टर"],
+  "Tomorrow": ["कल", "उद्या"],
+  "Appointments tomorrow ({date})": ["कल के अपॉइंटमेंट ({date})", "उद्याच्या अपॉइंटमेंट ({date})"],
+  "Udhaar": ["उधार", "उधारी"],
+  "Memberships": ["मेंबरशिप", "मेंबरशिप"],
+  "Tomorrow's appointments": ["कल के अपॉइंटमेंट", "उद्याच्या अपॉइंटमेंट"],
+  "No membership ends this week.": ["इस हफ़्ते कोई मेंबरशिप ख़त्म नहीं हो रही।", "या आठवड्यात कोणतीही मेंबरशिप संपत नाही."],
+  "No appointments booked for tomorrow.": ["कल के लिए कोई अपॉइंटमेंट नहीं।", "उद्यासाठी कोणतीही अपॉइंटमेंट नाही."],
+  "Select people (or Select all), then work through the list — you still hit Send in WhatsApp yourself for each one.": ["लोग चुनें (या सब चुनें), फिर एक-एक करके भेजें — हर एक के लिए WhatsApp में Send आप ही दबाते हैं।", "लोक निवडा (किंवा सर्व निवडा), मग एकेक करून पाठवा — प्रत्येकासाठी WhatsApp मध्ये Send तुम्हीच दाबता."],
+  "Select all ({n})": ["सब चुनें ({n})", "सर्व निवडा ({n})"],
+  "Ready to send ({n})": ["भेजने को तैयार ({n})", "पाठवण्यास तयार ({n})"],
+  "Sent": ["भेजा", "पाठवले"],
+  "Remind": ["याद दिलाएं", "आठवण द्या"],
+
+  // Reminder links
+  "WhatsApp reminders for memberships ending →": ["ख़त्म हो रही मेंबरशिप की WhatsApp याद →", "संपणाऱ्या मेंबरशिपची WhatsApp आठवण →"],
+  "Remind tomorrow's appointments on WhatsApp →": ["कल के अपॉइंटमेंट की WhatsApp पर याद दिलाएं →", "उद्याच्या अपॉइंटमेंटची WhatsApp वर आठवण द्या →"],
 };

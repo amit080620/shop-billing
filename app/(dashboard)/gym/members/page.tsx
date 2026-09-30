@@ -66,6 +66,9 @@ export default async function GymMembersPage({
         }
         icon={<Users size={18} strokeWidth={1.8} />}
       />
+      <Link href="/reminders?tab=membership" className="self-start text-xs font-medium text-brand-text">
+        {t("WhatsApp reminders for memberships ending →")}
+      </Link>
       <div className="flex gap-2 overflow-x-auto scroll-hide pb-1">
         {session.role !== "owner" && (
           <>

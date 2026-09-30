@@ -1,37 +1,72 @@
 "use client";
 import { Bell } from "lucide-react";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { formatMoney } from "@/lib/format";
 import { EmptyState } from "@/app/components/EmptyState";
 import { PageHeader } from "@/app/components/PageHeader";
-import { buildWhatsAppLink as buildWaLink } from "@/lib/whatsapp";
+import { buildWhatsAppLink } from "@/lib/whatsapp";
 import { useTranslation } from "@/lib/i18n/useTranslation";
 import type { Lang } from "@/lib/i18n/dictionary";
 import { BackLink } from "@/app/components/BackLink";
 
-type Customer = { id: string; name: string; phone: string; balance: number; daysPending: number };
+export type ReminderTab = "udhaar" | "membership" | "appointments";
+export type ReminderRow = {
+  id: string;
+  name: string;
+  phone: string;
+  href: string | null;
+  detail: string;
+  badge: { label: string; tone: "green" | "orange" | "red" };
+  /** The WhatsApp text, already in the shop's language. */
+  message: string;
+};
+
+const TAB_LABEL: Record<ReminderTab, string> = { udhaar: "Udhaar", membership: "Memberships", appointments: "Tomorrow's appointments" };
 
 export function RemindersClient({
-  shopName,
-  customers,
-  totalOutstanding,
+  tabs,
+  tab,
+  rows,
+  summary,
+  today,
   lang,
 }: {
-  shopName: string;
-  customers: Customer[];
-  totalOutstanding: number;
+  tabs: ReminderTab[];
+  tab: ReminderTab;
+  rows: ReminderRow[];
+  summary: { label: string; value: string } | null;
+  today: string;
   lang: Lang;
 }) {
   const { t } = useTranslation(lang);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [sentIds, setSentIds] = useState<Set<string>>(new Set());
+  // "Sent" survives a reload for the rest of the day, so a long list can be worked through in sittings.
+  const storeKey = `reminders-sent:${tab}:${today}`;
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem(storeKey) ?? "[]") as string[];
+      setSentIds(new Set(saved));
+    } catch {
+      setSentIds(new Set());
+    }
+  }, [storeKey]);
+  function markSent(id: string) {
+    setSentIds((prev) => {
+      const next = new Set(prev).add(id);
+      try {
+        localStorage.setItem(storeKey, JSON.stringify([...next]));
+      } catch {
+        // private window: remembered for this visit only
+      }
+      return next;
+    });
+  }
 
-  const allSelected = customers.length > 0 && selected.size === customers.length;
-
+  const allSelected = rows.length > 0 && selected.size === rows.length;
   function toggleAll() {
-    setSelected(allSelected ? new Set() : new Set(customers.map((c) => c.id)));
+    setSelected(allSelected ? new Set() : new Set(rows.map((c) => c.id)));
   }
   function toggleOne(id: string) {
     setSelected((prev) => {
@@ -41,59 +76,65 @@ export function RemindersClient({
       return next;
     });
   }
-
-  const selectedCustomers = useMemo(
-    () => customers.filter((c) => selected.has(c.id) && !sentIds.has(c.id)),
-    [customers, selected, sentIds],
-  );
+  const queue = useMemo(() => rows.filter((c) => selected.has(c.id) && !sentIds.has(c.id)), [rows, selected, sentIds]);
+  const empty =
+    tab === "udhaar"
+      ? t("Nothing pending — every customer is settled up right now.")
+      : tab === "membership"
+        ? t("No membership ends this week.")
+        : t("No appointments booked for tomorrow.");
 
   return (
     <div className="flex flex-col gap-4">
       <BackLink fallback="/dashboard" />
       <PageHeader
-        title={t("Udhaar reminders")}
-        subtitle="Select customers (or Select all), then work through the list — you still hit Send in WhatsApp yourself for each one."
-         
+        title={t("WhatsApp reminders")}
+        subtitle={t("Select people (or Select all), then work through the list — you still hit Send in WhatsApp yourself for each one.")}
         icon={<Bell size={17} strokeWidth={1.8} />}
       />
 
-      <div className="rounded-xl border border-border bg-credit-soft p-4">
-        <p className="text-xs text-credit">{t("Total outstanding")}</p>
-        <p className="mt-1 text-xl font-semibold text-credit">{formatMoney(totalOutstanding)}</p>
-      </div>
+      {tabs.length > 1 && (
+        <div className="flex flex-wrap gap-1.5">
+          {tabs.map((k) => (
+            <Link key={k} href={`/reminders?tab=${k}`} className={`rounded-full border px-3 py-1 text-xs font-medium ${tab === k ? "border-brand bg-brand-soft text-brand-text" : "border-border text-muted"}`}>
+              {t(TAB_LABEL[k])}
+            </Link>
+          ))}
+        </div>
+      )}
 
-      {customers.length === 0 ? (
-        <EmptyState text={t("Nothing pending — every customer is settled up right now.")} />
+      {summary && (
+        <div className={`rounded-xl border border-border p-4 ${tab === "udhaar" ? "bg-credit-soft" : "bg-brand-soft"}`}>
+          <p className={`text-xs ${tab === "udhaar" ? "text-credit" : "text-brand-text"}`}>{summary.label}</p>
+          <p className={`mt-1 text-xl font-semibold ${tab === "udhaar" ? "text-credit" : "text-brand-text"}`}>{summary.value}</p>
+        </div>
+      )}
+
+      {rows.length === 0 ? (
+        <EmptyState text={empty} />
       ) : (
         <>
           <label className="flex items-center gap-2 text-sm font-medium text-foreground">
-            <input
-              type="checkbox"
-              checked={allSelected}
-              onChange={toggleAll}
-              className="h-4 w-4 rounded border-border"
-            />
-            Select all ({customers.length})
+            <input type="checkbox" checked={allSelected} onChange={toggleAll} className="h-4 w-4 rounded border-border" />
+            {t("Select all ({n})", { n: rows.length })}
           </label>
 
-          {selectedCustomers.length > 0 && (
+          {queue.length > 0 && (
             <section className="flex flex-col gap-2 rounded-xl border border-border bg-surface p-3">
-              <p className="text-xs font-semibold text-brand-text">
-                Ready to send ({selectedCustomers.length})
-              </p>
+              <p className="text-xs font-semibold text-brand-text">{t("Ready to send ({n})", { n: queue.length })}</p>
               <ul className="flex flex-col gap-1.5">
-                {selectedCustomers.map((c) => (
+                {queue.map((c) => (
                   <li key={c.id} className="flex items-center justify-between gap-2 rounded-lg bg-surface px-3 py-2">
                     <span className="min-w-0 flex-1 truncate text-sm text-foreground">{c.name}</span>
                     <a
-                      href={buildWhatsAppLink(c, shopName, t)}
+                      href={buildWhatsAppLink(c.phone, c.message)}
                       target="_blank"
                       rel="noopener noreferrer"
-                      onClick={() => setSentIds((prev) => new Set(prev).add(c.id))}
+                      onClick={() => markSent(c.id)}
                       className="flex shrink-0 items-center gap-1.5 rounded-lg bg-[#25D366] px-2.5 py-1.5 text-xs font-medium text-white"
                     >
                       <WhatsAppIcon />
-                      Send
+                      {t("Send")}
                     </a>
                   </li>
                 ))}
@@ -102,39 +143,36 @@ export function RemindersClient({
           )}
 
           <ul className="flex flex-col gap-2">
-            {customers.map((c) => {
+            {rows.map((c) => {
               const sent = sentIds.has(c.id);
+              const body = (
+                <>
+                  <p className="truncate text-sm font-medium text-foreground">{c.name}</p>
+                  <div className="flex items-center gap-1.5">
+                    <p className={`truncate text-xs ${tab === "udhaar" ? "text-credit" : "text-muted"}`}>{c.detail}</p>
+                    <Badge {...c.badge} />
+                  </div>
+                </>
+              );
               return (
-                <li
-                  key={c.id}
-                  className={`flex items-center justify-between gap-3 rounded-lg border border-border shadow-sm px-3.5 py-3 ${
-                    sent ? "bg-background opacity-60" : "bg-surface"
-                  }`}
-                >
-                  <input
-                    type="checkbox"
-                    checked={selected.has(c.id)}
-                    onChange={() => toggleOne(c.id)}
-                    className="h-4 w-4 shrink-0 rounded border-border"
-                  />
-                  <Link href={`/customers/${c.id}`} className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium text-foreground">{c.name}</p>
-                    <div className="flex items-center gap-1.5">
-                      <p className="text-xs text-credit">{formatMoney(c.balance)} due</p>
-                      <AgingBadge days={c.daysPending} />
-                    </div>
-                  </Link>
+                <li key={c.id} className={`flex items-center justify-between gap-3 rounded-lg border border-border shadow-sm px-3.5 py-3 ${sent ? "bg-background opacity-60" : "bg-surface"}`}>
+                  <input type="checkbox" checked={selected.has(c.id)} onChange={() => toggleOne(c.id)} className="h-4 w-4 shrink-0 rounded border-border" aria-label={c.name} />
+                  {c.href ? (
+                    <Link href={c.href} className="min-w-0 flex-1">
+                      {body}
+                    </Link>
+                  ) : (
+                    <div className="min-w-0 flex-1">{body}</div>
+                  )}
                   <a
-                    href={buildWhatsAppLink(c, shopName, t)}
+                    href={buildWhatsAppLink(c.phone, c.message)}
                     target="_blank"
                     rel="noopener noreferrer"
-                    onClick={() => setSentIds((prev) => new Set(prev).add(c.id))}
-                    className={`flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium text-white ${
-                      sent ? "bg-gray-400" : "bg-[#25D366]"
-                    }`}
+                    onClick={() => markSent(c.id)}
+                    className={`flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium text-white ${sent ? "bg-gray-400" : "bg-[#25D366]"}`}
                   >
                     <WhatsAppIcon />
-                    {sent ? "Sent" : "Remind"}
+                    {sent ? t("Sent") : t("Remind")}
                   </a>
                 </li>
               );
@@ -150,9 +188,7 @@ export function RemindersClient({
   );
 }
 
-function AgingBadge({ days }: { days: number }) {
-  const label = days === 0 ? "Today" : `${days}d pending`;
-  const tone = days >= 30 ? "red" : days >= 10 ? "orange" : "green";
+function Badge({ label, tone }: ReminderRow["badge"]) {
   const styles: Record<string, { className: string; style?: React.CSSProperties }> = {
     green: { className: "text-white", style: { backgroundColor: "#16a34a" } },
     orange: { className: "text-white", style: { backgroundColor: "#c2760f" } },
@@ -160,15 +196,10 @@ function AgingBadge({ days }: { days: number }) {
   };
   const { className, style } = styles[tone];
   return (
-    <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-medium ${className}`} style={style}>
+    <span className={`shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-medium ${className}`} style={style}>
       {label}
     </span>
   );
-}
-
-function buildWhatsAppLink(customer: Customer, shopName: string, t: (key: string, values?: Record<string, string | number>) => string) {
-  const message = t("wa.reminderMessage", { name: customer.name, shop: shopName, amount: formatMoney(customer.balance) });
-  return buildWaLink(customer.phone, message);
 }
 
 function WhatsAppIcon() {

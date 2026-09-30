@@ -6,7 +6,7 @@ import { EmptyState } from "@/app/components/EmptyState";
 import { ClinicAppointmentRow } from "./ClinicAppointmentRow";
 import { Calendar } from "lucide-react";
 import { todayIso } from "@/lib/dateHelpers";
-import { getTranslator } from "@/lib/i18n/server";
+import { getTranslator } from "@/lib/i18n/server";
 import { BackLink } from "@/app/components/BackLink";
 
 export default async function ClinicAppointmentsPage({
@@ -39,6 +39,9 @@ export default async function ClinicAppointmentsPage({
         }
         icon={<Calendar size={18} strokeWidth={1.8} />}
       />
+      <Link href="/reminders?tab=appointments" className="self-start text-xs font-medium text-brand-text">
+        {t("Remind tomorrow's appointments on WhatsApp →")}
+      </Link>
 
       <Link
         href="/clinic/settings/booking"

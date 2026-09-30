@@ -513,6 +513,7 @@ const en: Record<string, string> = {
   "wa.jobReady": "Hi {name}, your {item} (Job #{jobNumber}) is ready for pickup!",
   "wa.ledgerReminder": "Hi {name}, this is a reminder that you have an outstanding balance of {amount}. Please pay at your earliest convenience. Thank you!",
   "wa.gymExpiryReminder": "Hi {name}, your gym membership ({plan}) expires on {date}. Renew soon to keep your fitness journey going! ",
+  "wa.appointmentTomorrow": "Hi {name}, a reminder from {shop}: your appointment for {what} is tomorrow, {date}, at {time}. Reply here if you need to change it.",
   "wa.billGreeting": "Hi {name}, here's your invoice from {shop}.",
   "wa.billInvoiceNo": "Invoice #{number}",
   "wa.billTotal": "Total: {amount}",
