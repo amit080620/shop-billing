@@ -5,7 +5,7 @@ import { getTranslator } from "@/lib/i18n/server";
 import { RemindersClient, type ReminderRow, type ReminderTab } from "./RemindersClient";
 import { isModuleEnabled } from "@/lib/modules";
 import { ModuleBlocked } from "@/app/components/ModuleBlocked";
-import { formatMoney } from "@/lib/format";
+import { formatMoney, withDr } from "@/lib/format";
 import { addDaysIso, formatIsoDate, todayIso } from "@/lib/dateHelpers";
 
 /** Which reminder lists a business gets besides udhaar. */
@@ -138,7 +138,7 @@ export default async function RemindersPage({ searchParams }: { searchParams: Pr
               .in("status", ["booked", "confirmed"])
               .order("appointment_time")
           ).data ?? []
-          ).map((a) => ({ id: a.id, customerId: a.patient_id, name: a.patient_name, phone: a.patient_phone, what: a.doctor_name ? `Dr. ${a.doctor_name}` : t("the doctor"), time: a.appointment_time }))
+          ).map((a) => ({ id: a.id, customerId: a.patient_id, name: a.patient_name, phone: a.patient_phone, what: a.doctor_name ? withDr(a.doctor_name) : t("the doctor"), time: a.appointment_time }))
         : ((
             await admin
               .from("appointments")
@@ -158,7 +158,7 @@ export default async function RemindersPage({ searchParams }: { searchParams: Pr
         href: a.customerId ? `/customers/${a.customerId}` : null,
         detail: `${a.what} · ${time12(a.time)}`,
         badge: { label: t("Tomorrow"), tone: "green" as const },
-        message: t("wa.appointmentTomorrow", { name: a.name, shop: session.shopName, what: a.what, date: formatIsoDate(tomorrow), time: time12(a.time) }),
+        message: t(type === "clinic" ? "wa.clinicAppointmentTomorrow" : "wa.appointmentTomorrow", { name: a.name, shop: session.shopName, what: a.what, date: formatIsoDate(tomorrow), time: time12(a.time) }),
       }));
     summary = { label: t("Appointments tomorrow ({date})", { date: formatIsoDate(tomorrow) }), value: String(rows.length) };
   }

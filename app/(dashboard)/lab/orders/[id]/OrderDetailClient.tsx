@@ -7,7 +7,7 @@ import Link from "next/link";
 import { updateLabOrderStatusAction, saveTestResultAction, billLabOrderAction } from "@/lib/actions/lab";
 import { formatMoney, withDr } from "@/lib/format";
 import { PageHeader } from "@/app/components/PageHeader";
-import { FlaskConical, Printer } from "lucide-react";
+import { Barcode, FlaskConical, Printer } from "lucide-react";
 import { BackLink } from "@/app/components/BackLink";
 import { calculateTransactionTotals } from "@/lib/validation/schemas";
 
@@ -113,6 +113,7 @@ export function OrderDetailClient({ order, items, priceIncludesGst }: { order: O
         icon={<FlaskConical size={18} strokeWidth={1.8} />}
       />
 
+      <div className="flex flex-wrap gap-2">
       <Link
         href={`/print/lab-report/${order.id}`}
         target="_blank"
@@ -120,6 +121,13 @@ export function OrderDetailClient({ order, items, priceIncludesGst }: { order: O
       >
         <Printer size={13} /> View / print report
       </Link>
+      <Link
+        href={`/print/lab-labels/${order.id}`}
+        className="flex items-center gap-1.5 self-start rounded-lg border border-brand bg-surface px-3 py-1.5 text-xs font-medium text-brand-text"
+      >
+        <Barcode size={13} /> {t("Sample labels")}
+      </Link>
+      </div>
 
       <div className="rounded-xl border border-border bg-surface p-3.5 shadow-sm text-sm">
         <p className="text-muted">

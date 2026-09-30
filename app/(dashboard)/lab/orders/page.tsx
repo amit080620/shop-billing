@@ -7,6 +7,8 @@ import { formatDateTime } from "@/lib/format";
 import { FlaskConical, ClipboardList } from "lucide-react";
 import { getTranslator } from "@/lib/i18n/server";
 import { BackLink } from "@/app/components/BackLink";
+import { redirect } from "next/navigation";
+import { orderNumberFromScan } from "@/lib/labSamples";
 
 const STATUS_LABELS: Record<string, string> = {
   booked: "Booked",
@@ -30,12 +32,19 @@ const STATUS_TONE: Record<string, string> = {
 export default async function LabOrdersPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string }>;
+  searchParams: Promise<{ status?: string; q?: string }>;
 }) {
   const { t } = await getTranslator();
   const session = await requireSession();
-  const { status } = await searchParams;
+  const { status, q: rawQ } = await searchParams;
   const admin = createSupabaseAdminClient();
+  const q = (rawQ ?? "").trim();
+  // A scanned sample sticker (or a typed order number) opens its order straight away.
+  const scanned = q ? orderNumberFromScan(q) : null;
+  if (scanned) {
+    const { data: hit } = await admin.from("lab_orders").select("id").eq("shop_id", session.shopId).eq("order_number", scanned).maybeSingle();
+    if (hit) redirect(`/lab/orders/${hit.id}`);
+  }
 
   let query = admin
     .from("lab_orders")
@@ -43,6 +52,10 @@ export default async function LabOrdersPage({
     .eq("shop_id", session.shopId)
     .order("created_at", { ascending: false })
     .limit(100);
+  if (q && !scanned) {
+    const safe = q.replace(/[%,()]/g, " ").slice(0, 60);
+    query = query.or(`patient_name.ilike.%${safe}%,patient_phone.ilike.%${safe}%,order_number.ilike.%${safe}%`);
+  }
   if (status && status !== "all") query = query.eq("status", status as "booked" | "sample_collected" | "received_at_lab" | "processing" | "report_ready" | "delivered" | "cancelled");
   const { data: orders } = await query;
 
@@ -61,6 +74,11 @@ export default async function LabOrdersPage({
       <Link href="/lab/tests" className="flex items-center gap-1 text-sm text-muted">
         <ClipboardList size={14} /> {t("Test catalog & packages")}
       </Link>
+
+      <form action="/lab/orders" className="flex gap-2">
+        <input name="q" defaultValue={q} autoFocus={false} placeholder={t("Scan a sample sticker, or search name / phone / order no.")} className="min-w-0 flex-1 rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand" enterKeyHint="search" />
+        <button className="shrink-0 rounded-lg border border-border px-3 py-2 text-sm font-medium text-foreground">{t("Find")}</button>
+      </form>
 
       <div className="flex gap-2 overflow-x-auto scroll-hide pb-1">
         <Link

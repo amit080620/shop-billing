@@ -514,6 +514,7 @@ const hi: Record<string, string> = {
   "wa.ledgerReminder": "नमस्ते {name}, याद दिलाना है कि आपका {amount} बकाया है। कृपया जल्द भुगतान कर दें। धन्यवाद!",
   "wa.gymExpiryReminder": "नमस्ते {name}, आपकी gym membership ({plan}) {date} को खत्म हो रही है। फिटनेस जारी रखने के लिए जल्द renew करें! ",
   "wa.appointmentTomorrow": "नमस्ते {name}, {shop} की तरफ़ से याद दिलाना है: आपका {what} का appointment कल, {date}, {time} बजे है। समय बदलना हो तो यहीं जवाब दें।",
+  "wa.clinicAppointmentTomorrow": "नमस्ते {name}, {shop} की तरफ़ से याद दिलाना है: {what} के साथ आपका appointment कल, {date}, {time} बजे है। समय बदलना हो तो यहीं जवाब दें।",
   "wa.billGreeting": "नमस्ते {name}, यह रहा आपका {shop} से बिल।",
   "wa.billInvoiceNo": "बिल नंबर #{number}",
   "wa.billTotal": "कुल: {amount}",

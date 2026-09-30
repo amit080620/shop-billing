@@ -1554,4 +1554,16 @@ export const PAGE_TEXT: Record<string, [hi: string, mr: string]> = {
   // Reminder links
   "WhatsApp reminders for memberships ending →": ["ख़त्म हो रही मेंबरशिप की WhatsApp याद →", "संपणाऱ्या मेंबरशिपची WhatsApp आठवण →"],
   "Remind tomorrow's appointments on WhatsApp →": ["कल के अपॉइंटमेंट की WhatsApp पर याद दिलाएं →", "उद्याच्या अपॉइंटमेंटची WhatsApp वर आठवण द्या →"],
+
+  // Lab: sample labels and scan
+  "Sample labels": ["सैंपल लेबल", "सॅम्पल लेबल"],
+  "One sticker per sample. Scan it on the Lab orders screen to open the order.": ["हर सैंपल का एक स्टिकर। Lab orders स्क्रीन पर स्कैन करें तो ऑर्डर खुल जाता है।", "प्रत्येक सॅम्पलचा एक स्टिकर. Lab orders स्क्रीनवर स्कॅन केल्यास ऑर्डर उघडते."],
+  "Label roll 50 × 25 mm": ["लेबल रोल 50 × 25 mm", "लेबल रोल 50 × 25 mm"],
+  "A4 sheet": ["A4 शीट", "A4 शीट"],
+  "Copies": ["कॉपी", "प्रती"],
+  "Print labels": ["लेबल प्रिंट करें", "लेबल प्रिंट करा"],
+  "← Back to the order": ["← ऑर्डर पर वापस", "← ऑर्डरवर परत"],
+  "This order has no tests yet.": ["इस ऑर्डर में अभी कोई टेस्ट नहीं।", "या ऑर्डरमध्ये अजून कोणतीही टेस्ट नाही."],
+  "Scan a sample sticker, or search name / phone / order no.": ["सैंपल स्टिकर स्कैन करें, या नाम / फ़ोन / ऑर्डर नं. खोजें", "सॅम्पल स्टिकर स्कॅन करा, किंवा नाव / फोन / ऑर्डर क्र. शोधा"],
+  "Find": ["खोजें", "शोधा"],
 };
