@@ -48,6 +48,8 @@ import {
   TrendingDown,
   Trash2,
   Truck,
+  Warehouse,
+  ListChecks,
   UserCog,
   Users,
   Wallet,
@@ -163,6 +165,16 @@ export async function MoreMenu() {
           </MenuGroup>
         )}
 
+        {type === "wholesale" && (
+          <MenuGroup title={t("Wholesale")}>
+            <MenuLink href="/orders" label={t("Orders")} sub={t("Booked by salesmen on the route — bill them in one tap")} icon={ClipboardList} locked={lock("quotations")} />
+            <MenuLink href="/products/rates" label={t("Rate list")} sub={t("MRP, retail and wholesale rates — share on WhatsApp")} icon={ListChecks} />
+            <MenuLink href="/reports/dues" label={t("Payments due")} sub={t("Bill by bill against credit days, beat by beat")} icon={CalendarClock} />
+            <MenuLink href="/reports/schemes" label={t("Scheme report")} sub={t("Free goods in, free goods out, what you kept")} icon={Gift} locked={lock("advanced_reports")} />
+            <MenuLink href="/challans" label={t("Delivery challans")} sub={t("Goods go first, the bill follows — one bill for many challans")} icon={Warehouse} locked={lock("delivery_challan")} />
+          </MenuGroup>
+        )}
+
         {type === "jewellery" && (
           <MenuGroup title="Jewellery">
             <MenuLink href="/jewellery/rates" label="Today's rate" sub="Gold 24K / 22K / 18K and silver, per gram" icon={Gem} />
@@ -206,6 +218,7 @@ export async function MoreMenu() {
         <MenuGroup title="Sales & money">
           <MenuLink href="/bills/all" label="All bills" sub="Browse & reprint any past bill" icon={Receipt} />
           <MenuLink href="/quotations" label="Quotations" sub="Price offers — bill them in one tap when agreed" icon={FileText} locked={lock("quotations")} />
+          {["hardware", "general", "grocery", "mart", "pharmacy"].includes(type) && <MenuLink href="/reports/dues" label={t("Payments due")} sub={t("Bill by bill against credit days, beat by beat")} icon={CalendarClock} />}
           {["hardware", "general", "grocery", "mart"].includes(type) && (
             <MenuLink href="/challans" label={t("Delivery challans")} sub={t("Goods go first, the bill follows — one bill for many challans")} icon={Truck} locked={lock("delivery_challan")} />
           )}
@@ -217,6 +230,7 @@ export async function MoreMenu() {
 
         <MenuGroup title="Stock">
           <MenuLink href="/products" label={terminology.productPlural} sub={terminology.productSub} icon={Package} />
+          {["hardware", "general", "grocery", "mart", "pharmacy"].includes(type) && <MenuLink href="/products/rates" label={t("Rate list")} sub={t("MRP, retail and wholesale rates — share on WhatsApp")} icon={ListChecks} />}
           <MenuLink href="/stock-audit" label="Stock audit" sub="Count physical stock, reconcile mismatches" icon={ClipboardCheck} locked={lock("stock_audit")} />
           <MenuLink href="/reorder" label="Reorder stock" sub="Send low-stock items to a vendor" icon={PackagePlus} />
           {/* Batch/expiry tracking is a per-product option any shop can use;

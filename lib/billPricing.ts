@@ -5,6 +5,7 @@ import { isLooseLine, productLinePrice } from "./linePrice";
 import { isModuleEnabled } from "./modules";
 import { gapsReady } from "./gapsData";
 import { freeUnits, type Bxgy } from "./bxgy";
+import { wholesalePrices, type PriceLevel } from "./wholesaleData";
 
 type Admin = ReturnType<typeof createSupabaseAdminClient>;
 
@@ -37,7 +38,7 @@ export async function priceLines(
    * whether it was quoted loose): honoured over today's catalogue price. */
   quoted?: Map<string, { unitPrice: number; loose: boolean }>,
   /** Split buy-X-get-Y free units onto their own ₹0 line (a bill does; a quotation quotes the plain price). */
-  opts: { freeLines?: boolean } = {},
+  opts: { freeLines?: boolean; priceLevel?: PriceLevel } = {},
 ) {
   const productIds = [...new Set(items.map((i) => i.productId).filter(Boolean))] as string[];
   const { data: dbProducts, error } = productIds.length
@@ -52,6 +53,9 @@ export async function priceLines(
     const { data: rows } = await admin.from("products").select("id, bxgy_buy, bxgy_free").in("id", productIds).not("bxgy_buy", "is", null);
     for (const r of rows ?? []) if (r.bxgy_buy && r.bxgy_free) offers.set(r.id, { buy: r.bxgy_buy, free: r.bxgy_free });
   }
+
+  // A wholesale party pays each item's wholesale rate, where it has one.
+  const wholesale = opts.priceLevel === "wholesale" ? await wholesalePrices(admin, productIds) : new Map<string, number>();
 
   const isComposition = session.gstScheme === "composition";
   const priced = items.map((item, sourceIndex) => {
@@ -68,7 +72,17 @@ export async function priceLines(
       hsnCode: product?.hsn_code ?? item.hsnCode ?? null,
       quantity: item.quantity,
       stockQuantity: product && loose ? round2(item.quantity / Number(product.units_per_pack)) : product ? item.quantity : (item.stockQuantity ?? item.quantity),
-      unitPrice: overridden ? item.unitPrice : quotedPrice != null ? quotedPrice : product ? productLinePrice(product, { quantity: item.quantity, loose }) : item.unitPrice,
+      unitPrice: overridden
+        ? item.unitPrice
+        : quotedPrice != null
+          ? quotedPrice
+          : product && wholesale.has(product.id)
+            ? loose && Number(product.units_per_pack) > 1
+              ? round2(wholesale.get(product.id)! / Number(product.units_per_pack))
+              : wholesale.get(product.id)!
+            : product
+              ? productLinePrice(product, { quantity: item.quantity, loose })
+              : item.unitPrice,
       gstPercent: isComposition ? 0 : product ? Number(product.gst_percent) : item.gstPercent,
       warrantyMonths: product?.has_warranty ? product.warranty_months : null,
       mrp: product?.mrp ? Number(product.mrp) : null,

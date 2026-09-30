@@ -174,6 +174,7 @@ export interface Database {
       };
       products: {
         Row: {
+          wholesale_price: number | null;
           bxgy_buy: number | null;
           bxgy_free: number | null;
           id: string;
@@ -225,6 +226,7 @@ export interface Database {
           created_at: string;
         };
         Insert: {
+          wholesale_price?: number | null;
           bxgy_buy?: number | null;
           bxgy_free?: number | null;
           id?: string;
@@ -276,6 +278,7 @@ export interface Database {
           created_at?: string;
         };
         Update: {
+          wholesale_price?: number | null;
           bxgy_buy?: number | null;
           bxgy_free?: number | null;
           id?: string;
@@ -351,6 +354,9 @@ export interface Database {
       };
       customers: {
         Row: {
+          price_level: "retail" | "wholesale";
+          credit_days: number | null;
+          beat: string | null;
           credit_limit: number | null;
           id: string;
           shop_id: string;
@@ -372,6 +378,9 @@ export interface Database {
           created_at: string;
         };
         Insert: {
+          price_level?: "retail" | "wholesale";
+          credit_days?: number | null;
+          beat?: string | null;
           credit_limit?: number | null;
           id?: string;
           shop_id: string;
@@ -393,6 +402,9 @@ export interface Database {
           created_at?: string;
         };
         Update: {
+          price_level?: "retail" | "wholesale";
+          credit_days?: number | null;
+          beat?: string | null;
           credit_limit?: number | null;
           id?: string;
           shop_id?: string;
@@ -426,6 +438,7 @@ export interface Database {
       };
       bills: {
         Row: {
+          due_date: string | null;
           buyer_name: string | null;
           buyer_gstin: string | null;
           buyer_address: string | null;
@@ -468,6 +481,7 @@ export interface Database {
           created_at: string;
         };
         Insert: {
+          due_date?: string | null;
           buyer_name?: string | null;
           buyer_gstin?: string | null;
           buyer_address?: string | null;
@@ -510,6 +524,7 @@ export interface Database {
           created_at?: string;
         };
         Update: {
+          due_date?: string | null;
           buyer_name?: string | null;
           buyer_gstin?: string | null;
           buyer_address?: string | null;
@@ -2233,9 +2248,9 @@ export interface Database {
         Relationships: [];
       };
       quotations: {
-        Row: { id: string; shop_id: string; quote_number: string; financial_year: string; customer_id: string | null; customer_name: string | null; customer_phone: string | null; items: QuotationLine[]; discount_type: "flat" | "percent"; discount_value: number; subtotal: number; discount_amount: number; taxable_amount: number; cgst_amount: number; sgst_amount: number; igst_amount: number; round_off_amount: number; total: number; supply_type: "intra" | "inter"; valid_until: string | null; notes: string | null; status: "open" | "converted" | "cancelled"; bill_id: string | null; staff_id: string | null; created_at: string };
-        Insert: { id?: string; shop_id: string; quote_number: string; financial_year: string; customer_id?: string | null; customer_name?: string | null; customer_phone?: string | null; items: QuotationLine[]; discount_type?: "flat" | "percent"; discount_value?: number; subtotal?: number; discount_amount?: number; taxable_amount?: number; cgst_amount?: number; sgst_amount?: number; igst_amount?: number; round_off_amount?: number; total?: number; supply_type?: "intra" | "inter"; valid_until?: string | null; notes?: string | null; status?: "open" | "converted" | "cancelled"; bill_id?: string | null; staff_id?: string | null; created_at?: string };
-        Update: { id?: string; shop_id?: string; quote_number?: string; financial_year?: string; customer_id?: string | null; customer_name?: string | null; customer_phone?: string | null; items?: QuotationLine[]; discount_type?: "flat" | "percent"; discount_value?: number; subtotal?: number; discount_amount?: number; taxable_amount?: number; cgst_amount?: number; sgst_amount?: number; igst_amount?: number; round_off_amount?: number; total?: number; supply_type?: "intra" | "inter"; valid_until?: string | null; notes?: string | null; status?: "open" | "converted" | "cancelled"; bill_id?: string | null; staff_id?: string | null; created_at?: string };
+        Row: { kind: "quote" | "order"; id: string; shop_id: string; quote_number: string; financial_year: string; customer_id: string | null; customer_name: string | null; customer_phone: string | null; items: QuotationLine[]; discount_type: "flat" | "percent"; discount_value: number; subtotal: number; discount_amount: number; taxable_amount: number; cgst_amount: number; sgst_amount: number; igst_amount: number; round_off_amount: number; total: number; supply_type: "intra" | "inter"; valid_until: string | null; notes: string | null; status: "open" | "converted" | "cancelled"; bill_id: string | null; staff_id: string | null; created_at: string };
+        Insert: { kind?: "quote" | "order"; id?: string; shop_id: string; quote_number: string; financial_year: string; customer_id?: string | null; customer_name?: string | null; customer_phone?: string | null; items: QuotationLine[]; discount_type?: "flat" | "percent"; discount_value?: number; subtotal?: number; discount_amount?: number; taxable_amount?: number; cgst_amount?: number; sgst_amount?: number; igst_amount?: number; round_off_amount?: number; total?: number; supply_type?: "intra" | "inter"; valid_until?: string | null; notes?: string | null; status?: "open" | "converted" | "cancelled"; bill_id?: string | null; staff_id?: string | null; created_at?: string };
+        Update: { kind?: "quote" | "order"; id?: string; shop_id?: string; quote_number?: string; financial_year?: string; customer_id?: string | null; customer_name?: string | null; customer_phone?: string | null; items?: QuotationLine[]; discount_type?: "flat" | "percent"; discount_value?: number; subtotal?: number; discount_amount?: number; taxable_amount?: number; cgst_amount?: number; sgst_amount?: number; igst_amount?: number; round_off_amount?: number; total?: number; supply_type?: "intra" | "inter"; valid_until?: string | null; notes?: string | null; status?: "open" | "converted" | "cancelled"; bill_id?: string | null; staff_id?: string | null; created_at?: string };
         Relationships: [
           { foreignKeyName: "quotations_shop_id_fkey"; columns: ["shop_id"]; isOneToOne: false; referencedRelation: "shops"; referencedColumns: ["id"] },
         ];

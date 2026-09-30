@@ -16,6 +16,7 @@ import { isModuleEnabled } from "@/lib/modules";
 import { recipesReady } from "@/lib/recipeData";
 import { gapsReady } from "@/lib/gapsData";
 import { mergeChallanLines } from "@/lib/challans";
+import { wholesaleReady } from "@/lib/wholesaleData";
 
 export default async function NewBillPage({ searchParams }: { searchParams: Promise<{ customer?: string; provider?: string; quote?: string; scheme?: string; challans?: string }> }) {
   // Opened from an appointment ("Bill →"): that customer and stylist come filled in. Opened from a
@@ -124,7 +125,7 @@ export default async function NewBillPage({ searchParams }: { searchParams: Prom
           discountType: quote.discount_type,
           discountValue: Number(quote.discount_value),
           // While it is valid the quoted prices stand (the server keeps them too).
-          honourPrices: !quote.valid_until || quote.valid_until >= todayIso(),
+          honourPrices: !!quote.valid_until && quote.valid_until >= todayIso(),
         }
       : null;
 
@@ -141,9 +142,22 @@ export default async function NewBillPage({ searchParams }: { searchParams: Prom
     const { data: rows } = await admin.from("products").select("id, bxgy_buy, bxgy_free").eq("shop_id", session.shopId).not("bxgy_buy", "is", null);
     for (const r of rows ?? []) if (r.bxgy_buy && r.bxgy_free) bxgyOffers.set(r.id, { buy: r.bxgy_buy, free: r.bxgy_free });
   }
+  // Wholesale (migration 0053): each item's wholesale rate, and each party's rate level and beat.
+  const wsReady = await wholesaleReady(admin);
+  const wholesaleOf = new Map<string, number>();
+  const partyOf = new Map<string, { level: "retail" | "wholesale"; beat: string | null }>();
+  if (wsReady) {
+    const [{ data: wp }, { data: parties }] = await Promise.all([
+      admin.from("products").select("id, wholesale_price").eq("shop_id", session.shopId).not("wholesale_price", "is", null),
+      admin.from("customers").select("id, price_level, beat").eq("shop_id", session.shopId).or("price_level.eq.wholesale,beat.not.is.null"),
+    ]);
+    for (const p of wp ?? []) wholesaleOf.set(p.id, Number(p.wholesale_price));
+    for (const c of parties ?? []) partyOf.set(c.id, { level: c.price_level === "wholesale" ? "wholesale" : "retail", beat: c.beat });
+  }
   // The weighing scale's label format, if the shop set one up.
   const { data: scaleRow } = (await gapsReady(admin)) ? await admin.from("shops").select("scale_barcode_prefix, scale_barcode_mode, scale_code_digits").eq("id", session.shopId).single() : { data: null };
   const scaleBarcode = scaleRow?.scale_barcode_prefix ? { prefix: scaleRow.scale_barcode_prefix, mode: scaleRow.scale_barcode_mode === "price" ? ("price" as const) : ("weight" as const), codeDigits: Number(scaleRow.scale_code_digits) || 5 } : null;
+  const ordersAvailable = wsReady && quotationsAvailable && session.businessType === "wholesale";
   const fromChallans =
     challanRows.length && !quote && challanRows.every((c) => c.customer_id === challanCustomer)
       ? {
@@ -214,8 +228,9 @@ export default async function NewBillPage({ searchParams }: { searchParams: Prom
         // Only a pharmacy looks for same-salt substitutes.
         salt: session.businessType === "pharmacy" ? p.salt_composition : null,
         bxgy: bxgyOffers.get(p.id) ?? null,
+        wholesalePrice: wholesaleOf.get(p.id) ?? null,
       }))}
-      customers={customers ?? []}
+      customers={(customers ?? []).map((c) => ({ ...c, priceLevel: partyOf.get(c.id)?.level ?? "retail", beat: partyOf.get(c.id)?.beat ?? null }))}
       frequentProductIds={frequentProductIds}
       affinityMap={affinityMap}
       vehicles={(vehicles ?? []).map((v) => ({ id: v.id, name: v.name, ratePerKm: Number(v.rate_per_km) }))}
@@ -230,6 +245,7 @@ export default async function NewBillPage({ searchParams }: { searchParams: Prom
       fromQuote={fromScheme ? null : fromQuote}
       fromChallans={fromScheme ? null : fromChallans}
       scaleBarcode={scaleBarcode}
+      ordersAvailable={ordersAvailable}
       fromScheme={fromScheme}
       stylists={(stylistRows ?? []).map((w) => w.name)}
       extrasAvailable={isModuleEnabled(session.enabledModules, "customer_prepaid") && (await salonExtrasReady(admin))}

@@ -15,6 +15,7 @@ import { seedJewellery } from "./jewellery";
 import { seedClinic } from "./clinic";
 import { seedGym } from "./gym";
 import { seedLab } from "./lab";
+import { seedWholesale } from "./wholesale";
 
 /** Each business type's own filler. A Record, so adding a business type without giving it a
  * demo is a compile error. */
@@ -34,6 +35,7 @@ const SEEDERS: Record<DemoType, (ctx: SeedCtx) => Promise<void>> = {
   clinic: seedClinic,
   gym: seedGym,
   lab: seedLab,
+  wholesale: seedWholesale,
 };
 
 /** Removes the demo shop a user owns (if any), the same way the admin "delete shop" does. */

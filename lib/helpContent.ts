@@ -955,6 +955,69 @@ const GYM_MR: HelpSection = {
   ],
 };
 
+const WHOLESALE_EN: HelpSection = {
+  title: "Wholesale: schemes, rates and orders",
+  items: [
+    {
+      q: "How do I bill a company scheme like 10 + 5?",
+      a: "Purchase: enter 10 as quantity and 5 as free — stock gets 15, GST and cost are on the 10, and profit counts each unit at the lower real cost. Sale: put the item on \"Buy 10 get 2 free\" in Offers — the bill shows the 2 free on their own ₹0 line. The 3 you kept are your extra profit; the Scheme report shows them.",
+    },
+    {
+      q: "How do retail and wholesale rates work?",
+      a: "Every item has a retail rate and can have a wholesale rate (Rate list screen, or set both as MRP − x%). Mark a party \"Wholesale rate\" on their page, and New Bill uses that rate for them automatically.",
+    },
+    {
+      q: "How do credit days and due dates work?",
+      a: "Set a party's credit days on their page. Each udhaar bill gets a due date, printed on the bill, and Payments due lists who is overdue and by how many days.",
+    },
+    {
+      q: "How does a salesman book orders?",
+      a: "Give the salesman a login. On New Bill he picks the party (search by beat / area), adds items and taps \"Save as order\". The office opens Orders and makes the bill in one tap when the goods go out.",
+    },
+  ],
+};
+const WHOLESALE_HI: HelpSection = {
+  title: "होलसेल: स्कीम, रेट और ऑर्डर",
+  items: [
+    {
+      q: "कंपनी की 10 + 5 स्कीम का बिल कैसे बनाएं?",
+      a: "खरीद: मात्रा 10 और फ़्री 5 लिखें — स्टॉक में 15 आते हैं, GST और लागत 10 पर, और मुनाफ़े में हर पीस की असली (कम) लागत गिनी जाती है। बिक्री: Offers में आइटम पर \"10 लो 2 फ़्री\" लगाएं — बिल में 2 फ़्री अलग ₹0 लाइन में। बचे 3 आपका अतिरिक्त मुनाफ़ा हैं; Scheme report में दिखते हैं।",
+    },
+    {
+      q: "रिटेल और होलसेल रेट कैसे काम करते हैं?",
+      a: "हर आइटम का रिटेल रेट और होलसेल रेट हो सकता है (Rate list स्क्रीन, या दोनों को MRP − x% से भरें)। पार्टी के पेज पर उसे \"Wholesale rate\" चुनें, New Bill उसके लिए अपने आप वही रेट लगाएगा।",
+    },
+    {
+      q: "क्रेडिट डेज़ और ड्यू डेट कैसे काम करते हैं?",
+      a: "पार्टी के पेज पर क्रेडिट डेज़ डालें। हर उधार बिल को ड्यू डेट मिलती है, बिल पर छपती है, और Payments due में दिखता है कौन कितने दिन से लेट है।",
+    },
+    {
+      q: "सेल्समैन ऑर्डर कैसे बुक करे?",
+      a: "सेल्समैन को लॉगिन दें। New Bill पर वो पार्टी चुने (बीट / एरिया से खोजें), आइटम जोड़े और \"Save as order\" दबाए। माल जाते समय ऑफ़िस Orders खोलकर एक टैप में बिल बनाता है।",
+    },
+  ],
+};
+const WHOLESALE_MR: HelpSection = {
+  title: "होलसेल: स्कीम, दर आणि ऑर्डर",
+  items: [
+    {
+      q: "कंपनीच्या 10 + 5 स्कीमचे बिल कसे करायचे?",
+      a: "खरेदी: प्रमाण 10 आणि मोफत 5 लिहा — स्टॉकमध्ये 15 येतात, GST आणि किंमत 10 वर, आणि नफ्यात प्रत्येक पीसची खरी (कमी) किंमत मोजली जाते. विक्री: Offers मध्ये आयटमवर \"10 घ्या 2 मोफत\" लावा — बिलात 2 मोफत वेगळ्या ₹0 ओळीत. उरलेले 3 तुमचा जास्तीचा नफा; Scheme report मध्ये दिसतात.",
+    },
+    {
+      q: "रिटेल आणि होलसेल दर कसे चालतात?",
+      a: "प्रत्येक आयटमचा रिटेल आणि होलसेल दर असू शकतो (Rate list स्क्रीन, किंवा दोन्ही MRP − x% ने भरा). पार्टीच्या पेजवर \"Wholesale rate\" निवडा, New Bill त्यांच्यासाठी आपोआप तोच दर लावेल.",
+    },
+    {
+      q: "क्रेडिट डेज आणि ड्यू डेट कसे चालतात?",
+      a: "पार्टीच्या पेजवर क्रेडिट डेज टाका. प्रत्येक उधारी बिलाला ड्यू डेट मिळते, बिलावर छापली जाते, आणि Payments due मध्ये दिसते कोण किती दिवस उशीर आहे.",
+    },
+    {
+      q: "सेल्समन ऑर्डर कशी बुक करतो?",
+      a: "सेल्समनला लॉगिन द्या. New Bill वर तो पार्टी निवडतो (बीट / एरियाने शोधा), आयटम जोडतो आणि \"Save as order\" दाबतो. माल जाताना ऑफिस Orders उघडून एका टॅपमध्ये बिल करते.",
+    },
+  ],
+};
 const LAB_EN: HelpSection = {
   title: "Orders & turnaround",
   items: [
@@ -1353,4 +1416,5 @@ export const BUSINESS_HELP_SECTION: Record<BusinessType, Record<Lang, HelpSectio
   clinic: { en: CLINIC_EN, hi: CLINIC_HI, mr: CLINIC_MR },
   gym: { en: GYM_EN, hi: GYM_HI, mr: GYM_MR },
   lab: { en: LAB_EN, hi: LAB_HI, mr: LAB_MR },
+  wholesale: { en: WHOLESALE_EN, hi: WHOLESALE_HI, mr: WHOLESALE_MR },
 };

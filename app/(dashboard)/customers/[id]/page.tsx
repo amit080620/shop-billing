@@ -7,6 +7,8 @@ import { getTranslator } from "@/lib/i18n/server";
 import { LedgerClient } from "./LedgerClient";
 import { PrepaidCard } from "./PrepaidCard";
 import { CreditLimitCard } from "./CreditLimitCard";
+import { PartyTermsCard } from "./PartyTermsCard";
+import { PARTY_TERMS_TRADES, wholesaleReady } from "@/lib/wholesaleData";
 import { gapsReady } from "@/lib/gapsData";
 import { loadPackages, loadWalletEntries, salonExtrasReady, walletBalance } from "@/lib/salonExtras";
 import { isModuleEnabled } from "@/lib/modules";
@@ -116,6 +118,10 @@ export default async function CustomerLedgerPage({
     : [0, [], []];
   // Udhaar limit (migration 0052).
   const limitReady = await gapsReady(admin);
+  // Party terms (migration 0053): rate level, credit days, beat — for trades that sell to other shops.
+  const termsReady = PARTY_TERMS_TRADES.has(session.businessType) && (await wholesaleReady(admin));
+  const terms = termsReady ? (await admin.from("customers").select("price_level, credit_days, beat").eq("id", id).single()).data : null;
+  const beats = termsReady ? [...new Set(((await admin.from("customers").select("beat").eq("shop_id", session.shopId).not("beat", "is", null).limit(500)).data ?? []).map((b) => b.beat as string))].slice(0, 40) : [];
   const creditLimit = limitReady ? ((await admin.from("customers").select("credit_limit").eq("id", id).single()).data?.credit_limit ?? null) : null;
 
   return (
@@ -124,6 +130,7 @@ export default async function CustomerLedgerPage({
       isOwner={session.role === "owner"}
       extras={
         <>
+          {terms && <PartyTermsCard customerId={id} priceLevel={terms.price_level === "wholesale" ? "wholesale" : "retail"} creditDays={terms.credit_days} beat={terms.beat} beats={beats} isOwner={session.role === "owner"} />}
           {limitReady && <CreditLimitCard customerId={id} limit={creditLimit != null ? Number(creditLimit) : null} balance={balance} isOwner={session.role === "owner"} />}
           {extrasReady && <PrepaidCard customerId={id} balance={wallet} entries={walletEntries} packages={packages} isOwner={session.role === "owner"} />}
         </>

@@ -16,7 +16,7 @@ export const MODULES = [
   { key: "quotations", label: "Quotations", description: "Price offers, billed in one tap when the customer agrees", href: "/quotations" },
   { key: "staff_payroll", label: "Staff attendance & salary", description: "Daily register, advances, monthly salary and salary slips", href: "/staff-attendance" },
   { key: "customer_prepaid", label: "Prepaid balance & packages", description: "Customers pay in advance; sessions sold up front, used visit by visit", href: "/prepaid" },
-  { key: "delivery_challan", label: "Delivery challans", description: "Goods go first with a challan; one bill later for one challan or many", href: "/challans", businessTypes: ["hardware", "general", "grocery", "mart"] },
+  { key: "delivery_challan", label: "Delivery challans", description: "Goods go first with a challan; one bill later for one challan or many", href: "/challans", businessTypes: ["hardware", "general", "grocery", "mart", "wholesale"] },
   { key: "karigar_jobs", label: "Karigar register", description: "Gold given to the karigar, jewellery received back, wastage checked", href: "/jewellery/karigar", businessTypes: ["jewellery"] },
   { key: "gold_schemes", label: "Gold saving schemes", description: "Monthly instalments with a bonus, used to buy jewellery", href: "/jewellery/schemes", businessTypes: ["jewellery"] },
   { key: "advanced_reports", label: "Advanced reports", description: "Insights, profit, CA export pack, staff reports", href: "/reports" },

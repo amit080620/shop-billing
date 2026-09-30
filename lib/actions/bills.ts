@@ -20,6 +20,7 @@ import { undoBillUsage } from "../billUndo";
 import { settleChallansForBill } from "../challanData";
 import { freeFollowUp } from "../followUp";
 import { gapsReady } from "../gapsData";
+import { dueDateFor, partyTerms } from "../wholesaleData";
 import { loadPackages, packageUsable, salonExtrasReady, walletBalance } from "../salonExtras";
 import { addDaysIso } from "../dateHelpers";
 import { isModuleEnabled } from "../modules";
@@ -119,13 +120,16 @@ export async function createBillCore(
   let quoted: Map<string, { unitPrice: number; loose: boolean }> | undefined;
   if (parsedData.quotationId) {
     const { data: quote } = await admin.from("quotations").select("items, status, valid_until").eq("id", parsedData.quotationId).eq("shop_id", session.shopId).maybeSingle();
-    if (quote && quote.status === "open" && (!quote.valid_until || quote.valid_until >= todayIso())) {
+    // A quotation's prices stand while it is valid; an order (no validity) is billed at the day's rates.
+    if (quote && quote.status === "open" && quote.valid_until && quote.valid_until >= todayIso()) {
       quoted = new Map(
         quote.items.filter((l) => l.productId).map((l) => [l.productId as string, { unitPrice: Number(l.unitPrice), loose: Number(l.stockQuantity) !== Number(l.quantity) }]),
       );
     }
   }
-  const priced = await priceLines(session, admin, itemsToPrice, quoted);
+  // The party's terms: a wholesale party pays wholesale rates; credit days set the due date.
+  const terms = await partyTerms(admin, session.shopId, customerId);
+  const priced = await priceLines(session, admin, itemsToPrice, quoted, { priceLevel: terms.priceLevel });
   if ("error" in priced) return { error: priced.error ?? "One or more products could not be verified" };
   const { productMap } = priced;
 
@@ -290,6 +294,7 @@ export async function createBillCore(
       total: totals.total,
       paid_amount: totals.paidAmount,
       credit_amount: totals.balanceAmount,
+      ...(totals.balanceAmount > 0 && terms.creditDays != null ? { due_date: dueDateFor(todayIso(), terms.creditDays) } : {}),
       doctor_name: needsPrescription ? doctorName : null,
       patient_name: needsPrescription ? patientName : null,
       service_provider_name: serviceProviderName ?? null,

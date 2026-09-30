@@ -1,7 +1,7 @@
 import type { LucideIcon } from "lucide-react";
-import { ShoppingCart, Store, Wrench, Pill, UtensilsCrossed, Repeat, Truck, Hammer, Scissors, Gem, Stethoscope, Dumbbell, FlaskConical, Building2, BedDouble } from "lucide-react";
+import { ShoppingCart, Store, Wrench, Pill, UtensilsCrossed, Repeat, Truck, Hammer, Scissors, Gem, Stethoscope, Dumbbell, FlaskConical, Building2, BedDouble, Warehouse } from "lucide-react";
 
-export type BusinessType = "grocery" | "restaurant" | "mart" | "hardware" | "pharmacy" | "rental" | "transport" | "service" | "salon" | "jewellery" | "clinic" | "gym" | "lab" | "hotel" | "general";
+export type BusinessType = "grocery" | "restaurant" | "mart" | "hardware" | "pharmacy" | "rental" | "transport" | "service" | "salon" | "jewellery" | "clinic" | "gym" | "lab" | "hotel" | "wholesale" | "general";
 
 export const BUSINESS_TYPES: { value: BusinessType; label: string; icon: LucideIcon; colors: [string, string] }[] = [
   { value: "grocery", label: "Grocery / Kirana", icon: ShoppingCart, colors: ["#34D399", "#059669"] },
@@ -18,6 +18,7 @@ export const BUSINESS_TYPES: { value: BusinessType; label: string; icon: LucideI
   { value: "gym", label: "Gym / Fitness", icon: Dumbbell, colors: ["#F97316", "#C2410C"] },
   { value: "lab", label: "Lab / Diagnostics", icon: FlaskConical, colors: ["#22D3EE", "#0891B2"] },
   { value: "hotel", label: "Hotel / Lodge", icon: BedDouble, colors: ["#A78BFA", "#6D28D9"] },
+  { value: "wholesale", label: "Wholesale / Distributor", icon: Warehouse, colors: ["#4ADE80", "#15803D"] },
   { value: "general", label: "General / Other", icon: Building2, colors: ["#94A3B8", "#475569"] },
 ];
 
@@ -35,6 +36,7 @@ export function customerNounFor(businessType: string): string {
   if (businessType === "clinic") return "Patient";
   if (businessType === "gym") return "Member";
   if (businessType === "lab") return "Patient";
+  if (businessType === "wholesale") return "Party";
   return "Customer";
 }
 
@@ -128,6 +130,12 @@ const TERMINOLOGY: Record<BusinessType, Terminology> = {
     productSub: "Restaurant menu, minibar, laundry — name, price, GST%",
     addProductLabel: "+ Item",
   },
+  wholesale: {
+    productPlural: "Items",
+    productSingular: "Item",
+    productSub: "MRP, retail and wholesale rate, scheme, GST%, stock",
+    addProductLabel: "+ Item",
+  },
   general: {
     productPlural: "Products",
     productSingular: "Product",
@@ -164,6 +172,7 @@ const NAME_EXAMPLE: Record<BusinessType, string> = {
   clinic: "Consultation",
   gym: "Whey protein 1kg",
   lab: "Blood sugar test kit",
+  wholesale: "Parle-G 250g (box of 24)",
   general: "Notebook A4",
 };
 
@@ -180,7 +189,7 @@ export function nameExampleFor(businessType: string): string {
 
 /** Whether "Comes with warranty" makes sense for what this business sells. */
 export function sellsWarrantyItems(businessType: string): boolean {
-  return ["grocery", "mart", "hardware", "general", "service", "jewellery"].includes(businessType);
+  return ["grocery", "mart", "hardware", "general", "service", "jewellery", "wholesale"].includes(businessType);
 }
 
 export function getTerminology(businessType: string): Terminology {
@@ -208,6 +217,7 @@ const UNIT_PRIORITY: Record<BusinessType, string[]> = {
   grocery: ["KG", "GM", "LTR", "ML", "NOS", "PKT", "BOX", "DZN"],
   mart: ["KG", "GM", "LTR", "ML", "NOS", "PKT", "BOX", "DZN"],
   hotel: ["PLATE", "NOS", "BOWL", "GLASS", "PCS", "KG", "LTR"],
+  wholesale: ["BOX", "CTN", "PCS", "NOS", "PKT", "KG", "LTR", "DZN"],
   general: [],
 };
 

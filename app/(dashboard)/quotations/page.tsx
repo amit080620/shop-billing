@@ -11,6 +11,7 @@ import { BackLink } from "@/app/components/BackLink";
 import { quotationsReady } from "@/lib/quotationsData";
 import { isModuleEnabled } from "@/lib/modules";
 import { ModuleBlocked } from "@/app/components/ModuleBlocked";
+import { wholesaleReady } from "@/lib/wholesaleData";
 
 export default async function QuotationsPage({ searchParams }: { searchParams: Promise<{ status?: string }> }) {
   const session = await requireSession();
@@ -37,6 +38,8 @@ export default async function QuotationsPage({ searchParams }: { searchParams: P
     .order("created_at", { ascending: false })
     .limit(200);
   if (status !== "all") query = query.eq("status", status);
+  // Salesmen's orders have their own screen (Orders).
+  if (await wholesaleReady(admin)) query = query.eq("kind", "quote");
   const { data: quotes } = await query;
   const today = todayIso();
 

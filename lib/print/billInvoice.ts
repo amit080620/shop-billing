@@ -5,6 +5,8 @@ import { goldSchemesReady, loadSchemes } from "../goldSchemeData";
 import { salonExtrasReady } from "../salonExtras";
 import type { createSupabaseAdminClient } from "../supabase/admin";
 import type { A4InvoiceData } from "./A4Renderer";
+import { wholesaleReady } from "../wholesaleData";
+import { formatIsoDate } from "../dateHelpers";
 
 type Admin = ReturnType<typeof createSupabaseAdminClient>;
 
@@ -180,6 +182,7 @@ export async function loadBillInvoice(admin: Admin, billId: string, shopId?: str
     editedNote: bill.edited_at ? `Corrected on ${formatDateTime(bill.edited_at)} — ${bill.edit_reason}` : null,
     upiQrDataUrl,
     upiId: shop.upi_id,
+    dueDateText: Number(bill.credit_amount) > 0 && (await wholesaleReady(admin)) ? await dueText(admin, bill.id) : null,
   };
 
   return {
@@ -203,4 +206,10 @@ export async function loadBillInvoice(admin: Admin, billId: string, shopId?: str
     hotelBookingId,
     a4Data,
   };
+}
+
+/** The due date printed on a credit bill (migration 0053). */
+async function dueText(admin: Admin, billId: string): Promise<string | null> {
+  const { data } = await admin.from("bills").select("due_date").eq("id", billId).maybeSingle();
+  return data?.due_date ? formatIsoDate(data.due_date) : null;
 }

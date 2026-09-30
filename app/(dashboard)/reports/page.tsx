@@ -77,6 +77,17 @@ export default async function ReportsPage() {
             sub="Who's owed the longest — chase the oldest first"
           />
           <ReportLink
+            href="/reports/dues"
+            label="Payments due"
+            sub="Bill by bill against credit days, beat by beat"
+          />
+          <ReportLink
+            href="/reports/schemes"
+            label="Scheme report"
+            sub="Free goods in, free goods out, what you kept"
+            locked={!advanced}
+          />
+          <ReportLink
             href="/reports/win-back"
             label="Win them back"
             sub="Regulars who've gone quiet — worth a nudge"
@@ -306,6 +317,8 @@ const REPORT_ICONS: Record<string, LucideIcon> = {
   "/reports/gstr3b": Landmark,
   "/reports/purchase-register": BookOpen,
   "/reports/einvoice": FileText,
+  "/reports/dues": Hourglass,
+  "/reports/schemes": TrendingUp,
   "/restaurant/reports": UtensilsCrossed,
   "/restaurant/reports/items": ChefHat,
   "/transport/reports": Truck,

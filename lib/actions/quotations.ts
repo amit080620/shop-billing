@@ -11,11 +11,12 @@ import { addDaysIso, todayIso } from "../dateHelpers";
 import { quotationsReady } from "../quotationsData";
 import { isModuleEnabled } from "../modules";
 import { moduleLockMessage } from "../plans";
+import { partyTerms, wholesaleReady } from "../wholesaleData";
 
 /** Saves the cart on the New Bill screen as a quotation instead of a bill: same lines, priced by
  * the same rules a bill uses, with a number and a date it is valid until. Nothing is sold —
  * no stock, udhaar or GST entry. */
-export async function saveQuotationAction(payloadJson: string, validDays: number, notes: string): Promise<{ error?: string; quotationId?: string }> {
+export async function saveQuotationAction(payloadJson: string, validDays: number, notes: string, kind: "quote" | "order" = "quote"): Promise<{ error?: string; quotationId?: string }> {
   const session = await requireSession();
   if (!isModuleEnabled(session.enabledModules, "quotations")) return { error: moduleLockMessage("quotations") };
   const admin = createSupabaseAdminClient();
@@ -35,8 +36,13 @@ export async function saveQuotationAction(payloadJson: string, validDays: number
   if (!items.length) return { error: "Add at least one item" };
   if (discountValue > 0 && !hasPermission(session, "give_discounts")) return { error: "You don't have permission to give a discount — ask the owner." };
   if (!session.shopStateCode) return { error: "Add your shop's state in Settings first." };
+  // A salesman's order (wholesale): for a party, no validity — it is billed at the day's rates.
+  const isOrder = kind === "order";
+  if (isOrder && !(await wholesaleReady(admin))) return { error: "Orders need a one-time database update (migration 0053)." };
+  if (isOrder && !customerId) return { error: "Pick the party the order is for." };
 
-  const priced = await priceLines(session, admin, items, undefined, { freeLines: false });
+  const terms = await partyTerms(admin, session.shopId, customerId);
+  const priced = await priceLines(session, admin, items, undefined, { freeLines: false, priceLevel: terms.priceLevel });
   if ("error" in priced) return { error: priced.error ?? "One or more products could not be verified" };
 
   let customer: { name: string; phone: string | null; gstin: string | null; state_code: string | null } | null = null;
@@ -64,7 +70,8 @@ export async function saveQuotationAction(payloadJson: string, validDays: number
     .from("quotations")
     .insert({
       shop_id: session.shopId,
-      quote_number: `Q/${financialYear}/${String(n).padStart(5, "0")}`,
+      quote_number: `${isOrder ? "SO" : "Q"}/${financialYear}/${String(n).padStart(5, "0")}`,
+      ...(isOrder ? { kind: "order" as const } : {}),
       financial_year: financialYear,
       customer_id: customerId ?? null,
       customer_name: customer?.name ?? null,
@@ -81,7 +88,7 @@ export async function saveQuotationAction(payloadJson: string, validDays: number
       round_off_amount: totals.roundOffAmount,
       total: totals.total,
       supply_type: supplyType,
-      valid_until: addDaysIso(todayIso(), days),
+      valid_until: isOrder ? null : addDaysIso(todayIso(), days),
       notes: notes.trim().slice(0, 500) || null,
       staff_id: session.userId,
     })
@@ -92,6 +99,7 @@ export async function saveQuotationAction(payloadJson: string, validDays: number
     return { error: "Could not save the quotation — try again." };
   }
   revalidatePath("/quotations");
+  revalidatePath("/orders");
   return { quotationId: row.id };
 }
 

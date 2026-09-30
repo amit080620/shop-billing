@@ -20,6 +20,7 @@ export const DEMO_TYPES = [
   "clinic",
   "gym",
   "lab",
+  "wholesale",
   "general",
 ] as const;
 export type DemoType = (typeof DEMO_TYPES)[number];
@@ -198,6 +199,17 @@ export const DEMO_BUSINESSES: DemoBusiness[] = [
     stateCode: "33",
     blurb: "Test catalog and packages, orders with sample status, result entry, printable reports.",
     tour: ["Test catalog with reference ranges", "New order for a patient", "Enter results", "Printable report", "Pending orders"],
+  },
+  {
+    type: "wholesale",
+    title: "Wholesale / Distributor",
+    shopName: "Maruti FMCG Distributors",
+    ownerName: "Suresh Agarwal",
+    city: "Pune",
+    state: "Maharashtra",
+    stateCode: "27",
+    blurb: "FMCG distributor: MRP, retail and wholesale rates, company schemes (10 + 5) and party schemes (10 + 2), credit days, salesman orders by beat.",
+    tour: ["Rate list: MRP, retail and wholesale rate, set from MRP, shared on WhatsApp", "A wholesale party billed at the wholesale rate, with a 10 + 2 scheme", "Orders booked by the salesman, billed in one tap", "Payments due: bill by bill against credit days, by beat", "Scheme report: free goods in, free goods out, what you kept"],
   },
   {
     type: "general",

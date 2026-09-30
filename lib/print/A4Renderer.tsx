@@ -61,6 +61,8 @@ export type A4InvoiceData = {
   /** Printed as a quotation: its own title and number label, a "valid until" date, the
    * shop's notes, and no payment lines (nothing has been paid for a price offer). */
   quotation?: { validUntilText: string | null; notes: string | null } | null;
+  /** A credit bill's due date (the party's credit days). */
+  dueDateText?: string | null;
 };
 
 function money(n: number): string {
@@ -151,6 +153,7 @@ export function A4Renderer({ data }: { data: A4InvoiceData }) {
           </p>
           <p className="text-[12px] text-neutral-500">{data.dateText}</p>
           {data.quotation?.validUntilText && <p className="text-[12px] font-medium text-neutral-600">Valid until {data.quotation.validUntilText}</p>}
+          {data.dueDateText && <p className="text-[12px] font-semibold text-neutral-700">Due by {data.dueDateText}</p>}
         </div>
       </div>
 

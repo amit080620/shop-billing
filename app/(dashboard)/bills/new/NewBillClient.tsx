@@ -42,7 +42,7 @@ import { getSpeechRecognition, speechLocaleFor, voiceErrorMessages, type SpeechR
 import { AIStatusBadge, type AIStatusBadgeHandle } from "@/app/components/AIStatusBadge";
 
 /** Business types whose items are goods even when no HSN code was entered (e-way bill reminder). */
-const GOODS_BUSINESSES = new Set(["grocery", "mart", "hardware", "pharmacy", "jewellery", "general", "transport"]);
+const GOODS_BUSINESSES = new Set(["grocery", "mart", "hardware", "pharmacy", "jewellery", "general", "transport", "wholesale"]);
 
 type Product = {
   id: string;
@@ -70,8 +70,10 @@ type Product = {
   salt?: string | null;
   /** A "buy X get Y free" offer on the item (Offers). */
   bxgy?: Bxgy | null;
+  /** The rate a wholesale party pays (Rate list). */
+  wholesalePrice?: number | null;
 };
-type Customer = { id: string; name: string; phone: string; gstin: string | null; state_code: string | null; loyalty_points?: number };
+type Customer = { id: string; name: string; phone: string; gstin: string | null; state_code: string | null; loyalty_points?: number; priceLevel?: "retail" | "wholesale"; beat?: string | null };
 type CartLine = {
   productId: string;
   name: string;
@@ -133,6 +135,7 @@ export function NewBillClient({
   fromQuote = null,
   fromChallans = null,
   scaleBarcode = null,
+  ordersAvailable = false,
   fromScheme = null,
   stylists = [],
   extrasAvailable = false,
@@ -151,6 +154,8 @@ export function NewBillClient({
   fromChallans?: { ids: string[]; numbers: string[]; lines: QuotationLine[] } | null;
   /** The weighing scale's label format: a scanned label bills the item at its weight or price. */
   scaleBarcode?: ScaleSettings | null;
+  /** Wholesale: a salesman can save the cart as an order, billed later. */
+  ordersAvailable?: boolean;
   /** Opened from an appointment: the customer and stylist to start with. */
   initialCustomerId?: string | null;
   initialProvider?: string;
@@ -324,6 +329,20 @@ export function NewBillClient({
       cancelled = true;
     };
   }, [creditCustomerId]);
+  // A different party may pay a different rate: the cart follows (typed or promised prices stay).
+  const partyLevel = customerMode === "existing" ? (selectedCustomer?.priceLevel ?? "retail") : "retail";
+  useEffect(() => {
+    setCart((prev) =>
+      prev.map((line) => {
+        const base = products.find((x) => x.id === line.productId);
+        if (!base || line.priceOverride || line.packageId) return line;
+        const p = partyLevel === "wholesale" && base.wholesalePrice != null ? { ...base, price: base.wholesalePrice, bulkMinQty: null, bulkPrice: null } : base;
+        const price = line.saleMode === "loose" && p.unitsPerPack ? round2(p.price / p.unitsPerPack) : priceForQuantity(p.price, p.bulkMinQty, p.bulkPrice, line.quantity);
+        return price === line.price && line.packPrice === p.price ? line : { ...line, price, packPrice: p.price, regularPrice: p.price, bulkMinQty: p.bulkMinQty, bulkPrice: p.bulkPrice };
+      }),
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- reprice only when the party's rate level changes
+  }, [partyLevel]);
   // Clinic: a consultation inside the free follow-up window is ₹0 (the server decides the same).
   const [followUp, setFollowUp] = useState<{ productIds: string[]; lastPaid: string; until: string } | null>(null);
   useEffect(() => {
@@ -464,7 +483,13 @@ export function NewBillClient({
     return regularPrice;
   }
 
-  function addProduct(p: Product) {
+  /** The item as this party buys it: a wholesale party pays the wholesale rate (no bulk slab on top). */
+  function atLevel(p: Product): Product {
+    return selectedCustomer?.priceLevel === "wholesale" && p.wholesalePrice != null ? { ...p, price: p.wholesalePrice, bulkMinQty: null, bulkPrice: null } : p;
+  }
+
+  function addProduct(input: Product) {
+    const p = atLevel(input);
     setCart((prev) => {
       const existing = prev.find((c) => c.productId === p.id);
       if (existing) {
@@ -842,7 +867,8 @@ export function NewBillClient({
                   items={customers}
                   getKey={(c) => c.id}
                   getLabel={(c) => c.name}
-                  getSubLabel={(c) => c.phone}
+                  getSubLabel={(c) => (c.beat ? `${c.phone} · ${c.beat}` : c.phone)}
+                  getKeywords={(c) => c.beat ?? ""}
                   onSelect={setSelectedCustomer}
                   placeholder={t("bill.searchCustomer")}
                 />
@@ -1292,9 +1318,10 @@ export function NewBillClient({
             <li key={line.productId} className="flex justify-between text-sm">
               <span className="min-w-0 flex-1 truncate text-muted">
                 {line.name} × {line.quantity}
+                {freeOf(line) > 0 ? ` (${t("{n} free", { n: freeOf(line) })})` : ""}
               </span>
               <span className="shrink-0 text-foreground">
-                {formatMoney(line.price * line.quantity)}
+                {formatMoney(line.price * (line.quantity - freeOf(line)))}
               </span>
             </li>
           ))}
@@ -1723,6 +1750,26 @@ export function NewBillClient({
       <SubmitButton blocked={(customerMode === "walkin" && totals.balanceAmount > 0) || b2bInvalid} generatingLabel={t("bill.generating")} submitLabel={t("bill.generateInvoice")} />
 
       {/* Not selling yet — the customer wants a price first. Same cart, saved as a quotation. */}
+      {ordersAvailable && !fromQuote && customerMode === "existing" && selectedCustomer && (
+        <div className="flex flex-col gap-2 rounded-xl border border-brand bg-brand-soft p-3">
+          <p className="text-xs text-brand-text">{t("Taking an order on the route? Save it now — the office bills it when the goods go out.")}</p>
+          <button
+            type="button"
+            disabled={quoteSaving}
+            onClick={async () => {
+              setQuoteError(null);
+              setQuoteSaving(true);
+              const r = await saveQuotationAction(payload, 0, "", "order");
+              setQuoteSaving(false);
+              if (r.error || !r.quotationId) setQuoteError(r.error ?? "Could not save");
+              else router.push("/orders");
+            }}
+            className="btn-primary text-center disabled:opacity-60"
+          >
+            {quoteSaving ? t("Saving…") : t("Save as order")}
+          </button>
+        </div>
+      )}
       {quotationsAvailable && !fromQuote && (
         <div className="flex flex-col gap-2 rounded-xl border border-dashed border-border p-3">
           <p className="text-xs text-muted">{t("Customer only wants a price for now?")}</p>

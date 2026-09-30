@@ -6,6 +6,14 @@ import { DEMO_BUSINESSES, DEMO_DOMAIN, type DemoType } from "./config";
 export type GuideBlock = { h: 1 | 2 | 3; text: string } | { p: string } | { ul: string[] } | { code: string };
 
 const SCREENS: Record<DemoType, { path: string; what: string }[]> = {
+  wholesale: [
+    { path: "/products/rates", what: "Rate list: MRP, retail rate and wholesale rate for every item; set them as MRP less x %; share on WhatsApp" },
+    { path: "/bills/new", what: "Billing a party: a wholesale party pays the wholesale rate; a 10 + 2 scheme shows the 2 free on their own ₹0 line; Save as order for a salesman" },
+    { path: "/orders", what: "Orders booked on the route, by beat — Make bill in one tap" },
+    { path: "/reports/dues", what: "Payments due: bill by bill against each party's credit days, overdue first, by beat" },
+    { path: "/reports/schemes", what: "Scheme report: free goods from the company (10 + 5), free goods to parties (10 + 2), and what you kept" },
+    { path: "/purchases", what: "Purchases with the company's free quantity" },
+  ],
   grocery: [
     { path: "/dashboard", what: "Home: today's sales, money owed by customers, low stock, the shop-health score and the three things worth doing today" },
     { path: "/fast-billing", what: "The tap-to-add counter for busy hours" },
