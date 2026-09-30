@@ -3,7 +3,7 @@ import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { PageHeader } from "@/app/components/PageHeader";
 import { EmptyState } from "@/app/components/EmptyState";
 import { formatDateTime } from "@/lib/format";
-import { Trash2, Pencil, UserPlus, UserMinus, KeyRound, Activity } from "lucide-react";
+import { Trash2, Pencil, UserPlus, UserMinus, KeyRound, Activity, Lock, Unlock, PiggyBank, Wallet, FileMinus } from "lucide-react";
 import { isModuleEnabled } from "@/lib/modules";
 import { ModuleBlocked } from "@/app/components/ModuleBlocked";
 import { History } from "lucide-react";
@@ -16,7 +16,16 @@ const ACTION_INFO: Record<string, { icon: typeof Trash2; label: string; tone: st
   staff_added: { icon: UserPlus, label: "Staff added", tone: "text-success" },
   staff_removed: { icon: UserMinus, label: "Staff removed", tone: "text-danger" },
   staff_permissions_changed: { icon: KeyRound, label: "Staff permissions changed", tone: "text-info" },
+  day_closed: { icon: Lock, label: "Day closed", tone: "text-foreground" },
+  day_reopened: { icon: Unlock, label: "Day reopened", tone: "text-warning" },
+  gold_scheme_closed: { icon: PiggyBank, label: "Gold scheme closed", tone: "text-danger" },
+  wallet_refunded: { icon: Wallet, label: "Prepaid balance handed back", tone: "text-danger" },
+  worker_payment_removed: { icon: Trash2, label: "Staff payment removed", tone: "text-danger" },
+  debit_note_issued: { icon: FileMinus, label: "Debit note issued", tone: "text-info" },
+  product_force_deleted: { icon: Trash2, label: "Item deleted with its history", tone: "text-danger" },
 };
+
+const money = (v: unknown) => `₹${Number(v ?? 0).toLocaleString("en-IN", { maximumFractionDigits: 2 })}`;
 
 function describeDetails(action: string, details: Record<string, unknown> | null): string {
   if (!details) return "";
@@ -24,6 +33,12 @@ function describeDetails(action: string, details: Record<string, unknown> | null
   if (action === "bill_quantities_edited") return `Reason: ${details.reason}`;
   if (action === "staff_added") return `${details.name} (${details.role})`;
   if (action === "staff_removed") return `${details.name} (${details.role})`;
+  if (action === "day_closed") return `${details.date}: counted ${money(details.counted)}, difference ${money(details.difference)}`;
+  if (action === "day_reopened") return `${details.date} (had counted ${money(details.counted)})`;
+  if (action === "gold_scheme_closed") return `Paid in ${money(details.paid)}, handed back ${money(details.refund)}`;
+  if (action === "wallet_refunded") return `Balance ${money(details.balance)}, handed back ${money(details.handedBack)}`;
+  if (action === "worker_payment_removed") return `${details.kind} ${money(details.amount)} (${details.month})`;
+  if (action === "debit_note_issued") return `${details.noteNumber}: ${money(details.total)}`;
   if (action === "staff_permissions_changed") {
     const before = Array.isArray(details.before) ? details.before : [];
     const after = Array.isArray(details.after) ? details.after : [];

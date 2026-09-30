@@ -26,7 +26,9 @@ export async function saveQuotationAction(payloadJson: string, validDays: number
   }
   const parsed = billSchema.safeParse(payload);
   if (!parsed.success) return { error: parsed.error.issues[0].message };
-  const { customerId, items, discountType, discountValue } = parsed.data;
+  const { customerId, discountType, discountValue } = parsed.data;
+  // A session from a customer's package isn't something to quote a price for.
+  const items = parsed.data.items.filter((i) => !i.packageId).map((i) => ({ ...i, providerName: undefined }));
   if (!items.length) return { error: "Add at least one item" };
   if (discountValue > 0 && !hasPermission(session, "give_discounts")) return { error: "You don't have permission to give a discount — ask the owner." };
   if (!session.shopStateCode) return { error: "Add your shop's state in Settings first." };

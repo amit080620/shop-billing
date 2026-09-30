@@ -6,6 +6,7 @@ import { createSupabaseAdminClient } from "../supabase/admin";
 import { logAuditEvent } from "../audit";
 import { payrollReady } from "../payrollData";
 import { todayIso } from "../dateHelpers";
+import { salonExtrasReady } from "../salonExtras";
 
 const NOT_READY = "Staff attendance needs a one-time database update — ask the owner to run migration 0046.";
 const NO_PERMISSION = "Only the owner (or staff allowed to manage staff) can do this.";
@@ -36,6 +37,9 @@ export async function saveWorkerAction(input: {
   dailyWage: number;
   joinedOn: string;
   isActive: boolean;
+  /** A salon's commission: the share of services (and products) this person does. */
+  commissionServicePercent?: number;
+  commissionProductPercent?: number;
 }): Promise<{ error?: string }> {
   const ctx = await open();
   if ("error" in ctx) return { error: ctx.error };
@@ -56,9 +60,14 @@ export async function saveWorkerAction(input: {
     joined_on: /^\d{4}-\d{2}-\d{2}$/.test(input.joinedOn) ? input.joinedOn : null,
     is_active: input.isActive,
   };
+  const percent = (n: number | undefined) => Math.round(Math.min(100, Math.max(0, Number(n) || 0)) * 100) / 100;
+  const commission =
+    (input.commissionServicePercent !== undefined || input.commissionProductPercent !== undefined) && (await salonExtrasReady(admin))
+      ? { commission_service_percent: percent(input.commissionServicePercent), commission_product_percent: percent(input.commissionProductPercent) }
+      : {};
   const { error } = input.id
-    ? await admin.from("workers").update(row).eq("id", input.id).eq("shop_id", session.shopId)
-    : await admin.from("workers").insert({ ...row, shop_id: session.shopId });
+    ? await admin.from("workers").update({ ...row, ...commission }).eq("id", input.id).eq("shop_id", session.shopId)
+    : await admin.from("workers").insert({ ...row, ...commission, shop_id: session.shopId });
   if (error) return { error: "Could not save — try again." };
   refresh();
   return {};

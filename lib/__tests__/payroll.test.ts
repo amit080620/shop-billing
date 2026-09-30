@@ -29,6 +29,13 @@ describe("a month's pay", () => {
     expect(p.earned).toBe(1250);
   });
 
+  it("adds a stylist's commission to what they earned", () => {
+    const p = monthPay({ ...base, marks: ["absent"], commission: 1234.5, advances: 1000 });
+    expect(p.commission).toBe(1234.5);
+    expect(p.earned).toBe(12000 - 400 + 1234.5);
+    expect(p.due).toBe(12000 - 400 + 1234.5 - 1000);
+  });
+
   it("takes advances and salary already paid off what is due, and adds bonuses", () => {
     const p = monthPay({ ...base, advances: 3000, bonuses: 500, salaryPaid: 4000 });
     expect(p.due).toBe(12000 + 500 - 3000 - 4000);

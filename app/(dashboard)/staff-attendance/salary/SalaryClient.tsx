@@ -56,6 +56,7 @@ export function SalaryClient({ month, monthLabel, shopName, isOwner, rows }: { m
       p.absent ? `${t("Absent")}: ${p.absent} ${p.absent === 1 ? t("day") : t("days")}` : "",
       p.half ? `${t("Half days")}: ${p.half}` : "",
       p.beforeJoining ? `${t("Joined on day")} ${p.beforeJoining + 1}` : "",
+      p.commission ? `${t("Commission")}: +${formatMoney(p.commission)}` : "",
       `*${t("Earned")}: ${formatMoney(p.earned)}*`,
       r.bonuses ? `${t("Bonus")}: +${formatMoney(r.bonuses)}` : "",
       r.advances ? `${t("Advance")}: −${formatMoney(r.advances)}` : "",
@@ -83,6 +84,7 @@ export function SalaryClient({ month, monthLabel, shopName, isOwner, rows }: { m
                   {p.half ? ` · ${t("Half")} ${p.half}` : ""}
                   {p.leave ? ` · ${t("Leave")} ${p.leave}` : ""}
                 </p>
+                {p.commission > 0 && <p className="text-xs font-medium text-brand-text">{t("Commission")} +{formatMoney(p.commission)} ({t("in Earned")})</p>}
               </div>
               <div className="shrink-0 text-right">
                 <p className={`text-base font-bold ${p.due > 0 ? "text-credit" : "text-success"}`}>{formatMoney(Math.abs(p.due))}</p>

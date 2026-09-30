@@ -147,7 +147,8 @@ export async function MoreMenu() {
           <MenuGroup title="Salon">
             <MenuLink href="/salon/appointments" label="Appointments" sub="Book & manage customer visits" icon={CalendarDays} />
             <MenuLink href="/salon/settings/booking" label="Online booking" sub="Working hours & shareable booking link" icon={Scissors} />
-            <MenuLink href="/salon" label="Staff-wise revenue" sub="Who's bringing in how much" icon={BarChart3} />
+            <MenuLink href="/salon/packages" label={t("Packages")} sub={t("5 hair spa sessions, paid up front — each visit takes one")} icon={Package} />
+            <MenuLink href="/salon" label={t("Stylist report")} sub={t("Work done by each stylist, and their commission")} icon={BarChart3} />
           </MenuGroup>
         )}
 
@@ -195,6 +196,7 @@ export async function MoreMenu() {
         <MenuGroup title="Sales & money">
           <MenuLink href="/bills/all" label="All bills" sub="Browse & reprint any past bill" icon={Receipt} />
           <MenuLink href="/quotations" label="Quotations" sub="Price offers — bill them in one tap when agreed" icon={FileText} />
+          <MenuLink href="/prepaid" label={t("Prepaid balances")} sub={t("Money customers paid in advance, used on their bills")} icon={PiggyBank} />
           {mod("petty_cash") && <MenuLink href="/petty-cash" label="Petty cash" sub="Small day-to-day cash expenses" icon={Wallet} />}
           <MenuLink href="/catalog-orders" label="Catalog orders" sub="Orders from your online catalog" icon={Store} />
           {mod("public_catalog") && (

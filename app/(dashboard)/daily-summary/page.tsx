@@ -104,7 +104,7 @@ export default async function DailySummaryPage({
         <BreakdownTable title={t("Sales collected today")} byMethod={salesByMethod} t={t} />
         <BreakdownTable title={t("Old udhaar collected today")} byMethod={oldCreditCollected} t={t} />
         <BreakdownTable title={t("Debit notes collected today")} byMethod={debitNotesByMethod} t={t} />
-        <BreakdownTable title={t("Advances taken today (repair jobs, table bookings, gold schemes)")} byMethod={advancesByMethod} t={t} />
+        <BreakdownTable title={t("Advances taken today (repair jobs, bookings, schemes, prepaid)")} byMethod={advancesByMethod} t={t} />
         {newCreditGiven > 0 && (
           <p className="text-xs text-credit">
             + {formatMoney(newCreditGiven)} sold on fresh credit today (not cash yet — tracked in Reminders)
@@ -141,7 +141,7 @@ export default async function DailySummaryPage({
         <BreakdownTable title={t("Petty cash and expenses today")} byMethod={pettyCashByMethod} t={t} />
         <BreakdownTable title={t("Staff salary and advances paid today")} byMethod={staffPaidByMethod} t={t} />
         <BreakdownTable title={t("Rental deposits handed back today")} byMethod={depositsBackByMethod} t={t} />
-        <BreakdownTable title={t("Advances handed back today (tokens, cancelled bookings, closed schemes)")} byMethod={advanceRefundsByMethod} t={t} />
+        <BreakdownTable title={t("Advances handed back today (tokens, cancelled bookings, schemes, prepaid)")} byMethod={advanceRefundsByMethod} t={t} />
         {newPayableCreated > 0 && (
           <p className="text-xs text-credit">
             + {formatMoney(newPayableCreated)} bought on credit from vendors today (not paid yet)

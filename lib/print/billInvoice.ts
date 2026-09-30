@@ -2,6 +2,7 @@ import { formatDateTime } from "../format";
 import { buyerOf } from "../gstBuyer";
 import { buildUpiLink, generateQrDataUrl } from "../qr";
 import { goldSchemesReady, loadSchemes } from "../goldSchemeData";
+import { salonExtrasReady } from "../salonExtras";
 import type { createSupabaseAdminClient } from "../supabase/admin";
 import type { A4InvoiceData } from "./A4Renderer";
 
@@ -95,11 +96,22 @@ export async function loadBillInvoice(admin: Admin, billId: string, shopId?: str
       if (view) schemeLine = { label: `Gold scheme ${view.scheme.scheme_number}`, amount: view.figures.value };
     }
   }
+  // Prepaid balance used on this bill pays part of it too.
+  let prepaidUsed = 0;
+  if (bill.customer_id && (await salonExtrasReady(admin))) {
+    const { data: spent } = await admin.from("wallet_entries").select("credit").eq("bill_id", bill.id).eq("kind", "spend");
+    prepaidUsed = Math.round(-(spent ?? []).reduce((s, e) => s + Number(e.credit), 0) * 100) / 100;
+  }
   const oldGold = exchangeRow ? Number(exchangeRow.exchange_value) : 0;
-  const exchangeAmount = oldGold + (schemeLine?.amount ?? 0);
-  const exchangeLabel = exchangeRow
-    ? `Old ${exchangeRow.metal_type} exchange (${Number(exchangeRow.gross_weight)} g @ ${Number(exchangeRow.purity_percent)}%)${schemeLine ? ` + ${schemeLine.label}` : ""}`
-    : (schemeLine?.label ?? null);
+  const exchangeAmount = oldGold + (schemeLine?.amount ?? 0) + prepaidUsed;
+  const exchangeLabel =
+    [
+      exchangeRow ? `Old ${exchangeRow.metal_type} exchange (${Number(exchangeRow.gross_weight)} g @ ${Number(exchangeRow.purity_percent)}%)` : null,
+      schemeLine?.label ?? null,
+      prepaidUsed > 0 ? "Prepaid balance" : null,
+    ]
+      .filter(Boolean)
+      .join(" + ") || null;
   const cashPaid = Math.max(0, Number(bill.paid_amount) - exchangeAmount);
 
   let upiLink: string | null = null;

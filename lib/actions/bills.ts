@@ -13,9 +13,12 @@ import { invalidateCache } from "../cache";
 import { buyerSchemaReady, stateFromGstin, type Buyer } from "../gstBuyer";
 import { todayIso } from "../dateHelpers";
 import { priceLines } from "../billPricing";
-import { loadSchemes } from "../goldSchemeData";
+import { goldSchemesReady, loadSchemes } from "../goldSchemeData";
 import { asCashMethod, recordCashMovement } from "../cashMovements";
 import { formatMoney } from "../format";
+import { undoBillUsage } from "../billUndo";
+import { loadPackages, packageUsable, salonExtrasReady, walletBalance } from "../salonExtras";
+import { addDaysIso } from "../dateHelpers";
 
 export type ActionState = { error?: string } | null;
 
@@ -47,16 +50,45 @@ export async function createBillCore(
     scheme = { id: view.scheme.id, number: view.scheme.scheme_number, value: view.figures.value };
   }
 
+  // Packages and prepaid balance (migration 0048): sessions taken from the customer's packages go
+  // on the bill at ₹0, and money from their prepaid balance pays for it like cash already in hand.
+  const extrasReady = await salonExtrasReady(admin);
+  const walletAmount = round2(parsedData.walletAmount ?? 0);
+  const sessionsWanted = new Map<string, number>();
+  for (const i of items) if (i.packageId) sessionsWanted.set(i.packageId, (sessionsWanted.get(i.packageId) ?? 0) + Number(i.quantity));
+  if (sessionsWanted.size || walletAmount > 0) {
+    if (!extrasReady) return { error: "Packages and prepaid balance need a one-time database update — ask the owner to run migration 0048." };
+    if (!customerId) return { error: "Pick the customer — packages and prepaid balance belong to someone." };
+  }
+  const packages = new Map((sessionsWanted.size ? await loadPackages(admin, session.shopId, { ids: [...sessionsWanted.keys()] }) : []).map((p) => [p.id, p]));
+  for (const [id, wanted] of sessionsWanted) {
+    const p = packages.get(id);
+    if (!p || p.customerId !== customerId) return { error: "That package belongs to another customer." };
+    if (!packageUsable(p) || !Number.isInteger(wanted) || wanted > p.left) {
+      return { error: p.cancelled ? `${p.name} was cancelled.` : p.expired ? `${p.name} ran out on ${p.expiresOn}.` : `${p.name}: ${p.left} session(s) left.` };
+    }
+  }
+  if (walletAmount > 0 && customerId) {
+    const balance = await walletBalance(admin, session.shopId, customerId);
+    if (walletAmount > balance + 0.005) return { error: `The prepaid balance is only ${formatMoney(balance)}.` };
+  }
+  // A session from a package is charged nothing — its price was paid when the package was sold.
+  const itemsToPrice = items.map((i) => {
+    const p = i.packageId ? packages.get(i.packageId) : undefined;
+    return p ? { ...i, productId: null, description: `${p.serviceName} (package)`, unitPrice: 0, gstPercent: 0, priceOverride: false } : i;
+  });
+
   // Old-gold/silver exchange is money-equivalent handed over at the
   // counter — it counts toward what's "paid", same as cash, without
-  // touching the taxable value of the new item being sold. A scheme's value likewise.
+  // touching the taxable value of the new item being sold. A scheme's value likewise, and prepaid
+  // balance used.
   // Its worth is worked out here from weight, purity and rate (fine weight to the milligram),
   // not taken from the screen as sent.
   const exchangeNetWeight =
     exchangeGrossWeight && exchangeGrossWeight > 0 ? Math.round(exchangeGrossWeight * ((exchangePurityPercent ?? 100) / 100) * 1000) / 1000 : 0;
   const exchangeWorth =
     exchangeMetal && exchangeNetWeight > 0 && exchangeRatePerGram && exchangeRatePerGram > 0 ? round2(exchangeNetWeight * exchangeRatePerGram) : (exchangeValue ?? 0);
-  const effectivePaidAmount = round2(paidAmount + exchangeWorth + (scheme?.value ?? 0));
+  const effectivePaidAmount = round2(paidAmount + exchangeWorth + (scheme?.value ?? 0) + walletAmount);
 
   // The "Give discounts" switch on a staff account means something: without it, the only money
   // off a bill is the customer's own loyalty points, at exactly what they are worth. (It used to
@@ -85,9 +117,36 @@ export async function createBillCore(
       );
     }
   }
-  const priced = await priceLines(session, admin, items, quoted);
+  const priced = await priceLines(session, admin, itemsToPrice, quoted);
   if ("error" in priced) return { error: priced.error ?? "One or more products could not be verified" };
   const { productMap } = priced;
+
+  // A package sold on this bill ("5 hair spa sessions"): the customer gets its sessions once the
+  // bill is made — so there has to be a customer.
+  const plans = new Map<string, { sessions: number; validityDays: number | null; serviceId: string | null; serviceName: string }>();
+  if (extrasReady && productMap.size) {
+    const { data: planRows } = await admin
+      .from("products")
+      .select("id, name, package_service_id, package_sessions, package_validity_days")
+      .eq("shop_id", session.shopId)
+      .in("id", [...productMap.keys()])
+      .not("package_sessions", "is", null);
+    const serviceIds = [...new Set((planRows ?? []).map((p) => p.package_service_id).filter((id): id is string => !!id))];
+    const { data: services } = serviceIds.length ? await admin.from("products").select("id, name").in("id", serviceIds) : { data: [] };
+    for (const p of planRows ?? []) {
+      if (p.package_sessions == null || !(Number(p.package_sessions) > 0)) continue;
+      plans.set(p.id, {
+        sessions: Number(p.package_sessions),
+        validityDays: p.package_validity_days,
+        serviceId: p.package_service_id,
+        serviceName: (services ?? []).find((s) => s.id === p.package_service_id)?.name ?? p.name,
+      });
+    }
+  }
+  if (plans.size) {
+    if (!customerId) return { error: "A package belongs to a customer — pick the customer first." };
+    if (items.some((i) => i.productId && plans.has(i.productId) && !Number.isInteger(Number(i.quantity)))) return { error: "Sell packages in whole numbers." };
+  }
 
   const needsPrescription = items.some((item) => item.productId && productMap.get(item.productId)?.requires_prescription);
   if (needsPrescription && (!doctorName || !patientName)) {
@@ -162,6 +221,10 @@ export async function createBillCore(
   });
   // A scheme is used whole: the jewellery must be worth at least its value (checked before the
   // invoice number is taken).
+  // Prepaid balance pays only what the bill comes to (after old gold and a scheme).
+  if (walletAmount > 0 && walletAmount > Math.max(0, totals.total - exchangeWorth - (scheme?.value ?? 0)) + 0.005) {
+    return { error: `Only ${formatMoney(Math.max(0, totals.total - exchangeWorth - (scheme?.value ?? 0)))} of the prepaid balance can go on this bill.` };
+  }
   if (scheme && totals.total + 0.005 < scheme.value) {
     return { error: `The scheme is worth ${formatMoney(scheme.value)} — pick jewellery worth at least that much.` };
   }
@@ -247,6 +310,8 @@ export async function createBillCore(
       igst_amount: line.igst,
       line_gst: line.lineGst,
       line_total: round2(line.lineSubtotal + line.lineGst),
+      // Who did the line (when not the bill's stylist), and the package a ₹0 session came from.
+      ...(extrasReady ? { provider_name: items[i].providerName ?? null, package_id: items[i].packageId ?? null } : {}),
     };
   });
 
@@ -392,7 +457,70 @@ export async function createBillCore(
       method: asCashMethod(paymentMethod),
       amount: -scheme.value,
       note: `Scheme ${scheme.number} used in invoice ${invoiceNumber}`,
+      billId: bill.id,
     });
+  }
+
+  if (extrasReady && customerId) {
+    // Sessions taken from packages.
+    if (sessionsWanted.size) {
+      const { error: usesError } = await admin
+        .from("package_uses")
+        .insert([...sessionsWanted].map(([packageId, quantity]) => ({ shop_id: session.shopId, package_id: packageId, bill_id: bill.id, quantity })));
+      if (usesError) console.error("Could not record package sessions", bill.id, usesError);
+    }
+    // Packages sold: the customer now has their sessions. One session is worth the package's
+    // price before GST over its sessions — what a stylist's commission is paid on when it is used.
+    const today = todayIso();
+    const sold = verifiedItems
+      .map((item, i) => ({ item, i, plan: item.productId ? plans.get(item.productId) : undefined }))
+      .filter((x) => x.plan)
+      .map(({ item, i, plan }) => {
+        const sessions = plan!.sessions * Math.round(Number(item.quantity));
+        return {
+          shop_id: session.shopId,
+          customer_id: customerId,
+          plan_product_id: item.productId,
+          name: item.productName,
+          service_product_id: plan!.serviceId,
+          service_name: plan!.serviceName,
+          sessions_total: sessions,
+          session_value: round2(totals.lines[i].lineSubtotal / sessions),
+          sold_bill_id: bill.id,
+          starts_on: today,
+          expires_on: plan!.validityDays ? addDaysIso(today, plan!.validityDays) : null,
+        };
+      });
+    if (sold.length) {
+      const { error: soldError } = await admin.from("customer_packages").insert(sold);
+      if (soldError) console.error("Could not record packages sold", bill.id, soldError);
+    }
+    // Prepaid balance used: off the balance, and off today's takings (it was money in when paid).
+    if (walletAmount > 0) {
+      const { error: walletError } = await admin.from("wallet_entries").insert({
+        shop_id: session.shopId,
+        customer_id: customerId,
+        kind: "spend",
+        money: 0,
+        credit: -walletAmount,
+        bill_id: bill.id,
+        payment_method: asCashMethod(paymentMethod),
+        note: `Invoice ${invoiceNumber}`,
+        staff_id: session.userId,
+      });
+      if (walletError) console.error("Could not record prepaid balance used", bill.id, walletError);
+      await recordCashMovement(admin, {
+        shopId: session.shopId,
+        staffId: session.userId,
+        kind: "advance_applied",
+        source: "wallet",
+        sourceId: customerId,
+        method: asCashMethod(paymentMethod),
+        amount: -walletAmount,
+        note: `Prepaid balance used in invoice ${invoiceNumber}`,
+        billId: bill.id,
+      });
+    }
   }
 
   return { billId: bill.id, invoiceNumber };
@@ -548,6 +676,8 @@ export async function voidBillAction(
     console.error("Could not void bill", error);
     return { error: "Could not void bill" };
   }
+  // A gold scheme, package session, prepaid balance or advance it used is given back.
+  await undoBillUsage(admin, session.shopId, billId);
 
   await logAuditEvent({
     admin,
@@ -601,6 +731,22 @@ export async function editBillQuantitiesAction(
     .select("id, product_id, quantity, unit_price, gst_percent")
     .eq("bill_id", billId);
   if (!items || items.length === 0) return { error: "No items on this bill" };
+
+  // A bill that used (or sold) a package, prepaid balance or a gold scheme is tied to it: changing
+  // its quantities would leave the two disagreeing. Void it and bill again instead.
+  const tiedUp = await Promise.all([
+    (await salonExtrasReady(admin))
+      ? Promise.all([
+          admin.from("package_uses").select("id", { count: "exact", head: true }).eq("bill_id", billId),
+          admin.from("customer_packages").select("id", { count: "exact", head: true }).eq("sold_bill_id", billId),
+          admin.from("wallet_entries").select("id", { count: "exact", head: true }).eq("bill_id", billId),
+        ]).then((r) => r.some((x) => (x.count ?? 0) > 0))
+      : false,
+    (await goldSchemesReady(admin))
+      ? admin.from("gold_schemes").select("id", { count: "exact", head: true }).eq("redeemed_bill_id", billId).then((r) => (r.count ?? 0) > 0)
+      : false,
+  ]);
+  if (tiedUp.some(Boolean)) return { error: "This bill used a package, prepaid balance or gold scheme — void it and make it again instead of changing quantities." };
 
   const updateByItemId = new Map(lineUpdates.map((u) => [u.billItemId, u.newQuantity]));
   for (const u of lineUpdates) {

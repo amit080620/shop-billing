@@ -1,7 +1,7 @@
 "use client";
 
 import { keepValuesOnError } from "@/lib/keepValuesOnError";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import Image from "next/image";
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
@@ -65,7 +65,10 @@ export function LedgerClient({
   specialty,
   growthLogs,
   photos,
+  extras = null,
 }: {
+  /** Prepaid balance and packages, when the shop has them. */
+  extras?: ReactNode;
   customer: { id: string; name: string; phone: string; gstin: string | null; address: string | null; stateCode: string | null; loyaltyPoints: number };
   shopName: string;
   balance: number;
@@ -211,6 +214,7 @@ export function LedgerClient({
 
       {specialty === "pediatric" && <GrowthChart patientId={customer.id} logs={growthLogs} />}
       {specialty === "dermatology" && <PatientPhotos patientId={customer.id} photos={photos} />}
+      {extras}
 
 
       {showPaymentForm && (

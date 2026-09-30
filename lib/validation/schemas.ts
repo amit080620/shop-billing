@@ -140,6 +140,10 @@ const lineItemSchema = z.object({
   // A rate the counter set on purpose (said out loud to voice billing) instead of the catalogue
   // price — honoured only for staff allowed to give discounts.
   priceOverride: z.boolean().optional(),
+  // Bills only: the customer's package this line is taken from (charged ₹0), and the stylist who
+  // did this line when it wasn't the bill's own stylist.
+  packageId: z.string().uuid().nullable().optional(),
+  providerName: optionalText(80),
   // Batch details — only meaningful on a purchase line for a pharma
   // product; ignored everywhere else.
   batchNumber: optionalText(60),
@@ -155,6 +159,8 @@ export const billSchema = z.object({
   quotationId: z.string().uuid().nullable().optional(),
   /** A jeweller's gold saving scheme whose value pays for this bill (then marked used). */
   goldSchemeId: z.string().uuid().nullable().optional(),
+  /** Paid from the customer's prepaid balance (on top of paidAmount). */
+  walletAmount: z.coerce.number().min(0).nullable().optional(),
   items: z.array(lineItemSchema).min(1, "Add at least one product"),
   discountType: z.enum(["percent", "flat"]),
   discountValue: z.coerce.number().min(0).default(0),

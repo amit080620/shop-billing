@@ -5,6 +5,7 @@ import { getTranslator } from "@/lib/i18n/server";
 import { PageHeader } from "@/app/components/PageHeader";
 import { BackLink } from "@/app/components/BackLink";
 import { loadWorkers, payrollReady } from "@/lib/payrollData";
+import { salonExtrasReady } from "@/lib/salonExtras";
 import { StaffTabs } from "../StaffTabs";
 import { PeopleClient } from "./PeopleClient";
 
@@ -26,7 +27,7 @@ export default async function StaffPeoplePage() {
       ) : (
         <>
           <StaffTabs active="people" t={t} />
-          <PeopleClient workers={workers} loginsNotListed={Math.max(0, (loginCount ?? 0) - linked)} />
+          <PeopleClient workers={workers} loginsNotListed={Math.max(0, (loginCount ?? 0) - linked)} showCommission={session.businessType === "salon" && (await salonExtrasReady(admin))} />
         </>
       )}
     </div>

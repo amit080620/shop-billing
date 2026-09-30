@@ -2,7 +2,9 @@ import { createAppointmentAction, updateAppointmentStatusAction } from "@/lib/ac
 import { saveBookingSettingsAction } from "@/lib/actions/clinic";
 import { dateOffset, formData, isoAt, personName } from "../util";
 import type { Catalog } from "./catalogs";
-import { insertCatalog, insertCustomers, insertVendors, seedBills, seedPettyCash, seedPurchases, seedUdhaarPayments, STANDARD_PETTY_CASH, type SeedCtx } from "./common";
+import { insertCatalog, insertCustomers, insertVendors, seedBills, seedPettyCash, seedPurchases, seedUdhaarPayments, STANDARD_PETTY_CASH, type SeedCtx, type SeededCustomer, type SeededProduct } from "./common";
+import { payrollReady } from "@/lib/payrollData";
+import { salonExtrasReady } from "@/lib/salonExtras";
 
 const SERVICES: Catalog = [
   {
@@ -118,5 +120,70 @@ export async function seedSalon(ctx: SeedCtx): Promise<void> {
     await ctx.admin.from("appointments").update({ created_at: isoAt(days, 10) }).eq("id", a.id);
   }
 
+  await seedSalonExtras(ctx, services, customers);
+
   await seedPettyCash(ctx, [{ description: "Towels laundry", amount: 600, category: "Housekeeping", daysAgo: 3 }, { description: "Disposable gloves and strips", amount: 950, category: "Supplies", daysAgo: 8 }, ...STANDARD_PETTY_CASH.slice(0, 3)]);
+}
+
+/** The payroll list with commission, two package plans with customers part-way through them, and
+ * a prepaid balance — each only once its migration has run (0046, 0048). */
+async function seedSalonExtras(ctx: SeedCtx, services: SeededProduct[], customers: SeededCustomer[]): Promise<void> {
+  const { admin, shopId } = ctx;
+  if (!(await payrollReady(admin))) return;
+  const extras = await salonExtrasReady(admin);
+  const salary: Record<string, number> = { Pooja: 18000, Ravi: 14000, Meena: 16000, Sana: 12000 };
+  await admin.from("workers").insert(
+    STYLISTS.map((name, i) => ({
+      shop_id: shopId,
+      name,
+      designation: name === "Sana" ? "Beautician" : "Stylist",
+      pay_type: "monthly" as const,
+      monthly_salary: salary[name],
+      joined_on: dateOffset(-420 + i * 45),
+      ...(extras ? { commission_service_percent: [10, 8, 10, 12][i], commission_product_percent: 5 } : {}),
+    })),
+  );
+  if (!extras) return;
+
+  const facial = services.find((s) => s.name === "Facial - Fruit");
+  const haircut = services.find((s) => s.name === "Haircut - Men");
+  if (!facial || !haircut) return;
+  const { data: plans } = await admin
+    .from("products")
+    .insert([
+      { shop_id: shopId, name: "Fruit Facial — 5 sessions", price: 3999, gst_percent: 18, hsn_code: "9602", unit: "NOS", track_inventory: false, package_service_id: facial.id, package_sessions: 5, package_validity_days: 180 },
+      { shop_id: shopId, name: "Men's Haircut — 10 visits", price: 2000, gst_percent: 18, hsn_code: "9602", unit: "NOS", track_inventory: false, package_service_id: haircut.id, package_sessions: 10, package_validity_days: 365 },
+    ])
+    .select("id, name, price, package_service_id, package_sessions, package_validity_days");
+  // Two customers part-way through a package (bought a few weeks ago).
+  for (const [k, plan] of (plans ?? []).entries()) {
+    const customer = customers[k + 2];
+    if (!customer) continue;
+    const sessions = Number(plan.package_sessions);
+    const { data: pkg } = await admin
+      .from("customer_packages")
+      .insert({
+        shop_id: shopId,
+        customer_id: customer.id,
+        plan_product_id: plan.id,
+        name: plan.name,
+        service_product_id: plan.package_service_id,
+        service_name: plan.package_service_id === facial.id ? facial.name : haircut.name,
+        sessions_total: sessions,
+        session_value: Math.round((Number(plan.price) / 1.18 / sessions) * 100) / 100,
+        starts_on: dateOffset(-24),
+        expires_on: dateOffset(-24 + Number(plan.package_validity_days)),
+        created_at: isoAt(24, 12),
+      })
+      .select("id")
+      .single();
+    if (pkg) await admin.from("package_uses").insert({ shop_id: shopId, package_id: pkg.id, quantity: k === 0 ? 2 : 3, created_at: isoAt(10, 16) });
+  }
+
+  // One regular keeps money with the salon: ₹5,000 paid in, ₹500 more from the shop.
+  const regular = customers[1];
+  if (regular) {
+    await admin.from("wallet_entries").insert({ shop_id: shopId, customer_id: regular.id, kind: "topup", money: 5000, credit: 5500, payment_method: "upi", note: "Paid 5000 + 500 extra", created_at: isoAt(12, 18) });
+    await admin.from("cash_movements").insert({ shop_id: shopId, kind: "advance_received", source: "wallet", source_id: regular.id, payment_method: "upi", amount: 5000, note: `Prepaid balance — ${regular.name}`, created_at: isoAt(12, 18) });
+  }
 }

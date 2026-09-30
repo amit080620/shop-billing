@@ -7,11 +7,11 @@ import type { Worker } from "@/lib/payrollData";
 import { formatMoney } from "@/lib/format";
 import { useT } from "@/lib/i18n/LangContext";
 
-type Draft = { id: string | null; name: string; phone: string; designation: string; payType: "monthly" | "daily"; monthlySalary: string; dailyWage: string; joinedOn: string; isActive: boolean };
-const empty: Draft = { id: null, name: "", phone: "", designation: "", payType: "monthly", monthlySalary: "", dailyWage: "", joinedOn: "", isActive: true };
+type Draft = { id: string | null; name: string; phone: string; designation: string; payType: "monthly" | "daily"; monthlySalary: string; dailyWage: string; joinedOn: string; isActive: boolean; commissionService: string; commissionProduct: string };
+const empty: Draft = { id: null, name: "", phone: "", designation: "", payType: "monthly", monthlySalary: "", dailyWage: "", joinedOn: "", isActive: true, commissionService: "", commissionProduct: "" };
 
 /** The payroll list: who works here and how they are paid. */
-export function PeopleClient({ workers, loginsNotListed }: { workers: Worker[]; loginsNotListed: number }) {
+export function PeopleClient({ workers, loginsNotListed, showCommission = false }: { workers: Worker[]; loginsNotListed: number; /** Salons: a share of the services each person does. */ showCommission?: boolean }) {
   const { t } = useT();
   const router = useRouter();
   const [draft, setDraft] = useState<Draft | null>(workers.length === 0 ? empty : null);
@@ -20,14 +20,14 @@ export function PeopleClient({ workers, loginsNotListed }: { workers: Worker[]; 
 
   function edit(w: Worker) {
     setError(null);
-    setDraft({ id: w.id, name: w.name, phone: w.phone ?? "", designation: w.designation ?? "", payType: w.payType, monthlySalary: w.monthlySalary ? String(w.monthlySalary) : "", dailyWage: w.dailyWage ? String(w.dailyWage) : "", joinedOn: w.joinedOn ?? "", isActive: w.isActive });
+    setDraft({ id: w.id, name: w.name, phone: w.phone ?? "", designation: w.designation ?? "", payType: w.payType, monthlySalary: w.monthlySalary ? String(w.monthlySalary) : "", dailyWage: w.dailyWage ? String(w.dailyWage) : "", joinedOn: w.joinedOn ?? "", isActive: w.isActive, commissionService: w.commissionServicePercent ? String(w.commissionServicePercent) : "", commissionProduct: w.commissionProductPercent ? String(w.commissionProductPercent) : "" });
   }
 
   function save() {
     if (!draft) return;
     setError(null);
     start(async () => {
-      const r = await saveWorkerAction({ ...draft, monthlySalary: Number(draft.monthlySalary) || 0, dailyWage: Number(draft.dailyWage) || 0 });
+      const r = await saveWorkerAction({ ...draft, monthlySalary: Number(draft.monthlySalary) || 0, dailyWage: Number(draft.dailyWage) || 0, ...(showCommission ? { commissionServicePercent: Number(draft.commissionService) || 0, commissionProductPercent: Number(draft.commissionProduct) || 0 } : {}) });
       if (r.error) {
         setError(r.error);
         return;
@@ -84,6 +84,18 @@ export function PeopleClient({ workers, loginsNotListed }: { workers: Worker[]; 
               <input type="date" value={draft.joinedOn} onChange={(e) => setDraft({ ...draft, joinedOn: e.target.value })} className={input} />
             </label>
           </div>
+          {showCommission && (
+            <div className="grid grid-cols-2 gap-2">
+              <label className="flex flex-col text-[11px] text-muted">
+                {t("Commission on services %")}
+                <input type="number" min={0} max={100} step="0.5" value={draft.commissionService} onChange={(e) => setDraft({ ...draft, commissionService: e.target.value })} placeholder="0" className={input} />
+              </label>
+              <label className="flex flex-col text-[11px] text-muted">
+                {t("Commission on products %")}
+                <input type="number" min={0} max={100} step="0.5" value={draft.commissionProduct} onChange={(e) => setDraft({ ...draft, commissionProduct: e.target.value })} placeholder="0" className={input} />
+              </label>
+            </div>
+          )}
           {draft.id && (
             <label className="flex items-center gap-2 text-sm text-foreground">
               <input type="checkbox" checked={draft.isActive} onChange={(e) => setDraft({ ...draft, isActive: e.target.checked })} />
@@ -113,7 +125,7 @@ export function PeopleClient({ workers, loginsNotListed }: { workers: Worker[]; 
               <div className="min-w-0">
                 <p className="truncate text-sm font-medium text-foreground">{w.name}</p>
                 <p className="truncate text-xs text-muted">
-                  {[w.designation, w.phone, w.isActive ? null : t("Left")].filter(Boolean).join(" · ")}
+                  {[w.designation, w.phone, showCommission && (w.commissionServicePercent || w.commissionProductPercent) ? `${t("Commission")} ${w.commissionServicePercent}% / ${w.commissionProductPercent}%` : null, w.isActive ? null : t("Left")].filter(Boolean).join(" · ")}
                 </p>
               </div>
               <p className="shrink-0 text-sm font-semibold text-foreground">

@@ -1,10 +1,11 @@
 import type { createSupabaseAdminClient } from "./supabase/admin";
+import { salonExtrasReady } from "./salonExtras";
 
 type Admin = ReturnType<typeof createSupabaseAdminClient>;
 
 export type CashMethod = "cash" | "card" | "upi" | "online" | "other";
 export type CashMovementKind = "advance_received" | "advance_applied" | "refund_given";
-export type CashMovementSource = "service_job" | "reservation" | "rental" | "item_request" | "gold_scheme";
+export type CashMovementSource = "service_job" | "reservation" | "rental" | "item_request" | "gold_scheme" | "wallet";
 
 export function asCashMethod(value: unknown): CashMethod {
   return value === "card" || value === "upi" || value === "online" || value === "other" ? value : "cash";
@@ -25,11 +26,25 @@ export async function cashMovementsReady(admin: Admin): Promise<boolean> {
  * belongs to has already been saved, and must not fail over its drawer entry. */
 export async function recordCashMovement(
   admin: Admin,
-  row: { shopId: string; staffId: string | null; kind: CashMovementKind; source: CashMovementSource; sourceId: string; method: CashMethod; amount: number; note?: string },
+  row: {
+    shopId: string;
+    staffId: string | null;
+    kind: CashMovementKind;
+    source: CashMovementSource;
+    sourceId: string;
+    method: CashMethod;
+    amount: number;
+    note?: string;
+    /** The bill an advance was used in — voiding that bill takes the entry back out. */
+    billId?: string | null;
+  },
 ): Promise<void> {
   if (!row.amount || !(await cashMovementsReady(admin))) return;
   try {
-    await admin.from("cash_movements").insert({
+    // (The bill it belongs to is kept from migration 0048 on.)
+    const withBill = row.billId && (await salonExtrasReady(admin)) ? { bill_id: row.billId } : {};
+    const { error } = await admin.from("cash_movements").insert({
+      ...withBill,
       shop_id: row.shopId,
       staff_id: row.staffId,
       kind: row.kind,
@@ -39,6 +54,7 @@ export async function recordCashMovement(
       amount: Math.round(row.amount * 100) / 100,
       note: row.note ?? null,
     });
+    if (error) console.error("Could not record cash movement", error);
   } catch (error) {
     console.error("Could not record cash movement", error);
   }

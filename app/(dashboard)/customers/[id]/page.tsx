@@ -5,6 +5,8 @@ import { getCustomerBalances } from "@/lib/moneyBalances";
 import { buyerSchemaReady } from "@/lib/gstBuyer";
 import { getTranslator } from "@/lib/i18n/server";
 import { LedgerClient } from "./LedgerClient";
+import { PrepaidCard } from "./PrepaidCard";
+import { loadPackages, loadWalletEntries, salonExtrasReady, walletBalance } from "@/lib/salonExtras";
 
 export default async function CustomerLedgerPage({
   params,
@@ -104,10 +106,17 @@ export default async function CustomerLedgerPage({
 
   const balance = Math.max(0, balances.get(id) ?? 0);
 
+  // Prepaid balance and packages (migration 0048): any shop can take money in advance.
+  const extrasReady = await salonExtrasReady(admin);
+  const [wallet, walletEntries, packages] = extrasReady
+    ? await Promise.all([walletBalance(admin, session.shopId, id), loadWalletEntries(admin, session.shopId, id), loadPackages(admin, session.shopId, { customerId: id })])
+    : [0, [], []];
+
   return (
     <LedgerClient
       lang={lang}
       isOwner={session.role === "owner"}
+      extras={extrasReady ? <PrepaidCard customerId={id} balance={wallet} entries={walletEntries} packages={packages} isOwner={session.role === "owner"} /> : null}
       hasWarranty={hasWarranty}
       specialty={specialty}
       growthLogs={(growthLogs ?? []).map((g) => ({

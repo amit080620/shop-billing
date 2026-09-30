@@ -343,6 +343,7 @@ export async function deliverJobAction(
       method: paymentMethod,
       amount: -Math.min(advance.amount, totalPaid),
       note: `Advance for job ${job.job_number}, used in the invoice`,
+      billId: result.billId,
     });
   }
 

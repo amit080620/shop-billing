@@ -15,7 +15,8 @@ export function daysInMonth(month: string): number {
  *   for the days before joining. Unmarked days count as worked — most shops only mark who
  *   didn't come. Leave and weekly offs are paid.
  * - Daily wage: the wage for each day marked present (half for a half day) — for day workers,
- *   the marks are the work. */
+ *   the marks are the work.
+ * - Commission (a stylist's share of the services they did) is added on top of either. */
 export function monthPay(input: {
   month: string; // "YYYY-MM"
   payType: "monthly" | "daily";
@@ -26,6 +27,7 @@ export function monthPay(input: {
   advances: number;
   bonuses: number;
   salaryPaid: number;
+  commission?: number;
 }) {
   const days = daysInMonth(input.month);
   const count = (s: AttendanceStatus) => input.marks.filter((m) => m === s).length;
@@ -45,7 +47,8 @@ export function monthPay(input: {
     else if (input.joinedOn && input.joinedOn.slice(0, 7) > input.month) beforeJoining = days;
     earned = Math.max(0, input.monthlySalary - perDay * (absent + half * 0.5 + beforeJoining));
   }
-  earned = round2(earned);
+  const commission = round2(input.commission ?? 0);
+  earned = round2(earned + commission);
   const due = round2(earned + input.bonuses - input.advances - input.salaryPaid);
-  return { days, present, half, absent, leave: count("leave"), off: count("off"), perDay: round2(perDay), beforeJoining, earned, due };
+  return { days, present, half, absent, leave: count("leave"), off: count("off"), perDay: round2(perDay), beforeJoining, commission, earned, due };
 }

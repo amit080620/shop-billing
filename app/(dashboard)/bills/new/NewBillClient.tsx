@@ -7,6 +7,8 @@ import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import { createBillAction } from "@/lib/actions/bills";
 import { saveQuotationAction } from "@/lib/actions/quotations";
+import { customerBillExtrasAction } from "@/lib/actions/salonExtras";
+import type { PackageView } from "@/lib/salonExtras";
 import { useRouter } from "next/navigation";
 import type { QuotationLine } from "@/lib/supabase/database.types";
 import { KARATS, karatOf, type Karat } from "@/lib/metalRates";
@@ -81,6 +83,9 @@ type CartLine = {
   bulkPrice: number | null;
   /** A rate set on purpose (said to voice billing) — kept through quantity changes. */
   priceOverride?: boolean;
+  /** A session taken from the customer's package (₹0), and how many that package has left. */
+  packageId?: string;
+  packageLeft?: number;
 };
 
 function SubmitButton({ blocked, generatingLabel, submitLabel }: { blocked: boolean; generatingLabel: string; submitLabel: string }) {
@@ -117,7 +122,13 @@ export function NewBillClient({
   quotationsAvailable = false,
   fromQuote = null,
   fromScheme = null,
+  stylists = [],
+  extrasAvailable = false,
 }: {
+  /** Salon: the people on the payroll list, to pick who did the work (and earns its commission). */
+  stylists?: string[];
+  /** Packages and prepaid balance can be used (migration 0048). */
+  extrasAvailable?: boolean;
   /** Buying jewellery with a gold saving scheme: its value pays for the bill. */
   fromScheme?: { id: string; number: string; value: number; complete: boolean } | null;
   /** "Save as quotation" is offered once migration 0045 has run. */
@@ -252,6 +263,23 @@ export function NewBillClient({
       cancelled = true;
     };
   }, [selectedCustomer?.phone]);
+  // The customer's packages and prepaid balance. Package sessions and balance already in the bill
+  // belong to whoever was picked before, so they go when the customer changes.
+  const extrasCustomerId = extrasAvailable && customerMode === "existing" ? selectedCustomer?.id ?? null : null;
+  useEffect(() => {
+    setExtras(null);
+    setWalletUse(0);
+    setCart((prev) => (prev.some((c) => c.packageId) ? prev.filter((c) => !c.packageId) : prev));
+    if (!extrasCustomerId) return;
+    let cancelled = false;
+    customerBillExtrasAction(extrasCustomerId).then((r) => {
+      if (!cancelled) setExtras(r);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [extrasCustomerId]);
+
   const [discountType, setDiscountType] = useState<"percent" | "flat">(fromQuote?.discountType ?? "flat");
   const [discountValue, setDiscountValue] = useState(fromQuote?.discountValue ?? 0);
   const [redeemPoints, setRedeemPoints] = useState(false);
@@ -259,7 +287,14 @@ export function NewBillClient({
   const [paymentMethod, setPaymentMethod] = useState<"cash" | "card" | "upi" | "online" | "other">("cash");
   const [doctorName, setDoctorName] = useState("");
   const [patientName, setPatientName] = useState("");
-  const [serviceProviderName, setServiceProviderName] = useState(initialProvider);
+  // The stylist: one from the list when the name matches (an appointment's may be typed differently).
+  const [serviceProviderName, setServiceProviderName] = useState(() => stylists.find((s) => s.trim().toLowerCase() === initialProvider.trim().toLowerCase()) ?? initialProvider);
+  const [otherStylist, setOtherStylist] = useState(() => !!initialProvider.trim() && !stylists.some((s) => s.trim().toLowerCase() === initialProvider.trim().toLowerCase()));
+  // A different stylist for some lines (by cart line key); the rest are the bill's stylist.
+  const [lineProviders, setLineProviders] = useState<Record<string, string>>({});
+  // The customer's packages with sessions left, and their prepaid balance.
+  const [extras, setExtras] = useState<{ packages: PackageView[]; wallet: number } | null>(null);
+  const [walletUse, setWalletUse] = useState(0);
   const [exchangeInfo, setExchangeInfo] = useState<{
     metal: "gold" | "silver";
     description: string;
@@ -270,7 +305,8 @@ export function NewBillClient({
   } | null>(null);
   // Old gold or silver handed over pays part of the bill; paidAmount stays the cash (or UPI, card...) only.
   // Old gold handed over and a gold scheme being used both pay part of the bill before any cash.
-  const exchangeValue = (exchangeInfo?.value ?? 0) + (fromScheme?.value ?? 0);
+  // Prepaid balance used pays part of it the same way.
+  const exchangeValue = (exchangeInfo?.value ?? 0) + (fromScheme?.value ?? 0) + walletUse;
   const [tripInfo, setTripInfo] = useState<{ vehicleId: string; km: number; driverName: string; loadWeight: number | null; loadUnit: string } | null>(null);
 
   // B2B invoice: made out to a business and its GSTIN, which the buyer uses to claim input tax
@@ -587,6 +623,40 @@ export function NewBillClient({
     ]);
   }
 
+  /** One session from the customer's package, at ₹0 (its price was paid when it was sold). */
+  function addPackageSession(p: PackageView) {
+    const key = `__package_${p.id}`;
+    setCart((prev) => {
+      const existing = prev.find((c) => c.productId === key);
+      if (existing) return existing.quantity >= p.left ? prev : prev.map((c) => (c.productId === key ? { ...c, quantity: c.quantity + 1 } : c));
+      return [
+        ...prev,
+        {
+          productId: key,
+          name: `${p.serviceName} (package)`,
+          price: 0,
+          packPrice: 0,
+          gstPercent: 0,
+          hsnCode: null,
+          unit: "NOS",
+          quantity: 1,
+          trackInventory: false,
+          stockQuantity: 0,
+          lowStockThreshold: 0,
+          requiresPrescription: false,
+          unitsPerPack: null,
+          looseUnitName: null,
+          saleMode: "pack",
+          regularPrice: 0,
+          bulkMinQty: null,
+          bulkPrice: null,
+          packageId: p.id,
+          packageLeft: p.left,
+        },
+      ];
+    });
+  }
+
   function updateQuantity(productId: string, quantity: number) {
     setCart((prev) =>
       quantity <= 0
@@ -595,7 +665,8 @@ export function NewBillClient({
             c.productId === productId
               ? {
                   ...c,
-                  quantity,
+                  // A package line: whole sessions, no more than the package has left.
+                  quantity: c.packageLeft != null ? Math.max(1, Math.min(Math.round(quantity), c.packageLeft)) : quantity,
                   price: c.saleMode === "pack" && !c.priceOverride ? priceForQuantity(c.regularPrice, c.bulkMinQty, c.bulkPrice, quantity) : c.price,
                 }
               : c,
@@ -618,7 +689,10 @@ export function NewBillClient({
   if (step === "cart") {
     const canComplete = cart.length > 0 && !(customerMode === "existing" && !selectedCustomer);
     const complete = () => {
-      setPaidAmount(totals.total);
+      // What a scheme or old gold already covers isn't asked for again (prepaid balance is chosen
+      // on the next screen, so it starts unused).
+      setWalletUse(0);
+      setPaidAmount(Math.max(0, totals.total - (exchangeInfo?.value ?? 0) - (fromScheme?.value ?? 0)));
       setStep("ticket");
     };
     return (
@@ -707,6 +781,41 @@ export function NewBillClient({
               </div>
             ))}
         </section>
+
+        {extras && (extras.packages.length > 0 || extras.wallet > 0) && (
+          <section className="flex flex-col gap-2 rounded-xl border border-brand bg-brand-soft px-3.5 py-3">
+            {extras.packages.map((p) => {
+              const inBill = cart.find((c) => c.packageId === p.id)?.quantity ?? 0;
+              return (
+                <div key={p.id} className="flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium text-brand-text">
+                      <Package size={13} className="mr-1 inline" />
+                      {p.name}
+                    </p>
+                    <p className="text-xs text-brand-text/80">
+                      {t("{left} of {total} left", { left: p.left - inBill, total: p.sessionsTotal })}
+                      {p.expiresOn ? ` · ${t("till {date}", { date: p.expiresOn })}` : ""}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => addPackageSession(p)}
+                    disabled={inBill >= p.left}
+                    className="shrink-0 rounded-full bg-brand px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-40"
+                  >
+                    {t("Use 1")}
+                  </button>
+                </div>
+              );
+            })}
+            {extras.wallet > 0 && (
+              <p className="text-xs text-brand-text">
+                {t("Prepaid balance {amount} — use it on the next screen", { amount: formatMoney(extras.wallet) })}
+              </p>
+            )}
+          </section>
+        )}
 
         <section className="flex flex-col gap-1.5">
           <p className="text-xs font-semibold text-muted">{t("bill.addProducts")}</p>
@@ -839,7 +948,9 @@ export function NewBillClient({
                         {line.name}
                       </p>
                       <p className="text-xs text-muted">
-                        {formatMoney(line.price)}/{line.saleMode === "loose" ? line.looseUnitName : unitLabel(line.unit)} · GST {line.gstPercent}%
+                        {line.packageId
+                          ? t("From the package · ₹0 · {left} left after this", { left: (line.packageLeft ?? 0) - line.quantity })
+                          : <>{formatMoney(line.price)}/{line.saleMode === "loose" ? line.looseUnitName : unitLabel(line.unit)} · GST {line.gstPercent}%</>}
                       </p>
                       {line.bulkMinQty && line.bulkPrice && (
                         <p className="flex items-center gap-1 text-[11px] text-brand">
@@ -1007,8 +1118,11 @@ export function NewBillClient({
     customerId: customerMode === "existing" ? selectedCustomer?.id ?? null : null,
     quotationId: fromQuote?.id ?? null,
     goldSchemeId: fromScheme?.id ?? null,
+    walletAmount: walletUse > 0 ? walletUse : null,
     items: cart.map((c) => ({
-      productId: c.productId === "__transport_charge__" || c.productId.startsWith("__jewellery_") || c.productId.startsWith("__quote_") ? null : c.productId,
+      productId: c.productId === "__transport_charge__" || c.productId.startsWith("__jewellery_") || c.productId.startsWith("__quote_") || c.packageId ? null : c.productId,
+      packageId: c.packageId ?? null,
+      providerName: lineProviders[c.productId] || undefined,
       description: c.name,
       hsnCode: c.hsnCode,
       quantity: c.quantity,
@@ -1274,6 +1388,36 @@ export function NewBillClient({
         </section>
       )}
 
+      {extras && extras.wallet > 0 && (
+        <section className="flex items-center justify-between gap-3 rounded-xl border border-brand bg-brand-soft px-4 py-3">
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-brand-text">{t("Prepaid balance")}</p>
+            <p className="text-xs text-brand-text/80">
+              {walletUse > 0
+                ? t("{used} used · {left} stays", { used: formatMoney(walletUse), left: formatMoney(round2(extras.wallet - walletUse)) })
+                : t("{amount} available", { amount: formatMoney(extras.wallet) })}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              const cash = typeof paidAmount === "number" ? paidAmount : 0;
+              if (walletUse > 0) {
+                setPaidAmount(round2(cash + walletUse));
+                setWalletUse(0);
+                return;
+              }
+              const use = round2(Math.min(extras.wallet, Math.max(0, totals.total - (exchangeInfo?.value ?? 0) - (fromScheme?.value ?? 0))));
+              setWalletUse(use);
+              setPaidAmount(round2(Math.max(0, cash - use)));
+            }}
+            className={`shrink-0 rounded-full px-3.5 py-1.5 text-xs font-semibold ${walletUse > 0 ? "bg-brand text-white" : "border border-brand text-brand-text"}`}
+          >
+            {walletUse > 0 ? `− ${formatMoney(walletUse)} ✓` : t("Pay from it")}
+          </button>
+        </section>
+      )}
+
       <section className="flex flex-col gap-3 neu-card p-4">
         <p className="text-sm font-medium text-foreground">{t("bill.howMuchPaid")}</p>
         <div className="flex gap-2">
@@ -1357,15 +1501,70 @@ export function NewBillClient({
         )}
 
         {businessType === "salon" && (
-          <label className="flex flex-col gap-1.5 text-sm">
-            <span className="font-medium text-foreground">Stylist / staff (optional)</span>
-            <input
-              value={serviceProviderName}
-              onChange={(e) => setServiceProviderName(e.target.value)}
-              placeholder="Who performed the service?"
-              className="rounded-lg border border-border bg-surface px-3.5 py-2.5 text-sm outline-none focus:border-brand"
-            />
-          </label>
+          <div className="flex flex-col gap-1.5 text-sm">
+            <span className="font-medium text-foreground">{t("Stylist / staff")}</span>
+            {stylists.length > 0 && (
+              <select
+                value={otherStylist ? "__other" : serviceProviderName}
+                onChange={(e) => {
+                  if (e.target.value === "__other") {
+                    setOtherStylist(true);
+                    setServiceProviderName("");
+                  } else {
+                    setOtherStylist(false);
+                    setServiceProviderName(e.target.value);
+                  }
+                }}
+                aria-label={t("Stylist / staff")}
+                className="rounded-lg border border-border bg-surface px-3.5 py-2.5 text-sm outline-none focus:border-brand"
+              >
+                <option value="">{t("— Who did it? —")}</option>
+                {stylists.map((name) => (
+                  <option key={name} value={name}>
+                    {name}
+                  </option>
+                ))}
+                <option value="__other">{t("Someone else…")}</option>
+              </select>
+            )}
+            {(stylists.length === 0 || otherStylist) && (
+              <input
+                value={serviceProviderName}
+                onChange={(e) => setServiceProviderName(e.target.value)}
+                placeholder={t("Who performed the service?")}
+                className="rounded-lg border border-border bg-surface px-3.5 py-2.5 text-sm outline-none focus:border-brand"
+              />
+            )}
+            {stylists.length === 0 && (
+              <Link href="/staff-attendance/people" className="text-xs text-brand-text">
+                {t("Add your stylists (with their commission %) in Staff attendance → People →")}
+              </Link>
+            )}
+            {stylists.length > 0 && cart.length > 1 && (
+              <details className="rounded-lg border border-border bg-surface px-3 py-2" open={Object.values(lineProviders).some(Boolean)}>
+                <summary className="cursor-pointer text-xs font-medium text-brand-text">{t("Someone else did part of it?")}</summary>
+                <div className="mt-2 flex flex-col gap-1.5">
+                  {cart.map((line) => (
+                    <label key={line.productId} className="flex items-center justify-between gap-2 text-xs">
+                      <span className="min-w-0 flex-1 truncate text-foreground">{line.name}</span>
+                      <select
+                        value={lineProviders[line.productId] ?? ""}
+                        onChange={(e) => setLineProviders((prev) => ({ ...prev, [line.productId]: e.target.value }))}
+                        className="w-32 shrink-0 rounded-lg border border-border bg-surface px-2 py-1.5 text-xs outline-none focus:border-brand"
+                      >
+                        <option value="">{serviceProviderName ? t("Same ({name})", { name: serviceProviderName }) : t("Same as above")}</option>
+                        {stylists.map((name) => (
+                          <option key={name} value={name}>
+                            {name}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  ))}
+                </div>
+              </details>
+            )}
+          </div>
         )}
 
         {cart.some((c) => c.requiresPrescription) && (
