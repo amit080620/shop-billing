@@ -5,7 +5,8 @@ import { getTranslator } from "@/lib/i18n/server";
 import { getTerminology } from "@/lib/businessType";
 import { isModuleEnabled } from "@/lib/modules";
 import { PlanBadge } from "@/app/components/PlanBadge";
-import { planFor } from "@/lib/plans";
+import { minPlanForModule, planFor, type PlanKey } from "@/lib/plans";
+import type { ModuleKey } from "@/lib/modules";
 import {
   AlertTriangle,
   BarChart3,
@@ -51,6 +52,7 @@ import {
   Users,
   Wallet,
   WifiOff,
+  Lock,
   Wrench,
   Zap,
   FileText,
@@ -69,6 +71,9 @@ export async function MoreMenu() {
   const type = session.businessType;
   const isOwner = session.role === "owner";
   const mod = (key: Parameters<typeof isModuleEnabled>[1]) => isModuleEnabled(session.enabledModules, key);
+  // A feature the plan doesn't include stays in the menu with the plan that has it — tapping it
+  // explains the feature and offers the upgrade, instead of the feature silently not existing.
+  const lock = (key: ModuleKey): PlanKey | null => (mod(key) ? null : minPlanForModule(key));
 
   const daysLeft = session.paidUntil ? Math.ceil((new Date(session.paidUntil).getTime() - Date.now()) / 86_400_000) : null;
   const trialLeft = session.onTrial && session.trialEndsAt ? Math.ceil((new Date(session.trialEndsAt).getTime() - Date.now()) / 86_400_000) : null;
@@ -139,7 +144,7 @@ export async function MoreMenu() {
         {type === "transport" && (
           <MenuGroup title="Transport">
             <MenuLink href="/transport/lr" label={t("Bilty (LR)")} sub={t("Book a consignment, track it to delivery, bill the freight")} icon={FileText} />
-            <MenuLink href="/transport/expenses" label={t("Vehicle expenses")} sub={t("Diesel, toll, driver bhatta, repairs")} icon={Wallet} />
+            <MenuLink href="/transport/expenses" label={t("Vehicle expenses")} sub={t("Diesel, toll, driver bhatta, repairs")} icon={Wallet} locked={lock("vehicle_profit")} />
             <MenuLink href="/transport/vehicles" label="Vehicles" sub="Manage trucks & per-km rates" icon={Truck} />
             <MenuLink href="/transport/reports" label={t("Vehicle profit")} sub={t("Earnings, running costs, diesel average")} icon={BarChart3} />
           </MenuGroup>
@@ -149,15 +154,15 @@ export async function MoreMenu() {
           <MenuGroup title="Salon">
             <MenuLink href="/salon/appointments" label="Appointments" sub="Book & manage customer visits" icon={CalendarDays} />
             <MenuLink href="/salon/settings/booking" label="Online booking" sub="Working hours & shareable booking link" icon={Scissors} />
-            <MenuLink href="/salon/packages" label={t("Packages")} sub={t("5 hair spa sessions, paid up front — each visit takes one")} icon={Package} />
-            <MenuLink href="/salon" label={t("Stylist report")} sub={t("Work done by each stylist, and their commission")} icon={BarChart3} />
+            <MenuLink href="/salon/packages" label={t("Packages")} sub={t("5 hair spa sessions, paid up front — each visit takes one")} icon={Package} locked={lock("customer_prepaid")} />
+            <MenuLink href="/salon" label={t("Stylist report")} sub={t("Work done by each stylist, and their commission")} icon={BarChart3} locked={lock("stylist_commission")} />
           </MenuGroup>
         )}
 
         {type === "jewellery" && (
           <MenuGroup title="Jewellery">
             <MenuLink href="/jewellery/rates" label="Today's rate" sub="Gold 24K / 22K / 18K and silver, per gram" icon={Gem} />
-            <MenuLink href="/jewellery/schemes" label={t("Gold saving schemes")} sub={t("Monthly instalments, a bonus at the end, jewellery at maturity")} icon={PiggyBank} />
+            <MenuLink href="/jewellery/schemes" label={t("Gold saving schemes")} sub={t("Monthly instalments, a bonus at the end, jewellery at maturity")} icon={PiggyBank} locked={lock("gold_schemes")} />
             <MenuLink href="/jewellery/exchanges" label="Exchange history" sub="Old gold/silver taken in" icon={Repeat} />
           </MenuGroup>
         )}
@@ -177,13 +182,11 @@ export async function MoreMenu() {
           <MenuGroup title="Gym">
             <MenuLink href="/gym/members" label="Members" sub="View members, expiry status, PT sessions" icon={Users} />
             <MenuLink href="/gym/members/new" label="Sell membership" sub="New sign-up or renewal" icon={Dumbbell} />
-            {mod("leads_crm") && <MenuLink href="/gym/leads" label="Leads" sub="Trial enquiries and walk-ins" icon={UserCog} />}
-            {mod("class_schedule") && <MenuLink href="/gym/classes" label="Classes" sub="Yoga, Zumba — weekly schedule & bookings" icon={CalendarDays} />}
+            <MenuLink href="/gym/leads" label="Leads" sub="Trial enquiries and walk-ins" icon={UserCog} locked={lock("leads_crm")} />
+            <MenuLink href="/gym/classes" label="Classes" sub="Yoga, Zumba — weekly schedule & bookings" icon={CalendarDays} locked={lock("class_schedule")} />
             <MenuLink href="/gym/plans" label="Membership plans" sub="Set up Monthly, Quarterly, Yearly plans" icon={ClipboardList} />
             <MenuLink href="/gym/attendance" label="Attendance" sub="Check-in / check-out log" icon={ClipboardCheck} />
-            {mod("self_checkin_kiosk") && (
-              <MenuLink href="/gym/kiosk-settings" label="Self check-in kiosk" sub="Members check themselves in — no staff needed" icon={MonitorPlay} />
-            )}
+            <MenuLink href="/gym/kiosk-settings" label="Self check-in kiosk" sub="Members check themselves in — no staff needed" icon={MonitorPlay} locked={lock("self_checkin_kiosk")} />
           </MenuGroup>
         )}
 
@@ -197,18 +200,16 @@ export async function MoreMenu() {
 
         <MenuGroup title="Sales & money">
           <MenuLink href="/bills/all" label="All bills" sub="Browse & reprint any past bill" icon={Receipt} />
-          <MenuLink href="/quotations" label="Quotations" sub="Price offers — bill them in one tap when agreed" icon={FileText} />
-          <MenuLink href="/prepaid" label={t("Prepaid balances")} sub={t("Money customers paid in advance, used on their bills")} icon={PiggyBank} />
-          {mod("petty_cash") && <MenuLink href="/petty-cash" label="Petty cash" sub="Small day-to-day cash expenses" icon={Wallet} />}
-          <MenuLink href="/catalog-orders" label="Catalog orders" sub="Orders from your online catalog" icon={Store} />
-          {mod("public_catalog") && (
-            <MenuLink href="/catalog-settings" label="Catalog link" sub="Share a link customers can browse & order from" icon={Store} />
-          )}
+          <MenuLink href="/quotations" label="Quotations" sub="Price offers — bill them in one tap when agreed" icon={FileText} locked={lock("quotations")} />
+          <MenuLink href="/prepaid" label={t("Prepaid balances")} sub={t("Money customers paid in advance, used on their bills")} icon={PiggyBank} locked={lock("customer_prepaid")} />
+          <MenuLink href="/petty-cash" label="Petty cash" sub="Small day-to-day cash expenses" icon={Wallet} locked={lock("petty_cash")} />
+          <MenuLink href="/catalog-settings" label="Catalog link" sub="Share a link customers can browse & order from" icon={Store} locked={lock("public_catalog")} />
+          {mod("public_catalog") && <MenuLink href="/catalog-orders" label="Catalog orders" sub="Orders from your online catalog" icon={Store} />}
         </MenuGroup>
 
         <MenuGroup title="Stock">
           <MenuLink href="/products" label={terminology.productPlural} sub={terminology.productSub} icon={Package} />
-          {mod("stock_audit") && <MenuLink href="/stock-audit" label="Stock audit" sub="Count physical stock, reconcile mismatches" icon={ClipboardCheck} />}
+          <MenuLink href="/stock-audit" label="Stock audit" sub="Count physical stock, reconcile mismatches" icon={ClipboardCheck} locked={lock("stock_audit")} />
           <MenuLink href="/reorder" label="Reorder stock" sub="Send low-stock items to a vendor" icon={PackagePlus} />
           {/* Batch/expiry tracking is a per-product option any shop can use;
               doctor-wise sales and Schedule X are pharmacy-only. */}
@@ -238,14 +239,14 @@ export async function MoreMenu() {
           />
           {isOwner && <MenuLink href="/staff" label={t("more.staff")} sub={t("more.staff.sub")} icon={UserCog} />}
           {(isOwner || session.permissions.includes("manage_staff")) && (
-            <MenuLink href="/staff-attendance" label={t("Staff attendance & salary")} sub={t("Daily register, advances, monthly salary and slips")} icon={CalendarCheck} />
+            <MenuLink href="/staff-attendance" label={t("Staff attendance & salary")} sub={t("Daily register, advances, monthly salary and slips")} icon={CalendarCheck} locked={lock("staff_payroll")} />
           )}
-          {isOwner && mod("multi_branch") && <MenuLink href="/branches" label="Branches" sub="Multiple locations, one account" icon={Building2} />}
+          {isOwner && <MenuLink href="/branches" label="Branches" sub="Multiple locations, one account" icon={Building2} locked={lock("multi_branch")} />}
         </MenuGroup>
 
         <MenuGroup title="Grow your business">
-          {mod("whatsapp_reminders") && <MenuLink href="/reminders" label={t("more.reminders")} sub={t("more.reminders.sub")} icon={Bell} />}
-          {mod("offers") && <MenuLink href="/offers" label={t("more.offers")} sub={t("more.offers.sub")} icon={Megaphone} />}
+          <MenuLink href="/reminders" label={t("more.reminders")} sub={t("more.reminders.sub")} icon={Bell} locked={lock("whatsapp_reminders")} />
+          <MenuLink href="/offers" label={t("more.offers")} sub={t("more.offers.sub")} icon={Megaphone} locked={lock("offers")} />
           <MenuLink href="/loyalty-settings" label="Loyalty program" sub="Reward regulars for coming back" icon={Gift} />
           <MenuLink href="/birthdays" label="Birthdays" sub="Wish customers, bring them back" icon={Cake} />
           <MenuLink href="/festivals" label="Festival planner" sub="Upcoming festivals, stock-up hints & posters" icon={PartyPopper} />
@@ -264,14 +265,10 @@ export async function MoreMenu() {
         <MenuGroup title="Settings & help">
           <MenuLink href="/profile" label="Shop settings" sub="GST profile, invoice, printer, preferences" icon={Settings} />
           <MenuLink href="/fast-print-setup" label="One-click print setup" sub="Print from a laptop without the dialog" icon={Printer} />
-          <MenuLink href="/plans#hardware" label="Printers & counter hardware" sub="Bluetooth printers, scanners and starter kits" icon={Printer} />
+          {type !== "restaurant" && <MenuLink href="/plans#hardware" label="Printers & counter hardware" sub="Bluetooth printers, scanners and starter kits" icon={Printer} />}
           <MenuLink href="/offline-bill" label="Offline billing" sub="Keep billing with no connection — syncs when you're back" icon={WifiOff} />
-          {isOwner && mod("audit_log") && (
-            <>
-              <MenuLink href="/audit-log" label="Audit log" sub="Who did what, and when" icon={FileClock} />
-              <MenuLink href="/error-log" label="Error log" sub="Unexpected failures caught automatically" icon={AlertTriangle} />
-            </>
-          )}
+          {isOwner && <MenuLink href="/audit-log" label="Audit log" sub="Who did what, and when" icon={FileClock} locked={lock("audit_log")} />}
+          {isOwner && mod("audit_log") && <MenuLink href="/error-log" label="Error log" sub="Unexpected failures caught automatically" icon={AlertTriangle} />}
         </MenuGroup>
 
         <div className="flex flex-col gap-3">
@@ -296,18 +293,18 @@ async function MenuGroup({ title, children }: { title: string; children: React.R
   );
 }
 
-async function MenuLink({ href, label, sub, icon: Icon }: { href: string; label: string; sub: string; icon: LucideIcon }) {
+async function MenuLink({ href, label, sub, icon: Icon, locked = null }: { href: string; label: string; sub: string; icon: LucideIcon; /** The plan that unlocks it, when this shop's plan doesn't. */ locked?: PlanKey | null }) {
   const { t } = await getTranslator();
   return (
     <Link href={href} className="flex items-center gap-3 px-3.5 py-3 transition-colors hover:bg-surface-2 active:bg-surface-2">
-      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-soft text-brand-text">
-        <Icon size={17} strokeWidth={1.9} />
+      <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${locked ? "bg-surface-2 text-muted" : "bg-brand-soft text-brand-text"}`}>
+        {locked ? <Lock size={15} strokeWidth={2} /> : <Icon size={17} strokeWidth={1.9} />}
       </span>
       <span className="min-w-0 flex-1">
         <span className="block truncate text-sm font-medium text-foreground">{t(label)}</span>
         <span className="block truncate text-xs text-muted">{t(sub)}</span>
       </span>
-      <ChevronRight size={16} className="shrink-0 text-muted" />
+      {locked ? <PlanBadge plan={locked} size="sm" /> : <ChevronRight size={16} className="shrink-0 text-muted" />}
     </Link>
   );
 }

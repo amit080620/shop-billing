@@ -5,6 +5,7 @@ import { after } from "next/server";
 import { requireSession } from "../auth";
 import { createSupabaseAdminClient } from "../supabase/admin";
 import { isModuleEnabled } from "../modules";
+import { productRoomLeft } from "../planLimits";
 
 export type ImportRow = {
   name: string;
@@ -96,6 +97,14 @@ export async function bulkImportProductsAction(rows: ImportRow[]): Promise<Impor
 
   if (validRows.length === 0) {
     return { inserted: 0, errors };
+  }
+  // The plan's item allowance: nothing is imported past it.
+  const room = await productRoomLeft(session);
+  if (room !== null && validRows.length > room) {
+    return {
+      inserted: 0,
+      errors: [...errors, { row: 0, name: "", message: `Your plan has room for ${room} more item(s) and this file has ${validRows.length}. Upgrade in More → Plan & billing, or import fewer.` }],
+    };
   }
 
   const { error, data } = await admin

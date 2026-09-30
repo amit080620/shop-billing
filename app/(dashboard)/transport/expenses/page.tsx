@@ -12,6 +12,8 @@ import { transportExtrasReady } from "@/lib/transportData";
 import { EXPENSE_CATEGORIES, EXPENSE_LABEL, type ExpenseCategory } from "@/lib/transport";
 import { TripExpenseForm } from "../TripExpenseForm";
 import { DeleteExpenseButton } from "./DeleteExpenseButton";
+import { isModuleEnabled } from "@/lib/modules";
+import { ModuleBlocked } from "@/app/components/ModuleBlocked";
 
 const shiftMonth = (month: string, by: number) => {
   const [y, m] = month.split("-").map(Number);
@@ -23,6 +25,7 @@ const shiftMonth = (month: string, by: number) => {
 export default async function TripExpensesPage({ searchParams }: { searchParams: Promise<{ month?: string; vehicle?: string }> }) {
   const { t } = await getTranslator();
   const session = await requireSession();
+  if (!isModuleEnabled(session.enabledModules, "vehicle_profit")) return <ModuleBlocked moduleKey="vehicle_profit" />;
   const admin = createSupabaseAdminClient();
   const { month: monthParam, vehicle } = await searchParams;
   const today = todayIso();

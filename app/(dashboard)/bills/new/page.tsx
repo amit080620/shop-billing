@@ -12,6 +12,7 @@ import { goldSchemesReady, loadSchemes } from "@/lib/goldSchemeData";
 import { todayIso } from "@/lib/dateHelpers";
 import { salonExtrasReady } from "@/lib/salonExtras";
 import { payrollReady } from "@/lib/payrollData";
+import { isModuleEnabled } from "@/lib/modules";
 
 export default async function NewBillPage({ searchParams }: { searchParams: Promise<{ customer?: string; provider?: string; quote?: string; scheme?: string }> }) {
   // Opened from an appointment ("Bill →"): that customer and stylist come filled in. Opened from a
@@ -89,7 +90,7 @@ export default async function NewBillPage({ searchParams }: { searchParams: Prom
 
   // Opened from a gold saving scheme ("Buy jewellery with it"): its value pays for the bill.
   const schemeView =
-    session.businessType === "jewellery" && schemeParam && /^[0-9a-f-]{36}$/i.test(schemeParam) && (await goldSchemesReady(admin))
+    session.businessType === "jewellery" && schemeParam && /^[0-9a-f-]{36}$/i.test(schemeParam) && isModuleEnabled(session.enabledModules, "gold_schemes") && (await goldSchemesReady(admin))
       ? (await loadSchemes(admin, session.shopId, { id: schemeParam }))[0]
       : undefined;
   const fromScheme =
@@ -97,10 +98,10 @@ export default async function NewBillPage({ searchParams }: { searchParams: Prom
       ? { id: schemeView.scheme.id, number: schemeView.scheme.scheme_number, value: schemeView.figures.value, complete: schemeView.figures.complete, customerId: schemeView.scheme.customer_id }
       : null;
 
-  const quotationsAvailable = await quotationsReady(admin);
+  const quotationsAvailable = isModuleEnabled(session.enabledModules, "quotations") && (await quotationsReady(admin));
   // Salon: who can be picked as the stylist — the people on the payroll list.
   const { data: stylistRows } =
-    session.businessType === "salon" && (await payrollReady(admin))
+    session.businessType === "salon" && isModuleEnabled(session.enabledModules, "staff_payroll") && (await payrollReady(admin))
       ? await admin.from("workers").select("name").eq("shop_id", session.shopId).eq("is_active", true).order("name")
       : { data: [] };
   const { data: quote } =
@@ -193,7 +194,7 @@ export default async function NewBillPage({ searchParams }: { searchParams: Prom
       fromQuote={fromScheme ? null : fromQuote}
       fromScheme={fromScheme}
       stylists={(stylistRows ?? []).map((w) => w.name)}
-      extrasAvailable={await salonExtrasReady(admin)}
+      extrasAvailable={isModuleEnabled(session.enabledModules, "customer_prepaid") && (await salonExtrasReady(admin))}
       initialProvider={providerParam?.slice(0, 80) ?? ""}
     />
     </div>

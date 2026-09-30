@@ -5,7 +5,9 @@ import { formatMoney } from "@/lib/format";
 import { getTranslator } from "@/lib/i18n/server";
 import { PageHeader } from "@/app/components/PageHeader";
 import { EmptyState } from "@/app/components/EmptyState";
-import { BarChart3 } from "lucide-react";
+import { BarChart3, Lock } from "lucide-react";
+import { isModuleEnabled } from "@/lib/modules";
+import { minPlanForModule, planFor } from "@/lib/plans";
 import { todayIso } from "@/lib/dateHelpers";
 import { BackLink } from "@/app/components/BackLink";
 import { transportExtrasReady, lrTotal, type Consignment } from "@/lib/transportData";
@@ -25,6 +27,8 @@ export default async function TransportReportsPage({ searchParams }: { searchPar
   const startOfRange = new Date(`${fromDate}T00:00:00+05:30`);
   const endOfRange = new Date(`${toDate}T23:59:59.999+05:30`);
   const extras = await transportExtrasReady(admin);
+  // Running costs and profit come with the vehicle-expenses module; trips and earnings are for all.
+  const profitOn = isModuleEnabled(session.enabledModules, "vehicle_profit");
 
   const [{ data: trips }, { data: vehicles }, lrRes, expRes] = await Promise.all([
     admin
@@ -37,7 +41,7 @@ export default async function TransportReportsPage({ searchParams }: { searchPar
     extras
       ? admin.from("consignments").select("*").eq("shop_id", session.shopId).neq("status", "cancelled").gte("lr_date", fromDate).lte("lr_date", toDate)
       : Promise.resolve({ data: [] as Consignment[] }),
-    extras
+    extras && profitOn
       ? admin.from("trip_expenses").select("vehicle_id, category, amount, litres, odometer_km").eq("shop_id", session.shopId).gte("expense_date", fromDate).lte("expense_date", toDate)
       : Promise.resolve({ data: [] as { vehicle_id: string | null; category: string; amount: number; litres: number | null; odometer_km: number | null }[] }),
   ]);
@@ -99,11 +103,13 @@ export default async function TransportReportsPage({ searchParams }: { searchPar
         </button>
       </form>
 
-      <div className="grid grid-cols-3 gap-2">
+      <div className={`grid gap-2 ${profitOn ? "grid-cols-3" : "grid-cols-1"}`}>
         <div className="neu-card p-3 text-center">
           <p className="text-[11px] text-muted">{t("Earned")}</p>
           <p className="mt-0.5 text-sm font-semibold text-foreground">{formatMoney(earned)}</p>
         </div>
+        {profitOn && (
+        <>
         <div className="neu-card p-3 text-center">
           <p className="text-[11px] text-muted">{t("Spent")}</p>
           <p className="mt-0.5 text-sm font-semibold text-foreground">{formatMoney(spent)}</p>
@@ -112,10 +118,18 @@ export default async function TransportReportsPage({ searchParams }: { searchPar
           <p className="text-[11px] text-muted">{t("Profit")}</p>
           <p className={`mt-0.5 text-sm font-bold ${earned - spent >= 0 ? "text-success" : "text-danger"}`}>{formatMoney(earned - spent)}</p>
         </div>
+        </>
+        )}
       </div>
       <p className="text-center text-xs text-muted">{t("treports.roundsAcrossAll", { count: rounds })}</p>
 
       {!extras && <p className="rounded-lg border border-dashed border-border px-3 py-2 text-xs text-muted">{t("Vehicle expenses need a one-time database update (migration 0049).")}</p>}
+      {extras && !profitOn && (
+        <Link href="/plans" className="flex items-center gap-2 rounded-xl border border-dashed border-brand bg-brand-soft px-3.5 py-3 text-xs text-brand-text">
+          <Lock size={14} className="shrink-0" />
+          {t("See each vehicle's running cost, real profit and diesel average with the {plan} plan →", { plan: planFor(minPlanForModule("vehicle_profit")).name })}
+        </Link>
+      )}
 
       {rows.length === 0 ? (
         <EmptyState text={t("treports.empty")} />
@@ -136,8 +150,8 @@ export default async function TransportReportsPage({ searchParams }: { searchPar
                     </p>
                   </div>
                   <div className="shrink-0 text-right">
-                    <p className={`text-base font-bold ${f.profit >= 0 ? "text-success" : "text-danger"}`}>{formatMoney(f.profit)}</p>
-                    <p className="text-[11px] text-muted">{t("profit")}</p>
+                    <p className={`text-base font-bold ${!profitOn ? "text-foreground" : f.profit >= 0 ? "text-success" : "text-danger"}`}>{formatMoney(profitOn ? f.profit : f.earnings)}</p>
+                    <p className="text-[11px] text-muted">{profitOn ? t("profit") : t("earned")}</p>
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-x-3 gap-y-0.5 text-xs">

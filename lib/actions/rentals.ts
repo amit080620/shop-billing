@@ -9,6 +9,7 @@ import { determineSupplyType, financialYearFor, round2 } from "../gst";
 import { partyStateCode } from "../gstBuyer";
 import { recordCashMovement } from "../cashMovements";
 import { rentalReturnFigures } from "../rentalReturn";
+import { billLimitError } from "../planLimits";
 
 export type ActionState = { error?: string } | null;
 
@@ -17,6 +18,9 @@ export async function createRentalAction(
   formData: FormData,
 ): Promise<ActionState> {
   const session = await requireSession();
+  // A rental counts against the plan's monthly sales, like a bill.
+  const overLimit = await billLimitError(session);
+  if (overLimit) return { error: overLimit };
 
   const raw = formData.get("payload");
   if (typeof raw !== "string") return { error: "Invalid submission" };

@@ -11,10 +11,13 @@ import { formatIsoDate } from "@/lib/dateHelpers";
 import { buildWhatsAppLink } from "@/lib/whatsapp";
 import { goldSchemesReady, loadSchemes } from "@/lib/goldSchemeData";
 import { SchemeActions } from "./SchemeActions";
+import { isModuleEnabled } from "@/lib/modules";
+import { ModuleBlocked } from "@/app/components/ModuleBlocked";
 
 export default async function GoldSchemePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const session = await requireSession();
+  if (!isModuleEnabled(session.enabledModules, "gold_schemes")) return <ModuleBlocked moduleKey="gold_schemes" />;
   const { t } = await getTranslator();
   const admin = createSupabaseAdminClient();
   if (!(await goldSchemesReady(admin))) notFound();

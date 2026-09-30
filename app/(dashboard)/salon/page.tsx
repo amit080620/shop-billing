@@ -9,12 +9,15 @@ import { todayIso } from "@/lib/dateHelpers";
 import { getTranslator } from "@/lib/i18n/server";
 import { BackLink } from "@/app/components/BackLink";
 import { loadCommissionRates, loadWorkLines, stylistTotals } from "@/lib/commission";
+import { isModuleEnabled } from "@/lib/modules";
+import { ModuleBlocked } from "@/app/components/ModuleBlocked";
 
 /** Each stylist's work in a period — services, products sold, package sessions — and the
  * commission it earns (the same figure the salary sheet adds for the month). */
 export default async function StylistReportPage({ searchParams }: { searchParams: Promise<{ from?: string; to?: string }> }) {
   const { t } = await getTranslator();
   const session = await requireSession();
+  if (!isModuleEnabled(session.enabledModules, "stylist_commission")) return <ModuleBlocked moduleKey="stylist_commission" />;
   const { from, to } = await searchParams;
   const today = todayIso();
   const fromDate = from && /^\d{4}-\d{2}-\d{2}$/.test(from) ? from : `${today.slice(0, 7)}-01`;

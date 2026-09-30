@@ -10,9 +10,12 @@ import { formatMoney } from "@/lib/format";
 import { formatIsoDate } from "@/lib/dateHelpers";
 import { goldSchemesReady, loadSchemes } from "@/lib/goldSchemeData";
 import { NewSchemeForm } from "./NewSchemeForm";
+import { isModuleEnabled } from "@/lib/modules";
+import { ModuleBlocked } from "@/app/components/ModuleBlocked";
 
 export default async function GoldSchemesPage({ searchParams }: { searchParams: Promise<{ status?: string }> }) {
   const session = await requireSession();
+  if (!isModuleEnabled(session.enabledModules, "gold_schemes")) return <ModuleBlocked moduleKey="gold_schemes" />;
   const { t } = await getTranslator();
   const admin = createSupabaseAdminClient();
   const { status: statusParam } = await searchParams;

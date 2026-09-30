@@ -8,9 +8,12 @@ import { loadWorkers, payrollReady } from "@/lib/payrollData";
 import { salonExtrasReady } from "@/lib/salonExtras";
 import { StaffTabs } from "../StaffTabs";
 import { PeopleClient } from "./PeopleClient";
+import { isModuleEnabled } from "@/lib/modules";
+import { ModuleBlocked } from "@/app/components/ModuleBlocked";
 
 export default async function StaffPeoplePage() {
   const session = await requireSession();
+  if (!isModuleEnabled(session.enabledModules, "staff_payroll")) return <ModuleBlocked moduleKey="staff_payroll" />;
   const { t } = await getTranslator();
   const admin = createSupabaseAdminClient();
   const ok = (await payrollReady(admin)) && hasPermission(session, "manage_staff");
@@ -27,7 +30,7 @@ export default async function StaffPeoplePage() {
       ) : (
         <>
           <StaffTabs active="people" t={t} />
-          <PeopleClient workers={workers} loginsNotListed={Math.max(0, (loginCount ?? 0) - linked)} showCommission={session.businessType === "salon" && (await salonExtrasReady(admin))} />
+          <PeopleClient workers={workers} loginsNotListed={Math.max(0, (loginCount ?? 0) - linked)} showCommission={session.businessType === "salon" && isModuleEnabled(session.enabledModules, "stylist_commission") && (await salonExtrasReady(admin))} />
         </>
       )}
     </div>

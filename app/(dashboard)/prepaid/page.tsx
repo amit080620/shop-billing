@@ -9,11 +9,14 @@ import { EmptyState } from "@/app/components/EmptyState";
 import { formatMoney } from "@/lib/format";
 import { salonExtrasReady, walletBalances } from "@/lib/salonExtras";
 import { CustomerJump } from "./CustomerJump";
+import { isModuleEnabled } from "@/lib/modules";
+import { ModuleBlocked } from "@/app/components/ModuleBlocked";
 
 /** Everyone who has money paid in advance, and the total the shop is holding for them. */
 export default async function PrepaidPage() {
   const { t } = await getTranslator();
   const session = await requireSession();
+  if (!isModuleEnabled(session.enabledModules, "customer_prepaid")) return <ModuleBlocked moduleKey="customer_prepaid" />;
   const admin = createSupabaseAdminClient();
 
   if (!(await salonExtrasReady(admin))) {

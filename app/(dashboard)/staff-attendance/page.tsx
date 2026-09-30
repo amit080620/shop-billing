@@ -9,9 +9,12 @@ import { addDaysIso, formatIsoDate, todayIso } from "@/lib/dateHelpers";
 import { loadWorkers, payrollReady } from "@/lib/payrollData";
 import { StaffTabs } from "./StaffTabs";
 import { AttendanceClient } from "./AttendanceClient";
+import { isModuleEnabled } from "@/lib/modules";
+import { ModuleBlocked } from "@/app/components/ModuleBlocked";
 
 export default async function StaffAttendancePage({ searchParams }: { searchParams: Promise<{ date?: string }> }) {
   const session = await requireSession();
+  if (!isModuleEnabled(session.enabledModules, "staff_payroll")) return <ModuleBlocked moduleKey="staff_payroll" />;
   const { t } = await getTranslator();
   const admin = createSupabaseAdminClient();
   const today = todayIso();

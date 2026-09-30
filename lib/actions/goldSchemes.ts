@@ -9,6 +9,8 @@ import { todayIso } from "../dateHelpers";
 import { findOrCreateCustomerByPhone } from "./customers";
 import { recordCashMovement } from "../cashMovements";
 import { goldSchemesReady, loadSchemes } from "../goldSchemeData";
+import { isModuleEnabled } from "../modules";
+import { moduleLockMessage } from "../plans";
 
 type Method = "cash" | "card" | "upi" | "online" | "other";
 const NOT_READY = "Gold schemes need a one-time database update — ask the owner to run migration 0047.";
@@ -31,6 +33,7 @@ export async function createGoldSchemeAction(input: {
   notes: string;
 }): Promise<{ error?: string; schemeId?: string }> {
   const session = await requireSession();
+  if (!isModuleEnabled(session.enabledModules, "gold_schemes")) return { error: moduleLockMessage("gold_schemes") };
   const admin = createSupabaseAdminClient();
   if (!(await goldSchemesReady(admin))) return { error: NOT_READY };
 
@@ -97,6 +100,7 @@ async function addInstallment(admin: ReturnType<typeof createSupabaseAdminClient
 /** Takes an instalment (or several at once) for a running scheme. */
 export async function recordSchemeInstallmentAction(schemeId: string, amount: number, method: Method): Promise<{ error?: string }> {
   const session = await requireSession();
+  if (!isModuleEnabled(session.enabledModules, "gold_schemes")) return { error: moduleLockMessage("gold_schemes") };
   const admin = createSupabaseAdminClient();
   if (!(await goldSchemesReady(admin))) return { error: NOT_READY };
   const [view] = await loadSchemes(admin, session.shopId, { id: schemeId });
@@ -114,6 +118,7 @@ export async function recordSchemeInstallmentAction(schemeId: string, amount: nu
 /** Ends a scheme early and hands money back — owner only, and written to the audit log. */
 export async function closeSchemeAction(schemeId: string, refund: number, method: Method): Promise<{ error?: string }> {
   const session = await requireOwner();
+  if (!isModuleEnabled(session.enabledModules, "gold_schemes")) return { error: moduleLockMessage("gold_schemes") };
   const admin = createSupabaseAdminClient();
   if (!(await goldSchemesReady(admin))) return { error: NOT_READY };
   const [view] = await loadSchemes(admin, session.shopId, { id: schemeId });

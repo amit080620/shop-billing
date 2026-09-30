@@ -394,6 +394,9 @@ export async function quickCreateProductAction(
   unit: string,
 ): Promise<{ product?: { id: string; name: string; price: number; gstPercent: number; hsnCode: string | null; barcode: string | null; unit: string }; error?: string }> {
   const session = await requireSession();
+  // Quick-add from the bill counts against the plan's items like any other.
+  const overLimit = await productLimitError(session);
+  if (overLimit) return { error: overLimit };
   const parsed = productSchema.pick({ name: true, price: true, gstPercent: true, unit: true }).safeParse({
     name,
     price,

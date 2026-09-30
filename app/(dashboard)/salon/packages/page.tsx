@@ -9,12 +9,15 @@ import { EmptyState } from "@/app/components/EmptyState";
 import { formatMoney } from "@/lib/format";
 import { loadPackages, packageUsable, salonExtrasReady } from "@/lib/salonExtras";
 import { NewPackageForm } from "./NewPackageForm";
+import { isModuleEnabled } from "@/lib/modules";
+import { ModuleBlocked } from "@/app/components/ModuleBlocked";
 
 const TABS = ["running", "used", "ended"] as const;
 
 export default async function PackagesPage({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
   const { t } = await getTranslator();
   const session = await requireSession();
+  if (!isModuleEnabled(session.enabledModules, "customer_prepaid")) return <ModuleBlocked moduleKey="customer_prepaid" />;
   const admin = createSupabaseAdminClient();
   const { tab: tabParam } = await searchParams;
   const tab = (TABS as readonly string[]).includes(tabParam ?? "") ? (tabParam as (typeof TABS)[number]) : "running";

@@ -10,6 +10,8 @@ import { createBillCore } from "./bills";
 import { billedSide, loadConsignment, transportExtrasReady, type Consignment } from "../transportData";
 import { EXPENSE_CATEGORIES, type ExpenseCategory, type PayBy } from "../transport";
 import type { CashMethod } from "../cashMovements";
+import { isModuleEnabled } from "../modules";
+import { moduleLockMessage } from "../plans";
 
 const NOT_READY = "Bilty and trip expenses need a one-time database update — ask the owner to run migration 0049.";
 const METHODS: CashMethod[] = ["cash", "card", "upi", "online", "other"];
@@ -261,6 +263,7 @@ export async function addTripExpenseAction(input: {
   note: string;
 }): Promise<{ error?: string }> {
   const session = await requireSession();
+  if (!isModuleEnabled(session.enabledModules, "vehicle_profit")) return { error: moduleLockMessage("vehicle_profit") };
   if (!hasPermission(session, "manage_expenses")) return { error: "You don't have permission to record expenses — ask the owner." };
   const admin = createSupabaseAdminClient();
   if (!(await transportExtrasReady(admin))) return { error: NOT_READY };
@@ -299,6 +302,7 @@ export async function addTripExpenseAction(input: {
 
 export async function deleteTripExpenseAction(id: string): Promise<{ error?: string }> {
   const session = await requireSession();
+  if (!isModuleEnabled(session.enabledModules, "vehicle_profit")) return { error: moduleLockMessage("vehicle_profit") };
   if (!hasPermission(session, "manage_expenses")) return { error: "You don't have permission to change expenses — ask the owner." };
   const admin = createSupabaseAdminClient();
   if (!(await transportExtrasReady(admin))) return { error: NOT_READY };

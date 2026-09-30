@@ -1,4 +1,4 @@
-import type { ModuleKey } from "./modules";
+import { MODULES, moduleRelevant, type ModuleKey } from "./modules";
 
 /** The four plans The Ray sells, plus the custom deal a super admin can
  * shape per shop. One file so pricing, limits, module access, the badge
@@ -26,27 +26,19 @@ export type Plan = {
   badge: { label: string; bg: string; text: string; border: string };
   modules: ModuleKey[];
   limits: PlanLimits;
-  /** What this plan adds over the one below it, in the owner's words. */
+  /** What this plan adds over the one below it besides modules (limits, support, set-up) — the
+   * modules it adds are listed from lib/modules, so the two can never disagree. */
   highlights: string[];
 };
 
-const ALL_MODULES: ModuleKey[] = [
-  "multi_branch",
-  "bulk_import_export",
-  "public_catalog",
-  "whatsapp_reminders",
-  "offers",
-  "advanced_reports",
-  "self_checkin_kiosk",
-  "leads_crm",
-  "class_schedule",
-  "audit_log",
-  "petty_cash",
-  "stock_audit",
-];
+const ALL_MODULES: ModuleKey[] = MODULES.map((m) => m.key);
 
-const BASIC_MODULES: ModuleKey[] = ["whatsapp_reminders", "bulk_import_export", "offers"];
-const PRO_MODULES: ModuleKey[] = [...BASIC_MODULES, "advanced_reports", "public_catalog", "petty_cash", "stock_audit", "audit_log"];
+// What stays free is everything a shop needs to bill legally and run the day: GST invoices and
+// filing, udhaar, the day's summary and closing the drawer, and each trade's own core (tables and
+// KOT, appointments, rates by karat, bilty…). Basic adds the tools a busy counter uses every day;
+// Pro adds control and insight; Pro + adds scale.
+const BASIC_MODULES: ModuleKey[] = ["whatsapp_reminders", "bulk_import_export", "offers", "quotations", "staff_payroll", "customer_prepaid", "gold_schemes"];
+const PRO_MODULES: ModuleKey[] = [...BASIC_MODULES, "advanced_reports", "public_catalog", "petty_cash", "stock_audit", "audit_log", "stylist_commission", "vehicle_profit"];
 
 export const PLANS: Record<Exclude<PlanKey, "custom">, Plan> & { custom: Plan } = {
   free: {
@@ -62,7 +54,7 @@ export const PLANS: Record<Exclude<PlanKey, "custom">, Plan> & { custom: Plan } 
       "GST invoices, thermal and A4 printing",
       "GSTR-1, GSTR-3B and purchase register — always free",
       "100 bills a month, 60 items, 1 login",
-      "Udhaar khata, day summary and sales reports",
+      "Udhaar khata, day summary, closing the day and sales reports",
       "Works offline, and on the Android app",
     ],
   },
@@ -75,13 +67,7 @@ export const PLANS: Record<Exclude<PlanKey, "custom">, Plan> & { custom: Plan } 
     badge: { label: "Basic", bg: "#D1FAE5", text: "#065F46", border: "#6EE7B7" },
     modules: BASIC_MODULES,
     limits: { billsPerMonth: null, products: 500, staff: 3, branches: 1 },
-    highlights: [
-      "Unlimited bills",
-      "WhatsApp reminders for udhaar and appointments",
-      "3 logins for your staff",
-      "Import and export items and customers (Excel/CSV)",
-      "Offers and discount coupons",
-    ],
+    highlights: ["Unlimited bills", "500 items, 3 logins for your staff"],
   },
   pro: {
     key: "pro",
@@ -92,13 +78,7 @@ export const PLANS: Record<Exclude<PlanKey, "custom">, Plan> & { custom: Plan } 
     badge: { label: "Pro", bg: "#E0E7FF", text: "#3730A3", border: "#A5B4FC" },
     modules: PRO_MODULES,
     limits: { billsPerMonth: null, products: null, staff: 10, branches: 1 },
-    highlights: [
-      "Profit report and shop Insights",
-      "CA export pack and staff-wise reports",
-      "Your own online order link and order queue",
-      "Petty cash, stock audit, audit log",
-      "10 logins, unlimited items",
-    ],
+    highlights: ["Unlimited items, 10 logins"],
   },
   pro_plus: {
     key: "pro_plus",
@@ -109,13 +89,7 @@ export const PLANS: Record<Exclude<PlanKey, "custom">, Plan> & { custom: Plan } 
     badge: { label: "Pro +", bg: "#FEF3C7", text: "#92400E", border: "#FCD34D" },
     modules: ALL_MODULES,
     limits: { billsPerMonth: null, products: null, staff: null, branches: 5 },
-    highlights: [
-      "Up to 5 branches with branch-wise reporting",
-      "Unlimited logins",
-      "Gym: self check-in kiosk, leads tracker, class schedule",
-      "Priority support on WhatsApp",
-      "Google Business and WhatsApp setup done for you",
-    ],
+    highlights: ["Unlimited logins", "Priority support on WhatsApp", "Google Business and WhatsApp setup done for you"],
   },
   custom: {
     key: "custom",
@@ -214,3 +188,34 @@ export function minPlanForModule(key: ModuleKey): PlanKey {
   }
   return "pro_plus";
 }
+
+/** The modules a plan adds over the plan below it — what its card lists — for this kind of shop. */
+export function modulesAddedBy(planKey: PlanKey, businessType?: string): ModuleKey[] {
+  const i = PAID_PLAN_ORDER.indexOf(planKey);
+  const below = i > 0 ? planFor(PAID_PLAN_ORDER[i - 1]).modules : [];
+  return planFor(planKey).modules.filter((m) => !below.includes(m) && (!businessType || moduleRelevant(m, businessType)));
+}
+
+/** What an action answers when the shop's plan doesn't include the module: which plan does, and
+ * where to upgrade — never a bare "not allowed". */
+export function moduleLockMessage(key: ModuleKey): string {
+  const label = MODULES.find((m) => m.key === key)?.label ?? "This feature";
+  return `${label} is part of the ${planFor(minPlanForModule(key)).name} plan — upgrade in More → Plan & billing.`;
+}
+
+/** What the Free plan already gives each trade — its own daily core, which is never behind a plan. */
+export const FREE_CORE: Record<string, string> = {
+  restaurant: "Tables, KOT and the kitchen display",
+  hotel: "Rooms, bookings, check-in and check-out",
+  salon: "Appointments and your online booking link",
+  jewellery: "Today's rate for each karat, billing by weight, old gold exchange",
+  transport: "Bilty (LR), vehicles and trip charges on the bill",
+  pharmacy: "Batches, expiry alerts and prescription billing",
+  clinic: "Appointments, prescriptions and patient history",
+  lab: "Test orders and reports",
+  gym: "Memberships, renewals and attendance",
+  rental: "Rentals with deposits and returns",
+  service: "Repair jobs with advance, status and delivery",
+};
+
+export const limitText = (n: number | null, unit: string) => (n === null ? "Unlimited" : `${n.toLocaleString("en-IN")} ${unit}`);

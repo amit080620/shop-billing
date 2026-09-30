@@ -3,6 +3,8 @@
 import { requireSession } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
+import { productRoomLeft } from "../planLimits";
+import { limitMessage } from "../plans";
 
 export type ScannedMenuItem = { name: string; price: number; categoryName: string | null };
 
@@ -24,6 +26,10 @@ export async function createProductsFromScanAction(
   const session = await requireSession();
   if (items.length === 0) return { error: "No items to add" };
   if (items.length > 60) return { error: "Too many items at once — scan in smaller batches (max 60)" };
+  const room = await productRoomLeft(session);
+  if (room !== null && items.length > room) {
+    return { error: room === 0 ? limitMessage("products", session.planLimits.products as number, session.plan) : `Your plan has room for ${room} more item(s) — pick fewer, or upgrade in More → Plan & billing.` };
+  }
 
   const admin = createSupabaseAdminClient();
 

@@ -19,6 +19,8 @@ import { formatMoney } from "../format";
 import { undoBillUsage } from "../billUndo";
 import { loadPackages, packageUsable, salonExtrasReady, walletBalance } from "../salonExtras";
 import { addDaysIso } from "../dateHelpers";
+import { isModuleEnabled } from "../modules";
+import { moduleLockMessage } from "../plans";
 
 export type ActionState = { error?: string } | null;
 
@@ -43,6 +45,7 @@ export async function createBillCore(
   // every instalment is in) pays for the jewellery, like cash already in hand.
   let scheme: { id: string; number: string; value: number } | null = null;
   if (parsedData.goldSchemeId) {
+    if (!isModuleEnabled(session.enabledModules, "gold_schemes")) return { error: moduleLockMessage("gold_schemes") };
     const [view] = await loadSchemes(admin, session.shopId, { id: parsedData.goldSchemeId });
     if (!view || view.scheme.status !== "active") return { error: "This gold scheme can't be used — it is closed or already used." };
     if (view.scheme.customer_id && view.scheme.customer_id !== customerId) return { error: "Bill the scheme's own customer to use their scheme." };
@@ -57,6 +60,7 @@ export async function createBillCore(
   const sessionsWanted = new Map<string, number>();
   for (const i of items) if (i.packageId) sessionsWanted.set(i.packageId, (sessionsWanted.get(i.packageId) ?? 0) + Number(i.quantity));
   if (sessionsWanted.size || walletAmount > 0) {
+    if (!isModuleEnabled(session.enabledModules, "customer_prepaid")) return { error: moduleLockMessage("customer_prepaid") };
     if (!extrasReady) return { error: "Packages and prepaid balance need a one-time database update — ask the owner to run migration 0048." };
     if (!customerId) return { error: "Pick the customer — packages and prepaid balance belong to someone." };
   }
@@ -144,6 +148,7 @@ export async function createBillCore(
     }
   }
   if (plans.size) {
+    if (!isModuleEnabled(session.enabledModules, "customer_prepaid")) return { error: moduleLockMessage("customer_prepaid") };
     if (!customerId) return { error: "A package belongs to a customer — pick the customer first." };
     if (items.some((i) => i.productId && plans.has(i.productId) && !Number.isInteger(Number(i.quantity)))) return { error: "Sell packages in whole numbers." };
   }

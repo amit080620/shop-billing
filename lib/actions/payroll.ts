@@ -7,6 +7,8 @@ import { logAuditEvent } from "../audit";
 import { payrollReady } from "../payrollData";
 import { todayIso } from "../dateHelpers";
 import { salonExtrasReady } from "../salonExtras";
+import { isModuleEnabled } from "../modules";
+import { moduleLockMessage } from "../plans";
 
 const NOT_READY = "Staff attendance needs a one-time database update — ask the owner to run migration 0046.";
 const NO_PERMISSION = "Only the owner (or staff allowed to manage staff) can do this.";
@@ -17,6 +19,7 @@ async function open() {
   const session = await requireSession();
   const admin = createSupabaseAdminClient();
   if (!(await payrollReady(admin))) return { error: NOT_READY } as const;
+  if (!isModuleEnabled(session.enabledModules, "staff_payroll")) return { error: moduleLockMessage("staff_payroll") } as const;
   if (!canManage(session)) return { error: NO_PERMISSION } as const;
   return { session, admin } as const;
 }

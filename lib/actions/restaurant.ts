@@ -10,6 +10,7 @@ import { invalidateCache } from "../cache";
 import { findOrCreateCustomerByPhone, awardLoyaltyPoints } from "./customers";
 import { advanceReceived, hasCashMovement, recordCashMovement } from "../cashMovements";
 import { todayIso } from "../dateHelpers";
+import { billLimitError } from "../planLimits";
 
 export type ActionState = { error?: string } | null;
 
@@ -266,6 +267,9 @@ export async function startOrderAction(
   if (!session.shopStateCode) {
     return { error: "Add your shop's state in Settings before taking orders." };
   }
+  // A new order counts against the plan's monthly sales, like a bill.
+  const overLimit = await billLimitError(session);
+  if (overLimit) return { error: overLimit };
 
   // Room service: the order belongs to the guest staying in that room, so their
   // name and mobile come from the booking instead of being asked again.

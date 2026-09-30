@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { effectivePlan, limitsForPlan, limitMessage, minPlanForModule, modulesForPlan, planFor, planRank, PLANS } from "../plans";
+import { effectivePlan, limitsForPlan, limitMessage, minPlanForModule, moduleLockMessage, modulesAddedBy, modulesForPlan, planFor, planRank, PLANS } from "../plans";
 import { MODULES } from "../modules";
 
 const daysFromNow = (n: number) => {
@@ -17,6 +17,29 @@ describe("plans", () => {
     expect(minPlanForModule("offers")).toBe("basic");
     expect(minPlanForModule("advanced_reports")).toBe("pro");
     expect(minPlanForModule("multi_branch")).toBe("pro_plus");
+  });
+
+  it("puts the day-to-day tools in Basic and control and insight in Pro", () => {
+    for (const m of ["quotations", "staff_payroll", "customer_prepaid", "gold_schemes"] as const) expect(minPlanForModule(m)).toBe("basic");
+    for (const m of ["stylist_commission", "vehicle_profit", "petty_cash"] as const) expect(minPlanForModule(m)).toBe("pro");
+    // Free keeps nothing behind a module: its trades' cores (bilty, rates by karat, tables…) aren't modules.
+    expect(PLANS.free.modules).toEqual([]);
+  });
+
+  it("lists what a plan adds for this kind of shop only", () => {
+    expect(modulesAddedBy("pro", "salon")).toContain("stylist_commission");
+    expect(modulesAddedBy("pro", "salon")).not.toContain("vehicle_profit");
+    expect(modulesAddedBy("basic", "grocery")).not.toContain("gold_schemes");
+    expect(modulesAddedBy("basic", "jewellery")).toContain("gold_schemes");
+    expect(modulesAddedBy("pro_plus", "grocery")).not.toContain("self_checkin_kiosk");
+    // Nothing is listed twice across the ladder.
+    const all = (["free", "basic", "pro", "pro_plus"] as const).flatMap((p) => modulesAddedBy(p));
+    expect(new Set(all).size).toBe(all.length);
+  });
+
+  it("a locked action names the plan that has it", () => {
+    expect(moduleLockMessage("quotations")).toMatch(/Quotations is part of the Basic plan/);
+    expect(moduleLockMessage("vehicle_profit")).toMatch(/Pro plan/);
   });
 
   it("each tier includes everything the tier below it has", () => {

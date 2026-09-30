@@ -7,6 +7,9 @@ import { logAuditEvent } from "../audit";
 import { invalidateCache } from "../cache";
 import { recordCashMovement, type CashMethod } from "../cashMovements";
 import { loadPackages, packageUsable, salonExtrasReady, walletBalance, type PackageView } from "../salonExtras";
+import { isModuleEnabled } from "../modules";
+import { moduleLockMessage } from "../plans";
+import { productLimitError } from "../planLimits";
 
 const NOT_READY = "Packages and prepaid balance need a one-time database update — ask the owner to run migration 0048.";
 const round2 = (n: number) => Math.round((n + Number.EPSILON) * 100) / 100;
@@ -21,9 +24,13 @@ export async function savePackagePlanAction(input: {
   name: string;
 }): Promise<{ error?: string; productId?: string }> {
   const session = await requireSession();
+  if (!isModuleEnabled(session.enabledModules, "customer_prepaid")) return { error: moduleLockMessage("customer_prepaid") };
   if (!hasPermission(session, "manage_products")) return { error: "Only staff allowed to manage items can add a package." };
   const admin = createSupabaseAdminClient();
   if (!(await salonExtrasReady(admin))) return { error: NOT_READY };
+  // A package is a catalogue item, so it counts against the plan's items.
+  const overLimit = await productLimitError(session);
+  if (overLimit) return { error: overLimit };
 
   const sessions = Math.round(Number(input.sessions));
   const price = round2(Number(input.price));
@@ -74,6 +81,7 @@ export async function savePackagePlanAction(input: {
 /** What a customer has to spend on New Bill: packages with sessions left, and prepaid balance. */
 export async function customerBillExtrasAction(customerId: string): Promise<{ packages: PackageView[]; wallet: number }> {
   const session = await requireSession();
+  if (!isModuleEnabled(session.enabledModules, "customer_prepaid")) return { packages: [], wallet: 0 };
   const admin = createSupabaseAdminClient();
   if (!/^[0-9a-f-]{36}$/i.test(customerId) || !(await salonExtrasReady(admin))) return { packages: [], wallet: 0 };
   const [packages, wallet] = await Promise.all([loadPackages(admin, session.shopId, { customerId }), walletBalance(admin, session.shopId, customerId)]);
@@ -89,6 +97,7 @@ async function ownCustomer(admin: ReturnType<typeof createSupabaseAdminClient>, 
  * money is an advance on the day it is paid (the Daily summary counts it then). */
 export async function topUpWalletAction(input: { customerId: string; money: number; extra: number; method: CashMethod; note?: string }): Promise<{ error?: string }> {
   const session = await requireSession();
+  if (!isModuleEnabled(session.enabledModules, "customer_prepaid")) return { error: moduleLockMessage("customer_prepaid") };
   const admin = createSupabaseAdminClient();
   if (!(await salonExtrasReady(admin))) return { error: NOT_READY };
   const customer = await ownCustomer(admin, session.shopId, input.customerId);
@@ -125,6 +134,7 @@ export async function topUpWalletAction(input: { customerId: string; money: numb
  * usually the shop's own extra — lapses. */
 export async function refundWalletAction(input: { customerId: string; money: number; method: CashMethod }): Promise<{ error?: string }> {
   const session = await requireSession();
+  if (!isModuleEnabled(session.enabledModules, "customer_prepaid")) return { error: moduleLockMessage("customer_prepaid") };
   if (session.role !== "owner") return { error: "Only the owner can hand back a prepaid balance." };
   const admin = createSupabaseAdminClient();
   if (!(await salonExtrasReady(admin))) return { error: NOT_READY };

@@ -159,7 +159,7 @@ function PaperSizeSection({
   );
 }
 
-export function ThermalPrintSettingsClient({ initial, initialDefaultFormat }: { initial: ThermalPrintSettings; initialDefaultFormat: "full" | "thermal58" | "thermal" }) {
+export function ThermalPrintSettingsClient({ initial, initialDefaultFormat, offerPrinters = true }: { initial: ThermalPrintSettings; initialDefaultFormat: "full" | "thermal58" | "thermal"; offerPrinters?: boolean }) {
   const { t } = useT();
   const [settings, setSettings] = useState(initial);
   const [defaultFormat, setDefaultFormat] = useState(initialDefaultFormat);
@@ -186,6 +186,7 @@ export function ThermalPrintSettingsClient({ initial, initialDefaultFormat }: { 
       <BackLink fallback="/profile" />
       <PageHeader title={t("Thermal print settings")} icon={<Printer size={18} strokeWidth={1.8} />} />
 
+      {offerPrinters && (
       <Link
         href="/plans#hardware"
         className="flex items-center gap-3 rounded-xl border border-brand/30 bg-brand-soft px-3.5 py-3 text-sm"
@@ -197,6 +198,7 @@ export function ThermalPrintSettingsClient({ initial, initialDefaultFormat }: { 
         </span>
         <span className="text-brand-text" aria-hidden="true">›</span>
       </Link>
+      )}
 
       <div className="rounded-xl border border-border bg-surface p-3.5">
         <p className="mb-2 text-sm font-semibold text-foreground">{t("Default print format")}</p>

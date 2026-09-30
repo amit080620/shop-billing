@@ -9,12 +9,15 @@ import { partyStateCode } from "../gstBuyer";
 import { priceLines } from "../billPricing";
 import { addDaysIso, todayIso } from "../dateHelpers";
 import { quotationsReady } from "../quotationsData";
+import { isModuleEnabled } from "../modules";
+import { moduleLockMessage } from "../plans";
 
 /** Saves the cart on the New Bill screen as a quotation instead of a bill: same lines, priced by
  * the same rules a bill uses, with a number and a date it is valid until. Nothing is sold —
  * no stock, udhaar or GST entry. */
 export async function saveQuotationAction(payloadJson: string, validDays: number, notes: string): Promise<{ error?: string; quotationId?: string }> {
   const session = await requireSession();
+  if (!isModuleEnabled(session.enabledModules, "quotations")) return { error: moduleLockMessage("quotations") };
   const admin = createSupabaseAdminClient();
   if (!(await quotationsReady(admin))) return { error: "Quotations need a one-time database update — ask the owner to run migration 0045." };
 
@@ -94,6 +97,7 @@ export async function saveQuotationAction(payloadJson: string, validDays: number
 
 export async function cancelQuotationAction(quotationId: string): Promise<{ error?: string }> {
   const session = await requireSession();
+  if (!isModuleEnabled(session.enabledModules, "quotations")) return { error: moduleLockMessage("quotations") };
   const admin = createSupabaseAdminClient();
   const { error } = await admin.from("quotations").update({ status: "cancelled" }).eq("id", quotationId).eq("shop_id", session.shopId).eq("status", "open");
   if (error) return { error: "Could not cancel — try again." };

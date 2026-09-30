@@ -13,6 +13,9 @@ import { loadConsignment, lrTotal, lrWhatsAppText, transportExtrasReady } from "
 import { EXPENSE_LABEL, type ExpenseCategory } from "@/lib/transport";
 import { LrActions } from "./LrActions";
 import { TripExpenseForm } from "../../TripExpenseForm";
+import { isModuleEnabled } from "@/lib/modules";
+import { minPlanForModule, planFor } from "@/lib/plans";
+import Link from "next/link";
 
 const STATUS = { booked: "Booked", in_transit: "On the way", delivered: "Delivered", cancelled: "Cancelled" } as const;
 const PAY_BY = { paid: "Paid (sender)", to_pay: "To pay (receiver)", tbb: "To be billed" } as const;
@@ -31,6 +34,7 @@ export default async function LrPage({ params }: { params: Promise<{ id: string 
     admin.from("vehicles").select("id, name").eq("shop_id", session.shopId).eq("is_active", true).order("name"),
   ]);
   const spent = (expenses ?? []).reduce((s, e) => s + Number(e.amount), 0);
+  const expensesOn = isModuleEnabled(session.enabledModules, "vehicle_profit");
   const total = lrTotal(c);
 
   const h = await headers();
@@ -121,7 +125,11 @@ export default async function LrPage({ params }: { params: Promise<{ id: string 
             ))}
           </ul>
         )}
-        {c.status !== "cancelled" && <TripExpenseForm vehicles={(vehicles ?? []).map((v) => ({ id: v.id, name: v.name }))} today={todayIso()} consignmentId={c.id} defaultVehicleId={c.vehicle_id} />}
+        {!expensesOn ? (
+          <Link href="/plans" className="rounded-lg border border-dashed border-border px-3 py-2 text-xs text-muted">
+            {t("Record diesel, toll and bhatta against this trip with the {plan} plan →", { plan: planFor(minPlanForModule("vehicle_profit")).name })}
+          </Link>
+        ) : c.status !== "cancelled" && <TripExpenseForm vehicles={(vehicles ?? []).map((v) => ({ id: v.id, name: v.name }))} today={todayIso()} consignmentId={c.id} defaultVehicleId={c.vehicle_id} />}
       </section>
     </div>
   );

@@ -7,6 +7,7 @@ import { getTranslator } from "@/lib/i18n/server";
 import { LedgerClient } from "./LedgerClient";
 import { PrepaidCard } from "./PrepaidCard";
 import { loadPackages, loadWalletEntries, salonExtrasReady, walletBalance } from "@/lib/salonExtras";
+import { isModuleEnabled } from "@/lib/modules";
 
 export default async function CustomerLedgerPage({
   params,
@@ -107,7 +108,7 @@ export default async function CustomerLedgerPage({
   const balance = Math.max(0, balances.get(id) ?? 0);
 
   // Prepaid balance and packages (migration 0048): any shop can take money in advance.
-  const extrasReady = await salonExtrasReady(admin);
+  const extrasReady = isModuleEnabled(session.enabledModules, "customer_prepaid") && (await salonExtrasReady(admin));
   const [wallet, walletEntries, packages] = extrasReady
     ? await Promise.all([walletBalance(admin, session.shopId, id), loadWalletEntries(admin, session.shopId, id), loadPackages(admin, session.shopId, { customerId: id })])
     : [0, [], []];

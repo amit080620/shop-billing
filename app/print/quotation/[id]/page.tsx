@@ -15,10 +15,13 @@ import { DownloadImageButton } from "@/app/print/bill/[id]/DownloadImageButton";
 import { SharePdfButton } from "@/app/print/bill/[id]/SharePdfButton";
 import { CancelQuotationButton } from "./CancelQuotationButton";
 import { quotationsReady } from "@/lib/quotationsData";
+import { isModuleEnabled } from "@/lib/modules";
+import { ModuleBlocked } from "@/app/components/ModuleBlocked";
 
 export default async function QuotationPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const session = await requireSession();
+  if (!isModuleEnabled(session.enabledModules, "quotations")) return <ModuleBlocked moduleKey="quotations" />;
   const { lang, t } = await getTranslator();
   const admin = createSupabaseAdminClient();
   if (!(await quotationsReady(admin))) notFound();

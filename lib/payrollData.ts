@@ -44,14 +44,14 @@ export async function loadWorkers(admin: Admin, shopId: string, includeInactive 
 export type Payment = { id: string; kind: "advance" | "salary" | "bonus"; amount: number; method: string; note: string | null; createdAt: string };
 
 /** The salary sheet for a month: every worker's marks, pay and what was already given. */
-export async function loadMonthSheet(admin: Admin, shopId: string, month: string) {
+export async function loadMonthSheet(admin: Admin, shopId: string, month: string, withCommission = true) {
   const workers = await loadWorkers(admin, shopId, true);
   const [y, m] = month.split("-").map(Number);
   const start = `${month}-01`;
   const next = m === 12 ? `${y + 1}-01-01` : `${y}-${String(m + 1).padStart(2, "0")}-01`;
   // Commission for the month, for people with a rate: what they did in India's calendar month.
   const commissionOf = new Map<string, number>();
-  if (workers.some((w) => w.commissionServicePercent > 0 || w.commissionProductPercent > 0)) {
+  if (withCommission && workers.some((w) => w.commissionServicePercent > 0 || w.commissionProductPercent > 0)) {
     const from = new Date(`${start}T00:00:00+05:30`);
     const to = new Date(new Date(`${next}T00:00:00+05:30`).getTime() - 1);
     const { rows } = stylistTotals(

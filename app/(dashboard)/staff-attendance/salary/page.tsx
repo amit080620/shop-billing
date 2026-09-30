@@ -10,6 +10,8 @@ import { formatMoney } from "@/lib/format";
 import { loadMonthSheet, payrollReady } from "@/lib/payrollData";
 import { StaffTabs } from "../StaffTabs";
 import { SalaryClient } from "./SalaryClient";
+import { isModuleEnabled } from "@/lib/modules";
+import { ModuleBlocked } from "@/app/components/ModuleBlocked";
 
 const shift = (month: string, by: number) => {
   const [y, m] = month.split("-").map(Number);
@@ -19,6 +21,7 @@ const shift = (month: string, by: number) => {
 
 export default async function StaffSalaryPage({ searchParams }: { searchParams: Promise<{ month?: string }> }) {
   const session = await requireSession();
+  if (!isModuleEnabled(session.enabledModules, "staff_payroll")) return <ModuleBlocked moduleKey="staff_payroll" />;
   const { t } = await getTranslator();
   const admin = createSupabaseAdminClient();
   const current = todayIso().slice(0, 7);
@@ -27,7 +30,7 @@ export default async function StaffSalaryPage({ searchParams }: { searchParams: 
   const label = `${MONTHS[Number(month.slice(5)) - 1]} ${month.slice(0, 4)}`;
 
   const ok = (await payrollReady(admin)) && hasPermission(session, "manage_staff");
-  const rows = ok ? await loadMonthSheet(admin, session.shopId, month) : [];
+  const rows = ok ? await loadMonthSheet(admin, session.shopId, month, isModuleEnabled(session.enabledModules, "stylist_commission")) : [];
   const sum = (f: (r: (typeof rows)[number]) => number) => rows.reduce((s, r) => s + f(r), 0);
 
   return (

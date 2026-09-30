@@ -9,9 +9,12 @@ import { PageHeader } from "@/app/components/PageHeader";
 import { EmptyState } from "@/app/components/EmptyState";
 import { BackLink } from "@/app/components/BackLink";
 import { quotationsReady } from "@/lib/quotationsData";
+import { isModuleEnabled } from "@/lib/modules";
+import { ModuleBlocked } from "@/app/components/ModuleBlocked";
 
 export default async function QuotationsPage({ searchParams }: { searchParams: Promise<{ status?: string }> }) {
   const session = await requireSession();
+  if (!isModuleEnabled(session.enabledModules, "quotations")) return <ModuleBlocked moduleKey="quotations" />;
   const { t } = await getTranslator();
   const admin = createSupabaseAdminClient();
   const { status: statusParam } = await searchParams;
