@@ -109,7 +109,7 @@ export function ThermalRenderer({
     data.exchangeLabel && data.exchangeAmount && data.exchangeAmount > 0
       ? buildTwoColumnRow(data.exchangeLabel, `- Rs.${money(data.exchangeAmount)}`, profile)
       : null;
-  const paidLine = buildTwoColumnRow(`Paid (${data.paymentLabel})`, `Rs.${money(data.paidAmount)}`, profile);
+  const paidLine = data.paidAmount > 0 || !data.exchangeAmount ? buildTwoColumnRow(`Paid (${data.paymentLabel})`, `Rs.${money(data.paidAmount)}`, profile) : null;
   const creditLine =
     data.creditAmount && data.creditAmount > 0
       ? buildTwoColumnRow("Credit (Udhaar)", `Rs.${money(data.creditAmount)}`, profile)

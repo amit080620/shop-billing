@@ -181,6 +181,9 @@ export type ReceiptData = {
   roundOffAmount?: number;
   savingsOffMrp?: number;
   total: number;
+  /** Old gold, a gold scheme or prepaid balance that paid part of the bill (printed before Paid). */
+  exchangeLabel?: string | null;
+  exchangeAmount?: number;
   paidAmount?: number;
   creditAmount?: number;
   footerText?: string | null;
@@ -280,7 +283,9 @@ export function buildReceiptEscPos(data: ReceiptData, charsWide: 32 | 48 = 32, f
   b.align("left");
   b.sizeLevel(1).bold(false).italic(false);
 
-  if (data.paidAmount !== undefined) b.row("Paid", `Rs.${data.paidAmount.toFixed(2)}`, charsWide);
+  if (data.exchangeLabel && data.exchangeAmount && data.exchangeAmount > 0) b.row(data.exchangeLabel, `- Rs.${data.exchangeAmount.toFixed(2)}`, charsWide);
+  // (Nothing more to say when old gold, a scheme or prepaid balance covered it all.)
+  if (data.paidAmount !== undefined && (data.paidAmount > 0 || !data.exchangeAmount)) b.row("Paid", `Rs.${data.paidAmount.toFixed(2)}`, charsWide);
   if (data.creditAmount) b.row("Credit (Udhaar)", `Rs.${data.creditAmount.toFixed(2)}`, charsWide);
 
   b.newline();

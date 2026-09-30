@@ -34,6 +34,11 @@ export function PrepaidCard({
   const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
   const input = "rounded-lg border border-border px-3 py-2 text-sm text-foreground outline-none focus:border-brand";
+  // What the customer paid in and hasn't used since the balance was last closed — the usual amount
+  // to hand back (the shop's own extra lapses). Entries are newest first.
+  const lastClose = entries.findIndex((e) => e.kind === "refund");
+  const own = (lastClose === -1 ? entries : entries.slice(0, lastClose)).reduce((sum, e) => sum + (e.kind === "topup" ? e.money : e.kind === "spend" ? e.credit : 0), 0);
+  const refundable = Math.max(0, Math.min(balance, Math.round(own * 100) / 100));
 
   function submit() {
     setError(null);
@@ -72,7 +77,7 @@ export function PrepaidCard({
             {t("+ Add money")}
           </button>
           {isOwner && balance > 0 && (
-            <button type="button" onClick={() => { setMode("close"); setMoney(balance); setError(null); }} className="rounded-full border border-danger px-3 py-1.5 text-xs font-medium text-danger">
+            <button type="button" onClick={() => { setMode("close"); setMoney(refundable); setError(null); }} className="rounded-full border border-danger px-3 py-1.5 text-xs font-medium text-danger">
               {t("Hand back and close")}
             </button>
           )}
@@ -107,7 +112,11 @@ export function PrepaidCard({
               {t("Balance goes up by")} <b>{formatMoney(money + (typeof extra === "number" ? extra : 0))}</b>
             </p>
           )}
-          {mode === "close" && <p className="text-xs text-muted">{t("The whole balance of {amount} is closed; whatever isn't handed back lapses.", { amount: formatMoney(balance) })}</p>}
+          {mode === "close" && (
+            <p className="text-xs text-muted">
+              {t("The customer's own money not yet used: {own}.", { own: formatMoney(refundable) })} {t("The whole balance of {amount} is closed; whatever isn't handed back lapses.", { amount: formatMoney(balance) })}
+            </p>
+          )}
           {error && <p className="text-xs text-danger">{error}</p>}
           <div className="flex gap-2">
             <button type="button" onClick={submit} disabled={pending} className={`flex-1 rounded-lg px-4 py-2 text-sm font-medium text-white disabled:opacity-60 ${mode === "close" ? "bg-danger" : "bg-brand"}`}>

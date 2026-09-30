@@ -252,7 +252,7 @@ export function A4Renderer({ data }: { data: A4InvoiceData }) {
             {data.exchangeLabel && data.exchangeAmount != null && data.exchangeAmount > 0 && (
               <SummaryLine label={data.exchangeLabel} value={`− ${money(data.exchangeAmount)}`} />
             )}
-            <SummaryLine label={`Paid (${data.paymentLabel})`} value={money(data.paidAmount)} />
+            {(data.paidAmount > 0 || !data.exchangeAmount) && <SummaryLine label={`Paid (${data.paymentLabel})`} value={money(data.paidAmount)} />}
             {data.creditAmount != null && data.creditAmount > 0 && (
               <div className="mt-1 flex items-baseline justify-between font-medium text-amber-700">
                 <p>Balance Due</p>

@@ -91,7 +91,9 @@ export default async function PrintBillPage({
     roundOffAmount: Number(bill.round_off_amount) || undefined,
     savingsOffMrp: totalMrpSavings || undefined,
     total: Number(bill.total),
-    paidAmount: Number(bill.paid_amount),
+    exchangeLabel,
+    exchangeAmount,
+    paidAmount: cashPaid,
     creditAmount: Number(bill.credit_amount),
     footerText: null,
   };

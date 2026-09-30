@@ -1216,6 +1216,7 @@ export const PAGE_TEXT: Record<string, [hi: string, mr: string]> = {
   "Extra from the shop ₹": ["दुकान की तरफ से ज़्यादा ₹", "दुकानाकडून जास्त ₹"],
   "Payment method": ["भुगतान का तरीका", "पेमेंटची पद्धत"],
   "Balance goes up by": ["बैलेंस इतना बढ़ेगा", "बॅलन्स इतका वाढेल"],
+  "The customer's own money not yet used: {own}.": ["ग्राहक का अपना पैसा जो अभी तक नहीं लगा: {own}।", "ग्राहकाचे स्वतःचे न वापरलेले पैसे: {own}."],
   "The whole balance of {amount} is closed; whatever isn't handed back lapses.": ["पूरा {amount} का बैलेंस बंद होगा; जो वापस नहीं दिया, वह खत्म हो जाएगा।", "संपूर्ण {amount} चा बॅलन्स बंद होईल; जे परत दिले नाही ते संपेल."],
   "Close balance": ["बैलेंस बंद करें", "बॅलन्स बंद करा"],
   "bill": ["बिल", "बिल"],
