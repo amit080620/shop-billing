@@ -51,20 +51,20 @@ export default async function GymAttendancePage() {
 
       <div className="grid grid-cols-2 gap-3">
         <div className="rounded-xl border border-border bg-surface p-3.5 text-center shadow-sm">
-          <p className="text-xs text-muted">Currently in gym</p>
+          <p className="text-xs text-muted">{t("Currently in gym")}</p>
           <p className="mt-1 text-lg font-semibold text-foreground">{currentlyIn}</p>
         </div>
         <div className="rounded-xl border border-border bg-surface p-3.5 text-center shadow-sm">
-          <p className="text-xs text-muted">Today&apos;s check-ins</p>
+          <p className="text-xs text-muted">{t("Today's check-ins")}</p>
           <p className="mt-1 text-lg font-semibold text-foreground">{todayAttendance?.length ?? 0}</p>
         </div>
       </div>
 
       {(recentCheckIns?.length ?? 0) >= 5 && (
         <div className="rounded-xl border border-border bg-surface p-3.5 shadow-sm">
-          <p className="text-xs font-medium text-muted">Busiest hour (last 30 days)</p>
+          <p className="text-xs font-medium text-muted">{t("Busiest hour (last 30 days)")}</p>
           <p className="mt-0.5 text-sm font-semibold text-foreground">
-            {peakHour === 0 ? "12 AM" : peakHour < 12 ? `${peakHour} AM` : peakHour === 12 ? "12 PM" : `${peakHour - 12} PM`} — {maxHourCount} check-ins
+            {peakHour === 0 ? "12 AM" : peakHour < 12 ? `${peakHour} AM` : peakHour === 12 ? "12 PM" : `${peakHour - 12} PM`} — {t("{n} check-ins", { n: maxHourCount })}
           </p>
           <div className="mt-2 flex h-16 items-end gap-[2px]">
             {hourCounts.map((count, hour) => (
@@ -72,7 +72,7 @@ export default async function GymAttendancePage() {
                 key={hour}
                 className={`flex-1 rounded-t ${hour === peakHour ? "bg-brand" : "bg-brand-soft"}`}
                 style={{ height: `${Math.max(6, (count / maxHourCount) * 100)}%` }}
-                title={`${hour}:00 — ${count} check-ins`}
+                title={`${hour}:00 — ${t("{n} check-ins", { n: count })}`}
               />
             ))}
           </div>
@@ -87,12 +87,12 @@ export default async function GymAttendancePage() {
       <CheckInForm lang={lang} members={members ?? []} />
 
       <Link href="/gym/kiosk-settings" className="flex items-center justify-between rounded-xl border border-border bg-surface px-4 py-3 text-sm">
-        <span className="flex items-center gap-1.5 text-brand-text"><Smartphone size={14} /> Set up self check-in kiosk — members check themselves in</span>
+        <span className="flex items-center gap-1.5 text-brand-text"><Smartphone size={14} /> {t("Set up self check-in kiosk — members check themselves in")}</span>
         <span className="text-brand-text">→</span>
       </Link>
 
       {(!todayAttendance || todayAttendance.length === 0) ? (
-        <EmptyState text="No check-ins yet today." />
+        <EmptyState text={t("No check-ins yet today.")} />
       ) : (
         <ul className="flex flex-col gap-2 md:grid md:grid-cols-2 md:gap-3">
           {todayAttendance.map((a) => {
@@ -102,7 +102,7 @@ export default async function GymAttendancePage() {
                 key={a.id}
                 attendance={{
                   id: a.id,
-                  memberName: customer?.name ?? "Member",
+                  memberName: customer?.name ?? t("Member"),
                   checkedInAt: a.checked_in_at,
                   checkedOutAt: a.checked_out_at,
                 }}

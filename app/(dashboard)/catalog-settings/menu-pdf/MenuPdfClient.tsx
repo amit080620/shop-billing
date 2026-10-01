@@ -102,13 +102,11 @@ export function MenuPdfClient() {
   return (
     <div className="flex flex-col gap-4">
       <BackLink fallback="/dashboard" />
-      <PageHeader icon={<FileText size={20} />} title={t("Menu PDF")} subtitle="A shareable menu with clickable items that link to online ordering" />
+      <PageHeader icon={<FileText size={20} />} title={t("Menu PDF")} subtitle={t("A shareable menu with clickable items that link to online ordering")} />
 
       <div className="neu-card flex flex-col gap-2 p-4">
         <p className="text-sm text-foreground">
-          Generates a clean PDF from everything in your Products list marked <b>&quot;show in catalog&quot;</b>,
-          grouped by category. Every item name is a live link — anyone reading the PDF (WhatsApp, print, email)
-          can tap straight through to your online ordering page.
+          {t("Generates a clean PDF from everything in your Products list marked “show in catalog”, grouped by category. Every item name is a live link — anyone reading the PDF (WhatsApp, print, email) can tap straight through to your online ordering page.")}
         </p>
       </div>
 
@@ -120,7 +118,7 @@ export function MenuPdfClient() {
         className={`btn-primary flex items-center justify-center gap-2 disabled:opacity-60 ${justDone ? "animate-save-success" : ""}`}
       >
         <Download size={16} />
-        {isPending ? "Building your menu…" : justDone ? "Downloaded ✓" : "Generate & download PDF"}
+        {isPending ? t("Building your menu…") : justDone ? t("Downloaded ✓") : t("Generate & download PDF")}
       </button>
     </div>
   );

@@ -45,12 +45,12 @@ export function MemberRow({ member, lang }: { member: Member; lang: Lang }) {
           </Link>
           <p className="text-xs text-muted">
             {member.phone}
-            {member.trainerName ? ` · Trainer: ${member.trainerName}` : ""}
+            {member.trainerName ? ` · ${t("Trainer: {name}", { name: member.trainerName })}` : ""}
           </p>
           {m && (
             <p className="text-xs text-muted">
               {m.planName}
-              {m.ptSessionsTotal > 0 ? ` · PT ${m.ptSessionsTotal - m.ptSessionsUsed}/${m.ptSessionsTotal} left` : ""}
+              {m.ptSessionsTotal > 0 ? ` · ${t("PT {left}/{total} left", { left: m.ptSessionsTotal - m.ptSessionsUsed, total: m.ptSessionsTotal })}` : ""}
             </p>
           )}
         </div>
@@ -66,16 +66,16 @@ export function MemberRow({ member, lang }: { member: Member; lang: Lang }) {
           }`}
         >
           {!m
-            ? "No membership"
+            ? t("No membership")
             : m.status === "frozen"
-              ? "Frozen"
+              ? t("Frozen")
               : m.status === "cancelled"
-                ? "Cancelled"
+                ? t("Cancelled")
                 : days !== null && days < 0
-                  ? `Expired ${Math.abs(days)}d ago`
+                  ? t("Expired {n}d ago", { n: Math.abs(days) })
                   : days !== null && days <= 7
-                    ? `Expires in ${days}d`
-                    : "Active"}
+                    ? t("Expires in {n}d", { n: days })
+                    : t("Active")}
         </span>
       </div>
 
@@ -93,7 +93,7 @@ export function MemberRow({ member, lang }: { member: Member; lang: Lang }) {
           disabled={isPending}
           className="rounded-lg border border-brand bg-brand-soft px-2.5 py-1 text-xs font-medium text-brand-text disabled:opacity-60"
         >
-          <CheckCircle2 size={13} className="mr-1 inline" /> Check in
+          <CheckCircle2 size={13} className="mr-1 inline" /> {t("Check in")}
         </button>
         {m && m.status === "active" && (tone === "soon" || tone === "expired") && (
           <a
@@ -109,7 +109,7 @@ export function MemberRow({ member, lang }: { member: Member; lang: Lang }) {
             rel="noopener noreferrer"
             className="rounded-lg border border-credit bg-credit-soft px-2.5 py-1 text-xs font-medium text-credit"
           >
-            <MessageCircle size={13} className="mr-1 inline" /> Remind
+            <MessageCircle size={13} className="mr-1 inline" /> {t("Remind")}
           </a>
         )}
         {m && m.status === "active" && m.ptSessionsTotal > m.ptSessionsUsed && (
@@ -124,21 +124,21 @@ export function MemberRow({ member, lang }: { member: Member; lang: Lang }) {
             disabled={isPending}
             className="rounded-lg border border-border px-2.5 py-1 text-xs font-medium text-foreground disabled:opacity-60"
           >
-            Use PT session
+            {t("Use PT session")}
           </button>
         )}
         {m && m.status === "active" && (
           <button onClick={() => setShowFreeze((v) => !v)} className="rounded-lg border border-border px-2.5 py-1 text-xs font-medium text-foreground">
-            <Snowflake size={13} className="mr-1 inline" /> Freeze
+            <Snowflake size={13} className="mr-1 inline" /> {t("Freeze")}
           </button>
         )}
         <Link href={`/gym/members/new?memberId=${member.id}&memberName=${encodeURIComponent(member.name)}&memberPhone=${encodeURIComponent(member.phone)}`} className="rounded-lg border border-border px-2.5 py-1 text-xs font-medium text-brand">
-          Renew
+          {t("Renew")}
         </Link>
         {m && m.status === "active" && (
           <button
             onClick={() => {
-              if (!confirm("Cancel this membership?")) return;
+              if (!confirm(t("Cancel this membership?"))) return;
               startTransition(async () => {
                 const result = await cancelMembershipAction(m.id);
                 if (result.error) setError(result.error);
@@ -148,7 +148,7 @@ export function MemberRow({ member, lang }: { member: Member; lang: Lang }) {
             disabled={isPending}
             className="rounded-lg border border-danger px-2.5 py-1 text-xs font-medium text-danger disabled:opacity-60"
           >
-            Cancel
+            {t("Cancel")}
           </button>
         )}
       </div>
@@ -162,7 +162,7 @@ export function MemberRow({ member, lang }: { member: Member; lang: Lang }) {
             onChange={(e) => setFreezeDays(Number(e.target.value) || 7)}
             className="w-16 rounded-lg border border-border bg-surface px-2 py-1 text-xs outline-none focus:border-brand"
           />
-          <span className="text-xs text-brand-text">days</span>
+          <span className="text-xs text-brand-text">{t("days")}</span>
           <button
             onClick={() =>
               startTransition(async () => {
@@ -178,7 +178,7 @@ export function MemberRow({ member, lang }: { member: Member; lang: Lang }) {
             disabled={isPending}
             className="btn-primary-sm disabled:opacity-60"
           >
-            Freeze
+            {t("Freeze")}
           </button>
         </div>
       )}

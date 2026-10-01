@@ -61,7 +61,7 @@ export default async function GymMembersPage({
         title={t("Members")}
         action={
           <Link href="/gym/members/new" className="btn-primary-sm">
-            + Sell membership
+            + {t("Sell membership")}
           </Link>
         }
         icon={<Users size={18} strokeWidth={1.8} />}
@@ -94,7 +94,7 @@ export default async function GymMembersPage({
           className="flex shrink-0 items-center gap-1 rounded-full border border-border px-3 py-1.5 text-xs font-medium text-muted"
           style={{ boxShadow: "var(--elev-xs)" }}
         >
-          <ClipboardList size={12} /> Plans
+          <ClipboardList size={12} /> {t("Plans")}
         </Link>
         <Link
           href="/gym/attendance"

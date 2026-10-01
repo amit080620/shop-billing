@@ -66,7 +66,7 @@ export default async function LabOrdersPage({
         title={t("Lab orders")}
         action={
           <Link href="/lab/orders/new" className="btn-primary-sm">
-            + Order
+            + {t("Order")}
           </Link>
         }
         icon={<FlaskConical size={18} strokeWidth={1.8} />}
@@ -86,7 +86,7 @@ export default async function LabOrdersPage({
           className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium ${!status || status === "all" ? "border-brand bg-brand-soft text-brand-text" : "border-border text-muted"}`}
           style={!status || status === "all" ? { boxShadow: "var(--elev-xs)" } : undefined}
         >
-          All
+          {t("All")}
         </Link>
         {Object.entries(STATUS_LABELS).map(([key, label]) => (
           <Link
@@ -95,7 +95,7 @@ export default async function LabOrdersPage({
             className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium ${status === key ? "border-brand bg-brand-soft text-brand-text" : "border-border text-muted"}`}
             style={status === key ? { boxShadow: "var(--elev-xs)" } : undefined}
           >
-            {label}
+            {t(label)}
           </Link>
         ))}
       </div>
@@ -110,10 +110,10 @@ export default async function LabOrdersPage({
                 <div className="min-w-0">
                   <p className="text-sm font-semibold text-foreground">{o.patient_name}</p>
                   <p className="text-xs text-muted">
-                    #{o.order_number} · {o.collection_type === "home_collection" ? "Home" : "Walk-in"} · {formatDateTime(o.created_at)}
+                    #{o.order_number} · {o.collection_type === "home_collection" ? t("Home") : t("Walk-in")} · {formatDateTime(o.created_at)}
                   </p>
                 </div>
-                <span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-medium ${STATUS_TONE[o.status]}`}>{STATUS_LABELS[o.status]}</span>
+                <span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-medium ${STATUS_TONE[o.status]}`}>{t(STATUS_LABELS[o.status] ?? o.status)}</span>
               </Link>
             </li>
           ))}

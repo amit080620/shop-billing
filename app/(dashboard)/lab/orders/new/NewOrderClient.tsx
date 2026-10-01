@@ -132,13 +132,13 @@ export function NewOrderClient({
             onClick={() => setCollectionType("walk_in")}
             className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-medium ${collectionType === "walk_in" ? "border-brand bg-brand-soft text-brand-text" : "border-border text-muted"}`}
           >
-            <Footprints size={14} /> Walk-in
+            <Footprints size={14} /> {t("Walk-in")}
           </button>
           <button
             onClick={() => setCollectionType("home_collection")}
             className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-medium ${collectionType === "home_collection" ? "border-brand bg-brand-soft text-brand-text" : "border-border text-muted"}`}
           >
-            <Home size={14} /> Home collection
+            <Home size={14} /> {t("Home collection")}
           </button>
         </div>
         {collectionType === "home_collection" && (
@@ -216,7 +216,7 @@ export function NewOrderClient({
 
       {error && <p className="text-sm text-danger">{error}</p>}
       <button onClick={submit} disabled={isPending || total === 0} className="btn-primary w-full text-center disabled:opacity-60">
-        {isPending ? "Creating…" : "Create order"}
+        {isPending ? t("Creating…") : t("Create order")}
       </button>
     </div>
   );

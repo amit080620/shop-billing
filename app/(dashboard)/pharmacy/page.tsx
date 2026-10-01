@@ -27,8 +27,8 @@ export default async function PharmacyHubPage() {
               <l.icon size={18} strokeWidth={1.8} />
             </span>
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-medium text-foreground">{l.label}</p>
-              <p className="truncate text-xs text-muted">{l.sub}</p>
+              <p className="truncate text-sm font-medium text-foreground">{t(l.label)}</p>
+              <p className="truncate text-xs text-muted">{t(l.sub)}</p>
             </div>
             <span className="text-muted">→</span>
           </Link>

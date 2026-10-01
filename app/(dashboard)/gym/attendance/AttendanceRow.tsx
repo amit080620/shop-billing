@@ -3,10 +3,12 @@
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { checkOutMemberAction } from "@/lib/actions/gym";
+import { useT } from "@/lib/i18n/LangContext";
 
 type Attendance = { id: string; memberName: string; checkedInAt: string; checkedOutAt: string | null };
 
 export function AttendanceRow({ attendance }: { attendance: Attendance }) {
+  const { t } = useT();
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
@@ -17,8 +19,8 @@ export function AttendanceRow({ attendance }: { attendance: Attendance }) {
       <div>
         <p className="text-sm font-medium text-foreground">{attendance.memberName}</p>
         <p className="text-xs text-muted">
-          In: {inTime}
-          {attendance.checkedOutAt ? ` · Out: ${new Date(attendance.checkedOutAt).toLocaleTimeString("en-IN", { timeZone: "Asia/Kolkata", hour: "numeric", minute: "2-digit" })}` : ""}
+          {t("In: {time}", { time: inTime })}
+          {attendance.checkedOutAt ? ` · ${t("Out: {time}", { time: new Date(attendance.checkedOutAt).toLocaleTimeString("en-IN", { timeZone: "Asia/Kolkata", hour: "numeric", minute: "2-digit" }) })}` : ""}
         </p>
       </div>
       {!attendance.checkedOutAt && (
@@ -32,7 +34,7 @@ export function AttendanceRow({ attendance }: { attendance: Attendance }) {
           disabled={isPending}
           className="rounded-lg border border-border px-2.5 py-1 text-xs font-medium text-foreground disabled:opacity-60"
         >
-          Check out
+          {t("Check out")}
         </button>
       )}
     </li>
