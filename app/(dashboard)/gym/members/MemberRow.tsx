@@ -93,7 +93,7 @@ export function MemberRow({ member, lang }: { member: Member; lang: Lang }) {
           disabled={isPending}
           className="rounded-lg border border-brand bg-brand-soft px-2.5 py-1 text-xs font-medium text-brand-text disabled:opacity-60"
         >
-          <CheckCircle2 size={13} className="mr-1 inline" /> {t("Check in")}
+          <CheckCircle2 size={13} className="mr-1 inline" /> {t("gym.checkIn")}
         </button>
         {m && m.status === "active" && (tone === "soon" || tone === "expired") && (
           <a
