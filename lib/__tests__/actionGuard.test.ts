@@ -14,7 +14,7 @@ function page(replyHeaders: Record<string, string>) {
   const assign = vi.fn();
   const reload = vi.fn();
   const reply = new Response("body", { headers: replyHeaders });
-  const win = { fetch: vi.fn(async () => reply), location: { href: "https://bill.theray.in/bills/new", assign, reload } };
+  const win = { fetch: vi.fn<(input: RequestInfo | URL, init?: RequestInit) => Promise<Response>>(async () => reply), location: { href: "https://bill.theray.in/bills/new", assign, reload } };
   vi.stubGlobal("window", win);
   installActionGuard();
   return { win, assign, reload, reply };
