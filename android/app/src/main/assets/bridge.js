@@ -1,7 +1,7 @@
 // Injected by the Android app into bill.theray.in before any page script runs.
 // Gives the web app what Android's WebView lacks on its own: Bluetooth
 // printing (window.RayApp), voice input (SpeechRecognition), window.print(),
-// navigator.share() and file downloads — all backed by native code.
+// navigator.share(), the contact picker and file downloads — all backed by native code.
 (() => {
   const channel = window.RayNativeChannel;
   if (!channel || window.RayApp) return;
@@ -140,6 +140,18 @@
     window.SpeechRecognition = window.webkitSpeechRecognition = RaySpeechRecognition;
   }
 
+  // ---- "Pick from contacts": the phone's contact list behind the Contact Picker API.
+  const contacts = {
+    select: async () => {
+      const c = await call("contacts.pick");
+      return c ? [{ name: c.name ? [c.name] : [], tel: c.tel ? [c.tel] : [] }] : [];
+    },
+    getProperties: async () => ["name", "tel"],
+  };
+  try {
+    Object.defineProperty(navigator, "contacts", { value: contacts, configurable: true });
+  } catch { /* read-only navigator: the button stays hidden */ }
+
   // ---- Status bar colour follows the app header (light and dark theme).
   // Colours come back in any CSS syntax (Tailwind v4 uses oklab, often
   // translucent), so a 1px canvas turns them into the colour actually seen.
@@ -163,5 +175,5 @@
   setInterval(syncBars, 1200);
   document.addEventListener("DOMContentLoaded", syncBars);
 
-  window.RayApp = { platform: "android", version: cfg.version, features: { barcode: !!cfg.barcode }, call, on, toBase64, saveUrl };
+  window.RayApp = { platform: "android", version: cfg.version, features: { barcode: !!cfg.barcode, contacts: true }, call, on, toBase64, saveUrl };
 })();

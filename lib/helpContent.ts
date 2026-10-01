@@ -78,7 +78,7 @@ export const HELP_CONTENT: Record<Lang, HelpSection[]> = {
         },
         {
           q: "How do I add someone quickly?",
-          a: "On Android Chrome, tap \"Pick from contacts\" to fill in name and phone straight from your phone's contact list — no typing.",
+          a: "In The Ray Android app or Chrome on Android, tap \"Pick from contacts\" to fill in name and phone straight from your phone's contact list — no typing.",
         },
         {
           q: "What's the downloadable statement for?",
@@ -262,7 +262,7 @@ export const HELP_CONTENT: Record<Lang, HelpSection[]> = {
         },
         {
           q: "किसी को जल्दी कैसे जोड़ें?",
-          a: "Android Chrome पर, \"Pick from contacts\" टैप करके सीधे फ़ोन के contacts से नाम और फ़ोन नंबर भर सकते हैं — टाइप करने की ज़रूरत नहीं।",
+          a: "The Ray Android ऐप या Android Chrome में, \"कॉन्टैक्ट से चुनें\" टैप करके सीधे फ़ोन के contacts से नाम और फ़ोन नंबर भर सकते हैं — टाइप करने की ज़रूरत नहीं।",
         },
         {
           q: "Download करने लायक statement किसलिए है?",
@@ -446,7 +446,7 @@ export const HELP_CONTENT: Record<Lang, HelpSection[]> = {
         },
         {
           q: "कोणाला पटकन कसे जोडायचे?",
-          a: "Android Chrome वर, \"Pick from contacts\" टॅप करून थेट फोनच्या contacts मधून नाव आणि फोन नंबर भरता येतो — टाइप करायची गरज नाही.",
+          a: "The Ray Android ॲप किंवा Android Chrome मध्ये, \"संपर्कातून निवडा\" टॅप करून थेट फोनच्या contacts मधून नाव आणि फोन नंबर भरता येतो — टाइप करायची गरज नाही.",
         },
         {
           q: "डाउनलोड करण्यायोग्य स्टेटमेंट कशासाठी?",

@@ -34,7 +34,7 @@ type Customer = {
   knownAllergies?: string | null;
 };
 
-function SubmitButton() {
+function SubmitButton({ label, savingLabel }: { label: string; savingLabel: string }) {
   const { pending } = useFormStatus();
   return (
     <button
@@ -42,7 +42,7 @@ function SubmitButton() {
       disabled={pending}
       className="btn-primary-sm"
     >
-      {pending ? "Saving…" : "Save customer"}
+      {pending ? savingLabel : label}
     </button>
   );
 }
@@ -127,7 +127,7 @@ export function CustomersClient({
       {bulkImportExportEnabled && <BulkImportExportCustomers isClinic={isClinic} isGym={isGym} onImported={() => router.refresh()} />}
 
       {showForm && (
-        <Popup open={showForm} onClose={() => setShowForm(false)} title={isClinic ? "New patient" : isGym ? "New member" : "New customer"}>
+        <Popup open={showForm} onClose={() => setShowForm(false)} title={t(isClinic ? "New patient" : isGym ? "New member" : "New customer")}>
         <form
           action={formAction}
           className="flex flex-col gap-3"
@@ -139,7 +139,7 @@ export function CustomersClient({
             }}
           />
           <label className="flex flex-col gap-1.5 text-sm">
-            <span className="font-medium text-foreground">Name</span>
+            <span className="font-medium text-foreground">{t("Name")}</span>
             <input
               ref={nameRef}
               name="name"
@@ -148,12 +148,12 @@ export function CustomersClient({
             />
           </label>
           <label className="flex flex-col gap-1.5 text-sm">
-            <span className="font-medium text-foreground">Phone</span>
+            <span className="font-medium text-foreground">{t("Phone")}</span>
             <PhoneInput value={phone} onChange={setPhone} required placeholder={t("For WhatsApp reminders")} />
             <input type="hidden" name="phone" value={phone} />
           </label>
           <label className="flex flex-col gap-1.5 text-sm">
-            <span className="font-medium text-foreground">GSTIN (leave blank for B2C/retail)</span>
+            <span className="font-medium text-foreground">{t("GSTIN (leave blank for B2C/retail)")}</span>
             <input
               name="gstin"
               placeholder="22AAAAA0000A1Z5"
@@ -161,21 +161,21 @@ export function CustomersClient({
             />
           </label>
           <label className="flex flex-col gap-1.5 text-sm">
-            <span className="font-medium text-foreground">Address (optional)</span>
+            <span className="font-medium text-foreground">{t("Address (optional)")}</span>
             <input
               name="address"
-              placeholder="Shows on tax invoices for B2B customers"
+              placeholder={t("Shows on tax invoices for B2B customers")}
               className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-brand"
             />
           </label>
           <label className="flex flex-col gap-1.5 text-sm">
-            <span className="font-medium text-foreground">State (for CGST/SGST vs IGST)</span>
+            <span className="font-medium text-foreground">{t("State (for CGST/SGST vs IGST)")}</span>
             <select
               name="stateCode"
               defaultValue=""
               className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-brand"
             >
-              <option value="">Not sure / skip</option>
+              <option value="">{t("Not sure / skip")}</option>
               {INDIAN_STATES.map((s) => (
                 <option key={s.code} value={s.code}>
                   {s.name}
@@ -184,7 +184,7 @@ export function CustomersClient({
             </select>
           </label>
           {state?.error && <p className="text-sm text-credit">{state.error}</p>}
-          <SubmitButton />
+          <SubmitButton label={t(isClinic ? "Save patient" : isGym ? "Save member" : "Save customer")} savingLabel={t("Saving…")} />
         </form>
         </Popup>
       )}

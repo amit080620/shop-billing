@@ -35,8 +35,8 @@ export function InlineQuickAdd<T>({
   fields: Field[];
   onSubmit: (values: Record<string, string>) => Promise<{ data?: T; error?: string }>;
   onCreated: (data: T) => void;
-  /** When set, shows a "Pick from contacts" button (Android Chrome only —
-   * hides itself elsewhere) that fills these two field names. */
+  /** When set, shows a "Pick from contacts" button (Android Chrome and the
+   * Android app — hides itself elsewhere) that fills these two field names. */
   contactFields?: { name: string; phone: string };
   /** When set alongside contactFields, looks up the typed phone number
    * (debounced) and auto-fills the name field if that number is

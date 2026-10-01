@@ -16,6 +16,7 @@ class Bridge(private val activity: MainActivity, private val files: Files) {
     private val printer = Printer(activity)
     private val speech = Speech(activity)
     private val scanner = Scanner(activity)
+    private val contacts = Contacts(activity)
     private val origin = activity.appUrl.let { u -> "${u.scheme}://${u.host}" + (if (u.port != -1) ":${u.port}" else "") }
     private var channel = false
     private var documentStart = false
@@ -83,6 +84,7 @@ class Bridge(private val activity: MainActivity, private val files: Files) {
             "barcode.scan" -> scanner.scan { code, err ->
                 if (err != null) done(null, err) else done(JSONObject().put("code", code ?: JSONObject.NULL), null)
             }
+            "contacts.pick" -> contacts.pick { contact, err -> done(contact, err) }
             "ui.bars" -> {
                 try { activity.setBarColor(Color.parseColor(args.optString("color"))) } catch (_: IllegalArgumentException) {}
                 done(null, null)

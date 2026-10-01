@@ -1972,4 +1972,21 @@ export const PAGE_TEXT: Record<string, [hi: string, mr: string]> = {
   "Update": ["अपडेट करें", "अपडेट करा"],
   "Later": ["बाद में", "नंतर"],
   "Or download the Android app — Bluetooth printer and barcode scanner work best in it": ["या Android ऐप डाउनलोड करें — ब्लूटूथ प्रिंटर और बारकोड स्कैनर उसमें सबसे अच्छे चलते हैं", "किंवा Android ॲप डाउनलोड करा — ब्लूटूथ प्रिंटर आणि बारकोड स्कॅनर त्यात सर्वात छान चालतात"],
+
+  // Contact picker
+  "Pick from contacts": ["कॉन्टैक्ट से चुनें", "संपर्कातून निवडा"],
+  "Update the app to pick from contacts.": ["कॉन्टैक्ट से चुनने के लिए ऐप अपडेट करें।", "संपर्कातून निवडण्यासाठी ॲप अपडेट करा."],
+
+  // Customer form
+  "New customer": ["नया ग्राहक", "नवीन ग्राहक"],
+  "New patient": ["नया मरीज़", "नवीन रुग्ण"],
+  "New member": ["नया सदस्य", "नवीन सदस्य"],
+  "GSTIN (leave blank for B2C/retail)": ["GSTIN (B2C/रिटेल के लिए खाली छोड़ें)", "GSTIN (B2C/रिटेलसाठी रिकामे ठेवा)"],
+  "Address (optional)": ["पता (वैकल्पिक)", "पत्ता (ऐच्छिक)"],
+  "Shows on tax invoices for B2B customers": ["B2B ग्राहकों के टैक्स इनवॉइस पर दिखेगा", "B2B ग्राहकांच्या टॅक्स इनव्हॉइसवर दिसेल"],
+  "State (for CGST/SGST vs IGST)": ["राज्य (CGST/SGST या IGST के लिए)", "राज्य (CGST/SGST की IGST साठी)"],
+  "Not sure / skip": ["पता नहीं / छोड़ें", "माहीत नाही / वगळा"],
+  "Save customer": ["ग्राहक सेव करें", "ग्राहक सेव्ह करा"],
+  "Save patient": ["मरीज़ सेव करें", "रुग्ण सेव्ह करा"],
+  "Save member": ["सदस्य सेव करें", "सदस्य सेव्ह करा"],
 };
