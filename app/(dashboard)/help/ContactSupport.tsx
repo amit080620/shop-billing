@@ -8,7 +8,7 @@ import { useBusinessType } from "@/lib/BusinessTypeContext";
 import { findVideos } from "@/lib/videoSearch";
 import { mmss } from "@/lib/trainingVideos";
 import { submitSupportRequestAction, type SupportCategory } from "@/lib/actions/support";
-import { salesLink } from "@/lib/sales";
+import { SALES_WHATSAPP_CONFIRMED, salesLink } from "@/lib/sales";
 import { useT } from "@/lib/i18n/LangContext";
 
 const CATEGORIES: { value: SupportCategory; label: string }[] = [
@@ -102,7 +102,7 @@ export function ContactSupport({ shopName, ownerPhone }: { shopName: string; own
             </span>
           </p>
         )}
-        {result?.ticketId && (
+        {result?.ticketId && SALES_WHATSAPP_CONFIRMED && (
           // The same request on WhatsApp too, quoting its number, for anything that can't wait.
           <a
             href={salesLink(`Hi, this is ${shopName}${ownerPhone ? ` (${ownerPhone})` : ""}. My support request ${result.ticketId}: ${sentMessage}`)}
@@ -120,15 +120,17 @@ export function ContactSupport({ shopName, ownerPhone }: { shopName: string; own
           {pending ? t("auth.pleaseWait") : t("help.contact.submit")}
         </button>
 
-        <a
-          href={salesLink(`Hi, this is ${shopName}${ownerPhone ? ` (${ownerPhone})` : ""}. I need help with: `)}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center justify-center gap-2 rounded-lg border border-border px-3.5 py-2.5 text-sm font-medium text-foreground"
-        >
-          <MessageCircle size={15} />
-          {t("help.contact.whatsapp")}
-        </a>
+        {SALES_WHATSAPP_CONFIRMED && (
+          <a
+            href={salesLink(`Hi, this is ${shopName}${ownerPhone ? ` (${ownerPhone})` : ""}. I need help with: `)}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center justify-center gap-2 rounded-lg border border-border px-3.5 py-2.5 text-sm font-medium text-foreground"
+          >
+            <MessageCircle size={15} />
+            {t("help.contact.whatsapp")}
+          </a>
+        )}
       </div>
     </section>
   );

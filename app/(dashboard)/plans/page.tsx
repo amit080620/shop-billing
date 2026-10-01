@@ -7,7 +7,7 @@ import { PageHeader } from "@/app/components/PageHeader";
 import { PlanBadge } from "@/app/components/PlanBadge";
 import { FREE_CORE, PLANS, PAID_PLAN_ORDER, limitText, minPlanForModule, modulesAddedBy, planFor, planRank, type PlanKey } from "@/lib/plans";
 import { MODULES, isModuleEnabled, moduleRelevant, type ModuleKey } from "@/lib/modules";
-import { HARDWARE, SERVICES, UPCOMING, rupees } from "@/lib/sales";
+import { HARDWARE, PRICES_CONFIRMED, SALES_WHATSAPP_CONFIRMED, SERVICES, UPCOMING, rupees } from "@/lib/sales";
 import { planUsage } from "@/lib/planLimits";
 import { EnquiryButton } from "./EnquiryButton";
 import { OwnerPhoneForm } from "./OwnerPhoneForm";
@@ -178,6 +178,8 @@ export default async function PlansPage() {
                       <div className="shrink-0 text-right">
                         {plan.priceYearly === 0 ? (
                           <p className="text-2xl font-bold text-foreground">₹0</p>
+                        ) : !PRICES_CONFIRMED ? (
+                          <p className="text-sm font-semibold text-muted">{t("Price on request")}</p>
                         ) : (
                           <>
                             <p className="text-2xl font-bold text-foreground">
@@ -296,7 +298,7 @@ export default async function PlansPage() {
               <p className="text-xs text-muted">{t("More branches, a specific module, or a price that fits a bigger chain — tell us and we'll build a plan around your shop.")}</p>
               <EnquiryButton kind="custom" item={t("a custom plan")} label={t("Talk to us")} variant="quiet" {...enquiry} />
             </article>
-            <p className="text-center text-xs text-muted">{t("Pay by UPI or bank transfer — we share the details on WhatsApp and switch your plan on the same day.")}</p>
+            <p className="text-center text-xs text-muted">{SALES_WHATSAPP_CONFIRMED ? t("Pay by UPI or bank transfer — we share the details on WhatsApp and switch your plan on the same day.") : t("Tap Upgrade — our team calls you, shares the payment details and switches your plan the same day.")}</p>
           </section>
         </>
       )}
@@ -308,7 +310,7 @@ export default async function PlansPage() {
             <h2 className="flex items-center gap-2 text-base font-semibold text-foreground">
               <Printer size={17} /> {type === "restaurant" ? t("Counter hardware") : t("Printers & counter hardware")}
             </h2>
-            <p className="text-xs text-muted">{t("Every item here is tested with The Ray. Prices are indicative — we confirm the final price on WhatsApp.")}</p>
+            <p className="text-xs text-muted">{PRICES_CONFIRMED && SALES_WHATSAPP_CONFIRMED ? t("Every item here is tested with The Ray. Prices are indicative — we confirm the final price on WhatsApp.") : t("Every item here is tested with The Ray. Ask us and we'll call you with the current price.")}</p>
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
             {[...hardware]
@@ -333,7 +335,7 @@ export default async function PlansPage() {
                         )}
                         {t(item.name)}
                       </p>
-                      <p className="shrink-0 text-base font-bold text-foreground">{rupees(item.price)}</p>
+                      {PRICES_CONFIRMED ? <p className="shrink-0 text-base font-bold text-foreground">{rupees(item.price)}</p> : <p className="shrink-0 text-xs font-semibold text-muted">{t("Price on request")}</p>}
                     </div>
                     <p className="text-xs font-medium text-brand-text">{t(item.worksWith)}</p>
                     <ul className="flex flex-col gap-1 text-xs text-muted">
@@ -341,7 +343,7 @@ export default async function PlansPage() {
                         <li key={p}>• {t(p)}</li>
                       ))}
                     </ul>
-                    <EnquiryButton kind="hardware" item={item.name} label={t("Enquire on WhatsApp")} variant="outline" {...enquiry} />
+                    <EnquiryButton kind="hardware" item={item.name} label={SALES_WHATSAPP_CONFIRMED ? t("Enquire on WhatsApp") : t("Ask about this")} variant="outline" {...enquiry} />
                   </article>
                 );
               })}
@@ -362,7 +364,7 @@ export default async function PlansPage() {
             <article key={s.id} className="flex flex-col gap-2 rounded-2xl border border-border bg-surface p-4">
               <div className="flex items-start justify-between gap-2">
                 <p className="text-sm font-semibold text-foreground">{t(s.name)}</p>
-                <p className="shrink-0 text-base font-bold text-foreground">{rupees(s.price)}</p>
+                {PRICES_CONFIRMED ? <p className="shrink-0 text-base font-bold text-foreground">{rupees(s.price)}</p> : <p className="shrink-0 text-xs font-semibold text-muted">{t("Price on request")}</p>}
               </div>
               <p className="text-xs text-muted">{t(s.description)}</p>
               <EnquiryButton kind="service" item={s.name} label={t("Book this")} variant="outline" {...enquiry} />

@@ -3,7 +3,7 @@ import { Check, Lock } from "lucide-react";
 import { requireSession } from "@/lib/auth";
 import { MODULES, type ModuleKey } from "@/lib/modules";
 import { minPlanForModule, modulesAddedBy, planFor } from "@/lib/plans";
-import { rupees } from "@/lib/sales";
+import { PRICES_CONFIRMED, rupees, SALES_WHATSAPP_CONFIRMED } from "@/lib/sales";
 import { getTranslator } from "@/lib/i18n/server";
 import { BackLink } from "@/app/components/BackLink";
 import { PlanBadge } from "@/app/components/PlanBadge";
@@ -32,10 +32,12 @@ export async function ModuleBlocked({ moduleKey }: { moduleKey: ModuleKey }) {
       <div className="flex w-full max-w-sm flex-col gap-2 rounded-xl border border-border bg-surface p-3.5 text-left">
         <div className="flex items-center justify-between gap-2">
           <PlanBadge plan={needed} size="md" />
-          <p className="text-sm font-bold text-foreground">
-            {rupees(plan.priceYearly)}
-            <span className="text-xs font-normal text-muted"> {t("/ year")}</span>
-          </p>
+          {PRICES_CONFIRMED && (
+            <p className="text-sm font-bold text-foreground">
+              {rupees(plan.priceYearly)}
+              <span className="text-xs font-normal text-muted"> {t("/ year")}</span>
+            </p>
+          )}
         </div>
         <p className="text-xs text-muted">{t("{feature} comes with the {plan} plan.", { feature: label, plan: plan.name })}</p>
         {alsoIn.length > 0 && (
@@ -51,7 +53,7 @@ export async function ModuleBlocked({ moduleKey }: { moduleKey: ModuleKey }) {
         <EnquiryButton
           kind="plan"
           item={plan.name}
-          label={t("Upgrade to {plan} on WhatsApp", { plan: plan.name })}
+          label={SALES_WHATSAPP_CONFIRMED ? t("Upgrade to {plan} on WhatsApp", { plan: plan.name }) : t("Upgrade to {plan}", { plan: plan.name })}
           shopName={session.shopName}
           ownerPhone={session.ownerPhone}
           plan={session.plan}

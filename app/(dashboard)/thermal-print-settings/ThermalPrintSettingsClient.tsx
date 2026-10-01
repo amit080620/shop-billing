@@ -9,6 +9,7 @@ import { BackLink } from "@/app/components/BackLink";
 import Link from "next/link";
 import { ThermalRenderer, type ThermalReceiptData } from "@/lib/print/ThermalRenderer";
 import { THERMAL_SIZE_LEVELS, thermalFormatFor } from "@/lib/print/thermalFormat";
+import { PRICES_CONFIRMED } from "@/lib/sales";
 
 // A made-up receipt, so the look can be judged without making a real bill.
 const SAMPLE_RECEIPT: ThermalReceiptData = {
@@ -194,7 +195,7 @@ export function ThermalPrintSettingsClient({ initial, initialDefaultFormat, offe
         <Printer size={18} className="shrink-0 text-brand-text" />
         <span className="min-w-0 flex-1">
           <span className="block font-semibold text-brand-text">{t("Don't have a printer yet?")}</span>
-          <span className="block text-xs text-muted">{t("See the printers we've tested with The Ray — 58mm Bluetooth from ₹2,499.")}</span>
+          <span className="block text-xs text-muted">{PRICES_CONFIRMED ? t("See the printers we've tested with The Ray — 58mm Bluetooth from ₹2,499.") : t("See the printers we've tested with The Ray — 58mm and 80mm, Bluetooth and USB.")}</span>
         </span>
         <span className="text-brand-text" aria-hidden="true">›</span>
       </Link>

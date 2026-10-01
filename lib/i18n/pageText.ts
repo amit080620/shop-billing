@@ -1842,4 +1842,14 @@ export const PAGE_TEXT: Record<string, [hi: string, mr: string]> = {
   "Doctors": ["डॉक्टर", "डॉक्टर"],
   "Prescribing doctor directory": ["पर्ची लिखने वाले डॉक्टरों की सूची", "प्रिस्क्रिप्शन लिहिणाऱ्या डॉक्टरांची यादी"],
   "Controlled substance register": ["नियंत्रित दवाओं का रजिस्टर", "नियंत्रित औषधांचे रजिस्टर"],
+
+  // Prices and sales WhatsApp hidden until confirmed
+  "Price on request": ["कीमत पूछें", "किंमत विचारा"],
+  "Request sent — our team will call you on {phone}.": ["रिक्वेस्ट भेज दी — हमारी टीम आपको {phone} पर कॉल करेगी।", "विनंती पाठवली — आमची टीम तुम्हाला {phone} वर कॉल करेल."],
+  "Request sent — our team will get back to you.": ["रिक्वेस्ट भेज दी — हमारी टीम आपसे संपर्क करेगी।", "विनंती पाठवली — आमची टीम तुमच्याशी संपर्क करेल."],
+  "Request sent": ["रिक्वेस्ट भेज दी", "विनंती पाठवली"],
+  "Tap Upgrade — our team calls you, shares the payment details and switches your plan the same day.": ["अपग्रेड दबाएं — हमारी टीम आपको कॉल करके पेमेंट की जानकारी देगी और उसी दिन प्लान चालू कर देगी।", "अपग्रेड दाबा — आमची टीम तुम्हाला कॉल करून पेमेंटची माहिती देईल आणि त्याच दिवशी प्लॅन सुरू करेल."],
+  "Every item here is tested with The Ray. Ask us and we'll call you with the current price.": ["यहाँ का हर सामान The Ray के साथ टेस्ट किया हुआ है। पूछें — हम आपको अभी की कीमत कॉल करके बताएंगे।", "इथली प्रत्येक वस्तू The Ray सोबत तपासलेली आहे. विचारा — आम्ही तुम्हाला सध्याची किंमत कॉल करून सांगू."],
+  "Ask about this": ["इसके बारे में पूछें", "याबद्दल विचारा"],
+  "See the printers we've tested with The Ray — 58mm and 80mm, Bluetooth and USB.": ["The Ray के साथ टेस्ट किए हमारे प्रिंटर देखें — 58mm और 80mm, ब्लूटूथ और USB।", "The Ray सोबत तपासलेले आमचे प्रिंटर पहा — 58mm आणि 80mm, ब्लूटूथ आणि USB."],
 };

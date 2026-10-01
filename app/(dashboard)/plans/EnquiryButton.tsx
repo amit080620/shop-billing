@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Check, MessageCircle, Bell } from "lucide-react";
+import { Check, MessageCircle, Bell, Phone } from "lucide-react";
 import { recordEnquiryAction } from "@/lib/actions/plans";
-import { enquiryMessage, salesLink, type EnquiryKind } from "@/lib/sales";
+import { enquiryMessage, SALES_WHATSAPP_CONFIRMED, salesLink, type EnquiryKind } from "@/lib/sales";
 import type { PlanKey } from "@/lib/plans";
 import { useT } from "@/lib/i18n/LangContext";
 import { useToast } from "@/app/components/Toast";
@@ -36,9 +36,11 @@ export function EnquiryButton({
   const [, startTransition] = useTransition();
   const [done, setDone] = useState(false);
   const notifyOnly = kind === "upcoming";
+  // Until the sales number is confirmed, a request is only recorded and the team calls back.
+  const callBack = !notifyOnly && !SALES_WHATSAPP_CONFIRMED;
 
   function onClick() {
-    if (!notifyOnly) {
+    if (!notifyOnly && !callBack) {
       // Opened synchronously, inside the tap — a popup opened after an
       // await is blocked by phones' browsers.
       window.open(salesLink(enquiryMessage({ kind, item, shopName, ownerPhone, plan })), "_blank", "noopener");
@@ -47,6 +49,7 @@ export function EnquiryButton({
       await recordEnquiryAction(kind, item);
       setDone(true);
       if (notifyOnly) showToast(t("Noted — we'll tell you when it's ready."));
+      if (callBack) showToast(ownerPhone ? t("Request sent — our team will call you on {phone}.", { phone: ownerPhone }) : t("Request sent — our team will get back to you."));
     });
   }
 
@@ -61,11 +64,11 @@ export function EnquiryButton({
     <button
       type="button"
       onClick={onClick}
-      disabled={disabled || (notifyOnly && done)}
+      disabled={disabled || ((notifyOnly || callBack) && done)}
       className={`flex w-full items-center justify-center gap-1.5 rounded-xl px-3 py-2.5 text-sm font-semibold transition-colors disabled:opacity-60 ${styles}`}
     >
-      {notifyOnly ? done ? <Check size={15} /> : <Bell size={15} /> : <MessageCircle size={15} />}
-      {notifyOnly && done ? t("We'll notify you") : label}
+      {(notifyOnly || callBack) && done ? <Check size={15} /> : notifyOnly ? <Bell size={15} /> : callBack ? <Phone size={15} /> : <MessageCircle size={15} />}
+      {notifyOnly && done ? t("We'll notify you") : callBack && done ? t("Request sent") : label}
     </button>
   );
 }

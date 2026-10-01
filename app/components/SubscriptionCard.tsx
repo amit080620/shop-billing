@@ -1,7 +1,7 @@
 import { requireSession } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { getTranslator } from "@/lib/i18n/server";
-import { SALES_WHATSAPP } from "@/lib/sales";
+import { SALES_WHATSAPP, SALES_WHATSAPP_CONFIRMED } from "@/lib/sales";
 
 const SUPPORT_WHATSAPP_NUMBER = SALES_WHATSAPP;
 
@@ -78,8 +78,9 @@ export async function SubscriptionCard() {
 
   return (
     <a
-      href={`https://wa.me/${SUPPORT_WHATSAPP_NUMBER}?text=${whatsappMessage}`}
-      target="_blank"
+      // Until the sales number is confirmed, the card opens the Plan screen instead of WhatsApp.
+      href={SALES_WHATSAPP_CONFIRMED ? `https://wa.me/${SUPPORT_WHATSAPP_NUMBER}?text=${whatsappMessage}` : "/plans"}
+      target={SALES_WHATSAPP_CONFIRMED ? "_blank" : undefined}
       rel="noopener noreferrer"
       className="flex items-center justify-between gap-3 rounded-2xl px-4 py-3 transition active:scale-[0.98]"
       style={{ background: tone.gradient, boxShadow: "var(--elev-sm)" }}

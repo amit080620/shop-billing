@@ -6,6 +6,17 @@ import { planFor, type PlanKey } from "./plans";
  * screen. Hardware prices are indicative — confirmed on WhatsApp when a
  * shop enquires, because street prices move. */
 
+/** Switched off until the owner confirms the prices (plans in lib/plans.ts, hardware and set-up
+ * services below). While off, shops see "Price on request" instead of a number. Admin screens
+ * always show the prices. Set to true to show them everywhere again. */
+export const PRICES_CONFIRMED = false;
+
+/** Switched off until the owner confirms the sales WhatsApp number below. While off, no screen
+ * links to it: every "upgrade / enquire / book" tap only records the request, which reaches the
+ * team as a push notification and in Admin → Enquiries, and support requests stay in the app.
+ * Set to true to bring the WhatsApp buttons back. */
+export const SALES_WHATSAPP_CONFIRMED = false;
+
 /** WhatsApp number for renewals, hardware and support (country code, no +). */
 export const SALES_WHATSAPP = "918123455501";
 
