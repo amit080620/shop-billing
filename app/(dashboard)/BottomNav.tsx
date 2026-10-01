@@ -24,6 +24,7 @@ import {
 import { useTranslation } from "@/lib/i18n/useTranslation";
 import { activeTabHref } from "@/lib/activeTab";
 import { mobileTabs } from "@/lib/mobileTabs";
+import { useKeepReady } from "@/lib/useKeepReady";
 import type { Lang } from "@/lib/i18n/dictionary";
 
 export function tabsFor(businessType: string, t: (key: string) => string, permissions: string[] = [], fastBillingEnabled = false) {
@@ -150,6 +151,7 @@ export function BottomNav({ lang, businessType, permissions = [], fastBillingEna
     customers: { href: "/customers", label: t("nav.customers"), icon: CustomersIcon },
   });
   const activeHref = activeTabHref(pathname, tabs.map((tab) => tab.href));
+  useKeepReady(tabs.map((tab) => tab.href).filter((href) => READY_AHEAD.has(href)), pathname);
 
   return (
     <nav className="no-print fixed inset-x-0 bottom-0 z-20 border-t border-border bg-surface pb-[env(safe-area-inset-bottom)] md:hidden">
@@ -161,9 +163,10 @@ export function BottomNav({ lang, businessType, permissions = [], fastBillingEna
             <li key={tab.href} className="flex-1">
               <Link
                 href={tab.href}
-                // The billing screens load in full (code and data) ahead of the tap, so they open at
-                // once; their data is at most two minutes old (staleTimes in next.config) and every
-                // bill is re-priced on the server anyway.
+                // Home and the billing screens load in full (code and data) ahead of the tap, so they
+                // open at once, and useKeepReady loads them again whenever that copy expires. Their
+                // data is at most two minutes old (staleTimes in next.config), every bill is
+                // re-priced on the server anyway, and saving a bill refreshes them.
                 prefetch={READY_AHEAD.has(tab.href) ? true : undefined}
                 aria-current={active ? "page" : undefined}
                 className={`flex h-[var(--bottom-nav-h)] flex-col items-center justify-center gap-0.5 text-[11px] font-semibold transition-colors ${
@@ -187,7 +190,7 @@ export function BottomNav({ lang, businessType, permissions = [], fastBillingEna
   );
 }
 
-const READY_AHEAD = new Set(["/bills/new", "/fast-billing", "/restaurant"]);
+const READY_AHEAD = new Set(["/dashboard", "/bills/new", "/fast-billing", "/restaurant"]);
 
 function HomeIcon({ active }: { active: boolean }) {
   return <House size={22} strokeWidth={active ? 2.3 : 1.8} />;

@@ -155,6 +155,14 @@ export const paymentMethods = ["cash", "card", "upi", "online", "other"] as cons
 
 export const billSchema = z.object({
   customerId: z.string().uuid().nullable(),
+  /** A customer typed in at the counter who isn't on file yet (Fast Billing): found or created by
+   * this number while the bill is saved, in the same request. Ignored when customerId is set. */
+  newCustomer: z
+    .object({
+      phone: z.string().trim().regex(/^\d{10}$/, "Enter a 10-digit mobile number"),
+      name: optionalText(120),
+    })
+    .optional(),
   /** The quotation this bill was made from (marked converted once the bill exists). */
   quotationId: z.string().uuid().nullable().optional(),
   /** Delivery challans this bill is for (marked billed once the bill exists). */

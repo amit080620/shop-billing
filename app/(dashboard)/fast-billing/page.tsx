@@ -54,6 +54,7 @@ export default async function FastBillingPage() {
       priceIncludesGst={session.priceIncludesGst}
       gstScheme={session.gstScheme}
       canDiscount={hasPermission(session, "give_discounts")}
+      shopId={session.shopId}
       lang={lang}
     />
   );

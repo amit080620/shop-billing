@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Check, UserPlus, X } from "lucide-react";
 import { useT } from "@/lib/i18n/LangContext";
+import { loadCounterCustomers, searchCounterCustomers } from "@/lib/counterCustomers";
 
 export type CounterCustomer = { id: string; name: string; phone: string; loyaltyPoints: number };
 
@@ -11,10 +12,13 @@ const spaced = (phone: string) => (phone.length === 10 ? `${phone.slice(0, 5)} $
 /** Who the sale is for, typed at the counter. Typing the mobile number lists
  * matching customers as it grows; a full number already on file fills in the
  * customer by itself, and a new number moves on to its (optional) name.
- * Typing a name lists customers by name. Left empty, the bill is a plain
+ * Typing a name lists customers by name. The shop's customers are kept on
+ * the phone (lib/counterCustomers), so suggestions appear as each key is
+ * pressed, without waiting on the network. Left empty, the bill is a plain
  * walk-in sale. While either box is in use the checkout shows only this
  * (onFocusMode), so the list fits above the keyboard. */
 export function FastCustomerPicker({
+  shopId,
   isUdhar,
   phone,
   name,
@@ -25,6 +29,7 @@ export function FastCustomerPicker({
   onPick,
   onFocusMode,
 }: {
+  shopId: string;
   isUdhar: boolean;
   phone: string;
   name: string;
@@ -42,12 +47,20 @@ export function FastCustomerPicker({
   const [field, setField] = useState<"phone" | "name" | null>(null);
   const [found, setFound] = useState<{ query: string; customers: CounterCustomer[] }>({ query: "", customers: [] });
   const handled = useRef("");
+  const [, setListReady] = useState(0);
+
+  useEffect(() => {
+    loadCounterCustomers(shopId).then(() => setListReady((n) => n + 1));
+  }, [shopId]);
 
   const query = matched ? "" : field === "phone" ? phone : field === "name" ? name.trim() : "";
   const searchable = field === "phone" ? query.length >= 3 : query.length >= 2;
+  // From the list on the phone: instant. Null when it isn't there (yet) — then the server is asked.
+  const local = searchable ? searchCounterCustomers(shopId, query, field === "phone") : null;
+  const onPhone = local !== null;
 
   useEffect(() => {
-    if (!searchable) return;
+    if (!searchable || onPhone) return;
     const abort = new AbortController();
     const timer = setTimeout(async () => {
       try {
@@ -61,11 +74,11 @@ export function FastCustomerPicker({
       clearTimeout(timer);
       abort.abort();
     };
-  }, [query, searchable]);
+  }, [query, searchable, onPhone]);
 
-  const list = searchable && found.query === query ? found.customers : [];
-  const fullNumber = !matched && phone.length === 10 && found.query === phone;
-  const onFile = fullNumber ? (found.customers.find((c) => c.phone === phone) ?? null) : null;
+  const list = local ?? (searchable && found.query === query ? found.customers : []);
+  const fullNumber = !matched && phone.length === 10 && (local !== null || found.query === phone);
+  const onFile = fullNumber ? ((local ?? found.customers).find((c) => c.phone === phone) ?? null) : null;
   const isNew = fullNumber && !onFile;
 
   // A full number: the customer on file is picked by itself; a new one moves on to the name.

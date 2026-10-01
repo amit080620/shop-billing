@@ -4,10 +4,9 @@ import { keepValuesOnError } from "@/lib/keepValuesOnError";
 import { useMemo, useState, useActionState, useRef, useEffect, useCallback } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { flushSync } from "react-dom";
 import { X, Minus, Plus, Trash2, Search, Mic } from "lucide-react";
 import { formatMoney } from "@/lib/format";
-import { createBillAction, resolveFastBillingCustomerAction } from "@/lib/actions/bills";
+import { createBillAction } from "@/lib/actions/bills";
 import { useSyncCalculatorAmount } from "@/lib/calculatorAmount";
 import { parseVoiceOrderAction } from "@/lib/actions/voiceOrder";
 import { getSpeechRecognition, speechLocaleFor, voiceErrorMessages, type SpeechRecognitionLike } from "@/lib/speechRecognition";
@@ -16,6 +15,7 @@ import { useTranslation } from "@/lib/i18n/useTranslation";
 import { QuantityGrid } from "./QuantityGrid";
 import { FastCustomerPicker, type CounterCustomer } from "./FastCustomerPicker";
 import { useT } from "@/lib/i18n/LangContext";
+import { forgetCounterCustomers, loadCounterCustomers } from "@/lib/counterCustomers";
 import { calculateTransactionTotals } from "@/lib/validation/totals";
 import { productLinePrice } from "@/lib/linePrice";
 
@@ -60,9 +60,11 @@ export function FastBillingClient({
   priceIncludesGst,
   gstScheme,
   canDiscount,
+  shopId,
   lang,
 }: {
   products: FastProduct[];
+  shopId: string;
   /** Staff with "Give discounts" (and the owner): discounts and spoken rates. The server checks too. */
   canDiscount: boolean;
   loyaltyRedemptionValue: number;
@@ -92,6 +94,18 @@ export function FastBillingClient({
   useEffect(() => {
     setVoiceSupported(getSpeechRecognition() !== null);
   }, []);
+
+  // The customer list for the bill's customer box, fetched while the counter is idle so it is
+  // already on the phone when a number is typed.
+  useEffect(() => {
+    const load = () => loadCounterCustomers(shopId);
+    if ("requestIdleCallback" in window) {
+      const id = window.requestIdleCallback(load, { timeout: 3000 });
+      return () => window.cancelIdleCallback(id);
+    }
+    const timer = setTimeout(load, 1500);
+    return () => clearTimeout(timer);
+  }, [shopId]);
 
   /** "2 samosa, 1 chai" spoken → parsed by Groq → matched against
    * this shop's real products (via the same fuzzy-match used
@@ -461,6 +475,7 @@ export function FastBillingClient({
           gstScheme={gstScheme}
           voiceCustomer={voiceCustomer}
           canDiscount={canDiscount}
+          shopId={shopId}
         />
       )}
     </div>
@@ -490,7 +505,9 @@ function FastBillSheet({
   gstScheme,
   voiceCustomer,
   canDiscount,
+  shopId,
 }: {
+  shopId: string;
   canDiscount: boolean;
   priceIncludesGst: boolean;
   gstScheme: "regular" | "composition";
@@ -573,7 +590,7 @@ function FastBillSheet({
               <span className="font-semibold text-foreground">{formatMoney(subtotal)}</span>
             </div>
           )}
-          <FastCheckoutButton cart={cart} loyaltyRedemptionValue={loyaltyRedemptionValue} priceIncludesGst={priceIncludesGst} gstScheme={gstScheme} voiceCustomer={voiceCustomer} canDiscount={canDiscount} focusMode={customerFocus} onFocusMode={setCustomerFocus} />
+          <FastCheckoutButton cart={cart} loyaltyRedemptionValue={loyaltyRedemptionValue} priceIncludesGst={priceIncludesGst} gstScheme={gstScheme} voiceCustomer={voiceCustomer} canDiscount={canDiscount} shopId={shopId} focusMode={customerFocus} onFocusMode={setCustomerFocus} />
         </div>
       )}
 
@@ -608,9 +625,11 @@ function FastCheckoutButton({
   gstScheme,
   voiceCustomer,
   canDiscount,
+  shopId,
   focusMode,
   onFocusMode,
 }: {
+  shopId: string;
   /** The customer box is being typed in: show only it. */
   focusMode: boolean;
   onFocusMode: (on: boolean) => void;
@@ -621,6 +640,7 @@ function FastCheckoutButton({
   gstScheme: "regular" | "composition";
   voiceCustomer: { id: string; name: string; phone: string | null; loyaltyPoints: number } | null;
 }) {
+  const { t } = useT();
   const [discountType, setDiscountType] = useState<"percent" | "flat">("flat");
   const [discountValue, setDiscountValue] = useState(0);
   const [showDiscountInput, setShowDiscountInput] = useState(false);
@@ -630,15 +650,12 @@ function FastCheckoutButton({
   const [customerError, setCustomerError] = useState<string | null>(null);
   const [matchedCustomer, setMatchedCustomer] = useState<CounterCustomer | null>(null);
   const [redeemPoints, setRedeemPoints] = useState(false);
-  const [isResolvingCustomer, setIsResolvingCustomer] = useState(false);
-  const [resolvedCustomerId, setResolvedCustomerId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!voiceCustomer) return;
     setMatchedCustomer({ id: voiceCustomer.id, name: voiceCustomer.name, phone: voiceCustomer.phone ?? "", loyaltyPoints: voiceCustomer.loyaltyPoints });
     setCustomerName(voiceCustomer.name);
     setCustomerPhone(voiceCustomer.phone ?? "");
-    setResolvedCustomerId(voiceCustomer.id);
      
   }, [voiceCustomer]);
   const [state, formAction, isPending] = useActionState(keepValuesOnError(createBillAction), null);
@@ -647,10 +664,9 @@ function FastCheckoutButton({
   const subtotal = cart.reduce((s, l) => s + l.qty * l.price, 0);
   const isUdhar = paymentMethod === "udhar";
 
-  // Whichever customer this sale is actually linked to — either
-  // matched live off the phone number as it was typed, or (for a
-  // genuinely new customer) resolved at submit time below.
-  const effectiveCustomerId = matchedCustomer?.id ?? resolvedCustomerId;
+  // A full number that isn't on file yet: the server finds or creates the customer while it saves
+  // the bill (one request), so the bill is always linked to them.
+  const newCustomer = !matchedCustomer && customerPhone.length === 10 ? { phone: customerPhone, name: customerName.trim() || undefined } : undefined;
 
   // Same formula regular billing uses (NewBillClient) — capped at the
   // customer's real balance AND at the subtotal itself, so redeeming
@@ -681,14 +697,12 @@ function FastCheckoutButton({
     setCustomerPhone(digits);
     setCustomerError(null);
     setMatchedCustomer(null);
-    setResolvedCustomerId(null);
     setRedeemPoints(false);
   }
 
   // A customer chosen from the suggestions, found by their full number, or cleared.
   const handlePick = useCallback((customer: CounterCustomer | null) => {
     setMatchedCustomer(customer);
-    setResolvedCustomerId(null);
     setRedeemPoints(false);
     setCustomerError(null);
     if (customer) {
@@ -698,7 +712,8 @@ function FastCheckoutButton({
   }, []);
 
   const payload = JSON.stringify({
-    customerId: effectiveCustomerId,
+    customerId: matchedCustomer?.id ?? null,
+    newCustomer,
     items: cart.map((l) => ({
       productId: l.productId,
       description: l.name,
@@ -758,6 +773,7 @@ function FastCheckoutButton({
           paid sale can earn/redeem loyalty points, not only credit
           ones. Required only when Udhar is selected. */}
       <FastCustomerPicker
+        shopId={shopId}
         isUdhar={isUdhar}
         phone={customerPhone}
         name={customerName}
@@ -836,45 +852,27 @@ function FastCheckoutButton({
         <input type="hidden" name="payload" value={payload} />
         <button
           type="button"
-          disabled={isPending || isResolvingCustomer || cart.length === 0}
-          onClick={async () => {
+          disabled={isPending || cart.length === 0}
+          onClick={() => {
             // Udhar strictly needs a phone number to recover from.
-            if (isUdhar && !customerPhone.trim()) {
-              setCustomerError("Enter a mobile number to genuinely track this udhar for recovery");
+            if (isUdhar && !matchedCustomer && !customerPhone) {
+              setCustomerError(t("Enter a mobile number to genuinely track this udhar for recovery"));
               return;
             }
-            // Already resolved (existing customer matched by phone, or
-            // no phone typed at all) — submit immediately, no extra
-            // round trip, so most sales stay exactly as fast as
-            // before.
-            if (matchedCustomer || !customerPhone.trim()) {
-              formRef.current?.requestSubmit();
+            // A half-typed number would save a customer with a wrong number.
+            if (!matchedCustomer && customerPhone && customerPhone.length !== 10) {
+              setCustomerError(t("Enter a 10-digit mobile number"));
               return;
             }
-            // A phone was typed but didn't match anyone on file yet —
-            // create them now so this sale actually links to a real
-            // customer record (and can start earning points).
-            setIsResolvingCustomer(true);
-            const result = await resolveFastBillingCustomerAction(customerName, customerPhone);
-            setIsResolvingCustomer(false);
-            if (result.error || !result.customerId) {
-              setCustomerError(result.error ?? "Could not save customer details");
-              return;
-            }
-            // The bill must carry the new customer: commit the id into the
-            // payload now, then submit. (Waiting a frame was not enough —
-            // the bill often went out before the re-render, with no customer,
-            // so a new customer's udhar was never on their account.)
-            flushSync(() => setResolvedCustomerId(result.customerId ?? null));
+            // This bill adds a customer: the list on the phone is fetched afresh next time.
+            if (newCustomer) forgetCounterCustomers();
             formRef.current?.requestSubmit();
           }}
           className={`w-full disabled:opacity-60 ${isUdhar ? "btn-primary bg-danger" : "btn-primary"}`}
         >
           {isPending
             ? "Creating bill…"
-            : isResolvingCustomer
-              ? "Saving customer…"
-              : isUdhar
+            : isUdhar
                 ? `Book as udhar · ${formatMoney(payable)}`
                 : `Checkout · ${formatMoney(payable)}`}
         </button>

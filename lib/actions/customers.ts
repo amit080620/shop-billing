@@ -30,7 +30,9 @@ export async function findOrCreateCustomerByPhone(
     .from("customers")
     .select("id, name")
     .eq("shop_id", shopId)
-    .eq("phone", normalized)
+    // Some older customers were saved as "+91…".
+    .in("phone", [normalized, `+91${normalized}`])
+    .limit(1)
     .maybeSingle();
 
   if (existing) {
