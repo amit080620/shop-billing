@@ -1768,4 +1768,33 @@ export const PAGE_TEXT: Record<string, [hi: string, mr: string]> = {
   "Free in {in} · free out {out} · kept {kept}": ["फ़्री आया {in} · फ़्री दिया {out} · बचा {kept}", "मोफत आले {in} · मोफत दिले {out} · उरले {kept}"],
   "buy rate {rate}, real cost {cost}": ["खरीद रेट {rate}, असली लागत {cost}", "खरेदी दर {rate}, खरी किंमत {cost}"],
   "You gave away more free than the company gave you.": ["कंपनी से मिले फ़्री से ज़्यादा आपने फ़्री दे दिया।", "कंपनीकडून मिळालेल्या मोफतपेक्षा जास्त तुम्ही मोफत दिले."],
+
+  // Training videos (in-app help)
+  "Watch how this screen works": ["यह स्क्रीन कैसे चलती है — वीडियो देखें", "ही स्क्रीन कशी वापरायची — व्हिडिओ पहा"],
+  "Video": ["वीडियो", "व्हिडिओ"],
+  "Training videos": ["ट्रेनिंग वीडियो", "ट्रेनिंग व्हिडिओ"],
+  "Short Hinglish videos — every screen, step by step": ["छोटे हिंग्लिश वीडियो — हर स्क्रीन, एक-एक स्टेप", "छोटे हिंग्लिश व्हिडिओ — प्रत्येक स्क्रीन, टप्प्याटप्प्याने"],
+  "Tip: every screen has a ▶ Video button next to its title — it opens the right video at the right moment.": ["टिप: हर स्क्रीन के नाम के पास ▶ वीडियो बटन है — वह सही वीडियो सही जगह से खोलता है।", "टीप: प्रत्येक स्क्रीनच्या नावाजवळ ▶ व्हिडिओ बटण आहे — ते योग्य व्हिडिओ योग्य ठिकाणापासून उघडते."],
+  "For your shop": ["आपकी दुकान के लिए", "तुमच्या दुकानासाठी"],
+  "For every shop": ["हर दुकान के लिए", "प्रत्येक दुकानासाठी"],
+  "Other businesses ({n})": ["दूसरे बिज़नेस ({n})", "इतर व्यवसाय ({n})"],
+  "{length} · subtitles on": ["{length} · सबटाइटल चालू", "{length} · सबटायटल चालू"],
+  "Jump to a part": ["सीधे किसी हिस्से पर जाएं", "थेट एखाद्या भागावर जा"],
+  "Share this video on WhatsApp": ["यह वीडियो WhatsApp पर भेजें", "हा व्हिडिओ WhatsApp वर पाठवा"],
+  "Subtitles are on — turn them off from the player's CC button.": ["सबटाइटल चालू हैं — प्लेयर के CC बटन से बंद कर सकते हैं।", "सबटायटल चालू आहेत — प्लेयरच्या CC बटणाने बंद करू शकता."],
+  "More videos": ["और वीडियो", "आणखी व्हिडिओ"],
+  "All videos →": ["सारे वीडियो →", "सर्व व्हिडिओ →"],
+  "Try the demo": ["डेमो चलाकर देखें", "डेमो वापरून पहा"],
+  "Your business": ["आपका बिज़नेस", "तुमचा व्यवसाय"],
+  "For your business": ["आपके बिज़नेस के लिए", "तुमच्या व्यवसायासाठी"],
+  "Business by business": ["हर बिज़नेस के अलग वीडियो", "प्रत्येक व्यवसायाचे वेगळे व्हिडिओ"],
+  "All videos": ["सारे वीडियो", "सर्व व्हिडिओ"],
+  "Try it yourself — a ready-made shop, no sign-up": ["खुद चलाकर देखें — तैयार दुकान, कोई साइन-अप नहीं", "स्वतः वापरून पहा — तयार दुकान, साइन-अपची गरज नाही"],
+  "These videos may already answer it:": ["शायद इन वीडियो में इसका जवाब है:", "कदाचित या व्हिडिओंमध्ये याचे उत्तर आहे:"],
+  "All {n} videos →": ["सारे {n} वीडियो →", "सर्व {n} व्हिडिओ →"],
+  "How The Ray works — watch videos": ["The Ray कैसे चलता है — वीडियो देखें", "The Ray कसे चालते — व्हिडिओ पहा"],
+
+  // Business types
+  "Hotel / Lodge": ["होटल / लॉज", "हॉटेल / लॉज"],
+  "Wholesale / Distributor": ["होलसेल / डिस्ट्रीब्यूटर", "होलसेल / डिस्ट्रिब्युटर"],
 };

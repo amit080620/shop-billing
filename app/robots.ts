@@ -7,7 +7,7 @@ export default function robots(): MetadataRoute.Robots {
   return {
     rules: {
       userAgent: "*",
-      allow: ["/", "/login", "/signup", "/privacy-policy", "/demo", "/demo/guide"],
+      allow: ["/", "/login", "/signup", "/privacy-policy", "/demo", "/demo/guide", "/videos"],
       disallow: ["/dashboard", "/bills", "/products", "/customers", "/reports", "/settings", "/admin", "/api", "/print", "/team", "/demo/enter"],
     },
     sitemap: "https://bill.theray.in/sitemap.xml",

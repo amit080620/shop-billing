@@ -73,6 +73,11 @@ export default async function LoginPage() {
             {t("login.setOneUp")}
           </Link>
         </div>
+        <p className="mt-3 text-center text-sm">
+          <Link href="/videos" className="font-medium text-white/70 hover:text-white">
+            ▶ {t("How The Ray works — watch videos")}
+          </Link>
+        </p>
       </div>
     </Login3DScene>
   );

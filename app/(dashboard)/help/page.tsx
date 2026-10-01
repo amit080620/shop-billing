@@ -6,7 +6,10 @@ import { PageHeader } from "@/app/components/PageHeader";
 import { HelpAccordion } from "./HelpAccordion";
 import { WatchTourButton } from "./WatchTourButton";
 import { ContactSupport } from "./ContactSupport";
-import { HelpCircle } from "lucide-react";
+import { HelpCircle, PlayCircle } from "lucide-react";
+import Link from "next/link";
+import { VideoList } from "@/app/components/VideoList";
+import { videosFor } from "@/lib/trainingVideos";
 import { BackLink } from "@/app/components/BackLink";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { formatDateTime } from "@/lib/format";
@@ -31,6 +34,7 @@ export default async function HelpPage() {
         .order("created_at", { ascending: false })
         .limit(10)
     : { data: [] };
+  const { own, common } = videosFor(session.businessType);
   const myRequests = (requests ?? []).map((r) => ({ id: r.id, status: r.status, createdAt: r.created_at, ...supportParts(r.item) }));
 
   return (
@@ -43,6 +47,18 @@ export default async function HelpPage() {
       />
 
       <WatchTourButton shopId={session.shopId} label={t("help.watchTour")} />
+
+      <section className="flex flex-col gap-2">
+        <div className="flex items-center justify-between gap-2">
+          <h2 className="flex items-center gap-1.5 text-sm font-semibold text-foreground">
+            <PlayCircle size={15} className="text-brand" /> {t("Training videos")}
+          </h2>
+          <Link href="/help/videos" className="text-xs font-semibold text-brand-text">
+            {t("All {n} videos →", { n: own.length + common.length })}
+          </Link>
+        </div>
+        <VideoList videos={[...own, ...common].slice(0, 4)} href={(id) => `/help/videos/${id}`} />
+      </section>
 
       {businessSection && (
         <section className="flex flex-col gap-2">

@@ -1,8 +1,12 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { MessageCircle, Send, CheckCircle2 } from "lucide-react";
+import { MessageCircle, Send, CheckCircle2, PlayCircle } from "lucide-react";
+import { useBusinessType } from "@/lib/BusinessTypeContext";
+import { findVideos } from "@/lib/videoSearch";
+import { mmss } from "@/lib/trainingVideos";
 import { submitSupportRequestAction, type SupportCategory } from "@/lib/actions/support";
 import { salesLink } from "@/lib/sales";
 import { useT } from "@/lib/i18n/LangContext";
@@ -29,6 +33,9 @@ export function ContactSupport({ shopName, ownerPhone }: { shopName: string; own
   const [result, setResult] = useState<{ ticketId?: string; error?: string } | null>(null);
   const [sentMessage, setSentMessage] = useState("");
   const router = useRouter();
+  const businessType = useBusinessType();
+  // While they type, the training video that may already answer it — opened at the right second.
+  const videos = useMemo(() => (message.trim().length >= 5 && businessType ? findVideos(message, businessType) : []), [message, businessType]);
 
   function submit() {
     startTransition(async () => {
@@ -67,6 +74,22 @@ export function ContactSupport({ shopName, ownerPhone }: { shopName: string; own
             className="px-3.5 py-3 text-base"
           />
         </label>
+
+        {videos.length > 0 && (
+          <div className="flex flex-col gap-1.5 rounded-lg border border-brand/30 bg-brand-soft/60 p-2.5">
+            <p className="text-xs font-semibold text-brand-text">{t("These videos may already answer it:")}</p>
+            {videos.map((v) => (
+              <Link key={v.video.id} href={`/help/videos/${v.video.id}?t=${v.t}`} className="flex items-center gap-2 rounded-md bg-surface px-2.5 py-2 text-xs">
+                <PlayCircle size={15} className="shrink-0 text-brand" />
+                <span className="min-w-0 flex-1">
+                  <span className="block font-medium text-foreground">{v.topic}</span>
+                  <span className="block truncate text-muted">{v.video.title}</span>
+                </span>
+                <span className="shrink-0 font-mono text-[11px] text-muted">{mmss(v.t)}</span>
+              </Link>
+            ))}
+          </div>
+        )}
 
         {result?.error && <p className="text-sm text-danger">{result.error}</p>}
         {result?.ticketId && (

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { requireSession } from "@/lib/auth";
 import { getLang } from "@/lib/i18n/server";
 import { LangProvider } from "@/lib/i18n/LangContext";
+import { BusinessTypeProvider } from "@/lib/BusinessTypeContext";
 import { PlanBadge } from "@/app/components/PlanBadge";
 import { MenuDrawerProvider } from "./MenuDrawer";
 import { MoreMenu } from "./more/MoreMenu";
@@ -36,6 +37,7 @@ export default async function DashboardLayout({
 
   return (
     <LangProvider lang={lang} messages={messagesFor(lang)}>
+    <BusinessTypeProvider value={session.businessType}>
     <MenuDrawerProvider title={translate(lang, "more.title")} menu={<MoreMenu />}>
     <NavDepthTracker />
     <div className="min-h-screen bg-background pb-24 md:pb-0 md:pl-72">
@@ -114,6 +116,7 @@ export default async function DashboardLayout({
       <LazyFloatingWidgets calculatorEnabled={calculatorEnabled} assistantEnabled={assistantEnabled} />
     </div>
     </MenuDrawerProvider>
+    </BusinessTypeProvider>
     </LangProvider>
   );
 }
