@@ -157,7 +157,7 @@ export function ClassesClient({
                       <div>
                         <p className="text-sm font-semibold text-foreground">{c.name}</p>
                         <p className="text-xs text-muted">
-                          {formatTime(c.startTime)} · {c.durationMinutes} min{c.trainerName ? ` · ${c.trainerName}` : ""}
+                          {formatTime(c.startTime)} · {t("{n} min", { n: c.durationMinutes })}{c.trainerName ? ` · ${c.trainerName}` : ""}
                         </p>
                       </div>
                       {isOwner && (
