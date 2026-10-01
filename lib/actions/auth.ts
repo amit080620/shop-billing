@@ -73,8 +73,10 @@ export async function signupAction(
   // Every new shop tries the whole app for 14 days and then settles on
   // the Free plan — no card, no lockout, and the counter keeps billing.
   // A super admin assigns a paid plan from /admin once payment arrives.
+  // trial_ends_at is the last day of the trial, inclusive, and sign-up day
+  // is day 1 — so +13 gives exactly 14 days, and Home says "14 more days".
   const trialEnds = new Date();
-  trialEnds.setDate(trialEnds.getDate() + 14);
+  trialEnds.setDate(trialEnds.getDate() + 13);
 
   let { data: shop, error: shopError } = await admin
     .from("shops")
