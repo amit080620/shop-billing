@@ -27,7 +27,7 @@ export function LanguageToggle({ lang: initial }: { lang: Lang; /** Kept for cal
           key={l.code}
           onClick={() => switchTo(l.code)}
           className={`rounded-md px-2.5 py-1 text-xs font-medium ${
-            lang === l.code ? "bg-brand-soft font-semibold text-brand-text" : "text-muted hover:text-foreground"
+            lang === l.code ? "bg-brand font-semibold text-white" : "text-muted hover:text-foreground"
           }`}
         >
           {l.label}

@@ -17,14 +17,14 @@ export function CalculatorToggle({ enabled: initial }: { enabled: boolean }) {
     <div className="flex gap-1.5 rounded-lg border border-border p-1">
       <button
         onClick={() => switchTo(true)}
-        className={`rounded-md px-2.5 py-1 text-xs font-medium ${enabled ? "bg-brand-soft text-brand-text" : "text-muted"}`}
+        className={`rounded-md px-2.5 py-1 text-xs font-medium ${enabled ? "bg-brand text-white" : "text-muted"}`}
         style={enabled ? { boxShadow: "var(--elev-xs)" } : undefined}
       >
         On
       </button>
       <button
         onClick={() => switchTo(false)}
-        className={`rounded-md px-2.5 py-1 text-xs font-medium ${!enabled ? "bg-brand-soft text-brand-text" : "text-muted"}`}
+        className={`rounded-md px-2.5 py-1 text-xs font-medium ${!enabled ? "bg-brand text-white" : "text-muted"}`}
         style={!enabled ? { boxShadow: "var(--elev-xs)" } : undefined}
       >
         Off
