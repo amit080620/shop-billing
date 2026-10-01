@@ -149,7 +149,10 @@ export async function LandingPage() {
 
       <footer className="mx-auto flex max-w-5xl flex-col items-center gap-2 px-5 py-8 text-center text-xs text-white/35">
         <p>{t("landing.footer.tagline")}</p>
-        <Link href="/privacy-policy" className="hover:text-white/60">{t("landing.footer.privacy")}</Link>
+        <p className="flex gap-3">
+          <Link href="/terms" className="hover:text-white/60">{t("Terms & refund policy")}</Link>
+          <Link href="/privacy-policy" className="hover:text-white/60">{t("landing.footer.privacy")}</Link>
+        </p>
       </footer>
     </div>
   );

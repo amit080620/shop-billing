@@ -24,6 +24,17 @@ export default async function SignupPage() {
       subtitle={t("signup.subtitle")}
       footer={
         <>
+          <p className="mb-3 text-xs">
+            {t("signup.agreeBefore")}{" "}
+            <Link href="/terms" className="font-medium text-brand underline">
+              {t("Terms & refund policy")}
+            </Link>{" "}
+            {t("signup.agreeAnd")}{" "}
+            <Link href="/privacy-policy" className="font-medium text-brand underline">
+              {t("landing.footer.privacy")}
+            </Link>{" "}
+            {t("signup.agreeAfter")}
+          </p>
           {t("signup.alreadyHave")}{" "}
           <Link href="/login" className="font-semibold text-brand">
             {t("signup.login")}

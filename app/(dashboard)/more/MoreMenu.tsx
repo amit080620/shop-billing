@@ -22,6 +22,7 @@ import {
   ChevronRight,
   ClipboardCheck,
   ClipboardList,
+  DatabaseBackup,
   Dumbbell,
   FileClock,
   FileDown,
@@ -290,6 +291,7 @@ export async function MoreMenu() {
           <MenuLink href="/fast-print-setup" label="One-click print setup" sub="Print from a laptop without the dialog" icon={Printer} />
           {type !== "restaurant" && <MenuLink href="/plans#hardware" label="Printers & counter hardware" sub="Bluetooth printers, scanners and starter kits" icon={ShoppingBag} />}
           <MenuLink href="/offline-bill" label="Offline billing" sub="Keep billing with no connection — syncs when you're back" icon={WifiOff} />
+          {isOwner && <MenuLink href="/backup" label="Backup" sub="Download all your data in one Excel file" icon={DatabaseBackup} />}
           {isOwner && <MenuLink href="/audit-log" label="Audit log" sub="Who did what, and when" icon={FileClock} locked={lock("audit_log")} />}
           {isOwner && mod("audit_log") && <MenuLink href="/error-log" label="Error log" sub="Unexpected failures caught automatically" icon={AlertTriangle} />}
         </MenuGroup>

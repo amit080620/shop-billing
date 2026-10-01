@@ -7,6 +7,8 @@ import { PlanBadge } from "@/app/components/PlanBadge";
 import { effectivePlan, PLANS, type PlanKey } from "@/lib/plans";
 import { buildWhatsAppLink } from "@/lib/whatsapp";
 import { isDemoShopName } from "@/lib/demo/config";
+import { onboardingStatus } from "@/lib/onboarding";
+import { onboardingFacts, readOnboardingFile } from "@/lib/onboardingData";
 import { CopyMigrationButton } from "./CopyMigrationButton";
 
 function statusFor(validUntil: string | null) {
@@ -89,6 +91,18 @@ export default async function AdminDashboardPage({ searchParams }: { searchParam
   const newEnquiries = plansReady
     ? ((await admin.from("sales_enquiries").select("id", { count: "exact", head: true }).eq("status", "new")).count ?? 0)
     : 0;
+
+  // Set-up progress for shops that joined in the last 60 days (the pilot), newest 25.
+  const recent = shops.filter((s) => Date.now() - Date.parse(s.created_at) < 60 * 86400_000).slice(0, 25);
+  const ticksFile = recent.length ? await readOnboardingFile(admin) : {};
+  const setup = new Map(
+    await Promise.all(
+      recent.map(async (s) => {
+        const st = onboardingStatus(await onboardingFacts(s.id, admin), ticksFile[s.id]?.ticks ?? {});
+        return [s.id, `${st.done}/${st.total}`] as const;
+      }),
+    ),
+  );
 
   const visible = withPlan.filter((s) => {
     if (!plansReady || filter === "all") return true;
@@ -191,6 +205,7 @@ export default async function AdminDashboardPage({ searchParams }: { searchParam
                     <span className="truncate text-sm font-medium">{shop.legal_name || shop.name}</span>
                     {plansReady && <PlanBadge plan={shop.eff.key as PlanKey} size="xs" className="shrink-0" />}
                     {shop.eff.onTrial && <span className="shrink-0 text-[10px] font-semibold text-emerald-400">TRIAL</span>}
+                    {setup.has(shop.id) && <span className="shrink-0 rounded bg-indigo-900/60 px-1.5 py-px text-[10px] font-semibold text-indigo-200">Set-up {setup.get(shop.id)}</span>}
                   </p>
                   <p className="text-xs text-gray-400">
                     {shop.gstin || "No GSTIN"} · Wallet ₹{Number(shop.wallet_balance).toLocaleString("en-IN")}

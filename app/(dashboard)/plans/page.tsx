@@ -298,6 +298,9 @@ export default async function PlansPage() {
               <p className="text-xs text-muted">{t("More branches, a specific module, or a price that fits a bigger chain — tell us and we'll build a plan around your shop.")}</p>
               <EnquiryButton kind="custom" item={t("a custom plan")} label={t("Talk to us")} variant="quiet" {...enquiry} />
             </article>
+            <Link href="/terms#refund" className="-mb-1 text-center text-xs font-medium text-brand-text underline">
+              {t("Terms & refund policy")}
+            </Link>
             <p className="text-center text-xs text-muted">{SALES_WHATSAPP_CONFIRMED ? t("Pay by UPI or bank transfer — we share the details on WhatsApp and switch your plan on the same day.") : t("Tap Upgrade — our team calls you, shares the payment details and switches your plan the same day.")}</p>
           </section>
         </>

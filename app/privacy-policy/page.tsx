@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function PrivacyPolicyPage() {
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-6 px-5 py-10 text-sm leading-relaxed text-foreground">
@@ -55,6 +57,14 @@ export default function PrivacyPolicyPage() {
       <p className="text-xs text-muted">
         This notice is provided in good faith to be genuinely clear and honest about our data practices. If you
         have questions or a request about your data, please contact the shop directly.
+      </p>
+
+      <p className="text-xs text-muted">
+        Shop owners: the rules for using The Ray, refunds and your shop&apos;s data are in the{" "}
+        <Link href="/terms" className="font-medium text-brand-text underline">
+          terms of service and refund policy
+        </Link>
+        .
       </p>
     </div>
   );

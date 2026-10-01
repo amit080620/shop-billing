@@ -12,6 +12,8 @@ import { PlanBadge } from "@/app/components/PlanBadge";
 import { effectivePlan, planFor, type PlanKey } from "@/lib/plans";
 import { buildWhatsAppLink } from "@/lib/whatsapp";
 import { plansMigrationApplied } from "@/lib/actions/admin-plans";
+import { shopOnboarding } from "@/lib/onboardingData";
+import { OnboardingChecklist } from "./OnboardingChecklist";
 
 export default async function AdminShopDetailPage({
   params,
@@ -68,6 +70,7 @@ export default async function AdminShopDetailPage({
     ? await admin.from("plan_changes").select("id, from_plan, to_plan, amount, months, note, created_at").eq("shop_id", id).order("created_at", { ascending: false }).limit(10)
     : { data: [] };
   const changes = changesResult.data ?? [];
+  const onboarding = await shopOnboarding(id);
 
   return (
     <div className="flex flex-col gap-4">
@@ -122,6 +125,13 @@ export default async function AdminShopDetailPage({
           <AdminOwnerPhoneForm shopId={shop.id} phone={shop.owner_phone ?? null} />
         </section>
       )}
+
+      <OnboardingChecklist
+        shopId={shop.id}
+        steps={onboarding.steps.map(({ id: stepId, stage, title, hint, byData, byHand, done, tickable }) => ({ id: stepId, stage, title, hint, byData, byHand, done, tickable }))}
+        note={onboarding.note}
+        videosLink={`https://bill.theray.in/videos?type=${shop.business_type}`}
+      />
 
       {plansReady && (
         <section className="rounded-xl border border-gray-800 bg-gray-900 p-4 text-xs text-gray-300">
