@@ -5,6 +5,8 @@ import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { formatMoney, formatDateTime } from "@/lib/format";
 import { EmptyState } from "@/app/components/EmptyState";
 import { SalesTrendChartLazy as SalesTrendChart } from "@/app/components/DashboardLazy";
+import { TrendBars } from "@/app/components/TrendBars";
+import { getLiteMode } from "@/lib/theme";
 import { getTranslator } from "@/lib/i18n/server";
 import { PlanBanner } from "./PlanBanner";
 import { RayScoreCard } from "./RayScoreCard";
@@ -1632,14 +1634,16 @@ function buildSevenDayTrend<T extends Record<string, unknown>>(
 
 /** Last-7-days revenue with its daily trend — the one chart every
  * business type's home shows. */
-function TrendCard({ trend, label }: { trend: { day: string; date: string; total: number }[]; label: string }) {
+async function TrendCard({ trend, label }: { trend: { day: string; date: string; total: number }[]; label: string }) {
+  // Lite Mode: plain bars instead of the chart library.
+  const lite = await getLiteMode();
   return (
     <section className="neu-card p-4">
       <div className="mb-2 flex items-baseline justify-between gap-3">
         <p className="text-sm font-medium text-muted">{label}</p>
         <p className="text-lg font-bold tracking-tight text-foreground">{formatMoney(sum(trend.map((d) => d.total)))}</p>
       </div>
-      <SalesTrendChart data={trend} />
+      {lite ? <TrendBars data={trend} /> : <SalesTrendChart data={trend} />}
     </section>
   );
 }

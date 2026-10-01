@@ -87,8 +87,22 @@ export default async function RootLayout({
   const lang = await getLang();
 
   return (
-    <html lang={lang} className={`${plusJakartaSans.variable} ${notoSansDevanagari.variable} ${theme === "dark" ? "dark" : ""} ${liteMode ? "lite-mode" : ""}`}>
+    <html
+      lang={lang}
+      className={`${plusJakartaSans.variable} ${notoSansDevanagari.variable} ${theme === "dark" ? "dark" : ""} ${liteMode ? "lite-mode" : ""}`}
+      // The Lite Mode script below may set the class before React loads.
+      suppressHydrationWarning
+    >
       <head>
+        {/* Lite Mode before the first paint. Preferences → Lite Mode can force it on or off; left on
+            Auto (the default), it switches on for a phone with ≤2 GB memory or ≤4 cores, data saver,
+            or a 2G/3G connection — and remembers the answer in a cookie so the server can skip the
+            heavy bits (chart library, login scene) on the next page too. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var m=/(?:^|; )lite_mode=(on|off)/.exec(document.cookie),on;if(m){on=m[1]==="on";}else{var n=navigator,c=n.connection||{};on=(n.deviceMemory||8)<=2||(n.hardwareConcurrency||8)<=4||!!c.saveData||/2g|3g/.test(c.effectiveType||"");document.cookie="lite_auto="+(on?"1":"0")+"; path=/; max-age=2592000; samesite=lax";}document.documentElement.classList.toggle("lite-mode",on);}catch(e){}})();`,
+          }}
+        />
         {/* Genuinely the earliest point any code runs on this page —
             before React, before the app's own bundles, before even
             global-error.tsx exists. A crash this early (webpack module

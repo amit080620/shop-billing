@@ -2,7 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { listPendingCatalogOrdersAction, rejectCatalogOrderAction } from "@/lib/actions/catalog";
+import { rejectCatalogOrderAction } from "@/lib/actions/catalog";
+import { useVisiblePoll } from "@/lib/useVisiblePoll";
 import { formatMoney } from "@/lib/format";
 
 type PendingOrder = { id: string; customerName: string; total: number; createdAt: string };
@@ -66,12 +67,13 @@ export function CatalogOrderAlert() {
     }
   }
 
-  // Poll for pending orders; detect newly-arrived ones to alert on.
-  useEffect(() => {
-    let cancelled = false;
-    async function poll() {
-      const pending = await listPendingCatalogOrdersAction();
-      if (cancelled) return;
+  // Poll for pending orders; detect newly-arrived ones to alert on. A plain GET while the screen
+  // is in view — never a server action, which would queue a bill behind it.
+  useVisiblePoll(async () => {
+    {
+      const res = await fetch("/api/pending/catalog-orders", { cache: "no-store" });
+      if (!res.ok) return;
+      const pending = (await res.json()) as PendingOrder[];
       const currentIds = new Set(pending.map((o) => o.id));
 
       if (seenIds.current === null) {
@@ -90,13 +92,7 @@ export function CatalogOrderAlert() {
       });
       seenIds.current = currentIds;
     }
-    poll();
-    const timer = setInterval(poll, 8000);
-    return () => {
-      cancelled = true;
-      clearInterval(timer);
-    };
-  }, []);
+  }, 8000);
 
   // Keep ringing on a loop for as long as there's an unhandled alert —
   // deliberately naggy (matches how delivery-partner apps behave), not

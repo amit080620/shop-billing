@@ -14,7 +14,8 @@ export function BillSuccessSound() {
   useEffect(() => {
     if (played.current) return;
     const params = new URLSearchParams(window.location.search);
-    if (params.get("new") === "1") {
+    // Lite Mode: silent — nothing extra on an older phone.
+    if (params.get("new") === "1" && !document.documentElement.classList.contains("lite-mode")) {
       played.current = true;
       // Tiny delay so the page has genuinely rendered before the
       // audio context is created — avoids the iOS "audio must follow

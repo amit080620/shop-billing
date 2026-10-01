@@ -347,7 +347,7 @@ function FormatPill({ href, label, active }: { href: string; label: string; acti
     <a
       href={href}
       aria-current={active ? "true" : undefined}
-      className={`rounded-full px-3 py-1 text-xs font-medium ${active ? "bg-surface text-foreground shadow-sm" : "text-muted hover:text-foreground"}`}
+      className={`rounded-full px-3 py-1 text-xs font-medium ${active ? "bg-brand text-white shadow-sm" : "text-muted hover:text-foreground"}`}
     >
       {label}
     </a>

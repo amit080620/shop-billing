@@ -48,7 +48,7 @@ export function ThemeToggle({ theme: initial }: { theme: "light" | "dark" | "aut
       <button
         onClick={() => switchTo("light")}
         className={`rounded-md px-2.5 py-1 text-xs font-medium ${
-          theme === "light" ? "bg-brand-soft text-brand-text" : "text-muted"
+          theme === "light" ? "bg-brand text-white" : "text-muted"
         }`}
       >
         <Sun size={12} className="inline" /> Light
@@ -56,7 +56,7 @@ export function ThemeToggle({ theme: initial }: { theme: "light" | "dark" | "aut
       <button
         onClick={() => switchTo("dark")}
         className={`rounded-md px-2.5 py-1 text-xs font-medium ${
-          theme === "dark" ? "bg-brand-soft text-brand-text" : "text-muted"
+          theme === "dark" ? "bg-brand text-white" : "text-muted"
         }`}
       >
         <Moon size={12} className="inline" /> Dark
@@ -64,7 +64,7 @@ export function ThemeToggle({ theme: initial }: { theme: "light" | "dark" | "aut
       <button
         onClick={() => switchTo("auto")}
         className={`rounded-md px-2.5 py-1 text-xs font-medium ${
-          theme === "auto" ? "bg-brand-soft text-brand-text" : "text-muted"
+          theme === "auto" ? "bg-brand text-white" : "text-muted"
         }`}
         title="Switches with day and night automatically"
       >

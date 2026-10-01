@@ -827,7 +827,7 @@ export function NewBillClient({
                 setSelectedCustomer(null);
               }}
               className={`rounded-lg py-2 text-sm font-semibold transition-colors ${
-                customerMode === "walkin" ? "bg-surface text-foreground shadow-[var(--elev-xs)]" : "text-muted"
+                customerMode === "walkin" ? "bg-brand text-white shadow-[var(--elev-xs)]" : "text-muted hover:text-foreground"
               }`}
             >
               {t("bill.walkin")}
@@ -837,7 +837,7 @@ export function NewBillClient({
               aria-pressed={customerMode === "existing"}
               onClick={() => setCustomerMode("existing")}
               className={`rounded-lg py-2 text-sm font-semibold transition-colors ${
-                customerMode === "existing" ? "bg-surface text-foreground shadow-[var(--elev-xs)]" : "text-muted"
+                customerMode === "existing" ? "bg-brand text-white shadow-[var(--elev-xs)]" : "text-muted hover:text-foreground"
               }`}
             >
               {t("bill.existingCustomer")}

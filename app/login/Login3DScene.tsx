@@ -20,7 +20,7 @@ import type { Lang } from "@/lib/i18n/dictionary";
  * (hover: hover, pointer: fine) — touch screens get the idle float/drift
  * animation instead, never a phantom gyroscope permission prompt.
  * Everything respects prefers-reduced-motion by freezing in place. */
-export function Login3DScene({ lang, children }: { lang: Lang; children: React.ReactNode }) {
+export function Login3DScene({ lang, children, lite = false }: { lang: Lang; children: React.ReactNode; /** Lite Mode: no stars, orbs, floor or stacked logo — a plain screen. */ lite?: boolean }) {
   const [tilt, setTilt] = useState({ x: 0, y: 0 });
   const [ready, setReady] = useState(false);
   const frame = useRef<number | null>(null);
@@ -30,7 +30,7 @@ export function Login3DScene({ lang, children }: { lang: Lang; children: React.R
     setReady(true);
     reducedMotion.current = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const canHover = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
-    if (!canHover || reducedMotion.current) return;
+    if (!canHover || reducedMotion.current || lite) return;
 
     function onMove(e: PointerEvent) {
       if (frame.current) return;
@@ -65,19 +65,25 @@ export function Login3DScene({ lang, children }: { lang: Lang; children: React.R
     >
       {/* Starfield — a pure CSS dot pattern, not JS-generated positions,
           so there's zero hydration risk from randomness. */}
-      <div className="login-stars" aria-hidden="true" />
+      {!lite && <div className="login-stars" aria-hidden="true" />}
 
       {/* Floating glass/gradient orbs at three different depths. */}
-      <div className="login-orb login-orb-a" aria-hidden="true" />
-      <div className="login-orb login-orb-b" aria-hidden="true" />
-      <div className="login-orb login-orb-c" aria-hidden="true" />
+      {!lite && (
+        <>
+          <div className="login-orb login-orb-a" aria-hidden="true" />
+          <div className="login-orb login-orb-b" aria-hidden="true" />
+          <div className="login-orb login-orb-c" aria-hidden="true" />
+        </>
+      )}
 
       {/* Perspective floor — a receding grid, the classic "deep space"
           cue: parallel lines converging toward a horizon read as real
           depth even though the whole thing is one flat plane. */}
-      <div className="login-floor-wrap" aria-hidden="true">
-        <div className="login-floor" />
-      </div>
+      {!lite && (
+        <div className="login-floor-wrap" aria-hidden="true">
+          <div className="login-floor" />
+        </div>
+      )}
 
       {/* A fixed corner, not part of the centered column below — a
           language switch reads as a deliberate top-right control here,
@@ -101,7 +107,12 @@ export function Login3DScene({ lang, children }: { lang: Lang; children: React.R
       {/* The actual 3D stage: logo + form card, both inside one
           perspective so they genuinely share the same depth space. */}
       <div className={`login-stage ${ready ? "login-stage-ready" : ""}`}>
-        <LogoStack tiltX={tilt.x} tiltY={tilt.y} />
+        {lite ? (
+          // eslint-disable-next-line @next/next/no-img-element -- the one small brand image
+          <img src="/brand-logo.png" alt="The Ray" className="mx-auto mb-6 h-16 w-auto" />
+        ) : (
+          <LogoStack tiltX={tilt.x} tiltY={tilt.y} />
+        )}
         <div
           className="login-card-wrap"
           style={{

@@ -1,4 +1,4 @@
-import { getTheme, getCalculatorEnabled, getAssistantEnabled, getLiteMode } from "@/lib/theme";
+import { getTheme, getCalculatorEnabled, getAssistantEnabled, getLiteSetting } from "@/lib/theme";
 import { ThemeToggle } from "@/app/components/ThemeToggle";
 import { CalculatorToggle } from "@/app/components/CalculatorToggle";
 import { AssistantToggle } from "@/app/components/AssistantToggle";
@@ -14,7 +14,7 @@ export default async function PreferencesPage() {
   const theme = await getTheme();
   const calculatorEnabled = await getCalculatorEnabled();
   const assistantEnabled = await getAssistantEnabled();
-  const liteMode = await getLiteMode();
+  const liteSetting = await getLiteSetting();
 
   return (
     <div className="flex flex-col gap-4 pb-6">
@@ -53,7 +53,7 @@ export default async function PreferencesPage() {
       </div>
 
       <div className="neu-tray flex flex-col gap-2 p-2">
-        <LiteModeToggle enabled={liteMode} />
+        <LiteModeToggle setting={liteSetting} />
       </div>
     </div>
   );

@@ -1048,17 +1048,33 @@ label.neu-card:active {
   text-shadow: none;
 }
 
-/* Lite Mode (opt-in, Preferences) — drops the remaining soft shadows
- * and decorative transitions for older/budget phones. */
-html.lite-mode .neu-card,
-html.lite-mode .neu-tray {
-  box-shadow: none !important;
-}
+/* Lite Mode (Preferences → Lite Mode; on Auto it switches itself on for older phones and slow
+ * networks) — speed over looks. No shadows, blur, filters or motion anywhere: every frame is cheap
+ * to paint. Animations end at once in their final state (duration 0) rather than being removed, so
+ * nothing that fades in stays hidden. Cards keep a plain border so they still read as cards. */
 html.lite-mode *,
 html.lite-mode *::before,
 html.lite-mode *::after {
-  transition-duration: 0ms !important;
+  transition: none !important;
   animation-duration: 0ms !important;
+  animation-delay: 0ms !important;
+  animation-iteration-count: 1 !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+  backdrop-filter: none !important;
+  scroll-behavior: auto !important;
+}
+html.lite-mode [class*="blur"],
+html.lite-mode [class*="drop-shadow"] {
+  filter: none !important;
+}
+html.lite-mode .neu-card,
+html.lite-mode .neu-tray {
+  border: 1px solid var(--border);
+}
+/* The phone's own font: nothing to download or swap in. */
+html.lite-mode body {
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", "Noto Sans Devanagari", sans-serif;
 }
 
 /* ─── Platform admin panel ────────────────────────────────────────────

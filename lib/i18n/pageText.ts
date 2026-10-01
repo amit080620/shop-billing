@@ -1903,4 +1903,15 @@ export const PAGE_TEXT: Record<string, [hi: string, mr: string]> = {
   "Ask for a call": ["कॉल के लिए कहें", "कॉलसाठी विनंती करा"],
   "Sending…": ["भेज रहे हैं…", "पाठवत आहोत…"],
   "Sent. Our team will reset your password and call you on this number.": ["भेज दिया। हमारी टीम पासवर्ड रीसेट करके इसी नंबर पर कॉल करेगी।", "पाठवले. आमची टीम पासवर्ड रीसेट करून याच नंबरवर कॉल करेल."],
+
+  // Lite Mode
+  "Auto": ["ऑटो", "ऑटो"],
+  "On": ["चालू", "चालू"],
+  "Lite Mode — fastest on old phones": ["लाइट मोड — पुराने फ़ोन पर सबसे तेज़", "लाइट मोड — जुन्या फोनवर सर्वात वेगवान"],
+  "No animations, shadows, blur or sounds, the phone's own font, simple charts. Billing works exactly the same, just quicker.": ["कोई एनिमेशन, शैडो, ब्लर या आवाज़ नहीं, फ़ोन का अपना फ़ॉन्ट, सादे चार्ट। बिलिंग बिल्कुल वैसी ही — बस और तेज़।", "कोणतेही ॲनिमेशन, शॅडो, ब्लर किंवा आवाज नाही, फोनचा स्वतःचा फॉन्ट, साधे चार्ट. बिलिंग अगदी तसेच — फक्त अधिक वेगाने."],
+  "Lite Mode": ["लाइट मोड", "लाइट मोड"],
+  "Auto: this phone gets Lite Mode (older phone or slow internet).": ["ऑटो: इस फ़ोन पर लाइट मोड चालू है (पुराना फ़ोन या धीमा इंटरनेट)।", "ऑटो: या फोनवर लाइट मोड चालू आहे (जुना फोन किंवा हळू इंटरनेट)."],
+  "Auto: this phone is fast enough for the full look.": ["ऑटो: यह फ़ोन पूरे डिज़ाइन के लिए काफ़ी तेज़ है।", "ऑटो: हा फोन पूर्ण डिझाइनसाठी पुरेसा वेगवान आहे."],
+  "Lite Mode is on.": ["लाइट मोड चालू है।", "लाइट मोड चालू आहे."],
+  "Lite Mode is off.": ["लाइट मोड बंद है।", "लाइट मोड बंद आहे."],
 };

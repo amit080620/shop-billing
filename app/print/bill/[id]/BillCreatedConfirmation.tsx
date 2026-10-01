@@ -13,10 +13,13 @@ export function BillCreatedConfirmation({ amount, pointsEarned }: { amount?: str
 
   useEffect(() => {
     if (!visible) return;
-    // Strip ?new=1 at once with the History API (not router.replace, which would re-render the
-    // whole page) so a refresh or a shared link never shows this again; hide the bar shortly after.
-    window.history.replaceState(null, "", pathname);
-    const timer = setTimeout(() => setVisible(false), 1800);
+    // Hide the bar shortly, then strip ?new=1 with the History API (not router.replace, which would
+    // re-render the whole page) so a refresh or a shared link never shows it again. Not stripped at
+    // once: the success sound reads the same flag when the page opens.
+    const timer = setTimeout(() => {
+      setVisible(false);
+      window.history.replaceState(null, "", pathname);
+    }, 1800);
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible]);

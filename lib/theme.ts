@@ -23,14 +23,23 @@ export async function getAssistantEnabled(): Promise<boolean> {
   return cookieStore.get("assistant")?.value !== "off";
 }
 
-/** Lite Mode — swaps the app's neumorphic shadows/gradients (visually
- * premium, but genuinely more expensive to paint — many layered
- * shadows per card) for flat, simple-bordered cards, and removes
- * decorative transitions. Defaults OFF (the app looks how it's
- * designed to look) — this is an opt-in for anyone on an older/budget
- * phone who'd rather trade the neumorphic look for snappier scrolling
- * on long lists (Products, Customers, etc). */
+/** Lite Mode — speed over looks, for older phones and slow networks: no shadows, blur, animations
+ * or sounds, the system font, a plain login screen and simple bars instead of the chart library.
+ * Auto by default: switched on by itself on a phone with little memory, few cores, data saver or
+ * a 2G/3G connection. */
 export async function getLiteMode(): Promise<boolean> {
+  const setting = await getLiteSetting();
+  if (setting !== "auto") return setting === "on";
   const cookieStore = await cookies();
-  return cookieStore.get("lite_mode")?.value === "on";
+  // Auto: the little script in the root layout checks the phone (memory, cores, network) on every
+  // visit and leaves its answer here.
+  return cookieStore.get("lite_auto")?.value === "1";
+}
+
+/** What the owner chose in Preferences: Auto (the default — on for older phones and slow
+ * networks), always On, or always Off. */
+export async function getLiteSetting(): Promise<"auto" | "on" | "off"> {
+  const cookieStore = await cookies();
+  const v = cookieStore.get("lite_mode")?.value;
+  return v === "on" || v === "off" ? v : "auto";
 }

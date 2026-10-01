@@ -6,13 +6,13 @@ import Link from "next/link";
 import { createTableAction, createNumberedTablesAction, startOrderAction, renameTableAction, deleteTableAction, clearEmptyOrderAction } from "@/lib/actions/restaurant";
 import { lookupCustomerByPhoneAction } from "@/lib/actions/customers";
 import {
-  listPendingTableRequestsAction,
   acceptTableOrderRequestAction,
   rejectTableOrderRequestAction,
   getTableQrImageAction,
 } from "@/lib/actions/table-orders";
 import { LayoutGrid, Layers, CalendarClock, Smartphone, Check, X, Bell, QrCode, Minus, Plus, ChefHat } from "lucide-react";
 import { formatMoney } from "@/lib/format";
+import { useVisiblePoll } from "@/lib/useVisiblePoll";
 import { PageHeader } from "@/app/components/PageHeader";
 import { useToast } from "@/app/components/Toast";
 import { EmptyState } from "@/app/components/EmptyState";
@@ -229,16 +229,13 @@ export function TablesClient({ tables, lang, showKitchenLink = false }: { tables
     }
   }
 
-  useEffect(() => {
-    function poll() {
-      router.refresh();
-      listPendingTableRequestsAction().then(setRequests);
-    }
-    poll();
-    const timer = setInterval(poll, 15000);
-    return () => clearInterval(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  // Tables and QR orders stay fresh while the screen is in view; the orders come by plain GET so
+  // they never hold up a settle or a KOT.
+  useVisiblePoll(async () => {
+    router.refresh();
+    const res = await fetch("/api/pending/table-requests", { cache: "no-store" });
+    if (res.ok) setRequests(await res.json());
+  }, 15000);
 
   const [bookingTable, setBookingTable] = useState<Table | null>(null);
   const [bookingName, setBookingName] = useState("");

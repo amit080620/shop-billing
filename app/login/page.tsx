@@ -3,6 +3,7 @@ import { loginAction } from "@/lib/actions/auth";
 import { AuthForm } from "@/app/(auth)/AuthForm";
 import { getTranslator } from "@/lib/i18n/server";
 import { Login3DScene } from "./Login3DScene";
+import { getLiteMode } from "@/lib/theme";
 
 /** The login screen only — a deliberately different, more theatrical
  * first impression than the rest of the app. Every other auth screen
@@ -14,9 +15,10 @@ import { Login3DScene } from "./Login3DScene";
  * split-panel/light background entirely, rather than fighting it. */
 export default async function LoginPage() {
   const { lang, t } = await getTranslator();
+  const lite = await getLiteMode();
 
   return (
-    <Login3DScene lang={lang}>
+    <Login3DScene lang={lang} lite={lite}>
       <div
         style={
           {
