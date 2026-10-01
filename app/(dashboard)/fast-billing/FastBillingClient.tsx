@@ -518,7 +518,7 @@ function FastBillSheet({
 
       {customerFocus ? (
         <p className="border-b border-border px-4 py-2 text-xs text-muted">
-          {t("{count} items", { count: itemCount })} · {formatMoney(subtotal)}
+          {itemCount === 1 ? t("1 item") : t("{count} items", { count: itemCount })} · {formatMoney(subtotal)}
         </p>
       ) : (
       <div className="flex-1 overflow-y-auto px-4 py-3">
