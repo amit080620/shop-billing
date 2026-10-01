@@ -9,6 +9,21 @@ import { AlertTriangle } from "lucide-react";
 import { getTranslator } from "@/lib/i18n/server";
 import { BackLink } from "@/app/components/BackLink";
 
+const CONTEXT_LABEL: Record<string, string> = { "client-crash": "Screen error" };
+
+/** Plain words for the errors that aren't a fault in a screen, so only the
+ * ones worth a look stay red. */
+function explain(message: string, details: Record<string, unknown> | null): string | null {
+  const text = `${message} ${String(details?.stack ?? "")}`;
+  if (details?.oldCode || /reading 'call'|Loading chunk|ChunkLoadError|Server Action .* was not found/i.test(text)) {
+    return "An update went live while this screen was still open on the older version. The app reloads itself; nothing saved is lost.";
+  }
+  if (/network error|Load failed|Failed to fetch|Connection closed|NetworkError/i.test(text)) {
+    return "The internet dropped while the screen was loading. It works again once the connection is back.";
+  }
+  return null;
+}
+
 export default async function ErrorLogPage() {
   const { t } = await getTranslator();
   const session = await requireOwner();
@@ -27,29 +42,32 @@ export default async function ErrorLogPage() {
       <BackLink fallback="/dashboard" />
       <PageHeader
         title={t("Error log")}
-        subtitle="Unexpected failures the app caught automatically — mostly useful if something needs investigating."
+        subtitle={t("Unexpected failures the app caught automatically — mostly useful if something needs investigating.")}
         icon={<AlertTriangle size={18} strokeWidth={1.8} />}
       />
 
       {(!logs || logs.length === 0) ? (
-        <EmptyState text="Nothing logged — that's a good sign." />
+        <EmptyState text={t("Nothing logged — that's a good sign.")} />
       ) : (
         <ul className="flex flex-col gap-2 md:grid md:grid-cols-2 md:gap-3">
           {logs.map((log) => {
             const details = log.details as Record<string, unknown> | null;
+            const hint = explain(log.message ?? "", details);
+            const where = [details?.url, details?.device].filter(Boolean).join(" · ");
             return (
-              <li key={log.id} className="rounded-lg border border-danger/30 bg-danger/5 px-3.5 py-2.5 shadow-sm">
-                <div className="flex items-center justify-between">
-                  <p className="text-sm font-medium text-danger">{log.context}</p>
-                  <p className="text-[11px] text-muted">{formatDateTime(log.created_at)}</p>
+              <li key={log.id} className={`rounded-lg border px-3.5 py-2.5 shadow-sm ${hint ? "border-border bg-surface" : "border-danger/30 bg-danger/5"}`}>
+                <div className="flex items-center justify-between gap-2">
+                  <p className={`text-sm font-medium ${hint ? "text-foreground" : "text-danger"}`}>{t(CONTEXT_LABEL[log.context] ?? log.context)}</p>
+                  <p className="shrink-0 text-[11px] text-muted">{formatDateTime(log.created_at)}</p>
                 </div>
-                <p className="text-xs text-foreground">{log.message}</p>
+                <p className="break-words text-xs text-foreground">{log.message}</p>
+                {hint && <p className="mt-1 text-xs text-muted">{t(hint)}</p>}
+                {where && <p className="mt-0.5 text-[11px] text-muted">{where}</p>}
                 {details && (
-                  <p className="mt-0.5 truncate text-[11px] text-muted" title={JSON.stringify(details)}>
-                    {Object.entries(details)
-                      .map(([k, v]) => `${k}: ${v}`)
-                      .join(" · ")}
-                  </p>
+                  <details className="mt-1">
+                    <summary className="cursor-pointer text-[11px] text-muted">{t("Technical details")}</summary>
+                    <pre className="mt-1 max-h-48 overflow-auto whitespace-pre-wrap break-all text-[10px] text-muted">{JSON.stringify(details, null, 2)}</pre>
+                  </details>
                 )}
               </li>
             );

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { RefreshCw, AlertTriangle } from "lucide-react";
 import { logClientErrorAction } from "@/lib/actions/errorReporting";
-import { reloadOnce } from "@/lib/recovery";
+import { crashContext, reloadOnce } from "@/lib/recovery";
 
 export default function DashboardError({
   error,
@@ -31,6 +31,7 @@ export default function DashboardError({
       digest: error.digest ?? null,
       stack: error.stack ?? null,
       url: typeof window !== "undefined" ? window.location.pathname : null,
+      ...crashContext(),
     });
 
     // A large share of these crashes right after reopening the app are

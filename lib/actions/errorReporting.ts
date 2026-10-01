@@ -18,12 +18,17 @@ export async function logClientErrorAction(message: string, details?: Record<str
     const admin = createSupabaseAdminClient();
     const { data: staff } = await admin.from("staff").select("shop_id").eq("id", user.id).maybeSingle();
 
+    // The phone was running an older deploy than the server: an update went
+    // live while the page was open, not a bug in the screen itself.
+    const serverBuild = process.env.NEXT_PUBLIC_BUILD_ID;
+    const oldCode = !!details?.build && !!serverBuild && details.build !== serverBuild;
+
     await logError({
       admin,
       shopId: staff?.shop_id ?? null,
       context: "client-crash",
       message,
-      details,
+      details: oldCode ? { ...details, oldCode: true } : details,
     });
   } catch {
     // Best-effort only.

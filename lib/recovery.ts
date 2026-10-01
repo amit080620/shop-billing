@@ -19,3 +19,14 @@ export function reloadOnce(): boolean {
   window.location.reload();
   return true;
 }
+
+/** Which code the phone was running and on what, added to crash reports so
+ * the error log can tell "old version open during an update" apart from a
+ * real bug, and an app install from a browser. */
+export function crashContext(): { build: string | null; device: string | null } {
+  if (typeof navigator === "undefined") return { build: null, device: null };
+  const ua = navigator.userAgent;
+  const app = ua.match(/TheRayApp\/[\d.]+/)?.[0]?.replace("TheRayApp/", "Android app ");
+  const device = app ?? (/Android/.test(ua) ? "Android browser" : /iPhone|iPad/.test(ua) ? "iPhone browser" : "Computer browser");
+  return { build: process.env.NEXT_PUBLIC_BUILD_ID ?? null, device };
+}

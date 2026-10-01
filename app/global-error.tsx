@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { logClientErrorAction } from "@/lib/actions/errorReporting";
-import { reloadOnce } from "@/lib/recovery";
+import { crashContext, reloadOnce } from "@/lib/recovery";
 
 export default function GlobalError({
   error,
@@ -26,6 +26,7 @@ export default function GlobalError({
       stack: error.stack ?? null,
       url: typeof window !== "undefined" ? window.location.pathname : null,
       boundary: "global-error",
+      ...crashContext(),
     });
 
     // A large share of "client-side exception" crashes right after

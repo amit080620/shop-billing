@@ -1989,4 +1989,12 @@ export const PAGE_TEXT: Record<string, [hi: string, mr: string]> = {
   "Save customer": ["ग्राहक सेव करें", "ग्राहक सेव्ह करा"],
   "Save patient": ["मरीज़ सेव करें", "रुग्ण सेव्ह करा"],
   "Save member": ["सदस्य सेव करें", "सदस्य सेव्ह करा"],
+
+  // Error log
+  "Screen error": ["स्क्रीन की गड़बड़ी", "स्क्रीनमधील त्रुटी"],
+  "An update went live while this screen was still open on the older version. The app reloads itself; nothing saved is lost.": ["यह स्क्रीन पुराने वर्ज़न पर खुली थी और तभी नया अपडेट आ गया। ऐप खुद रीलोड हो जाता है; सेव किया हुआ कुछ भी नहीं खोता।", "ही स्क्रीन जुन्या आवृत्तीवर उघडी असताना नवीन अपडेट आले. ॲप स्वतः रीलोड होते; सेव्ह केलेले काहीही हरवत नाही."],
+  "The internet dropped while the screen was loading. It works again once the connection is back.": ["स्क्रीन लोड होते समय इंटरनेट कट गया था। कनेक्शन वापस आने पर सब ठीक चलता है।", "स्क्रीन लोड होताना इंटरनेट बंद झाले होते. कनेक्शन परत आल्यावर सर्व ठीक चालते."],
+  "Technical details": ["तकनीकी जानकारी", "तांत्रिक माहिती"],
+  "Unexpected failures the app caught automatically — mostly useful if something needs investigating.": ["ऐप ने अपने-आप पकड़ी अनचाही गड़बड़ियाँ — किसी समस्या की जाँच में काम आती हैं।", "ॲपने आपोआप पकडलेल्या अनपेक्षित त्रुटी — एखाद्या समस्येची तपासणी करताना उपयोगी."],
+  "Nothing logged — that's a good sign.": ["कुछ दर्ज नहीं हुआ — यह अच्छी बात है।", "काहीही नोंदले नाही — हे चांगले लक्षण आहे."],
 };

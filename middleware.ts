@@ -5,7 +5,17 @@ import { NextResponse, type NextRequest } from "next/server";
  * not just at the moment of login. */
 const KITCHEN_ALLOWED = ["/restaurant-kds", "/login", "/api"];
 
+const BUILD = process.env.NEXT_PUBLIC_BUILD_ID ?? "";
+
 export function middleware(request: NextRequest) {
+  const response = route(request);
+  // Server action replies carry the deploy id, so a page still running older
+  // code doesn't try to show a screen built by newer code (lib/actionGuard).
+  if (BUILD && request.headers.has("next-action")) response.headers.set("x-ray-build", BUILD);
+  return response;
+}
+
+function route(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Only guard actual dashboard pages — skip static assets, the public

@@ -2,6 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { RefreshCw } from "lucide-react";
+import { installActionGuard } from "@/lib/actionGuard";
+
+// As soon as the app's code loads, before anything can be saved.
+installActionGuard();
 
 const CHECK_INTERVAL_MS = 5 * 60 * 1000;
 const CURRENT = process.env.NEXT_PUBLIC_BUILD_ID;
