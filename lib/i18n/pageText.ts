@@ -2001,4 +2001,15 @@ export const PAGE_TEXT: Record<string, [hi: string, mr: string]> = {
   // Update pill
   "A new version is available": ["नया वर्ज़न आ गया है", "नवीन आवृत्ती आली आहे"],
   "Refresh": ["रीफ़्रेश करें", "रीफ्रेश करा"],
+
+  // Fast billing quantity
+  "Tap the quantity you want": ["जितनी मात्रा चाहिए उस पर टैप करें", "हवी ती संख्या टॅप करा"],
+  "Custom quantity": ["अपनी मात्रा लिखें", "स्वतःची संख्या लिहा"],
+  "Back": ["वापस", "मागे"],
+  "Set": ["सेट करें", "सेट करा"],
+  "More / Custom quantity": ["और / अपनी मात्रा", "आणखी / स्वतःची संख्या"],
+  "Remove from bill": ["बिल से हटाएँ", "बिलमधून काढा"],
+  "Remove one": ["एक कम करें", "एक कमी करा"],
+  "Change quantity": ["मात्रा बदलें", "संख्या बदला"],
+  "Tap an item to add 1 · press and hold to pick a quantity": ["आइटम पर टैप करें तो 1 जुड़ेगा · दबाकर रखें तो मात्रा चुनें", "आयटम टॅप केल्यास 1 जोडले जाईल · दाबून धरल्यास संख्या निवडा"],
 };

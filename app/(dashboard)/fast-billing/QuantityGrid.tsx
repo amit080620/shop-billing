@@ -1,17 +1,28 @@
 "use client";
 
 import { useState } from "react";
-import { X } from "lucide-react";
+import { X, Trash2 } from "lucide-react";
+import { useT } from "@/lib/i18n/LangContext";
 
+/** Picks an exact quantity for one item: the number tapped becomes the
+ * quantity in the bill, never added on top of what is already there (picking
+ * 3 for an item already at 1 makes it 3, not 4). */
 export function QuantityGrid({
   productName,
+  current,
   onSelect,
+  onRemove,
   onClose,
 }: {
   productName: string;
+  /** The quantity already in the bill, highlighted in the grid. */
+  current?: number;
   onSelect: (qty: number) => void;
+  /** Given when the item is in the bill: takes it out entirely. */
+  onRemove?: () => void;
   onClose: () => void;
 }) {
+  const { t } = useT();
   const [showCustom, setShowCustom] = useState(false);
   const [customValue, setCustomValue] = useState("");
 
@@ -24,8 +35,11 @@ export function QuantityGrid({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-3 flex items-center justify-between">
-          <p className="truncate pr-2 text-sm font-semibold text-foreground">{productName}</p>
-          <button onClick={onClose} className="shrink-0 rounded-full p-1.5 text-muted" aria-label="Close">
+          <div className="min-w-0 pr-2">
+            <p className="truncate text-sm font-semibold text-foreground">{productName}</p>
+            <p className="text-xs text-muted">{t("Tap the quantity you want")}</p>
+          </div>
+          <button onClick={onClose} className="shrink-0 rounded-full p-1.5 text-muted" aria-label={t("Close")}>
             <X size={18} />
           </button>
         </div>
@@ -33,7 +47,7 @@ export function QuantityGrid({
         {showCustom ? (
           <div className="flex flex-col gap-3">
             <label className="flex flex-col gap-1.5">
-              <span className="text-xs text-muted">Custom quantity</span>
+              <span className="text-xs text-muted">{t("Custom quantity")}</span>
               <input
                 type="number"
                 inputMode="numeric"
@@ -47,7 +61,7 @@ export function QuantityGrid({
             </label>
             <div className="flex gap-2">
               <button onClick={() => setShowCustom(false)} className="flex-1 rounded-lg border border-border py-2.5 text-sm font-medium text-foreground">
-                Back
+                {t("Back")}
               </button>
               <button
                 onClick={() => {
@@ -57,7 +71,7 @@ export function QuantityGrid({
                 disabled={!customValue || Number(customValue) <= 0}
                 className="btn-primary flex-1 disabled:opacity-40"
               >
-                Add
+                {t("Set")}
               </button>
             </div>
           </div>
@@ -68,7 +82,8 @@ export function QuantityGrid({
                 <button
                   key={n}
                   onClick={() => onSelect(n)}
-                  className="flex aspect-square items-center justify-center rounded-xl bg-background text-base font-semibold text-foreground"
+                  aria-pressed={n === current}
+                  className={`flex aspect-square items-center justify-center rounded-xl text-base font-semibold ${n === current ? "bg-brand text-white" : "bg-background text-foreground"}`}
                   style={{ boxShadow: "var(--elev-xs)" }}
                 >
                   {n}
@@ -79,8 +94,13 @@ export function QuantityGrid({
               onClick={() => setShowCustom(true)}
               className="mt-3 w-full rounded-xl border border-dashed border-border py-3 text-sm font-medium text-muted"
             >
-              More / Custom quantity
+              {t("More / Custom quantity")}
             </button>
+            {onRemove && (
+              <button onClick={onRemove} className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl py-3 text-sm font-medium text-danger">
+                <Trash2 size={16} /> {t("Remove from bill")}
+              </button>
+            )}
           </>
         )}
       </div>

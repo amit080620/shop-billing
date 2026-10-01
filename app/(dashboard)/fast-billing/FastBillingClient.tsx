@@ -81,6 +81,9 @@ export function FastBillingClient({
   const [voiceSupported, setVoiceSupported] = useState(false);
   const [voiceStatus, setVoiceStatus] = useState<string | null>(null);
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
+  // Press and hold on a tile opens the quantity grid; the tap that ends a
+  // hold must not also add one.
+  const hold = useRef<{ timer: ReturnType<typeof setTimeout> | null; opened: boolean }>({ timer: null, opened: false });
   const voiceStatusRef = useRef<AIStatusBadgeHandle>(null);
   const [voiceCustomer, setVoiceCustomer] = useState<{ id: string; name: string; phone: string | null; loyaltyPoints: number } | null>(null);
 
@@ -261,6 +264,27 @@ export function FastBillingClient({
     setCart((prev) => prev.map((l) => (l.productId === productId ? { ...l, qty, price: fastLinePrice(l, qty) } : l)));
   }
 
+  /** From the quantity grid: the number picked becomes the quantity. */
+  function setQuantity(product: FastProduct, qty: number) {
+    if (cart.some((l) => l.productId === product.id)) updateQty(product.id, qty);
+    else addToCart(product, qty);
+    setSelectedProduct(null);
+  }
+
+  function startHold(product: FastProduct) {
+    hold.current.opened = false;
+    if (hold.current.timer) clearTimeout(hold.current.timer);
+    hold.current.timer = setTimeout(() => {
+      hold.current.opened = true;
+      setSelectedProduct(product);
+    }, 450);
+  }
+
+  function endHold() {
+    if (hold.current.timer) clearTimeout(hold.current.timer);
+    hold.current.timer = null;
+  }
+
   if (products.length === 0) {
     return (
       <div className="flex flex-col items-center gap-3 px-6 py-16 text-center">
@@ -315,6 +339,8 @@ export function FastBillingClient({
         )}
       </div>
 
+      {itemCount === 0 && <p className="px-3 pt-2 text-center text-xs text-muted">{t("Tap an item to add 1 · press and hold to pick a quantity")}</p>}
+
       {/* Product grid — large tappable tiles, image-first */}
       <div className="grid flex-1 grid-cols-3 gap-2 px-3 py-3 pb-40 sm:grid-cols-4 md:pb-20">
         {visibleProducts.map((product) => {
@@ -325,30 +351,57 @@ export function FastBillingClient({
               key={product.id}
               onClick={() => {
                 if (outOfStock) return;
+                if (hold.current.opened) {
+                  hold.current.opened = false;
+                  return;
+                }
                 // A single tap instantly adds 1 — no modal in the way.
                 // Tapping again adds another. This is what makes
                 // repeat items (tea, samosas...) fast to ring up.
                 addToCart(product, 1);
               }}
+              // Press and hold: pick an exact quantity ("8 tea") straight away.
+              onPointerDown={() => !outOfStock && startHold(product)}
+              onPointerUp={endHold}
+              onPointerLeave={endHold}
+              onPointerCancel={endHold}
+              onContextMenu={(e) => e.preventDefault()}
               disabled={outOfStock}
-              className="relative flex flex-col overflow-hidden rounded-xl bg-surface text-left disabled:opacity-40"
+              className="relative flex select-none flex-col overflow-hidden rounded-xl bg-surface text-left [-webkit-touch-callout:none] disabled:opacity-40"
               style={{ boxShadow: "var(--elev-xs)" }}
             >
               {inCart && (
-                <span
-                  role="button"
-                  tabIndex={0}
-                  onClick={(e) => {
-                    // Jump straight to a specific quantity (e.g. "8
-                    // tea") without tapping the tile 8 times — the
-                    // one case that still genuinely needs the grid.
-                    e.stopPropagation();
-                    setSelectedProduct(product);
-                  }}
-                  className="absolute right-1 top-1 z-10 flex h-6 min-w-6 items-center justify-center rounded-full bg-brand px-1 text-xs font-bold text-white"
-                >
-                  {inCart.qty}
-                </span>
+                <>
+                  {/* One less — for an extra tap by mistake. */}
+                  <span
+                    role="button"
+                    tabIndex={0}
+                    aria-label={t("Remove one")}
+                    onPointerDown={(e) => e.stopPropagation()}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      updateQty(product.id, inCart.qty - 1);
+                    }}
+                    className="absolute left-1 top-1 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-surface text-foreground"
+                    style={{ boxShadow: "var(--elev-sm)" }}
+                  >
+                    <Minus size={16} strokeWidth={2.5} />
+                  </span>
+                  {/* The quantity: tap to set an exact number. */}
+                  <span
+                    role="button"
+                    tabIndex={0}
+                    aria-label={t("Change quantity")}
+                    onPointerDown={(e) => e.stopPropagation()}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedProduct(product);
+                    }}
+                    className="absolute right-1 top-1 z-10 flex h-8 min-w-8 items-center justify-center rounded-full bg-brand px-1.5 text-sm font-bold text-white"
+                  >
+                    {inCart.qty}
+                  </span>
+                </>
               )}
               <div className="relative flex aspect-square w-full items-center justify-center bg-background">
                 {product.imageUrl ? (
@@ -382,7 +435,16 @@ export function FastBillingClient({
       {selectedProduct && (
         <QuantityGrid
           productName={selectedProduct.name}
-          onSelect={(qty) => addToCart(selectedProduct, qty)}
+          current={cart.find((l) => l.productId === selectedProduct.id)?.qty}
+          onSelect={(qty) => setQuantity(selectedProduct, qty)}
+          onRemove={
+            cart.some((l) => l.productId === selectedProduct.id)
+              ? () => {
+                  updateQty(selectedProduct.id, 0);
+                  setSelectedProduct(null);
+                }
+              : undefined
+          }
           onClose={() => setSelectedProduct(null)}
         />
       )}
@@ -503,8 +565,13 @@ function FastBillSheet({
       {editingQty && (
         <QuantityGrid
           productName={editingQty.name}
+          current={cart.find((l) => l.productId === editingQty.productId)?.qty}
           onSelect={(qty) => {
             onUpdateQty(editingQty.productId, qty);
+            setEditingQty(null);
+          }}
+          onRemove={() => {
+            onUpdateQty(editingQty.productId, 0);
             setEditingQty(null);
           }}
           onClose={() => setEditingQty(null)}
