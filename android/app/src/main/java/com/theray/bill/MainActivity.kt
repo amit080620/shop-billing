@@ -50,6 +50,10 @@ class MainActivity : Activity() {
     val appUrl: Uri = Uri.parse(BuildConfig.APP_URL)
     private var pageReady = false
 
+    private var fullscreenView: View? = null
+    private var fullscreenCallback: WebChromeClient.CustomViewCallback? = null
+    private var barFlagsBeforeFullscreen = 0
+
     private var fileCallback: ValueCallback<Array<Uri>>? = null
     private var cameraFile: File? = null
     private var cameraUri: Uri? = null
@@ -178,6 +182,30 @@ class MainActivity : Activity() {
             }
             return true
         }
+
+        // The fullscreen button on a video (training videos, YouTube): the
+        // player takes the whole screen until back or the button again.
+        override fun onShowCustomView(view: View, callback: CustomViewCallback) {
+            if (fullscreenView != null) return callback.onCustomViewHidden()
+            fullscreenView = view
+            fullscreenCallback = callback
+            view.setBackgroundColor(Color.BLACK)
+            (window.decorView as ViewGroup).addView(view, FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
+            root.visibility = View.GONE
+            hideSystemBars(true)
+        }
+
+        override fun onHideCustomView() = exitFullscreen()
+    }
+
+    private fun exitFullscreen() {
+        val view = fullscreenView ?: return
+        fullscreenView = null
+        (window.decorView as ViewGroup).removeView(view)
+        root.visibility = View.VISIBLE
+        hideSystemBars(false)
+        fullscreenCallback?.onCustomViewHidden()
+        fullscreenCallback = null
     }
 
     private fun pickerIntent(accepts: List<String>, multiple: Boolean): Intent {
@@ -293,6 +321,26 @@ class MainActivity : Activity() {
         }
     }
 
+    @Suppress("DEPRECATION")
+    private fun hideSystemBars(hide: Boolean) {
+        if (Build.VERSION.SDK_INT >= 30) {
+            val controller = window.insetsController ?: return
+            if (hide) {
+                controller.systemBarsBehavior = WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+                controller.hide(WindowInsets.Type.systemBars())
+            } else {
+                controller.show(WindowInsets.Type.systemBars())
+            }
+        } else if (hide) {
+            barFlagsBeforeFullscreen = window.decorView.systemUiVisibility
+            window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_FULLSCREEN or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or
+                View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or
+                View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION or View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+        } else {
+            window.decorView.systemUiVisibility = barFlagsBeforeFullscreen
+        }
+    }
+
     /** Shows the splash (logo) until the first page has loaded instead of a
      * blank white screen, capped so a slow network never hides the app. */
     private fun keepSplashUntilLoaded() {
@@ -341,7 +389,8 @@ class MainActivity : Activity() {
 
     @Deprecated("Deprecated in Java")
     override fun onBackPressed() {
-        if (webView.canGoBack()) webView.goBack() else moveTaskToBack(true)
+        if (fullscreenView != null) exitFullscreen()
+        else if (webView.canGoBack()) webView.goBack() else moveTaskToBack(true)
     }
 
     override fun onSaveInstanceState(outState: Bundle) {

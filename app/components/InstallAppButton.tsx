@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { X } from "lucide-react";
-import { isNativeApp } from "@/lib/nativeApp";
+import { APP_DOWNLOAD_URL, isNativeApp } from "@/lib/nativeApp";
 import { useT } from "@/lib/i18n/LangContext";
 
 interface BeforeInstallPromptEvent extends Event {
@@ -109,6 +109,12 @@ export function InstallAppButton() {
           <X size={16} />
         </button>
       </div>
+
+      {platform === "android" && (
+        <a href={APP_DOWNLOAD_URL} className="px-1 text-xs font-semibold text-brand-text underline">
+          {t("Or download the Android app — Bluetooth printer and barcode scanner work best in it")}
+        </a>
+      )}
 
       {showManualSteps && !deferredPrompt && (
         <div className="rounded-lg border border-border bg-surface p-3 text-xs text-foreground">

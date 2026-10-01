@@ -43,6 +43,17 @@ For every release, raise both `versionCode` and `versionName` in
 `app/build.gradle.kts`. Android refuses to install an update that has the same
 or a lower `versionCode`.
 
+## Getting a new version to shops
+
+1. Copy the APK to `TheRay-v<version>.apk` and upload it to the public `app`
+   bucket in Supabase Storage under that same name.
+2. Raise `LATEST_APP_VERSION` in `lib/nativeApp.ts` and deploy the web app.
+
+Phones on an older version then see a "New app version ready — Update" banner
+at the top of the app. Tapping it downloads the APK in the phone's browser, and
+installing it over the old app keeps the login and data. New shops can be sent
+the short link `bill.theray.in/download`, which always gives the newest APK.
+
 ## Signing key — keep it safe
 
 Release builds are signed with the key in

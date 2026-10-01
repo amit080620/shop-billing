@@ -1964,4 +1964,12 @@ export const PAGE_TEXT: Record<string, [hi: string, mr: string]> = {
   "Photos of a shelf — the AI notices what is running out": ["शेल्फ़ की फ़ोटो — AI बताता है क्या ख़त्म हो रहा है", "शेल्फचे फोटो — AI सांगते काय संपत आहे"],
   "Birthday wishes, posters and price ideas": ["जन्मदिन की शुभकामनाएं, पोस्टर और दाम के सुझाव", "वाढदिवसाच्या शुभेच्छा, पोस्टर आणि किंमतीच्या सूचना"],
   "Personal WhatsApp wishes, festival poster text, a fair price for a new item": ["WhatsApp पर पर्सनल शुभकामनाएं, त्योहार के पोस्टर का टेक्स्ट, नए आइटम का सही दाम", "WhatsApp वर वैयक्तिक शुभेच्छा, सणाच्या पोस्टरचा मजकूर, नवीन वस्तूची योग्य किंमत"],
+
+  // Android app update banner
+  "New app version ready.": ["ऐप का नया वर्ज़न आ गया है।", "ॲपची नवीन आवृत्ती आली आहे."],
+  "Takes a minute; your data stays.": ["एक मिनट लगेगा, आपका डेटा वैसा ही रहेगा।", "एक मिनिट लागेल, तुमचा डेटा तसाच राहील."],
+  "Downloading… open the file and tap Install. Your login and data stay as they are.": ["डाउनलोड हो रहा है… फ़ाइल खोलें और इंस्टॉल दबाएँ। आपका लॉगिन और डेटा वैसा ही रहेगा।", "डाउनलोड होत आहे… फाइल उघडा आणि इन्स्टॉल दाबा. तुमचे लॉगिन आणि डेटा तसेच राहतील."],
+  "Update": ["अपडेट करें", "अपडेट करा"],
+  "Later": ["बाद में", "नंतर"],
+  "Or download the Android app — Bluetooth printer and barcode scanner work best in it": ["या Android ऐप डाउनलोड करें — ब्लूटूथ प्रिंटर और बारकोड स्कैनर उसमें सबसे अच्छे चलते हैं", "किंवा Android ॲप डाउनलोड करा — ब्लूटूथ प्रिंटर आणि बारकोड स्कॅनर त्यात सर्वात छान चालतात"],
 };
