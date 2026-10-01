@@ -2006,7 +2006,6 @@ export const PAGE_TEXT: Record<string, [hi: string, mr: string]> = {
   "Tap the quantity you want": ["जितनी मात्रा चाहिए उस पर टैप करें", "हवी ती संख्या टॅप करा"],
   "Custom quantity": ["अपनी मात्रा लिखें", "स्वतःची संख्या लिहा"],
   "Back": ["वापस", "मागे"],
-  "Set": ["सेट करें", "सेट करा"],
   "More / Custom quantity": ["और / अपनी मात्रा", "आणखी / स्वतःची संख्या"],
   "Remove from bill": ["बिल से हटाएँ", "बिलमधून काढा"],
   "Remove one": ["एक कम करें", "एक कमी करा"],
