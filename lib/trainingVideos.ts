@@ -1,6 +1,8 @@
 // The training videos (generated from the recordings — scratchpad video/gen-videos-ts.mjs).
-// Each chapter is one short Hinglish video, kept in the public "training-videos" storage bucket as
-// NN.mp4 (phone size), NN.jpg (poster) and NN.vtt (subtitles). `for` says which trades it is about.
+// Each chapter is one short Hinglish video. It plays from YouTube when the team has set its link
+// (lib/youtubeData.ts), else from the public "training-videos" storage bucket as NN.mp4 (phone size).
+// The poster NN.jpg and subtitles NN.vtt ship with the app in public/training-videos, so lists of
+// videos cost the storage bucket nothing. `for` says which trades it is about.
 
 export type TrainingVideo = { id: string; title: string; seconds: number; for: "all" | string[]; topics: [seconds: number, title: string][] };
 
@@ -43,9 +45,11 @@ export const videoById = (id: string) => TRAINING_VIDEOS.find((v) => v.id === id
 
 /** Where a video's files are. */
 export function videoFiles(id: string, base = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "") {
-  const root = `${base}/storage/v1/object/public/training-videos/${id}`;
-  return { mp4: `${root}.mp4`, poster: `${root}.jpg`, vtt: `${root}.vtt` };
+  return { mp4: `${base}/storage/v1/object/public/training-videos/${id}.mp4`, poster: `/training-videos/${id}.jpg`, vtt: `/training-videos/${id}.vtt` };
 }
+
+/** Width / height of every recording (a phone screen). */
+export const VIDEO_ASPECT = "720 / 1558";
 
 /** This trade's own videos first, then the ones for every shop. */
 export function videosFor(businessType: string) {
@@ -53,6 +57,13 @@ export function videosFor(businessType: string) {
   const common = TRAINING_VIDEOS.filter((v) => v.for === "all");
   const other = TRAINING_VIDEOS.filter((v) => v.for !== "all" && !v.for.includes(businessType));
   return { own, common, other };
+}
+
+/** The one video to show first for a trade: the most specific of its own (wholesale gets its own
+ * chapter, not the one it shares with four other trades). */
+export function mainVideoFor(businessType: string): TrainingVideo | null {
+  const { own } = videosFor(businessType);
+  return [...own].sort((x, y) => x.for.length - y.for.length || x.id.localeCompare(y.id))[0] ?? null;
 }
 
 export const mmss = (s: number) => `${Math.floor(s / 60)}:${String(Math.round(s % 60)).padStart(2, "0")}`;

@@ -1,0 +1,115 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:06.504
+Namaste. Is video mein hum The Ray ko Repair aur Service ki dukaan ke liye step by step use karenge.
+
+00:00:06.504 --> 00:00:09.106
+Ye public demo dummy data par based hai.
+
+00:00:09.106 --> 00:00:17.691
+Repair shop mein billing se pehle job card banta hai, kyunki customer apna phone ya A C chhod jaata hai aur baad mein lene aata hai.
+
+00:00:18.037 --> 00:00:25.158
+Ye Jobs screen hai. Har job ek card: kaunsa device, kis customer ka, job number, aur uski halat.
+
+00:00:25.158 --> 00:00:31.538
+Upar tab hain: Received, In progress, Ready for pickup, Delivered aur Cancelled. Kyun?
+
+00:00:31.538 --> 00:00:39.995
+Kyunki dukaan mein dus, bees device pade hote hain, aur customer phone karke poochta hai mera phone ready hua kya.
+
+00:00:39.995 --> 00:00:42.888
+Yahan ek nazar mein jawab mil jata hai.
+
+00:00:43.267 --> 00:00:46.629
+Naya job. Plus New job dabate hain.
+
+00:00:46.629 --> 00:00:54.986
+Customer ka naam aur mobile, phir device ka type: mobile, bike, car, laptop, appliance.
+
+00:00:54.986 --> 00:01:02.958
+Mobile chunte hain, device ka naam Samsung Galaxy M31, aur kharabi: screen badalna.
+
+00:01:03.335 --> 00:01:07.140
+IMEI ya serial number yahan alag se likh sakte ho. Kyun?
+
+00:01:07.140 --> 00:01:12.440
+Kyunki do ek jaise phone mein galat device lautane se bada jhagda ho jata hai.
+
+00:01:12.440 --> 00:01:18.216
+Estimate, yaani anumaani kharcha, do hazaar chaar sau, aur advance paanch sau rupaye.
+
+00:01:18.216 --> 00:01:20.866
+Create job dabate hi job card ban gaya.
+
+00:01:21.237 --> 00:01:29.545
+Ye job ka page hai. Upar device aur customer, aur neeche Estimated aur Advance received. Ab parts ka hisaab.
+
+00:01:29.545 --> 00:01:35.238
+Parts used from stock mein aapke apne stock ka part search karke jodte ho.
+
+00:01:35.238 --> 00:01:38.854
+Samsung M31 Display Assembly chunte hain. Kyun?
+
+00:01:38.854 --> 00:01:48.008
+Kyunki part ka stock tabhi ghatta hai jab job deliver hoti hai, aur customer ke bill mein wahi part apne aap judta hai.
+
+00:01:48.374 --> 00:01:53.992
+Technician yaani kaam karne wale ka naam likhte hain, Ramesh, aur Save. Kyun?
+
+00:01:53.992 --> 00:02:04.425
+Kyunki mahine ke end mein pata chalta hai ki kis technician ne kitne job kiye aur kitna kamaya, aur unka hisaab ya incentive saaf ban jata hai.
+
+00:02:04.789 --> 00:02:10.466
+Ab status badalte hain. Kaam shuru hua to Mark In Progress, khatam hua to Mark Ready.
+
+00:02:10.466 --> 00:02:14.273
+Har badlav ke saath job ka status customer ko dikhta hai.
+
+00:02:14.273 --> 00:02:21.954
+Send tracking link se customer ko ek link jata hai, jisme wo khud dekh sakta hai ki uska device kahan tak pahuncha.
+
+00:02:21.954 --> 00:02:25.360
+Kyun? Customer ko baar baar phone nahi karna padta.
+
+00:02:25.736 --> 00:02:29.553
+Ye wahi tracking page hai jo customer ko milta hai.
+
+00:02:29.553 --> 00:02:35.241
+Isme device, status aur kya kaam ho raha hai saaf dikhta hai, bina login ke.
+
+00:02:35.241 --> 00:02:41.827
+Ye customer ke bharose ke liye hai: usse pata rehta hai ki uska phone kis stage par hai.
+
+00:02:42.367 --> 00:02:46.164
+Wapas job par. Customer aaya, ab Deliver and bill.
+
+00:02:46.164 --> 00:02:51.707
+Job ka bill apne aap ban jata hai: kaam ka charge, jo part laga, aur GST.
+
+00:02:51.707 --> 00:02:57.402
+Advance kat kar baaki amount lete hain, aur stock se wo part ghat jata hai.
+
+00:02:57.402 --> 00:03:01.578
+Dekhiye, final bill ban gaya aur job delivered ho gayi.
+
+00:03:01.955 --> 00:03:07.653
+Service Reports. Kitne job aaye, kitne deliver hue, aur delivered jobs se kitni kamai.
+
+00:03:07.653 --> 00:03:16.665
+Neeche status ke hisaab se kitne job, technician ke hisaab se kamai, aur item type ke hisaab se: mobile zyada aa rahe hain ya appliance.
+
+00:03:16.665 --> 00:03:16.996
+Kyun?
+
+00:03:16.996 --> 00:03:24.086
+Kyunki isse pata chalta hai kis tarah ke kaam mein paisa hai aur kis technician ko zyada kaam dena chahiye.
+
+00:03:24.450 --> 00:03:38.785
+Aaj humne Repair ka flow dekha: job card, device ki pehchaan, estimate aur advance, parts stock se, technician, status aur customer ka tracking link, deliver aur bill, aur reports.
+
+00:03:38.785 --> 00:03:44.599
+Ek practical baat: hamesha estimate aur advance job banate waqt hi likho.
+
+00:03:44.599 --> 00:03:48.661
+Final bill par customer se bahes isi se bachti hai.

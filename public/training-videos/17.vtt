@@ -1,0 +1,271 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:05.905
+Namaste. Is video mein hum The Ray ka back office dekhenge: reports, G S T aur settings.
+
+00:00:05.905 --> 00:00:08.589
+Ye public demo dummy data par based hai.
+
+00:00:08.589 --> 00:00:14.830
+Transaction ke baad management ko numbers chahiye, aur mahine ke end mein C A ko tax ka data.
+
+00:00:14.830 --> 00:00:22.211
+Ye module wahi visibility deta hai. Hum grocery demo par dekhenge, par ye sab har business type mein hota hai.
+
+00:00:22.582 --> 00:00:24.814
+Reports ka hub. Teen hisson mein.
+
+00:00:24.814 --> 00:00:35.298
+Daily tools mein daily summary, insights, profit, udhaar aging, win them back, staff performance, vendor price comparison, C A export pack aur export data.
+
+00:00:35.298 --> 00:00:37.395
+Sales mein saari bills ki list.
+
+00:00:37.395 --> 00:00:44.227
+Aur G S T filing mein GSTR 1, GSTR 3B aur purchase register, jo har plan par hamesha free hain. Kyun?
+
+00:00:44.227 --> 00:00:48.353
+Kyunki tax ka data kabhi paywall ke peeche nahi hona chahiye.
+
+00:00:48.716 --> 00:00:53.022
+Daily summary. Din ke end mein cash drawer milane ke liye.
+
+00:00:53.022 --> 00:01:00.222
+Upar Expected cash in drawer, yaani cash sales plus cash udhaar wapas aaya minus vendors ko diya.
+
+00:01:00.222 --> 00:01:06.977
+Neeche Money in aur Money out payment method ke hisaab se: cash, card, U P I, online. Kyun?
+
+00:01:06.977 --> 00:01:13.807
+Kyunki shaam ko ginti ke saath ye number match hona chahiye, warna kahin chori ya galti hai.
+
+00:01:14.173 --> 00:01:20.945
+Aur Staff wise breakdown. Kis staff ne kitne bill banaye aur kitna paisa andar aur bahar gaya.
+
+00:01:20.945 --> 00:01:29.590
+Dhyan rahe ki ye har payment method ka jod hai aur ye batata hai ki kisne process kiya, na ki paisa abhi kiske paas hai.
+
+00:01:29.590 --> 00:01:33.984
+Kyun? Kyunki kai staff ho to jimmedari tay karna zaroori hai.
+
+00:01:34.351 --> 00:01:39.899
+Sales report. Upar Today, Last 7 days, Last 30 days ya apni tareekh chuno.
+
+00:01:39.899 --> 00:01:47.845
+Kul bikri, bills ki ginti, aur har bill ki list. Kisi bill par tap karo to poora invoice khulta hai. Kyun?
+
+00:01:47.845 --> 00:01:55.642
+Kyunki mahine ka sales number sabse pehla sawal hota hai jab koi poochta hai dukaan kaisi chal rahi hai.
+
+00:01:56.004 --> 00:02:00.251
+Profit report. Sales minus stock cost, yaani asli munafa.
+
+00:02:00.251 --> 00:02:07.851
+Upar sales, stock cost, aur profit ke saath margin percent. Neeche sabse zyada munafa dene wale items.
+
+00:02:07.851 --> 00:02:13.290
+Jinke purchase entry nahi hai unhe ek note mein bata diya jata hai. Kyun?
+
+00:02:13.290 --> 00:02:18.655
+Kyunki sales bade dikhne se munafa nahi hota, munafa margin se hota hai.
+
+00:02:19.034 --> 00:02:27.668
+GSTR 1. Mahina aur saal chuno. Table 4 mein B2B invoices, yaani jin customers ke paas G S T I N hai.
+
+00:02:27.668 --> 00:02:33.798
+Table 5 aur 7 mein B2C, table 12 mein HSN summary aur documents issued.
+
+00:02:33.798 --> 00:02:42.777
+Har table ke saath Export C S V ka button. Kyun? Kyunki C A ko data ek click mein file ki tarah chahiye.
+
+00:02:42.777 --> 00:02:51.325
+Dhyan rahe, ye app return file nahi karta, sirf GST portal jaise format mein data tayyar karta hai.
+
+00:02:51.711 --> 00:02:58.896
+GSTR 3B. Mahine ka summary. Point teen ek mein outward supplies ka taxable value aur tax.
+
+00:02:58.896 --> 00:03:03.335
+Point chaar mein input tax credit jo purchases se mila.
+
+00:03:03.335 --> 00:03:09.228
+Aur neeche Net tax payable, yaani estimate ki kitna cash mein bharna hai.
+
+00:03:09.228 --> 00:03:13.588
+Upar ek note ki exact figure C A se verify karo. Kyun?
+
+00:03:13.588 --> 00:03:19.642
+Kyunki GST ke rules mein credit ka adjustment ek khaas order mein hota hai.
+
+00:03:20.000 --> 00:03:21.441
+Purchase register.
+
+00:03:21.441 --> 00:03:29.125
+Vendor ke naam, unka invoice, tareekh, taxable value, tax aur kya ye input credit ke laayak hai.
+
+00:03:29.125 --> 00:03:33.048
+Upar ITC ka total CGST, SGST aur IGST mein. Kyun?
+
+00:03:33.048 --> 00:03:38.251
+Kyunki jo input credit chhoot jaye wo seedha paisa ka nuksan hai.
+
+00:03:38.626 --> 00:03:39.524
+Profit Leak.
+
+00:03:39.524 --> 00:03:47.457
+Paisa phansne ki jagah ek screen par: bina bika stock, purana udhaar aur kharid se sasta bikne wale items.
+
+00:03:47.457 --> 00:03:53.370
+Upar at risk total. Har hisse mein Dekhein dabao to poori list milti hai. Kyun?
+
+00:03:53.370 --> 00:03:57.037
+Kyunki jo nuksan dikhta nahi wo chalta rehta hai.
+
+00:03:57.402 --> 00:04:05.700
+Export data. Kya export karna hai: Sales, Petty cash, Online orders, naye customers ya naye vendors.
+
+00:04:05.700 --> 00:04:14.496
+Kitni tareekh ka: aaj, is hafte, is mahine, ya is quarter ka. Aur do format: Excel yaani C S V, aur P D F.
+
+00:04:14.496 --> 00:04:22.213
+Kyun? Kyunki kabhi apne C A ko Excel chahiye, kabhi bank ke liye P D F, aur dono ek jagah se.
+
+00:04:22.575 --> 00:04:23.608
+C A export pack.
+
+00:04:23.608 --> 00:04:30.772
+Poore saal ki sales aur purchases, do Excel ready files, jo aap seedha apne accountant ko forward kar sakte ho.
+
+00:04:30.772 --> 00:04:35.032
+This financial year ya last financial year, ya apni tareekh. Kyun?
+
+00:04:35.032 --> 00:04:40.906
+Kyunki saal ke end mein accountant ko books milane ke liye yahi do files chahiye hoti hain.
+
+00:04:44.937 --> 00:04:49.353
+Petty cash. Chhote roz ke kharche jaise chai, courier ya bijli ka bill.
+
+00:04:49.353 --> 00:04:54.205
+Plus Expense dabate hain, kya kharcha hai, kitna, category aur payment method.
+
+00:04:54.205 --> 00:04:57.377
+Chai staff ke liye, ek sau bees rupaye, cash. Kyun?
+
+00:04:57.377 --> 00:05:05.028
+Kyunki chhote kharche bhoolne se munafa ka hisaab galat ho jata hai, aur owner ka apna kharcha alag rakhna bhi zaroori hai.
+
+00:05:05.385 --> 00:05:12.511
+Ab ek sensitive kaam. Kisi bill ko void karna. Bills mein se ek kholte hain aur Void invoice dabate hain.
+
+00:05:12.511 --> 00:05:17.329
+App reason poochta hai, kyunki bina reason ke koi bill hata nahi sakta.
+
+00:05:17.329 --> 00:05:21.333
+Galat item bill ho gaya likhte hain aur Confirm void. Kyun?
+
+00:05:21.333 --> 00:05:27.916
+Kyunki bill hata dena chori ka sabse aasan tareeka hai, isliye har void ka record rakha jata hai.
+
+00:05:28.292 --> 00:05:28.923
+Audit log.
+
+00:05:28.923 --> 00:05:38.951
+Sensitive kaamon ka record: kisne kaun sa bill void kiya, kis reason se, kab, kaunse bill ki quantity badli, staff ka jodna ya hatana, aur permissions badalna.
+
+00:05:38.951 --> 00:05:42.988
+Dekhiye, abhi hamara void yahan darj hai, reason ke saath. Kyun?
+
+00:05:42.988 --> 00:05:48.223
+Kyunki owner ko bharosa chahiye ki uski dukaan mein kya hua, jab wo wahan nahi tha.
+
+00:05:48.595 --> 00:05:52.423
+Ab Settings. Pehli screen GST aur shop profile.
+
+00:05:52.423 --> 00:06:06.105
+Business ka naam, GST scheme, Regular ya Composition, price ka tareeka, yaani price GST ke saath ya bina GST ke, GSTIN, address, state, invoice ka prefix, aur U P I ID.
+
+00:06:06.105 --> 00:06:13.598
+Kyun? Kyunki isi se invoice ka number, CGST ya IGST ka faisla, aur har GST report banti hai.
+
+00:06:13.598 --> 00:06:16.286
+State galat ho to tax head galat.
+
+00:06:16.658 --> 00:06:17.721
+Invoice design.
+
+00:06:17.721 --> 00:06:25.094
+Tagline, footer message, terms aur conditions, bank details, header aur footer image, aur accent colour.
+
+00:06:25.094 --> 00:06:26.938
+Neeche live preview. Kyun?
+
+00:06:26.938 --> 00:06:33.389
+Kyunki invoice aapki dukaan ka chehra hai, aur customer ko bharosa uski shakal se hota hai.
+
+00:06:33.757 --> 00:06:39.116
+Thermal printer settings. Default format A four, 58 ya 80 millimetre.
+
+00:06:39.116 --> 00:06:43.232
+Neeche live preview jisme bill ka receipt dikhta hai.
+
+00:06:43.232 --> 00:06:50.300
+Shop ke naam ka size, alignment aur bold chunte hain, aur receipt turant badalta hai. Kyun?
+
+00:06:50.300 --> 00:06:57.368
+Kyunki alag alag printer ka roll alag hota hai, aur receipt aapke hisaab se dikhna chahiye.
+
+00:07:03.079 --> 00:07:08.908
+Fast billing settings. Kaun se item Fast Billing ke tiles mein dikhein, ye tay karo.
+
+00:07:08.908 --> 00:07:14.598
+Ye wahi pricing aur GST use karta hai jo normal billing, bas tiles ki tarah. Kyun?
+
+00:07:14.598 --> 00:07:18.970
+Kyunki chai aur snacks jaise tez bikne wale item pehle dikhein.
+
+00:07:19.342 --> 00:07:27.244
+Loyalty settings. Har sau rupaye par kitne points, aur ek point ki value. Zero rakhoge to loyalty band. Kyun?
+
+00:07:27.244 --> 00:07:32.753
+Kyunki har dukaan ka apna tareeka hota hai, aur ye ek jagah se tay hota hai.
+
+00:07:33.114 --> 00:07:34.173
+Festival planner.
+
+00:07:34.173 --> 00:07:43.331
+Aane wale tyohar, kitne din door, unke liye kaun se items stock karne chahiye, aur ek restock reminder apne phone ke calendar mein jodne ka button.
+
+00:07:43.331 --> 00:07:46.758
+Aur Create poster se dukaan ke liye festival ka poster.
+
+00:07:46.758 --> 00:07:50.807
+Aap apne notes bhi likh sakte ho ki pichhle saal kya chala. Kyun?
+
+00:07:50.807 --> 00:07:56.165
+Kyunki tyohar par bikri sabse zyada hoti hai, aur tayyari ek hafte pehle honi chahiye.
+
+00:07:56.534 --> 00:08:00.852
+Aur offline billing. Agar internet chala jaye to bhi bill banate raho.
+
+00:08:00.852 --> 00:08:09.734
+App ek baar online khulne par products aur customers ki copy phone mein rakh leta hai, aur net wapas aane par bills apne aap sync ho jaate hain.
+
+00:08:09.734 --> 00:08:14.545
+Kyun? Kyunki kirana mein bheed ke time net chala jaye to bikri nahi ruk sakti.
+
+00:08:14.916 --> 00:08:20.010
+Aur Preferences. English, Hindi ya Marathi, aur Light, Dark ya Auto theme.
+
+00:08:20.010 --> 00:08:25.103
+Hindi chunte hain to poora app Hindi mein, jaise abhi dikh raha hai. Kyun?
+
+00:08:25.103 --> 00:08:31.367
+Kyunki har staff ki bhasha alag ho sakti hai, aur kaam apni bhasha mein sabse tez hota hai.
+
+00:08:41.422 --> 00:08:59.493
+Aaj humne Back office dekha: reports ka hub, daily summary, sales aur profit, G S T reports, profit leak, export aur C A pack, petty cash, void aur audit log, aur settings, invoice design, thermal printer, loyalty, festival planner, offline billing aur preferences.
+
+00:08:59.493 --> 00:09:05.767
+Ek practical baat: mahine ki paanch tareekh se pehle C A export pack download karke bhej do.
+
+00:09:05.767 --> 00:09:09.313
+Uske baad tax ka kaam aapke haath se nikal jata hai.

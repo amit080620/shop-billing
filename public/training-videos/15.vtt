@@ -1,0 +1,112 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:06.899
+Namaste. Is video mein hum The Ray ko Diagnostic Lab ke liye step by step use karenge.
+
+00:00:06.899 --> 00:00:10.108
+Ye public demo dummy data par based hai.
+
+00:00:10.108 --> 00:00:18.691
+Lab ka kaam test catalogue se shuru hota hai, phir order, sample, result, aur ant mein ek printable report.
+
+00:00:19.006 --> 00:00:20.054
+Test Catalogue.
+
+00:00:20.054 --> 00:00:35.142
+Har test ka naam, category jaise Kidney, Diabetes ya Thyroid, sample ka type, price, T A T yaani report kitne ghante mein, aur reference range, jaise Fasting Blood Sugar ke liye sattar se sau milligram per decilitre.
+
+00:00:35.142 --> 00:00:42.617
+Kyun? Kyunki reference range pehle se likhi ho to result likhte hi app bata deta hai ki normal hai ya nahi.
+
+00:00:43.496 --> 00:00:52.510
+Packages ya Profiles tab mein kai tests ka ek package, jaise Diabetes Profile ya Full Body Checkup, ek discounted price par.
+
+00:00:52.510 --> 00:00:52.874
+Kyun?
+
+00:00:52.874 --> 00:01:00.507
+Kyunki patient ko ek ek test chunne ki jagah ek package aasan lagta hai, aur lab ki bikri bhi badhti hai.
+
+00:01:00.878 --> 00:01:04.578
+Naya order. Patient ka naam, mobile aur umar.
+
+00:01:04.578 --> 00:01:14.525
+Collection chuno: Walk-in, yaani patient lab aaya, ya Home collection, jisme address aur preferred time slot likhte hain.
+
+00:01:14.525 --> 00:01:19.129
+Hum Home collection chunte hain aur address likhte hain.
+
+00:01:19.506 --> 00:01:27.378
+Ab tests. Packages aur individual tests ke checkbox hain. Diabetes Profile aur Fever Panel chunte hain.
+
+00:01:27.378 --> 00:01:31.505
+Neeche total apne aap. Create order dabate hain. Kyun?
+
+00:01:31.505 --> 00:01:40.677
+Kyunki test chunne mein galti se koi test chhoot jaye to patient dobara aata hai, aur checkbox se ye galti kam hoti hai.
+
+00:01:41.053 --> 00:01:47.674
+Order ban gaya. Ye order ka page hai: patient, home collection ka address, aur status Booked.
+
+00:01:47.674 --> 00:01:55.363
+Status ek ke baad ek badalta hai: Sample collected, Received at lab, Processing, Report ready aur Delivered.
+
+00:01:55.363 --> 00:01:57.855
+Mark as button se agla stage. Kyun?
+
+00:01:57.855 --> 00:02:05.544
+Kyunki patient phone karke poochta hai mera report kahan tak pahuncha, aur status se turant jawab milta hai.
+
+00:02:05.914 --> 00:02:15.762
+Orders list mein upar tab hain: All, Booked, Sample collected, Received at lab, Processing, Report ready, Delivered aur Cancelled.
+
+00:02:15.762 --> 00:02:20.610
+Har order ke saamne uska type, Home ya Walk-in, aur samay. Kyun?
+
+00:02:20.610 --> 00:02:27.125
+Kyunki lab ke staff ko roz dekhna hota hai ki kaunsa order kis stage par atka hua hai.
+
+00:02:28.218 --> 00:02:32.430
+Ab result likhna. Processing wale order Neha Singh ko kholte hain.
+
+00:02:32.430 --> 00:02:36.131
+Har test ke saamne Result ka box aur uski reference range.
+
+00:02:36.131 --> 00:02:40.087
+Fasting Blood Sugar mein ek sau chaudah likhte hain, aur Save.
+
+00:02:40.087 --> 00:02:43.533
+App ne turant bata diya ki ye range se upar hai. Kyun?
+
+00:02:43.533 --> 00:02:49.149
+Kyunki result ko galat padhna sabse khatarnak galti hai, aur ye alert us se bachata hai.
+
+00:02:49.515 --> 00:02:56.026
+Baaki tests ke result bhi isi tarah bharte hain. Sab bhar jaane par status Report ready karte hain.
+
+00:02:56.026 --> 00:03:07.798
+View or print report dabate hi patient ki printable report khulti hai: lab ka naam, patient ki details, har test ka result aur range, aur jo range se bahar hai wo alag dikhta hai.
+
+00:03:07.798 --> 00:03:14.966
+Ye report PDF ya WhatsApp par bhi ja sakti hai. Kyun? Kyunki patient ko kaagaz bhi chahiye aur phone par bhi.
+
+00:03:15.344 --> 00:03:21.895
+Aur bill. Order ke page par Generate invoice dabate hi tests ke amount ka GST invoice ban jata hai.
+
+00:03:21.895 --> 00:03:26.395
+Isse lab ka hisaab bhi saaf rehta hai aur patient ko bill milta hai.
+
+00:03:28.940 --> 00:03:38.996
+Dashboard par Pending orders dikhte hain, aur aaj ki home collections, kis patient ke ghar kis samay jana hai, jaise Meera More ka saat se nau baje ka slot.
+
+00:03:38.996 --> 00:03:43.831
+Kyun? Kyunki home collection wale staff ko din ka route yahin se milta hai.
+
+00:03:44.195 --> 00:03:57.893
+Aaj humne Lab ka flow dekha: test catalogue reference range ke saath, packages, order home collection ke saath, status ke stage, result aur normal ya abnormal alert, printable report, aur invoice.
+
+00:03:57.893 --> 00:04:02.296
+Ek practical baat: sample collected ka status turant mark karo.
+
+00:04:02.296 --> 00:04:08.166
+Isse patient ko hamesha sahi update milta hai aur staff ki zimmedari saaf rehti hai.

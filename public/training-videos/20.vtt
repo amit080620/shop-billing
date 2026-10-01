@@ -1,0 +1,121 @@
+WEBVTT
+
+00:00:01.022 --> 00:00:09.228
+Namaste. Is video mein hum The Ray ke naye GST features dekhenge. Ye public demo dummy data par based hai.
+
+00:00:09.228 --> 00:00:21.382
+Business customer ke liye B2B bill, kisi aur company ke GSTIN par bill, debit note, udhaar mein return ka hisaab, aur ye sab GST report mein kaise jaata hai.
+
+00:00:21.781 --> 00:00:26.330
+Naya bill. Customer Manoj hain, inka apna GSTIN nahi hai.
+
+00:00:26.330 --> 00:00:33.990
+Lekin ye apni company ke liye saaman le rahe hain, aur company GST ka input credit claim karegi.
+
+00:00:33.990 --> 00:00:37.661
+Item jodte hain aur Complete bill dabate hain.
+
+00:00:38.039 --> 00:00:46.671
+Yahan B2B invoice ka switch hai. Isse on karte hain aur company ka naam, GSTIN aur address likhte hain.
+
+00:00:46.671 --> 00:00:51.365
+GSTIN ke pehle do ank se state apne aap pata chalti hai.
+
+00:00:51.365 --> 00:00:58.656
+Ye company Karnataka ki hai, isliye app khud IGST lagata hai, CGST aur SGST nahi. Kyun?
+
+00:00:58.656 --> 00:01:06.199
+Kyunki alag state ko bechne par IGST lagta hai, aur galat tax bill ko bekaar kar deta hai.
+
+00:01:06.580 --> 00:01:09.281
+Fully paid aur Generate invoice.
+
+00:01:09.281 --> 00:01:18.059
+Dekhiye, invoice ABC Traders ke naam bana hai, unke GSTIN ke saath, aur place of supply Karnataka, IGST.
+
+00:01:18.059 --> 00:01:22.279
+Udhaar aur loyalty Manoj ke khate mein hi rahenge.
+
+00:01:22.279 --> 00:01:32.660
+Aur ye naam aur GSTIN bill par freeze ho jaate hain, customer ki details baad mein badlein to bhi purana bill nahi badalta.
+
+00:01:33.039 --> 00:01:40.031
+Ab maan lijiye bill mein price kam lag gayi thi. GST mein bana hua invoice badla nahi jaata.
+
+00:01:40.031 --> 00:01:41.931
+Iske liye Debit note hai.
+
+00:01:41.931 --> 00:01:49.379
+Bill par plus Debit note dabate hain, extra amount paanch sau, GST ki rate, aur wajah likhte hain.
+
+00:01:49.379 --> 00:01:53.559
+Customer ye paisa baad mein dega, isliye Add to udhaar.
+
+00:01:53.938 --> 00:01:58.847
+Issue debit note. Ye apna number wala document hai, D N series.
+
+00:01:58.847 --> 00:02:04.380
+Kis invoice ke against hai, extra value, IGST aur total, sab likha hai.
+
+00:02:04.380 --> 00:02:11.548
+Ye GST report ke Table nau B mein jaata hai aur customer ke udhaar mein jud jaata hai. Kyun?
+
+00:02:11.548 --> 00:02:17.938
+Kyunki GST mein har sudhaar ka alag kaagaz chahiye, chupke se badla hua bill nahi.
+
+00:02:19.234 --> 00:02:25.321
+Ulta case: customer saaman lautata hai aur paisa nahi leta, udhaar mein kam karwata hai.
+
+00:02:25.321 --> 00:02:28.503
+Return mein Adjust against credit chunte hain.
+
+00:02:28.503 --> 00:02:35.074
+Ab ye sirf label nahi, customer ka baaki sach mein kam hota hai, aur credit note bhi banta hai.
+
+00:02:36.195 --> 00:02:43.772
+Aur pichhle mahine ka bill. Ispar Edit aur Void ab nahi milte, kyunki wo mahina shayad file ho chuka hai.
+
+00:02:43.772 --> 00:02:47.091
+Sudhaar ke liye Return ya Debit note hi. Kyun?
+
+00:02:47.091 --> 00:02:54.235
+Kyunki file hue mahine ka bill chupke se badla, to CA ki report aur sarkari record mel nahi khaate.
+
+00:02:59.107 --> 00:03:02.452
+Restaurant mein company ki party ya lunch.
+
+00:03:02.452 --> 00:03:09.779
+Order ka Bill kholte hain, aur Company GST bill par company ka naam aur GSTIN likh kar Save.
+
+00:03:09.779 --> 00:03:16.787
+Bill par Bill to aur GSTIN chhapta hai, aur settle hone par ye B2B mein report hota hai.
+
+00:03:17.183 --> 00:03:25.119
+Hotel mein corporate guest. Check out par Company GST invoice ka option hai, company ka naam aur GSTIN.
+
+00:03:25.119 --> 00:03:32.823
+Hotel ka tax hotel ki jagah par lagta hai, isliye dusre state ki company ho to bhi CGST aur SGST hi.
+
+00:03:36.401 --> 00:03:41.683
+Ab GST report. G S T R 1 mein upar B2B aur B2C ka filter hai.
+
+00:03:41.683 --> 00:03:49.995
+B2B chunne par Table chaar mein wo bill dikhte hain jo kisi GSTIN ke naam bane, ABC Traders bhi.
+
+00:03:49.995 --> 00:03:57.961
+Table nau B mein credit notes aur debit notes. Har table ka CSV CA ko bhejne ke liye taiyar.
+
+00:04:00.150 --> 00:04:08.493
+Aur G S T R 3 B mein bhi B2B aur B2C ka hissa dikhta hai, credit note ghata ke aur debit note jod ke.
+
+00:04:08.493 --> 00:04:19.150
+Saath hi Table teen point do, dusre state ke bina GSTIN wale customers ki bikri, state ke hisaab se, jo 3 B mein bharni hoti hai.
+
+00:04:27.851 --> 00:04:49.234
+Aaj humne dekha: B2B switch se company ke GSTIN par bill, sahi state se IGST ya CGST, freeze hua naam, debit note se value badhana, return ko udhaar mein adjust karna, purane mahine ka lock, restaurant aur hotel mein company ka bill, aur GST report mein B2B aur B2C alag.
+
+00:04:49.234 --> 00:04:56.887
+Ek practical baat: business customer ka GSTIN hamesha bill banate waqt hi daliye, baad mein nahi.
+
+00:04:56.887 --> 00:04:59.491
+Wahi unka tax credit bachata hai.

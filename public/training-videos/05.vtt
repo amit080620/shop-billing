@@ -1,0 +1,124 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:05.751
+Namaste. Is video mein hum The Ray ko Medical Store ke liye step by step use karenge.
+
+00:00:05.751 --> 00:00:11.028
+Ye public demo dummy data par based hai. Pharmacy mein sirf billing nahi hoti.
+
+00:00:11.028 --> 00:00:20.771
+Batch number, expiry date aur prescription ki jaankari bhi utni hi zaroori hai, kyunki yahan galti ka matlab kanooni problem ya nuksan hota hai.
+
+00:00:21.119 --> 00:00:23.966
+Ye Jeevan Medical ka Home screen hai.
+
+00:00:23.966 --> 00:00:32.968
+Sabse upar pehla kaam hai ki kitne batch expire hone wale hain, aur us stock ko is se pehle wapas karo ya clear karo.
+
+00:00:32.968 --> 00:00:39.585
+Kyun? Kyunki expire hui dawai bechna gair kanooni hai aur wo pura paisa doob jata hai.
+
+00:00:39.585 --> 00:00:42.970
+Neeche low stock aur overdue udhaar bhi hai.
+
+00:00:43.352 --> 00:00:45.039
+Ab bill. Dawai chuno.
+
+00:00:45.039 --> 00:00:52.913
+Paracetamol ek normal dawai hai, lekin Azithromycin prescription wali dawai hai, yaani Schedule H.
+
+00:00:52.913 --> 00:00:55.243
+Dono ko bill mein jodte hain.
+
+00:01:00.457 --> 00:01:09.326
+Complete bill dabate hi app ne ek warning dikhayi: prescription wali dawai ke liye doctor ka naam aur patient ka naam bharna zaroori hai.
+
+00:01:09.326 --> 00:01:13.145
+Doctor Kulkarni aur patient Ramesh Gupta likhte hain. Kyun?
+
+00:01:13.145 --> 00:01:19.748
+Kyunki Schedule H dawai bina prescription nahi bikti, aur inspection mein yahi record maanga jata hai.
+
+00:01:20.110 --> 00:01:26.955
+Generate invoice dabate hain. Bill ban gaya, aur ye dawai ka batch aur expiry bill par chhapte hain.
+
+00:01:26.955 --> 00:01:33.321
+Ab ye doctor aur patient ka naam register mein bhi apne aap chadh gaya, jo hum aage dekhenge.
+
+00:01:33.695 --> 00:01:34.596
+Ab Products.
+
+00:01:34.596 --> 00:01:43.085
+Har dawai ke saath uska salt, yaani composition, rack ki jagah aur schedule likha hai, jaise Schedule H ya H one.
+
+00:01:43.085 --> 00:01:49.921
+Salt isliye ki customer kahe ki ye dawai nahi hai, to same salt ki doosri dawai dikha sako.
+
+00:01:49.921 --> 00:01:53.226
+Rack isliye ki counter par dhundhna na pade.
+
+00:01:53.802 --> 00:01:56.923
+Kisi bhi dawai ke neeche Manage batches hai.
+
+00:01:56.923 --> 00:02:02.597
+Ek hi dawai ke alag alag batch hote hain, har batch ki apni expiry aur quantity.
+
+00:02:02.597 --> 00:02:07.916
+Bill karte waqt sabse pehle expire hone wala batch pehle nikalta hai. Kyun?
+
+00:02:07.916 --> 00:02:11.533
+Taaki purana maal pehle bike aur kuch expire na ho.
+
+00:02:21.194 --> 00:02:22.330
+Ab Expiry screen.
+
+00:02:22.330 --> 00:02:29.011
+Jo pehle se expire ho chuka hai wo alag, jo tees din ke andar expire hoga wo alag, din ke hisaab se.
+
+00:02:29.011 --> 00:02:33.153
+Upar wale button se ye urgent list WhatsApp par bhej sakte ho.
+
+00:02:33.153 --> 00:02:39.299
+Aur distributor ke naam ke saamne Send request dabao to wapas karne ka message tayyar. Kyun?
+
+00:02:39.299 --> 00:02:45.245
+Kyunki expire hone se pehle wapas karne par distributor paisa ya replacement de deta hai.
+
+00:02:45.625 --> 00:02:52.649
+Jo stock expire ho gaya ya toot gaya, use shelf se hatane ke baad yahan write off karte hain.
+
+00:02:52.649 --> 00:02:56.803
+Ye history batati hai ki kya, kitna aur kab hata. Kyun?
+
+00:02:56.803 --> 00:03:05.036
+Kyunki isse stock ka hisaab sahi rehta hai aur aapko pata chalta hai ki saal mein expiry se kitna nuksan hua.
+
+00:03:05.404 --> 00:03:08.146
+Ye Schedule H one aur X register hai.
+
+00:03:08.146 --> 00:03:19.261
+Isme har controlled dawai ki bikri likhi hai: kis tareekh, kis batch, kitni quantity, kaun customer, kaunse doctor ki prescription aur kaunsa patient.
+
+00:03:19.261 --> 00:03:24.448
+Ye wahi register hai jo pehle haath se likhna padta tha. Kyun zaroori?
+
+00:03:24.448 --> 00:03:30.895
+Kyunki drug inspector aaye to ye ek click mein saamne hona chahiye. CSV export bhi hai.
+
+00:03:31.259 --> 00:03:38.349
+Aur Doctors. Ye batata hai ki kaunse doctor ki prescription se aapki kitni bikri hui aur kitne bill bane.
+
+00:03:38.349 --> 00:03:38.687
+Kyun?
+
+00:03:38.687 --> 00:03:46.790
+Kyunki jo doctor aapke yahan zyada patient bhejte hain, unse rishta banana aapke business ke liye sabse achhi cheez hai.
+
+00:03:47.149 --> 00:04:00.512
+Aaj humne Pharmacy ka flow dekha: prescription item ka bill doctor aur patient ke naam ke saath, batch aur expiry, expire hone wala stock, write off, Schedule H one register aur doctor wise sales.
+
+00:04:00.512 --> 00:04:04.875
+Ek practical baat: har hafte Expiry screen ek baar zaroor kholo.
+
+00:04:04.875 --> 00:04:09.920
+Tees din pehle pata ho to distributor ko wapas karke paisa bacha sakte ho.

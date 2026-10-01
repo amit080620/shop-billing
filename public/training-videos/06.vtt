@@ -1,0 +1,196 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:06.597
+Namaste. Is video mein hum The Ray ko Restaurant aur Cafe ke liye step by step use karenge.
+
+00:00:06.597 --> 00:00:09.497
+Ye public demo dummy data par based hai.
+
+00:00:09.497 --> 00:00:19.211
+Restaurant mein billing counter se pehle order table aur kitchen ke workflow se shuru hota hai, isliye hum bhi table se shuru karenge.
+
+00:00:19.558 --> 00:00:24.607
+Ye Tables screen hai, restaurant ka main control room. Har table ek tile hai.
+
+00:00:24.607 --> 00:00:31.952
+Hara matlab khali, laal matlab order chal raha hai aur us par abhi tak ka bill kitna hua, peela matlab reserved.
+
+00:00:31.952 --> 00:00:37.460
+Upar Sales reports, Combos, Reservations aur Kitchen display ke shortcut hain. Kyun?
+
+00:00:37.460 --> 00:00:42.969
+Taaki waiter ya manager ek nazar mein dekh le ki kaunsi table par kya chal raha hai.
+
+00:00:43.338 --> 00:00:47.740
+Table T1 par tap karte hain. Customer ka naam aur mobile number optional hai.
+
+00:00:47.740 --> 00:00:51.627
+Dena chaho to loyalty points aur baad mein message ke kaam aata hai.
+
+00:00:51.627 --> 00:00:56.829
+Abhi hum skip karke seedha order lete hain, kyunki rush mein waiter ke paas time nahi hota.
+
+00:00:57.209 --> 00:01:03.613
+Ye order screen hai. Upar Dine-in, Takeaway aur Delivery ka option hai, aur waiter ka naam. Kyun?
+
+00:01:03.613 --> 00:01:07.971
+Taaki pata rahe ki kaunsa order kaise aaya aur kis waiter ne liya.
+
+00:01:07.971 --> 00:01:11.140
+Combos bhi yahin hain, jaise Biryani plus drink.
+
+00:01:11.506 --> 00:01:14.411
+Ab dishes. Kai dishes mein options hote hain.
+
+00:01:14.411 --> 00:01:24.998
+Chicken Biryani par tap karte hi spice level puchha gaya, mild, medium ya extra spicy, aur add-ons jaise raita, boiled egg, extra gravy, jinka paisa alag lagta hai.
+
+00:01:24.998 --> 00:01:27.838
+Hum extra spicy aur raita chunte hain. Kyun?
+
+00:01:27.838 --> 00:01:35.197
+Kyunki kitchen ko exact bataana padta hai, aur add-on ka paisa bill mein jodna zaroori hai, warna nuksan hota hai.
+
+00:01:35.563 --> 00:01:42.319
+Baaki dishes seedhe ek tap se jud jaati hain. Paneer Butter Masala, do Butter Naan aur ek Masala Chai.
+
+00:01:42.319 --> 00:01:45.830
+Neeche bar mein dishes ki ginti aur total dikhta hai.
+
+00:01:45.830 --> 00:01:50.334
+Isse dabao to poora order dikhta hai, jahan quantity badal sakte ho.
+
+00:01:50.708 --> 00:01:56.267
+Ab K O T, yaani Kitchen Order Ticket. K O T dabate hi order kitchen ko chala jata hai.
+
+00:01:56.267 --> 00:02:01.954
+Printer laga ho to slip nikalti hai, aur kitchen ki screen par ticket aa jata hai. Kyun?
+
+00:02:01.954 --> 00:02:07.319
+Taaki waiter ko zubaani order lekar bhaagna na pade, aur kitchen mein galti kam ho.
+
+00:02:07.691 --> 00:02:12.412
+Ye kitchen ki screen hai, jo kitchen mein laga TV ya tablet dikhata hai.
+
+00:02:12.412 --> 00:02:19.361
+Har table ka ticket, kitne minute pehle aaya, aur kaunsi dish kitni. Naya order apne aap upar aa jata hai.
+
+00:02:19.361 --> 00:02:25.262
+Kyun? Kitchen ko bar bar poochna na pade, aur der se aaye ticket rang se pehchane jaayein.
+
+00:02:25.729 --> 00:02:31.217
+Jab kitchen dish taiyar kar leta hai, wo us dish par tap karta hai, jaise Masala Chai.
+
+00:02:31.217 --> 00:02:37.918
+Table wale waiter ko tile par ready ka badge dikhta hai, aur wo garam khana turant le ja sakta hai. Kyun?
+
+00:02:37.918 --> 00:02:41.620
+Khana thanda na ho, aur customer ko intezar na karna pade.
+
+00:02:41.985 --> 00:02:47.168
+Ab bill. T1 kholo aur Settle dabao. Pehle discount likhne ka option aata hai.
+
+00:02:47.168 --> 00:02:54.236
+Customer ke saamne final amount dikhata hai, taaki baad mein jhagda na ho. Phir Take payment dabate hain.
+
+00:02:54.610 --> 00:02:59.050
+Yahan split payment hai. Customer kahta hai aadha cash aur aadha UPI.
+
+00:02:59.050 --> 00:03:04.583
+Plus Split payment dabao, pehli row mein cash ka amount likho, doosri row mein UPI ka.
+
+00:03:04.583 --> 00:03:09.795
+Dono ka hisaab alag alag darj hota hai, aur day summary mein bhi alag dikhta hai.
+
+00:03:09.795 --> 00:03:13.141
+Confirm settlement dabate hi bill band, table khali.
+
+00:03:13.519 --> 00:03:14.214
+Ab Combos.
+
+00:03:14.214 --> 00:03:22.064
+Combo matlab kai dishes ka ek package price par, jaise Biryani plus drink teen sau unchaas, ya do logon ki Thali.
+
+00:03:22.064 --> 00:03:25.955
+Combo order mein ek tap se poora set jud jata hai. Kyun?
+
+00:03:25.955 --> 00:03:30.610
+Combo se average bill badhta hai, aur customer ko value dikhti hai.
+
+00:03:30.984 --> 00:03:31.913
+Reservations.
+
+00:03:31.913 --> 00:03:41.344
+Yahan din ke hisaab se bookings dikhti hain, jaise aaj raat aath baje chaar log, table T4, aur paanch sau rupaye token le liya gaya.
+
+00:03:41.344 --> 00:03:43.845
+Naya booking Book dabakar hota hai.
+
+00:03:43.845 --> 00:03:49.275
+Naam, mobile, tareekh, samay, kitne log, table aur token amount likhte hain.
+
+00:03:49.639 --> 00:03:55.793
+Table chuno, ye us samay ke liye block ho jayegi. Token amount yaani advance likho, paanch sau rupaye.
+
+00:03:55.793 --> 00:04:00.861
+Ye amount customer ke final bill se apne aap kat jayega jab wo aakar baithega. Kyun?
+
+00:04:00.861 --> 00:04:06.050
+Kyunki token dene wala customer aksar aa jata hai, aur no-show ka nuksan kam hota hai.
+
+00:04:06.416 --> 00:04:07.142
+Ab reports.
+
+00:04:07.142 --> 00:04:14.599
+Restaurant sales screen din ke hisaab se sales dikhati hai, aur Payment mix mein cash, card ya UPI se kitna aaya.
+
+00:04:14.599 --> 00:04:20.670
+Upar Today, Yesterday, This week, This month jaise button hain, ya apni tareekh chuno. Kyun?
+
+00:04:20.670 --> 00:04:24.827
+Kyunki mahine ka hisaab aur cash match karna yahin se hota hai.
+
+00:04:25.204 --> 00:04:26.703
+Aur item wise report.
+
+00:04:26.703 --> 00:04:33.482
+Category ke hisaab se kitna bika, aur har dish ka number: kaunsi dish sabse zyada bik rahi hai.
+
+00:04:33.482 --> 00:04:36.908
+Yahan Paneer Butter Masala sabse upar hai. Kyun?
+
+00:04:36.908 --> 00:04:44.615
+Jo dish nahi chalti use menu se hata sakte ho, aur jo chalti hai uska stock aur price sochkar rakh sakte ho.
+
+00:04:44.986 --> 00:04:50.674
+Menu options ka setup Products mein hota hai. Har dish ke saamne Options ka button hai.
+
+00:04:50.674 --> 00:04:57.277
+Yahan spice level aur add-on ka naam aur paisa likhte ho. Ek baar likho, har order mein aa jaata hai.
+
+00:04:59.268 --> 00:05:01.164
+Kitchen display ki settings.
+
+00:05:01.164 --> 00:05:09.223
+Kitchen ka screen chhota ho ya bada TV, yahan ek row mein kitne ticket dikhen aur text kitna bada ho, ye chun sakte ho.
+
+00:05:09.223 --> 00:05:11.999
+Kyun? Door se bhi ticket padhe ja sakein.
+
+00:05:12.367 --> 00:05:13.986
+Aakhri mein Menu P D F.
+
+00:05:13.986 --> 00:05:23.206
+Ek tap mein aapke menu ka saaf P D F ban jata hai, aur har dish ka naam ek link hai jo seedha online ordering page par le jata hai.
+
+00:05:23.206 --> 00:05:28.978
+WhatsApp par bhejo ya print karo. Kyun? Kyunki naya menu card chapwana nahi padta.
+
+00:05:29.343 --> 00:05:43.026
+Aaj humne Restaurant ka poora flow dekha: table kholna, options ke saath order lena, K O T se kitchen ko bhejna, kitchen display par ready karna, split payment se bill settle karna, combos, reservation aur reports.
+
+00:05:43.026 --> 00:05:46.926
+Ek practical baat: har order K O T se hi bhejo, zubaani nahi.
+
+00:05:46.926 --> 00:05:50.954
+Isse kitchen ki galti aur waiter ki daud dono kam ho jaati hai.

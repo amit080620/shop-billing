@@ -1797,4 +1797,7 @@ export const PAGE_TEXT: Record<string, [hi: string, mr: string]> = {
   // Business types
   "Hotel / Lodge": ["होटल / लॉज", "हॉटेल / लॉज"],
   "Wholesale / Distributor": ["होलसेल / डिस्ट्रीब्यूटर", "होलसेल / डिस्ट्रिब्युटर"],
+
+  // Training videos on YouTube
+  "Clearer picture: tap ⚙ in the player and pick a higher quality.": ["और साफ़ तस्वीर: प्लेयर में ⚙ दबाकर ऊँची क्वालिटी चुनें।", "अधिक स्पष्ट चित्र: प्लेयरमध्ये ⚙ दाबून जास्त क्वालिटी निवडा."],
 };

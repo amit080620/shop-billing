@@ -1,0 +1,151 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:06.307
+Namaste. Is video mein hum The Ray ko Clinic aur Doctor ke liye step by step use karenge.
+
+00:00:06.307 --> 00:00:09.142
+Ye public demo dummy data par based hai.
+
+00:00:09.142 --> 00:00:18.851
+Clinic ka kaam appointment se shuru hota hai, phir consultation ke baad prescription aur treatment plan tak jaata hai, aur ant mein bill.
+
+00:00:19.192 --> 00:00:22.521
+Ye Appointments screen hai, aaj ki patient list.
+
+00:00:22.521 --> 00:00:28.833
+Har line mein samay, patient ka naam, mobile, doctor aur kaaran, jaise bukhar ya knee pain.
+
+00:00:28.833 --> 00:00:32.163
+Status: Completed, Arrived, Confirmed ya Booked.
+
+00:00:32.163 --> 00:00:37.018
+Jo patient aa gaya uske saamne Write prescription ka button hai. Kyun?
+
+00:00:37.018 --> 00:00:45.203
+Kyunki reception aur doctor ko ek hi list dikhti hai, aur waiting room mein kaun baitha hai ye turant pata chalta hai.
+
+00:00:45.581 --> 00:00:52.605
+Ab ek naya prescription likhte hain. Patient ka naam Suresh Patil, mobile number, umar bayalees saal.
+
+00:00:52.605 --> 00:00:58.934
+Patient pehle aaya ho to upar search se uski purani details aur history aa jaati hai. Kyun?
+
+00:00:58.934 --> 00:01:03.872
+Kyunki har baar naam number dubara likhne mein doctor ka time jata hai.
+
+00:01:04.241 --> 00:01:09.800
+Complaints mein bukhar aur gale mein dard, do din se. Neeche diagnosis aur advice.
+
+00:01:09.800 --> 00:01:21.866
+Kuch specialty ke liye extra fields bhi aate hain, jaise cardiology mein blood pressure aur vitals ka panel, dental mein tooth chart, aur bachchon ke doctor ke liye growth chart.
+
+00:01:21.866 --> 00:01:25.052
+Ye Prescription pad settings se chalu hota hai.
+
+00:01:25.437 --> 00:01:31.918
+Ab dawai. Naam likhte hi library se suggestion aati hai, jo pehle likhi ja chuki hai.
+
+00:01:31.918 --> 00:01:39.009
+Paracetamol, dose paanch sau milligram. Din mein kitni baar, ek zero ek yaani subah aur raat.
+
+00:01:39.009 --> 00:01:44.652
+Kitne din, paanch din. Khane ke baad. Plus Add medicine dabate hain. Kyun?
+
+00:01:44.652 --> 00:01:52.048
+Kyunki dawai ka naam, dose aur samay saaf likha ho to pharmacy aur patient dono galti nahi karte.
+
+00:01:52.422 --> 00:01:54.514
+Follow up ki tareekh bhi yahin.
+
+00:01:54.514 --> 00:02:02.813
+Aur ye combination aage baar baar likhna ho to Save as template dabao, agli baar ek tap mein pura prescription bhar jayega.
+
+00:02:02.813 --> 00:02:10.033
+Kyun? Kyunki common bimariyon ke liye wahi dawai baar baar likhni padti hai, aur template isse bachata hai.
+
+00:02:10.411 --> 00:02:13.210
+Save and print prescription dabate hain.
+
+00:02:13.210 --> 00:02:24.826
+Dekhiye, prescription clinic ke apne letterhead par bana hai: doctor ka naam, degree, registration number upar, patient ki details, dawai ka table, aur neeche footer.
+
+00:02:24.826 --> 00:02:28.744
+Ye print ke liye taiyar hai, ya PDF ban sakta hai. Kyun?
+
+00:02:28.744 --> 00:02:34.902
+Kyunki chhape hue pad ki zaroorat nahi, aur har prescription saaf aur ek jaisa aata hai.
+
+00:02:35.271 --> 00:02:39.122
+Isi page ke neeche consultation ka bill bhi ban jata hai.
+
+00:02:39.122 --> 00:02:43.109
+Fees likhte hain, teen sau rupaye, aur Generate bill. Kyun?
+
+00:02:43.109 --> 00:02:49.122
+Kyunki prescription se bill tak ek hi jagah, doosri machine ya register ki zaroorat nahi.
+
+00:02:49.489 --> 00:02:55.828
+Ab Treatment Plans. Ye badi ya lambi treatment ke liye hain, jaise dental ka kaam.
+
+00:02:55.828 --> 00:03:02.554
+List mein plan aur uski halat, In progress ya Billed. Meera Chavan ka plan kholte hain.
+
+00:03:02.554 --> 00:03:06.420
+Isme teen treatments hain aur kul saat sau rupaye.
+
+00:03:09.039 --> 00:03:16.337
+Print ya share quotation dabate hain to patient ko pehle se likha hua estimate mil jata hai, taaki wo tay kar sake.
+
+00:03:16.337 --> 00:03:20.272
+Fir jaise jaise treatment hoti hai, use tick karte jaate hain.
+
+00:03:20.272 --> 00:03:24.715
+Aur ant mein Convert to bill se poore plan ka bill ban jata hai. Kyun?
+
+00:03:24.715 --> 00:03:30.490
+Kyunki plan, quotation aur bill teeno ek hi record hain, koi baat dobara nahi likhni padti.
+
+00:03:31.704 --> 00:03:37.996
+Medicine Library. Jo dawai aap ne prescription mein likhi, wo yahan apne aap save ho jaati hai.
+
+00:03:37.996 --> 00:03:41.506
+Agli baar naam type nahi karna, sirf search se chuno.
+
+00:03:41.506 --> 00:03:46.540
+Aap apni list CSV ya Excel se upload bhi kar sakte ho, aur export bhi. Kyun?
+
+00:03:46.540 --> 00:03:52.435
+Kyunki dawai ka naam galat type hone se galti ho sakti hai, aur library usse bachati hai.
+
+00:03:52.804 --> 00:03:59.316
+Prescription pad settings. Yahan specialty chunte hain, jaise dental, cardiology ya bachchon ke doctor.
+
+00:03:59.316 --> 00:04:03.047
+Header mein doctor ka naam, degree aur registration number.
+
+00:04:03.047 --> 00:04:10.887
+Letterhead banner aur footer ka stamp upload kar sakte ho, aur prescription par kaunse fields chhapein, ye tay kar sakte ho.
+
+00:04:10.887 --> 00:04:16.135
+Kyun? Kyunki har doctor ka pad alag hota hai, aur ye app us pad jaisa hi banta hai.
+
+00:04:16.501 --> 00:04:17.619
+Aur online booking.
+
+00:04:17.619 --> 00:04:24.090
+Ek link jo patient ko WhatsApp par bhej sakte ho, aur wo apne aap slot chun kar appointment book kar leta hai.
+
+00:04:24.090 --> 00:04:28.326
+Kaam ke ghante, aur appointments ke beech ka gap aap tay karte ho. Kyun?
+
+00:04:28.326 --> 00:04:35.032
+Kyunki phone par appointment dene mein reception ka time jaata hai, aur booking link raat mein bhi kaam karta hai.
+
+00:04:35.407 --> 00:04:51.332
+Aaj humne Clinic ka flow dekha: appointments, prescription vitals aur complaints ke saath, dawai ka dose, letterhead par print, consultation ka bill, treatment plan se quotation aur bill, medicine library, pad settings aur online booking.
+
+00:04:51.332 --> 00:04:56.351
+Ek practical baat: har prescription mein follow up ki tareekh zaroor likho.
+
+00:04:56.351 --> 00:05:00.098
+Patient ko wapas bulane ka sabse aasan tareeka wahi hai.

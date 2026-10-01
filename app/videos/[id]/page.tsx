@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getTranslator } from "@/lib/i18n/server";
 import { VideoPlayer } from "@/app/components/VideoPlayer";
+import { loadYoutubeIds } from "@/lib/youtubeData";
 import { mmss, videoById, videoFiles, videosFor } from "@/lib/trainingVideos";
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
@@ -11,7 +12,10 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   if (!video) return { title: "Video not found" };
   return {
     title: `${video.title} | The Ray`,
-    description: `Training video, ${mmss(video.seconds)}: ${video.topics.slice(0, 6).map(([, title]) => title).join(", ")}.`,
+    description: `Training video, ${mmss(video.seconds)}: ${video.topics
+      .slice(0, 6)
+      .map(([, title]) => title)
+      .join(", ")}.`,
     alternates: { canonical: `/videos/${video.id}` },
     openGraph: { images: [videoFiles(video.id).poster] },
   };
@@ -25,6 +29,7 @@ export default async function PublicVideoPage({ params, searchParams }: { params
   const video = videoById(id);
   if (!video) notFound();
   const files = videoFiles(video.id);
+  const youtubeId = (await loadYoutubeIds())[video.id] ?? null;
   const start = Math.max(0, Math.min(video.seconds - 5, Number(at) || 0));
   const { own, common } = videosFor(type ?? "");
   const next = [...own, ...common].filter((v) => v.id !== video.id).slice(0, 4);
@@ -43,17 +48,23 @@ export default async function PublicVideoPage({ params, searchParams }: { params
       <main className="mx-auto flex max-w-3xl flex-col gap-4 px-4 pb-16">
         <div>
           <h1 className="text-lg font-bold text-foreground">{video.title}</h1>
-          <p className="text-xs text-muted">{t("{length} · subtitles on", { length: mmss(video.seconds) })}</p>
+          <p className="text-xs text-muted">{youtubeId ? mmss(video.seconds) : t("{length} · subtitles on", { length: mmss(video.seconds) })}</p>
         </div>
         <VideoPlayer
           src={files.mp4}
           poster={files.poster}
           vtt={files.vtt}
+          youtubeId={youtubeId}
           start={start}
           topics={video.topics}
           shareText={`The Ray — ${video.title}`}
           shareUrl={`https://bill.theray.in/videos/${video.id}`}
-          words={{ topics: t("Jump to a part"), share: t("Share this video on WhatsApp"), subtitlesNote: t("Subtitles are on — turn them off from the player's CC button.") }}
+          words={{
+            topics: t("Jump to a part"),
+            share: t("Share this video on WhatsApp"),
+            subtitlesNote: t("Subtitles are on — turn them off from the player's CC button."),
+            youtubeNote: t("Clearer picture: tap ⚙ in the player and pick a higher quality."),
+          }}
         />
         <div className="neu-card flex flex-col items-center gap-2 p-4 text-center">
           <p className="text-sm font-semibold text-foreground">{t("Try it yourself — a ready-made shop, no sign-up")}</p>
@@ -65,7 +76,11 @@ export default async function PublicVideoPage({ params, searchParams }: { params
           <section className="flex flex-col gap-1.5">
             <p className="text-sm font-semibold text-foreground">{t("More videos")}</p>
             {next.map((v) => (
-              <Link key={v.id} href={`/videos/${v.id}${type ? `?type=${encodeURIComponent(type)}` : ""}`} className="flex items-center justify-between gap-2 rounded-lg border border-border px-3 py-2 text-sm">
+              <Link
+                key={v.id}
+                href={`/videos/${v.id}${type ? `?type=${encodeURIComponent(type)}` : ""}`}
+                className="flex items-center justify-between gap-2 rounded-lg border border-border px-3 py-2 text-sm"
+              >
                 <span className="min-w-0 truncate text-foreground">{v.title}</span>
                 <span className="shrink-0 text-xs text-muted">{mmss(v.seconds)}</span>
               </Link>

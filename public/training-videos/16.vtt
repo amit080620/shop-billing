@@ -1,0 +1,136 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:00.539
+Namaste.
+
+00:00:00.539 --> 00:00:07.408
+Is video mein hum The Ray ko General Store ya kisi bhi doosri dukaan ke liye step by step use karenge.
+
+00:00:07.408 --> 00:00:10.102
+Ye public demo dummy data par based hai.
+
+00:00:10.102 --> 00:00:22.291
+Agar aapka business kisi khaas category mein fit nahi hota, jaise stationery, mobile accessories, gift ya kapde, to General Store ka flow ek saada aur flexible billing app deta hai.
+
+00:00:22.651 --> 00:00:24.583
+Ye Gupta Traders ka Home hai.
+
+00:00:24.583 --> 00:00:31.843
+Wahi teen cheezein jo har dukaan ko chahiye: aaj ki sales, kis se paisa aana hai, aur kya khatam ho raha hai.
+
+00:00:31.843 --> 00:00:35.040
+Neeche recent bills aur festival reminder. Kyun?
+
+00:00:35.040 --> 00:00:39.902
+Kyunki chhoti dukaan mein bhi owner ko din ka haal ek nazar mein chahiye.
+
+00:00:40.265 --> 00:00:46.917
+Naya bill. Ek existing customer chunte hain, aur do items: Mobile Charger aur Boat Earphones.
+
+00:00:46.917 --> 00:00:52.925
+In par MRP likha hai aur bikri ki price kam hai, aur bill mein wahi price lagti hai.
+
+00:00:52.925 --> 00:00:59.076
+Do rupaye ka discount ya kul ek fix amount ka discount, ye Complete bill par aata hai.
+
+00:00:59.442 --> 00:01:04.633
+Discount ab rupaye mein. Flat amount chunte hain aur pachaas rupaye likhte hain.
+
+00:01:04.633 --> 00:01:11.771
+Customer ko poora udhaar par dena hai, isliye Full udhaar chunte hain. Ye customer ke khata mein chadh jayega.
+
+00:01:11.771 --> 00:01:13.653
+Generate invoice dabate hain.
+
+00:01:14.026 --> 00:01:21.011
+Invoice ban gaya. Yahan se A four, thermal, PDF ya WhatsApp. Aur neeche ek Return ka button bhi hai.
+
+00:01:21.011 --> 00:01:31.629
+Agar customer koi saaman wapas kare, to Return dabate hain, item aur quantity chunte hain, aur bill, stock aur khata teeno apne aap theek ho jaate hain.
+
+00:01:31.629 --> 00:01:37.357
+Kyun? Kyunki wapsi haath se likhne mein stock aur udhaar dono galat ho jaate hain.
+
+00:01:37.925 --> 00:01:45.204
+Customers. Kisi bhi customer ko kholo to khata, history, aur Remind aur Statement PDF ke button.
+
+00:01:45.204 --> 00:01:52.256
+Statement PDF customer ko bhejne ke liye ek saaf hisaab ki copy hai, jo bahes se bachati hai.
+
+00:01:53.939 --> 00:02:00.520
+Ab Products. Naya item jodne ke liye Plus Product. Sirf naam, price aur GST chahiye.
+
+00:02:00.520 --> 00:02:06.317
+Naam likhte hain Phone Cover, price ek sau ninyanave, GST atharah percent.
+
+00:02:06.317 --> 00:02:11.174
+Aur zyada options mein MRP, barcode, category aur stock. Kyun?
+
+00:02:11.174 --> 00:02:17.990
+Kyunki dukaan ke liye pehle din se sab kuch bharna zaroori nahi, jitna chahiye utna hi.
+
+00:02:23.284 --> 00:02:25.868
+Save dabate hain. Item list mein aa gaya.
+
+00:02:25.868 --> 00:02:34.059
+Stock track karne ka option on ho to har bill ke saath stock apne aap ghatta hai, aur jab kam hota hai to Low ka nishaan aata hai.
+
+00:02:34.059 --> 00:02:37.336
+Yahin se barcode labels ka print bhi hota hai. Kyun?
+
+00:02:37.336 --> 00:02:41.495
+Kyunki bina stock ke pata nahi chalta ki kya khatam hone wala hai.
+
+00:02:41.849 --> 00:02:49.102
+Purchases. Vendor se maal aane par yahan likhte hain: vendor, unka invoice number, item, quantity aur rate.
+
+00:02:49.102 --> 00:02:55.068
+Save purchase dabate hi stock badh jata hai, aur input GST ka record ban jata hai. Kyun?
+
+00:02:55.068 --> 00:03:00.220
+Kyunki purchase likhne se hi pata chalta hai ki aapka asli munafa kitna hai.
+
+00:03:00.596 --> 00:03:09.213
+Quantity bees, rate tin sau saath rupaye. Neeche paid now aur method, aur input tax credit ka tick.
+
+00:03:09.213 --> 00:03:14.087
+Save dabate hain. Ab charger ka stock bees se badh gaya.
+
+00:03:14.461 --> 00:03:15.657
+Reports aur GST.
+
+00:03:15.657 --> 00:03:27.397
+Wahi poori report list jo har dukaan ko milti hai: daily summary, sales, profit, udhaar aging, aur GST ke teen reports GSTR 1, GSTR 3B aur purchase register.
+
+00:03:27.397 --> 00:03:32.481
+Aaj ke bill aur purchase ka data in mein apne aap aa gaya hai. Kyun?
+
+00:03:32.481 --> 00:03:37.192
+Kyunki mahine ke end mein CA ko koi register nahi banana padta.
+
+00:03:37.570 --> 00:03:45.868
+GSTR 1 mein aaj ka bill bhi aa gaya. Same state ka customer hai to CGST aur SGST, doosre state ka ho to IGST.
+
+00:03:45.868 --> 00:03:50.132
+Ye faisla app khud karta hai customer ke state se. Kyun?
+
+00:03:50.132 --> 00:03:55.461
+Kyunki galat tax head par bill banane se return mein mushkil hoti hai.
+
+00:03:55.821 --> 00:03:57.273
+Aur bill ka output.
+
+00:03:57.273 --> 00:04:08.049
+Kisi bhi bill ko kholo to A four ka bada invoice, 58 aur 80 millimetre ka thermal receipt, P D F aur WhatsApp, saare raaste ek hi jagah hain.
+
+00:04:08.049 --> 00:04:14.392
+Kyun? Kyunki alag dukaan mein alag printer hota hai, aur ek app sab par chalta hai.
+
+00:04:14.748 --> 00:04:29.987
+Aaj humne General Store ka flow dekha: bill discount aur udhaar ke saath, sales return, customer khata, naya item, stock, purchase, reports aur GST, aur bill ke alag alag output.
+
+00:04:29.987 --> 00:04:37.606
+Ek practical baat: pehle din sirf item, price aur GST bharo aur bill banana shuru kar do.
+
+00:04:37.606 --> 00:04:43.599
+Baaki cheezein, jaise stock ya barcode, jab zaroorat ho tab jodte jao.

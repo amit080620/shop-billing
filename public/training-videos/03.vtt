@@ -1,0 +1,139 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:06.027
+Namaste. Is video mein hum The Ray ko Supermarket ya Mart ke liye step by step use karenge.
+
+00:00:06.027 --> 00:00:08.676
+Ye public demo dummy data par based hai.
+
+00:00:08.676 --> 00:00:16.491
+Supermarket mein counter ki speed aur price ki clarity sabse zaroori hoti hai, isliye hum counter se shuru karte hain.
+
+00:00:16.854 --> 00:00:22.563
+Ye Fast Billing counter hai. Upar categories, neeche saare products ke bade tiles.
+
+00:00:22.563 --> 00:00:29.177
+Tile par tap karo to item bill mein jud jata hai, dobara tap karo to quantity badhti hai. Kyun?
+
+00:00:29.177 --> 00:00:33.981
+Rush ke time typing ka waqt nahi hota, ek tap mein item aana chahiye.
+
+00:00:33.981 --> 00:00:40.665
+Fast Billing wahi pricing, GST aur stock use karta hai jo normal billing, bas raasta chhota hai.
+
+00:00:44.883 --> 00:00:48.964
+Neeche ek hi bar mein items ki ginti aur total dikhta hai.
+
+00:00:48.964 --> 00:00:56.072
+Isse dabao to poora cart khulta hai, jahan quantity theek kar sakte ho aur payment le sakte ho. Kyun?
+
+00:00:56.072 --> 00:01:00.294
+Taaki customer ke saamne bill ek nazar mein confirm ho jaye.
+
+00:01:00.667 --> 00:01:04.285
+Ab normal New Bill mein MRP aur offers dekhte hain.
+
+00:01:04.285 --> 00:01:10.741
+Milton Water Bottle ka MRP paanch sau ke kareeb hai, lekin uspar Diwali deal chal rahi hai.
+
+00:01:10.741 --> 00:01:12.798
+Item search karke jodte hain.
+
+00:01:18.949 --> 00:01:21.545
+Dekhiye, offer price apne aap lag gaya.
+
+00:01:21.545 --> 00:01:28.200
+Aapko discount manually likhna nahi pada, aur customer ko dikhta hai ki MRP se kitna kam mila. Kyun?
+
+00:01:28.200 --> 00:01:35.720
+Kyunki offer sirf shelf par likhne se nahi chalta, bill mein bhi wahi price lagni chahiye, warna jhagda hota hai.
+
+00:01:36.088 --> 00:01:42.431
+Ab bulk pricing. Kissan Ketchup ek kilo ke pack par teen ya usse zyada lene par sasta rate hai.
+
+00:01:42.431 --> 00:01:46.838
+Teen pack jodte hain, aur dekhiye rate apne aap kam ho gaya. Kyun?
+
+00:01:46.838 --> 00:01:51.579
+Thok mein kharidne wale customer ko sahi rate dena, bina calculator ke.
+
+00:01:53.169 --> 00:01:59.542
+In dono cheezon ka setup Products screen mein hota hai. Milton Water Bottle kholte hain.
+
+00:01:59.542 --> 00:02:08.738
+Yahan price, GST, MRP, bulk quantity aur bulk price, aur offer price ke saath offer ka badge, jaise Diwali deal, likh sakte ho.
+
+00:02:08.738 --> 00:02:11.780
+Ek baar likho, har bill mein lag jata hai.
+
+00:02:14.207 --> 00:02:15.355
+Ab Stock Audit.
+
+00:02:15.355 --> 00:02:24.002
+Kabhi kabhi shelf par asli maal aur computer ke stock mein antar aa jata hai, chori, toot phoot ya galat bill se.
+
+00:02:24.002 --> 00:02:29.818
+Audit mein aap gin kar asli quantity likhte ho. Start new count dabate hain.
+
+00:02:30.193 --> 00:02:36.389
+Har item ke saamne count ka box hai. Yahan kuch items ki asli ginti likhte hain.
+
+00:02:36.389 --> 00:02:42.353
+Jo item ki ginti computer se kam ya zyada hogi, wo mismatch ban jayegi. Kyun?
+
+00:02:42.353 --> 00:02:48.084
+Kyunki sirf ginti karne se hi pata chalta hai ki nuksan kahan ho raha hai.
+
+00:02:48.880 --> 00:02:50.678
+Complete audit dabate hain.
+
+00:02:50.678 --> 00:02:59.535
+App dikhata hai kis item mein kitna antar hai, aur aap ek tap mein stock ko asli ginti ke hisaab se theek kar sakte ho, yaani settle.
+
+00:02:59.535 --> 00:03:03.531
+Ye isliye ki aage ka reorder aur profit sahi stock par bane.
+
+00:03:03.905 --> 00:03:04.696
+Ab Reorder.
+
+00:03:04.696 --> 00:03:12.822
+Ye screen batati hai ki kaunsa maal kitna bacha hai, roz kitna bik raha hai, aur kitne din mein khatam ho jayega.
+
+00:03:12.822 --> 00:03:16.346
+Jaise Prestige Cooker aaj hi khatam ho sakta hai.
+
+00:03:16.346 --> 00:03:23.753
+Vendor chuno aur ek tap mein pre-filled purchase bana lo, ya WhatsApp par vendor ko list bhej do. Kyun?
+
+00:03:23.753 --> 00:03:28.356
+Kyunki stock khatam hone se pehle order dena hi asli bachat hai.
+
+00:03:31.316 --> 00:03:36.486
+Reorder par tap karne se purchase form pehle se bhar ke khulta hai.
+
+00:03:36.486 --> 00:03:42.967
+Vendor, items aur quantity tayyar hote hain, sirf rate aur payment likhna baaki hai.
+
+00:03:43.334 --> 00:03:45.239
+Dashboard par wapas aate hain.
+
+00:03:45.239 --> 00:03:50.701
+Mart mein health score, kam stock wale items aur udhaar ke reminders yahin milte hain.
+
+00:03:50.701 --> 00:03:54.385
+Ye teen kaam roz subah ek nazar mein pata chal jaate hain.
+
+00:03:54.750 --> 00:04:01.337
+Aur Profit Leak. Mart mein bahut maal hota hai, isliye kai items mahino tak nahi bikte.
+
+00:04:01.337 --> 00:04:09.287
+Ye screen bina bika stock, purana udhaar aur kharid se sasta bikne wale items ek jagah dikhati hai. Kyun?
+
+00:04:09.287 --> 00:04:12.921
+Kyunki jo nuksan dikhta nahi, wo rukta bhi nahi.
+
+00:04:13.279 --> 00:04:25.524
+Aaj humne Mart ka poora flow dekha: Fast Billing counter, MRP offer aur bulk price wala bill, Stock Audit se asli ginti, Reorder se stock khatam hone se pehle order, aur Profit Leak.
+
+00:04:25.524 --> 00:04:33.530
+Ek practical baat: mahine mein ek baar Stock Audit zaroor karo, chhoti chhoti chori aur galtiyan wahi pakdi jaati hain.

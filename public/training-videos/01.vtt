@@ -1,0 +1,262 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:04.530
+Namaste. Is video mein hum The Ray ko step by step use karenge.
+
+00:00:04.530 --> 00:00:11.720
+Ye public demo dummy data par based hai, isliye koi bhi cheez try karo, asli data ko kuch nahi hota.
+
+00:00:11.720 --> 00:00:21.571
+The Ray ek billing app hai jo billing ke saath customer ka udhaar, stock, purchases aur business reports ko ek hi jagah manage karta hai.
+
+00:00:21.934 --> 00:00:23.588
+Sabse pehle demo page.
+
+00:00:23.588 --> 00:00:33.662
+Yahan pandrah tarah ke business ke liye alag ready-made demo shop hai: kirana, restaurant, hotel, pharmacy, clinic, gym aur baaki bhi.
+
+00:00:33.662 --> 00:00:37.497
+Har shop mein ek mahine ka data pehle se bhara hai.
+
+00:00:37.497 --> 00:00:42.985
+Isse aap kisi bhi business ka poora kaam bina sign up kiye dekh sakte ho.
+
+00:00:43.371 --> 00:00:48.656
+Hum Grocery, yaani Kirana demo kholte hain. Na password, na login.
+
+00:00:48.656 --> 00:00:53.942
+Ek tap se seedha Sharma Kirana Store ka Home screen khul jata hai.
+
+00:00:54.327 --> 00:00:55.700
+Ye Home screen hai.
+
+00:00:55.700 --> 00:01:03.937
+Sabse upar shop health score hai, ek se sau ke beech ka number, jo batata hai ki dukaan kitni theek chal rahi hai.
+
+00:01:03.937 --> 00:01:07.839
+Uske neeche aaj ke teen sabse zaroori kaam hain. Kyun?
+
+00:01:07.839 --> 00:01:13.258
+Taaki dukandaar ko roz sochna na pade ki subah se shuru kahan se karna hai.
+
+00:01:13.637 --> 00:01:24.844
+Neeche aaj ki sales, To collect yaani customers se kitna paisa aana hai, aur To pay vendors yaani suppliers ko kitna dena hai, ye teen number hain.
+
+00:01:24.844 --> 00:01:31.248
+Kyun zaroori? Kyunki paise ka hisaab register kholne se pehle hi saamne aa jata hai.
+
+00:01:31.621 --> 00:01:35.134
+Last 7 days ka sales graph aur recent bills.
+
+00:01:35.134 --> 00:01:41.201
+Graph se turant samajh aata hai ki kaun sa din tez chala aur kaun sa dheema.
+
+00:01:41.201 --> 00:01:45.512
+Kisi bill par tap karo to poora invoice khul jata hai.
+
+00:01:45.892 --> 00:01:53.022
+Aur neeche festival reminder aur shortcuts. Festival aane se pehle ye app yaad dilata hai ki stock check karo.
+
+00:01:53.022 --> 00:01:59.503
+Customers ke birthday bhi yahin se pakde jaate hain, taaki ek message se purana customer wapas aaye.
+
+00:01:59.868 --> 00:02:05.831
+Ab ek naya bill banate hain. Ye Sell screen hai. Sabse pehle customer chunna hota hai.
+
+00:02:05.831 --> 00:02:13.319
+Walk-in ka matlab jo bina naam ke khareedta hai. Existing customer tab udhaar aur khata ke liye zaroori hai.
+
+00:02:13.319 --> 00:02:15.399
+Hum Karan Nair ko chunte hain.
+
+00:02:17.231 --> 00:02:22.040
+Ab item chunte hain. Item par tap karo, ya naam likh ke search karo.
+
+00:02:22.040 --> 00:02:26.707
+Barcode scan karna, ya bol kar order likhwana bhi yahin hai. Kyun?
+
+00:02:26.707 --> 00:02:32.082
+Kyunki counter par har second kimti hota hai, jitna tez bill, utni kam line.
+
+00:02:32.448 --> 00:02:39.255
+Cart mein quantity plus minus se badha sakte ho. Ek item ka rate badalna ho to wo bhi ho jata hai.
+
+00:02:39.255 --> 00:02:42.589
+Yahan Basmati Rice ki quantity do kar dete hain.
+
+00:02:42.589 --> 00:02:47.659
+Total apne aap update hota hai, taaki galti se kam ya zyada bill na bane.
+
+00:02:48.034 --> 00:02:52.530
+Complete bill dabate hi discount aur payment ka step aata hai.
+
+00:02:52.530 --> 00:02:59.419
+Discount rupaye mein ya percentage mein de sakte ho. Yahan paanch percent discount lagate hain.
+
+00:02:59.419 --> 00:03:07.685
+Neeche GST ka poora breakup dikhta hai, CGST aur SGST alag alag, jo aapke CA aur GST return dono ke kaam aata hai.
+
+00:03:08.061 --> 00:03:12.546
+Ab payment. Agar customer poora paisa deta hai to Fully paid chuno.
+
+00:03:12.546 --> 00:03:18.838
+Agar sirf thoda deta hai, to yahan part payment likh do. Hum teen sau rupaye UPI se lete hain.
+
+00:03:18.838 --> 00:03:25.062
+Baaki ka balance apne aap udhaar ban jayega, aur Karan Nair ke khata mein chadh jayega. Kyun?
+
+00:03:25.062 --> 00:03:30.752
+Kyunki kaagaz ke register mein udhaar bhoolna aam baat hai, yahan kabhi nahi bhoolta.
+
+00:03:31.125 --> 00:03:34.215
+Generate invoice dabate hi bill ban gaya.
+
+00:03:34.215 --> 00:03:42.354
+Ye customer ka GST invoice hai, jisme aapki shop ki details, GSTIN, har item ka HSN aur tax breakup sab hai.
+
+00:03:42.354 --> 00:03:48.836
+Dekhiye, payment mein teen sau rupaye jama hue, aur baaki amount udhaar dikh raha hai.
+
+00:03:48.836 --> 00:03:53.056
+Yaani bill mein jo change hua wo saaf nazar aa raha hai.
+
+00:03:53.433 --> 00:03:57.371
+Bill ko kis kaagaz par nikalna hai, ye aap chun sakte ho.
+
+00:03:57.371 --> 00:04:04.140
+A four size ka bada bill, ya chhote thermal printer ke liye 58 millimetre aur 80 millimetre. Kyun?
+
+00:04:04.140 --> 00:04:10.081
+Kyunki kisi dukaan mein laser printer hota hai, kisi mein sirf chhota receipt printer.
+
+00:04:10.081 --> 00:04:14.364
+Dono ke liye bill ek hi tap mein alag format mein aa jata hai.
+
+00:04:14.732 --> 00:04:19.563
+Print, PDF save aur WhatsApp par bhejna, ye teen button bill ke upar hi hain.
+
+00:04:19.563 --> 00:04:23.892
+WhatsApp wala customer ko seedha invoice ki link bhej deta hai. Kyun?
+
+00:04:23.892 --> 00:04:30.543
+Aajkal zyadatar customer paper nahi, phone par bill chahte hain, aur aapko ek rupaya bhi kharch nahi hota.
+
+00:04:30.912 --> 00:04:33.016
+Ab customer ka khata dekhte hain.
+
+00:04:33.016 --> 00:04:38.883
+Customers screen mein har customer ke saamne likha hai ki wo settled hai ya kitna baaki hai.
+
+00:04:38.883 --> 00:04:40.923
+Yahan Karan Nair ko kholte hain.
+
+00:04:47.275 --> 00:04:51.894
+Yahan upar To collect mein wahi balance dikh raha hai jo abhi bill se bana.
+
+00:04:51.894 --> 00:04:55.898
+Neeche total business aur total paid hai, aur loyalty points bhi.
+
+00:04:55.898 --> 00:04:58.854
+History mein har bill aur har payment likhi hai.
+
+00:04:58.854 --> 00:05:03.227
+Remind dabao to WhatsApp par yaad dilane ka message tayyar ho jata hai.
+
+00:05:03.227 --> 00:05:07.846
+Ye isliye ki udhaar maangna sharam ki baat na lage, message khud jaata hai.
+
+00:05:08.222 --> 00:05:14.850
+Jab customer paisa wapas deta hai to Payment received dabao. Amount likho aur method chuno.
+
+00:05:14.850 --> 00:05:20.313
+Balance turant kam ho jata hai. Yahan do sau rupaye UPI se jama karte hain.
+
+00:05:20.689 --> 00:05:27.621
+Payment record hote hi upar To collect ka amount kam ho gaya, aur History mein ye payment bhi likh gayi.
+
+00:05:27.621 --> 00:05:34.420
+Yaani khata hamesha sahi rehta hai, aur customer se poochne ki zaroorat nahi padti ki kitna baaki hai.
+
+00:05:34.804 --> 00:05:39.461
+Ab Reports. Ye screen teen hisson mein baati gayi hai.
+
+00:05:39.461 --> 00:05:48.603
+Daily tools mein din ka hisaab, insights, profit aur udhaar ki report hai. Sales mein saare bills ki list.
+
+00:05:48.603 --> 00:05:54.123
+Aur GST filing mein GSTR 1, GSTR 3B aur purchase register. Kyun?
+
+00:05:54.123 --> 00:05:59.815
+Kyunki dukaan ko roz numbers chahiye aur CA ko mahine ke end mein.
+
+00:06:00.197 --> 00:06:04.912
+Daily summary din ke end mein cash drawer milane ke liye hai.
+
+00:06:04.912 --> 00:06:13.723
+Ye batati hai ki cash, card aur UPI se kitna aaya, vendors ko kitna gaya, aur drawer mein kitna cash hona chahiye.
+
+00:06:13.723 --> 00:06:20.448
+Kyun? Taaki shaam ko ginti se paise match karo, aur agar kami ho to usi din pakdi jaye.
+
+00:06:20.828 --> 00:06:24.482
+GSTR 1 aapki sales ka GST return format hai.
+
+00:06:24.482 --> 00:06:29.962
+B2B mein GSTIN wale customer, B2C mein baaki sab, aur HSN summary.
+
+00:06:29.962 --> 00:06:34.530
+Mahina aur saal chun kar CSV export kar sakte ho. Kyun?
+
+00:06:34.530 --> 00:06:39.429
+Taaki CA ko data type nahi karna pade, seedha file bhej do.
+
+00:06:39.429 --> 00:06:45.159
+Dhyan rahe, ye app return file nahi karta, sirf tayyar data deta hai.
+
+00:06:45.529 --> 00:06:48.677
+GSTR 3B mahine ka summary return hai.
+
+00:06:48.677 --> 00:06:59.397
+Isme aapki sales par bana tax, purchases par mila input tax credit, aur dono ka antar, yaani estimate ki kitna tax bharna hai.
+
+00:06:59.397 --> 00:07:07.140
+Kyun? Taaki mahine ke end mein pehle se pata ho ki GST ke liye kitna paisa alag rakhna hai.
+
+00:07:07.523 --> 00:07:11.718
+Purchase register vendor wise input tax credit dikhata hai.
+
+00:07:11.718 --> 00:07:16.339
+Jo tax aapne vendor ko diya, wo aapka credit ban sakta hai. Kyun?
+
+00:07:16.339 --> 00:07:20.534
+Kyunki ye credit chhoot jaye to seedha paisa ka nuksan hai.
+
+00:07:20.907 --> 00:07:30.636
+Profit leak detector batata hai ki aapka paisa kahan phansa hai: bina bika stock, purane udhaar aur wo items jo kharid se sasta bik rahe hain.
+
+00:07:30.636 --> 00:07:35.158
+Ye is liye ki nuksan tab tak dikhta nahi jab tak koi dikhaye nahi.
+
+00:07:35.530 --> 00:07:41.948
+Aakhri cheez, Preferences. Yahan bhasha badal sakte ho, English, Hindi ya Marathi.
+
+00:07:41.948 --> 00:07:46.253
+Hindi chunte hi poora app Hindi mein ho jata hai. Kyun?
+
+00:07:46.253 --> 00:07:51.341
+Kyunki har dukandaar ya staff angrezi mein comfortable nahi hota.
+
+00:07:51.711 --> 00:07:55.649
+Aur raat ko kaam karne wale dukandaron ke liye dark mode.
+
+00:07:55.649 --> 00:08:02.282
+Aankhon par kam zor padta hai aur battery bhi bachti hai. Light, Dark aur Auto teen option hain.
+
+00:08:03.476 --> 00:08:17.292
+Aaj humne The Ray ka common flow poora dekha: demo shop kholna, Home se din ka haal samajhna, bill banana, part payment se udhaar banana, khata dekhna, bill ko print ya WhatsApp karna, aur reports padhna.
+
+00:08:17.292 --> 00:08:22.032
+Ek practical baat yaad rakhna: bill banate waqt customer zaroor chuno.
+
+00:08:22.032 --> 00:08:27.247
+Wahi customer aage khata, reminder aur birthday message ka aadhaar banta hai.

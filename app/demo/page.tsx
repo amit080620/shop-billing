@@ -1,8 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, BookOpen, RefreshCw, ShieldCheck, Sparkles } from "lucide-react";
+import { ArrowRight, BookOpen, PlayCircle, RefreshCw, ShieldCheck, Sparkles } from "lucide-react";
 import { BUSINESS_TYPES } from "@/lib/businessType";
 import { DEMO_BUSINESSES } from "@/lib/demo/config";
+import { VideoPlayer } from "@/app/components/VideoPlayer";
+import { mainVideoFor, mmss, videoById, videoFiles } from "@/lib/trainingVideos";
+import { loadYoutubeIds } from "@/lib/youtubeData";
 
 export const metadata: Metadata = {
   title: "Try The Ray: live demo for every business",
@@ -10,7 +13,11 @@ export const metadata: Metadata = {
   alternates: { canonical: "/demo" },
 };
 
-export default function DemoPage() {
+export default async function DemoPage() {
+  const youtube = await loadYoutubeIds();
+  const tour = videoById("01")!;
+  const tourFiles = videoFiles(tour.id);
+
   return (
     <div className="min-h-screen bg-background">
       <header className="mx-auto flex max-w-5xl items-center justify-between px-5 py-5">
@@ -34,29 +41,69 @@ export default function DemoPage() {
           </p>
         </section>
 
+        <section aria-label="Tour video" className="mx-auto mb-10 flex max-w-sm flex-col gap-2">
+          <p className="text-center text-sm font-semibold text-foreground">New here? Watch the {Math.round(tour.seconds / 60)}-minute tour first</p>
+          <VideoPlayer
+            lite
+            showTopics={false}
+            src={tourFiles.mp4}
+            poster={tourFiles.poster}
+            vtt={tourFiles.vtt}
+            youtubeId={youtube[tour.id] ?? null}
+            topics={tour.topics}
+            shareText="The Ray — billing app tour (Hinglish)"
+            shareUrl={`https://bill.theray.in/videos/${tour.id}`}
+            words={{
+              play: `Watch the tour · ${mmss(tour.seconds)}`,
+              topics: "",
+              share: "Share this video on WhatsApp",
+              subtitlesNote: "Hinglish voice, subtitles on.",
+            }}
+          />
+          <Link href="/videos" className="self-center text-xs font-semibold text-brand-text">
+            All training videos, business by business →
+          </Link>
+        </section>
+
         <section aria-label="Demos" className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {DEMO_BUSINESSES.map((b) => {
             const Icon = BUSINESS_TYPES.find((t) => t.value === b.type)?.icon;
             const colors = BUSINESS_TYPES.find((t) => t.value === b.type)?.colors ?? ["#6366f1", "#4338ca"];
+            const video = mainVideoFor(b.type);
             return (
-              // A plain link on purpose: opening a demo signs you in, which must not happen on a prefetch.
-              <a key={b.type} href={`/demo/enter/${b.type}`} className="neu-card group flex flex-col gap-3 p-4 transition-transform hover:-translate-y-0.5">
-                <div className="flex items-center gap-3">
-                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-white" style={{ background: `linear-gradient(135deg, ${colors[0]}, ${colors[1]})` }}>
-                    {Icon && <Icon size={22} />}
-                  </span>
-                  <div className="min-w-0">
-                    <p className="truncate text-base font-semibold text-foreground">{b.title}</p>
-                    <p className="truncate text-xs text-muted">
-                      {b.shopName} · {b.city}
-                    </p>
+              <div key={b.type} className="neu-card flex flex-col gap-3 p-4 transition-transform hover:-translate-y-0.5">
+                {/* A plain link on purpose: opening a demo signs you in, which must not happen on a prefetch. */}
+                <a href={`/demo/enter/${b.type}`} className="group flex flex-1 flex-col gap-3">
+                  <div className="flex items-center gap-3">
+                    <span
+                      className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-white"
+                      style={{
+                        background: `linear-gradient(135deg, ${colors[0]}, ${colors[1]})`,
+                      }}
+                    >
+                      {Icon && <Icon size={22} />}
+                    </span>
+                    <div className="min-w-0">
+                      <p className="truncate text-base font-semibold text-foreground">{b.title}</p>
+                      <p className="truncate text-xs text-muted">
+                        {b.shopName} · {b.city}
+                      </p>
+                    </div>
                   </div>
-                </div>
-                <p className="text-sm text-muted">{b.blurb}</p>
-                <span className="mt-auto inline-flex items-center gap-1.5 text-sm font-semibold text-brand-text">
-                  Open the demo <ArrowRight size={15} className="transition-transform group-hover:translate-x-0.5" />
-                </span>
-              </a>
+                  <p className="text-sm text-muted">{b.blurb}</p>
+                  <span className="mt-auto inline-flex items-center gap-1.5 text-sm font-semibold text-brand-text">
+                    Open the demo <ArrowRight size={15} className="transition-transform group-hover:translate-x-0.5" />
+                  </span>
+                </a>
+                {video && (
+                  <Link
+                    href={`/videos/${video.id}?type=${b.type}`}
+                    className="inline-flex items-center gap-1.5 self-start rounded-full border border-border px-2.5 py-1 text-xs font-medium text-muted hover:text-foreground"
+                  >
+                    <PlayCircle size={14} className="text-brand" /> Watch the video · {mmss(video.seconds)}
+                  </Link>
+                )}
+              </div>
             );
           })}
         </section>

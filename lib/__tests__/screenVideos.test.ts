@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { videoForScreen } from "../screenVideos";
-import { TRAINING_VIDEOS, videosFor } from "../trainingVideos";
+import { mainVideoFor, TRAINING_VIDEOS, videosFor } from "../trainingVideos";
 
 describe("videoForScreen", () => {
   it("picks the trade's own video for a shared screen", () => {
@@ -33,5 +33,14 @@ describe("videosFor", () => {
     const { own, common } = videosFor("wholesale");
     expect(own.map((v) => v.id)).toEqual(["30", "32"]);
     expect(common.some((v) => v.id === "01")).toBe(true);
+  });
+});
+
+describe("mainVideoFor", () => {
+  it("picks the trade's own chapter over a shared one", () => {
+    expect(mainVideoFor("wholesale")?.id).toBe("32");
+    expect(mainVideoFor("grocery")?.id).toBe("02");
+    expect(mainVideoFor("hotel")?.id).toBe("07");
+    expect(mainVideoFor("nothing")).toBeNull();
   });
 });

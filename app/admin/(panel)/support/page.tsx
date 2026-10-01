@@ -1,10 +1,11 @@
 import Link from "next/link";
-import { MessageCircle } from "lucide-react";
+import { MessageCircle, PlayCircle } from "lucide-react";
 import { requireSuperAdmin } from "@/lib/admin-auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { plansMigrationApplied } from "@/lib/actions/admin-plans";
 import { buildWhatsAppLink } from "@/lib/whatsapp";
 import { srNumber, SUPPORT_PREFIX, supportParts } from "@/lib/support";
+import { findVideos } from "@/lib/videoSearch";
 import { PushToggle } from "../PushToggle";
 import { SupportStatusButtons } from "./SupportStatusButtons";
 
@@ -67,6 +68,10 @@ export default async function AdminSupportPage({ searchParams }: { searchParams:
             const { category, message } = supportParts(r.item);
             const sr = srNumber(r.id);
             const reply = shop?.owner_phone ? buildWhatsAppLink(shop.owner_phone, `Hi ${shop.name}, this is The Ray support about your request ${sr} ("${message.slice(0, 80)}"). `) : null;
+            // The training video that most likely answers it, to send with the reply.
+            const video = findVideos(message, shop?.business_type ?? "", 1)[0];
+            const videoUrl = video ? `https://bill.theray.in/videos/${video.video.id}?t=${video.t}` : null;
+            const videoReply = video && shop?.owner_phone ? buildWhatsAppLink(shop.owner_phone, `Hi ${shop.name}, this is The Ray support about your request ${sr}. This short video shows exactly how — "${video.topic}": ${videoUrl}`) : null;
             return (
               <li key={r.id} className="flex flex-col gap-2 rounded-xl border border-gray-800 bg-gray-900 p-3.5">
                 <div className="flex items-start justify-between gap-2">
@@ -96,8 +101,18 @@ export default async function AdminSupportPage({ searchParams }: { searchParams:
                       <MessageCircle size={13} /> Reply on WhatsApp
                     </a>
                   )}
+                  {videoReply && (
+                    <a href={videoReply} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 rounded-lg bg-indigo-600 px-2.5 py-1.5 text-xs font-medium text-white">
+                      <PlayCircle size={13} /> Reply with video
+                    </a>
+                  )}
                   <SupportStatusButtons id={r.id} status={r.status} />
                 </div>
+                {video && videoUrl && (
+                  <a href={videoUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-indigo-300 underline">
+                    Suggested video: {video.topic} — {video.video.title}
+                  </a>
+                )}
               </li>
             );
           })}

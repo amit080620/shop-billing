@@ -1,0 +1,121 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:00.541
+Namaste.
+
+00:00:00.541 --> 00:00:07.513
+Is video mein hum The Ray ko Hardware aur Building Material ki dukaan ke liye step by step use karenge.
+
+00:00:07.513 --> 00:00:10.221
+Ye public demo dummy data par based hai.
+
+00:00:10.221 --> 00:00:18.411
+Hardware business mein do cheezein sabse zyada important hain: warranty wale saaman ka record, aur contractors ka udhaar.
+
+00:00:18.731 --> 00:00:21.792
+Ye Shree Hardware and Paints ka Home screen hai.
+
+00:00:21.792 --> 00:00:25.809
+Dhyan dijiye To collect aur To pay vendors ke number bade hain.
+
+00:00:25.809 --> 00:00:33.333
+Hardware mein contractor mahine bhar udhaar lete hain, aur dukandaar apne suppliers ko bhi udhaar par maal uthata hai.
+
+00:00:33.333 --> 00:00:37.542
+Isliye yahan dono taraf ka paisa ek nazar mein dikhna zaroori hai.
+
+00:00:37.899 --> 00:00:45.284
+Ab warranty wale item ka bill. Existing customer mein Manoj Shinde ko chunte hain, jo ek contractor hai.
+
+00:00:45.284 --> 00:00:52.030
+Phir Philips LED Bulb aur Bosch Drill Machine jodte hain. In dono par warranty hai, ek saal ki.
+
+00:00:52.422 --> 00:00:58.838
+Contractor ne poora paisa nahi diya. Complete bill dabakar part payment likhte hain, paanch sau rupaye.
+
+00:00:58.838 --> 00:01:03.074
+Baaki ka balance contractor ke khata mein udhaar chadh jayega. Kyun?
+
+00:01:03.074 --> 00:01:10.673
+Kyunki hardware mein bade bill aur mahine ke hisaab ka udhaar roz ki baat hai, aur usko yaad rakhna insaan ke bas ka nahi.
+
+00:01:11.049 --> 00:01:15.593
+Dekhiye, invoice ban gaya aur usme warranty wale items ka record ban gaya.
+
+00:01:15.593 --> 00:01:21.980
+Customer ka phone number bill ke saath jud gaya hai, isliye baad mein warranty isi number se mil jayegi.
+
+00:01:22.369 --> 00:01:28.676
+Ab Customers. Yahan contractors ki list hai, har naam ke saamne unka baaki udhaar.
+
+00:01:28.676 --> 00:01:37.445
+Jinke paas GSTIN hai, unke bill B2B invoice ban jaate hain, aur wo seedha aapke GSTR 1 mein sahi jagah jaate hain.
+
+00:01:37.445 --> 00:01:44.060
+Kyun? Kyunki GSTIN wale customer ka bill galat bane to unka input credit ruk jata hai.
+
+00:01:44.441 --> 00:01:55.124
+Kisi contractor ko kholo to poora khata dikhta hai: kitna business hua, kitna diya, kitna baaki hai, aur har bill aur payment ki history.
+
+00:01:55.124 --> 00:01:59.725
+Remind dabao to WhatsApp par yaad dilane ka message tayyar.
+
+00:01:59.725 --> 00:02:05.652
+Ye isliye ki contractor se paisa maangna aasan aur professional ho jata hai.
+
+00:02:06.909 --> 00:02:08.242
+Ab Warranty lookup.
+
+00:02:08.242 --> 00:02:15.676
+Jab koi customer kahe ki drill kharab ho gaya, to aap uska phone number ya invoice number yahan likhte ho.
+
+00:02:15.676 --> 00:02:17.920
+Hum Manoj ka number likhte hain.
+
+00:02:18.295 --> 00:02:23.232
+Dekhiye, us customer ke saare warranty items aur unka bill saamne aa gaya.
+
+00:02:23.232 --> 00:02:27.902
+Dukandaar turant bata sakta hai ki warranty chalu hai ya khatam. Kyun?
+
+00:02:27.902 --> 00:02:33.306
+Bahes aur kaagaz dhundhne ka waqt bachta hai, aur customer ka bharosa badhta hai.
+
+00:02:33.679 --> 00:02:38.495
+Ab Purchases. Hardware mein maal vendors se udhaar par aata hai.
+
+00:02:38.495 --> 00:02:46.320
+Purchase mein vendor ka bill, items, GST aur input credit likhte hain, aur stock apne aap badh jata hai.
+
+00:02:46.320 --> 00:02:49.330
+Yahin se vendor ko payment bhi hoti hai.
+
+00:02:49.699 --> 00:02:54.998
+Make Payment mein supplier chuno, aur dekho ki usko kitna dena baaki hai.
+
+00:02:54.998 --> 00:02:58.555
+Aap poora ya thoda thoda paisa de sakte ho. Kyun?
+
+00:02:58.555 --> 00:03:04.870
+Vendor ke saath hisaab saaf rakhne se agla maal bina jhagde udhaar par milta rehta hai.
+
+00:03:17.890 --> 00:03:23.992
+Aur Products. Yahan har item ka bulk rate, stock aur reorder level dikhta hai.
+
+00:03:23.992 --> 00:03:29.703
+Ultratech Cement kholte hain: bees bori ya usse zyada par sasta rate hai.
+
+00:03:29.703 --> 00:03:36.901
+Reorder level ka matlab jab stock is se neeche jaye, to app khud batata hai ki maal mangwao.
+
+00:03:38.591 --> 00:03:39.819
+Wapas Dashboard par.
+
+00:03:39.819 --> 00:03:48.602
+Hardware ke liye teen kaam yahan roz milte hain: kam stock ka reorder, overdue udhaar ki vasooli, aur wo customers jo aana band kar chuke hain.
+
+00:03:48.967 --> 00:04:00.209
+Aaj humne Hardware ka flow dekha: warranty item ka bill, contractor ka part payment aur udhaar, phone se warranty lookup, vendor ko payment, aur bulk rate ka setup.
+
+00:04:00.209 --> 00:04:10.218
+Ek practical baat: warranty wale item ka bill hamesha customer ke phone number ke saath banao, warna baad mein warranty dhundhna mushkil hota hai.
