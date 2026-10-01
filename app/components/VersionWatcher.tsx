@@ -29,7 +29,7 @@ async function isOutdated(): Promise<boolean> {
  *   a half-filled bill is never reloaded out from under someone.
  * (The previous version read window.__NEXT_DATA__, which only exists in
  * the Pages Router, so it never detected anything.) */
-export function VersionWatcher() {
+export function VersionWatcher({ words }: { words: { available: string; refresh: string } }) {
   const [updateAvailable, setUpdateAvailable] = useState(false);
 
   useEffect(() => {
@@ -56,12 +56,12 @@ export function VersionWatcher() {
 
   return (
     <div className="fixed inset-x-0 bottom-[calc(var(--bottom-nav-h)+env(safe-area-inset-bottom)+12px)] z-50 mx-auto flex w-fit max-w-[90%] items-center gap-3 rounded-full bg-foreground px-4 py-2.5 text-background shadow-lg md:bottom-4">
-      <span className="text-xs font-medium">A new version is available</span>
+      <span className="text-xs font-medium">{words.available}</span>
       <button
         onClick={() => window.location.reload()}
         className="flex shrink-0 items-center gap-1.5 rounded-full bg-background px-3 py-1.5 text-xs font-semibold text-foreground"
       >
-        <RefreshCw size={12} /> Refresh
+        <RefreshCw size={12} /> {words.refresh}
       </button>
     </div>
   );

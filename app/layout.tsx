@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Plus_Jakarta_Sans, Noto_Sans_Devanagari } from "next/font/google";
 import { getTheme, getLiteMode } from "@/lib/theme";
-import { getLang } from "@/lib/i18n/server";
+import { getTranslator } from "@/lib/i18n/server";
 import { ServiceWorkerRegistration } from "./components/ServiceWorkerRegistration";
 import { ToastProvider } from "./components/Toast";
 import { AutoThemeApplier } from "./components/ThemeToggle";
@@ -84,7 +84,7 @@ export default async function RootLayout({
 }>) {
   const theme = await getTheme();
   const liteMode = await getLiteMode();
-  const lang = await getLang();
+  const { lang, t } = await getTranslator();
 
   return (
     <html
@@ -162,7 +162,7 @@ export default async function RootLayout({
         <AutoThemeApplier theme={theme} />
         <ServiceWorkerRegistration />
         <FocusScrollIntoView />
-        <VersionWatcher />
+        <VersionWatcher words={{ available: t("A new version is available"), refresh: t("Refresh") }} />
         <CalculatorAmountProvider>
           <ToastProvider>{children}</ToastProvider>
         </CalculatorAmountProvider>

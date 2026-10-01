@@ -1997,4 +1997,8 @@ export const PAGE_TEXT: Record<string, [hi: string, mr: string]> = {
   "Technical details": ["तकनीकी जानकारी", "तांत्रिक माहिती"],
   "Unexpected failures the app caught automatically — mostly useful if something needs investigating.": ["ऐप ने अपने-आप पकड़ी अनचाही गड़बड़ियाँ — किसी समस्या की जाँच में काम आती हैं।", "ॲपने आपोआप पकडलेल्या अनपेक्षित त्रुटी — एखाद्या समस्येची तपासणी करताना उपयोगी."],
   "Nothing logged — that's a good sign.": ["कुछ दर्ज नहीं हुआ — यह अच्छी बात है।", "काहीही नोंदले नाही — हे चांगले लक्षण आहे."],
+
+  // Update pill
+  "A new version is available": ["नया वर्ज़न आ गया है", "नवीन आवृत्ती आली आहे"],
+  "Refresh": ["रीफ़्रेश करें", "रीफ्रेश करा"],
 };
