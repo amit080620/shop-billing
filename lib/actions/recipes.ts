@@ -17,7 +17,7 @@ const round4 = (n: number) => Math.round((n + Number.EPSILON) * 10000) / 10000;
 
 async function open(permission: "manage_products" | null = "manage_products") {
   const session = await requireSession();
-  if (!isModuleEnabled(session.enabledModules, "recipe_stock")) return { error: moduleLockMessage("recipe_stock") } as const;
+  if (!isModuleEnabled(session.enabledModules, "recipe_stock")) return { error: moduleLockMessage("recipe_stock", session.businessType) } as const;
   if (permission && !hasPermission(session, permission)) return { error: "Only staff allowed to manage items can do this." } as const;
   const admin = createSupabaseAdminClient();
   if (!(await recipesReady(admin))) return { error: NOT_READY } as const;

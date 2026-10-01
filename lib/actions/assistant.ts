@@ -716,7 +716,7 @@ export async function askAssistantAction(question: string, history: ChatMessage[
   const apiKey = process.env.GROQ_API_KEY?.trim();
   if (!apiKey) return { error: "not_configured" };
 
-  const quota = await checkAiQuota(session.shopId, "assistant", session.email);
+  const quota = await checkAiQuota(session.shopId, "assistant", session.email, session.plan);
   if (!quota.allowed) return { error: "Aaj ke liye assistant ki daily limit khatam ho gayi — kal phir try karein." };
 
   const messages: GroqMessage[] = [

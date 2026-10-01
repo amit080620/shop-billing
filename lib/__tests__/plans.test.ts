@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { effectivePlan, limitsForPlan, limitMessage, minPlanForModule, moduleLockMessage, modulesAddedBy, modulesForPlan, planFor, planRank, PLANS } from "../plans";
+import { AI_DAILY, cheaperPackage, customQuote, effectivePlan, limitsForPlan, limitMessage, minPlanForModule, moduleLockMessage, modulesAddedBy, modulesForPlan, offeredPlans, planFor, planName, planPrice, planRank, PLANS } from "../plans";
 import { MODULES } from "../modules";
 
 const daysFromNow = (n: number) => {
@@ -19,9 +19,10 @@ describe("plans", () => {
     expect(minPlanForModule("multi_branch")).toBe("pro_plus");
   });
 
-  it("puts the day-to-day tools in Basic and control and insight in Pro", () => {
-    for (const m of ["quotations", "staff_payroll", "customer_prepaid", "gold_schemes"] as const) expect(minPlanForModule(m)).toBe("basic");
-    for (const m of ["stylist_commission", "vehicle_profit", "petty_cash"] as const) expect(minPlanForModule(m)).toBe("pro");
+  it("keeps Basic light and puts the money features in Pro, so most shops pick Pro", () => {
+    for (const m of ["quotations", "offers", "bulk_import_export"] as const) expect(minPlanForModule(m)).toBe("basic");
+    for (const m of ["whatsapp_reminders", "advanced_reports", "public_catalog", "staff_payroll", "gold_schemes", "stylist_commission", "vehicle_profit", "petty_cash"] as const) expect(minPlanForModule(m)).toBe("pro");
+    for (const m of ["multi_branch", "audit_log", "self_checkin_kiosk"] as const) expect(minPlanForModule(m)).toBe("pro_plus");
     // Free keeps nothing behind a module: its trades' cores (bilty, rates by karat, tables…) aren't modules.
     expect(PLANS.free.modules).toEqual([]);
   });
@@ -30,7 +31,7 @@ describe("plans", () => {
     expect(modulesAddedBy("pro", "salon")).toContain("stylist_commission");
     expect(modulesAddedBy("pro", "salon")).not.toContain("vehicle_profit");
     expect(modulesAddedBy("basic", "grocery")).not.toContain("gold_schemes");
-    expect(modulesAddedBy("basic", "jewellery")).toContain("gold_schemes");
+    expect(modulesAddedBy("pro", "jewellery")).toContain("gold_schemes");
     expect(modulesAddedBy("pro_plus", "grocery")).not.toContain("self_checkin_kiosk");
     // Nothing is listed twice across the ladder.
     const all = (["free", "basic", "pro", "pro_plus"] as const).flatMap((p) => modulesAddedBy(p));
@@ -40,6 +41,43 @@ describe("plans", () => {
   it("a locked action names the plan that has it", () => {
     expect(moduleLockMessage("quotations")).toMatch(/Quotations is part of the Basic plan/);
     expect(moduleLockMessage("vehicle_profit")).toMatch(/Pro plan/);
+    expect(moduleLockMessage("recipe_stock", "restaurant")).toMatch(/Pro \+ Restaurant plan/);
+  });
+
+  it("sells at the owner's prices: ₹99 / ₹199 / ₹299 a month, ₹999 / ₹1,999 / ₹2,999 a year", () => {
+    expect([PLANS.basic, PLANS.pro, PLANS.pro_plus].map((p) => [p.priceMonthly, p.priceYearly])).toEqual([
+      [99, 999],
+      [199, 1999],
+      [299, 2999],
+    ]);
+  });
+
+  it("restaurants and hotels get one complete plan at ₹12,000 a year", () => {
+    for (const trade of ["restaurant", "hotel"]) {
+      expect(offeredPlans(trade)).toEqual(["free", "pro_plus"]);
+      expect(planPrice("pro_plus", trade).yearly).toBe(12000);
+      expect(minPlanForModule("offers", trade)).toBe("pro_plus");
+    }
+    expect(planName("pro_plus", "hotel")).toBe("Pro + Hotel");
+    expect(planPrice("pro_plus", "grocery").yearly).toBe(2999);
+    expect(limitMessage("bills", 100, "free", "restaurant")).toMatch(/Upgrade to Pro \+ Restaurant/);
+  });
+
+  it("gives more AI each step up", () => {
+    const order = ["free", "basic", "pro", "pro_plus"] as const;
+    for (let i = 1; i < order.length; i++) for (const f of ["assistant", "voice", "scan"] as const) expect(AI_DAILY[order[i]][f]).toBeGreaterThan(AI_DAILY[order[i - 1]][f]);
+  });
+
+  it("prices a custom bucket and points to Pro when Pro has it all for less", () => {
+    const small = { modules: ["quotations" as const], ai: false, unlimitedItems: false, extraLogins: false };
+    expect(customQuote(small, "grocery")).toBe(649);
+    expect(cheaperPackage(small, "grocery")).toBeNull();
+    const big = { modules: ["whatsapp_reminders", "advanced_reports", "public_catalog", "staff_payroll"] as const, ai: true, unlimitedItems: false, extraLogins: false };
+    const pick = { ...big, modules: [...big.modules] };
+    expect(customQuote(pick, "grocery")).toBeGreaterThan(1999);
+    expect(cheaperPackage(pick, "grocery")).toMatchObject({ plan: "pro", yearly: 1999 });
+    // A restaurant's bucket starts higher and is weighed against its own ₹12,000 plan.
+    expect(customQuote({ modules: [], ai: false, unlimitedItems: false, extraLogins: false }, "restaurant")).toBe(4999);
   });
 
   it("each tier includes everything the tier below it has", () => {

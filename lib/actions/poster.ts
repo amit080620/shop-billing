@@ -1,5 +1,6 @@
 "use server";
 
+import { checkAiQuota } from "../aiQuota";
 import { requireSession } from "../auth";
 import { isDemoSession } from "../demo/guard";
 
@@ -22,6 +23,7 @@ export async function generatePosterTextAction(occasion: string, discountPercent
   if (isDemoSession(session)) return { error: "not_configured" };
   const apiKey = process.env.GROQ_API_KEY?.trim();
   if (!apiKey) return { error: "not_configured" };
+  if (!(await checkAiQuota(session.shopId, "assistant", session.email, session.plan)).allowed) return { error: "Today's AI limit is used up — more with Pro, in More → Plan & billing." };
 
   try {
     const response = await fetch(GROQ_URL, {

@@ -4,7 +4,7 @@ import { requireSuperAdmin } from "@/lib/admin-auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { plansMigrationApplied } from "@/lib/actions/admin-plans";
 import { PlanBadge } from "@/app/components/PlanBadge";
-import { effectivePlan, PLANS, type PlanKey } from "@/lib/plans";
+import { effectivePlan, planPrice, type PlanKey } from "@/lib/plans";
 import { buildWhatsAppLink } from "@/lib/whatsapp";
 import { isDemoShopName } from "@/lib/demo/config";
 import { onboardingStatus } from "@/lib/onboarding";
@@ -34,6 +34,7 @@ type ShopRow = {
   subscription_valid_until: string | null;
   wallet_balance: number;
   created_at: string;
+  business_type?: string;
   plan?: string;
   trial_ends_at?: string | null;
   owner_phone?: string | null;
@@ -57,7 +58,7 @@ export default async function AdminDashboardPage({ searchParams }: { searchParam
   const admin = createSupabaseAdminClient();
   const plansReady = await plansMigrationApplied();
 
-  const columns = "id, name, legal_name, gstin, subscription_valid_until, wallet_balance, created_at";
+  const columns = "id, name, legal_name, gstin, subscription_valid_until, wallet_balance, created_at, business_type";
   const { data } = await admin
     .from("shops")
     .select(plansReady ? `${columns}, plan, trial_ends_at, owner_phone` : columns)
@@ -86,7 +87,7 @@ export default async function AdminDashboardPage({ searchParams }: { searchParam
   const paying = withPlan.filter((s) => !s.eff.onTrial && s.eff.key !== "free").length;
   // Yearly-equivalent revenue of the paying shops at list price (custom
   // deals aren't priced here).
-  const arr = withPlan.reduce((sum, s) => (!s.eff.onTrial && s.eff.key !== "free" && s.eff.key !== "custom" ? sum + PLANS[s.eff.key].priceYearly : sum), 0);
+  const arr = withPlan.reduce((sum, s) => (!s.eff.onTrial && s.eff.key !== "free" && s.eff.key !== "custom" ? sum + planPrice(s.eff.key, s.business_type).yearly : sum), 0);
 
   const newEnquiries = plansReady
     ? ((await admin.from("sales_enquiries").select("id", { count: "exact", head: true }).eq("status", "new")).count ?? 0)

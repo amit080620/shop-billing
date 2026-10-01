@@ -2,8 +2,8 @@ import Link from "next/link";
 import { Check, Lock } from "lucide-react";
 import { requireSession } from "@/lib/auth";
 import { MODULES, type ModuleKey } from "@/lib/modules";
-import { minPlanForModule, modulesAddedBy, planFor } from "@/lib/plans";
-import { PRICES_CONFIRMED, rupees, SALES_WHATSAPP_CONFIRMED } from "@/lib/sales";
+import { minPlanForModule, modulesAddedBy, planName, planPrice } from "@/lib/plans";
+import { PLAN_PRICES_LIVE, rupees, SALES_WHATSAPP_CONFIRMED } from "@/lib/sales";
 import { getTranslator } from "@/lib/i18n/server";
 import { BackLink } from "@/app/components/BackLink";
 import { PlanBadge } from "@/app/components/PlanBadge";
@@ -16,8 +16,8 @@ export async function ModuleBlocked({ moduleKey }: { moduleKey: ModuleKey }) {
   const { t } = await getTranslator();
   const session = await requireSession();
   const moduleInfo = MODULES.find((m) => m.key === moduleKey);
-  const needed = minPlanForModule(moduleKey);
-  const plan = planFor(needed);
+  const needed = minPlanForModule(moduleKey, session.businessType);
+  const plan = { name: planName(needed, session.businessType), priceYearly: planPrice(needed, session.businessType).yearly };
   const alsoIn = modulesAddedBy(needed, session.businessType).filter((k) => k !== moduleKey).slice(0, 4);
   const label = t(moduleInfo?.label ?? "This feature");
 
@@ -32,7 +32,7 @@ export async function ModuleBlocked({ moduleKey }: { moduleKey: ModuleKey }) {
       <div className="flex w-full max-w-sm flex-col gap-2 rounded-xl border border-border bg-surface p-3.5 text-left">
         <div className="flex items-center justify-between gap-2">
           <PlanBadge plan={needed} size="md" />
-          {PRICES_CONFIRMED && (
+          {PLAN_PRICES_LIVE && (
             <p className="text-sm font-bold text-foreground">
               {rupees(plan.priceYearly)}
               <span className="text-xs font-normal text-muted"> {t("/ year")}</span>

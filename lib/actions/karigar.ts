@@ -13,7 +13,7 @@ const grams = (v: unknown) => Math.round(Number(v) * 1000) / 1000;
 
 async function guard() {
   const session = await requireSession();
-  if (!isModuleEnabled(session.enabledModules, "karigar_jobs")) return { error: moduleLockMessage("karigar_jobs") } as const;
+  if (!isModuleEnabled(session.enabledModules, "karigar_jobs")) return { error: moduleLockMessage("karigar_jobs", session.businessType) } as const;
   const admin = createSupabaseAdminClient();
   if (!(await gapsReady(admin))) return { error: GAPS_NOT_READY } as const;
   return { session, admin } as const;

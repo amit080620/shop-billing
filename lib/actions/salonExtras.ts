@@ -24,7 +24,7 @@ export async function savePackagePlanAction(input: {
   name: string;
 }): Promise<{ error?: string; productId?: string }> {
   const session = await requireSession();
-  if (!isModuleEnabled(session.enabledModules, "customer_prepaid")) return { error: moduleLockMessage("customer_prepaid") };
+  if (!isModuleEnabled(session.enabledModules, "customer_prepaid")) return { error: moduleLockMessage("customer_prepaid", session.businessType) };
   if (!hasPermission(session, "manage_products")) return { error: "Only staff allowed to manage items can add a package." };
   const admin = createSupabaseAdminClient();
   if (!(await salonExtrasReady(admin))) return { error: NOT_READY };
@@ -97,7 +97,7 @@ async function ownCustomer(admin: ReturnType<typeof createSupabaseAdminClient>, 
  * money is an advance on the day it is paid (the Daily summary counts it then). */
 export async function topUpWalletAction(input: { customerId: string; money: number; extra: number; method: CashMethod; note?: string }): Promise<{ error?: string }> {
   const session = await requireSession();
-  if (!isModuleEnabled(session.enabledModules, "customer_prepaid")) return { error: moduleLockMessage("customer_prepaid") };
+  if (!isModuleEnabled(session.enabledModules, "customer_prepaid")) return { error: moduleLockMessage("customer_prepaid", session.businessType) };
   const admin = createSupabaseAdminClient();
   if (!(await salonExtrasReady(admin))) return { error: NOT_READY };
   const customer = await ownCustomer(admin, session.shopId, input.customerId);
@@ -134,7 +134,7 @@ export async function topUpWalletAction(input: { customerId: string; money: numb
  * usually the shop's own extra — lapses. */
 export async function refundWalletAction(input: { customerId: string; money: number; method: CashMethod }): Promise<{ error?: string }> {
   const session = await requireSession();
-  if (!isModuleEnabled(session.enabledModules, "customer_prepaid")) return { error: moduleLockMessage("customer_prepaid") };
+  if (!isModuleEnabled(session.enabledModules, "customer_prepaid")) return { error: moduleLockMessage("customer_prepaid", session.businessType) };
   if (session.role !== "owner") return { error: "Only the owner can hand back a prepaid balance." };
   const admin = createSupabaseAdminClient();
   if (!(await salonExtrasReady(admin))) return { error: NOT_READY };

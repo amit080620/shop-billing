@@ -33,7 +33,7 @@ export async function billLimitError(session: SessionContext): Promise<string | 
   if (limit === null) return null;
   const admin = createSupabaseAdminClient();
   if ((await salesThisMonth(admin, session.shopId)) < limit) return null;
-  return limitMessage("bills", limit, session.plan);
+  return limitMessage("bills", limit, session.plan, session.businessType);
 }
 
 /** How many more items the plan allows (null: no limit). */
@@ -48,7 +48,7 @@ export async function productRoomLeft(session: SessionContext): Promise<number |
 export async function productLimitError(session: SessionContext): Promise<string | null> {
   const left = await productRoomLeft(session);
   if (left === null || left > 0) return null;
-  return limitMessage("products", session.planLimits.products as number, session.plan);
+  return limitMessage("products", session.planLimits.products as number, session.plan, session.businessType);
 }
 
 export async function staffLimitError(session: SessionContext): Promise<string | null> {
@@ -57,7 +57,7 @@ export async function staffLimitError(session: SessionContext): Promise<string |
   const admin = createSupabaseAdminClient();
   const { count } = await admin.from("staff").select("id", { count: "exact", head: true }).eq("shop_id", session.shopId);
   if ((count ?? 0) < limit) return null;
-  return limitMessage("staff", limit, session.plan);
+  return limitMessage("staff", limit, session.plan, session.businessType);
 }
 
 export async function branchLimitError(session: SessionContext): Promise<string | null> {
@@ -66,7 +66,7 @@ export async function branchLimitError(session: SessionContext): Promise<string 
   const admin = createSupabaseAdminClient();
   const { count } = await admin.from("branches").select("id", { count: "exact", head: true }).eq("shop_id", session.shopId);
   if ((count ?? 0) < limit) return null;
-  return limitMessage("branches", limit, session.plan);
+  return limitMessage("branches", limit, session.plan, session.businessType);
 }
 
 /** What the Plan screen shows: how much of each limit is used. */

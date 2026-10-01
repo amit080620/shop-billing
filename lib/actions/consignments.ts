@@ -263,7 +263,7 @@ export async function addTripExpenseAction(input: {
   note: string;
 }): Promise<{ error?: string }> {
   const session = await requireSession();
-  if (!isModuleEnabled(session.enabledModules, "vehicle_profit")) return { error: moduleLockMessage("vehicle_profit") };
+  if (!isModuleEnabled(session.enabledModules, "vehicle_profit")) return { error: moduleLockMessage("vehicle_profit", session.businessType) };
   if (!hasPermission(session, "manage_expenses")) return { error: "You don't have permission to record expenses — ask the owner." };
   const admin = createSupabaseAdminClient();
   if (!(await transportExtrasReady(admin))) return { error: NOT_READY };
@@ -302,7 +302,7 @@ export async function addTripExpenseAction(input: {
 
 export async function deleteTripExpenseAction(id: string): Promise<{ error?: string }> {
   const session = await requireSession();
-  if (!isModuleEnabled(session.enabledModules, "vehicle_profit")) return { error: moduleLockMessage("vehicle_profit") };
+  if (!isModuleEnabled(session.enabledModules, "vehicle_profit")) return { error: moduleLockMessage("vehicle_profit", session.businessType) };
   if (!hasPermission(session, "manage_expenses")) return { error: "You don't have permission to change expenses — ask the owner." };
   const admin = createSupabaseAdminClient();
   if (!(await transportExtrasReady(admin))) return { error: NOT_READY };

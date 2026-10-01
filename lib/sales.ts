@@ -6,10 +6,12 @@ import { planFor, type PlanKey } from "./plans";
  * screen. Hardware prices are indicative — confirmed on WhatsApp when a
  * shop enquires, because street prices move. */
 
-/** Switched off until the owner confirms the prices (plans in lib/plans.ts, hardware and set-up
- * services below). While off, shops see "Price on request" instead of a number. Admin screens
- * always show the prices. Set to true to show them everywhere again. */
-export const PRICES_CONFIRMED = false;
+/** Which prices shops see. Plan prices are set by the owner (lib/plans.ts) and shown. Printers,
+ * rolls and kits are priced on the call (street prices move), and the set-up services are not
+ * priced yet — both say "Price on request" until switched on. Admin screens always show prices. */
+export const PLAN_PRICES_LIVE = true;
+export const HARDWARE_PRICES_LIVE = false;
+export const SERVICE_PRICES_LIVE = false;
 
 /** Switched off until the owner confirms the sales WhatsApp number below. While off, no screen
  * links to it: every "upgrade / enquire / book" tap only records the request, which reaches the
@@ -176,3 +178,14 @@ export function enquiryMessage(opts: {
 export function rupees(n: number): string {
   return `₹${n.toLocaleString("en-IN")}`;
 }
+
+/** The AI tools, as the Plan screen lists them — each one's daily use counts against the plan's
+ * AI allowance (lib/plans AI_DAILY). */
+export const AI_TOOLS: { name: string; what: string }[] = [
+  { name: "AI shop assistant", what: "Ask in Hindi or English — today's sales, who owes udhaar, what's running low" },
+  { name: "Speak to bill", what: "Say the items out loud and the bill fills itself" },
+  { name: "Scan a price list or purchase bill", what: "A photo becomes your items with prices and GST, or a purchase entered" },
+  { name: "Import old khata and sales register", what: "A photo of the old register becomes customers and their udhaar" },
+  { name: "Shelf watch", what: "Photos of a shelf — the AI notices what is running out" },
+  { name: "Birthday wishes, posters and price ideas", what: "Personal WhatsApp wishes, festival poster text, a fair price for a new item" },
+];

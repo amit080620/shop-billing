@@ -11,7 +11,7 @@ import { invalidateCache } from "../cache";
 /** Puts a "buy X get Y free" offer on an item, or takes it off (null). */
 export async function setBxgyAction(productId: string, offer: { buy: number; free: number } | null): Promise<{ error?: string }> {
   const session = await requireSession();
-  if (!isModuleEnabled(session.enabledModules, "offers")) return { error: moduleLockMessage("offers") };
+  if (!isModuleEnabled(session.enabledModules, "offers")) return { error: moduleLockMessage("offers", session.businessType) };
   const admin = createSupabaseAdminClient();
   if (!(await gapsReady(admin))) return { error: GAPS_NOT_READY };
   if (!/^[0-9a-f-]{36}$/i.test(productId)) return { error: "Pick an item." };

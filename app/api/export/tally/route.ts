@@ -7,7 +7,7 @@ import { loadTallyExport } from "@/lib/tallyData";
 /** Tally import files for a period: ?from=YYYY-MM-DD&to=YYYY-MM-DD&part=masters|vouchers. */
 export async function GET(request: Request) {
   const session = await requireSession();
-  if (!isModuleEnabled(session.enabledModules, "advanced_reports")) return new Response(moduleLockMessage("advanced_reports"), { status: 403 });
+  if (!isModuleEnabled(session.enabledModules, "advanced_reports")) return new Response(moduleLockMessage("advanced_reports", session.businessType), { status: 403 });
   const url = new URL(request.url);
   const from = url.searchParams.get("from") ?? "";
   const to = url.searchParams.get("to") ?? "";

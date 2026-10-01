@@ -1,34 +1,28 @@
 import { Ratelimit } from "@upstash/ratelimit";
 import { getRedis } from "./redis";
 import { isDemoEmail } from "./demo/config";
+import { AI_DAILY, type PlanKey } from "./plans";
 
-// Generous by design — these exist to catch a genuine runaway (a bug
-// looping, or one shop hammering a feature) rather than to pinch
-// normal daily use. A typical shop's real usage is a small fraction
-// of these numbers.
-const DAILY_LIMITS = {
-  assistant: 200, // AI Shop Assistant chat messages per shop per day
-  voice: 150, // Voice billing parses per shop per day
-  scan: 100, // Gemini scan calls (products/purchase/khata/sales-history) per shop per day
-} as const;
+// The daily allowance comes from the shop's plan (lib/plans AI_DAILY): every AI call costs The
+// Ray money, so Free and Basic get a taste and Pro and up use it every day.
 
 // The public demo shops share the app's AI key with everyone, so they get a small taste only.
 const DEMO_DAILY_LIMITS = { assistant: 12, voice: 8, scan: 5 } as const;
 
-export type AiQuotaFeature = keyof typeof DAILY_LIMITS;
+export type AiQuotaFeature = keyof typeof DEMO_DAILY_LIMITS;
 
-const limiters = new Map<AiQuotaFeature, Ratelimit>();
+const limiters = new Map<string, Ratelimit>();
 
-function getLimiter(feature: AiQuotaFeature, demo: boolean): Ratelimit | null {
+function getLimiter(feature: AiQuotaFeature, tier: string, limit: number): Ratelimit | null {
   const redis = getRedis();
   if (!redis) return null;
-  const key = `${demo ? "demo:" : ""}${feature}` as AiQuotaFeature;
+  const key = `${tier}:${feature}`;
   const existing = limiters.get(key);
   if (existing) return existing;
   const limiter = new Ratelimit({
     redis,
-    limiter: Ratelimit.slidingWindow((demo ? DEMO_DAILY_LIMITS : DAILY_LIMITS)[feature], "1 d"),
-    prefix: `ray:aiquota:${demo ? "demo:" : ""}${feature}`,
+    limiter: Ratelimit.slidingWindow(limit, "1 d"),
+    prefix: `ray:aiquota:${tier}:${feature}`,
   });
   limiters.set(key, limiter);
   return limiter;
@@ -41,10 +35,10 @@ function getLimiter(feature: AiQuotaFeature, demo: boolean): Ratelimit | null {
  * infrastructure piece is unavailable. Without Upstash configured,
  * this is simply a no-op and every call is allowed, exactly as
  * before this existed. */
-export async function checkAiQuota(shopId: string, feature: AiQuotaFeature, email?: string | null): Promise<{ allowed: boolean; remaining: number; limit: number }> {
+export async function checkAiQuota(shopId: string, feature: AiQuotaFeature, email?: string | null, plan: PlanKey = "pro_plus"): Promise<{ allowed: boolean; remaining: number; limit: number }> {
   const demo = isDemoEmail(email);
-  const limit = (demo ? DEMO_DAILY_LIMITS : DAILY_LIMITS)[feature];
-  const limiter = getLimiter(feature, demo);
+  const limit = demo ? DEMO_DAILY_LIMITS[feature] : (AI_DAILY[plan] ?? AI_DAILY.pro)[feature];
+  const limiter = getLimiter(feature, demo ? "demo" : plan, limit);
   // Without Redis a demo has no counter to lean on, so the AI stays off there rather than open.
   if (!limiter) return { allowed: !demo, remaining: limit, limit };
   try {

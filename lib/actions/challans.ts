@@ -29,7 +29,7 @@ export async function createChallanAction(input: {
   items: ChallanLine[];
 }): Promise<{ error?: string; id?: string }> {
   const session = await requireSession();
-  if (!isModuleEnabled(session.enabledModules, "delivery_challan")) return { error: moduleLockMessage("delivery_challan") };
+  if (!isModuleEnabled(session.enabledModules, "delivery_challan")) return { error: moduleLockMessage("delivery_challan", session.businessType) };
   const admin = createSupabaseAdminClient();
   if (!(await gapsReady(admin))) return { error: GAPS_NOT_READY };
 

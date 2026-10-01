@@ -54,7 +54,7 @@ export async function scanImageWithAI(
   if (!apiKey) return { error: "AI scan is not set up for this shop yet", errorType: "not_configured" };
 
   const session = await requireSession();
-  const quota = await checkAiQuota(session.shopId, "scan", session.email);
+  const quota = await checkAiQuota(session.shopId, "scan", session.email, session.plan);
   if (!quota.allowed) return { error: "Today's scan limit is used up. Try again tomorrow.", errorType: "quota_exceeded" };
 
   try {

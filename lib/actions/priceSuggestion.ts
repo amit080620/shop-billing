@@ -1,5 +1,6 @@
 "use server";
 
+import { checkAiQuota } from "../aiQuota";
 import { requireSession } from "../auth";
 import { isDemoSession } from "../demo/guard";
 import { createSupabaseAdminClient } from "../supabase/admin";
@@ -19,6 +20,7 @@ export async function suggestProductPriceAction(productName: string): Promise<{ 
   if (isDemoSession(session)) return { error: "not_configured" };
   const apiKey = process.env.GROQ_API_KEY?.trim();
   if (!apiKey) return { error: "not_configured" };
+  if (!(await checkAiQuota(session.shopId, "assistant", session.email, session.plan)).allowed) return { error: "Today's AI limit is used up — more with Pro, in More → Plan & billing." };
   if (!productName.trim()) return { error: "No product name given" };
 
   const admin = createSupabaseAdminClient();

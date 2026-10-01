@@ -5,7 +5,7 @@ import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { adminAssignPlanAction } from "@/lib/actions/admin-plans";
 import { MODULES } from "@/lib/modules";
-import { PLANS, planFor, type PlanKey } from "@/lib/plans";
+import { planName, planPrice, type PlanKey } from "@/lib/plans";
 import { PlanBadge } from "@/app/components/PlanBadge";
 
 const CHOICES: PlanKey[] = ["free", "basic", "pro", "pro_plus", "custom"];
@@ -31,11 +31,11 @@ const inputClass = "rounded-lg border border-gray-700 bg-gray-800 px-3 py-2 text
 /** Where payment turns into access: pick a plan, how long, what was
  * received, and the shop is switched over. Custom reveals the module and
  * limit pickers for the rare bespoke deal. */
-export function PlanForm({ shopId, currentPlan, disabled }: { shopId: string; currentPlan: PlanKey; disabled?: boolean }) {
+export function PlanForm({ shopId, currentPlan, businessType, disabled }: { shopId: string; currentPlan: PlanKey; businessType?: string | null; disabled?: boolean }) {
   const [state, formAction] = useActionState(keepValuesOnError(adminAssignPlanAction), null);
   const [plan, setPlan] = useState<PlanKey>(currentPlan);
   const [months, setMonths] = useState(12);
-  const suggested = plan === "free" || plan === "custom" ? 0 : months === 12 ? planFor(plan).priceYearly : planFor(plan).priceMonthly * months;
+  const suggested = plan === "free" || plan === "custom" ? 0 : months === 12 ? planPrice(plan, businessType).yearly : planPrice(plan, businessType).monthly * months;
 
   return (
     <form action={formAction} className="flex flex-col gap-3 rounded-xl border border-gray-800 bg-gray-900 p-4">
@@ -59,7 +59,7 @@ export function PlanForm({ shopId, currentPlan, disabled }: { shopId: string; cu
           >
             <PlanBadge plan={key} />
             <span className="text-[11px] text-gray-400">
-              {key === "free" ? "₹0" : key === "custom" ? "You set it" : `₹${PLANS[key].priceYearly.toLocaleString("en-IN")} / year`}
+              {key === "free" ? "₹0" : key === "custom" ? "You set it" : `${planName(key, businessType) !== planName(key) ? planName(key, businessType) + " · " : ""}₹${planPrice(key, businessType).yearly.toLocaleString("en-IN")} / year`}
             </span>
           </button>
         ))}

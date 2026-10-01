@@ -1,5 +1,6 @@
 "use server";
 
+import { checkAiQuota } from "../aiQuota";
 import { requireSession } from "../auth";
 import { isDemoSession } from "../demo/guard";
 import { createSupabaseAdminClient } from "../supabase/admin";
@@ -38,6 +39,7 @@ export async function checkShelfPhotoAction(shelfId: string, newPhotoBase64: str
   if (isDemoSession(session)) return { error: "not_configured", errorType: "not_configured" };
   const apiKey = process.env.GEMINI_API_KEY?.trim();
   if (!apiKey) return { error: "not_configured", errorType: "not_configured" };
+  if (!(await checkAiQuota(session.shopId, "scan", session.email, session.plan)).allowed) return { error: "Today's AI limit is used up", errorType: "quota_exceeded" };
 
   const admin = createSupabaseAdminClient();
   const { data: shelf } = await admin.from("shelf_watches").select("id, photo_url").eq("id", shelfId).eq("shop_id", session.shopId).maybeSingle();

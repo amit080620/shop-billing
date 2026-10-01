@@ -154,7 +154,7 @@ export default async function AdminShopDetailPage({
         </section>
       )}
 
-      <PlanForm shopId={shop.id} currentPlan={(shop.plan ?? "free") as PlanKey} disabled={!plansReady} />
+      <PlanForm shopId={shop.id} currentPlan={(shop.plan ?? "free") as PlanKey} businessType={shop.business_type} disabled={!plansReady} />
 
       {enquiries.length > 0 && (
         <section className="rounded-xl border border-gray-800 bg-gray-900 p-3">

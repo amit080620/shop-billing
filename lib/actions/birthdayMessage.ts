@@ -1,5 +1,6 @@
 "use server";
 
+import { checkAiQuota } from "../aiQuota";
 import { createSupabaseAdminClient } from "../supabase/admin";
 import { requireSession } from "../auth";
 import { isDemoSession } from "../demo/guard";
@@ -19,6 +20,8 @@ export async function generatePersonalizedBirthdayMessageAction(
 ): Promise<{ message: string }> {
   const session = await requireSession();
   if (isDemoSession(session)) return { message: "" };
+  // Counts against the plan's daily AI allowance (assistant).
+  if (!(await checkAiQuota(session.shopId, "assistant", session.email, session.plan)).allowed) return { message: "" };
   const admin = createSupabaseAdminClient();
   const { data: customerNameRow } = await admin.from("customers").select("name").eq("id", customerId).eq("shop_id", session.shopId).maybeSingle();
   if (!customerNameRow) return { message: "" };

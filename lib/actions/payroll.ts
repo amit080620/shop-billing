@@ -19,7 +19,7 @@ async function open() {
   const session = await requireSession();
   const admin = createSupabaseAdminClient();
   if (!(await payrollReady(admin))) return { error: NOT_READY } as const;
-  if (!isModuleEnabled(session.enabledModules, "staff_payroll")) return { error: moduleLockMessage("staff_payroll") } as const;
+  if (!isModuleEnabled(session.enabledModules, "staff_payroll")) return { error: moduleLockMessage("staff_payroll", session.businessType) } as const;
   if (!canManage(session)) return { error: NO_PERMISSION } as const;
   return { session, admin } as const;
 }
