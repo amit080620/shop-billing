@@ -10,6 +10,7 @@ import { getAuthenticatedUser } from "../supabase/server";
 import { isDemoEmail } from "../demo/config";
 import { hotelSchemaReady } from "../hotel/server";
 import { notifyTeam } from "../push";
+import { getTranslator } from "../i18n/server";
 import { createClient } from "@supabase/supabase-js";
 
 /** redirectTo: where the browser should go next. Login/signup finish with
@@ -275,6 +276,14 @@ export async function forgotPasswordAction(
     redirectTo: `${siteUrl}/reset-password`,
   });
 
+  // Supabase's email sender is out of sends for now (its built-in sender allows only a few an hour
+  // for the whole app). That says nothing about this email address, so it is safe to say so — and
+  // the person can ask the team instead of waiting for an email that won't come.
+  if (error && (error.status === 429 || error.code === "over_email_send_rate_limit")) {
+    console.error("Password reset email rate-limited", error);
+    const { t } = await getTranslator();
+    return { error: t("Too many reset emails are going out right now. Use “Email didn't come? Ask The Ray team” below — we'll reset it and call you.") };
+  }
   // Always report success even if the email doesn't exist — this is
   // intentional and standard practice, since confirming "no account
   // with that email" would let anyone probe which emails have accounts.

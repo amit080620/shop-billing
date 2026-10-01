@@ -1914,4 +1914,7 @@ export const PAGE_TEXT: Record<string, [hi: string, mr: string]> = {
   "Auto: this phone is fast enough for the full look.": ["ऑटो: यह फ़ोन पूरे डिज़ाइन के लिए काफ़ी तेज़ है।", "ऑटो: हा फोन पूर्ण डिझाइनसाठी पुरेसा वेगवान आहे."],
   "Lite Mode is on.": ["लाइट मोड चालू है।", "लाइट मोड चालू आहे."],
   "Lite Mode is off.": ["लाइट मोड बंद है।", "लाइट मोड बंद आहे."],
+
+  // Reset email rate limit
+  "Too many reset emails are going out right now. Use “Email didn't come? Ask The Ray team” below — we'll reset it and call you.": ["अभी बहुत सारे रीसेट ईमेल जा रहे हैं। नीचे “ईमेल नहीं आया? The Ray टीम से कहें” दबाएं — हम पासवर्ड रीसेट करके आपको कॉल करेंगे।", "आत्ता खूप रीसेट ईमेल जात आहेत. खाली “ईमेल आला नाही? The Ray टीमला सांगा” दाबा — आम्ही पासवर्ड रीसेट करून तुम्हाला कॉल करू."],
 };
