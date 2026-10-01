@@ -138,6 +138,18 @@ export async function adminDeleteShopAction(shopId: string, confirmName: string)
   if (!shop) return { error: "Shop not found" };
   if (confirmName.trim() !== shop.name.trim()) return { error: "Type the shop name exactly as shown to confirm" };
 
+  // Migration 0054's force_delete_shop finds and empties every table itself (and the logins).
+  // Until it is run, the older table list below is used.
+  type ForceResult = { ok: boolean; error?: string; blocked?: string[]; login_error?: string | null };
+  const rpc = db.rpc as unknown as (fn: string, args: Record<string, unknown>) => Promise<{ data: ForceResult | null; error: { code?: string; message: string } | null }>;
+  const forced = await rpc.call(db, "force_delete_shop", { p_shop_id: shopId });
+  if (!forced.error && forced.data) {
+    revalidatePath("/admin");
+    if (!forced.data.ok) return { error: `Could not delete shop: ${forced.data.error ?? "unknown error"}${forced.data.blocked?.length ? ` (still in use: ${forced.data.blocked.join(", ")})` : ""}` };
+    if (forced.data.login_error) return { error: `Shop deleted, but its login(s) could not be removed — delete them in Supabase Auth. (${forced.data.login_error})` };
+    return {};
+  }
+
   const { data: staff } = await db.from("staff").select("id").eq("shop_id", shopId);
 
   await emptyShopForDeletion(db, shopId);
