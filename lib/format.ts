@@ -3,21 +3,18 @@ export function withDr(name: string): string {
   return `Dr. ${name.replace(/^\s*dr\.?\s+/i, "").trim()}`;
 }
 
+// One formatter each, made once and reused. toLocaleString with options builds a new formatter on
+// every call, which is slow: a screen with a few hundred amounts spent over half a second of a budget
+// phone's time in it (measured opening New Bill). Same output as before.
+const MONEY = new Intl.NumberFormat("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const DATE_TIME = new Intl.DateTimeFormat("en-IN", { timeZone: "Asia/Kolkata", day: "numeric", month: "short", hour: "numeric", minute: "2-digit" });
+
 export function formatMoney(n: number) {
-  return `₹${Number(n).toLocaleString("en-IN", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })}`;
+  return `₹${MONEY.format(Number(n))}`;
 }
 
 export function formatDateTime(iso: string) {
-  return new Date(iso).toLocaleString("en-IN", {
-    timeZone: "Asia/Kolkata",
-    day: "numeric",
-    month: "short",
-    hour: "numeric",
-    minute: "2-digit",
-  });
+  return DATE_TIME.format(new Date(iso));
 }
 
 const PAYMENT_LABELS: Record<string, string> = { upi: "UPI", udhar: "Udhar", cash: "Cash", card: "Card", online: "Online", other: "Other", adjustment: "Adjusted (return)" };
