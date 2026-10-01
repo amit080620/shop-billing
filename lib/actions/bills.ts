@@ -652,6 +652,11 @@ export async function createBillAction(
     await settleChallansForBill(createSupabaseAdminClient(), session.shopId, parsed.data.challanIds, result.billId);
   }
 
+  // Stock, the day's figures and udhaar just changed: screens kept ready ahead (the billing
+  // screens in the bottom bar) must be fetched again, not reused.
+  revalidatePath("/bills/new");
+  revalidatePath("/fast-billing");
+  revalidatePath("/dashboard");
   redirect(`/print/bill/${result.billId}?new=1`);
 }
 

@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { headers } from "next/headers";
 import { Suspense } from "react";
 import Link from "next/link";
+import { homePathFor } from "@/lib/businessType";
 import { requireSession, hasPermission } from "@/lib/auth";
 import { getTranslator } from "@/lib/i18n/server";
 import { LangProvider } from "@/lib/i18n/LangContext";
@@ -192,7 +193,9 @@ export default async function PrintBillPage({
           <Link href="/bills/all" className="text-sm font-medium text-muted hover:text-foreground">
             {t("← All bills")}
           </Link>
-          <Link href="/" className="btn-primary-sm">
+          {/* Straight to this shop's billing screen (no hop through "/"), loaded ahead in full so the
+              next sale opens at once — with fresh stock, since making this bill cleared the cache. */}
+          <Link href={homePathFor(session.businessType, session.fastBillingEnabled)} prefetch className="btn-primary-sm">
             {t("common.newBillPlus")}
           </Link>
         </div>
