@@ -1,6 +1,5 @@
 import { PageIcon } from "./PageIcon";
 import { InfoTooltip } from "./InfoTooltip";
-import { ScreenVideoLink } from "./ScreenVideoLink";
 
 export function PageHeader({
   icon,
@@ -22,7 +21,6 @@ export function PageHeader({
         <div className="flex min-w-0 items-center gap-1.5">
           <h1 className="truncate text-lg font-bold tracking-tight text-foreground md:text-2xl">{title}</h1>
           {subtitle && <InfoTooltip message={subtitle} />}
-          <ScreenVideoLink />
         </div>
       </div>
       {action}
