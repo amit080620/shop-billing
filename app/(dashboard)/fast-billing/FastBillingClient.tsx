@@ -4,6 +4,7 @@ import { keepValuesOnError } from "@/lib/keepValuesOnError";
 import { useMemo, useState, useActionState, useRef, useEffect, useCallback } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { flushSync } from "react-dom";
 import { X, Minus, Plus, Trash2, Search, Mic } from "lucide-react";
 import { formatMoney } from "@/lib/format";
 import { createBillAction, resolveFastBillingCustomerAction } from "@/lib/actions/bills";
@@ -860,11 +861,12 @@ function FastCheckoutButton({
               setCustomerError(result.error ?? "Could not save customer details");
               return;
             }
-            setResolvedCustomerId(result.customerId);
-            // Genuinely wait one tick so the payload (which reads
-            // resolvedCustomerId) re-renders with the new id before
-            // the form actually submits.
-            requestAnimationFrame(() => formRef.current?.requestSubmit());
+            // The bill must carry the new customer: commit the id into the
+            // payload now, then submit. (Waiting a frame was not enough —
+            // the bill often went out before the re-render, with no customer,
+            // so a new customer's udhar was never on their account.)
+            flushSync(() => setResolvedCustomerId(result.customerId ?? null));
+            formRef.current?.requestSubmit();
           }}
           className={`w-full disabled:opacity-60 ${isUdhar ? "btn-primary bg-danger" : "btn-primary"}`}
         >
