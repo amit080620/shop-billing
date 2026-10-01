@@ -1774,7 +1774,7 @@ export const PAGE_TEXT: Record<string, [hi: string, mr: string]> = {
   "Video": ["वीडियो", "व्हिडिओ"],
   "Training videos": ["ट्रेनिंग वीडियो", "ट्रेनिंग व्हिडिओ"],
   "Short Hinglish videos — every screen, step by step": ["छोटे हिंग्लिश वीडियो — हर स्क्रीन, एक-एक स्टेप", "छोटे हिंग्लिश व्हिडिओ — प्रत्येक स्क्रीन, टप्प्याटप्प्याने"],
-  "Tip: every screen has a ▶ Video button next to its title — it opens the right video at the right moment.": ["टिप: हर स्क्रीन के नाम के पास ▶ वीडियो बटन है — वह सही वीडियो सही जगह से खोलता है।", "टीप: प्रत्येक स्क्रीनच्या नावाजवळ ▶ व्हिडिओ बटण आहे — ते योग्य व्हिडिओ योग्य ठिकाणापासून उघडते."],
+  "Tip: tap ▶ at the top of any screen — it opens that screen's video at the right moment.": ["टिप: किसी भी स्क्रीन पर ऊपर ▶ दबाएं — उस स्क्रीन का वीडियो सही जगह से खुलेगा।", "टीप: कोणत्याही स्क्रीनवर वर ▶ दाबा — त्या स्क्रीनचा व्हिडिओ योग्य ठिकाणापासून उघडेल."],
   "For your shop": ["आपकी दुकान के लिए", "तुमच्या दुकानासाठी"],
   "For every shop": ["हर दुकान के लिए", "प्रत्येक दुकानासाठी"],
   "Other businesses ({n})": ["दूसरे बिज़नेस ({n})", "इतर व्यवसाय ({n})"],
