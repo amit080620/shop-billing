@@ -3,6 +3,9 @@
 import { useEffect, useState } from "react";
 import { useSearchParams, usePathname } from "next/navigation";
 
+/** "Bill created" as a small bar at the top that never covers the invoice — Print and WhatsApp can
+ * be tapped straight away. (It used to be a full-screen card held for 2.2 seconds, which on a slow
+ * phone felt like the app was stuck after every bill.) */
 export function BillCreatedConfirmation({ amount, pointsEarned }: { amount?: string; pointsEarned?: number }) {
   const searchParams = useSearchParams();
   const pathname = usePathname();
@@ -10,14 +13,10 @@ export function BillCreatedConfirmation({ amount, pointsEarned }: { amount?: str
 
   useEffect(() => {
     if (!visible) return;
-    // Auto-dismiss, then strip the ?new=1 flag so refreshing/sharing this link never
-    // re-triggers the celebration. Done via the native History API, not router.replace:
-    // that would re-navigate this server-rendered page, flashing the already-rendered
-    // invoice back to the loading skeleton while it refetches from scratch.
-    const timer = setTimeout(() => {
-      setVisible(false);
-      window.history.replaceState(null, "", pathname);
-    }, 2200);
+    // Strip ?new=1 at once with the History API (not router.replace, which would re-render the
+    // whole page) so a refresh or a shared link never shows this again; hide the bar shortly after.
+    window.history.replaceState(null, "", pathname);
+    const timer = setTimeout(() => setVisible(false), 1800);
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible]);
@@ -25,33 +24,16 @@ export function BillCreatedConfirmation({ amount, pointsEarned }: { amount?: str
   if (!visible) return null;
 
   return (
-    <div className="no-print fixed inset-0 z-[200] flex items-center justify-center bg-black/40" onClick={() => setVisible(false)}>
-      <div className="surface-raised ray-pop flex flex-col items-center gap-3 px-9 py-8">
-        <div
-          className="ray-success flex h-16 w-16 items-center justify-center rounded-full"
-          style={{ background: "var(--ray-gradient)" }}
-        >
-          <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
-            <path
-              d="M20 6 9 17l-5-5"
-              stroke="white"
-              strokeWidth="3"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="bill-checkmark"
-              pathLength={1}
-            />
-          </svg>
-        </div>
-        <div className="text-center">
-          <p className="text-base font-semibold text-foreground">Bill created</p>
-          {amount && <p className="mt-0.5 text-sm text-muted">{amount}</p>}
-          {!!pointsEarned && pointsEarned > 0 && (
-            <p className="mt-1 text-xs font-medium text-brand-text">🎁 +{pointsEarned} loyalty points earned</p>
-          )}
-        </div>
+    <div className="no-print pointer-events-none fixed inset-x-0 top-3 z-[200] flex justify-center px-4">
+      <div className="ray-pop flex items-center gap-2.5 rounded-full px-4 py-2 text-white shadow-lg" style={{ background: "var(--ray-gradient)" }}>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M20 6 9 17l-5-5" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="bill-checkmark" pathLength={1} />
+        </svg>
+        <p className="text-sm font-semibold">
+          Bill created{amount ? ` · ${amount}` : ""}
+          {!!pointsEarned && pointsEarned > 0 && <span className="ml-1.5 text-xs font-medium opacity-90">🎁 +{pointsEarned} points</span>}
+        </p>
       </div>
     </div>
   );
 }
-

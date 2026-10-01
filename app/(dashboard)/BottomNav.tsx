@@ -152,7 +152,7 @@ export function BottomNav({ lang, businessType, permissions = [], fastBillingEna
   const activeHref = activeTabHref(pathname, tabs.map((tab) => tab.href));
 
   return (
-    <nav className="no-print fixed inset-x-0 bottom-0 z-20 border-t border-border bg-surface/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-md md:hidden">
+    <nav className="no-print fixed inset-x-0 bottom-0 z-20 border-t border-border bg-surface pb-[env(safe-area-inset-bottom)] md:hidden">
       <ul className="mx-auto flex max-w-lg items-stretch justify-between px-2">
         {tabs.map((tab) => {
           const active = tab.href === activeHref;

@@ -357,7 +357,7 @@ export function NewBookingClient({ today, initialCheckIn, presetRoom }: { today:
         </label>
       </section>
 
-      <div className="fixed inset-x-0 bottom-[calc(var(--bottom-nav-h,4rem)+env(safe-area-inset-bottom))] z-30 border-t border-border bg-surface/95 px-4 py-3 backdrop-blur md:bottom-0 md:left-72">
+      <div className="fixed inset-x-0 bottom-[calc(var(--bottom-nav-h,4rem)+env(safe-area-inset-bottom))] z-30 border-t border-border bg-surface px-4 py-3 md:bottom-0 md:left-72">
         <div className="mx-auto flex max-w-lg flex-col gap-2 md:max-w-3xl">
           {/* The message sits in the bar so it is seen wherever on a long form the person is. */}
           {error && (

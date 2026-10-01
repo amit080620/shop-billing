@@ -60,7 +60,7 @@ export default async function DashboardLayout({
           single sticky element stops them stacking on top of each other
           while scrolling. There's exactly one UniversalSearch instance,
           so one Ctrl+K listener. */}
-      <header className="no-print sticky top-0 z-20 border-b border-border bg-surface/95 backdrop-blur-md">
+      <header className="no-print sticky top-0 z-20 border-b border-border bg-surface">
         <div className="mx-auto flex max-w-lg items-center gap-2.5 px-4 pb-2 pt-3 md:hidden">
           <HamburgerToggle className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-foreground hover:bg-surface-2" />
           <Link href="/profile" aria-label="Profile & settings" className="flex min-w-0 flex-1 items-center gap-2.5">

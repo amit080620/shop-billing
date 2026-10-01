@@ -1230,7 +1230,7 @@ export function NewBillClient({
           </button>
         </aside>
 
-        <div className="fixed inset-x-0 bottom-[calc(var(--bottom-nav-h)+env(safe-area-inset-bottom))] z-20 border-t border-border bg-surface/95 px-4 py-3 backdrop-blur-md md:hidden">
+        <div className="fixed inset-x-0 bottom-[calc(var(--bottom-nav-h)+env(safe-area-inset-bottom))] z-20 border-t border-border bg-surface px-4 py-3 md:hidden">
           <div className="mx-auto flex max-w-lg items-center justify-between gap-3 md:max-w-5xl xl:max-w-6xl">
             <div className="min-w-0">
               <p className="text-xs text-muted">{t("bill.subtotal")}</p>

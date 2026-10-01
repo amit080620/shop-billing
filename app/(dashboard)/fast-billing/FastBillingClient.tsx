@@ -369,7 +369,7 @@ export function FastBillingClient({
 
       {/* Persistent bottom bar — always know item count + total */}
       {itemCount > 0 && (
-        <div className="fixed inset-x-0 bottom-[calc(var(--bottom-nav-h)+env(safe-area-inset-bottom))] z-20 border-t border-border bg-surface/95 px-3 py-2.5 backdrop-blur-md md:bottom-0 md:left-72">
+        <div className="fixed inset-x-0 bottom-[calc(var(--bottom-nav-h)+env(safe-area-inset-bottom))] z-20 border-t border-border bg-surface px-3 py-2.5 md:bottom-0 md:left-72">
           <button onClick={() => setShowBill(true)} className="btn-primary flex w-full items-center justify-between px-4">
             <span>
               {itemCount} item{itemCount === 1 ? "" : "s"}

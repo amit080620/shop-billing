@@ -10,6 +10,7 @@ import { getAuthenticatedUser } from "../supabase/server";
 import { isDemoEmail } from "../demo/config";
 import { hotelSchemaReady } from "../hotel/server";
 import { notifyTeam } from "../push";
+import { createClient } from "@supabase/supabase-js";
 
 /** redirectTo: where the browser should go next. Login/signup finish with
  * a full page load instead of a server-action redirect — the redirect path
@@ -263,9 +264,14 @@ export async function forgotPasswordAction(
   }
   await admin.from("password_reset_requests").insert({ email: normalizedEmail });
 
-  const supabase = await createSupabaseServerClient();
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
-  const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+  // Sent with the implicit flow: the link carries its own one-time tokens, so it works on whatever
+  // phone or browser the email is opened in. (The cookie-based flow only worked in the same browser
+  // the request was made from — not from the Gmail app.) /reset-password turns the link into a session.
+  const mailer = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {
+    auth: { flowType: "implicit", persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+  });
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://bill.theray.in";
+  const { error } = await mailer.auth.resetPasswordForEmail(email.trim(), {
     redirectTo: `${siteUrl}/reset-password`,
   });
 
@@ -273,6 +279,51 @@ export async function forgotPasswordAction(
   // intentional and standard practice, since confirming "no account
   // with that email" would let anyone probe which emails have accounts.
   if (error) console.error("Could not send password reset email", error);
+  return { success: true };
+}
+
+/** "The email didn't come": the shop owner asks The Ray's team to reset the password instead. It
+ * lands in Admin → Support for the shop that email belongs to (with a push to the team's phones);
+ * the team resets it from the shop's page and calls the number given. Always answers "sent", so it
+ * can't be used to find out which emails have accounts; shares the 3-an-hour limit with reset emails. */
+export async function requestPasswordHelpAction(
+  _prev: { error?: string; success?: boolean } | null,
+  formData: FormData,
+): Promise<{ error?: string; success?: boolean }> {
+  const email = String(formData.get("email") ?? "").trim().toLowerCase();
+  const phone = String(formData.get("phone") ?? "").replace(/\D/g, "").slice(-10);
+  if (!/^\S+@\S+\.\S+$/.test(email)) return { error: "Enter the email you log in with" };
+  if (!/^[6-9]\d{9}$/.test(phone)) return { error: "Enter your 10-digit mobile number" };
+
+  const admin = createSupabaseAdminClient();
+  const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+  const { count: recent } = await admin.from("password_reset_requests").select("id", { count: "exact", head: true }).eq("email", email).gte("created_at", oneHourAgo);
+  if ((recent ?? 0) >= 3) return { success: true };
+  await admin.from("password_reset_requests").insert({ email });
+
+  // Whose login is it? (Emails live in Supabase Auth, not in our tables.)
+  let userId: string | null = null;
+  for (let page = 1; page <= 10 && !userId; page++) {
+    const { data, error } = await admin.auth.admin.listUsers({ page, perPage: 1000 });
+    if (error || !data?.users.length) break;
+    userId = data.users.find((u) => (u.email ?? "").toLowerCase() === email)?.id ?? null;
+    if (data.users.length < 1000) break;
+  }
+  const { data: staff } = userId ? await admin.from("staff").select("shop_id, name, role, shops ( name )").eq("id", userId).maybeSingle() : { data: null };
+  const shopName = (Array.isArray(staff?.shops) ? staff?.shops[0] : (staff?.shops as { name: string } | null | undefined))?.name ?? null;
+
+  if (staff?.shop_id) {
+    await admin.from("sales_enquiries").insert({
+      shop_id: staff.shop_id,
+      kind: "custom",
+      item: `[Support/technical] Password reset requested for ${email} (${staff.name}, ${staff.role}). Call ${phone}. Set a new password from the shop's page → Staff → Reset password.`,
+    });
+  }
+  await notifyTeam(admin, {
+    title: "Password help requested",
+    body: shopName ? `${shopName}: ${email} · call ${phone}` : `${email} · call ${phone} — no account found for this email`,
+    url: staff?.shop_id ? `/admin/shops/${staff.shop_id}` : "/admin/support",
+  });
   return { success: true };
 }
 

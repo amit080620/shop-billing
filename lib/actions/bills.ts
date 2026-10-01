@@ -37,14 +37,30 @@ export async function createBillCore(
   session: SessionContext,
   parsedData: BillInput,
 ): Promise<{ billId: string; invoiceNumber: string } | { error: string }> {
-  // Plan limit first: a bill that can't be created shouldn't consume an
-  // invoice number or touch stock.
-  const overLimit = await billLimitError(session);
-  if (overLimit) return { error: overLimit };
-
   const { customerId, items, discountType, discountValue, paidAmount, paymentMethod, doctorName, patientName, tripVehicleId, tripKm, tripDriverName, tripLoadWeight, tripLoadUnit, serviceProviderName, exchangeMetal, exchangeDescription, exchangeGrossWeight, exchangePurityPercent, exchangeRatePerGram, exchangeValue, redeemedPoints, b2b, buyerName, buyerGstin, buyerAddress } = parsedData;
 
   const admin = createSupabaseAdminClient();
+
+  // Speed: every lookup that doesn't depend on another starts now, together, instead of one after
+  // the other — on a bill this was a dozen round trips in a row. Each is awaited where it is used;
+  // a bill refused early just leaves the rest unused.
+  const quiet = <T,>(p: PromiseLike<T>) => Promise.resolve(p).catch((e) => { console.error("Bill lookup failed", e); throw e; });
+  const limitP = quiet(billLimitError(session));
+  const extrasP = quiet(salonExtrasReady(admin));
+  const termsP = quiet(partyTerms(admin, session.shopId, customerId));
+  const customerP = customerId ? quiet(admin.from("customers").select("id, name, gstin, address, state, state_code").eq("id", customerId).eq("shop_id", session.shopId).single()) : null;
+  const staffP = quiet(admin.from("staff").select("branch_id").eq("id", session.userId).single());
+  const buyerReadyP = quiet(buyerSchemaReady(admin));
+  const quoteP = parsedData.quotationId ? quiet(admin.from("quotations").select("items, status, valid_until").eq("id", parsedData.quotationId).eq("shop_id", session.shopId).maybeSingle()) : null;
+  const recipesOn = isModuleEnabled(session.enabledModules, "recipe_stock");
+  const productIdsAsked = [...new Set(items.map((i) => i.productId).filter((id): id is string => !!id))];
+  const recipeDishesP = recipesOn ? quiet(dishesWithRecipes(admin, session.shopId, productIdsAsked)) : Promise.resolve(new Set<string>());
+  for (const p of [limitP, extrasP, termsP, customerP, staffP, buyerReadyP, quoteP, recipeDishesP]) p?.catch(() => undefined);
+
+  // Plan limit first: a bill that can't be created shouldn't consume an
+  // invoice number or touch stock.
+  const overLimit = await limitP;
+  if (overLimit) return { error: overLimit };
 
   // A gold saving scheme used in this bill: what the customer paid into it (plus the bonus once
   // every instalment is in) pays for the jewellery, like cash already in hand.
@@ -60,7 +76,7 @@ export async function createBillCore(
 
   // Packages and prepaid balance (migration 0048): sessions taken from the customer's packages go
   // on the bill at ₹0, and money from their prepaid balance pays for it like cash already in hand.
-  const extrasReady = await salonExtrasReady(admin);
+  const extrasReady = await extrasP;
   const walletAmount = round2(parsedData.walletAmount ?? 0);
   const sessionsWanted = new Map<string, number>();
   for (const i of items) if (i.packageId) sessionsWanted.set(i.packageId, (sessionsWanted.get(i.packageId) ?? 0) + Number(i.quantity));
@@ -118,8 +134,8 @@ export async function createBillCore(
   // Billing a quotation that is still valid: the prices it promised stand, even if the catalogue
   // has changed since.
   let quoted: Map<string, { unitPrice: number; loose: boolean }> | undefined;
-  if (parsedData.quotationId) {
-    const { data: quote } = await admin.from("quotations").select("items, status, valid_until").eq("id", parsedData.quotationId).eq("shop_id", session.shopId).maybeSingle();
+  if (quoteP) {
+    const { data: quote } = await quoteP;
     // A quotation's prices stand while it is valid; an order (no validity) is billed at the day's rates.
     if (quote && quote.status === "open" && quote.valid_until && quote.valid_until >= todayIso()) {
       quoted = new Map(
@@ -128,7 +144,7 @@ export async function createBillCore(
     }
   }
   // The party's terms: a wholesale party pays wholesale rates; credit days set the due date.
-  const terms = await partyTerms(admin, session.shopId, customerId);
+  const terms = await termsP;
   const priced = await priceLines(session, admin, itemsToPrice, quoted, { priceLevel: terms.priceLevel });
   if ("error" in priced) return { error: priced.error ?? "One or more products could not be verified" };
   const { productMap } = priced;
@@ -186,13 +202,8 @@ export async function createBillCore(
   }
 
   let customer: { name: string; gstin: string | null; address: string | null; state: string | null; state_code: string | null } | null = null;
-  if (customerId) {
-    const { data } = await admin
-      .from("customers")
-      .select("id, name, gstin, address, state, state_code")
-      .eq("id", customerId)
-      .eq("shop_id", session.shopId)
-      .single();
+  if (customerP) {
+    const { data } = await customerP;
     if (!data) return { error: "Customer not found" };
     customer = data;
   }
@@ -267,7 +278,7 @@ export async function createBillCore(
   // Auto-tag the bill with whichever branch this staff member is
   // assigned to — the owner (or unassigned staff) end up with a null
   // branch_id, which reports treat as "unassigned/shop-wide", not an error.
-  const { data: staffRow } = await admin.from("staff").select("branch_id").eq("id", session.userId).single();
+  const { data: staffRow } = await staffP;
 
   const { data: bill, error: billError } = await admin
     .from("bills")
@@ -299,7 +310,7 @@ export async function createBillCore(
       patient_name: needsPrescription ? patientName : null,
       service_provider_name: serviceProviderName ?? null,
       // Frozen here so a later edit of the customer never changes an invoice already issued.
-      ...((await buyerSchemaReady(admin))
+      ...((await buyerReadyP)
         ? { buyer_name: buyer?.name ?? null, buyer_gstin: buyer?.gstin ?? null, buyer_address: buyer?.address ?? null, buyer_state: buyer?.state ?? null, buyer_state_code: buyer?.stateCode ?? null }
         : {}),
     })
@@ -413,8 +424,7 @@ export async function createBillCore(
   // rather than one-at-a-time — the FEFO batch loop for pharma items
   // stays sequential WITHIN itself since it tracks a running
   // "remaining" counter across a single product's own batches.
-  const recipesOn = isModuleEnabled(session.enabledModules, "recipe_stock");
-  const recipeDishes = recipesOn ? await dishesWithRecipes(admin, session.shopId, [...productMap.keys()]) : new Set<string>();
+  const recipeDishes = await recipeDishesP;
   if (recipeDishes.size) {
     await takeForSale(admin, {
       shopId: session.shopId,
@@ -436,7 +446,7 @@ export async function createBillCore(
     if (covered > 0) challanOut.set(item.productId as string, round2(out - covered));
     return round2(item.stockQuantity - covered);
   });
-  await Promise.all(
+  const stockWork = Promise.all(
     verifiedItems.map(async (item, index) => {
       const product = item.productId ? productMap.get(item.productId) : undefined;
       if (!product?.track_inventory || recipeDishes.has(product.id)) return;
@@ -481,23 +491,21 @@ export async function createBillCore(
       if (stockError) console.error("Could not update stock for product", product.id, stockError);
     }),
   );
+
+  // Loyalty points — best-effort, and alongside the stock work (both points calls are single
+  // atomic updates in the database, so running them together can't lose a point).
+  // Points redemption: the redeem_loyalty_points RPC itself floors at 0, so this can never push a
+  // customer's balance negative even in a rare race between two bills redeeming at the same time.
+  await Promise.all([
+    stockWork,
+    awardLoyaltyPoints(admin, session.shopId, customerId, totals.paidAmount),
+    customerId && redeemedPoints && redeemedPoints > 0
+      ? admin.rpc("redeem_loyalty_points", { p_customer_id: customerId, p_points: Math.floor(redeemedPoints) }).then(({ error: redeemError }) => {
+          if (redeemError) console.error("Could not redeem loyalty points", customerId, redeemError);
+        })
+      : null,
+  ]);
   await invalidateCache(`ray:cache:products:${session.shopId}`);
-
-  // Loyalty points — best-effort, same non-blocking pattern as the
-  // stock decrement above.
-  await awardLoyaltyPoints(admin, session.shopId, customerId, totals.paidAmount);
-
-  // Points redemption — best-effort, mirrors the earning hook above.
-  // The redeem_loyalty_points RPC itself floors at 0, so this can
-  // never push a customer's balance negative even in a rare race
-  // between two bills redeeming around the same time.
-  if (customerId && redeemedPoints && redeemedPoints > 0) {
-    const { error: redeemError } = await admin.rpc("redeem_loyalty_points", {
-      p_customer_id: customerId,
-      p_points: Math.floor(redeemedPoints),
-    });
-    if (redeemError) console.error("Could not redeem loyalty points", customerId, redeemError);
-  }
 
   // The scheme is used up in this bill. Its instalments were counted as money in on the days they
   // were paid (and a bonus is never money in), so their value comes off today's takings.
