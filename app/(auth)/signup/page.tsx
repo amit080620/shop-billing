@@ -32,7 +32,7 @@ export default async function SignupPage() {
             {t("signup.agreeAnd")}{" "}
             <Link href="/privacy-policy" className="font-medium text-brand underline">
               {t("landing.footer.privacy")}
-            </Link>{" "}
+            </Link>
             {t("signup.agreeAfter")}
           </p>
           {t("signup.alreadyHave")}{" "}

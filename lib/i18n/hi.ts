@@ -159,7 +159,7 @@ const hi: Record<string, string> = {
   "signup.alreadyHave": "पहले से दुकान है?",
   "signup.agreeBefore": "रजिस्टर करके आप",
   "signup.agreeAnd": "और",
-  "signup.agreeAfter": "से सहमत होते हैं।",
+  "signup.agreeAfter": " से सहमत होते हैं।",
   "signup.login": "लॉग इन करें",
   "signup.shopName": "दुकान का नाम",
   "signup.ownerName": "आपका नाम",
