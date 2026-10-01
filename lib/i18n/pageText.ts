@@ -2011,4 +2011,13 @@ export const PAGE_TEXT: Record<string, [hi: string, mr: string]> = {
   "Remove one": ["एक कम करें", "एक कमी करा"],
   "Change quantity": ["मात्रा बदलें", "संख्या बदला"],
   "Tap an item to add 1 · press and hold to pick a quantity": ["आइटम पर टैप करें तो 1 जुड़ेगा · दबाकर रखें तो मात्रा चुनें", "आयटम टॅप केल्यास 1 जोडले जाईल · दाबून धरल्यास संख्या निवडा"],
+
+  // Fast billing customer
+  "{count} items": ["{count} आइटम", "{count} आयटम"],
+  "Udhar needs a mobile number — it is who the money is collected from later.": ["उधार के लिए मोबाइल नंबर ज़रूरी है — बाद में पैसा इन्हीं से लिया जाएगा।", "उधारीसाठी मोबाईल नंबर आवश्यक आहे — नंतर पैसे यांच्याकडूनच घेतले जातील."],
+  "Customer (optional) — type a mobile number or name": ["ग्राहक (वैकल्पिक) — मोबाइल नंबर या नाम लिखें", "ग्राहक (ऐच्छिक) — मोबाईल नंबर किंवा नाव लिहा"],
+  "points": ["पॉइंट", "पॉइंट्स"],
+  "Change customer": ["ग्राहक बदलें", "ग्राहक बदला"],
+  "Mobile number — required for udhar": ["मोबाइल नंबर — उधार के लिए ज़रूरी", "मोबाईल नंबर — उधारीसाठी आवश्यक"],
+  "New customer — add their name (optional)": ["नया ग्राहक — नाम लिखें (वैकल्पिक)", "नवीन ग्राहक — नाव लिहा (ऐच्छिक)"],
 };

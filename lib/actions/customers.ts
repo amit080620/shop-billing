@@ -280,7 +280,9 @@ export async function lookupCustomerForBillingAction(
     .from("customers")
     .select("id, name, loyalty_points")
     .eq("shop_id", session.shopId)
-    .eq("phone", normalized)
+    // Some older customers were saved as "+91…".
+    .in("phone", [normalized, `+91${normalized}`])
+    .limit(1)
     .maybeSingle();
 
   if (!data) return null;

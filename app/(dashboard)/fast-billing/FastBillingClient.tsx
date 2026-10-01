@@ -1,19 +1,20 @@
 "use client";
 
 import { keepValuesOnError } from "@/lib/keepValuesOnError";
-import { useMemo, useState, useActionState, useRef, useEffect } from "react";
+import { useMemo, useState, useActionState, useRef, useEffect, useCallback } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { X, Minus, Plus, Trash2, Search, Mic } from "lucide-react";
 import { formatMoney } from "@/lib/format";
 import { createBillAction, resolveFastBillingCustomerAction } from "@/lib/actions/bills";
-import { lookupCustomerForBillingAction } from "@/lib/actions/customers";
 import { useSyncCalculatorAmount } from "@/lib/calculatorAmount";
 import { parseVoiceOrderAction } from "@/lib/actions/voiceOrder";
 import { getSpeechRecognition, speechLocaleFor, voiceErrorMessages, type SpeechRecognitionLike } from "@/lib/speechRecognition";
 import { AIStatusBadge, type AIStatusBadgeHandle } from "@/app/components/AIStatusBadge";
 import { useTranslation } from "@/lib/i18n/useTranslation";
 import { QuantityGrid } from "./QuantityGrid";
+import { FastCustomerPicker, type CounterCustomer } from "./FastCustomerPicker";
+import { useT } from "@/lib/i18n/LangContext";
 import { calculateTransactionTotals } from "@/lib/validation/totals";
 import { productLinePrice } from "@/lib/linePrice";
 
@@ -498,8 +499,13 @@ function FastBillSheet({
   loyaltyRedemptionValue: number;
   voiceCustomer: { id: string; name: string; phone: string | null; loyaltyPoints: number } | null;
 }) {
+  const { t } = useT();
   const [editingQty, setEditingQty] = useState<FastCartLine | null>(null);
+  // While the customer's number or name is being typed, the item list folds
+  // to one line so the customer box and its suggestions sit above the keyboard.
+  const [customerFocus, setCustomerFocus] = useState(false);
   const subtotal = cart.reduce((s, l) => s + l.qty * l.price, 0);
+  const itemCount = cart.reduce((s, l) => s + l.qty, 0);
 
   return (
     <div className="fixed inset-0 z-30 flex flex-col bg-background">
@@ -510,6 +516,11 @@ function FastBillSheet({
         </button>
       </div>
 
+      {customerFocus ? (
+        <p className="border-b border-border px-4 py-2 text-xs text-muted">
+          {t("{count} items", { count: itemCount })} · {formatMoney(subtotal)}
+        </p>
+      ) : (
       <div className="flex-1 overflow-y-auto px-4 py-3">
         {cart.length === 0 ? (
           <p className="py-10 text-center text-sm text-muted">No items yet — tap products to add them.</p>
@@ -551,14 +562,17 @@ function FastBillSheet({
           </ul>
         )}
       </div>
+      )}
 
       {cart.length > 0 && (
-        <div className="border-t border-border px-4 py-3">
-          <div className="mb-3 flex items-center justify-between text-sm">
-            <span className="text-muted">Subtotal</span>
-            <span className="font-semibold text-foreground">{formatMoney(subtotal)}</span>
-          </div>
-          <FastCheckoutButton cart={cart} loyaltyRedemptionValue={loyaltyRedemptionValue} priceIncludesGst={priceIncludesGst} gstScheme={gstScheme} voiceCustomer={voiceCustomer} canDiscount={canDiscount} />
+        <div className={`border-t border-border px-4 py-3 ${customerFocus ? "min-h-0 flex-1 overflow-y-auto" : ""}`}>
+          {!customerFocus && (
+            <div className="mb-3 flex items-center justify-between text-sm">
+              <span className="text-muted">Subtotal</span>
+              <span className="font-semibold text-foreground">{formatMoney(subtotal)}</span>
+            </div>
+          )}
+          <FastCheckoutButton cart={cart} loyaltyRedemptionValue={loyaltyRedemptionValue} priceIncludesGst={priceIncludesGst} gstScheme={gstScheme} voiceCustomer={voiceCustomer} canDiscount={canDiscount} focusMode={customerFocus} onFocusMode={setCustomerFocus} />
         </div>
       )}
 
@@ -593,7 +607,12 @@ function FastCheckoutButton({
   gstScheme,
   voiceCustomer,
   canDiscount,
+  focusMode,
+  onFocusMode,
 }: {
+  /** The customer box is being typed in: show only it. */
+  focusMode: boolean;
+  onFocusMode: (on: boolean) => void;
   canDiscount: boolean;
   cart: FastCartLine[];
   loyaltyRedemptionValue: number;
@@ -608,14 +627,14 @@ function FastCheckoutButton({
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
   const [customerError, setCustomerError] = useState<string | null>(null);
-  const [matchedCustomer, setMatchedCustomer] = useState<{ id: string; name: string; loyaltyPoints: number } | null>(null);
+  const [matchedCustomer, setMatchedCustomer] = useState<CounterCustomer | null>(null);
   const [redeemPoints, setRedeemPoints] = useState(false);
   const [isResolvingCustomer, setIsResolvingCustomer] = useState(false);
   const [resolvedCustomerId, setResolvedCustomerId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!voiceCustomer) return;
-    setMatchedCustomer({ id: voiceCustomer.id, name: voiceCustomer.name, loyaltyPoints: voiceCustomer.loyaltyPoints });
+    setMatchedCustomer({ id: voiceCustomer.id, name: voiceCustomer.name, phone: voiceCustomer.phone ?? "", loyaltyPoints: voiceCustomer.loyaltyPoints });
     setCustomerName(voiceCustomer.name);
     setCustomerPhone(voiceCustomer.phone ?? "");
     setResolvedCustomerId(voiceCustomer.id);
@@ -655,21 +674,27 @@ function FastCheckoutButton({
   }).total;
 
   function handlePhoneChange(value: string) {
-    const digits = value.replace(/\D/g, "").slice(0, 10);
+    // A pasted "+91 98765 43210" or "098765…" keeps its own 10 digits.
+    const all = value.replace(/\D/g, "");
+    const digits = (all.length > 10 && all.startsWith("91") ? all.slice(2) : all.length > 10 && all.startsWith("0") ? all.slice(1) : all).slice(0, 10);
     setCustomerPhone(digits);
     setCustomerError(null);
     setMatchedCustomer(null);
     setResolvedCustomerId(null);
     setRedeemPoints(false);
-    if (digits.length === 10) {
-      lookupCustomerForBillingAction(digits).then((found) => {
-        if (found) {
-          setMatchedCustomer(found);
-          setCustomerName((prev) => (prev.trim() ? prev : found.name));
-        }
-      });
-    }
   }
+
+  // A customer chosen from the suggestions, found by their full number, or cleared.
+  const handlePick = useCallback((customer: CounterCustomer | null) => {
+    setMatchedCustomer(customer);
+    setResolvedCustomerId(null);
+    setRedeemPoints(false);
+    setCustomerError(null);
+    if (customer) {
+      setCustomerPhone(customer.phone);
+      setCustomerName(customer.name);
+    }
+  }, []);
 
   const payload = JSON.stringify({
     customerId: effectiveCustomerId,
@@ -705,7 +730,7 @@ function FastCheckoutButton({
       {/* Payment method — always-visible capsule row, no tap needed to
           reveal it. Cash is the sane default so most sales need zero
           taps here at all. */}
-      <div className="grid grid-cols-5 gap-1.5">
+      <div className={`grid grid-cols-5 gap-1.5 ${focusMode ? "hidden" : ""}`}>
         {(["cash", "upi", "card", "udhar", "other"] as const).map((m) => (
           <button
             key={m}
@@ -731,33 +756,18 @@ function FastCheckoutButton({
       {/* Customer — always available (not just for Udhar), since ANY
           paid sale can earn/redeem loyalty points, not only credit
           ones. Required only when Udhar is selected. */}
-      <div className={`flex flex-col gap-2 rounded-lg border p-2.5 ${isUdhar ? "border-danger/25 bg-danger-soft" : "border-border"}`}>
-        <p className={`text-[11px] ${isUdhar ? "text-danger" : "text-muted"}`}>
-          {isUdhar
-            ? "A mobile number is genuinely needed here — this is who the udhar is recovered from later."
-            : "Customer mobile (optional) — links this sale for loyalty points"}
-        </p>
-        <input
-          value={customerName}
-          onChange={(e) => setCustomerName(e.target.value)}
-          placeholder="Customer name (optional)"
-          className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand"
-        />
-        <input
-          value={customerPhone}
-          onChange={(e) => handlePhoneChange(e.target.value)}
-          placeholder={isUdhar ? "Mobile number — required for udhar" : "Mobile number (optional)"}
-          inputMode="numeric"
-          className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand"
-        />
-        {customerError && <p className="text-xs text-danger">{customerError}</p>}
-
-        {matchedCustomer && (
-          <p className="text-xs font-medium text-brand-text">
-            🎁 {matchedCustomer.name} has {matchedCustomer.loyaltyPoints} loyalty point{matchedCustomer.loyaltyPoints === 1 ? "" : "s"}
-          </p>
-        )}
-
+      <FastCustomerPicker
+        isUdhar={isUdhar}
+        phone={customerPhone}
+        name={customerName}
+        matched={matchedCustomer}
+        error={customerError}
+        onPhoneChange={handlePhoneChange}
+        onNameChange={setCustomerName}
+        onPick={handlePick}
+        onFocusMode={onFocusMode}
+      />
+      <div className={`flex flex-col gap-2 ${focusMode ? "hidden" : ""}`}>
         {matchedCustomer && matchedCustomer.loyaltyPoints > 0 && loyaltyRedemptionValue > 0 && (
           discountType === "flat" ? (
             <label className="flex items-center gap-2 rounded-lg bg-brand-soft px-3 py-2 text-sm">
@@ -777,7 +787,7 @@ function FastCheckoutButton({
           this behind an extra tap; now it's one tap to open (or zero,
           once a discount is already set — the summary itself stays
           tappable to change it), directly on this screen. */}
-      {!canDiscount ? null : showDiscountInput ? (
+      {!canDiscount || focusMode ? null : showDiscountInput ? (
         <div className="flex flex-col gap-2 rounded-lg border border-border p-2.5">
           <div className="flex items-center justify-between">
             <p className="text-xs font-medium text-muted">Discount</p>
@@ -821,7 +831,7 @@ function FastCheckoutButton({
         </button>
       )}
 
-      <form ref={formRef} action={formAction}>
+      <form ref={formRef} action={formAction} className={focusMode ? "hidden" : ""}>
         <input type="hidden" name="payload" value={payload} />
         <button
           type="button"
