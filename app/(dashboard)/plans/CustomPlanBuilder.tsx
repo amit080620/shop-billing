@@ -74,12 +74,15 @@ export function CustomPlanBuilder({ businessType, showPrices, enquiry }: { busin
           </p>
         )}
         {better && (
-          <p className="flex items-start gap-1.5 rounded-lg bg-success-soft px-2.5 py-2 text-xs text-success">
-            <Sparkles size={13} className="mt-0.5 shrink-0" />
-            {showPrices
-              ? t("{plan} already has all of this — and more — for {price}, {saving} less.", { plan: planName(better.plan, businessType), price: rupees(better.yearly), saving: rupees(better.saving) })
-              : t("{plan} already has all of this — and more.", { plan: planName(better.plan, businessType) })}
-          </p>
+          <div className="flex flex-col gap-2 rounded-lg bg-success-soft px-2.5 py-2">
+            <p className="flex items-start gap-1.5 text-xs text-success">
+              <Sparkles size={13} className="mt-0.5 shrink-0" />
+              {showPrices
+                ? t("{plan} already has all of this — and more — for {price}, {saving} less.", { plan: planName(better.plan, businessType), price: rupees(better.yearly), saving: rupees(better.saving) })
+                : t("{plan} already has all of this — and more.", { plan: planName(better.plan, businessType) })}
+            </p>
+            <EnquiryButton kind="plan" item={planName(better.plan, businessType)} label={t("Upgrade to {plan}", { plan: planName(better.plan, businessType) })} {...enquiry} />
+          </div>
         )}
         <EnquiryButton kind="custom" item={request} label={t("Ask for this plan")} variant="outline" {...enquiry} />
       </div>
