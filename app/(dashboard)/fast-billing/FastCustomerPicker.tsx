@@ -77,8 +77,11 @@ export function FastCustomerPicker({
   }, [query, searchable, onPhone]);
 
   const list = local ?? (searchable && found.query === query ? found.customers : []);
-  const fullNumber = !matched && phone.length === 10 && (local !== null || found.query === phone);
-  const onFile = fullNumber ? ((local ?? found.customers).find((c) => c.phone === phone) ?? null) : null;
+  // Whether a full number is on file is looked up whichever box is in use, so "New customer" stays
+  // shown after the cursor has moved on to the name.
+  const byNumber = !matched && phone.length === 10 ? searchCounterCustomers(shopId, phone, true) : null;
+  const fullNumber = !matched && phone.length === 10 && (byNumber !== null || found.query === phone);
+  const onFile = fullNumber ? ((byNumber ?? found.customers).find((c) => c.phone === phone) ?? null) : null;
   const isNew = fullNumber && !onFile;
 
   // A full number: the customer on file is picked by itself; a new one moves on to the name.
