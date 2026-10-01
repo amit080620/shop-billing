@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { X, Trash2 } from "lucide-react";
 import { useT } from "@/lib/i18n/LangContext";
 
@@ -25,11 +25,20 @@ export function QuantityGrid({
   const { t } = useT();
   const [showCustom, setShowCustom] = useState(false);
   const [customValue, setCustomValue] = useState("");
+  // Opened by pressing and holding a tile, the grid appears under the finger;
+  // lifting it must not pick whatever number is there. A tap only counts once a
+  // press has started inside the grid (keyboard presses always count).
+  const pressedInside = useRef(false);
+  const counts = (e: React.MouseEvent) => e.detail === 0 || pressedInside.current;
 
   const numbers = Array.from({ length: 50 }, (_, i) => i + 1);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 sm:items-center" onClick={onClose}>
+    <div
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 sm:items-center"
+      onPointerDown={() => (pressedInside.current = true)}
+      onClick={(e) => counts(e) && onClose()}
+    >
       <div
         className="max-h-[85vh] w-full max-w-md overflow-y-auto rounded-t-2xl bg-surface p-4 sm:rounded-2xl"
         onClick={(e) => e.stopPropagation()}
@@ -81,7 +90,7 @@ export function QuantityGrid({
               {numbers.map((n) => (
                 <button
                   key={n}
-                  onClick={() => onSelect(n)}
+                  onClick={(e) => counts(e) && onSelect(n)}
                   aria-pressed={n === current}
                   className={`flex aspect-square items-center justify-center rounded-xl text-base font-semibold ${n === current ? "bg-brand text-white" : "bg-background text-foreground"}`}
                   style={{ boxShadow: "var(--elev-xs)" }}
@@ -97,7 +106,7 @@ export function QuantityGrid({
               {t("More / Custom quantity")}
             </button>
             {onRemove && (
-              <button onClick={onRemove} className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl py-3 text-sm font-medium text-danger">
+              <button onClick={(e) => counts(e) && onRemove()} className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl py-3 text-sm font-medium text-danger">
                 <Trash2 size={16} /> {t("Remove from bill")}
               </button>
             )}
