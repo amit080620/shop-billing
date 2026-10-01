@@ -16,7 +16,7 @@ import type { QuotationLine } from "@/lib/supabase/database.types";
 import { KARATS, karatOf, type Karat } from "@/lib/metalRates";
 import { quickCreateCustomerAction, lookupCustomerByPhoneAction } from "@/lib/actions/customers";
 import { quickCreateProductAction } from "@/lib/actions/products";
-import { calculateTransactionTotals } from "@/lib/validation/schemas";
+import { calculateTransactionTotals } from "@/lib/validation/totals";
 import { determineSupplyType, GSTIN_REGEX, round2 } from "@/lib/gst";
 import { INDIAN_STATES } from "@/lib/constants/states";
 import { UNITS } from "@/lib/constants/states";

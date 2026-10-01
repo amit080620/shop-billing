@@ -17,7 +17,7 @@ import {
   type PendingBill,
   type PendingBillItem,
 } from "@/lib/offline-db";
-import { calculateTransactionTotals } from "@/lib/validation/schemas";
+import { calculateTransactionTotals } from "@/lib/validation/totals";
 import { determineSupplyType } from "@/lib/gst";
 import { useOnlineStatus } from "@/lib/useOnlineStatus";
 import { syncOfflineBillAction } from "@/lib/actions/bills";

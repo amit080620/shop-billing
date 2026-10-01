@@ -11,7 +11,7 @@ import { useTranslation } from "@/lib/i18n/useTranslation";
 import { buildWhatsAppLink as buildWaLink } from "@/lib/whatsapp";
 import type { Lang } from "@/lib/i18n/dictionary";
 import { BackLink } from "@/app/components/BackLink";
-import { calculateTransactionTotals } from "@/lib/validation/schemas";
+import { calculateTransactionTotals } from "@/lib/validation/totals";
 
 type Job = {
   id: string;

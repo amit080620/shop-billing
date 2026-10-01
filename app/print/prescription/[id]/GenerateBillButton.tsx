@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { generateBillFromPrescriptionAction } from "@/lib/actions/clinic";
 import { formatMoney, paymentMethodLabel } from "@/lib/format";
-import { calculateTransactionTotals } from "@/lib/validation/schemas";
+import { calculateTransactionTotals } from "@/lib/validation/totals";
 
 type Line = { medicineName: string; quantity: number; unitPrice: number; inCatalog: boolean; gstPercent: number };
 

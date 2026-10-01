@@ -7,7 +7,7 @@ import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import { createPurchaseAction } from "@/lib/actions/purchases";
 import { quickCreateVendorAction } from "@/lib/actions/vendors";
-import { calculateTransactionTotals } from "@/lib/validation/schemas";
+import { calculateTransactionTotals } from "@/lib/validation/totals";
 import { formatMoney, paymentMethodLabel } from "@/lib/format";
 import { COMMON_GST_RATES } from "@/lib/constants/states";
 import type { Lang } from "@/lib/i18n/dictionary";

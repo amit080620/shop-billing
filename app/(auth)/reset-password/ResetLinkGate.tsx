@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 
 type Words = { checking: string; expired: string; askAgain: string };
 
@@ -16,6 +15,9 @@ export function ResetLinkGate({ children, words }: { children: React.ReactNode; 
   useEffect(() => {
     let cancelled = false;
     (async () => {
+      // Loaded here rather than with the page, so the page itself stays small; the auth library
+      // arrives while "Checking your reset link…" is on screen.
+      const { createSupabaseBrowserClient } = await import("@/lib/supabase/browser");
       const supabase = createSupabaseBrowserClient();
       const hash = new URLSearchParams(window.location.hash.slice(1));
       const query = new URLSearchParams(window.location.search);

@@ -161,6 +161,10 @@ export function BottomNav({ lang, businessType, permissions = [], fastBillingEna
             <li key={tab.href} className="flex-1">
               <Link
                 href={tab.href}
+                // The billing screens load in full (code and data) ahead of the tap, so they open at
+                // once; their data is at most two minutes old (staleTimes in next.config) and every
+                // bill is re-priced on the server anyway.
+                prefetch={READY_AHEAD.has(tab.href) ? true : undefined}
                 aria-current={active ? "page" : undefined}
                 className={`flex h-[var(--bottom-nav-h)] flex-col items-center justify-center gap-0.5 text-[11px] font-semibold transition-colors ${
                   active ? "text-brand-text" : "text-muted"
@@ -182,6 +186,8 @@ export function BottomNav({ lang, businessType, permissions = [], fastBillingEna
     </nav>
   );
 }
+
+const READY_AHEAD = new Set(["/bills/new", "/fast-billing", "/restaurant"]);
 
 function HomeIcon({ active }: { active: boolean }) {
   return <House size={22} strokeWidth={active ? 2.3 : 1.8} />;

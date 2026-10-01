@@ -1,0 +1,23 @@
+# Keeps The Ray's servers awake during shop hours. A screen nobody has opened for a while has to
+# start its server from cold, which can take 2–5 seconds on the first tap; a light request to each
+# main screen every 5 minutes means a shop never waits for that. Unauthenticated, so each request
+# only reaches the login check — enough to keep the server warm, nothing else runs.
+name: Keep the app warm
+
+on:
+  schedule:
+    # Every 5 minutes, 02:00–17:59 UTC = 07:30–23:29 in India.
+    - cron: "*/5 2-17 * * *"
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Wake the main screens
+        run: |
+          for path in / /login /dashboard /bills/new /fast-billing /bills /customers /products /purchases /reports /more /plans /offers /help /daily-summary /reminders /restaurant /restaurant-kds /hotel /videos /api/version; do
+            curl -s -o /dev/null -m 25 -w "%{http_code} %{time_total}s ${path}\n" "https://bill.theray.in${path}" &
+          done
+          wait

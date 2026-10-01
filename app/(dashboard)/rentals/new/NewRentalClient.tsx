@@ -5,7 +5,7 @@ import { useActionState, useMemo, useState } from "react";
 import { useFormStatus } from "react-dom";
 import Link from "next/link";
 import { createRentalAction } from "@/lib/actions/rentals";
-import { calculateRentalTotals } from "@/lib/validation/schemas";
+import { calculateRentalTotals } from "@/lib/validation/totals";
 import { determineSupplyType } from "@/lib/gst";
 import { formatMoney, paymentMethodLabel } from "@/lib/format";
 import { SearchableSelect } from "@/app/components/SearchableSelect";

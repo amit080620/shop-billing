@@ -14,7 +14,7 @@ import { getSpeechRecognition, speechLocaleFor, voiceErrorMessages, type SpeechR
 import { AIStatusBadge, type AIStatusBadgeHandle } from "@/app/components/AIStatusBadge";
 import { useTranslation } from "@/lib/i18n/useTranslation";
 import { QuantityGrid } from "./QuantityGrid";
-import { calculateTransactionTotals } from "@/lib/validation/schemas";
+import { calculateTransactionTotals } from "@/lib/validation/totals";
 import { productLinePrice } from "@/lib/linePrice";
 
 export type FastProduct = {

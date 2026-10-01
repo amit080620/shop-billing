@@ -9,7 +9,7 @@ import { formatMoney, withDr } from "@/lib/format";
 import { PageHeader } from "@/app/components/PageHeader";
 import { Barcode, FlaskConical, Printer } from "lucide-react";
 import { BackLink } from "@/app/components/BackLink";
-import { calculateTransactionTotals } from "@/lib/validation/schemas";
+import { calculateTransactionTotals } from "@/lib/validation/totals";
 
 type Order = {
   id: string;
