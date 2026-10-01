@@ -30,6 +30,7 @@ export function VideoPlayer({
   words,
   lite = false,
   showTopics = true,
+  maxVh = 75,
 }: {
   src: string;
   poster: string;
@@ -42,6 +43,8 @@ export function VideoPlayer({
   words: Words;
   lite?: boolean;
   showTopics?: boolean;
+  /** Tallest the video may be, in % of the screen height. */
+  maxVh?: number;
 }) {
   const video = useRef<HTMLVideoElement>(null);
   const frame = useRef<HTMLIFrameElement>(null);
@@ -101,7 +104,7 @@ export function VideoPlayer({
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="mx-auto w-full" style={{ maxWidth: `calc(75vh * ${VIDEO_ASPECT})` }}>
+      <div className="mx-auto w-full" style={{ maxWidth: `calc(${maxVh}vh * ${VIDEO_ASPECT})` }}>
         <div className="relative w-full overflow-hidden rounded-xl bg-black" style={{ aspectRatio: VIDEO_ASPECT }}>
           {!on ? (
             <button type="button" onClick={() => setOn(true)} className="group absolute inset-0 h-full w-full" aria-label={words.play ?? "Play"}>

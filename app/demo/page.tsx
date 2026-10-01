@@ -46,6 +46,7 @@ export default async function DemoPage() {
           <VideoPlayer
             lite
             showTopics={false}
+            maxVh={58}
             src={tourFiles.mp4}
             poster={tourFiles.poster}
             vtt={tourFiles.vtt}
