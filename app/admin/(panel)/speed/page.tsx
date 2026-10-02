@@ -2,7 +2,7 @@ import Link from "next/link";
 import { requireSuperAdmin } from "@/lib/admin-auth";
 import { getRedis } from "@/lib/redis";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
-import { istDay, SPEED_LIMITS, speedBand, speedKey, speedStats, type SpeedKind, type StoredSpeed } from "@/lib/speedWatch";
+import { istDay, KEEP_WARM_KEY, SPEED_LIMITS, speedBand, speedKey, speedStats, type SpeedKind, type StoredSpeed } from "@/lib/speedWatch";
 
 const BAND = { quick: "text-emerald-400", ok: "text-amber-300", slow: "text-red-400" } as const;
 const KIND_LABEL: Record<SpeedKind, string> = { open: "Tap → screen", save: "Save → next screen", load: "App / page opened" };
@@ -27,7 +27,7 @@ export default async function AdminSpeedPage({ searchParams }: { searchParams: P
   const withDemo = params.demo === "1";
 
   const redis = getRedis();
-  const raw = redis ? await redis.lrange<unknown>(speedKey(day), 0, -1) : [];
+  const [raw, warm] = redis ? await Promise.all([redis.lrange<unknown>(speedKey(day), 0, -1), redis.hgetall<Record<string, number>>(KEEP_WARM_KEY)]) : [[], null];
   const all = raw
     .map((r) => {
       try {
@@ -52,6 +52,12 @@ export default async function AdminSpeedPage({ searchParams }: { searchParams: P
   const slow = events.filter((e) => speedBand(e.k, e.ms) === "slow");
   const days = Array.from({ length: 7 }, (_, i) => istDay(new Date(Date.now() - i * 86400_000)));
   const href = (d: string, demo = withDemo) => `/admin/speed?day=${d}${demo ? "&demo=1" : ""}`;
+  const ago = (ms?: number) => {
+    if (!ms) return null;
+    const min = Math.round((Date.now() - Number(ms)) / 60_000);
+    return min < 1 ? "just now" : min < 120 ? `${min} min ago` : `${Math.round(min / 60)} h ago`;
+  };
+  const dbWarm = warm?.db ? Date.now() - Number(warm.db) : null;
   const time = (at: number) => new Date(at * 1000).toLocaleTimeString("en-IN", { timeZone: "Asia/Kolkata", hour: "numeric", minute: "2-digit" });
 
   return (
@@ -74,6 +80,14 @@ export default async function AdminSpeedPage({ searchParams }: { searchParams: P
           {withDemo ? "Hide demo shops" : `Show demo shops${demoCount ? ` (${demoCount})` : ""}`}
         </Link>
       </nav>
+
+      <p className="text-xs text-gray-400">
+        Kept warm:{" "}
+        <span className={dbWarm !== null && dbWarm < 10 * 60_000 ? "text-emerald-400" : "text-red-400"}>
+          {dbWarm !== null ? `database pinged ${ago(warm?.db)}` : "database ping not seen yet (migration 0055)"}
+        </span>
+        {warm?.github ? ` · GitHub ${ago(warm.github)}` : ""}
+      </p>
 
       {!redis && <p className="text-sm text-amber-300">Redis isn&apos;t set up, so timings aren&apos;t kept.</p>}
 

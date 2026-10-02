@@ -65,6 +65,19 @@ export function istDay(at: Date = new Date()): string {
 
 export const speedKey = (day: string) => `speed:${day}`;
 
+/** When each keep-warm pinger last called /api/version: { db: ms, github: ms }. */
+export const KEEP_WARM_KEY = "keepwarm:last";
+
+/** Which keep-warm job a request comes from, by its user agent: the database's pg_cron job sends
+ * pg_net's, GitHub's job uses curl. Null for everyone else. */
+export function keepWarmSource(userAgent: string | null): "db" | "github" | null {
+  // pg_net may send no user agent at all (libcurl sets none by default); browsers always send one.
+  if (!userAgent) return "db";
+  if (/^pg_net\b/i.test(userAgent)) return "db";
+  if (/^curl\//i.test(userAgent)) return "github";
+  return null;
+}
+
 /** Count, median, 90th percentile (nine in ten were at least this quick) and slowest. */
 export function speedStats(values: number[]): { count: number; median: number; p90: number; max: number } {
   if (!values.length) return { count: 0, median: 0, p90: 0, max: 0 };

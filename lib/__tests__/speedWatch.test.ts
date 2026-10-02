@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { istDay, screenOf, speedBand, speedStats } from "../speedWatch";
+import { istDay, keepWarmSource, screenOf, speedBand, speedStats } from "../speedWatch";
 
 describe("screenOf", () => {
   it("counts every bill or customer as one screen", () => {
@@ -37,5 +37,14 @@ describe("istDay", () => {
   it("rolls over at midnight in India, not UTC", () => {
     expect(istDay(new Date("2026-10-01T18:29:00Z"))).toBe("2026-10-01");
     expect(istDay(new Date("2026-10-01T18:31:00Z"))).toBe("2026-10-02");
+  });
+});
+
+describe("keepWarmSource", () => {
+  it("tells the database ping, the GitHub ping and people apart", () => {
+    expect(keepWarmSource("pg_net/0.14.0")).toBe("db");
+    expect(keepWarmSource(null)).toBe("db");
+    expect(keepWarmSource("curl/8.5.0")).toBe("github");
+    expect(keepWarmSource("Mozilla/5.0 (Linux; Android 14) TheRayApp/1.0.4")).toBeNull();
   });
 });

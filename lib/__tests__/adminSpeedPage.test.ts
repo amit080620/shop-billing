@@ -6,7 +6,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 const stored: unknown[] = [];
 
 vi.mock("@/lib/admin-auth", () => ({ requireSuperAdmin: async () => ({ userId: "u", email: null, name: "Admin" }) }));
-vi.mock("@/lib/redis", () => ({ getRedis: () => ({ lrange: async () => stored }) }));
+vi.mock("@/lib/redis", () => ({ getRedis: () => ({ lrange: async () => stored, hgetall: async () => ({ db: Date.now() - 2 * 60_000 }) }) }));
 vi.mock("@/lib/supabase/admin", () => ({
   createSupabaseAdminClient: () => ({
     from: () => ({
@@ -48,6 +48,7 @@ describe("Admin → Speed", () => {
   it("summarises real shops' timings and lists the slow moment with its phone", async () => {
     const html = await render();
     expect(html).toContain("Speed watch");
+    expect(html).toContain("database pinged 2 min ago");
     expect(html).toContain("/bills/new");
     expect(html).toContain("/print/bill/:id");
     expect(html).toContain("Sharma Kirana");
