@@ -58,7 +58,8 @@ jobs:
           PG_BIN: /usr/lib/postgresql/17/bin
         run: |
           name="the-ray-$(TZ=Asia/Kolkata date +%Y-%m-%d-%H%M).backup"
-          bash scripts/db-backup.sh "$name"
+          bash scripts/db-backup.sh "$name" > out.txt 2>&1 || { cat out.txt; echo "::error::backup: $(tail -c 1500 out.txt | tr '\n' ' ')"; exit 1; }
+          cat out.txt
           echo "name=$name" >> "$GITHUB_OUTPUT"
 
       - name: Store in Supabase (private bucket, newest 14 kept)
@@ -122,17 +123,29 @@ jobs:
             create table bills (id serial primary key, shop_id uuid references shops(id), total numeric);
             insert into bills (shop_id, total) select '00000000-0000-0000-0000-000000000002', g from generate_series(1, 500) g;"
 
-      - name: Back up, open and restore
+      # Each step reports its own error as an annotation, readable on the run page.
+      - name: Back up
+        run: bash scripts/db-backup.sh test.backup > out.txt 2>&1 || { cat out.txt; echo "::error::backup: $(tail -c 1500 out.txt | tr '\n' ' ')"; exit 1; }; cat out.txt
+
+      - name: Open it with the passphrase
         run: |
-          bash scripts/db-backup.sh test.backup
-          openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -pass env:BACKUP_PASSPHRASE -in test.backup -out test.tar
+          openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -pass env:BACKUP_PASSPHRASE -in test.backup -out test.tar 2> err.txt || { echo "::error::decrypt: $(cat err.txt)"; exit 1; }
           mkdir restored && tar -C restored -xf test.tar && ls -la restored
+
+      - name: Restore into an empty database
+        run: |
+          R=postgres://postgres:pw@localhost:5432/restored
           $PG_BIN/psql "$DB_URL" -c "create database restored"
-          $PG_BIN/psql "postgres://postgres:pw@localhost:5432/restored" -c "create schema auth; create table auth.users (id uuid primary key, email text);"
-          $PG_BIN/pg_restore --no-owner -d "postgres://postgres:pw@localhost:5432/restored" restored/public.dump
-          $PG_BIN/pg_restore --no-owner --data-only -d "postgres://postgres:pw@localhost:5432/restored" restored/auth.dump
+          $PG_BIN/psql "$R" -c "create schema auth; create table auth.users (id uuid primary key, email text);"
+          # A new database already has the public schema: restore everything except creating it.
+          $PG_BIN/pg_restore --list restored/public.dump | grep -vE "SCHEMA - public|COMMENT - SCHEMA public" > toc.list
+          $PG_BIN/pg_restore --no-owner --no-privileges -L toc.list -d "$R" restored/public.dump 2> err.txt || { echo "::error::restore shop data: $(tail -c 1500 err.txt | tr '\n' ' ')"; exit 1; }
+          $PG_BIN/pg_restore --no-owner --no-privileges --data-only -d "$R" restored/auth.dump 2> err.txt || { echo "::error::restore logins: $(tail -c 1500 err.txt | tr '\n' ' ')"; exit 1; }
+
+      - name: Same data back, and a wrong passphrase can't open it
+        run: |
           got=$($PG_BIN/psql -tA "postgres://postgres:pw@localhost:5432/restored" -c "select (select count(*) from bills) || ' bills, ' || (select name from shops) || ', ' || (select count(*) from auth.users) || ' login'")
           echo "restored: $got"
-          [ "$got" = "500 bills, शर्मा किराना, 1 login" ] || { echo "restore does not match"; exit 1; }
-          if openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -pass pass:wrong-passphrase-here -in test.backup -out /dev/null 2>/dev/null; then echo "opened with a wrong passphrase"; exit 1; fi
-          echo "a wrong passphrase cannot open it ✓"
+          [ "$got" = "500 bills, शर्मा किराना, 1 login" ] || { echo "::error::restore does not match: $got"; exit 1; }
+          if openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -pass pass:wrong-passphrase-here -in test.backup 2>/dev/null | tar -t >/dev/null 2>&1; then echo "::error::opened with a wrong passphrase"; exit 1; fi
+          echo "a wrong passphrase cannot open it"

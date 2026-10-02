@@ -37,7 +37,9 @@ Into a **new, empty** Supabase project (never over a live one by mistake):
 # Its connection string: Supabase → Connect → Session pooler
 export NEW_DB='postgresql://postgres.xxxx:password@aws-0-ap-south-1.pooler.supabase.com:5432/postgres'
 
-pg_restore --no-owner --no-privileges -d "$NEW_DB" backup/public.dump
+# A new project already has the "public" schema: restore everything except creating it.
+pg_restore --list backup/public.dump | grep -vE "SCHEMA - public|COMMENT - SCHEMA public" > toc.list
+pg_restore --no-owner --no-privileges -L toc.list -d "$NEW_DB" backup/public.dump
 pg_restore --no-owner --no-privileges --data-only -d "$NEW_DB" backup/auth.dump   # logins
 ```
 
