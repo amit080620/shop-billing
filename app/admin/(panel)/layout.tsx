@@ -46,6 +46,9 @@ export default async function AdminPanelLayout({ children }: { children: React.R
         <Link href="/admin/videos" className="flex items-center rounded-lg px-2.5 py-1.5 text-gray-300 hover:bg-gray-800">
           Videos
         </Link>
+        <Link href="/admin/speed" className="flex items-center rounded-lg px-2.5 py-1.5 text-gray-300 hover:bg-gray-800">
+          Speed
+        </Link>
       </nav>
       <main className="mx-auto max-w-2xl p-4">{children}</main>
     </div>
