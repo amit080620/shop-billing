@@ -67,7 +67,7 @@ export async function LandingPage() {
           <div className="hidden sm:block">
             <LanguageToggle lang={lang} />
           </div>
-          <Link href="/login" className="rounded-lg border border-white/20 px-3.5 py-2 text-sm font-medium text-white/85 hover:bg-white/10">
+          <Link href="/login" prefetch className="rounded-lg border border-white/20 px-3.5 py-2 text-sm font-medium text-white/85 hover:bg-white/10">
             {t("landing.login")}
           </Link>
         </div>
@@ -97,6 +97,7 @@ export async function LandingPage() {
           </Link>
           <Link
             href="/login"
+            prefetch
             className="flex w-full items-center justify-center gap-2 rounded-xl border border-white/20 px-6 py-3.5 text-base font-medium text-white/85 sm:w-auto"
           >
             {t("landing.cta.secondary")}

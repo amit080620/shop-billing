@@ -21,6 +21,8 @@ import { getCalculatorEnabled, getAssistantEnabled } from "@/lib/theme";
 import { HeaderTools } from "@/app/components/HeaderTools";
 import { DemoBanner } from "@/app/components/DemoBanner";
 import { Analytics } from "@/app/components/Analytics";
+import { RememberHome } from "@/app/components/RememberHome";
+import { homePathFor } from "@/lib/businessType";
 import { AppUpdateBanner } from "@/app/components/AppUpdateBanner";
 import { isDemoEmail } from "@/lib/demo/config";
 
@@ -118,6 +120,7 @@ export default async function DashboardLayout({
           booking or print pages, which live outside this layout. */}
       <LazyFloatingWidgets calculatorEnabled={calculatorEnabled} assistantEnabled={assistantEnabled} />
       <Analytics shopId={session.shopId} businessType={session.businessType} plan={session.plan} role={session.role} />
+      <RememberHome path={homePathFor(session.businessType, fastBillingEnabled)} />
     </div>
     </MenuDrawerProvider>
     </BusinessTypeProvider>

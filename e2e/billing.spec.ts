@@ -83,3 +83,11 @@ test("Fast Billing: a bill for a new customer is saved and linked to them", asyn
     await cleanUpDemo("grocery", since, [newPhone]);
   }
 });
+
+test("opening the app at / goes straight to the shop's home screen from the edge", async ({ page }) => {
+  await page.goto("/dashboard");
+  await expect(page.locator('nav a[href="/bills/new"]:visible')).toBeVisible();
+  const res = await timed("/ → home redirect", () => page.request.get("/", { maxRedirects: 0 }), 3000);
+  expect(res.status()).toBe(307);
+  expect(res.headers()["location"]).toMatch(/\/(fast-billing|bills\/new)$/);
+});
