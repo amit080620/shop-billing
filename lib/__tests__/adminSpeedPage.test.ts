@@ -21,6 +21,10 @@ vi.mock("@/lib/supabase/admin", () => ({
     }),
   }),
 }));
+vi.mock("@/lib/systemHealth", () => ({
+  lastBackup: async () => ({ name: "the-ray.backup", at: new Date(Date.now() - 3 * 3600_000).toISOString(), bytes: 2 * 1024 * 1024 }),
+  lastTestRun: async () => ({ conclusion: "success", status: "completed", at: new Date(Date.now() - 3600_000).toISOString(), url: "https://github.com/run" }),
+}));
 vi.mock("next/link", () => ({ default: ({ href, children, className }: { href: string; children: ReactNode; className?: string }) => createElement("a", { href, className }, children) }));
 
 const at = Math.floor(Date.now() / 1000);
@@ -49,6 +53,8 @@ describe("Admin → Speed", () => {
     const html = await render();
     expect(html).toContain("Speed watch");
     expect(html).toContain("database pinged 2 min ago");
+    expect(html).toContain("2.0 MB");
+    expect(html).toContain("all passed");
     expect(html).toContain("/bills/new");
     expect(html).toContain("/print/bill/:id");
     expect(html).toContain("Sharma Kirana");

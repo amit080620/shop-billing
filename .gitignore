@@ -43,3 +43,8 @@ next-env.d.ts
 .vercel
 .env*
 tmp-int/
+
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/

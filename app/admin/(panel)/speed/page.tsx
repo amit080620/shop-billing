@@ -2,6 +2,7 @@ import Link from "next/link";
 import { requireSuperAdmin } from "@/lib/admin-auth";
 import { getRedis } from "@/lib/redis";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { lastBackup, lastTestRun } from "@/lib/systemHealth";
 import { istDay, KEEP_WARM_KEY, SPEED_LIMITS, speedBand, speedKey, speedStats, type SpeedKind, type StoredSpeed } from "@/lib/speedWatch";
 
 const BAND = { quick: "text-emerald-400", ok: "text-amber-300", slow: "text-red-400" } as const;
@@ -27,7 +28,11 @@ export default async function AdminSpeedPage({ searchParams }: { searchParams: P
   const withDemo = params.demo === "1";
 
   const redis = getRedis();
-  const [raw, warm] = redis ? await Promise.all([redis.lrange<unknown>(speedKey(day), 0, -1), redis.hgetall<Record<string, number>>(KEEP_WARM_KEY)]) : [[], null];
+  const [[raw, warm], backup, tests] = await Promise.all([
+    redis ? Promise.all([redis.lrange<unknown>(speedKey(day), 0, -1), redis.hgetall<Record<string, number>>(KEEP_WARM_KEY)]) : Promise.resolve([[], null] as const),
+    lastBackup().catch(() => null),
+    lastTestRun(),
+  ]);
   const all = raw
     .map((r) => {
       try {
@@ -81,13 +86,35 @@ export default async function AdminSpeedPage({ searchParams }: { searchParams: P
         </Link>
       </nav>
 
-      <p className="text-xs text-gray-400">
-        Kept warm:{" "}
-        <span className={dbWarm !== null && dbWarm < 10 * 60_000 ? "text-emerald-400" : "text-red-400"}>
-          {dbWarm !== null ? `database pinged ${ago(warm?.db)}` : "database ping not seen yet (migration 0055)"}
-        </span>
-        {warm?.github ? ` · GitHub ${ago(warm.github)}` : ""}
-      </p>
+      <section className="grid gap-1 rounded-xl border border-gray-800 bg-gray-900 p-3 text-xs text-gray-400">
+        <p>
+          Kept warm:{" "}
+          <span className={dbWarm !== null && dbWarm < 10 * 60_000 ? "text-emerald-400" : "text-red-400"}>
+            {dbWarm !== null ? `database pinged ${ago(warm?.db)}` : "database ping not seen yet (migration 0055)"}
+          </span>
+          {warm?.github ? ` · GitHub ${ago(warm.github)}` : ""}
+        </p>
+        <p>
+          Last database backup:{" "}
+          {backup ? (
+            <span className={Date.now() - Date.parse(backup.at) < 30 * 3600_000 ? "text-emerald-400" : "text-red-400"}>
+              {ago(Date.parse(backup.at))} · {(backup.bytes / 1024 / 1024).toFixed(1)} MB
+            </span>
+          ) : (
+            <span className="text-amber-300">none yet (add the backup secrets in GitHub)</span>
+          )}
+        </p>
+        <p>
+          Automatic tests:{" "}
+          {tests ? (
+            <a href={tests.url} target="_blank" rel="noreferrer" className={tests.conclusion === "success" ? "text-emerald-400" : tests.conclusion ? "text-red-400" : "text-amber-300"}>
+              {tests.conclusion === "success" ? "all passed" : tests.conclusion ? `${tests.conclusion} — open the run` : "running"} · {ago(Date.parse(tests.at))}
+            </a>
+          ) : (
+            "not run yet"
+          )}
+        </p>
+      </section>
 
       {!redis && <p className="text-sm text-amber-300">Redis isn&apos;t set up, so timings aren&apos;t kept.</p>}
 

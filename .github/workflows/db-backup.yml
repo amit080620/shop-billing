@@ -1,0 +1,138 @@
+# Nightly database backup (scripts/db-backup.sh): the whole of The Ray's data, encrypted with
+# BACKUP_PASSPHRASE, kept for 14 days in two places — a private Supabase storage bucket
+# ("db-backups") and this run's artifacts. How to open one: docs/BACKUP-RESTORE.md.
+#
+# Secrets (Settings → Secrets and variables → Actions): SUPABASE_DB_URL (the Session pooler
+# connection string, with the password), BACKUP_PASSPHRASE (16+ characters, kept safe — without it a
+# backup can't be opened), SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY (to store it).
+#
+# When this file or the script changes, a self-test runs instead: a throwaway database is backed up,
+# opened and restored, so the backup is known to work before it is ever needed.
+name: Database backup
+
+on:
+  schedule:
+    - cron: "30 21 * * *" # 03:00 in India
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - scripts/db-backup.sh
+      - .github/workflows/db-backup.yml
+
+jobs:
+  backup:
+    if: github.event_name != 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check the secrets are there
+        id: ready
+        env:
+          DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          BACKUP_PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          missing=""
+          [ -n "$DB_URL" ] || missing="$missing SUPABASE_DB_URL"
+          [ -n "$BACKUP_PASSPHRASE" ] || missing="$missing BACKUP_PASSPHRASE"
+          [ -n "$SUPABASE_URL" ] || missing="$missing SUPABASE_URL"
+          [ -n "$SUPABASE_SERVICE_ROLE_KEY" ] || missing="$missing SUPABASE_SERVICE_ROLE_KEY"
+          if [ -n "$missing" ]; then echo "::error::Backup not set up yet — add these secrets:$missing"; exit 1; fi
+
+      - name: Install pg_dump 17
+        run: |
+          sudo install -d /usr/share/postgresql-common/pgdg
+          sudo curl -fsSL -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc https://www.postgresql.org/media/keys/ACCC4CF8.asc
+          echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" | sudo tee /etc/apt/sources.list.d/pgdg.list >/dev/null
+          sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client-17
+
+      - name: Back up and encrypt
+        id: dump
+        env:
+          DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          BACKUP_PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+          PG_BIN: /usr/lib/postgresql/17/bin
+        run: |
+          name="the-ray-$(TZ=Asia/Kolkata date +%Y-%m-%d-%H%M).backup"
+          bash scripts/db-backup.sh "$name"
+          echo "name=$name" >> "$GITHUB_OUTPUT"
+
+      - name: Store in Supabase (private bucket, newest 14 kept)
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          NAME: ${{ steps.dump.outputs.name }}
+        run: |
+          auth=(-H "Authorization: Bearer $KEY" -H "apikey: $KEY")
+          curl -s "${auth[@]}" -H "Content-Type: application/json" -X POST "$SUPABASE_URL/storage/v1/bucket" -d '{"id":"db-backups","name":"db-backups","public":false}' >/dev/null || true
+          curl -sf "${auth[@]}" -H "Content-Type: application/octet-stream" -H "x-upsert: true" --data-binary @"$NAME" "$SUPABASE_URL/storage/v1/object/db-backups/$NAME" >/dev/null
+          echo "stored $NAME"
+          old=$(curl -sf "${auth[@]}" -H "Content-Type: application/json" -X POST "$SUPABASE_URL/storage/v1/object/list/db-backups" \
+            -d '{"prefix":"","limit":1000,"sortBy":{"column":"name","order":"desc"}}' | jq -c '[.[14:][] | .name]')
+          if [ "$old" != "[]" ]; then
+            curl -sf "${auth[@]}" -H "Content-Type: application/json" -X DELETE "$SUPABASE_URL/storage/v1/object/db-backups" -d "{\"prefixes\":$old}" >/dev/null
+            echo "removed older: $old"
+          fi
+
+      - name: Second copy with this run (encrypted)
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.dump.outputs.name }}
+          path: ${{ steps.dump.outputs.name }}
+          retention-days: 14
+          compression-level: 0
+
+  selftest:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: pw
+        ports: ["5432:5432"]
+        options: --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DB_URL: postgres://postgres:pw@localhost:5432/postgres
+      BACKUP_PASSPHRASE: self-test-passphrase-only
+      PG_BIN: /usr/lib/postgresql/17/bin
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install pg_dump 17
+        run: |
+          sudo install -d /usr/share/postgresql-common/pgdg
+          sudo curl -fsSL -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc https://www.postgresql.org/media/keys/ACCC4CF8.asc
+          echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" | sudo tee /etc/apt/sources.list.d/pgdg.list >/dev/null
+          sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client-17
+
+      - name: A throwaway shop database
+        run: |
+          $PG_BIN/psql "$DB_URL" -v ON_ERROR_STOP=1 -c "
+            create schema auth;
+            create table auth.users (id uuid primary key, email text);
+            insert into auth.users values ('00000000-0000-0000-0000-000000000001', 'owner@example.com');
+            create table shops (id uuid primary key, name text);
+            insert into shops values ('00000000-0000-0000-0000-000000000002', 'शर्मा किराना');
+            create table bills (id serial primary key, shop_id uuid references shops(id), total numeric);
+            insert into bills (shop_id, total) select '00000000-0000-0000-0000-000000000002', g from generate_series(1, 500) g;"
+
+      - name: Back up, open and restore
+        run: |
+          bash scripts/db-backup.sh test.backup
+          openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -pass env:BACKUP_PASSPHRASE -in test.backup -out test.tar
+          mkdir restored && tar -C restored -xf test.tar && ls -la restored
+          $PG_BIN/psql "$DB_URL" -c "create database restored"
+          $PG_BIN/psql "postgres://postgres:pw@localhost:5432/restored" -c "create schema auth; create table auth.users (id uuid primary key, email text);"
+          $PG_BIN/pg_restore --no-owner -d "postgres://postgres:pw@localhost:5432/restored" restored/public.dump
+          $PG_BIN/pg_restore --no-owner --data-only -d "postgres://postgres:pw@localhost:5432/restored" restored/auth.dump
+          got=$($PG_BIN/psql -tA "postgres://postgres:pw@localhost:5432/restored" -c "select (select count(*) from bills) || ' bills, ' || (select name from shops) || ', ' || (select count(*) from auth.users) || ' login'")
+          echo "restored: $got"
+          [ "$got" = "500 bills, शर्मा किराना, 1 login" ] || { echo "restore does not match"; exit 1; }
+          if openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -pass pass:wrong-passphrase-here -in test.backup -out /dev/null 2>/dev/null; then echo "opened with a wrong passphrase"; exit 1; fi
+          echo "a wrong passphrase cannot open it ✓"
