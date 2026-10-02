@@ -20,6 +20,7 @@ import { LazyFloatingWidgets } from "@/app/components/LazyFloatingWidgets";
 import { getCalculatorEnabled, getAssistantEnabled } from "@/lib/theme";
 import { HeaderTools } from "@/app/components/HeaderTools";
 import { DemoBanner } from "@/app/components/DemoBanner";
+import { Analytics } from "@/app/components/Analytics";
 import { AppUpdateBanner } from "@/app/components/AppUpdateBanner";
 import { isDemoEmail } from "@/lib/demo/config";
 
@@ -116,6 +117,7 @@ export default async function DashboardLayout({
       {/* Shop-owner tools only — never on login, public storefront,
           booking or print pages, which live outside this layout. */}
       <LazyFloatingWidgets calculatorEnabled={calculatorEnabled} assistantEnabled={assistantEnabled} />
+      <Analytics shopId={session.shopId} businessType={session.businessType} plan={session.plan} role={session.role} />
     </div>
     </MenuDrawerProvider>
     </BusinessTypeProvider>

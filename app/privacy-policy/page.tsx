@@ -39,6 +39,16 @@ export default function PrivacyPolicyPage() {
       </section>
 
       <section>
+        <h2 className="text-base font-semibold">Keeping the app working well</h2>
+        <p className="mt-1 text-muted">
+          To find and fix problems quickly, the shop&apos;s app sends us error reports (through Sentry) and how it is used — which screens are
+          opened and how fast they load (through PostHog and our own speed checks). These never include names, phone numbers, amounts or what
+          is on a bill: screen recordings hide all text and typing. Every night the whole database is backed up in encrypted form, so it can
+          be restored if something ever goes wrong.
+        </p>
+      </section>
+
+      <section>
         <h2 className="text-base font-semibold">Your rights</h2>
         <p className="mt-1 text-muted">
           You can genuinely ask the shop you dealt with to show you, correct, or delete the data they hold about
