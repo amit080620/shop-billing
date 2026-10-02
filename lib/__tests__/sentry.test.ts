@@ -27,7 +27,7 @@ describe("sendToSentry", () => {
   it("does nothing without SENTRY_DSN", async () => {
     const fetch = vi.fn();
     vi.stubGlobal("fetch", fetch);
-    await sendToSentry({ message: "x" });
+    expect(await sendToSentry({ message: "x" })).toBe(false);
     expect(fetch).not.toHaveBeenCalled();
   });
 
@@ -35,7 +35,7 @@ describe("sendToSentry", () => {
     vi.stubEnv("SENTRY_DSN", "https://abc123@o42.ingest.sentry.io/777");
     const fetch = vi.fn(async () => new Response("{}"));
     vi.stubGlobal("fetch", fetch);
-    await sendToSentry({ message: "Cannot read properties of undefined (reading 'call')", stack: STACK, level: "warning", tags: { context: "client-crash", shop: undefined } });
+    expect(await sendToSentry({ message: "Cannot read properties of undefined (reading 'call')", stack: STACK, level: "warning", tags: { context: "client-crash", shop: undefined } })).toBe(true);
     expect(fetch).toHaveBeenCalledOnce();
     const [url, init] = fetch.mock.calls[0] as unknown as [string, RequestInit];
     expect(url).toBe("https://o42.ingest.sentry.io/api/777/envelope/");
@@ -51,6 +51,6 @@ describe("sendToSentry", () => {
   it("never throws when Sentry is unreachable", async () => {
     vi.stubEnv("SENTRY_DSN", "https://abc123@o42.ingest.sentry.io/777");
     vi.stubGlobal("fetch", vi.fn(async () => { throw new Error("offline"); }));
-    await expect(sendToSentry({ message: "x" })).resolves.toBeUndefined();
+    await expect(sendToSentry({ message: "x" })).resolves.toBe(false);
   });
 });

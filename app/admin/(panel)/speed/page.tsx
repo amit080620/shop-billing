@@ -126,7 +126,8 @@ export default async function AdminSpeedPage({ searchParams }: { searchParams: P
                   send a test error
                 </button>
               </form>
-              {params.sentry === "sent" && <span className="text-emerald-400"> · sent — it appears in Sentry → Issues within a minute</span>}
+              {params.sentry === "accepted" && <span className="text-emerald-400"> · Sentry accepted it — it is in Sentry → Issues</span>}
+              {params.sentry === "refused" && <span className="text-red-400"> · Sentry did not accept it — check SENTRY_DSN in Vercel</span>}
             </>
           ) : (
             <span className="text-amber-300">not set (SENTRY_DSN in Vercel)</span>

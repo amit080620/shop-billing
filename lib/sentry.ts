@@ -5,7 +5,7 @@ import "server-only";
  * errors (lib/audit logError, instrumentation.ts); with SENTRY_DSN set, each also goes to Sentry,
  * whose screen shows the exact line of code: the app's source maps are published
  * (productionBrowserSourceMaps), and the repository is public anyway. Without SENTRY_DSN this does
- * nothing. Never throws, and gives up after a few seconds. */
+ * nothing. Never throws, and gives up after a few seconds. Resolves true when Sentry accepted it. */
 
 type Frame = { filename: string; abs_path: string; function: string; lineno: number; colno: number; in_app: boolean };
 
@@ -27,9 +27,9 @@ export async function sendToSentry(report: {
   tags?: Record<string, string | undefined>;
   extra?: Record<string, unknown>;
   url?: string | null;
-}): Promise<void> {
+}): Promise<boolean> {
   const dsn = process.env.SENTRY_DSN;
-  if (!dsn) return;
+  if (!dsn) return false;
   try {
     const u = new URL(dsn);
     const projectId = u.pathname.replace(/\//g, "");
@@ -50,7 +50,7 @@ export async function sendToSentry(report: {
       exception: { values: [{ type, value: report.message.slice(0, 1000), ...(frames.length ? { stacktrace: { frames } } : {}) }] },
     };
     const envelope = [JSON.stringify({ event_id: eventId, sent_at: new Date().toISOString(), dsn }), JSON.stringify({ type: "event" }), JSON.stringify(event)].join("\n");
-    await fetch(`${u.protocol}//${u.host}/api/${projectId}/envelope/`, {
+    const res = await fetch(`${u.protocol}//${u.host}/api/${projectId}/envelope/`, {
       method: "POST",
       headers: {
         "Content-Type": "application/x-sentry-envelope",
@@ -59,7 +59,9 @@ export async function sendToSentry(report: {
       body: envelope,
       signal: AbortSignal.timeout(3000),
     });
+    return res.ok;
   } catch {
     // Reporting must never add to the problem.
+    return false;
   }
 }
