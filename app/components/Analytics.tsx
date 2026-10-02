@@ -30,7 +30,16 @@ export function Analytics({ shopId, businessType, plan, role }: { shopId: string
             api_host: process.env.NEXT_PUBLIC_POSTHOG_HOST ?? "https://us.i.posthog.com",
             capture_pageview: false,
             capture_pageleave: false,
+            // Only screens and (masked) recordings: nothing that reads what is tapped, nor extra uploads or
+            // scripts on a phone, whatever is switched on in PostHog's settings. Speed is Speed watch's job,
+            // errors are Sentry's.
             autocapture: false,
+            rageclick: false,
+            capture_dead_clicks: false,
+            enable_heatmaps: false,
+            capture_heatmaps: false,
+            capture_performance: false,
+            capture_exceptions: false,
             disable_surveys: true,
             person_profiles: "identified_only",
             mask_all_text: true,
