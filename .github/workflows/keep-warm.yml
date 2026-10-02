@@ -38,7 +38,7 @@ jobs:
 
       - name: Wake the main screens
         run: |
-          paths="/ /login /dashboard /bills/new /fast-billing /bills /customers /products /purchases /reports /more /plans /offers /help /daily-summary /reminders /restaurant /restaurant-kds /hotel /videos /api/version /api/customers/search /api/customers/all"
+          paths="/ /login /dashboard /bills/new /fast-billing /bills /customers /products /purchases /reports /more /plans /offers /help /daily-summary /reminders /restaurant /restaurant-kds /hotel /videos /api/version /api/customers/search /api/customers/all /admin /admin/login /admin/support /admin/enquiries /admin/videos /admin/speed"
           # Twice after a deploy: the first round starts the servers, the second finds them warm.
           rounds=1
           if [ "${{ github.event_name }}" = "push" ]; then rounds=2; fi

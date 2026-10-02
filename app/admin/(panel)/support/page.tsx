@@ -33,8 +33,7 @@ export default async function AdminSupportPage({ searchParams }: { searchParams:
     .order("created_at", { ascending: false })
     .limit(200);
   if (status !== "all") q = q.eq("status", status as "new" | "contacted" | "won" | "lost");
-  const { data } = await q;
-  const { data: counts } = await db.from("sales_enquiries").select("status").eq("kind", "custom").like("item", `${SUPPORT_PREFIX}%`);
+  const [{ data }, { data: counts }] = await Promise.all([q, db.from("sales_enquiries").select("status").eq("kind", "custom").like("item", `${SUPPORT_PREFIX}%`)]);
   const n = (s: string) => (counts ?? []).filter((c) => s === "all" || c.status === s).length;
 
   return (

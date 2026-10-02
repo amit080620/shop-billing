@@ -15,10 +15,16 @@ const PLAN_KEYS = Object.keys(PLANS) as PlanKey[];
  * admin screen checks this so it can say "run the database update"
  * instead of failing with a cryptic column error. */
 export async function plansMigrationApplied(): Promise<boolean> {
+  if (plansApplied) return true;
   const db = createSupabaseAdminClient();
   const { error } = await db.from("shops").select("plan").limit(1);
-  return !error;
+  plansApplied = !error;
+  return plansApplied;
 }
+
+// Once the column is there it stays, so a server that has seen it doesn't ask again (it was a
+// round trip on every admin screen, 1.2 s on a cold one).
+let plansApplied = false;
 
 function addMonths(from: Date, months: number): Date {
   const d = new Date(from);

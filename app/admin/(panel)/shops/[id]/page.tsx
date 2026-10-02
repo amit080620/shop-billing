@@ -45,12 +45,18 @@ export default async function AdminShopDetailPage({
   // Email lives in Supabase Auth, not the staff table — one lookup per
   // staff member via the admin API, so the panel can show who actually
   // owns each login and reset it if they're locked out.
-  const staffWithEmail = await Promise.all(
-    (staff ?? []).map(async (s) => {
-      const { data: authUser } = await admin.auth.admin.getUserById(s.id);
-      return { ...s, email: authUser?.user?.email ?? null };
-    }),
-  );
+  // These don't depend on each other: fetched together.
+  const [staffWithEmail, enquiriesResult, changesResult, onboarding] = await Promise.all([
+    Promise.all(
+      (staff ?? []).map(async (s) => {
+        const { data: authUser } = await admin.auth.admin.getUserById(s.id);
+        return { ...s, email: authUser?.user?.email ?? null };
+      }),
+    ),
+    plansReady ? admin.from("sales_enquiries").select("id, kind, item, status, created_at").eq("shop_id", id).order("created_at", { ascending: false }).limit(8) : Promise.resolve({ data: [] }),
+    plansReady ? admin.from("plan_changes").select("id, from_plan, to_plan, amount, months, note, created_at").eq("shop_id", id).order("created_at", { ascending: false }).limit(10) : Promise.resolve({ data: [] }),
+    shopOnboarding(id),
+  ]);
 
   if (!shopRow) {
     return <p className="text-sm text-gray-300">Shop not found.</p>;
@@ -62,15 +68,8 @@ export default async function AdminShopDetailPage({
     plan_limits?: Record<string, number> | null; trial_ends_at?: string | null; owner_phone?: string | null;
   };
   const eff = effectivePlan({ plan: shop.plan, subscription_valid_until: shop.subscription_valid_until, trial_ends_at: shop.trial_ends_at });
-  const enquiriesResult = plansReady
-    ? await admin.from("sales_enquiries").select("id, kind, item, status, created_at").eq("shop_id", id).order("created_at", { ascending: false }).limit(8)
-    : { data: [] };
   const enquiries = enquiriesResult.data ?? [];
-  const changesResult = plansReady
-    ? await admin.from("plan_changes").select("id, from_plan, to_plan, amount, months, note, created_at").eq("shop_id", id).order("created_at", { ascending: false }).limit(10)
-    : { data: [] };
   const changes = changesResult.data ?? [];
-  const onboarding = await shopOnboarding(id);
 
   return (
     <div className="flex flex-col gap-4">

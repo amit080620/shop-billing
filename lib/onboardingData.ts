@@ -1,4 +1,5 @@
 import "server-only";
+import { unstable_cache } from "next/cache";
 import { createSupabaseAdminClient } from "./supabase/admin";
 import { onboardingStatus, type OnboardingFacts, type OnboardingTicks } from "./onboarding";
 
@@ -60,6 +61,10 @@ export async function onboardingFacts(shopId: string, db: Admin = createSupabase
     paidPlan: ["basic", "pro", "pro_plus", "custom"].includes(String(shop?.plan ?? "free")),
   };
 }
+
+/** onboardingFacts for the admin shops list, kept ten minutes: it is seven queries per shop, for up
+ * to 25 shops, on every visit. A shop's own page (shopOnboarding) always reads them fresh. */
+export const onboardingFactsCached = unstable_cache(async (shopId: string) => onboardingFacts(shopId), ["admin-onboarding-facts"], { revalidate: 600 });
 
 /** The checklist for one shop: every step, done or not, plus the team's note. */
 export async function shopOnboarding(shopId: string) {

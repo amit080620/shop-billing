@@ -46,11 +46,10 @@ export default async function AdminEnquiriesPage({ searchParams }: { searchParam
     .order("created_at", { ascending: false })
     .limit(200);
   if (status !== "all") query = query.eq("status", status as "new" | "contacted" | "won" | "lost");
-  const { data } = await query;
+  // The list and the "Notify me" interest (tallied below — the roadmap follows it), together.
+  const [{ data }, { data: interest }] = await Promise.all([query, db.from("sales_enquiries").select("item").eq("kind", "upcoming")]);
   const rows = data ?? [];
 
-  // "Notify me" interest, tallied — the roadmap follows this.
-  const { data: interest } = await db.from("sales_enquiries").select("item").eq("kind", "upcoming");
   const tally = new Map<string, number>();
   for (const r of interest ?? []) tally.set(r.item, (tally.get(r.item) ?? 0) + 1);
   const wanted = UPCOMING.map((u) => ({ name: u.name, n: tally.get(u.name) ?? 0 })).sort((a, b) => b.n - a.n);

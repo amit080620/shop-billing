@@ -2,13 +2,12 @@ import Link from "next/link";
 import { Phone, MessageCircle, Inbox } from "lucide-react";
 import { requireSuperAdmin } from "@/lib/admin-auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
-import { plansMigrationApplied } from "@/lib/actions/admin-plans";
 import { PlanBadge } from "@/app/components/PlanBadge";
 import { effectivePlan, planPrice, type PlanKey } from "@/lib/plans";
 import { buildWhatsAppLink } from "@/lib/whatsapp";
 import { isDemoShopName } from "@/lib/demo/config";
 import { onboardingStatus } from "@/lib/onboarding";
-import { onboardingFacts, readOnboardingFile } from "@/lib/onboardingData";
+import { onboardingFactsCached, readOnboardingFile } from "@/lib/onboardingData";
 import { CopyMigrationButton } from "./CopyMigrationButton";
 
 function statusFor(validUntil: string | null) {
@@ -56,13 +55,17 @@ export default async function AdminDashboardPage({ searchParams }: { searchParam
   await requireSuperAdmin();
   const { plan: filter = "all" } = await searchParams;
   const admin = createSupabaseAdminClient();
-  const plansReady = await plansMigrationApplied();
 
+  // Fetched together rather than one after another. The plan columns come from migration 0040; if
+  // they aren't there yet the shops are read again without them.
   const columns = "id, name, legal_name, gstin, subscription_valid_until, wallet_balance, created_at, business_type";
-  const { data } = await admin
-    .from("shops")
-    .select(plansReady ? `${columns}, plan, trial_ends_at, owner_phone` : columns)
-    .order("created_at", { ascending: false });
+  const [withPlans, enquiriesNew, ticksFile] = await Promise.all([
+    admin.from("shops").select(`${columns}, plan, trial_ends_at, owner_phone`).order("created_at", { ascending: false }),
+    admin.from("sales_enquiries").select("id", { count: "exact", head: true }).eq("status", "new"),
+    readOnboardingFile(admin),
+  ]);
+  const plansReady = !withPlans.error;
+  const data = plansReady ? withPlans.data : (await admin.from("shops").select(columns).order("created_at", { ascending: false })).data;
   const everyShop = (data ?? []) as unknown as ShopRow[];
   // The public demo shops are on the top plan for ever; counting them would inflate every figure here.
   const shops = everyShop.filter((s) => !isDemoShopName(s.legal_name));
@@ -89,17 +92,14 @@ export default async function AdminDashboardPage({ searchParams }: { searchParam
   // deals aren't priced here).
   const arr = withPlan.reduce((sum, s) => (!s.eff.onTrial && s.eff.key !== "free" && s.eff.key !== "custom" ? sum + planPrice(s.eff.key, s.business_type).yearly : sum), 0);
 
-  const newEnquiries = plansReady
-    ? ((await admin.from("sales_enquiries").select("id", { count: "exact", head: true }).eq("status", "new")).count ?? 0)
-    : 0;
+  const newEnquiries = plansReady ? (enquiriesNew.count ?? 0) : 0;
 
   // Set-up progress for shops that joined in the last 60 days (the pilot), newest 25.
   const recent = shops.filter((s) => Date.now() - Date.parse(s.created_at) < 60 * 86400_000).slice(0, 25);
-  const ticksFile = recent.length ? await readOnboardingFile(admin) : {};
   const setup = new Map(
     await Promise.all(
       recent.map(async (s) => {
-        const st = onboardingStatus(await onboardingFacts(s.id, admin), ticksFile[s.id]?.ticks ?? {});
+        const st = onboardingStatus(await onboardingFactsCached(s.id), ticksFile[s.id]?.ticks ?? {});
         return [s.id, `${st.done}/${st.total}`] as const;
       }),
     ),
