@@ -1,7 +1,7 @@
-# Keeps The Ray's servers awake during shop hours. A screen nobody has opened for a while has to
-# start its server from cold, which can take 2–5 seconds on the first tap; a light request to each
-# main screen every 5 minutes means a shop never waits for that. Unauthenticated, so each request
-# only reaches the login check — enough to keep the server warm, nothing else runs.
+# Keeps The Ray's servers awake. A screen nobody has opened for a while has to start its server
+# from cold, which can take 2–5 seconds on the first tap; a light request to each main screen every
+# 5 minutes means a shop never waits for that. Unauthenticated, so each request only reaches the
+# login check — enough to keep the server warm, nothing else runs.
 name: Keep the app warm
 
 on:
@@ -10,16 +10,41 @@ on:
     # exactly when the first tap is slow. (While a shop has the app open, useKeepReady keeps its
     # own screens warm too.)
     - cron: "*/5 * * * *"
+  # Every deploy starts on cold servers: Speed watch caught the first app opening after one taking
+  # 5.6 s. On a push, wait for the new deploy to go live, then wake it before a shop gets there.
+  push:
+    branches: [main]
   workflow_dispatch:
+
+concurrency:
+  group: keep-warm-${{ github.event_name }}
+  cancel-in-progress: true
 
 jobs:
   ping:
     runs-on: ubuntu-latest
-    timeout-minutes: 3
+    timeout-minutes: 15
     steps:
+      - name: Wait for the new deploy to go live
+        if: github.event_name == 'push'
+        run: |
+          before=$(curl -s -m 10 https://bill.theray.in/api/version || true)
+          for i in $(seq 1 80); do
+            sleep 10
+            now=$(curl -s -m 10 https://bill.theray.in/api/version || true)
+            if [ -n "$now" ] && [ "$now" != "$before" ]; then echo "live: $now"; exit 0; fi
+          done
+          echo "no new deploy seen; waking whatever is live"
+
       - name: Wake the main screens
         run: |
-          for path in / /login /dashboard /bills/new /fast-billing /bills /customers /products /purchases /reports /more /plans /offers /help /daily-summary /reminders /restaurant /restaurant-kds /hotel /videos /api/version /api/customers/search /api/customers/all; do
-            curl -s -o /dev/null -m 25 -w "%{http_code} %{time_total}s ${path}\n" "https://bill.theray.in${path}" &
+          paths="/ /login /dashboard /bills/new /fast-billing /bills /customers /products /purchases /reports /more /plans /offers /help /daily-summary /reminders /restaurant /restaurant-kds /hotel /videos /api/version /api/customers/search /api/customers/all"
+          # Twice after a deploy: the first round starts the servers, the second finds them warm.
+          rounds=1
+          if [ "${{ github.event_name }}" = "push" ]; then rounds=2; fi
+          for round in $(seq 1 $rounds); do
+            for path in $paths; do
+              curl -s -o /dev/null -m 25 -w "%{http_code} %{time_total}s ${path}\n" "https://bill.theray.in${path}" &
+            done
+            wait
           done
-          wait
