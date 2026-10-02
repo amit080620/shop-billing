@@ -9,7 +9,8 @@ export default defineConfig({
   expect: { timeout: 15_000 },
   retries: process.env.CI ? 1 : 0,
   workers: 2,
-  reporter: process.env.CI ? [["list"], ["html", { open: "never" }]] : "list",
+  // On GitHub, a failed test is also written on the run page ("github"), readable without logging in.
+  reporter: process.env.CI ? [["list"], ["github"], ["html", { open: "never" }]] : "list",
   use: {
     baseURL: process.env.E2E_BASE_URL ?? "https://bill.theray.in",
     ...devices["Pixel 7"],

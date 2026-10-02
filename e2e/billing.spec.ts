@@ -35,6 +35,7 @@ test("Fast Billing quantity: tap adds, − takes off, the grid sets an exact num
 
 test("Fast Billing: pressing and holding opens the grid without adding one", async ({ page }) => {
   await page.goto("/fast-billing");
+  await expect(tile(page, 1)).toBeVisible();
   const box = (await tile(page, 1).boundingBox())!;
   await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
   await page.mouse.down();

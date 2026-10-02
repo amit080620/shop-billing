@@ -1,4 +1,5 @@
 import { createSupabaseAdminClient } from "./supabase/admin";
+import { sendToSentry } from "./sentry";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "./supabase/database.types";
 
@@ -25,6 +26,17 @@ export async function logError(params: {
   } catch (error) {
     console.error("Could not write error log", error);
   }
+  // And to Sentry, when it is set up. Crashes from an older version still open on a phone, and
+  // dropped connections, are warnings there: the error log explains them too.
+  const d = params.details ?? {};
+  const benign = d.oldCode === true || /reading 'call'|Loading chunk|ChunkLoadError|network error|Load failed|Failed to fetch|Connection closed/i.test(params.message);
+  await sendToSentry({
+    message: params.message,
+    stack: typeof d.stack === "string" ? d.stack : null,
+    level: benign ? "warning" : "error",
+    tags: { context: params.context, shop: params.shopId ?? undefined, device: typeof d.device === "string" ? d.device : undefined, screen: typeof d.url === "string" ? d.url : undefined },
+    extra: { ...d, stack: undefined },
+  });
 }
 
 /** One shared way to record a sensitive action — never throws, so a

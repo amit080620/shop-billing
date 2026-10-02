@@ -125,7 +125,9 @@ jobs:
 
       # Each step reports its own error as an annotation, readable on the run page.
       - name: Back up
-        run: bash scripts/db-backup.sh test.backup > out.txt 2>&1 || { cat out.txt; echo "::error::backup: $(tail -c 1500 out.txt | tr '\n' ' ')"; exit 1; }; cat out.txt
+        run: |
+          bash scripts/db-backup.sh test.backup > out.txt 2>&1 || { cat out.txt; echo "::error::backup: $(tail -c 1500 out.txt | tr '\n' ' ')"; exit 1; }
+          cat out.txt
 
       - name: Open it with the passphrase
         run: |

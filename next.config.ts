@@ -5,6 +5,9 @@ import type { NextConfig } from "next";
 const buildId = process.env.VERCEL_DEPLOYMENT_ID || process.env.VERCEL_GIT_COMMIT_SHA || `local-${Date.now()}`;
 
 const nextConfig: NextConfig = {
+  // Published so error reports (Sentry) show the real line of code instead of minified bundles.
+  // Phones never download them; the source is public on GitHub anyway.
+  productionBrowserSourceMaps: true,
   env: { NEXT_PUBLIC_BUILD_ID: buildId },
   experimental: {
     // How long a screen loaded ahead (the bottom bar's billing screens) is used as it is before
