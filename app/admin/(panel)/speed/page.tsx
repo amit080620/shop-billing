@@ -3,6 +3,7 @@ import { requireSuperAdmin } from "@/lib/admin-auth";
 import { getRedis } from "@/lib/redis";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { lastBackup, lastTestRun } from "@/lib/systemHealth";
+import { sendSentryTestAction } from "@/lib/actions/admin-monitoring";
 import { istDay, KEEP_WARM_KEY, SPEED_LIMITS, speedBand, speedKey, speedStats, type SpeedKind, type StoredSpeed } from "@/lib/speedWatch";
 
 const BAND = { quick: "text-emerald-400", ok: "text-amber-300", slow: "text-red-400" } as const;
@@ -20,7 +21,7 @@ function group(events: StoredSpeed[], by: (e: StoredSpeed) => string) {
 
 /** How fast the app feels on shops' own phones (see lib/speedWatch): per screen, per shop, and the
  * slowest moments with the phone and network they happened on. One day at a time, India time. */
-export default async function AdminSpeedPage({ searchParams }: { searchParams: Promise<{ day?: string; demo?: string }> }) {
+export default async function AdminSpeedPage({ searchParams }: { searchParams: Promise<{ day?: string; demo?: string; sentry?: string }> }) {
   await requireSuperAdmin();
   const params = await searchParams;
   const today = istDay();
@@ -113,6 +114,27 @@ export default async function AdminSpeedPage({ searchParams }: { searchParams: P
           ) : (
             "not run yet"
           )}
+        </p>
+        <p>
+          Error reports (Sentry):{" "}
+          {process.env.SENTRY_DSN ? (
+            <>
+              <span className="text-emerald-400">on</span>
+              {" · "}
+              <form action={sendSentryTestAction} className="inline">
+                <button type="submit" className="underline">
+                  send a test error
+                </button>
+              </form>
+              {params.sentry === "sent" && <span className="text-emerald-400"> · sent — it appears in Sentry → Issues within a minute</span>}
+            </>
+          ) : (
+            <span className="text-amber-300">not set (SENTRY_DSN in Vercel)</span>
+          )}
+        </p>
+        <p>
+          Analytics (PostHog):{" "}
+          {process.env.NEXT_PUBLIC_POSTHOG_KEY ? <span className="text-emerald-400">on</span> : <span className="text-amber-300">not set (NEXT_PUBLIC_POSTHOG_KEY in Vercel)</span>}
         </p>
       </section>
 
