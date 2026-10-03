@@ -6,22 +6,25 @@ import {
 } from "lucide-react";
 import { getTranslator } from "@/lib/i18n/server";
 import { LanguageToggle } from "@/lib/i18n/LanguageToggle";
+import { verticalForType } from "@/lib/seo/verticals";
+import { JsonLd } from "@/app/components/JsonLd";
+import { graph, organization, SITE_URL, softwareApplication } from "@/lib/seo/site";
 
 const BUSINESSES = [
-  { icon: ShoppingCart, label: "Grocery / Kirana" },
-  { icon: Store, label: "Supermarket / Mart" },
-  { icon: Wrench, label: "Hardware / Electrical" },
-  { icon: Pill, label: "Pharmacy / Medical" },
-  { icon: UtensilsCrossed, label: "Restaurant / Café" },
-  { icon: Repeat, label: "Rental business" },
-  { icon: Truck, label: "Transport & Materials" },
-  { icon: Hammer, label: "Repair & Services" },
-  { icon: Scissors, label: "Salon / Spa" },
-  { icon: Gem, label: "Jewellery" },
-  { icon: Stethoscope, label: "Clinic / Doctor" },
-  { icon: Dumbbell, label: "Gym / Fitness" },
-  { icon: FlaskConical, label: "Lab / Diagnostics" },
-  { icon: Building2, label: "General / Other" },
+  { icon: ShoppingCart, label: "Grocery / Kirana", type: "grocery" },
+  { icon: Store, label: "Supermarket / Mart", type: "mart" },
+  { icon: Wrench, label: "Hardware / Electrical", type: "hardware" },
+  { icon: Pill, label: "Pharmacy / Medical", type: "pharmacy" },
+  { icon: UtensilsCrossed, label: "Restaurant / Café", type: "restaurant" },
+  { icon: Repeat, label: "Rental business", type: "rental" },
+  { icon: Truck, label: "Transport & Materials", type: "transport" },
+  { icon: Hammer, label: "Repair & Services", type: "service" },
+  { icon: Scissors, label: "Salon / Spa", type: "salon" },
+  { icon: Gem, label: "Jewellery", type: "jewellery" },
+  { icon: Stethoscope, label: "Clinic / Doctor", type: "clinic" },
+  { icon: Dumbbell, label: "Gym / Fitness", type: "gym" },
+  { icon: FlaskConical, label: "Lab / Diagnostics", type: "lab" },
+  { icon: Building2, label: "General / Other", type: "general" },
 ];
 
 /** The app's actual front door for anyone who ISN'T already a shop
@@ -46,6 +49,9 @@ export async function LandingPage() {
 
   return (
     <div className="min-h-screen" style={{ background: "#08061a" }}>
+      <JsonLd
+        data={graph(organization, { "@type": "WebSite", "@id": `${SITE_URL}/#website`, name: "The Ray", url: SITE_URL, inLanguage: ["en-IN", "hi-IN", "mr-IN"] }, softwareApplication({ description: "GST billing, udhar khata, stock and reports for every kind of Indian shop, on any phone.", url: SITE_URL }))}
+      />
       <header className="mx-auto flex max-w-5xl items-center justify-between px-5 py-5">
         <span className="flex items-center gap-2">
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -110,11 +116,15 @@ export async function LandingPage() {
       <section className="mx-auto max-w-5xl px-5 py-12">
         <p className="text-center text-sm font-medium text-white/50">{t("landing.builtFor")}</p>
         <div className="mt-5 grid grid-cols-2 gap-2.5 sm:grid-cols-4 md:grid-cols-7">
-          {BUSINESSES.map(({ icon: Icon, label }) => (
-            <div key={label} className="flex flex-col items-center gap-1.5 rounded-xl border border-white/10 bg-white/[0.04] px-2 py-3.5 text-center">
+          {BUSINESSES.map(({ icon: Icon, label, type }) => (
+            <Link
+              key={label}
+              href={`/billing-software/${verticalForType(type)?.slug ?? ""}`}
+              className="flex flex-col items-center gap-1.5 rounded-xl border border-white/10 bg-white/[0.04] px-2 py-3.5 text-center hover:bg-white/[0.08]"
+            >
               <Icon size={18} className="text-brand-light" />
               <span className="text-[11px] leading-tight text-white/70">{t(label)}</span>
-            </div>
+            </Link>
           ))}
         </div>
       </section>
@@ -150,7 +160,10 @@ export async function LandingPage() {
 
       <footer className="mx-auto flex max-w-5xl flex-col items-center gap-2 px-5 py-8 text-center text-xs text-white/35">
         <p>{t("landing.footer.tagline")}</p>
-        <p className="flex gap-3">
+        <p className="flex flex-wrap justify-center gap-3">
+          <Link href="/billing-software" className="hover:text-white/60">{t("Billing software for every shop")}</Link>
+          <Link href="/gst-calculator" className="hover:text-white/60">{t("GST calculator")}</Link>
+          <Link href="/videos" className="hover:text-white/60">{t("Training videos")}</Link>
           <Link href="/terms" className="hover:text-white/60">{t("Terms & refund policy")}</Link>
           <Link href="/privacy-policy" className="hover:text-white/60">{t("landing.footer.privacy")}</Link>
         </p>

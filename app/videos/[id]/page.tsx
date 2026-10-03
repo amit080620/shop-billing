@@ -5,6 +5,15 @@ import { getTranslator } from "@/lib/i18n/server";
 import { VideoPlayer } from "@/app/components/VideoPlayer";
 import { loadYoutubeIds } from "@/lib/youtubeData";
 import { mmss, videoById, videoFiles, videosFor } from "@/lib/trainingVideos";
+import { JsonLd } from "@/app/components/JsonLd";
+import { breadcrumbs, graph, organization } from "@/lib/seo/site";
+import { loadTranscript, videoObject, youtubeUploadDate } from "@/lib/seo/videoSeo";
+
+const describe = (video: NonNullable<ReturnType<typeof videoById>>) =>
+  `Training video, ${mmss(video.seconds)}: ${video.topics
+    .slice(0, 6)
+    .map(([, title]) => title)
+    .join(", ")}.`;
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;
@@ -12,10 +21,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   if (!video) return { title: "Video not found" };
   return {
     title: `${video.title} | The Ray`,
-    description: `Training video, ${mmss(video.seconds)}: ${video.topics
-      .slice(0, 6)
-      .map(([, title]) => title)
-      .join(", ")}.`,
+    description: describe(video),
     alternates: { canonical: `/videos/${video.id}` },
     openGraph: { images: [videoFiles(video.id).poster] },
   };
@@ -30,6 +36,7 @@ export default async function PublicVideoPage({ params, searchParams }: { params
   if (!video) notFound();
   const files = videoFiles(video.id);
   const youtubeId = (await loadYoutubeIds())[video.id] ?? null;
+  const [transcript, uploadDate] = await Promise.all([loadTranscript(video), youtubeUploadDate(youtubeId)]);
   const start = Math.max(0, Math.min(video.seconds - 5, Number(at) || 0));
   const { own, common } = videosFor(type ?? "");
   const next = [...own, ...common].filter((v) => v.id !== video.id).slice(0, 4);
@@ -45,6 +52,17 @@ export default async function PublicVideoPage({ params, searchParams }: { params
           {t("login.setOneUp")}
         </Link>
       </header>
+      <JsonLd
+        data={graph(
+          organization,
+          videoObject(video, { youtubeId, uploadDate, mp4: files.mp4, description: describe(video) }),
+          breadcrumbs([
+            { name: "The Ray", path: "/" },
+            { name: "Training videos", path: "/videos" },
+            { name: video.title, path: `/videos/${video.id}` },
+          ]),
+        )}
+      />
       <main className="mx-auto flex max-w-3xl flex-col gap-4 px-4 pb-16">
         <div>
           <h1 className="text-lg font-bold text-foreground">{video.title}</h1>
@@ -72,6 +90,22 @@ export default async function PublicVideoPage({ params, searchParams }: { params
             {t("Try the demo")}
           </Link>
         </div>
+        {transcript.length > 0 && (
+          <section className="flex flex-col gap-3">
+            <h2 className="text-sm font-semibold text-foreground">{t("What is said in this video")}</h2>
+            {transcript.map((part) => (
+              <div key={part.start} className="flex flex-col gap-1">
+                <h3 className="text-xs font-semibold text-foreground">
+                  <Link href={`/videos/${video.id}?t=${part.start}`} className="text-brand-text">
+                    {mmss(part.start)}
+                  </Link>{" "}
+                  {part.title}
+                </h3>
+                <p className="text-sm leading-relaxed text-muted">{part.text}</p>
+              </div>
+            ))}
+          </section>
+        )}
         {next.length > 0 && (
           <section className="flex flex-col gap-1.5">
             <p className="text-sm font-semibold text-foreground">{t("More videos")}</p>

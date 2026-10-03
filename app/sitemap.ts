@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { TRAINING_VIDEOS } from "@/lib/trainingVideos";
+import { VERTICALS } from "@/lib/seo/verticals";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const base = "https://bill.theray.in";
@@ -7,6 +8,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${base}/videos`, changeFrequency: "monthly", priority: 0.6 },
     ...TRAINING_VIDEOS.map((v) => ({ url: `${base}/videos/${v.id}`, changeFrequency: "monthly" as const, priority: 0.4 })),
     { url: base, changeFrequency: "weekly", priority: 1 },
+    { url: `${base}/billing-software`, changeFrequency: "monthly", priority: 0.9 },
+    ...VERTICALS.map((v) => ({ url: `${base}/billing-software/${v.slug}`, changeFrequency: "monthly" as const, priority: 0.9 })),
+    { url: `${base}/gst-calculator`, changeFrequency: "monthly", priority: 0.8 },
     { url: `${base}/login`, changeFrequency: "monthly", priority: 0.5 },
     { url: `${base}/signup`, changeFrequency: "monthly", priority: 0.8 },
     { url: `${base}/demo`, changeFrequency: "weekly", priority: 0.7 },

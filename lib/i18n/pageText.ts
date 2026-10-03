@@ -2020,4 +2020,9 @@ export const PAGE_TEXT: Record<string, [hi: string, mr: string]> = {
   "Change customer": ["ग्राहक बदलें", "ग्राहक बदला"],
   "Mobile number — required for udhar": ["मोबाइल नंबर — उधार के लिए ज़रूरी", "मोबाईल नंबर — उधारीसाठी आवश्यक"],
   "New customer — add their name (optional)": ["नया ग्राहक — नाम लिखें (वैकल्पिक)", "नवीन ग्राहक — नाव लिहा (ऐच्छिक)"],
+
+  // SEO links
+  "GST calculator": ["GST कैलकुलेटर", "GST कॅल्क्युलेटर"],
+  "Billing software for every shop": ["हर दुकान के लिए बिलिंग सॉफ़्टवेयर", "प्रत्येक दुकानासाठी बिलिंग सॉफ्टवेअर"],
+  "What is said in this video": ["इस वीडियो में क्या बताया गया है", "या व्हिडिओत काय सांगितले आहे"],
 };
