@@ -1,6 +1,7 @@
 import "server-only";
 import { SITE_URL } from "./site";
 import type { TrainingVideo } from "../trainingVideos";
+import { loadYoutubeDates } from "../youtubeData";
 
 export type TranscriptPart = { title: string; start: number; text: string };
 
@@ -39,21 +40,12 @@ export async function loadTranscript(video: TrainingVideo): Promise<TranscriptPa
   return parts.filter((p) => p.text);
 }
 
-/** The day the video went on YouTube, read from its page (kept a week); a fixed date otherwise. */
+/** The day the video went on YouTube (saved with its link, see loadYoutubeDates); for a video still
+ * playing from storage, the day the training videos were published. */
 export async function youtubeUploadDate(youtubeId: string | null): Promise<string> {
   const fallback = "2026-10-02T00:00:00+05:30";
   if (!youtubeId) return fallback;
-  try {
-    const res = await fetch(`https://www.youtube.com/watch?v=${youtubeId}`, {
-      headers: { "Accept-Language": "en", "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0 Safari/537.36" },
-      next: { revalidate: 7 * 86400 },
-      signal: AbortSignal.timeout(5000),
-    });
-    const html = await res.text();
-    return html.match(/"uploadDate":"([^"]+)"/)?.[1] ?? html.match(/itemprop="uploadDate" content="([^"]+)"/)?.[1] ?? fallback;
-  } catch {
-    return fallback;
-  }
+  return (await loadYoutubeDates())[youtubeId] ?? fallback;
 }
 
 const isoDuration = (seconds: number) => `PT${Math.floor(seconds / 60)}M${Math.round(seconds % 60)}S`;

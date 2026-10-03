@@ -10,13 +10,16 @@ import { chapterFromTitle, playlistId, videosFromPlaylistHtml, youtubeId } from 
 export const YOUTUBE_FILE = "youtube.json";
 export const YOUTUBE_TAG = "youtube-ids";
 
-export const loadYoutubeIds = unstable_cache(
-  async (): Promise<Record<string, string>> => {
+async function readYoutubeFile(): Promise<Record<string, unknown>> {
+  const { data, error } = await createSupabaseAdminClient().storage.from("training-videos").download(YOUTUBE_FILE);
+  if (error || !data) return {};
+  return JSON.parse(await data.text()) as Record<string, unknown>;
+}
+
+const loadYoutubeFile = unstable_cache(
+  async (): Promise<Record<string, unknown>> => {
     try {
-      const { data, error } = await createSupabaseAdminClient().storage.from("training-videos").download(YOUTUBE_FILE);
-      if (error || !data) return {};
-      const raw = JSON.parse(await data.text()) as Record<string, unknown>;
-      return Object.fromEntries(Object.entries(raw).filter((e): e is [string, string] => TRAINING_VIDEOS.some((v) => v.id === e[0]) && typeof e[1] === "string" && youtubeId(e[1]) === e[1]));
+      return await readYoutubeFile();
     } catch {
       return {};
     }
@@ -25,8 +28,29 @@ export const loadYoutubeIds = unstable_cache(
   { revalidate: 600, tags: [YOUTUBE_TAG] },
 );
 
+export async function loadYoutubeIds(): Promise<Record<string, string>> {
+  const raw = await loadYoutubeFile();
+  return Object.fromEntries(Object.entries(raw).filter((e): e is [string, string] => TRAINING_VIDEOS.some((v) => v.id === e[0]) && typeof e[1] === "string" && youtubeId(e[1]) === e[1]));
+}
+
+/** When each linked video went on YouTube, by YouTube id ({ "7uL9SqaxYWw": "2026-10-02T06:35:17-07:00" }),
+ * for search engines (VideoObject uploadDate). Kept in the same file under "_dates", written from a
+ * computer (YouTube turns away cloud servers asking for its pages). */
+export async function loadYoutubeDates(): Promise<Record<string, string>> {
+  const dates = (await loadYoutubeFile())._dates;
+  if (!dates || typeof dates !== "object") return {};
+  return Object.fromEntries(Object.entries(dates as Record<string, unknown>).filter((e): e is [string, string] => typeof e[1] === "string" && !Number.isNaN(Date.parse(e[1]))));
+}
+
 export async function saveYoutubeIds(ids: Record<string, string>) {
-  const body = new Blob([JSON.stringify(ids, null, 1)], {
+  // Keep the upload dates already saved with the links.
+  let dates: unknown;
+  try {
+    dates = (await readYoutubeFile())._dates;
+  } catch {
+    dates = undefined;
+  }
+  const body = new Blob([JSON.stringify(dates ? { ...ids, _dates: dates } : ids, null, 1)], {
     type: "application/json",
   });
   const { error } = await createSupabaseAdminClient().storage.from("training-videos").upload(YOUTUBE_FILE, body, {
