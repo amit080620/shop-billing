@@ -47,6 +47,25 @@ export async function GET(request: Request) {
       timed(() => fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/auth/v1/health`, { headers: { apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "" }, cache: "no-store" })),
     ]);
     probe = { redis: r, database: d, auth: a };
+    // ?page=/challans: this server opens that screen itself, as the caller (their cookies), and
+    // times it — the screen's own server time, without the caller's internet in between.
+    const page = new URL(request.url).searchParams.get("page");
+    if (page && /^\/[a-z0-9/_-]*$/i.test(page)) {
+      const t0 = Date.now();
+      let first = 0;
+      let status = 0;
+      try {
+        const res = await fetch(new URL(page, request.url), { headers: { cookie: request.headers.get("cookie") ?? "", accept: "text/html" }, redirect: "manual", cache: "no-store" });
+        first = Date.now() - t0;
+        status = res.status;
+        await res.text();
+      } catch {
+        status = -1;
+      }
+      probe.page = Date.now() - t0;
+      probe.pageFirstByte = first;
+      probe.pageStatus = status;
+    }
   }
   return NextResponse.json(
     { id: process.env.NEXT_PUBLIC_BUILD_ID, instance: INSTANCE_ID, monitoring: { sentry: !!process.env.SENTRY_DSN, posthog: !!process.env.NEXT_PUBLIC_POSTHOG_KEY }, ...(probe ? { probe } : {}) },
