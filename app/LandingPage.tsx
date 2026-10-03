@@ -6,7 +6,7 @@ import {
 } from "lucide-react";
 import { getTranslator } from "@/lib/i18n/server";
 import { LanguageToggle } from "@/lib/i18n/LanguageToggle";
-import { verticalForType } from "@/lib/seo/verticals";
+import { MAIN_SITE_TRADES, verticalForType, verticalHref } from "@/lib/seo/verticals";
 import { JsonLd } from "@/app/components/JsonLd";
 import { graph, organization, SITE_URL, softwareApplication } from "@/lib/seo/site";
 
@@ -117,14 +117,14 @@ export async function LandingPage() {
         <p className="text-center text-sm font-medium text-white/50">{t("landing.builtFor")}</p>
         <div className="mt-5 grid grid-cols-2 gap-2.5 sm:grid-cols-4 md:grid-cols-7">
           {BUSINESSES.map(({ icon: Icon, label, type }) => (
-            <Link
+            <a
               key={label}
-              href={`/billing-software/${verticalForType(type)?.slug ?? ""}`}
+              href={verticalForType(type) ? verticalHref(verticalForType(type)!) : MAIN_SITE_TRADES}
               className="flex flex-col items-center gap-1.5 rounded-xl border border-white/10 bg-white/[0.04] px-2 py-3.5 text-center hover:bg-white/[0.08]"
             >
               <Icon size={18} className="text-brand-light" />
               <span className="text-[11px] leading-tight text-white/70">{t(label)}</span>
-            </Link>
+            </a>
           ))}
         </div>
       </section>
@@ -161,7 +161,7 @@ export async function LandingPage() {
       <footer className="mx-auto flex max-w-5xl flex-col items-center gap-2 px-5 py-8 text-center text-xs text-white/35">
         <p>{t("landing.footer.tagline")}</p>
         <p className="flex flex-wrap justify-center gap-3">
-          <Link href="/billing-software" className="hover:text-white/60">{t("Billing software for every shop")}</Link>
+          <a href={MAIN_SITE_TRADES} className="hover:text-white/60">{t("Billing software for every shop")}</a>
           <Link href="/gst-calculator" className="hover:text-white/60">{t("GST calculator")}</Link>
           <Link href="/videos" className="hover:text-white/60">{t("Training videos")}</Link>
           <Link href="/terms" className="hover:text-white/60">{t("Terms & refund policy")}</Link>

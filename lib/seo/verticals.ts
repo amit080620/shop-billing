@@ -6,6 +6,10 @@ import type { BusinessType } from "../businessType";
 export type Vertical = {
   type: BusinessType;
   slug: string;
+  /** The trade's page on the main site, www.theray.in, where it lives: this site's address for it
+   * redirects there permanently (next.config), so the two never compete in search. Only a trade
+   * the main site has no page for is shown here. */
+  mainSite?: string;
   /** "Kirana store" — used in sentences. */
   trade: string;
   title: string;
@@ -24,6 +28,7 @@ export const VERTICALS: Vertical[] = [
   {
     type: "grocery",
     slug: "kirana-store",
+    mainSite: "https://www.theray.in/billing-software/kirana-grocery-store",
     trade: "kirana store",
     title: "Kirana Store Billing Software with GST, Udhar Khata & Stock",
     description: "Billing app for kirana and grocery shops: fast counter billing, barcode scan, udhar khata with WhatsApp reminders, stock and reorder, GSTR-1/3B. Free 14-day trial.",
@@ -47,6 +52,7 @@ export const VERTICALS: Vertical[] = [
   {
     type: "mart",
     slug: "supermarket",
+    mainSite: "https://www.theray.in/billing-software/supermarket",
     trade: "supermarket",
     title: "Supermarket & Mini Mart Billing Software — Fast POS with MRP Offers",
     description: "POS billing for supermarkets and marts: quick counter billing, MRP and offer prices, bulk rates, buy X get Y, stock audit and reorder, GST reports. Free 14-day trial.",
@@ -70,6 +76,7 @@ export const VERTICALS: Vertical[] = [
   {
     type: "hardware",
     slug: "hardware-shop",
+    mainSite: "https://www.theray.in/billing-software/hardware-shop",
     trade: "hardware shop",
     title: "Hardware & Building Material Shop Billing Software with Contractor Udhar",
     description: "Billing for hardware, electrical, paint and building material shops: contractor udhar khata, warranty records, delivery challans, bulk rates, GST bills. Free trial.",
@@ -93,6 +100,7 @@ export const VERTICALS: Vertical[] = [
   {
     type: "pharmacy",
     slug: "medical-store",
+    mainSite: "https://www.theray.in/billing-software/pharmacy-medical-store",
     trade: "medical store",
     title: "Medical Store & Pharmacy Billing Software with Batch and Expiry",
     description: "Pharmacy billing software: batch and expiry tracking, expiry alerts and returns, salt-wise substitutes, Schedule H1 and X registers, doctor and patient on the bill, GST. Free trial.",
@@ -116,6 +124,7 @@ export const VERTICALS: Vertical[] = [
   {
     type: "restaurant",
     slug: "restaurant",
+    mainSite: "https://www.theray.in/billing-software/restaurant-cafe",
     trade: "restaurant",
     title: "Restaurant & Café Billing Software with KOT, Kitchen Display and QR Orders",
     description: "Restaurant POS: tables, KOT to the kitchen, kitchen display, QR table ordering, split bills, recipes and food cost, GST bills. One price for everything. Free trial.",
@@ -139,6 +148,7 @@ export const VERTICALS: Vertical[] = [
   {
     type: "hotel",
     slug: "hotel",
+    mainSite: "https://www.theray.in/billing-software/hotel-lodge",
     trade: "hotel or lodge",
     title: "Hotel & Lodge Billing Software — Bookings, Room Board and GST Check-out",
     description: "Hotel management and billing: room board, booking calendar, OTA bookings and commission, check-in with ID, room service charged to the room, guest folio and GST check-out invoice.",
@@ -162,6 +172,7 @@ export const VERTICALS: Vertical[] = [
   {
     type: "rental",
     slug: "rental-business",
+    mainSite: "https://www.theray.in/billing-software/rental-business",
     trade: "rental business",
     title: "Rental Business Software — Bookings, Deposits, Availability and Returns",
     description: "Billing for rental shops (tent, furniture, costume, equipment, vehicles): bookings with dates, deposits, availability calendar with clash blocking, pickup and return, photos.",
@@ -185,6 +196,7 @@ export const VERTICALS: Vertical[] = [
   {
     type: "transport",
     slug: "transport-and-building-material",
+    mainSite: "https://www.theray.in/billing-software/transport-sand-materials",
     trade: "transport and building material business",
     title: "Transport & Building Material Billing Software — Bilty (LR), Trips and Vehicle Profit",
     description: "Billing for transporters and material suppliers: bilty/LR with tracking link, transport charges on bills, per-km rates, trip expenses and diesel, vehicle documents, vehicle-wise profit.",
@@ -208,6 +220,7 @@ export const VERTICALS: Vertical[] = [
   {
     type: "service",
     slug: "repair-shop",
+    mainSite: "https://www.theray.in/billing-software/repair-service-center",
     trade: "repair shop",
     title: "Repair Shop & Service Centre Software — Job Cards, Estimates and Status Link",
     description: "Job card software for mobile, laptop, appliance and vehicle repair: job card, estimate and advance, technician, parts from stock, customer approval and job-status link, billing on delivery.",
@@ -231,6 +244,7 @@ export const VERTICALS: Vertical[] = [
   {
     type: "salon",
     slug: "salon-and-spa",
+    mainSite: "https://www.theray.in/billing-software/salon-spa",
     trade: "salon or spa",
     title: "Salon & Spa Software — Appointments, Online Booking, Packages and Commission",
     description: "Salon billing and appointment software: online booking page, stylist on each service, commission, packages and prepaid balance, WhatsApp appointment reminders, staff-wise revenue.",
@@ -254,6 +268,7 @@ export const VERTICALS: Vertical[] = [
   {
     type: "jewellery",
     slug: "jewellery-shop",
+    mainSite: "https://www.theray.in/billing-software/jewellery-shop",
     trade: "jewellery shop",
     title: "Jewellery Shop Billing Software — Daily Rate, Making Charge, HUID and Old Gold",
     description: "Jewellery billing: daily gold and silver rate by karat, weight, making charge and wastage, HUID on the bill, old gold exchange, gold saving scheme with passbook, karigar register.",
@@ -277,6 +292,7 @@ export const VERTICALS: Vertical[] = [
   {
     type: "clinic",
     slug: "clinic-and-doctor",
+    mainSite: "https://www.theray.in/billing-software/clinic-doctor",
     trade: "clinic",
     title: "Clinic Software for Doctors — Appointments, Prescriptions and Billing",
     description: "Clinic management for doctors: appointments and online booking, prescriptions on your letterhead with medicine templates, follow-ups, treatment plans, consultation billing.",
@@ -300,6 +316,7 @@ export const VERTICALS: Vertical[] = [
   {
     type: "gym",
     slug: "gym",
+    mainSite: "https://www.theray.in/billing-software/gym-fitness",
     trade: "gym",
     title: "Gym Management Software — Memberships, Attendance, Leads and Renewal Reminders",
     description: "Gym software: membership plans and invoices, attendance with self check-in, classes, leads, workout and diet plans, WhatsApp renewal reminders.",
@@ -323,6 +340,7 @@ export const VERTICALS: Vertical[] = [
   {
     type: "lab",
     slug: "pathology-lab",
+    mainSite: "https://www.theray.in/billing-software/lab-diagnostics",
     trade: "pathology lab",
     title: "Pathology Lab Software — Test Orders, Home Collection, Reports and Billing",
     description: "Lab management software: test catalogue and packages, orders with home collection charge, sample stickers, result entry, printable reports, billing.",
@@ -369,6 +387,7 @@ export const VERTICALS: Vertical[] = [
   {
     type: "general",
     slug: "general-store",
+    mainSite: "https://www.theray.in/billing-software/general-store",
     trade: "shop",
     title: "Free GST Billing App for Any Shop — Bills, Udhar, Stock and Reports",
     description: "Simple billing app for any shop or business: GST and non-GST bills, udhar khata, stock, purchases, sales returns, reports, WhatsApp bills. Works on any phone. Free trial.",
@@ -392,4 +411,7 @@ export const VERTICALS: Vertical[] = [
 ];
 
 export const verticalBySlug = (slug: string) => VERTICALS.find((v) => v.slug === slug);
+/** Where a trade's page is: the main site's, or this site's own. */
+export const verticalHref = (v: Vertical) => v.mainSite ?? `/billing-software/${v.slug}`;
+export const MAIN_SITE_TRADES = "https://www.theray.in/billing-software";
 export const verticalForType = (type: string) => VERTICALS.find((v) => v.type === type);

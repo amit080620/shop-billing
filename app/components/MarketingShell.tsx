@@ -1,6 +1,6 @@
 import Link from "@/lib/link";
 import { ArrowRight } from "lucide-react";
-import { VERTICALS } from "@/lib/seo/verticals";
+import { VERTICALS, verticalHref } from "@/lib/seo/verticals";
 
 /** The frame of the public pages people reach from a search: The Ray's logo, log in, the free trial,
  * and a footer linking every trade's page, the GST calculator and the training videos — so a
@@ -28,9 +28,9 @@ export function MarketingShell({ children }: { children: React.ReactNode }) {
         <ul className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 sm:grid-cols-3 md:grid-cols-4">
           {VERTICALS.map((v) => (
             <li key={v.slug}>
-              <Link href={`/billing-software/${v.slug}`} className="text-white/55 hover:text-white">
+              <a href={verticalHref(v)} className="text-white/55 hover:text-white">
                 {v.h1.replace(/^(Billing )?[Ss]oftware for /, "").replace(/^./, (c) => c.toUpperCase())}
-              </Link>
+              </a>
             </li>
           ))}
         </ul>

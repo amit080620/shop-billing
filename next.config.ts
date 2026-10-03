@@ -26,6 +26,31 @@ const nextConfig: NextConfig = {
   // Genuinely enables gzip/brotli compression for all responses —
   // measurably reduces transfer size for JS, CSS, and HTML.
   compress: true,
+  // The main site (www.theray.in) has a page for each trade; this site's copies send people and
+  // search engines there, so the two never compete. Wholesale has no page there and stays here.
+  async redirects() {
+    const trades: Record<string, string> = {
+      "kirana-store": "kirana-grocery-store",
+      "supermarket": "supermarket",
+      "hardware-shop": "hardware-shop",
+      "medical-store": "pharmacy-medical-store",
+      "restaurant": "restaurant-cafe",
+      "hotel": "hotel-lodge",
+      "rental-business": "rental-business",
+      "transport-and-building-material": "transport-sand-materials",
+      "repair-shop": "repair-service-center",
+      "salon-and-spa": "salon-spa",
+      "jewellery-shop": "jewellery-shop",
+      "clinic-and-doctor": "clinic-doctor",
+      "gym": "gym-fitness",
+      "pathology-lab": "lab-diagnostics",
+      "general-store": "general-store"
+    };
+    return [
+      { source: "/billing-software", destination: "https://www.theray.in/billing-software", permanent: true },
+      ...Object.entries(trades).map(([here, there]) => ({ source: `/billing-software/${here}`, destination: `https://www.theray.in/billing-software/${there}`, permanent: true })),
+    ];
+  },
   images: {
     remotePatterns: [
       // Wildcard covers any Supabase project's storage domain

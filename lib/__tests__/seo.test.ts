@@ -17,6 +17,11 @@ describe("trade pages", () => {
     for (const v of VERTICALS) expect(v.slug).toMatch(/^[a-z-]+$/);
   });
 
+  it("send every trade the main site has a page for there, keeping only wholesale here", () => {
+    expect(VERTICALS.filter((v) => !v.mainSite).map((v) => v.slug)).toEqual(["wholesale-distributor"]);
+    for (const v of VERTICALS) if (v.mainSite) expect(v.mainSite).toMatch(/^https://www.theray.in/billing-software/[a-z-]+$/);
+  });
+
   it("only show training videos that exist", () => {
     for (const v of VERTICALS) for (const id of v.videos) expect(videoById(id), `${v.slug} → ${id}`).toBeTruthy();
   });

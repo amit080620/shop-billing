@@ -4,18 +4,18 @@ import Link from "@/lib/link";
 import { ArrowRight, CheckCircle2, PlayCircle } from "lucide-react";
 import { MarketingShell } from "@/app/components/MarketingShell";
 import { JsonLd } from "@/app/components/JsonLd";
-import { VERTICALS, verticalBySlug } from "@/lib/seo/verticals";
+import { MAIN_SITE_TRADES, VERTICALS, verticalBySlug, verticalHref } from "@/lib/seo/verticals";
 import { commonFaqs } from "@/lib/seo/commonFaqs";
 import { breadcrumbs, faqPage, graph, organization, SITE_URL, softwareApplication } from "@/lib/seo/site";
 import { mmss, videoById, videoFiles } from "@/lib/trainingVideos";
 
 export function generateStaticParams() {
-  return VERTICALS.map((v) => ({ slug: v.slug }));
+  return VERTICALS.filter((v) => !v.mainSite).map((v) => ({ slug: v.slug }));
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const v = verticalBySlug((await params).slug);
-  if (!v) return { title: "Not found" };
+  if (!v || v.mainSite) return { title: "Not found" };
   return {
     title: { absolute: `${v.title} | The Ray` },
     description: v.description,
@@ -30,7 +30,8 @@ const EVERY_PLAN = ["GST and non-GST bills, A4 or thermal", "Bills and reminders
 /** "Billing software for <trade>": what a shop owner searching for software for their trade finds. */
 export default async function VerticalPage({ params }: { params: Promise<{ slug: string }> }) {
   const v = verticalBySlug((await params).slug);
-  if (!v) notFound();
+  // A trade the main site has a page for is redirected there (next.config) before reaching this.
+  if (!v || v.mainSite) notFound();
   const faqs = [...v.faqs, ...commonFaqs(v.type, v.trade)];
   const videos = v.videos.map((id) => videoById(id)).filter((x): x is NonNullable<typeof x> => !!x);
   const others = VERTICALS.filter((o) => o.slug !== v.slug);
@@ -45,13 +46,12 @@ export default async function VerticalPage({ params }: { params: Promise<{ slug:
           faqPage(faqs),
           breadcrumbs([
             { name: "The Ray", path: "/" },
-            { name: "Billing software", path: "/billing-software" },
             { name: v.h1, path: `/billing-software/${v.slug}` },
           ]),
         )}
       />
       <nav aria-label="Breadcrumb" className="mx-auto max-w-5xl px-5 text-xs text-white/45">
-        <Link href="/">The Ray</Link> › <Link href="/billing-software">Billing software</Link> › <span className="text-white/70">{v.trade}</span>
+        <Link href="/">The Ray</Link> › <a href={MAIN_SITE_TRADES}>Billing software</a> › <span className="text-white/70">{v.trade}</span>
       </nav>
 
       <section className="mx-auto max-w-5xl px-5 pb-10 pt-6">
@@ -135,9 +135,9 @@ export default async function VerticalPage({ params }: { params: Promise<{ slug:
         <h2 className="text-sm font-semibold text-white/70">The Ray for other businesses</h2>
         <p className="mt-2 flex flex-wrap gap-2">
           {others.map((o) => (
-            <Link key={o.slug} href={`/billing-software/${o.slug}`} className="rounded-full border border-white/10 px-3 py-1 text-xs text-white/60 hover:text-white">
+            <a key={o.slug} href={verticalHref(o)} className="rounded-full border border-white/10 px-3 py-1 text-xs text-white/60 hover:text-white">
               {o.trade}
-            </Link>
+            </a>
           ))}
         </p>
       </section>
