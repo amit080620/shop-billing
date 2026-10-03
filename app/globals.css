@@ -1122,3 +1122,21 @@ select,
   scroll-margin-top: 76px;
   scroll-margin-bottom: 140px;
 }
+
+/* TapFeedback: the instant a link is tapped, a thin line along the top until the next screen is
+   up, so a slow connection never looks like an ignored tap. Lite Mode drops the movement (its
+   rule above stops animations), leaving a still line. */
+.tap-feedback {
+  position: fixed;
+  inset: 0 0 auto 0;
+  height: 3px;
+  z-index: 60;
+  background: var(--brand, #4f46e5);
+  transform-origin: left;
+  animation: tap-feedback-grow 6s cubic-bezier(0.1, 0.7, 0.2, 1) forwards;
+  pointer-events: none;
+}
+@keyframes tap-feedback-grow {
+  from { transform: scaleX(0.08); }
+  to { transform: scaleX(0.92); }
+}
