@@ -1,14 +1,30 @@
 import { NextResponse } from "next/server";
 import { getRedis } from "@/lib/redis";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { keepWarmSource, KEEP_WARM_KEY } from "@/lib/speedWatch";
+import { INSTANCE_ID } from "@/lib/instance";
 
 export const dynamic = "force-dynamic";
+
+const timed = async (fn: () => PromiseLike<unknown>): Promise<number> => {
+  const t0 = Date.now();
+  try {
+    await fn();
+    return Date.now() - t0;
+  } catch {
+    return -(Date.now() - t0);
+  }
+};
 
 /** The deploy id this server is running — polled by VersionWatcher. Also says, yes or no, whether
  * error reports (Sentry) and analytics (PostHog) are switched on in this deploy, so that can be
  * checked from outside; never the keys themselves. The keep-warm pings (the database's pg_cron job,
  * GitHub's backup job) also call it; each notes when it last came, so Admin → Speed can show the
- * warmer is alive. */
+ * warmer is alive.
+ *
+ * ?probe=1 also times, from this server, one round trip each to Redis, the database and Supabase
+ * Auth (milliseconds; negative when it failed), to tell which one a slow moment waits on. No data
+ * is returned. */
 export async function GET(request: Request) {
   const source = keepWarmSource(request.headers.get("user-agent"));
   if (source) {
@@ -18,8 +34,22 @@ export async function GET(request: Request) {
       // Only a health note; never fails the answer.
     }
   }
+  let probe: Record<string, number> | undefined;
+  if (new URL(request.url).searchParams.get("probe") === "1") {
+    const redis = getRedis();
+    const db = createSupabaseAdminClient();
+    const [r, d, a] = await Promise.all([
+      timed(async () => redis?.ping()),
+      timed(async () => {
+        const { error } = await db.from("shops").select("id").limit(1);
+        if (error) throw error;
+      }),
+      timed(() => fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/auth/v1/health`, { headers: { apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "" }, cache: "no-store" })),
+    ]);
+    probe = { redis: r, database: d, auth: a };
+  }
   return NextResponse.json(
-    { id: process.env.NEXT_PUBLIC_BUILD_ID, monitoring: { sentry: !!process.env.SENTRY_DSN, posthog: !!process.env.NEXT_PUBLIC_POSTHOG_KEY } },
+    { id: process.env.NEXT_PUBLIC_BUILD_ID, instance: INSTANCE_ID, monitoring: { sentry: !!process.env.SENTRY_DSN, posthog: !!process.env.NEXT_PUBLIC_POSTHOG_KEY }, ...(probe ? { probe } : {}) },
     { headers: { "Cache-Control": "no-store" } },
   );
 }
