@@ -1,6 +1,6 @@
 export default function Loading() {
   return (
-    <div className="flex flex-col gap-5">
+    <div data-loading-screen className="flex flex-col gap-5">
       <div className="space-y-2">
         <div className="h-5 w-40 animate-pulse rounded-md bg-border" />
         <div className="h-4 w-56 animate-pulse rounded-md bg-border" />

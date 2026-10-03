@@ -18,6 +18,12 @@ export type SpeedEvent = {
   full?: 1;
   /** load: time to the server's first byte. */
   ttfb?: number;
+  /** Timed until the content was on screen (from 3 Oct 2026); older timings stopped at the loading
+   * outline, so a slow screen could look quick. */
+  c?: 1;
+  /** A tap: how long the server took to answer its request, from asking to the first byte (network
+   * included). Missing when the screen came from the copy loaded ahead, with no request at all. */
+  sv?: number;
 };
 
 /** About the phone, sent once per batch. */

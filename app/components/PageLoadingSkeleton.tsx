@@ -7,7 +7,7 @@
  * a slower connection or a heavier page. */
 export function PageLoadingSkeleton() {
   return (
-    <div className="flex flex-col gap-3 p-1">
+    <div data-loading-screen className="flex flex-col gap-3 p-1">
       <div className="h-6 w-40 animate-pulse rounded-lg bg-surface-2" />
       <div className="h-24 w-full animate-pulse rounded-2xl bg-surface-2" />
       <div className="flex flex-col gap-2">

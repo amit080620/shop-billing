@@ -43,21 +43,26 @@ export async function createSupabaseServerClient() {
  * proactively signs out to clear the stale cookies so the next request
  * starts clean instead of hitting the same broken refresh repeatedly.
  */
-export async function getAuthenticatedUser() {
+export type AuthenticatedUser = { id: string; email: string | null };
+
+export async function getAuthenticatedUser(): Promise<AuthenticatedUser | null> {
   const supabase = await createSupabaseServerClient();
   try {
-    const {
-      data: { user },
-      error,
-    } = await supabase.auth.getUser();
+    // getClaims checks the login token's signature right here, against the project's public
+    // signing key (ES256; kept in memory for ten minutes), instead of asking Supabase Auth over the
+    // network the way getUser did on every screen and every save. It is still a full check: a
+    // forged, altered or expired token is refused, and an expired one is renewed first as before.
+    // Tokens signed the old way (HS256) are still checked with Supabase Auth by getClaims itself.
+    const { data, error } = await supabase.auth.getClaims();
 
-    if (error) {
-      if (error.code === "refresh_token_not_found" || error.status === 400) {
+    if (error || !data?.claims?.sub) {
+      if (error && (error.code === "refresh_token_not_found" || error.status === 400)) {
         await supabase.auth.signOut();
       }
       return null;
     }
-    return user;
+    const claims = data.claims as { sub: string; email?: string };
+    return { id: claims.sub, email: claims.email ?? null };
   } catch {
     // A thrown AuthApiError (some SDK paths throw rather than return an
     // error field) or a transient network failure calling Supabase Auth

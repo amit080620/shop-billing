@@ -29,8 +29,10 @@ export default async function AdminSpeedPage({ searchParams }: { searchParams: P
   const withDemo = params.demo === "1";
 
   const redis = getRedis();
-  const [[raw, warm], backup, tests] = await Promise.all([
-    redis ? Promise.all([redis.lrange<unknown>(speedKey(day), 0, -1), redis.hgetall<Record<string, number>>(KEEP_WARM_KEY)]) : Promise.resolve([[], null] as const),
+  const [[raw, warm, serverRaw], backup, tests] = await Promise.all([
+    redis
+      ? Promise.all([redis.lrange<unknown>(speedKey(day), 0, -1), redis.hgetall<Record<string, number>>(KEEP_WARM_KEY), redis.lrange<unknown>(`speed:server:${day}`, 0, -1)])
+      : Promise.resolve([[], null, []] as const),
     lastBackup().catch(() => null),
     lastTestRun(),
   ]);
@@ -48,8 +50,24 @@ export default async function AdminSpeedPage({ searchParams }: { searchParams: P
   const { data: shops } = shopIds.length ? await createSupabaseAdminClient().from("shops").select("id, name, legal_name").in("id", shopIds) : { data: [] };
   const shopName = new Map((shops ?? []).map((s) => [s.id, s.name || s.legal_name || "Shop"]));
   const isDemo = (id: string) => /\(demo\)/i.test((shops ?? []).find((s) => s.id === id)?.legal_name ?? "");
-  const events = withDemo ? all : all.filter((e) => !isDemo(e.s));
-  const demoCount = all.length - events.length;
+  // Timings from before 3 Oct 2026 stopped at the loading outline, not the content: left out of
+  // the numbers so they can't make a slow screen look quick.
+  // Server notes (lib/auth requireSession): cold starts, and slow sign-in checks or shop lookups.
+  const serverNotes = (serverRaw as unknown[])
+    .map((r) => {
+      try {
+        return (typeof r === "string" ? JSON.parse(r) : r) as { at: number; cold: number; auth: number; shop: number };
+      } catch {
+        return null;
+      }
+    })
+    .filter((n): n is { at: number; cold: number; auth: number; shop: number } => !!n);
+  const colds = serverNotes.filter((n) => n.cold);
+  const slowChecks = serverNotes.filter((n) => n.auth + n.shop >= 700);
+  const counted = all.filter((e) => e.c === 1 || day > "2026-10-03");
+  const oldTimings = all.length - counted.length;
+  const events = withDemo ? counted : counted.filter((e) => !isDemo(e.s));
+  const demoCount = counted.filter((e) => isDemo(e.s)).length;
 
   const of = (kind: SpeedKind) => events.filter((e) => e.k === kind);
   const opens = of("open");
@@ -116,6 +134,14 @@ export default async function AdminSpeedPage({ searchParams }: { searchParams: P
           )}
         </p>
         <p>
+          Server today:{" "}
+          <span className={colds.length > 5 ? "text-amber-300" : "text-emerald-400"}>{colds.length} cold starts</span>
+          {" · "}
+          <span className={slowChecks.length ? "text-amber-300" : "text-emerald-400"}>
+            {slowChecks.length} slow sign-in checks{slowChecks.length ? ` (slowest ${Math.max(...slowChecks.map((n) => n.auth + n.shop))} ms)` : ""}
+          </span>
+        </p>
+        <p>
           Error reports (Sentry):{" "}
           {process.env.SENTRY_DSN ? (
             <>
@@ -138,6 +164,12 @@ export default async function AdminSpeedPage({ searchParams }: { searchParams: P
           {process.env.NEXT_PUBLIC_POSTHOG_KEY ? <span className="text-emerald-400">on</span> : <span className="text-amber-300">not set (NEXT_PUBLIC_POSTHOG_KEY in Vercel)</span>}
         </p>
       </section>
+
+      {oldTimings > 0 && (
+        <p className="text-xs text-amber-300">
+          {oldTimings} older timings left out: until 3 Oct they stopped when the loading outline appeared, not when the content did, so slow screens looked quick.
+        </p>
+      )}
 
       {!redis && <p className="text-sm text-amber-300">Redis isn&apos;t set up, so timings aren&apos;t kept.</p>}
 
@@ -220,6 +252,7 @@ export default async function AdminSpeedPage({ searchParams }: { searchParams: P
                       {e.m ? ` · ${e.m} GB RAM` : ""}
                       {e.l ? " · Lite" : ""}
                       {e.ttfb !== undefined ? ` · server answered in ${e.ttfb} ms` : ""}
+                      {e.sv !== undefined ? ` · server took ${e.sv} ms` : e.k === "open" && e.c ? " · from the copy loaded ahead" : ""}
                     </p>
                   </li>
                 ))}

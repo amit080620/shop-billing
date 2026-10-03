@@ -29,7 +29,7 @@ export async function POST(request: Request) {
       const ms = num(e.ms, 120_000);
       const p = text(e.p, 60);
       if (!e.k || !KINDS.has(e.k) || ms === undefined || !p) return null;
-      return JSON.stringify({ k: e.k, f: text(e.f, 60), p, ms, full: e.full === 1 ? 1 : undefined, ttfb: num(e.ttfb, 120_000), ...ctx, s: session.shopId, at });
+      return JSON.stringify({ k: e.k, f: text(e.f, 60), p, ms, full: e.full === 1 ? 1 : undefined, c: e.c === 1 ? 1 : undefined, sv: num(e.sv, 120_000), ttfb: num(e.ttfb, 120_000), ...ctx, s: session.shopId, at });
     })
     .filter((row): row is string => row !== null);
   if (!rows.length) return new Response(null, { status: 204 });

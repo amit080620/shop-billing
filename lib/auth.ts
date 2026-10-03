@@ -2,6 +2,9 @@ import "server-only";
 
 import { AsyncLocalStorage } from "node:async_hooks";
 import { redirect } from "next/navigation";
+import { after } from "next/server";
+import { firstRequestHere, INSTANCE_ID } from "./instance";
+import { istDay } from "./speedWatch";
 import { unstable_cache, revalidateTag } from "next/cache";
 import { getAuthenticatedUser } from "./supabase/server";
 import { createSupabaseAdminClient } from "./supabase/admin";
@@ -184,19 +187,44 @@ export async function requireSession(): Promise<SessionContext> {
   const override = sessionOverride.getStore();
   if (override) return override;
 
+  const here = firstRequestHere();
+  const t0 = Date.now();
   const user = await getAuthenticatedUser();
+  const t1 = Date.now();
 
   if (!user) {
     redirect("/login");
   }
 
   const { staff, error } = await getStaffAndShop(user.id);
+  noteServerTiming(here.cold, t1 - t0, Date.now() - t1, user.id);
 
   if (error || !staff) {
     redirect("/login");
   }
 
   return sessionFromStaff(user.id, user.email ?? null, staff);
+}
+
+/** For Admin → Speed: a request that met a server instance which had only just started (a cold
+ * start), or whose sign-in check and shop lookup took over 700 ms. Written after the answer has
+ * gone out, so it never slows the screen. */
+function noteServerTiming(cold: boolean, authMs: number, shopMs: number, userId: string) {
+  if (!cold && authMs + shopMs < 700) return;
+  try {
+    after(async () => {
+      const redis = getRedis();
+      if (!redis) return;
+      const key = `speed:server:${istDay()}`;
+      await redis
+        .pipeline()
+        .rpush(key, JSON.stringify({ at: Math.floor(Date.now() / 1000), cold: cold ? 1 : 0, auth: authMs, shop: shopMs, u: userId.slice(0, 8), i: INSTANCE_ID }))
+        .expire(key, 15 * 86400)
+        .exec();
+    });
+  } catch {
+    // Outside a request (tests, scripts): nothing to note.
+  }
 }
 
 type StaffAndShop = NonNullable<Awaited<ReturnType<typeof fetchStaffAndShop>>["staff"]>;

@@ -29,7 +29,7 @@ vi.mock("@/lib/actions/admin-monitoring", () => ({ sendSentryTestAction: async (
 vi.mock("next/link", () => ({ default: ({ href, children, className }: { href: string; children: ReactNode; className?: string }) => createElement("a", { href, className }, children) }));
 
 const at = Math.floor(Date.now() / 1000);
-const ev = (o: Record<string, unknown>) => ({ d: "App 1.0.4", n: "4g", l: 0, at, ...o });
+const ev = (o: Record<string, unknown>) => ({ d: "App 1.0.4", n: "4g", l: 0, c: 1, at, ...o });
 
 beforeEach(() => {
   stored.length = 0;

@@ -66,9 +66,32 @@ function writePending(pending: Pending | null) {
 
 const afterPaint = (fn: () => void) => requestAnimationFrame(() => setTimeout(fn, 0));
 
+/** How long the server took to answer the request a tap made for `path` (asking to first byte),
+ * or undefined when the screen came from the copy loaded ahead. Resource timings are cleared after
+ * each tap so the browser's list never fills up. */
+function serverTimeFor(path: string, since: number): number | undefined {
+  const start = since - performance.timeOrigin - 100;
+  const entries = performance.getEntriesByType("resource") as PerformanceResourceTiming[];
+  const hit = entries.filter((e) => e.startTime >= start && e.name.includes(`${path}?_rsc=`) && e.responseStart > 0).pop();
+  return hit ? Math.round(hit.responseStart - hit.startTime) : undefined;
+}
+
+/** Calls fn once the screen shows its real content: no loading outline ([data-loading-screen], the
+ * loading.tsx skeletons) left, painted. A tap on a screen that isn't loaded ahead shows the outline
+ * at once while its data comes from the server; timing only to the outline made a slow screen look
+ * quick. Gives up waiting after MAX_WAIT_MS. */
+function whenContentShown(fn: () => void) {
+  const start = Date.now();
+  const check = () => {
+    if (document.querySelector("[data-loading-screen]") && Date.now() - start < MAX_WAIT_MS) setTimeout(check, 50);
+    else afterPaint(fn);
+  };
+  afterPaint(check);
+}
+
 /** Times how fast the app feels on this phone, for Admin → Speed (see lib/speedWatch): a tap on a
- * link until the next screen is painted, a form sent (a bill saved) until the screen it leads to,
- * and a fresh page load until it is ready. Sent in small batches in the background; nothing on
+ * link until the next screen's content is on screen, a form sent (a bill saved) until the screen it
+ * leads to shows its content, and a fresh page load until its content is ready. Sent in small batches in the background; nothing on
  * screen, and no work on the tap itself beyond noting the time. */
 export function SpeedWatch() {
   const pathname = usePathname();
@@ -114,7 +137,7 @@ export function SpeedWatch() {
   useEffect(() => {
     const fresh = firstScreen.current;
     firstScreen.current = false;
-    afterPaint(() => {
+    whenContentShown(() => {
       const pending = readPending();
       writePending(null);
       const waited = pending && !pending.hidden && Date.now() - pending.at <= MAX_WAIT_MS ? Date.now() - pending.at : null;
@@ -122,12 +145,20 @@ export function SpeedWatch() {
         // The page was loaded fresh: the app opened, a reload, or a tap that became a full load.
         if (document.visibilityState === "visible") {
           const nav = performance.getEntriesByType("navigation")[0] as PerformanceNavigationTiming | undefined;
-          record({ k: "load", p: screenOf(pathname), ms: Math.round(performance.now()), ...(nav ? { ttfb: Math.round(nav.responseStart) } : {}) });
+          record({ k: "load", p: screenOf(pathname), ms: Math.round(performance.now()), c: 1, ...(nav ? { ttfb: Math.round(nav.responseStart) } : {}) });
         }
-        if (pending && waited !== null) record({ k: pending.kind, f: screenOf(pending.from), p: screenOf(pathname), ms: waited, full: 1 });
+        if (pending && waited !== null) record({ k: pending.kind, f: screenOf(pending.from), p: screenOf(pathname), ms: waited, full: 1, c: 1 });
         return;
       }
-      if (pending && waited !== null) record({ k: pending.kind, f: screenOf(pending.from), p: screenOf(pathname), ms: waited });
+      if (pending && waited !== null) {
+        const sv = serverTimeFor(pathname, pending.at);
+        record({ k: pending.kind, f: screenOf(pending.from), p: screenOf(pathname), ms: waited, c: 1, ...(sv !== undefined ? { sv } : {}) });
+        try {
+          performance.clearResourceTimings();
+        } catch {
+          // Not supported: the list just fills up.
+        }
+      }
     });
   }, [pathname]);
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useTransition } from "react";
+import { whenIdle } from "@/lib/whenIdle";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createTableAction, createNumberedTablesAction, startOrderAction, renameTableAction, deleteTableAction, clearEmptyOrderAction } from "@/lib/actions/restaurant";
@@ -171,8 +172,11 @@ export function TablesClient({ tables, lang, showKitchenLink = false }: { tables
     }
     window.addEventListener("pointerdown", unlock);
     window.addEventListener("touchstart", unlock);
-    unlock();
+    // Made in the first quiet moment rather than while the app is opening (creating it costs a
+    // budget phone tens of milliseconds); still ready long before an order can arrive.
+    const cancelIdle = whenIdle(unlock);
     return () => {
+      cancelIdle();
       window.removeEventListener("pointerdown", unlock);
       window.removeEventListener("touchstart", unlock);
     };

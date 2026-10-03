@@ -8,15 +8,21 @@ import { AutoThemeApplier } from "./components/ThemeToggle";
 import { FocusScrollIntoView } from "./components/FocusScrollIntoView";
 import { VersionWatcher } from "./components/VersionWatcher";
 import { SpeedWatch } from "./components/SpeedWatch";
+import { INSTANCE_ID } from "@/lib/instance";
 import { CalculatorAmountProvider } from "@/lib/calculatorAmount";
 import "./globals.css";
 
+// Not preloaded: a preload made every phone download 174 KB of fonts before the app could start,
+// even in Lite Mode, which uses the phone's own font and never needed them. Without it a font comes
+// only when text on screen uses it (the Devanagari one only for Hindi or Marathi text), and the
+// phone's font shows until then (display: swap).
 const plusJakartaSans = Plus_Jakarta_Sans({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700", "800"],
   style: ["normal", "italic"],
   variable: "--font-plus-jakarta",
   display: "swap",
+  preload: false,
 });
 
 const notoSansDevanagari = Noto_Sans_Devanagari({
@@ -24,6 +30,7 @@ const notoSansDevanagari = Noto_Sans_Devanagari({
   weight: ["400", "500", "600", "700"],
   variable: "--font-noto-devanagari",
   display: "swap",
+  preload: false,
 });
 
 const SITE_URL = "https://bill.theray.in";
@@ -95,6 +102,8 @@ export default async function RootLayout({
       suppressHydrationWarning
     >
       <head>
+        {/* Which server instance made this page (lib/instance): tells which screens share a server function. */}
+        <meta name="ray-i" content={INSTANCE_ID} />
         {/* Lite Mode before the first paint. Preferences → Lite Mode can force it on or off; left on
             Auto (the default), it switches on for a phone with ≤2 GB memory or ≤4 cores, data saver,
             or a 2G/3G connection — and remembers the answer in a cookie so the server can skip the

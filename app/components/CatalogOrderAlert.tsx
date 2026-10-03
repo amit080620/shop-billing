@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { whenIdle } from "@/lib/whenIdle";
 import { useRouter, usePathname } from "next/navigation";
 import { rejectCatalogOrderAction } from "@/lib/actions/catalog";
 import { useVisiblePoll } from "@/lib/useVisiblePoll";
@@ -29,8 +30,11 @@ export function CatalogOrderAlert() {
     }
     window.addEventListener("pointerdown", unlock);
     window.addEventListener("touchstart", unlock);
-    unlock();
+    // Made in the first quiet moment rather than while the app is opening (creating it costs a
+    // budget phone tens of milliseconds); still ready long before an order can arrive.
+    const cancelIdle = whenIdle(unlock);
     return () => {
+      cancelIdle();
       window.removeEventListener("pointerdown", unlock);
       window.removeEventListener("touchstart", unlock);
     };
