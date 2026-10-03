@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/lib/link";
 import { getTranslator } from "@/lib/i18n/server";
 import { requireSession } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";

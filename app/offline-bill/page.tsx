@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { paymentMethodLabel } from "@/lib/format";
-import Link from "next/link";
+import Link from "@/lib/link";
 import {
   getShopContext,
   getCachedProducts,

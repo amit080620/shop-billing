@@ -8,7 +8,7 @@ import { PhoneInput } from "@/app/components/PhoneInput";
 import { useRouter } from "next/navigation";
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
-import Link from "next/link";
+import Link from "@/lib/link";
 import { createCustomerAction } from "@/lib/actions/customers";
 import { useToast } from "@/app/components/Toast";
 import { formatMoney } from "@/lib/format";

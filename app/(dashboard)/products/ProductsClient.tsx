@@ -6,7 +6,7 @@ import Image from "next/image";
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
+import Link from "@/lib/link";
 import {
   createProductAction,
   updateProductAction,

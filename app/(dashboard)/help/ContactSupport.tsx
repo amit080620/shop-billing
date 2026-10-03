@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
-import Link from "next/link";
+import Link from "@/lib/link";
 import { useRouter } from "next/navigation";
 import { MessageCircle, Send, CheckCircle2, PlayCircle } from "lucide-react";
 import { useBusinessType } from "@/lib/BusinessTypeContext";

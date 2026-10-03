@@ -15,7 +15,7 @@ import { LrActions } from "./LrActions";
 import { TripExpenseForm } from "../../TripExpenseForm";
 import { isModuleEnabled } from "@/lib/modules";
 import { minPlanForModule, planFor } from "@/lib/plans";
-import Link from "next/link";
+import Link from "@/lib/link";
 
 const STATUS = { booked: "Booked", in_transit: "On the way", delivered: "Delivered", cancelled: "Cancelled" } as const;
 const PAY_BY = { paid: "Paid (sender)", to_pay: "To pay (receiver)", tbb: "To be billed" } as const;

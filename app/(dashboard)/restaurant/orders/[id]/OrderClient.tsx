@@ -2,7 +2,7 @@
 
 import { useEffect, useOptimistic, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
+import Link from "@/lib/link";
 import {
   X, Bell, Check, ShoppingCart, Ticket, ArrowLeft, ChefHat, ChevronUp, Layers, Loader2, Merge, Minus, Plus,
   Printer, Search, Trash2, UserRound, UtensilsCrossed, Wallet,

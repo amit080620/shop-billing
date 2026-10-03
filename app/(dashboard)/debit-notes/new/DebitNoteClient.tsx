@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@/lib/link";
 import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { createDebitNoteAction } from "@/lib/actions/debitNotes";

@@ -2,7 +2,7 @@
 import { Bell } from "lucide-react";
 
 import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
+import Link from "@/lib/link";
 import { EmptyState } from "@/app/components/EmptyState";
 import { PageHeader } from "@/app/components/PageHeader";
 import { buildWhatsAppLink } from "@/lib/whatsapp";

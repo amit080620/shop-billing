@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/lib/link";
 import { requireSuperAdmin } from "@/lib/admin-auth";
 import { getRedis } from "@/lib/redis";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";

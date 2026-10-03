@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/lib/link";
 import { requireSuperAdmin } from "@/lib/admin-auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { RechargeForm } from "./RechargeForm";

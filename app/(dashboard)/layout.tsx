@@ -1,5 +1,5 @@
 import Image from "next/image";
-import Link from "next/link";
+import Link from "@/lib/link";
 import { requireSession } from "@/lib/auth";
 import { getLang } from "@/lib/i18n/server";
 import { LangProvider } from "@/lib/i18n/LangContext";

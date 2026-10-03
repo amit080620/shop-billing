@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
+import Link from "@/lib/link";
 import { createComboAction, updateComboAction, toggleComboActiveAction, deleteComboAction, type ComboItemInput } from "@/lib/actions/combos";
 import { useToast } from "@/app/components/Toast";
 import { formatMoney } from "@/lib/format";

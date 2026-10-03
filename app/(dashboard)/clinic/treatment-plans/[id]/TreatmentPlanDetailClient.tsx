@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { paymentMethodLabel, withDr } from "@/lib/format";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
+import Link from "@/lib/link";
 import { markTreatmentItemDoneAction, convertTreatmentPlanToBillAction } from "@/lib/actions/treatmentPlans";
 import { PageHeader } from "@/app/components/PageHeader";
 import { useToast } from "@/app/components/Toast";

@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { headers } from "next/headers";
 import { Suspense } from "react";
-import Link from "next/link";
+import Link from "@/lib/link";
 import { homePathFor } from "@/lib/businessType";
 import { requireSession, hasPermission } from "@/lib/auth";
 import { getTranslator } from "@/lib/i18n/server";

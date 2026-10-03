@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/lib/link";
 import { listTreatmentPlansAction } from "@/lib/actions/treatmentPlans";
 import { PageHeader } from "@/app/components/PageHeader";
 import { EmptyState } from "@/app/components/EmptyState";

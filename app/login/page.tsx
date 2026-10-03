@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/lib/link";
 import { loginAction } from "@/lib/actions/auth";
 import { AuthForm } from "@/app/(auth)/AuthForm";
 import { getTranslator } from "@/lib/i18n/server";

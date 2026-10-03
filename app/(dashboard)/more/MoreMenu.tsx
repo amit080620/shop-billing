@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/lib/link";
 import { requireSession } from "@/lib/auth";
 import { LogoutButton } from "./LogoutButton";
 import { getTranslator } from "@/lib/i18n/server";

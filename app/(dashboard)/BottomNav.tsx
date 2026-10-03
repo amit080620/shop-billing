@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@/lib/link";
 import { usePathname } from "next/navigation";
 import {
   Receipt,
@@ -163,11 +163,11 @@ export function BottomNav({ lang, businessType, permissions = [], fastBillingEna
             <li key={tab.href} className="flex-1">
               <Link
                 href={tab.href}
-                // Home and the billing screens load in full (code and data) ahead of the tap, so they
-                // open at once, and useKeepReady loads them again whenever that copy expires. Their
-                // data is at most two minutes old (staleTimes in next.config), every bill is
+                // Home and the billing screens are loaded ahead in full by useKeepReady, one at a
+                // time once the phone is idle, and again whenever that copy expires — not by the
+                // link itself, which would fetch them all at the same moment as the screen opening.
+                // Their data is at most two minutes old (staleTimes in next.config), every bill is
                 // re-priced on the server anyway, and saving a bill refreshes them.
-                prefetch={READY_AHEAD.has(tab.href) ? true : undefined}
                 aria-current={active ? "page" : undefined}
                 className={`flex h-[var(--bottom-nav-h)] flex-col items-center justify-center gap-0.5 text-[11px] font-semibold transition-colors ${
                   active ? "text-brand-text" : "text-muted"

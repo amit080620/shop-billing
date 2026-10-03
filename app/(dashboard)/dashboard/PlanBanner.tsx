@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/lib/link";
 import { AlertTriangle, Clock, Crown, Phone } from "lucide-react";
 import { requireSession } from "@/lib/auth";
 import { getTranslator } from "@/lib/i18n/server";

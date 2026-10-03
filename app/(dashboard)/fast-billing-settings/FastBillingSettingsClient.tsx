@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
+import Link from "@/lib/link";
 import { toggleFastBillingAction } from "@/lib/actions/settings";
 import { useT } from "@/lib/i18n/LangContext";
 

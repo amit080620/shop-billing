@@ -5,7 +5,7 @@ import { useState, type ReactNode } from "react";
 import Image from "next/image";
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
-import Link from "next/link";
+import Link from "@/lib/link";
 import { TrendingUp, Camera, X } from "lucide-react";
 import { buildWhatsAppLink } from "@/lib/whatsapp";
 import { recordPaymentAction } from "@/lib/actions/customers";

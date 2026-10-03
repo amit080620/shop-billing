@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
+import Link from "@/lib/link";
 import { CheckCircle2, MessageCircle, Snowflake } from "lucide-react";
 import { freezeMembershipAction, cancelMembershipAction, recordPtSessionAction, checkInMemberAction } from "@/lib/actions/gym";
 import { useTranslation } from "@/lib/i18n/useTranslation";

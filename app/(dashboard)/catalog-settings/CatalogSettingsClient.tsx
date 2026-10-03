@@ -3,7 +3,7 @@
 import { useOrigin } from "@/lib/useOrigin";
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
+import Link from "@/lib/link";
 import { saveCatalogSettingsAction } from "@/lib/actions/catalog";
 import { PageHeader } from "@/app/components/PageHeader";
 import { Store, Inbox } from "lucide-react";

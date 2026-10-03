@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
+import Link from "@/lib/link";
 import { Printer } from "lucide-react";
 import { useT } from "@/lib/i18n/LangContext";
 

@@ -8,7 +8,7 @@ import { useRouter } from "next/navigation";
 import { MessageCircle, Dumbbell } from "lucide-react";
 import { buildWhatsAppLink } from "@/lib/whatsapp";
 import { PhoneInput } from "@/app/components/PhoneInput";
-import Link from "next/link";
+import Link from "@/lib/link";
 import { createLeadAction, updateLeadStatusAction, deleteLeadAction } from "@/lib/actions/gym";
 import { PageHeader } from "@/app/components/PageHeader";
 import { EmptyState } from "@/app/components/EmptyState";

@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/lib/link";
 import { notFound } from "next/navigation";
 import { PlayCircle } from "lucide-react";
 import { requireSession } from "@/lib/auth";

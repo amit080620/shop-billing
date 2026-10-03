@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/lib/link";
 import { PlayCircle } from "lucide-react";
 import { mmss, videoFiles, type TrainingVideo } from "@/lib/trainingVideos";
 

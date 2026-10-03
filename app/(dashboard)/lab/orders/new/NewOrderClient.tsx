@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
+import Link from "@/lib/link";
 import { createLabOrderAction } from "@/lib/actions/lab";
 import { formatMoney } from "@/lib/format";
 import { PhoneInput } from "@/app/components/PhoneInput";

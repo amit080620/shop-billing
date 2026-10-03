@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { headers } from "next/headers";
-import Link from "next/link";
+import Link from "@/lib/link";
 import { requireSession } from "@/lib/auth";
 import { getTranslator } from "@/lib/i18n/server";
 import { LangProvider } from "@/lib/i18n/LangContext";

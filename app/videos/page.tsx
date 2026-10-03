@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import Link from "@/lib/link";
 import { PlayCircle } from "lucide-react";
 import { BUSINESS_TYPES } from "@/lib/businessType";
 import { getTranslator } from "@/lib/i18n/server";

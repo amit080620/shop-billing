@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition, useRef } from "react";
-import Link from "next/link";
+import Link from "@/lib/link";
 import { Trash2, FileDown, FileUp, ChevronDown, Settings2 } from "lucide-react";
 import { deleteMedicineFromLibraryAction, bulkDeleteMedicinesFromLibraryAction, importMedicineLibraryRowsAction, exportMedicineLibraryCsvAction } from "@/lib/actions/clinic";
 import { useToast } from "@/app/components/Toast";

@@ -7,7 +7,7 @@ import { formatStayDateLong } from "@/lib/hotel/dates";
 import { MEAL_PLANS } from "@/lib/hotel/constants";
 import { hotelSchemaReady, loadBookingDetail } from "@/lib/hotel/server";
 import { PrintButton } from "@/app/print/bill/[id]/PrintButton";
-import Link from "next/link";
+import Link from "@/lib/link";
 import { ChevronLeft } from "lucide-react";
 
 /** The guest's running statement: rooms, extras, room service, what they have

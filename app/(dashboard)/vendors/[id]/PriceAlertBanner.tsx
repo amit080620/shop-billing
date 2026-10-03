@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
+import Link from "@/lib/link";
 import { AlertTriangle, X } from "lucide-react";
 import { formatMoney } from "@/lib/format";
 

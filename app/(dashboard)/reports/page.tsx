@@ -28,7 +28,7 @@ import {
   Wrench,
   type LucideIcon,
 } from "lucide-react";
-import Link from "next/link";
+import Link from "@/lib/link";
 import { requireSession } from "@/lib/auth";
 import { PageHeader } from "@/app/components/PageHeader";
 import { isModuleEnabled } from "@/lib/modules";

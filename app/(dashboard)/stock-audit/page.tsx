@@ -1,5 +1,5 @@
 import { ClipboardCheck } from "lucide-react";
-import Link from "next/link";
+import Link from "@/lib/link";
 import { requireSession } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { PageHeader } from "@/app/components/PageHeader";

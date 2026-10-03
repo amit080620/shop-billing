@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import Link from "next/link";
+import Link from "@/lib/link";
 import { Printer } from "lucide-react";
 
 type Label = { code: string; sampleName: string; tests: string[] };

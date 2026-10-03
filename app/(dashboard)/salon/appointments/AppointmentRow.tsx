@@ -6,7 +6,7 @@ import { updateAppointmentStatusAction, deleteAppointmentAction } from "@/lib/ac
 import { useTranslation } from "@/lib/i18n/useTranslation";
 import type { Lang } from "@/lib/i18n/dictionary";
 import { buildWhatsAppLink as buildWaLink } from "@/lib/whatsapp";
-import Link from "next/link";
+import Link from "@/lib/link";
 
 type Appointment = {
   id: string;

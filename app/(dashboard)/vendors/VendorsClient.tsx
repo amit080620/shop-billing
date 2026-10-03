@@ -4,7 +4,7 @@ import { keepValuesOnError } from "@/lib/keepValuesOnError";
 import { useRef, useState } from "react";
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
-import Link from "next/link";
+import Link from "@/lib/link";
 import { createVendorAction } from "@/lib/actions/vendors";
 import { useToast } from "@/app/components/Toast";
 import { formatMoney } from "@/lib/format";

@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
+import Link from "@/lib/link";
 import { Wallet } from "lucide-react";
 import { refundWalletAction, topUpWalletAction } from "@/lib/actions/salonExtras";
 import { formatDateTime, formatMoney, paymentMethodLabel } from "@/lib/format";

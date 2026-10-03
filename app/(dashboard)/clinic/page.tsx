@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/lib/link";
 import { Calendar, FileText, ClipboardList, Pill, Settings, CalendarClock } from "lucide-react";
 import { PageHeader } from "@/app/components/PageHeader";
 import { getTranslator } from "@/lib/i18n/server";

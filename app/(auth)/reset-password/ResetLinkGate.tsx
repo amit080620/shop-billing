@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
+import Link from "@/lib/link";
 
 type Words = { checking: string; expired: string; askAgain: string };
 

@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/lib/link";
 
 export type PartyType = "all" | "b2b" | "b2c";
 

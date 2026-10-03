@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/lib/link";
 import { FlaskConical } from "lucide-react";
 import { getTranslator } from "@/lib/i18n/server";
 

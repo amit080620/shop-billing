@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { AlertTriangle, Clock, Package, IndianRupee, TrendingDown, Loader2 } from "lucide-react";
 import { getProfitLeakAction, type ProfitLeak } from "@/lib/actions/profitLeak";
 import { formatMoney } from "@/lib/format";
-import Link from "next/link";
+import Link from "@/lib/link";
 import { useT } from "@/lib/i18n/LangContext";
 
 export function ProfitLeakClient() {

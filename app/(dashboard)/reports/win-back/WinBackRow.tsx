@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@/lib/link";
 import { buildWhatsAppLink } from "@/lib/whatsapp";
 
 function buildWinBackLink(name: string, phone: string) {

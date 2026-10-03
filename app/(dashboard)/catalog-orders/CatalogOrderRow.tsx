@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
+import Link from "@/lib/link";
 import { acceptCatalogOrderAction, rejectCatalogOrderAction, setDeliveryStatusAction } from "@/lib/actions/catalog";
 import { formatMoney } from "@/lib/format";
 import { buildWhatsAppLink } from "@/lib/whatsapp";

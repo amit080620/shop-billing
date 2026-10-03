@@ -1,5 +1,5 @@
 import { Bot, Check, Crown, Lock, Minus, Printer, Sparkles, Wrench, Rocket, ScanBarcode, Package, CalendarClock } from "lucide-react";
-import Link from "next/link";
+import Link from "@/lib/link";
 import { requireSession } from "@/lib/auth";
 import { getTranslator } from "@/lib/i18n/server";
 import { BackLink } from "@/app/components/BackLink";

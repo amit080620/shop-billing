@@ -3,7 +3,7 @@
 import { keepValuesOnError } from "@/lib/keepValuesOnError";
 import { useActionState, useMemo, useState } from "react";
 import { useFormStatus } from "react-dom";
-import Link from "next/link";
+import Link from "@/lib/link";
 import { createReturnAction } from "@/lib/actions/returns";
 import { formatMoney } from "@/lib/format";
 import { returnFigures, type LineFigures } from "@/lib/returnMath";

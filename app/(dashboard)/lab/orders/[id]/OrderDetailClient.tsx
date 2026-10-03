@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { useT } from "@/lib/i18n/LangContext";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
+import Link from "@/lib/link";
 import { updateLabOrderStatusAction, saveTestResultAction, billLabOrderAction, setLabCollectionChargeAction } from "@/lib/actions/lab";
 import { formatMoney, withDr } from "@/lib/format";
 import { PageHeader } from "@/app/components/PageHeader";

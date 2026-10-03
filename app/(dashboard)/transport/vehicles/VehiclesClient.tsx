@@ -4,7 +4,7 @@ import { keepValuesOnError } from "@/lib/keepValuesOnError";
 import { useActionState, useState, useTransition } from "react";
 import { useFormStatus } from "react-dom";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
+import Link from "@/lib/link";
 import { createVehicleAction, toggleVehicleActiveAction, updateVehicleAction, updateVehicleDocumentsAction, deleteVehicleAction } from "@/lib/actions/transport";
 import { formatMoney } from "@/lib/format";
 import { PageHeader } from "@/app/components/PageHeader";

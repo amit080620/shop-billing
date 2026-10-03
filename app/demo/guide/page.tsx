@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import Link from "@/lib/link";
 import { guideBlocks } from "@/lib/demo/guide";
 import { demoPublicLinks } from "@/lib/demo/links";
 

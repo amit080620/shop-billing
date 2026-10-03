@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/lib/link";
 import type { BookingStatus } from "@/lib/hotel/constants";
 import { sourceIsOta, sourceLabel, sourceTakesCommission } from "@/lib/hotel/constants";
 import { formatStayDate } from "@/lib/hotel/dates";

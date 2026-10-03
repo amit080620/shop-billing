@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/lib/link";
 import {
   ShoppingCart, Store, Wrench, Pill, UtensilsCrossed, Repeat, Truck, Hammer,
   Scissors, Gem, Stethoscope, Dumbbell, FlaskConical, Building2,

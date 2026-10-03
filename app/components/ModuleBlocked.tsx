@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/lib/link";
 import { Check, Lock } from "lucide-react";
 import { requireSession } from "@/lib/auth";
 import { MODULES, type ModuleKey } from "@/lib/modules";

@@ -1,5 +1,5 @@
 import { istDayStart } from "@/lib/dateHelpers";
-import Link from "next/link";
+import Link from "@/lib/link";
 import { requireSession } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { getTranslator } from "@/lib/i18n/server";

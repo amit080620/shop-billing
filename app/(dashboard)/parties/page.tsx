@@ -6,7 +6,7 @@ import { VendorsClient } from "../vendors/VendorsClient";
 import { isModuleEnabled } from "@/lib/modules";
 import { PageHeader } from "@/app/components/PageHeader";
 import { Users } from "lucide-react";
-import Link from "next/link";
+import Link from "@/lib/link";
 import { getTranslator } from "@/lib/i18n/server";
 import { BackLink } from "@/app/components/BackLink";
 

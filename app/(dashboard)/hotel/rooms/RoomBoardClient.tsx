@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import Link from "next/link";
+import Link from "@/lib/link";
 import { useRouter } from "next/navigation";
 import { Brush, CheckCircle2, ConciergeBell, Wrench } from "lucide-react";
 import { setRoomStateAction } from "@/lib/actions/hotel";

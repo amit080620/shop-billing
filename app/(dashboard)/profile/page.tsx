@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/lib/link";
 import { requireSession } from "@/lib/auth";
 import { getTranslator } from "@/lib/i18n/server";
 import { SubscriptionCard } from "@/app/components/SubscriptionCard";

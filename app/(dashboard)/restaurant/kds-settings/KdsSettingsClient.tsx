@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
+import Link from "@/lib/link";
 import { saveKdsSettingsAction } from "@/lib/actions/restaurant";
 import { PageHeader } from "@/app/components/PageHeader";
 import { Monitor, Check } from "lucide-react";

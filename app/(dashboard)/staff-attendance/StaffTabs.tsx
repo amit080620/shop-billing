@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/lib/link";
 
 /** Attendance · Salary · People — the three screens of staff attendance and pay. */
 export function StaffTabs({ active, t }: { active: "attendance" | "salary" | "people"; t: (k: string) => string }) {

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import Link from "next/link";
+import Link from "@/lib/link";
 import { useRouter } from "next/navigation";
 import { cancelChallanAction, setChallanReceivedByAction } from "@/lib/actions/challans";
 import { useT } from "@/lib/i18n/LangContext";

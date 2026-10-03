@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
+import Link from "@/lib/link";
 import { useT } from "@/lib/i18n/LangContext";
 
 type Group = { party: string; customerId: string | null; challans: { id: string; number: string; date: string; summary: string }[] };

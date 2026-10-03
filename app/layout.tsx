@@ -8,6 +8,7 @@ import { AutoThemeApplier } from "./components/ThemeToggle";
 import { FocusScrollIntoView } from "./components/FocusScrollIntoView";
 import { VersionWatcher } from "./components/VersionWatcher";
 import { SpeedWatch } from "./components/SpeedWatch";
+import { PrefetchOnTouch } from "./components/PrefetchOnTouch";
 import { INSTANCE_ID } from "@/lib/instance";
 import { CalculatorAmountProvider } from "@/lib/calculatorAmount";
 import "./globals.css";
@@ -174,6 +175,7 @@ export default async function RootLayout({
         <FocusScrollIntoView />
         <VersionWatcher words={{ available: t("A new version is available"), refresh: t("Refresh") }} />
         <SpeedWatch />
+        <PrefetchOnTouch />
         <CalculatorAmountProvider>
           <ToastProvider>{children}</ToastProvider>
         </CalculatorAmountProvider>

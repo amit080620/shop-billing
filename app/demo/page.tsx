@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import Link from "@/lib/link";
 import { ArrowRight, BookOpen, PlayCircle, RefreshCw, ShieldCheck, Sparkles } from "lucide-react";
 import { BUSINESS_TYPES } from "@/lib/businessType";
 import { DEMO_BUSINESSES } from "@/lib/demo/config";

@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
+import Link from "@/lib/link";
 import { generateBillFromPrescriptionAction } from "@/lib/actions/clinic";
 import { formatMoney, paymentMethodLabel } from "@/lib/format";
 import { calculateTransactionTotals } from "@/lib/validation/totals";

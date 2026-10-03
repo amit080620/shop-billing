@@ -7,7 +7,7 @@ import { FESTIVALS } from "@/lib/festivals";
 import { AddToCalendarButton } from "./AddToCalendarButton";
 import { FestivalNoteBox } from "./FestivalNoteBox";
 import { PartyPopper, Sparkles } from "lucide-react";
-import Link from "next/link";
+import Link from "@/lib/link";
 import { getTranslator } from "@/lib/i18n/server";
 import { BackLink } from "@/app/components/BackLink";
 

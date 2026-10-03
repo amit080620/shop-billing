@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useTransition } from "react";
 import { whenIdle } from "@/lib/whenIdle";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
+import Link from "@/lib/link";
 import { createTableAction, createNumberedTablesAction, startOrderAction, renameTableAction, deleteTableAction, clearEmptyOrderAction } from "@/lib/actions/restaurant";
 import { lookupCustomerByPhoneAction } from "@/lib/actions/customers";
 import {

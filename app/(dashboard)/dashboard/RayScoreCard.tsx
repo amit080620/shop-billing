@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/lib/link";
 import { ChevronRight, Sparkles } from "lucide-react";
 import { computeTodaysMoves } from "@/lib/rayMoves";
 import type { Lang } from "@/lib/i18n/dictionary";

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import Link from "next/link";
+import Link from "@/lib/link";
 import { useRouter } from "next/navigation";
 import { BedDouble, ConciergeBell, FileText, LogIn, LogOut, MessageCircle, Pencil, Phone, Plus, Printer, Trash2, Wallet, X } from "lucide-react";
 import { addChargeAction, assignRoomAction, changeStayDatesAction, checkInAction, removeChargeAction, setRoomRateAction, updateGuestAction } from "@/lib/actions/hotel";

@@ -2,7 +2,7 @@
 
 import { keepValuesOnError } from "@/lib/keepValuesOnError";
 import { useEffect, useMemo, useRef, useState } from "react";
-import Link from "next/link";
+import Link from "@/lib/link";
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import { createBillAction } from "@/lib/actions/bills";

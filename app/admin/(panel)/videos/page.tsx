@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/lib/link";
 import { requireSuperAdmin } from "@/lib/admin-auth";
 import { loadYoutubeIds } from "@/lib/youtubeData";
 import { TRAINING_VIDEOS, mmss } from "@/lib/trainingVideos";

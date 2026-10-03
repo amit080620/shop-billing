@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import Link from "@/lib/link";
 import { getTranslator } from "@/lib/i18n/server";
 
 export const metadata: Metadata = {

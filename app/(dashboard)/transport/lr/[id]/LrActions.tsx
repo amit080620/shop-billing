@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
+import Link from "@/lib/link";
 import { billConsignmentsAction, setConsignmentStatusAction } from "@/lib/actions/consignments";
 import { formatMoney, paymentMethodLabel } from "@/lib/format";
 import { useT } from "@/lib/i18n/LangContext";

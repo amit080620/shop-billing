@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import Link from "@/lib/link";
 import { notFound } from "next/navigation";
 import { getTranslator } from "@/lib/i18n/server";
 import { VideoPlayer } from "@/app/components/VideoPlayer";

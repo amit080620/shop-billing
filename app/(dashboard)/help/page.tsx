@@ -7,7 +7,7 @@ import { HelpAccordion } from "./HelpAccordion";
 import { WatchTourButton } from "./WatchTourButton";
 import { ContactSupport } from "./ContactSupport";
 import { HelpCircle, PlayCircle } from "lucide-react";
-import Link from "next/link";
+import Link from "@/lib/link";
 import { VideoList } from "@/app/components/VideoList";
 import { videosFor } from "@/lib/trainingVideos";
 import { BackLink } from "@/app/components/BackLink";

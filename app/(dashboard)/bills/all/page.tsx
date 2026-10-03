@@ -5,7 +5,7 @@ import { EmptyState } from "@/app/components/EmptyState";
 import { DateRangeControls } from "@/app/components/DateRangeControls";
 import { formatMoney, formatDateTime } from "@/lib/format";
 import { Receipt, Search } from "lucide-react";
-import Link from "next/link";
+import Link from "@/lib/link";
 import { todayIso } from "@/lib/dateHelpers";
 import { getTranslator } from "@/lib/i18n/server";
 import { BackLink } from "@/app/components/BackLink";

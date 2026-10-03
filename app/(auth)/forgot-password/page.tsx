@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/lib/link";
 import { forgotPasswordAction } from "@/lib/actions/auth";
 import { AuthShell } from "../AuthShell";
 import { getTranslator } from "@/lib/i18n/server";

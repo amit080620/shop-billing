@@ -6,7 +6,7 @@ import { PageHeader } from "@/app/components/PageHeader";
 import { Printer } from "lucide-react";
 import { useT } from "@/lib/i18n/LangContext";
 import { BackLink } from "@/app/components/BackLink";
-import Link from "next/link";
+import Link from "@/lib/link";
 import { ThermalRenderer, type ThermalReceiptData } from "@/lib/print/ThermalRenderer";
 import { THERMAL_SIZE_LEVELS, thermalFormatFor } from "@/lib/print/thermalFormat";
 import { HARDWARE_PRICES_LIVE } from "@/lib/sales";

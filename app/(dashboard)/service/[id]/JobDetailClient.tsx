@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
+import Link from "@/lib/link";
 import { updateJobStatusAction, assignTechnicianAction, deliverJobAction, addPartToJobAction, removePartFromJobAction } from "@/lib/actions/service";
 import { SearchableSelect } from "@/app/components/SearchableSelect";
 import { Check } from "lucide-react";
