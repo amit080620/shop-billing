@@ -72,6 +72,7 @@ export const SCREEN_STRINGS: Record<string, [en: string, hi: string, mr: string]
   "billPage.savePdf": ["Save PDF", "PDF सेव करें", "PDF सेव्ह करा"],
   "billPage.preparing": ["Preparing…", "तैयार हो रहा है…", "तयार होत आहे…"],
   "billPage.kioskHint": ["Print without the dialog? Set it up", "बिना डायलॉग के प्रिंट करना है? सेट अप करें", "डायलॉगशिवाय प्रिंट करायचे? सेट अप करा"],
+  "billPage.helperFallback": ["Printing the usual way instead.", "इसलिए सामान्य तरीके से प्रिंट हो रहा है।", "म्हणून नेहमीच्या पद्धतीने प्रिंट होत आहे."],
   "billPage.firstPrintHint": [
     "The first print asks you to pick the printer once — after that, printing is one tap.",
     "पहली बार एक बार प्रिंटर चुनना होगा — उसके बाद एक टैप में प्रिंट।",

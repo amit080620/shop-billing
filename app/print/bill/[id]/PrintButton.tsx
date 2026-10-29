@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "@/lib/link";
 import { Printer } from "lucide-react";
 import { useT } from "@/lib/i18n/LangContext";
+import { PRINT_EVENT } from "@/lib/printHelper";
 
 export function PrintButton({ labels }: { labels?: { print: string; printing: string; kioskHint: string } }) {
   const [justClicked, setJustClicked] = useState(false);
@@ -11,6 +12,13 @@ export function PrintButton({ labels }: { labels?: { print: string; printing: st
   // Print pages live outside the dashboard layout, so there is no
   // LangProvider above them — they pass the words in instead.
   const text = labels ?? { print: t("billPage.print"), printing: t("billPage.printing"), kioskHint: t("billPage.kioskHint") };
+
+  // "Print as soon as a bill is saved" (AutoPrint).
+  useEffect(() => {
+    const onPrint = () => window.print();
+    window.addEventListener(PRINT_EVENT, onPrint);
+    return () => window.removeEventListener(PRINT_EVENT, onPrint);
+  }, []);
 
   return (
     <div className="no-print flex w-full flex-col items-center gap-1">

@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Printer, RotateCcw } from "lucide-react";
 import { printViaBluetooth, shouldDefaultToBluetooth, hasRememberedPrinter, forgetRememberedPrinter } from "@/lib/bluetooth-print";
 import { buildReceiptEscPos, type ReceiptData } from "@/lib/escpos";
 import { getThermalPrintSettingsAction } from "@/lib/actions/settings";
 import { useT } from "@/lib/i18n/LangContext";
+import { PRINT_EVENT, helperSettings, printViaHelper } from "@/lib/printHelper";
 
 /** THE print button — one, simple, always labeled just "Print". No
  * separate "Bluetooth print" vs regular "Print" for the person to
@@ -31,6 +32,27 @@ export function BluetoothPrintButton({ receipt, paperWidth }: { receipt: Receipt
   }, [status]);
 
   async function handlePrint() {
+    // A computer with The Ray Print Helper: straight to its printer, no dialog. If the helper isn't
+    // running, print the usual way below instead.
+    const helper = helperSettings();
+    if (helper.enabled) {
+      setStatus("connecting");
+      setError(null);
+      const result = await printViaHelper(buildReceiptEscPos(receipt, paperWidth, await formatFor()), helper.printer);
+      if (!result.error) {
+        setStatus("done");
+        setTimeout(() => setStatus("idle"), 2000);
+        return;
+      }
+      if (result.reachable) {
+        setStatus("error");
+        setError(result.error);
+        return;
+      }
+      setStatus("idle");
+      setError(`${result.error} ${t("billPage.helperFallback")}`);
+    }
+
     if (!bluetoothSupported) {
       window.print();
       return;
@@ -38,15 +60,7 @@ export function BluetoothPrintButton({ receipt, paperWidth }: { receipt: Receipt
 
     setStatus("connecting");
     setError(null);
-    // Genuinely fetch the owner's own formatting preferences for
-    // this exact paper width — a 58mm printer and an 80mm printer
-    // genuinely have their own separate settings.
-    const settings = await getThermalPrintSettingsAction();
-    const format =
-      paperWidth === 32
-        ? { shopNameBold: settings.t58ShopNameBold, shopNameItalic: settings.t58ShopNameItalic, shopNameSize: settings.t58ShopNameSize, shopNameAlign: settings.t58ShopNameAlign, itemsBold: settings.t58ItemsBold, totalBold: settings.t58TotalBold, totalItalic: settings.t58TotalItalic, totalSize: settings.t58TotalSize, totalAlign: settings.t58TotalAlign }
-        : { shopNameBold: settings.t80ShopNameBold, shopNameItalic: settings.t80ShopNameItalic, shopNameSize: settings.t80ShopNameSize, shopNameAlign: settings.t80ShopNameAlign, itemsBold: settings.t80ItemsBold, totalBold: settings.t80TotalBold, totalItalic: settings.t80TotalItalic, totalSize: settings.t80TotalSize, totalAlign: settings.t80TotalAlign };
-    const bytes = buildReceiptEscPos(receipt, paperWidth, format);
+    const bytes = buildReceiptEscPos(receipt, paperWidth, await formatFor());
     const result = await printViaBluetooth(bytes);
     if (result.error) {
       setStatus("error");
@@ -55,6 +69,27 @@ export function BluetoothPrintButton({ receipt, paperWidth }: { receipt: Receipt
     }
     setStatus("done");
     setTimeout(() => setStatus("idle"), 2000);
+  }
+
+  // "Print as soon as a bill is saved" (AutoPrint) taps this button for the person.
+  const printRef = useRef(handlePrint);
+  printRef.current = handlePrint;
+  useEffect(() => {
+    const onPrint = () => void printRef.current();
+    window.addEventListener(PRINT_EVENT, onPrint);
+    return () => window.removeEventListener(PRINT_EVENT, onPrint);
+  }, []);
+
+  async function formatFor() {
+    // Genuinely fetch the owner's own formatting preferences for
+    // this exact paper width — a 58mm printer and an 80mm printer
+    // genuinely have their own separate settings.
+    const settings = await getThermalPrintSettingsAction();
+    const format =
+      paperWidth === 32
+        ? { shopNameBold: settings.t58ShopNameBold, shopNameItalic: settings.t58ShopNameItalic, shopNameSize: settings.t58ShopNameSize, shopNameAlign: settings.t58ShopNameAlign, itemsBold: settings.t58ItemsBold, totalBold: settings.t58TotalBold, totalItalic: settings.t58TotalItalic, totalSize: settings.t58TotalSize, totalAlign: settings.t58TotalAlign }
+        : { shopNameBold: settings.t80ShopNameBold, shopNameItalic: settings.t80ShopNameItalic, shopNameSize: settings.t80ShopNameSize, shopNameAlign: settings.t80ShopNameAlign, itemsBold: settings.t80ItemsBold, totalBold: settings.t80TotalBold, totalItalic: settings.t80TotalItalic, totalSize: settings.t80TotalSize, totalAlign: settings.t80TotalAlign };
+    return format;
   }
 
   return (

@@ -1,6 +1,7 @@
 import { PageHeader } from "@/app/components/PageHeader";
 import { Download, Printer } from "lucide-react";
 import { AutoPrintToggle } from "./AutoPrintToggle";
+import { PrintHelperSetup } from "./PrintHelperSetup";
 import { BackLink } from "@/app/components/BackLink";
 
 export default function FastPrintSetupPage() {
@@ -18,7 +19,11 @@ export default function FastPrintSetupPage() {
       </div>
 
       <div className="neu-card flex flex-col gap-3 p-4">
-        <p className="text-sm font-semibold text-foreground">🪟 Windows — one minute, once</p>
+        <PrintHelperSetup />
+      </div>
+
+      <div className="neu-card flex flex-col gap-3 p-4">
+        <p className="text-sm font-semibold text-foreground">🪟 Or, without installing anything: the Fast Print shortcut</p>
         <a href="/fast-print" download className="btn-primary flex items-center justify-center gap-2">
           <Download size={16} /> Download one-click print setup
         </a>
@@ -41,7 +46,8 @@ export default function FastPrintSetupPage() {
       <div className="neu-card flex flex-col gap-2 p-4">
         <AutoPrintToggle />
         <p className="text-xs text-muted">
-          Turn this on inside the <strong>Fast Print</strong> window (open this page there): each window remembers it separately.
+          Works with the Print Helper or the Fast Print shortcut. With the shortcut, turn it on inside the Fast Print window (open this page
+          there): each window remembers it separately.
         </p>
       </div>
 
