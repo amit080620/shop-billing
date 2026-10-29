@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { LABEL_PRESETS, buildLabelTspl, labelRows, rowWidthMm, type LabelItem } from "../labels";
+import { LABEL_PRESETS, buildLabelTspl, labelPriceLine, labelRows, rowWidthMm, type LabelItem } from "../labels";
 
 const item: LabelItem = { name: "Spring Days", price: 139, mrp: 139, unit: "pcs", code: "106464" };
 const text = (bytes: Uint8Array) => String.fromCharCode(...bytes);
@@ -48,7 +48,7 @@ describe("barcode stickers (TSPL)", () => {
   });
 
   it("shows the lower selling price beside the MRP, and only prints what the printer's fonts have", () => {
-    const p = text(buildLabelTspl([{ ...item, name: 'Atta "Gold" आटा', mrp: 150, price: 139 }], "Shop", LABEL_PRESETS[2].layout));
+    const p = text(buildLabelTspl([{ ...item, name: 'Atta "Gold" आटा', mrp: 150, price: 139 }], "Shop", LABEL_PRESETS[2].layout, "both"));
     expect(p).toContain("MRP 150.00  Our 139.00");
     expect(p).toContain('ATTA \\["]GOLD\\["] ???');
     expect(rowWidthMm(LABEL_PRESETS[2].layout)).toBe(50);
@@ -58,7 +58,24 @@ describe("barcode stickers (TSPL)", () => {
 describe("small stickers", () => {
   it("drop only the .00 of whole rupees to fit the price, never other digits", () => {
     const small = LABEL_PRESETS.find((p) => p.id === "33x22x3")!.layout;
-    const p = text(buildLabelTspl([{ ...item, mrp: 1000, price: 999.5 }], "Shop", small));
+    const p = text(buildLabelTspl([{ ...item, mrp: 1000, price: 999.5 }], "Shop", small, "both"));
     expect(p).toContain("MRP 1000  Our 999.50");
+  });
+});
+
+describe("price on the sticker", () => {
+  const below = { price: 119, mrp: 150 };
+  it("shows the MRP alone unless the shop asks for more", () => {
+    expect(labelPriceLine(below, "mrp")).toBe("MRP 150.00");
+    expect(labelPriceLine(below, "price")).toBe("Price 119.00");
+    expect(labelPriceLine(below, "both")).toBe("MRP 150.00  Our 119.00");
+    // Sold at MRP, or no MRP saved: one price either way.
+    expect(labelPriceLine({ price: 150, mrp: 150 }, "both")).toBe("MRP 150.00");
+    expect(labelPriceLine({ price: 99, mrp: null }, "mrp")).toBe("MRP 99.00");
+  });
+  it("prints MRP alone by default", () => {
+    const p = text(buildLabelTspl([{ ...item, ...below }], "Shop", LABEL_PRESETS[0].layout));
+    expect(p).toContain('"MRP 150.00"');
+    expect(p).not.toContain("Our");
   });
 });

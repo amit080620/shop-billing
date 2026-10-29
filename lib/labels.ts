@@ -33,6 +33,15 @@ export const LABEL_PRESETS: LabelPreset[] = [
 
 export const DEFAULT_LABEL_LAYOUT = LABEL_PRESETS[0].layout;
 
+/** Which price the sticker shows: the MRP alone (the usual, as Marg prints), the shop's own selling
+ * price alone, or both when the shop sells below MRP. */
+export type LabelPriceMode = "mrp" | "price" | "both";
+export const LABEL_PRICE_MODES: { id: LabelPriceMode; label: string }[] = [
+  { id: "mrp", label: "MRP only" },
+  { id: "price", label: "Selling price only" },
+  { id: "both", label: "MRP and selling price" },
+];
+
 export type LabelItem = {
   name: string;
   /** Selling price. */
@@ -65,6 +74,14 @@ function tsplText(text: string): string {
     .replace(/"/g, '\\["]');
 }
 
+/** The sticker's price line, the same for the printer and the on-screen preview. */
+export function labelPriceLine(item: Pick<LabelItem, "price" | "mrp">, mode: LabelPriceMode): string {
+  const mrp = item.mrp != null && item.mrp > 0 ? item.mrp : null;
+  if (mode === "price" || !mrp) return mode === "price" ? `Price ${money(item.price)}` : `MRP ${money(item.price)}`;
+  if (mode === "both" && item.price < mrp) return `MRP ${money(mrp)}  Our ${money(item.price)}`;
+  return `MRP ${money(mrp)}`;
+}
+
 const fit = (text: string, maxChars: number) => (text.length <= maxChars ? text : text.slice(0, Math.max(1, maxChars - 1)) + ".");
 const money = (n: number) => n.toFixed(2);
 
@@ -76,7 +93,7 @@ function code128Modules(code: string) {
 /** One sticker, at x0 dots from the left edge of the row. Laid out like a counter POS sticker: shop
  * name centred on top, the item's name, the MRP (and the shop's lower price when there is one), the
  * barcode, and its number under it. */
-function stickerCommands(item: LabelItem, shopName: string, x0: number, layout: LabelLayout): string[] {
+function stickerCommands(item: LabelItem, shopName: string, x0: number, layout: LabelLayout, priceMode: LabelPriceMode): string[] {
   const w = Math.round(layout.widthMm * DOTS_PER_MM);
   const h = Math.round(layout.heightMm * DOTS_PER_MM);
   const pad = 12;
@@ -102,9 +119,7 @@ function stickerCommands(item: LabelItem, shopName: string, x0: number, layout: 
   left(item.name.toUpperCase(), body, y);
   y += FONT[body][1] + Math.round(4 * unit);
 
-  const mrp = item.mrp != null && item.mrp > 0 ? item.mrp : null;
-  const priceLine =
-    mrp && item.price < mrp ? `MRP ${money(mrp)}  Our ${money(item.price)}` : `MRP ${money(mrp ?? item.price)}`;
+  const priceLine = labelPriceLine(item, priceMode);
   // On a narrow sticker drop the paise from whole rupees rather than cut the price off.
   left(priceLine.length > chars(body) ? priceLine.replace(/\.00\b/g, "") : priceLine, body, y);
   y += FONT[body][1] + Math.round(6 * unit);
@@ -123,7 +138,7 @@ function stickerCommands(item: LabelItem, shopName: string, x0: number, layout: 
 }
 
 /** The TSPL program for these stickers: exactly `items.length` stickers, side by side, then stop. */
-export function buildLabelTspl(items: LabelItem[], shopName: string, layout: LabelLayout): Uint8Array {
+export function buildLabelTspl(items: LabelItem[], shopName: string, layout: LabelLayout, priceMode: LabelPriceMode = "mrp"): Uint8Array {
   const lines = [
     `SIZE ${rowWidthMm(layout)} mm, ${layout.heightMm} mm`,
     `GAP ${layout.rowGapMm} mm, 0 mm`,
@@ -136,7 +151,7 @@ export function buildLabelTspl(items: LabelItem[], shopName: string, layout: Lab
   const step = Math.round((layout.widthMm + layout.columnGapMm) * DOTS_PER_MM);
   for (const row of labelRows(items, layout.columns)) {
     lines.push("CLS");
-    row.forEach((item, c) => lines.push(...stickerCommands(item, shopName, c * step, layout)));
+    row.forEach((item, c) => lines.push(...stickerCommands(item, shopName, c * step, layout, priceMode)));
     lines.push("PRINT 1,1");
   }
   const text = lines.join("\r\n") + "\r\n";

@@ -7,7 +7,7 @@ import { CheckCircle2, Printer } from "lucide-react";
 import { useT } from "@/lib/i18n/LangContext";
 import { BackLink } from "@/app/components/BackLink";
 import Link from "@/lib/link";
-import { DEFAULT_LABEL_LAYOUT, LABEL_PRESETS, buildLabelTspl, labelRows, rowWidthMm, type LabelLayout } from "@/lib/labels";
+import { DEFAULT_LABEL_LAYOUT, LABEL_PRESETS, LABEL_PRICE_MODES, buildLabelTspl, labelPriceLine, labelRows, rowWidthMm, type LabelLayout, type LabelPriceMode } from "@/lib/labels";
 import { helperStatus, printViaHelper, type HelperStatus } from "@/lib/printHelper";
 
 type Product = { id: string; name: string; price: number; mrp: number | null; unit: string; barcode: string | null };
@@ -15,6 +15,7 @@ type Product = { id: string; name: string; price: number; mrp: number | null; un
 // Per computer: the roll in this label printer, and which printer it is.
 const LAYOUT_KEY = "ray-label-layout";
 const PRINTER_KEY = "ray-label-printer";
+const PRICE_MODE_KEY = "ray-label-price";
 
 function load<T>(key: string, fallback: T): T {
   try {
@@ -40,6 +41,7 @@ export function LabelsClient({ shopName, products: initialProducts }: { shopName
   const [generating, setGenerating] = useState<string | null>(null);
   const [layout, setLayout] = useState<LabelLayout>(DEFAULT_LABEL_LAYOUT);
   const [printer, setPrinter] = useState("");
+  const [priceMode, setPriceMode] = useState<LabelPriceMode>("mrp");
   const [helper, setHelper] = useState<HelperStatus | null | undefined>(undefined);
   const [printing, setPrinting] = useState(false);
   const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null);
@@ -47,6 +49,8 @@ export function LabelsClient({ shopName, products: initialProducts }: { shopName
   useEffect(() => {
     setLayout(load(LAYOUT_KEY, DEFAULT_LABEL_LAYOUT));
     setPrinter(load(PRINTER_KEY, ""));
+    const savedMode = load<string>(PRICE_MODE_KEY, "mrp");
+    if (LABEL_PRICE_MODES.some((m) => m.id === savedMode)) setPriceMode(savedMode as LabelPriceMode);
     void helperStatus(2000).then(setHelper);
   }, []);
 
@@ -94,6 +98,7 @@ export function LabelsClient({ shopName, products: initialProducts }: { shopName
       selected.map((p) => ({ name: p.name, price: p.price, mrp: p.mrp, unit: p.unit, code: p.barcode! })),
       shopName,
       layout,
+      priceMode,
     );
     const result = await printViaHelper(bytes, printer);
     setPrinting(false);
@@ -139,6 +144,24 @@ export function LabelsClient({ shopName, products: initialProducts }: { shopName
               </option>
             ))}
             {presetId === "custom" && <option value="custom">{t("My own size")}</option>}
+          </select>
+        </label>
+        <label className="flex flex-col gap-1 text-sm">
+          <span className="font-medium text-foreground">{t("Price on the sticker")}</span>
+          <select
+            className="input-field"
+            value={priceMode}
+            onChange={(e) => {
+              const mode = e.target.value as LabelPriceMode;
+              setPriceMode(mode);
+              save(PRICE_MODE_KEY, mode);
+            }}
+          >
+            {LABEL_PRICE_MODES.map((m) => (
+              <option key={m.id} value={m.id}>
+                {t(m.label)}
+              </option>
+            ))}
           </select>
         </label>
         <details className="text-sm">
@@ -276,7 +299,7 @@ export function LabelsClient({ shopName, products: initialProducts }: { shopName
           <p className="text-xs font-medium text-muted">{t("Preview — as on the roll")}</p>
           <div className="flex flex-col gap-1.5 overflow-x-auto rounded-xl bg-neutral-200 p-2">
             {rows.slice(0, 6).map((row, r) => (
-              <StickerRow key={r} row={row} layout={layout} shopName={shopName} />
+              <StickerRow key={r} row={row} layout={layout} shopName={shopName} priceMode={priceMode} />
             ))}
             {rows.length > 6 && <p className="text-center text-xs text-neutral-600">+ {rows.length - 6} more rows</p>}
           </div>
@@ -304,7 +327,7 @@ export function LabelsClient({ shopName, products: initialProducts }: { shopName
       {/* The browser's printout (no Print Helper): one page per row, each page exactly a row of stickers. */}
       <div id="label-sheet">
         {rows.map((row, r) => (
-          <StickerRow key={r} row={row} layout={layout} shopName={shopName} forPrint />
+          <StickerRow key={r} row={row} layout={layout} shopName={shopName} priceMode={priceMode} forPrint />
         ))}
       </div>
 
@@ -335,18 +358,18 @@ export function LabelsClient({ shopName, products: initialProducts }: { shopName
   );
 }
 
-function StickerRow({ row, layout, shopName, forPrint }: { row: Product[]; layout: LabelLayout; shopName: string; forPrint?: boolean }) {
+function StickerRow({ row, layout, shopName, priceMode, forPrint }: { row: Product[]; layout: LabelLayout; shopName: string; priceMode: LabelPriceMode; forPrint?: boolean }) {
   return (
     <div style={{ display: "flex", gap: `${layout.columnGapMm}mm`, width: `${rowWidthMm(layout)}mm`, height: `${layout.heightMm}mm`, overflow: "hidden" }}>
       {row.map((p, i) => (
-        <Sticker key={i} product={p} layout={layout} shopName={shopName} outline={!forPrint} />
+        <Sticker key={i} product={p} layout={layout} shopName={shopName} priceMode={priceMode} outline={!forPrint} />
       ))}
     </div>
   );
 }
 
 /** The sticker as the browser draws it — the same rows as the printer's own (lib/labels.ts). */
-function Sticker({ product, layout, shopName, outline }: { product: Product; layout: LabelLayout; shopName: string; outline: boolean }) {
+function Sticker({ product, layout, shopName, priceMode, outline }: { product: Product; layout: LabelLayout; shopName: string; priceMode: LabelPriceMode; outline: boolean }) {
   const svgRef = useRef<SVGSVGElement>(null);
   const code = product.barcode!;
   useEffect(() => {
@@ -354,7 +377,6 @@ function Sticker({ product, layout, shopName, outline }: { product: Product; lay
       if (svgRef.current) JsBarcode(svgRef.current, code, { format: "CODE128", width: 2, height: 40, displayValue: false, margin: 0 });
     });
   }, [code]);
-  const mrp = product.mrp && product.mrp > 0 ? product.mrp : null;
   const small = layout.widthMm < 45;
   return (
     <div
@@ -378,8 +400,7 @@ function Sticker({ product, layout, shopName, outline }: { product: Product; lay
       <div style={{ textAlign: "center", fontWeight: 800, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{shopName.toUpperCase()}</div>
       <div style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{product.name.toUpperCase()}</div>
       <div style={{ whiteSpace: "nowrap" }}>
-        MRP {(mrp ?? product.price).toFixed(2)}
-        {mrp && product.price < mrp ? `  Our ${product.price.toFixed(2)}` : ""}
+        {labelPriceLine(product, priceMode)}
       </div>
       <svg ref={svgRef} preserveAspectRatio="none" style={{ display: "block", width: "100%", flex: 1, minHeight: 0, marginTop: "0.5mm" }} />
       <div style={{ textAlign: "center", fontSize: "0.9em" }}>{code}</div>
