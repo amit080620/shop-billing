@@ -2,10 +2,11 @@
 
 import { revalidatePath } from "next/cache";
 import { after } from "next/server";
-import { requireSession } from "../auth";
+import { requireSession, requireArea } from "../auth";
 import { createSupabaseAdminClient } from "../supabase/admin";
 import { isModuleEnabled } from "../modules";
 import { productRoomLeft } from "../planLimits";
+import { allRows } from "../supabase/allRows";
 
 export type ImportRow = {
   name: string;
@@ -39,12 +40,22 @@ export type ImportRow = {
 export type ImportResult = {
   inserted: number;
   errors: { row: number; name: string; message: string }[];
+  /** Rows whose name the shop already has, or that repeat a name earlier in the file. With
+   * duplicates "ask" (the default), nothing is imported while there are any: the owner decides. */
+  duplicates?: { row: number; name: string; why: "already" | "twice" }[];
 };
+
+/** What to do with rows whose name is already taken: stop and ask, leave them out, or import anyway. */
+export type DuplicateChoice = "ask" | "skip" | "import";
+
+/** Names compared the way a person reads them: case, spaces and "@" spacing don't matter. */
+const sameName = (name: string) => name.trim().toLowerCase().replace(/\s+/g, " ").replace(/\s*@\s*/g, "@");
 
 const VALID_SCHEDULES = new Set(["otc", "h", "h1", "x", "g"]);
 
-export async function bulkImportProductsAction(rows: ImportRow[]): Promise<ImportResult> {
+export async function bulkImportProductsAction(rows: ImportRow[], duplicates: DuplicateChoice = "ask"): Promise<ImportResult> {
   const session = await requireSession();
+  requireArea(session, "manage_products");
   if (!isModuleEnabled(session.enabledModules, "bulk_import_export")) {
     return { inserted: 0, errors: [{ row: 0, name: "", message: "Bulk import/export isn't enabled for this shop." }] };
   }
@@ -97,6 +108,29 @@ export async function bulkImportProductsAction(rows: ImportRow[]): Promise<Impor
 
   if (validRows.length === 0) {
     return { inserted: 0, errors };
+  }
+
+  // The same item twice — already in the shop, or twice in this file — splits its stock and makes
+  // the counter pick between two of them. Found before anything is saved.
+  if (duplicates !== "import") {
+    const { data: existing } = await allRows((from, to) =>
+      admin.from("products").select("id, name").eq("shop_id", session.shopId).order("id").range(from, to),
+    );
+    const taken = new Set((existing ?? []).map((p) => sameName(p.name)));
+    const seen = new Set<string>();
+    const found: NonNullable<ImportResult["duplicates"]> = [];
+    for (const row of validRows) {
+      const key = sameName(row.name);
+      if (taken.has(key)) found.push({ row: row.rowIndex, name: row.name.trim(), why: "already" });
+      else if (seen.has(key)) found.push({ row: row.rowIndex, name: row.name.trim(), why: "twice" });
+      seen.add(key);
+    }
+    if (found.length && duplicates === "ask") return { inserted: 0, errors, duplicates: found };
+    if (found.length && duplicates === "skip") {
+      const skip = new Set(found.map((d) => d.row));
+      for (let i = validRows.length - 1; i >= 0; i--) if (skip.has(validRows[i].rowIndex)) validRows.splice(i, 1);
+      if (validRows.length === 0) return { inserted: 0, errors };
+    }
   }
   // The plan's item allowance: nothing is imported past it.
   const room = await productRoomLeft(session);
@@ -216,6 +250,7 @@ const VALID_GENDERS = new Set(["male", "female", "other"]);
  * polls getBulkImportJobStatusAction for progress. */
 export async function startBulkImportCustomersAction(rows: CustomerImportRow[]): Promise<{ jobId: string } | { error: string }> {
   const session = await requireSession();
+  requireArea(session, "manage_customers");
   if (!isModuleEnabled(session.enabledModules, "bulk_import_export")) return { error: "Bulk import/export isn't enabled for this shop." };
   const admin = createSupabaseAdminClient();
 
@@ -338,6 +373,7 @@ export async function fetchAllCustomersForExportAction(): Promise<{
   weightKg: number | null;
 }[]> {
   const session = await requireSession();
+  requireArea(session, "manage_customers");
   if (!isModuleEnabled(session.enabledModules, "bulk_import_export")) return [];
   const admin = createSupabaseAdminClient();
   const { data } = await admin

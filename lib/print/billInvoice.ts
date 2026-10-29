@@ -33,7 +33,7 @@ export async function loadBillInvoice(admin: Admin, billId: string, shopId?: str
   let billQuery = admin
     .from("bills")
     .select(
-      "id, shop_id, invoice_number, subtotal, discount_type, discount_value, discount_amount, taxable_amount, supply_type, cgst_amount, sgst_amount, igst_amount, gst_amount, round_off_amount, payment_method, status, void_reason, voided_at, total, paid_amount, credit_amount, created_at, service_provider_name, edited_at, edit_reason, customer_id, buyer_name, buyer_gstin, buyer_address, buyer_state, buyer_state_code, customers ( name, phone, gstin, address )",
+      "id, shop_id, staff_id, invoice_number, subtotal, discount_type, discount_value, discount_amount, taxable_amount, supply_type, cgst_amount, sgst_amount, igst_amount, gst_amount, round_off_amount, payment_method, status, void_reason, voided_at, total, paid_amount, credit_amount, created_at, service_provider_name, edited_at, edit_reason, customer_id, buyer_name, buyer_gstin, buyer_address, buyer_state, buyer_state_code, customers ( name, phone, gstin, address )",
     )
     .eq("id", billId);
   if (shopId) billQuery = billQuery.eq("shop_id", shopId); // ownership check

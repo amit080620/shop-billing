@@ -1,6 +1,8 @@
 import { requireOwner } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { SettingsClient } from "./SettingsClient";
+import { StockRuleToggle } from "./StockRuleToggle";
+import { shopBlocksOversell } from "@/lib/stockRule";
 
 export default async function SettingsPage() {
   const session = await requireOwner();
@@ -14,7 +16,10 @@ export default async function SettingsPage() {
     .eq("id", session.shopId)
     .single();
 
+  const blockOversell = await shopBlocksOversell(admin, session.shopId);
+
   return (
+    <div className="flex flex-col gap-4">
     <SettingsClient
       shop={{
         name: shop?.name ?? "",
@@ -35,5 +40,7 @@ export default async function SettingsPage() {
         managerPin: shop?.manager_pin ?? "",
       }}
     />
+    <StockRuleToggle initial={blockOversell} />
+    </div>
   );
 }

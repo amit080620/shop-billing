@@ -71,3 +71,9 @@ export function canOpen(who: Who, path: string): boolean {
   // A screen in no area is closed to staff on the new list until it is given one.
   return best ? who.permissions.includes(best.key) : false;
 }
+
+/** May this person use an area's actions (saving items, purchases…)? Same rule as its screens. */
+export function hasArea(who: Who, key: string): boolean {
+  if (who.role === "owner" || !followsAreas(who)) return true;
+  return who.permissions.includes(key);
+}

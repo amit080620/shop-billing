@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { requireSession, requireOwner } from "../auth";
+import { requireSession, requireOwner, requireArea } from "../auth";
 import { createSupabaseAdminClient } from "../supabase/admin";
 import { customerSchema, paymentSchema } from "../validation/schemas";
 import { stateNameForCode } from "../constants/states";
@@ -135,6 +135,7 @@ export async function updateCustomerAction(
   formData: FormData,
 ): Promise<ActionState> {
   const session = await requireSession();
+  requireArea(session, "manage_customers");
   const parsed = customerSchema.safeParse({
     name: formData.get("name"),
     phone: formData.get("phone"),
@@ -175,6 +176,7 @@ export async function recordPaymentAction(
   formData: FormData,
 ): Promise<ActionState> {
   const session = await requireSession();
+  requireArea(session, "manage_customers");
   const parsed = paymentSchema.safeParse({
     partyId: formData.get("customerId"),
     amount: formData.get("amount"),
@@ -225,6 +227,7 @@ export async function recordPaymentAction(
  * without needing to individually list and check every one here. */
 export async function deleteCustomerAction(customerId: string): Promise<ActionState> {
   const session = await requireOwner();
+  requireArea(session, "manage_customers");
   const admin = createSupabaseAdminClient();
 
   const { error } = await admin.from("customers").delete().eq("id", customerId).eq("shop_id", session.shopId);

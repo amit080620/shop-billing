@@ -2,7 +2,7 @@
 
 import { demoLocked } from "../demo/guard";
 import { revalidatePath } from "next/cache";
-import { requireSession, requireOwner } from "../auth";
+import { requireSession, requireOwner, requireArea } from "../auth";
 import { createSupabaseAdminClient } from "../supabase/admin";
 import { productLimitError } from "../planLimits";
 import { productSchema, categorySchema } from "../validation/schemas";
@@ -17,6 +17,7 @@ export async function createProductAction(
   formData: FormData,
 ): Promise<ActionState> {
   const session = await requireSession(); // every mutation re-verifies the session
+  requireArea(session, "manage_products");
   const overLimit = await productLimitError(session);
   if (overLimit) return { error: overLimit };
   const parsed = productSchema.safeParse({
@@ -152,6 +153,7 @@ export async function updateProductAction(
   formData: FormData,
 ): Promise<ActionState> {
   const session = await requireSession();
+  requireArea(session, "manage_products");
   const parsed = productSchema.safeParse({
     name: formData.get("name"),
     price: formData.get("price"),
@@ -257,6 +259,7 @@ export async function updateProductAction(
 
 export async function deleteProductAction(productId: string): Promise<{ error?: string }> {
   const session = await requireSession();
+  requireArea(session, "manage_products");
   const admin = createSupabaseAdminClient();
   const { error } = await admin
     .from("products")
@@ -292,6 +295,7 @@ export async function deleteProductAction(productId: string): Promise<{ error?: 
  * the owner to remove it from the combo first. */
 export async function forceDeleteProductAction(productId: string): Promise<{ error?: string }> {
   const session = await requireOwner();
+  requireArea(session, "manage_products");
   const admin = createSupabaseAdminClient();
 
   const { data: product } = await admin.from("products").select("id").eq("id", productId).eq("shop_id", session.shopId).single();
@@ -333,6 +337,7 @@ export async function createCategoryAction(
   formData: FormData,
 ): Promise<ActionState> {
   const session = await requireSession();
+  requireArea(session, "manage_products");
   const parsed = categorySchema.safeParse({ name: formData.get("name") });
   if (!parsed.success) {
     return { error: parsed.error.issues[0].message };
@@ -351,6 +356,7 @@ export async function createCategoryAction(
 
 export async function renameCategoryAction(categoryId: string, newName: string): Promise<{ error?: string }> {
   const session = await requireSession();
+  requireArea(session, "manage_products");
   const parsed = categorySchema.safeParse({ name: newName });
   if (!parsed.success) return { error: parsed.error.issues[0].message };
 
@@ -374,6 +380,7 @@ export async function renameCategoryAction(categoryId: string, newName: string):
  * than blocking or losing anything. */
 export async function deleteCategoryAction(categoryId: string): Promise<{ error?: string }> {
   const session = await requireSession();
+  requireArea(session, "manage_products");
   const admin = createSupabaseAdminClient();
   const { error } = await admin.from("categories").delete().eq("id", categoryId).eq("shop_id", session.shopId);
   if (error) {
@@ -464,6 +471,7 @@ export async function generateBarcodeAction(
   productId: string,
 ): Promise<{ barcode?: string; error?: string }> {
   const session = await requireSession();
+  requireArea(session, "manage_products");
   const admin = createSupabaseAdminClient();
 
   const { data: product } = await admin
@@ -505,6 +513,7 @@ const PRODUCT_IMAGE_ALLOWED_TYPES = ["image/png", "image/jpeg", "image/webp"];
 
 export async function uploadProductImageAction(productId: string, formData: FormData): Promise<{ error?: string; imageUrl?: string }> {
   const session = await requireSession();
+  requireArea(session, "manage_products");
   const demoBlock = demoLocked(session);
   if (demoBlock) return { error: demoBlock };
   const admin = createSupabaseAdminClient();

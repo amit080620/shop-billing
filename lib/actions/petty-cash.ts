@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { requireSession, hasPermission } from "../auth";
+import { requireSession, hasPermission, requireArea } from "../auth";
 import { createSupabaseAdminClient } from "../supabase/admin";
 
 export type ActionState = { error?: string } | null;
@@ -11,6 +11,7 @@ export async function createPettyCashEntryAction(
   formData: FormData,
 ): Promise<ActionState> {
   const session = await requireSession();
+  requireArea(session, "manage_expenses");
   if (!hasPermission(session, "manage_expenses")) return { error: "You don't have permission to log petty cash — ask the owner." };
   const admin = createSupabaseAdminClient();
 
@@ -44,6 +45,7 @@ export async function createPettyCashEntryAction(
 
 export async function deletePettyCashEntryAction(entryId: string): Promise<{ error?: string }> {
   const session = await requireSession();
+  requireArea(session, "manage_expenses");
   const admin = createSupabaseAdminClient();
   const { error } = await admin.from("petty_cash_entries").delete().eq("id", entryId).eq("shop_id", session.shopId);
   if (error) {

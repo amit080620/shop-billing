@@ -1,7 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { requireSession } from "../auth";
+import { requireSession, requireArea } from "../auth";
 import { createSupabaseAdminClient } from "../supabase/admin";
 import { purchaseSchema, calculateTransactionTotals } from "../validation/schemas";
 import { determineSupplyType, round2 } from "../gst";
@@ -37,6 +37,7 @@ export type LowStockReorderItem = {
  * pre-filled instead of blank. */
 export async function getLowStockReorderItemsAction(): Promise<LowStockReorderItem[]> {
   const session = await requireSession();
+  requireArea(session, "purchases");
   const admin = createSupabaseAdminClient();
 
   const { data: products } = await admin
@@ -123,6 +124,7 @@ export async function createPurchaseAction(
   formData: FormData,
 ): Promise<ActionState> {
   const session = await requireSession();
+  requireArea(session, "purchases");
 
   const raw = formData.get("payload");
   if (typeof raw !== "string") return { error: "Invalid submission" };
@@ -363,6 +365,7 @@ export async function listPurchasesAction(): Promise<
   { id: string; vendorName: string; purchaseDate: string; billNumber: string; total: number; paidAmount: number; outstanding: number; paymentMethod: string }[]
 > {
   const session = await requireSession();
+  requireArea(session, "purchases");
   const admin = createSupabaseAdminClient();
   const { data } = await admin
     .from("purchases")
@@ -391,6 +394,7 @@ export async function listPurchasePaymentsAction(): Promise<
   { id: string; vendorName: string; amount: number; paymentMethod: string; note: string | null; createdAt: string }[]
 > {
   const session = await requireSession();
+  requireArea(session, "purchases");
   const admin = createSupabaseAdminClient();
   const { data } = await admin
     .from("purchase_payments")

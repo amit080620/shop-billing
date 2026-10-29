@@ -3,7 +3,7 @@ import "server-only";
 import { AsyncLocalStorage } from "node:async_hooks";
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
-import { canOpen } from "./staffAccess";
+import { STAFF_AREAS, canOpen, hasArea } from "./staffAccess";
 import { after } from "next/server";
 import { firstRequestHere, INSTANCE_ID } from "./instance";
 import { istDay } from "./speedWatch";
@@ -315,4 +315,13 @@ export async function requirePermission(key: PermissionKey): Promise<SessionCont
     redirect("/");
   }
   return session;
+}
+
+/** For a save in an area (items, purchases, petty cash…): a staff member the owner hasn't given it
+ * is taken to "Not open for your account", the same as for its screens — so the rule holds even
+ * for a save sent from somewhere else in the app. */
+export function requireArea(session: SessionContext, key: string): void {
+  if (hasArea(session, key)) return;
+  const area = STAFF_AREAS.find((x) => x.key === key);
+  redirect(`/no-access?from=${encodeURIComponent(area?.prefixes[0] ?? "/")}`);
 }

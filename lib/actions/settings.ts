@@ -423,3 +423,19 @@ export async function saveDefaultPrintFormatAction(format: "full" | "thermal58" 
   revalidatePath("/profile");
   return {};
 }
+
+/** Settings → Stock: refuse a bill for more of an item than is in stock (true), or allow it (false). */
+export async function saveBlockOversellAction(block: boolean): Promise<{ error?: string }> {
+  const session = await requireOwner();
+  const demoBlock = demoLocked(session);
+  if (demoBlock) return { error: demoBlock };
+  const admin = createSupabaseAdminClient();
+  const { error } = await admin.from("shops").update({ block_oversell: block }).eq("id", session.shopId);
+  if (error) {
+    if (/block_oversell/.test(error.message ?? "")) return { error: "This needs a one-time database update (migration 0059). Ask your admin to run it." };
+    console.error("Could not save the stock rule", error);
+    return { error: "Could not save" };
+  }
+  revalidatePath("/settings");
+  return {};
+}

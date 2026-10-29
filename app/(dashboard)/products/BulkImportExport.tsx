@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { bulkImportProductsAction, type ImportResult } from "@/lib/actions/bulk-import";
+import { bulkImportProductsAction, type DuplicateChoice, type ImportResult, type ImportRow } from "@/lib/actions/bulk-import";
 import { downloadCsv } from "@/app/components/downloadCsv";
 import { useT } from "@/lib/i18n/LangContext";
 
@@ -85,6 +85,21 @@ export function BulkImportExport({ products, onImported, businessType }: { produ
     );
   }
 
+  // Rows read from the file, kept while the owner decides about names already taken.
+  const [pendingRows, setPendingRows] = useState<ImportRow[] | null>(null);
+
+  async function runImport(rows: ImportRow[], choice: DuplicateChoice) {
+    setIsImporting(true);
+    try {
+      const res = await bulkImportProductsAction(rows, choice);
+      setResult(res);
+      if (!res.duplicates?.length) setPendingRows(null);
+      if (res.inserted > 0) onImported();
+    } finally {
+      setIsImporting(false);
+    }
+  }
+
   async function handleFile(file: File) {
     setIsImporting(true);
     setResult(null);
@@ -124,9 +139,8 @@ export function BulkImportExport({ products, onImported, businessType }: { produ
         };
       });
 
-      const res = await bulkImportProductsAction(rows);
-      setResult(res);
-      if (res.inserted > 0) onImported();
+      setPendingRows(rows);
+      await runImport(rows, "ask");
     } catch (err) {
       console.error("Import parsing failed:", err);
       setResult({ inserted: 0, errors: [{ row: 0, name: "", message: "Could not read that file. Use the CSV template above." }] });
@@ -198,7 +212,31 @@ export function BulkImportExport({ products, onImported, businessType }: { produ
         />
       </label>
       {isImporting && <p className="text-xs text-muted">Importing…</p>}
-      {result && (
+      {result?.duplicates && result.duplicates.length > 0 && pendingRows && (
+        <div className="flex flex-col gap-2 rounded-lg border border-credit bg-credit-soft p-3 text-xs text-credit">
+          <p className="font-semibold">
+            {result.duplicates.length} item name(s) are already taken — nothing imported yet. The same item twice splits its stock and the
+            counter has to pick between them.
+          </p>
+          <div className="flex flex-col gap-0.5">
+            {result.duplicates.slice(0, 15).map((d, i) => (
+              <p key={i}>
+                Row {d.row}: {d.name} — {d.why === "already" ? "already in your items" : "twice in this file"}
+              </p>
+            ))}
+            {result.duplicates.length > 15 && <p>…and {result.duplicates.length - 15} more.</p>}
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <button type="button" disabled={isImporting} onClick={() => void runImport(pendingRows, "skip")} className="btn-primary-sm disabled:opacity-60">
+              Leave these out, import the rest
+            </button>
+            <button type="button" disabled={isImporting} onClick={() => void runImport(pendingRows, "import")} className="rounded-lg border border-credit px-3 py-1.5 font-medium disabled:opacity-60">
+              Import all anyway
+            </button>
+          </div>
+        </div>
+      )}
+      {result && !(result.duplicates && result.duplicates.length > 0) && (
         <div className="rounded-lg bg-surface p-3 text-xs">
           <p className="font-medium text-brand-text">{result.inserted} product(s) imported.</p>
           {result.errors.length > 0 && (

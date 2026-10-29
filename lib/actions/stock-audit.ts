@@ -2,11 +2,12 @@
 
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { requireSession } from "../auth";
+import { requireSession, requireArea } from "../auth";
 import { createSupabaseAdminClient } from "../supabase/admin";
 
 export async function startAuditAction(): Promise<{ auditId?: string; error?: string }> {
   const session = await requireSession();
+  requireArea(session, "manage_products");
   const admin = createSupabaseAdminClient();
 
   const { data: products } = await admin
@@ -52,6 +53,7 @@ export async function updateAuditItemAction(
   countedQuantity: number | null,
 ): Promise<{ error?: string }> {
   const session = await requireSession();
+  requireArea(session, "manage_products");
   const admin = createSupabaseAdminClient();
 
   // Ownership check via the parent audit's shop_id.
@@ -77,6 +79,7 @@ export async function updateAuditItemAction(
 
 export async function completeAuditAction(auditId: string): Promise<{ error?: string }> {
   const session = await requireSession();
+  requireArea(session, "manage_products");
   const admin = createSupabaseAdminClient();
 
   const { data: audit } = await admin
@@ -123,6 +126,7 @@ export async function completeAuditAction(auditId: string): Promise<{ error?: st
 
 export async function discardAuditAction(auditId: string): Promise<{ error?: string }> {
   const session = await requireSession();
+  requireArea(session, "manage_products");
   const admin = createSupabaseAdminClient();
   const { data: audit } = await admin
     .from("stock_audits")

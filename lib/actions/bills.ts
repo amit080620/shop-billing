@@ -22,6 +22,7 @@ import { freeFollowUp } from "../followUp";
 import { gapsReady } from "../gapsData";
 import { isClientRef, offlineBillsReady, offlineIssuedAt } from "../offlineBills";
 import { issueInvoiceNumber } from "../invoiceNumber";
+import { oversellError, shopBlocksOversell } from "../stockRule";
 import { dueDateFor, partyTerms } from "../wholesaleData";
 import { loadPackages, packageUsable, salonExtrasReady, walletBalance } from "../salonExtras";
 import { addDaysIso } from "../dateHelpers";
@@ -71,7 +72,9 @@ export async function createBillCore(
   const recipesOn = isModuleEnabled(session.enabledModules, "recipe_stock");
   const productIdsAsked = [...new Set(items.map((i) => i.productId).filter((id): id is string => !!id))];
   const recipeDishesP = recipesOn ? quiet(dishesWithRecipes(admin, session.shopId, productIdsAsked)) : Promise.resolve(new Set<string>());
-  for (const p of [limitP, extrasP, termsP, customerP, staffP, buyerReadyP, quoteP, recipeDishesP]) p?.catch(() => undefined);
+  // Settings → Stock: whether this shop refuses to bill more than it has.
+  const oversellP = quiet(shopBlocksOversell(admin, session.shopId));
+  for (const p of [limitP, extrasP, termsP, customerP, staffP, buyerReadyP, quoteP, recipeDishesP, oversellP]) p?.catch(() => undefined);
 
   // Plan limit first: a bill that can't be created shouldn't consume an
   // invoice number or touch stock.
@@ -282,6 +285,13 @@ export async function createBillCore(
   }
 
   // The shop's own prefix, when it set one ("SS/26-27/00042"; lib/invoiceNumber).
+  // Before a number is taken: a shop that doesn't bill past its stock stops here. A dish made from a
+  // recipe takes its ingredients instead, so it isn't counted against its own stock.
+  if (await oversellP) {
+    const short = oversellError(verifiedItems, productMap, await recipeDishesP);
+    if (short) return { error: short };
+  }
+
   const issued = await issueInvoiceNumber(admin, session.shopId, offline?.issuedAt ?? new Date());
   if (!issued) {
     return { error: "Could not generate an invoice number. Please try again." };

@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { hasPermission, requireSession } from "../auth";
+import { hasPermission, requireSession, requireArea } from "../auth";
 import { createSupabaseAdminClient } from "../supabase/admin";
 import { invalidateCache } from "../cache";
 
@@ -11,6 +11,7 @@ const round2 = (n: number) => Math.round((n + Number.EPSILON) * 100) / 100;
  * price is kept only while it is below the new price (an offer at or above it isn't an offer). */
 export async function bulkUpdatePricesAction(changes: { id: string; price: number; offerPrice: number | null }[]): Promise<{ error?: string; saved?: number }> {
   const session = await requireSession();
+  requireArea(session, "manage_products");
   if (!hasPermission(session, "manage_products")) return { error: "Only staff allowed to manage items can change prices." };
   const clean = changes
     .filter((c) => /^[0-9a-f-]{36}$/i.test(c.id) && Number.isFinite(Number(c.price)) && Number(c.price) >= 0 && Number(c.price) <= 10_000_000)

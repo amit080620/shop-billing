@@ -33,6 +33,7 @@ export interface Database {
           barcode_scan_mode: "camera" | "hardware" | "both" | "off"; default_print_format: "full" | "thermal58" | "thermal";
           loyalty_redemption_value: number;
           fast_billing_enabled: boolean;
+          block_oversell: boolean;
           price_includes_gst: boolean;
           invoice_prefix: string;
           logo_url: string | null;
@@ -72,6 +73,7 @@ export interface Database {
           barcode_scan_mode?: "camera" | "hardware" | "both" | "off"; default_print_format?: "full" | "thermal58" | "thermal";
           loyalty_redemption_value?: number;
           fast_billing_enabled?: boolean;
+          block_oversell?: boolean;
           price_includes_gst?: boolean;
           invoice_prefix?: string;
           logo_url?: string | null;
@@ -111,6 +113,7 @@ export interface Database {
           barcode_scan_mode?: "camera" | "hardware" | "both" | "off"; default_print_format?: "full" | "thermal58" | "thermal";
           loyalty_redemption_value?: number;
           fast_billing_enabled?: boolean;
+          block_oversell?: boolean;
           price_includes_gst?: boolean;
           invoice_prefix?: string;
           logo_url?: string | null;

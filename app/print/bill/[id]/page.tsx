@@ -1,4 +1,5 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
+import { hasArea } from "@/lib/staffAccess";
 import { headers } from "next/headers";
 import { Suspense } from "react";
 import Link from "@/lib/link";
@@ -46,6 +47,10 @@ export default async function PrintBillPage({
 
   const invoice = await loadBillInvoice(admin, id, session.shopId);
   if (!invoice) notFound();
+  // A staff member without "See all bills" sees the bills they made themselves (just made, or reprinted), not other people's.
+  if (!hasArea(session, "view_bills") && (invoice.bill as { staff_id?: string | null }).staff_id !== session.userId) {
+    redirect(`/no-access?from=${encodeURIComponent("/bills")}`);
+  }
   const { bill, shop, invoiceSettings, items, customer, party, isIntra, placeOfSupply, paymentLabel, discountLabel, exchangeLabel, exchangeAmount, cashPaid, upiLink, totalMrpSavings, warrantyText, hotelBookingId, a4Data } = invoice;
 
   // Genuinely fall back to the shop's own default print format only

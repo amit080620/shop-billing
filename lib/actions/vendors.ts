@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { requireSession } from "../auth";
+import { requireSession, requireArea } from "../auth";
 import { createSupabaseAdminClient } from "../supabase/admin";
 import { vendorSchema, paymentSchema } from "../validation/schemas";
 import { stateNameForCode } from "../constants/states";
@@ -13,6 +13,7 @@ export async function createVendorAction(
   formData: FormData,
 ): Promise<ActionState> {
   const session = await requireSession();
+  requireArea(session, "purchases");
   const parsed = vendorSchema.safeParse({
     name: formData.get("name"),
     phone: formData.get("phone"),
@@ -49,6 +50,7 @@ export async function updateVendorAction(
   formData: FormData,
 ): Promise<ActionState> {
   const session = await requireSession();
+  requireArea(session, "purchases");
   const parsed = vendorSchema.safeParse({
     name: formData.get("name"),
     phone: formData.get("phone"),
@@ -88,6 +90,7 @@ export async function recordVendorPaymentAction(
   formData: FormData,
 ): Promise<ActionState> {
   const session = await requireSession();
+  requireArea(session, "purchases");
   const parsed = paymentSchema.safeParse({
     partyId: formData.get("vendorId"),
     amount: formData.get("amount"),
@@ -131,6 +134,7 @@ export async function quickCreateVendorAction(
   phone: string,
 ): Promise<{ vendor?: { id: string; name: string; gstin: string | null; phone: string | null }; error?: string }> {
   const session = await requireSession();
+  requireArea(session, "purchases");
   const parsed = vendorSchema.pick({ name: true }).safeParse({ name });
   if (!parsed.success) {
     return { error: parsed.error.issues[0].message };
