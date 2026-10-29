@@ -24,7 +24,7 @@ const nextConfig: NextConfig = {
     },
     // Genuinely optimize lucide-react imports so Next.js only bundles
     // the exact icons each page uses (barrel-import tree-shaking).
-    optimizePackageImports: ["lucide-react", "recharts"],
+    optimizePackageImports: ["lucide-react"],
   },
   // Genuinely enables gzip/brotli compression for all responses —
   // measurably reduces transfer size for JS, CSS, and HTML.

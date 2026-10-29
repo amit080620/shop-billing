@@ -2,6 +2,7 @@ import "server-only";
 import type { ComponentProps } from "react";
 import { hasPermission, type SessionContext } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { allRows } from "@/lib/supabase/allRows";
 import type { Lang } from "@/lib/i18n/dictionary";
 import type { FastBillingClient } from "@/app/(dashboard)/fast-billing/FastBillingClient";
 
@@ -24,12 +25,16 @@ export async function loadFastBillingScreen(session: SessionContext, lang: Lang)
   }
   if (!fastBillingEnabled) return { props: null };
 
-  const { data: products } = await admin
-    .from("products")
-    .select("id, name, price, offer_price, bulk_min_qty, bulk_price, gst_percent, hsn_code, image_url, category_id, stock_quantity, track_inventory, categories ( name )")
-    .eq("shop_id", session.shopId)
-    .eq("show_in_fast_billing", true)
-    .order("fast_billing_order", { ascending: true });
+  const { data: products } = await allRows((from, to) =>
+    admin
+      .from("products")
+      .select("id, name, price, offer_price, bulk_min_qty, bulk_price, gst_percent, hsn_code, image_url, category_id, stock_quantity, track_inventory, categories ( name )")
+      .eq("shop_id", session.shopId)
+      .eq("show_in_fast_billing", true)
+      .order("fast_billing_order", { ascending: true })
+      .order("id")
+      .range(from, to),
+  );
 
   const items = (products ?? []).map((p) => {
     const category = Array.isArray(p.categories) ? p.categories[0] : p.categories;

@@ -4,7 +4,7 @@ import { requireSession } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { formatMoney, formatDateTime } from "@/lib/format";
 import { EmptyState } from "@/app/components/EmptyState";
-import { SalesTrendChartLazy as SalesTrendChart } from "@/app/components/DashboardLazy";
+import { SalesTrendChart } from "@/app/components/SalesTrendChart";
 import { TrendBars } from "@/app/components/TrendBars";
 import { getLiteMode } from "@/lib/theme";
 import { getTranslator } from "@/lib/i18n/server";

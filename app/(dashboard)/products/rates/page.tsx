@@ -1,6 +1,7 @@
 import { ListChecks } from "lucide-react";
 import { requireSession } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { allRows } from "@/lib/supabase/allRows";
 import { getTranslator } from "@/lib/i18n/server";
 import { PageHeader } from "@/app/components/PageHeader";
 import { BackLink } from "@/app/components/BackLink";
@@ -25,7 +26,7 @@ export default async function RatesPage() {
   }
   const offersOn = await gapsReady(admin);
   const [{ data: products }, { data: categories }] = await Promise.all([
-    admin.from("products").select("id, name, price, mrp, wholesale_price, unit, category_id, is_raw_material").eq("shop_id", session.shopId).order("name"),
+    allRows((from, to) => admin.from("products").select("id, name, price, mrp, wholesale_price, unit, category_id, is_raw_material").eq("shop_id", session.shopId).order("name").order("id").range(from, to)),
     admin.from("categories").select("id, name").eq("shop_id", session.shopId).order("name"),
   ]);
   const { data: schemes } = offersOn ? await admin.from("products").select("id, bxgy_buy, bxgy_free").eq("shop_id", session.shopId).not("bxgy_buy", "is", null) : { data: [] };

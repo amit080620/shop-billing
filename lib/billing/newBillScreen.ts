@@ -2,9 +2,10 @@ import "server-only";
 import type { ComponentProps } from "react";
 import { hasPermission, type SessionContext } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { allRows } from "@/lib/supabase/allRows";
 import type { Lang } from "@/lib/i18n/dictionary";
 import { getBarcodeScanModeAction } from "@/lib/actions/settings";
-import { computeAffinityMap } from "@/lib/basketAffinity";
+import { salesSuggestions } from "@/lib/basketAffinity";
 import { buyerSchemaReady } from "@/lib/gstBuyer";
 import { quotationsReady } from "@/lib/quotationsData";
 import { goldRatesFrom, loadRateRows, silverRateFrom } from "@/lib/metalRates";
@@ -34,62 +35,64 @@ export async function loadNewBillScreen(
   lang: Lang,
 ): Promise<NewBillScreen> {
   const { customer: customerParam, provider: providerParam, quote: quoteParam, scheme: schemeParam, challans: challansParam } = params;
-  const barcodeScanMode = await getBarcodeScanModeAction();
   const admin = createSupabaseAdminClient();
+  const on = (m: Parameters<typeof isModuleEnabled>[1]) => isModuleEnabled(session.enabledModules, m);
 
+  // Speed: which optional features are set up (each answered once per server, then remembered),
+  // then every read this screen needs starts at once — not one after another, as it did.
+  const [recipesOn, gapsOn, wsReady, quotesReady, b2bAvailable] = await Promise.all([
+    recipesReady(admin),
+    gapsReady(admin),
+    wholesaleReady(admin),
+    quotationsReady(admin),
+    buyerSchemaReady(admin),
+  ]);
+  const barcodeScanModeP = getBarcodeScanModeAction();
   // Raw materials (migration 0050) are stock for the kitchen, never sold on a bill.
-  const rawIds = new Set(
-    (await recipesReady(admin)) ? ((await admin.from("products").select("id").eq("shop_id", session.shopId).eq("is_raw_material", true)).data ?? []).map((p) => p.id) : [],
-  );
-  const last30 = new Date();
-  last30.setDate(last30.getDate() - 30);
+  const rawP = recipesOn ? admin.from("products").select("id").eq("shop_id", session.shopId).eq("is_raw_material", true) : null;
+  // "Buy X get Y free" offers, so the counter sees the free units before the bill is made.
+  const bxgyP = on("offers") && gapsOn ? admin.from("products").select("id, bxgy_buy, bxgy_free").eq("shop_id", session.shopId).not("bxgy_buy", "is", null) : null;
+  // Wholesale (migration 0053): each item's wholesale rate, and each party's rate level and beat.
+  const wholesaleP = wsReady
+    ? Promise.all([
+        admin.from("products").select("id, wholesale_price").eq("shop_id", session.shopId).not("wholesale_price", "is", null),
+        admin.from("customers").select("id, price_level, beat").eq("shop_id", session.shopId).or("price_level.eq.wholesale,beat.not.is.null"),
+      ])
+    : null;
+  // The weighing scale's label format, if the shop set one up.
+  const scaleP = gapsOn ? admin.from("shops").select("scale_barcode_prefix, scale_barcode_mode, scale_code_digits").eq("id", session.shopId).single() : null;
+  const extrasP = on("customer_prepaid") ? salonExtrasReady(admin) : Promise.resolve(false);
 
-  const [{ data: products }, { data: customers }, { data: recentBills }, { data: shop }, { data: vehicles }, rateRows] = await Promise.all([
-    admin
-      .from("products")
-      .select("id, name, price, offer_price, gst_percent, hsn_code, barcode, unit, track_inventory, stock_quantity, low_stock_threshold, requires_prescription, units_per_pack, loose_unit_name, metal_type, purity, making_charge_type, making_charge_value, wastage_percent, bulk_min_qty, bulk_price, hallmark_number, salt_composition")
-      .eq("shop_id", session.shopId)
-      .order("name"),
-    admin
-      .from("customers")
-      .select("id, name, phone, gstin, state_code, loyalty_points")
-      .eq("shop_id", session.shopId)
-      .order("name"),
-    admin
-      .from("bills")
-      .select("id")
-      .eq("shop_id", session.shopId)
-      .eq("status", "active")
-      .gte("created_at", last30.toISOString()),
+  const [{ data: products }, { data: customers }, { frequentProductIds, affinityMap }, { data: shop }, { data: vehicles }, rateRows] = await Promise.all([
+    // Every item and customer, past the 1000 rows one query returns (lib/supabase/allRows).
+    allRows((from, to) =>
+      admin
+        .from("products")
+        .select("id, name, price, offer_price, gst_percent, hsn_code, barcode, unit, track_inventory, stock_quantity, low_stock_threshold, requires_prescription, units_per_pack, loose_unit_name, metal_type, purity, making_charge_type, making_charge_value, wastage_percent, bulk_min_qty, bulk_price, hallmark_number, salt_composition")
+        .eq("shop_id", session.shopId)
+        .order("name")
+        .order("id")
+        .range(from, to),
+    ),
+    allRows((from, to) =>
+      admin
+        .from("customers")
+        .select("id, name, phone, gstin, state_code, loyalty_points")
+        .eq("shop_id", session.shopId)
+        .order("name")
+        .order("id")
+        .range(from, to),
+    ),
+    // "Frequently sold" quick-add chips (milk, bread… without typing) and "bought together" — the one
+    // product each item most often shares a bill with, from THIS shop's own sales (shared with the
+    // dashboard's matched-pair stock check). One read of the last 30 days, kept 10 minutes.
+    salesSuggestions(admin, session.shopId),
     admin.from("shops").select("invoice_prefix, loyalty_redemption_value, fast_billing_enabled").eq("id", session.shopId).single(),
     admin.from("vehicles").select("id, name, rate_per_km").eq("shop_id", session.shopId).eq("is_active", true).order("name"),
     // Today's rates — for gold, one per karat (see lib/metalRates).
     session.businessType === "jewellery" ? loadRateRows(admin, session.shopId) : Promise.resolve([]),
   ]);
 
-  // "Frequently sold" quick-add chips — a real speed win for repeat items
-  // (milk, bread, etc.) without typing anything.
-  let frequentProductIds: string[] = [];
-  const recentBillIds = (recentBills ?? []).map((b) => b.id);
-  if (recentBillIds.length > 0) {
-    const { data: items } = await admin.from("bill_items").select("product_id, quantity").in("bill_id", recentBillIds);
-    const countByProduct = new Map<string, number>();
-    for (const item of items ?? []) {
-      if (!item.product_id) continue;
-      countByProduct.set(item.product_id, (countByProduct.get(item.product_id) ?? 0) + Number(item.quantity));
-    }
-    frequentProductIds = [...countByProduct.entries()]
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 8)
-      .map(([id]) => id);
-  }
-
-  // "Bought together" — the one product each item most often shares a
-  // bill with, so adding rice can nudge atta the way a big e-commerce
-  // cart would, except built from THIS shop's own real sales instead of
-  // a platform-wide model. Shared with the low-stock "matched pair"
-  // check on the dashboard, so both agree on what actually goes together.
-  const affinityMap = await computeAffinityMap(admin, session.shopId);
 
   // Opened from a gold saving scheme ("Buy jewellery with it"): its value pays for the bill.
   const schemeView =
@@ -101,7 +104,7 @@ export async function loadNewBillScreen(
       ? { id: schemeView.scheme.id, number: schemeView.scheme.scheme_number, value: schemeView.figures.value, complete: schemeView.figures.complete, customerId: schemeView.scheme.customer_id }
       : null;
 
-  const quotationsAvailable = isModuleEnabled(session.enabledModules, "quotations") && (await quotationsReady(admin));
+  const quotationsAvailable = on("quotations") && quotesReady;
   // Salon: who can be picked as the stylist — the people on the payroll list.
   const { data: stylistRows } =
     session.businessType === "salon" && isModuleEnabled(session.enabledModules, "staff_payroll") && (await payrollReady(admin))
@@ -127,30 +130,21 @@ export async function loadNewBillScreen(
   // Billing delivery challans: their goods, added up, for their one customer, at today's prices.
   const challanIds = (challansParam ?? "").split(",").filter((x) => /^[0-9a-f-]{36}$/i.test(x)).slice(0, 50);
   const challanRows =
-    challanIds.length && isModuleEnabled(session.enabledModules, "delivery_challan") && (await gapsReady(admin))
+    challanIds.length && on("delivery_challan") && gapsOn
       ? ((await admin.from("delivery_challans").select("id, challan_number, customer_id, items").eq("shop_id", session.shopId).eq("status", "open").in("id", challanIds)).data ?? [])
       : [];
   const challanCustomer = challanRows[0]?.customer_id ?? null;
-  // "Buy X get Y free" offers, so the counter sees the free units before the bill is made.
+  const rawIds = new Set(rawP ? ((await rawP).data ?? []).map((p) => p.id) : []);
   const bxgyOffers = new Map<string, { buy: number; free: number }>();
-  if (isModuleEnabled(session.enabledModules, "offers") && (await gapsReady(admin))) {
-    const { data: rows } = await admin.from("products").select("id, bxgy_buy, bxgy_free").eq("shop_id", session.shopId).not("bxgy_buy", "is", null);
-    for (const r of rows ?? []) if (r.bxgy_buy && r.bxgy_free) bxgyOffers.set(r.id, { buy: r.bxgy_buy, free: r.bxgy_free });
-  }
-  // Wholesale (migration 0053): each item's wholesale rate, and each party's rate level and beat.
-  const wsReady = await wholesaleReady(admin);
+  for (const r of bxgyP ? ((await bxgyP).data ?? []) : []) if (r.bxgy_buy && r.bxgy_free) bxgyOffers.set(r.id, { buy: r.bxgy_buy, free: r.bxgy_free });
   const wholesaleOf = new Map<string, number>();
   const partyOf = new Map<string, { level: "retail" | "wholesale"; beat: string | null }>();
-  if (wsReady) {
-    const [{ data: wp }, { data: parties }] = await Promise.all([
-      admin.from("products").select("id, wholesale_price").eq("shop_id", session.shopId).not("wholesale_price", "is", null),
-      admin.from("customers").select("id, price_level, beat").eq("shop_id", session.shopId).or("price_level.eq.wholesale,beat.not.is.null"),
-    ]);
+  if (wholesaleP) {
+    const [{ data: wp }, { data: parties }] = await wholesaleP;
     for (const p of wp ?? []) wholesaleOf.set(p.id, Number(p.wholesale_price));
     for (const c of parties ?? []) partyOf.set(c.id, { level: c.price_level === "wholesale" ? "wholesale" : "retail", beat: c.beat });
   }
-  // The weighing scale's label format, if the shop set one up.
-  const { data: scaleRow } = (await gapsReady(admin)) ? await admin.from("shops").select("scale_barcode_prefix, scale_barcode_mode, scale_code_digits").eq("id", session.shopId).single() : { data: null };
+  const { data: scaleRow } = scaleP ? await scaleP : { data: null };
   const scaleBarcode = scaleRow?.scale_barcode_prefix ? { prefix: scaleRow.scale_barcode_prefix, mode: scaleRow.scale_barcode_mode === "price" ? ("price" as const) : ("weight" as const), codeDigits: Number(scaleRow.scale_code_digits) || 5 } : null;
   const ordersAvailable = wsReady && quotationsAvailable && session.businessType === "wholesale";
   const fromChallans =
@@ -167,8 +161,8 @@ export async function loadNewBillScreen(
   const props: NewBillProps = {
     shopStateCode: session.shopStateCode,
     lang,
-    barcodeScanMode,
-    b2bAvailable: await buyerSchemaReady(admin),
+    barcodeScanMode: await barcodeScanModeP,
+    b2bAvailable,
     loyaltyRedemptionValue: Number(shop?.loyalty_redemption_value ?? 1),
     shopContext: {
       shopId: session.shopId,
@@ -227,7 +221,7 @@ export async function loadNewBillScreen(
     ordersAvailable,
     fromScheme,
     stylists: (stylistRows ?? []).map((w) => w.name),
-    extrasAvailable: isModuleEnabled(session.enabledModules, "customer_prepaid") && (await salonExtrasReady(admin)),
+    extrasAvailable: await extrasP,
     initialProvider: providerParam?.slice(0, 80) ?? "",
   };
   return { props, fastBillingEnabled: !!shop?.fast_billing_enabled };

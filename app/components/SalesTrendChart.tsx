@@ -1,64 +1,61 @@
 "use client";
 
-import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis } from "recharts";
-import { useRouter } from "next/navigation";
+import { useState } from "react";
+import Link from "@/lib/link";
 import { useT } from "@/lib/i18n/LangContext";
+import { formatMoney } from "@/lib/format";
 
+/** The dashboard's 7-day sales bars. Plain elements, no chart library: a chart library was 104 KB
+ * of script for seven bars, downloaded and run on every dashboard open. Tapping a bar shows that
+ * day's sales; tapping it again opens that day's summary. Drawn on the server, so it shows with the
+ * page instead of after a loading box. */
 export function SalesTrendChart({ data }: { data: { day: string; date: string; total: number }[] }) {
   const { t } = useT();
-  const router = useRouter();
+  const [picked, setPicked] = useState<string | null>(null);
+  const max = Math.max(1, ...data.map((d) => d.total));
   const hasAnySales = data.some((d) => d.total > 0);
+  const chosen = data.find((d) => d.date === picked);
 
-  // Genuinely keeps the recharts tree permanently mounted regardless
-  // of whether there's any sales data yet — conditionally mounting an
-  // entire third-party chart tree (which internally uses several of
-  // its own hooks) based on a value that changes between renders is a
-  // genuinely risky pattern. The "no sales yet" message is an overlay
-  // on top of the always-mounted (but visually near-invisible, zeroed)
-  // chart instead of a swap to a completely different subtree.
   return (
     <div className="relative h-28 w-full">
-      <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={data} margin={{ top: 4, right: 4, left: 4, bottom: 0 }}>
-          <defs>
-            <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="var(--brand-light)" />
-              <stop offset="100%" stopColor="var(--brand-dark)" />
-            </linearGradient>
-            <filter id="barShadow" x="-50%" y="-50%" width="200%" height="200%">
-              <feDropShadow dx="0" dy="2" stdDeviation="2" floodColor="var(--neu-dark)" floodOpacity="0.7" />
-            </filter>
-          </defs>
-          <XAxis
-            dataKey="day"
-            axisLine={false}
-            tickLine={false}
-            tick={{ fontSize: 10, fill: "var(--muted)" }}
-          />
-          <Tooltip
-            cursor={{ fill: "var(--brand-soft)" }}
-            contentStyle={{
-              fontSize: 12,
-              borderRadius: 8,
-              border: "1px solid var(--border)",
-              background: "var(--surface)",
-              color: "var(--foreground)",
-            }}
-            formatter={(value) => [`₹${Number(value).toLocaleString("en-IN")}`, "Sales"]}
-          />
-          <Bar
-            dataKey="total"
-            radius={[6, 6, 6, 6]}
-            fill="url(#barGradient)"
-            style={{ filter: "url(#barShadow)", cursor: "pointer" }}
-            maxBarSize={22}
-            onClick={(entry) => {
-              const date = (entry as unknown as { date?: string })?.date;
-              if (date) router.push(`/daily-summary?date=${date}`);
-            }}
-          />
-        </BarChart>
-      </ResponsiveContainer>
+      <div className="flex h-full items-end gap-1.5 px-1">
+        {data.map((d) => {
+          const height = Math.max(d.total > 0 ? 6 : 2, Math.round((d.total / max) * 82));
+          const isPicked = d.date === picked;
+          const bar = (
+            <span
+              className="block w-full max-w-[22px] rounded-md"
+              style={{
+                height: `${height}px`,
+                background: "linear-gradient(to bottom, var(--brand-light), var(--brand-dark))",
+                boxShadow: d.total > 0 ? "0 2px 4px var(--neu-dark)" : undefined,
+                opacity: d.total > 0 ? 1 : 0.25,
+                outline: isPicked ? "2px solid var(--brand-soft)" : undefined,
+              }}
+            />
+          );
+          return (
+            <div key={d.date} className="flex h-full min-w-0 flex-1 flex-col items-center justify-end gap-1">
+              {isPicked ? (
+                <Link href={`/daily-summary?date=${d.date}`} className="flex w-full justify-center" aria-label={`${d.day}: ${formatMoney(d.total)} — open that day`}>
+                  {bar}
+                </Link>
+              ) : (
+                <button type="button" onClick={() => setPicked(d.date)} className="flex w-full justify-center" aria-label={`${d.day}: ${formatMoney(d.total)}`}>
+                  {bar}
+                </button>
+              )}
+              <span className="text-[10px] text-muted">{d.day}</span>
+            </div>
+          );
+        })}
+      </div>
+
+      {chosen && (
+        <div className="pointer-events-none absolute left-1/2 top-0 -translate-x-1/2 rounded-lg border border-border bg-surface px-2.5 py-1 text-xs text-foreground shadow-sm">
+          {chosen.day}: <span className="font-semibold">{formatMoney(chosen.total)}</span>
+        </div>
+      )}
 
       {!hasAnySales && (
         <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-1 bg-background text-center">

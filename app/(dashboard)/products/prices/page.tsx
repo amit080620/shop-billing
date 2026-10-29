@@ -1,6 +1,7 @@
 import { Tags } from "lucide-react";
 import { requireSession } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { allRows } from "@/lib/supabase/allRows";
 import { getTranslator } from "@/lib/i18n/server";
 import { PageHeader } from "@/app/components/PageHeader";
 import { BackLink } from "@/app/components/BackLink";
@@ -13,7 +14,7 @@ export default async function PricesPage() {
   const session = await requireSession();
   const admin = createSupabaseAdminClient();
   const [{ data: products }, { data: categories }] = await Promise.all([
-    admin.from("products").select("id, name, price, offer_price, unit, category_id").eq("shop_id", session.shopId).order("name"),
+    allRows((from, to) => admin.from("products").select("id, name, price, offer_price, unit, category_id").eq("shop_id", session.shopId).order("name").order("id").range(from, to)),
     admin.from("categories").select("id, name").eq("shop_id", session.shopId).order("name"),
   ]);
   // Raw materials aren't sold, so they have no selling price to change here.
