@@ -22,6 +22,7 @@ import { BluetoothPrintButton } from "./BluetoothPrintButton";
 import { BillSuccessSound } from "./BillSuccessSound";
 import { AutoPrint } from "./AutoPrint";
 import { ThermalPageSize } from "./ThermalPageSize";
+import { ThermalScreen } from "./ThermalScreen";
 import { InfoTooltip } from "@/app/components/InfoTooltip";
 import { ThermalRenderer, type ThermalReceiptData } from "@/lib/print/ThermalRenderer";
 import { thermalFormatFor } from "@/lib/print/thermalFormat";
@@ -127,7 +128,8 @@ export default async function PrintBillPage({
     customerPhone: customer?.phone ?? null,
     customerGstin: party?.gstin ?? null,
     serviceProviderName: bill.service_provider_name,
-    placeOfSupplyText: `Place: ${placeOfSupply}`,
+    // A composition dealer charges no CGST/SGST/IGST, so its bill names the place only.
+    placeOfSupplyText: `Place: ${invoice.isComposition ? placeOfSupply.replace(/\s*\((CGST \+ SGST|IGST)\)$/, "") : placeOfSupply}`,
     items: items.map((it) => ({
       name: it.product_name,
       qty: Number(it.quantity),
@@ -347,13 +349,18 @@ export default async function PrintBillPage({
         </div>
       )}
 
-      <div id="invoice-capture-area" className={`${isFreshBill === "1" ? "animate-print-slip" : ""} bg-white text-black`}>
       {isThermal ? (
-        <ThermalRenderer data={thermalData} paperWidth={is58mm ? 58 : 80} format={thermalFormat} />
+        // Where Print sends the printer's own receipt (Bluetooth, Print Helper), the screen shows that.
+        <ThermalScreen receipt={receiptData} chars={is58mm ? 32 : 48} format={thermalFormat}>
+          <div id="invoice-capture-area" className={`${isFreshBill === "1" ? "animate-print-slip" : ""} bg-white text-black`}>
+            <ThermalRenderer data={thermalData} paperWidth={is58mm ? 58 : 80} format={thermalFormat} />
+          </div>
+        </ThermalScreen>
       ) : (
-        <A4Renderer data={a4Data} />
+        <div id="invoice-capture-area" className={`${isFreshBill === "1" ? "animate-print-slip" : ""} bg-white text-black`}>
+          <A4Renderer data={a4Data} />
+        </div>
       )}
-      </div>
     </div>
     </LangProvider>
   );
