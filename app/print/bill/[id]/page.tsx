@@ -20,6 +20,7 @@ import { DownloadImageButton } from "./DownloadImageButton";
 import { SharePdfButton } from "./SharePdfButton";
 import { BluetoothPrintButton } from "./BluetoothPrintButton";
 import { BillSuccessSound } from "./BillSuccessSound";
+import { AutoPrint } from "./AutoPrint";
 import { InfoTooltip } from "@/app/components/InfoTooltip";
 import { ThermalRenderer, type ThermalReceiptData } from "@/lib/print/ThermalRenderer";
 import { thermalFormatFor } from "@/lib/print/thermalFormat";
@@ -170,6 +171,7 @@ export default async function PrintBillPage({
   return (
     <LangProvider lang={lang} messages={messagesFor(lang)}>
       <BillSuccessSound />
+      <AutoPrint fresh={isFreshBill === "1" && bill.status === "active"} />
       <Suspense fallback={null}>
         <BillCreatedConfirmation amount={formatMoney(bill.total)} pointsEarned={pointsEarned} />
       </Suspense>
