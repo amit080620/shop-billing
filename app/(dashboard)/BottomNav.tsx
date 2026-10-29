@@ -152,10 +152,11 @@ function allTabsFor(businessType: string, t: (key: string) => string, permission
 export function BottomNav({ lang, businessType, permissions = [], fastBillingEnabled = false }: { lang: Lang; businessType: string; permissions?: string[]; fastBillingEnabled?: boolean }) {
   const pathname = usePathname();
   const { t } = useTranslation(lang);
+  // Home and Customers too only when this person may open them (lib/staffAccess).
   const tabs = mobileTabs(tabsFor(businessType, t, permissions, fastBillingEnabled), {
     home: { href: "/dashboard", label: t("nav.home"), icon: HomeIcon },
     customers: { href: "/customers", label: t("nav.customers"), icon: CustomersIcon },
-  });
+  }).filter((tab) => canOpen({ role: "staff", businessType, permissions }, tab.href));
   const activeHref = activeTabHref(pathname, tabs.map((tab) => tab.href));
   useKeepReady(tabs.map((tab) => tab.href).filter((href) => READY_AHEAD.has(href)), pathname);
 
