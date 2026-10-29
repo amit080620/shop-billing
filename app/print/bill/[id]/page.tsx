@@ -21,6 +21,7 @@ import { SharePdfButton } from "./SharePdfButton";
 import { BluetoothPrintButton } from "./BluetoothPrintButton";
 import { BillSuccessSound } from "./BillSuccessSound";
 import { AutoPrint } from "./AutoPrint";
+import { ThermalPageSize } from "./ThermalPageSize";
 import { InfoTooltip } from "@/app/components/InfoTooltip";
 import { ThermalRenderer, type ThermalReceiptData } from "@/lib/print/ThermalRenderer";
 import { thermalFormatFor } from "@/lib/print/thermalFormat";
@@ -175,14 +176,11 @@ export default async function PrintBillPage({
       <Suspense fallback={null}>
         <BillCreatedConfirmation amount={formatMoney(bill.total)} pointsEarned={pointsEarned} />
       </Suspense>
-      <style>{`
-        @media print {
-          @page {
-            size: ${isThermal ? (is58mm ? "58mm auto" : "80mm auto") : "A4"};
-            margin: ${isThermal ? "2mm" : "15mm"};
-          }
-        }
-      `}</style>
+      {isThermal ? (
+        <ThermalPageSize widthMm={is58mm ? 58 : 80} />
+      ) : (
+        <style>{`@media print { @page { size: A4; margin: 15mm; } }`}</style>
+      )}
     <div
       className={`relative mx-auto bg-background text-foreground ${isThermal ? "" : "max-w-2xl p-8"}`}
     >

@@ -187,20 +187,45 @@ export function ThermalRenderer({
           </tr>
         </thead>
         <tbody>
-          {data.items.map((it, i) => (
-            <tr key={i}>
+          {data.items.flatMap((it, i) => {
+            const showMrp = it.mrp != null && it.mrp > it.rate;
+            const notes = (
+              <>
+                {showMrp && <Sub>MRP {money(it.mrp!)}</Sub>}
+                {it.warrantyText && <Sub>{it.warrantyText}</Sub>}
+              </>
+            );
+            // On 58mm the name column is narrow: a longer name (or one with notes) gets the whole
+            // line, and its numbers go on the next line under their headings.
+            const ownLine = !wide && (it.name.length > 12 || showMrp || !!it.warrantyText);
+            const name = ownLine ? null : (
               <td style={{ ...cell, overflowWrap: "anywhere", paddingTop: 3 }}>
                 {wide && <span>{i + 1}. </span>}
                 {it.name}
-                {it.mrp != null && it.mrp > it.rate && <Sub>MRP {money(it.mrp)}</Sub>}
-                {it.warrantyText && <Sub>{it.warrantyText}</Sub>}
+                {notes}
               </td>
+            );
+            const rows = ownLine
+              ? [
+                  <tr key={`${i}n`}>
+                    <td colSpan={4} style={{ ...cell, overflowWrap: "anywhere", paddingTop: 3 }}>
+                      {it.name}
+                      {notes}
+                    </td>
+                  </tr>,
+                ]
+              : [];
+            return [
+              ...rows,
+              <tr key={i}>
+              {name ?? <td style={cell} />}
               <td style={{ ...mid, paddingTop: 3 }}>{qtyText(it.qty)}</td>
               <td style={{ ...num, paddingTop: 3 }}>{money(it.rate)}</td>
               {gstColumn && <td style={{ ...mid, paddingLeft: 6, paddingTop: 3 }}>{it.gstPercent != null ? pctText(it.gstPercent) : ""}</td>}
               <td style={{ ...num, paddingTop: 3 }}>{money(it.amount)}</td>
-            </tr>
-          ))}
+              </tr>,
+            ];
+          })}
         </tbody>
       </table>
 
@@ -318,8 +343,8 @@ function Field({ label, value }: { label: string; value: string }) {
 function Line({ label, value, strong }: { label: string; value: string; strong?: boolean }) {
   return (
     <div style={{ display: "flex", justifyContent: "space-between", gap: 6, fontWeight: strong ? 800 : undefined }}>
-      <span style={{ textAlign: "right", flex: 1 }}>{label}:</span>
-      <span style={{ minWidth: "5.5em", textAlign: "right", whiteSpace: "nowrap" }}>{value}</span>
+      <span style={{ textAlign: "right", flex: 1, whiteSpace: "nowrap" }}>{label}:</span>
+      <span style={{ minWidth: "4.5em", textAlign: "right", whiteSpace: "nowrap" }}>{value}</span>
     </div>
   );
 }
