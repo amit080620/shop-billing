@@ -45,6 +45,11 @@ export default async function PrintBillPage({
   const { lang, t } = await getTranslator();
   const admin = createSupabaseAdminClient();
 
+  // Speed: the bill, the print settings and the B2B check are read together, not one after another.
+  const settingsP = getThermalPrintSettingsAction();
+  const buyerReadyP = buyerSchemaReady(admin);
+  settingsP.catch(() => undefined);
+  buyerReadyP.catch(() => undefined);
   const invoice = await loadBillInvoice(admin, id, session.shopId);
   if (!invoice) notFound();
   // A staff member without "See all bills" sees the bills they made themselves (just made, or reprinted), not other people's.
@@ -67,7 +72,7 @@ export default async function PrintBillPage({
   // Same rule the Edit/Void actions enforce server-side; checked here too so those buttons
   // aren't offered at all on a bill they would refuse.
   const periodClosed = isPastGstPeriod(bill.created_at);
-  const debitNotesReady = bill.status === "active" && (await buyerSchemaReady(admin));
+  const debitNotesReady = bill.status === "active" && (await buyerReadyP);
 
   // The customer's own copy: a link that opens this invoice (with a PDF button) without a login.
   const requestHeaders = await headers();
@@ -119,7 +124,7 @@ export default async function PrintBillPage({
   };
 
   // The owner's shop-name / item / total styling (Settings → Thermal print settings).
-  const thermalFormat = isThermal ? thermalFormatFor(await getThermalPrintSettingsAction(), is58mm ? 58 : 80) : undefined;
+  const thermalFormat = isThermal ? thermalFormatFor(await settingsP, is58mm ? 58 : 80) : undefined;
 
   const thermalData: ThermalReceiptData = {
     shopName: shop.name,

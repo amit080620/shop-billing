@@ -1,5 +1,6 @@
 "use client";
 
+import { SavingBill } from "@/app/components/SavingBill";
 import { CashChange } from "@/app/components/CashChange";
 import { keepValuesOnError } from "@/lib/keepValuesOnError";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -1758,6 +1759,8 @@ export function NewBillClient({
       )}
 
       <SubmitButton blocked={(customerMode === "walkin" && totals.balanceAmount > 0) || b2bInvalid} generatingLabel={t("bill.generating")} submitLabel={t("bill.generateInvoice")} />
+      {/* The bill shows the moment Save is tapped; its number and print follow from the server. */}
+      <SavingBill lines={cart.map((c) => ({ name: c.name, quantity: c.quantity, unit: c.unit, amount: round2(c.price * c.quantity) }))} total={totals.total} />
 
       {/* Not selling yet — the customer wants a price first. Same cart, saved as a quotation. */}
       {ordersAvailable && !fromQuote && customerMode === "existing" && selectedCustomer && (

@@ -1,5 +1,6 @@
 "use client";
 
+import { SavingBill } from "@/app/components/SavingBill";
 import { CashChange } from "@/app/components/CashChange";
 import { keepValuesOnError } from "@/lib/keepValuesOnError";
 import { useMemo, useState, useActionState, useRef, useEffect, useCallback } from "react";
@@ -851,6 +852,9 @@ function FastCheckoutButton({
 
       {/* Cash at the counter: what the customer handed over, and the change to give back. */}
       {paymentMethod === "cash" && cart.length > 0 && !focusMode && <CashChange total={payable} resetKey={cart.length === 0} />}
+
+      {/* The bill shows the moment Checkout is tapped; its number and print follow from the server. */}
+      <SavingBill pending={isPending} lines={cart.map((l) => ({ name: l.name, quantity: l.qty, amount: Math.round(l.qty * l.price * 100) / 100 }))} total={payable} />
 
       <form ref={formRef} action={formAction} className={focusMode ? "hidden" : ""}>
         <input type="hidden" name="payload" value={payload} />

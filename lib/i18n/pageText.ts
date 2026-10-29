@@ -429,6 +429,8 @@ export const PAGE_TEXT: Record<string, [hi: string, mr: string]> = {
   "View incoming orders": ["आए ऑर्डर देखें", "आलेले ऑर्डर पहा"],
 
   // Change to give back
+  "Saving the bill…": ["बिल सेव हो रहा है…","बिल सेव्ह होत आहे…"],
+  "The bill number and print come in a moment.": ["बिल नंबर और प्रिंट बस एक पल में।","बिल नंबर आणि प्रिंट काही क्षणात."],
   "Customer gave (for change)": ["ग्राहक ने दिए (छुट्टे के लिए)","ग्राहकाने दिले (सुट्ट्यांसाठी)"],
   "Exact": ["पूरे","बरोबर"],
   "Other ₹": ["दूसरा ₹","इतर ₹"],
