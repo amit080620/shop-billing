@@ -455,6 +455,16 @@ export function NewBillClient({
   }, 0);
 
   const [state, formAction] = useActionState(keepValuesOnError(createBillAction), null);
+  // Set the moment the bill form is sent (this form's own pending status never shows here), cleared
+  // when an answer comes back — an error; a saved bill moves on to its page instead.
+  const [saving, setSaving] = useState(false);
+  useEffect(() => setSaving(false), [state]);
+  // No answer at all (the connection dropped): never leave the bill covered — it can be saved again.
+  useEffect(() => {
+    if (!saving) return;
+    const timer = setTimeout(() => setSaving(false), 25000);
+    return () => clearTimeout(timer);
+  }, [saving]);
 
   // The floating calculator picks this up automatically when opened.
   useSyncCalculatorAmount(cart.length > 0 ? totals.total : null);
@@ -1291,7 +1301,7 @@ export function NewBillClient({
   });
 
   return (
-    <form action={formAction} className="flex flex-col gap-4">
+    <form action={formAction} onSubmit={() => setSaving(true)} className="flex flex-col gap-4">
       <input type="hidden" name="payload" value={payload} />
 
       <div className="flex items-center gap-2">
@@ -1760,7 +1770,7 @@ export function NewBillClient({
 
       <SubmitButton blocked={(customerMode === "walkin" && totals.balanceAmount > 0) || b2bInvalid} generatingLabel={t("bill.generating")} submitLabel={t("bill.generateInvoice")} />
       {/* The bill shows the moment Save is tapped; its number and print follow from the server. */}
-      <SavingBill lines={cart.map((c) => ({ name: c.name, quantity: c.quantity, unit: c.unit, amount: round2(c.price * c.quantity) }))} total={totals.total} />
+      <SavingBill pending={saving} lines={cart.map((c) => ({ name: c.name, quantity: c.quantity, unit: c.unit, amount: round2(c.price * c.quantity) }))} total={totals.total} />
 
       {/* Not selling yet — the customer wants a price first. Same cart, saved as a quotation. */}
       {ordersAvailable && !fromQuote && customerMode === "existing" && selectedCustomer && (
