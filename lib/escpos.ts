@@ -6,6 +6,7 @@
 
 import { THERMAL_58_DEFAULT, THERMAL_80_DEFAULT } from "./print/printerProfile";
 import { buildDivider, buildHeaderRow, buildItemRowLines } from "./print/textGrid";
+import { amountInWords } from "./amountInWords";
 
 const ESC = 0x1b;
 const GS = 0x1d;
@@ -151,14 +152,29 @@ export class EscPosBuilder {
   }
 }
 
-export type ReceiptItem = { name: string; qty: number; price: number; lineTotal: number };
+export type ReceiptItem = {
+  name: string;
+  qty: number;
+  price: number;
+  lineTotal: number;
+  /** GST rate and the line's tax, for the per-rate summary printed under the bill. */
+  gstPercent?: number | null;
+  taxAmount?: number | null;
+};
 
 export type ReceiptData = {
   shopName: string;
+  shopAddress?: string | null;
   gstin?: string | null;
+  isComposition?: boolean;
   invoiceNumber: string;
   dateText: string;
+  /** When given, the date and time print as their own fields beside the bill number. */
+  timeText?: string | null;
   customerName?: string | null;
+  customerPhone?: string | null;
+  /** Cash, UPI, … — printed in the bill's header and on the Paid line. */
+  paymentLabel?: string | null;
   /** The buyer's GSTIN on a B2B bill (printed under the customer's name). */
   customerGstin?: string | null;
   items: ReceiptItem[];
@@ -228,73 +244,155 @@ export function buildReceiptEscPos(data: ReceiptData, charsWide: 32 | 48 = 32, f
   // (lib/print/ThermalRenderer.tsx) — a printer-width tweak there is
   // never silently unmatched here.
   const profile = charsWide === 32 ? THERMAL_58_DEFAULT : THERMAL_80_DEFAULT;
+  const wide = charsWide === 48;
+  const n = (v: number) => v.toFixed(2);
+  const qty = (v: number) => String(Number(v.toFixed(3)));
+  // Tax lines only for a GST-registered regular dealer; a caller that doesn't say (no gstin field)
+  // still gets them whenever it passes a taxable value.
+  const showTax = !data.isComposition && (data.gstin === undefined || !!data.gstin);
 
   const b = new EscPosBuilder();
+  // A totals line: label and amount sit at the right in one column, like a counter bill; `left`
+  // (the item count, say) may use the space before them.
+  const total = (label: string, value: string, left = "") => {
+    const right = `${label} ${value.padStart(10)}`;
+    b.text(left + " ".repeat(Math.max(1, charsWide - left.length - right.length)) + right).newline();
+  };
   b.init();
 
+  b.align("center").text(data.gstin && showTax ? "TAX INVOICE" : data.isComposition ? "BILL OF SUPPLY" : "INVOICE").newline();
   b.align(format.shopNameAlign).sizeLevel(format.shopNameSize).bold(format.shopNameBold || format.shopNameSize >= 2).italic(format.shopNameItalic).text(data.shopName).newline();
-  b.sizeLevel(1).bold(false).italic(false);
+  b.sizeLevel(1).bold(false).italic(false).align("center");
+  for (const line of wrap(data.shopAddress ?? "", charsWide)) b.text(line).newline();
   if (data.gstin) b.text(`GSTIN: ${data.gstin}`).newline();
-  b.newline();
-
   b.align("left");
-  b.text(`Bill: ${data.invoiceNumber}`).newline();
-  b.text(data.dateText).newline();
-  if (data.customerName) b.text(`Customer: ${data.customerName}`).newline();
+  b.text(buildDivider(profile)).newline();
+
+  const customer = `Customer: ${data.customerName || "Cash"}`;
+  if (wide) {
+    // Customer on the left, bill number / date / time on the right.
+    const left = [customer, data.customerPhone ? `Mobile: ${data.customerPhone}` : "", data.paymentLabel ? `Payment: ${data.paymentLabel}` : ""].filter(Boolean);
+    const right = [`Bill No. ${data.invoiceNumber}`, data.timeText ? `Date: ${data.dateText}` : data.dateText, data.timeText ? `Time: ${data.timeText}` : ""].filter(Boolean);
+    for (let i = 0; i < Math.max(left.length, right.length); i++) {
+      const r = right[i] ?? "";
+      b.row((left[i] ?? "").slice(0, Math.max(0, charsWide - r.length - 1)), r, charsWide);
+    }
+  } else {
+    b.row("Bill No.", data.invoiceNumber, charsWide);
+    if (data.timeText) b.row(data.dateText, data.timeText, charsWide);
+    else b.text(data.dateText).newline();
+    for (const line of wrap(customer, charsWide)) b.text(line).newline();
+    if (data.customerPhone) b.text(`Mobile: ${data.customerPhone}`).newline();
+    if (data.paymentLabel) b.text(`Payment: ${data.paymentLabel}`).newline();
+  }
   if (data.customerGstin) b.text(`GSTIN: ${data.customerGstin}`).newline();
   b.text(buildDivider(profile)).newline();
 
   b.bold(format.itemsBold);
   b.text(buildHeaderRow(profile)).newline();
+  b.text(buildDivider(profile)).newline();
   for (const item of data.items) {
-    const rowLines = buildItemRowLines(item.name, String(item.qty), item.price.toFixed(2), item.lineTotal.toFixed(2), profile);
+    const rowLines = buildItemRowLines(item.name, qty(item.qty), item.price.toFixed(2), item.lineTotal.toFixed(2), profile);
     for (const line of rowLines) b.text(line).newline();
   }
   b.bold(false);
   b.text(buildDivider(profile)).newline();
 
-  if (data.savingsOffMrp) b.row("You saved (off MRP)", `Rs.${data.savingsOffMrp.toFixed(2)}`, charsWide);
-  b.row("Subtotal", `Rs.${data.subtotal.toFixed(2)}`, charsWide);
-  if (data.discount) b.row("Discount", `-Rs.${data.discount.toFixed(2)}`, charsWide);
+  const qtyTotal = data.items.reduce((sum, it) => sum + it.qty, 0);
+  const counts = [`Items: ${data.items.length}`, `Qty: ${qty(qtyTotal)}`];
+  const lines: [string, string][] = [["Sub Total:", n(data.subtotal)]];
+  if (data.discount) lines.push(["Discount:", `-${n(data.discount)}`]);
   if (data.taxableAmount != null) {
-    b.row("Taxable Value", `Rs.${data.taxableAmount.toFixed(2)}`, charsWide);
-    if (data.isIntraState) {
-      if (data.cgstAmount) b.row("CGST", `+Rs.${data.cgstAmount.toFixed(2)}`, charsWide);
-      if (data.sgstAmount) b.row("SGST", `+Rs.${data.sgstAmount.toFixed(2)}`, charsWide);
-    } else if (data.igstAmount) {
-      b.row("IGST", `+Rs.${data.igstAmount.toFixed(2)}`, charsWide);
+    if (showTax) {
+      lines.push(["Taxable Value:", n(data.taxableAmount)]);
+      if (data.isIntraState) {
+        if (data.cgstAmount) lines.push(["CGST:", n(data.cgstAmount)]);
+        if (data.sgstAmount) lines.push(["SGST:", n(data.sgstAmount)]);
+      } else if (data.igstAmount) {
+        lines.push(["IGST:", n(data.igstAmount)]);
+      }
     }
     if (data.roundOffAmount && Math.abs(data.roundOffAmount) > 0.001) {
-      const sign = data.roundOffAmount > 0 ? "+" : "-";
-      b.row("Round Off", `${sign}Rs.${Math.abs(data.roundOffAmount).toFixed(2)}`, charsWide);
+      lines.push(["Round Off:", `${data.roundOffAmount > 0 ? "+" : "-"}${n(Math.abs(data.roundOffAmount))}`]);
     }
   } else if (data.taxTotal) {
-    b.row("Tax", `Rs.${data.taxTotal.toFixed(2)}`, charsWide);
+    lines.push(["Tax:", n(data.taxTotal)]);
   }
+  // On 58mm the counts take a line of their own; on 80mm they sit beside the first totals.
+  if (!wide) b.text(counts.join("   ")).newline();
+  lines.forEach(([label, value], i) => total(label, value, wide ? (counts[i] ?? "") : ""));
+  if (wide) for (const c of counts.slice(lines.length)) b.text(c).newline();
 
+  b.text(buildDivider(profile, "=")).newline();
   b.bold(format.totalBold || format.totalSize >= 2).italic(format.totalItalic).sizeLevel(format.totalSize);
   if (format.totalAlign === "left") {
     b.align("left");
-    b.row("TOTAL", `Rs.${data.total.toFixed(2)}`, charsWide);
+    b.row("TOTAL", `Rs.${n(data.total)}`, charsWide);
   } else {
     b.align(format.totalAlign);
-    b.text(`TOTAL Rs.${data.total.toFixed(2)}`).newline();
+    b.text(`TOTAL Rs.${n(data.total)}`).newline();
   }
   b.align("left");
   b.sizeLevel(1).bold(false).italic(false);
+  b.text(buildDivider(profile, "=")).newline();
+  for (const line of wrap(amountInWords(data.total), charsWide)) b.text(line).newline();
 
-  if (data.exchangeLabel && data.exchangeAmount && data.exchangeAmount > 0) b.row(data.exchangeLabel, `- Rs.${data.exchangeAmount.toFixed(2)}`, charsWide);
+  if (data.exchangeLabel && data.exchangeAmount && data.exchangeAmount > 0) total(`${data.exchangeLabel}:`, `-${n(data.exchangeAmount)}`);
   // (Nothing more to say when old gold, a scheme or prepaid balance covered it all.)
-  if (data.paidAmount !== undefined && (data.paidAmount > 0 || !data.exchangeAmount)) b.row("Paid", `Rs.${data.paidAmount.toFixed(2)}`, charsWide);
-  if (data.creditAmount) b.row("Credit (Udhaar)", `Rs.${data.creditAmount.toFixed(2)}`, charsWide);
+  if (data.paidAmount !== undefined && (data.paidAmount > 0 || !data.exchangeAmount)) total(data.paymentLabel ? `Paid (${data.paymentLabel}):` : "Paid:", n(data.paidAmount));
+  if (data.creditAmount) total("Balance due (Udhaar):", n(data.creditAmount));
+  if (data.savingsOffMrp) b.newline().align("center").text(`You saved Rs.${n(data.savingsOffMrp)} on MRP`).newline().align("left");
 
+  // GST per rate — what a customer (or their CA) needs to check or claim the tax. The taxable part
+  // is worked back from each line's tax, so it holds whether prices include GST or not.
+  const rates = new Map<number, { taxable: number; tax: number }>();
+  if (showTax && data.gstin && data.items.length > 0 && data.items.every((it) => it.gstPercent != null)) {
+    for (const it of data.items) {
+      const rate = Number(it.gstPercent);
+      const tax = Number(it.taxAmount ?? 0);
+      const r = rates.get(rate) ?? { taxable: 0, tax: 0 };
+      r.taxable += rate > 0 ? (tax * 100) / rate : it.lineTotal;
+      r.tax += tax;
+      rates.set(rate, r);
+    }
+  }
+  if (rates.size > 0) {
+    const w = Math.floor((charsWide - 6) / 2);
+    b.text(buildDivider(profile)).newline();
+    b.text("GST%".padEnd(6) + "Taxable".padStart(w) + (data.isIntraState ? "CGST+SGST" : "IGST").padStart(charsWide - 6 - w)).newline();
+    for (const [rate, r] of [...rates.entries()].sort((a, c) => a[0] - c[0])) {
+      b.text(`${Number(rate.toFixed(2))}%`.padEnd(6) + n(r.taxable).padStart(w) + n(r.tax).padStart(charsWide - 6 - w)).newline();
+    }
+  }
+
+  b.text(buildDivider(profile)).newline();
+  b.row("E.&O.E.", `For ${data.shopName}`.slice(0, charsWide - 9), charsWide);
   b.newline();
   b.align("center");
   if (data.footerText) b.text(data.footerText).newline();
-  b.text("Thank you, visit again!").newline();
+  b.text("Thank you! Visit again").newline();
 
   b.feedAndCut();
   return b.build();
+}
+
+/** Words onto lines of at most `width` characters. */
+function wrap(text: string, width: number): string[] {
+  const lines: string[] = [];
+  let line = "";
+  for (const word of text.split(/\s+/).filter(Boolean)) {
+    if (line && line.length + 1 + word.length > width) {
+      lines.push(line);
+      line = "";
+    }
+    line = line ? `${line} ${word}` : word;
+    while (line.length > width) {
+      lines.push(line.slice(0, width));
+      line = line.slice(width);
+    }
+  }
+  if (line) lines.push(line);
+  return lines;
 }
 
 export type KotData = {

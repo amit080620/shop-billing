@@ -15,14 +15,12 @@ export type ThermalColumnWidths = {
  * each column. */
 export function computeColumnWidths(profile: ThermalPrinterProfile): ThermalColumnWidths {
   const total = usableWidth(profile);
-  // 58mm (32 chars) genuinely needs tighter numeric columns than 80mm
-  // (48 chars) — a small shop's line items rarely need more than
-  // 4-5 digits for rate/amount, and every character saved here goes
-  // straight to the item name, which is what actually needs the room.
+  // Wide enough that a price is never cut: rate up to 9999.99 (58mm) / 99999.99 (80mm), amount
+  // up to 99999.99 / 999999.99 — a narrower column used to print 1250.00 as "1250.0".
   const narrow = total <= 32;
-  const qty = narrow ? 2 : 3;
-  const rate = narrow ? 5 : 6;
-  const amount = narrow ? 6 : 7;
+  const qty = narrow ? 3 : 4;
+  const rate = narrow ? 7 : 8;
+  const amount = narrow ? 8 : 9;
   const gaps = 3; // one space between each of the 4 columns
   const item = Math.max(6, total - qty - rate - amount - gaps);
   return { item, qty, rate, amount };
@@ -87,6 +85,13 @@ export function buildItemRowLines(
   profile: ThermalPrinterProfile,
 ): string[] {
   const cols = computeColumnWidths(profile);
+  const full = cols.item + cols.qty + cols.rate + cols.amount + 3;
+  // On 58mm the name column is narrow: a name that doesn't fit prints across the whole line
+  // instead (not chopped into four stubs), with its numbers on the line below, under their headings.
+  if (usableWidth(profile) <= 32 && name.length > cols.item) {
+    const numbers = [padRight("", cols.item), padLeft(qty, cols.qty), padLeft(rate, cols.rate), padLeft(amount, cols.amount)].join(" ");
+    return [...wrapText(name, full).map((l) => padRight(l, full)), numbers];
+  }
   const nameLines = wrapText(name, cols.item);
   const lastIdx = nameLines.length - 1;
 

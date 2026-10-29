@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { buildReceiptEscPos, type ReceiptData, type ReceiptFormatSettings } from "../escpos";
-import { ThermalRenderer, type ThermalReceiptData } from "../print/ThermalRenderer";
+import { SHOP_NAME_SCALE, TOTAL_SCALE, ThermalRenderer, gstSummary, type ThermalReceiptData } from "../print/ThermalRenderer";
 import { DEFAULT_THERMAL_FORMAT, sizeEm, thermalFormatFor, type ThermalFormat } from "../print/thermalFormat";
 
 const receipt: ReceiptData = {
@@ -87,8 +87,8 @@ const html = (f: Partial<ThermalFormat>) => renderToStaticMarkup(createElement(T
 
 describe("Browser / USB receipt honours every setting", () => {
   it("shop-name size grows with the chosen level", () => {
-    expect(html({ shopNameSize: 1 })).toContain("font-size:1em");
-    expect(html({ shopNameSize: 4 })).toContain("font-size:2em");
+    expect(html({ shopNameSize: 1 })).toContain(`font-size:${1 * SHOP_NAME_SCALE}em`);
+    expect(html({ shopNameSize: 4 })).toContain(`font-size:${2 * SHOP_NAME_SCALE}em`);
     expect(sizeEm(99)).toBe(sizeEm(7));
     expect(sizeEm(-3)).toBe(sizeEm(0));
   });
@@ -115,9 +115,48 @@ describe("Browser / USB receipt honours every setting", () => {
   it("total: left aligned splits label and amount, centred is one line, size is applied", () => {
     const left = html({ totalAlign: "left", totalSize: 3 });
     expect(left).toContain("justify-between");
-    expect(left).toContain("font-size:1.6em");
+    expect(left).toContain(`font-size:${1.6 * TOTAL_SCALE}em`);
     const centre = html({ totalAlign: "center" });
     expect(centre).toContain("TOTAL Rs.620.00");
+  });
+});
+
+describe("Browser / USB receipt layout", () => {
+  const data: ThermalReceiptData = {
+    ...thermalData,
+    gstin: "20DOYPK4642M2ZD",
+    shopAddress: "Thana Chowk, Latehar",
+    timeText: "3:14 pm",
+    customerName: null,
+    items: [
+      { name: "Surf", qty: 2, rate: 59, amount: 118, gstPercent: 18, taxAmount: 18 },
+      { name: "Carry bag", qty: 1, rate: 1, amount: 1, gstPercent: 0, taxAmount: 0 },
+    ],
+    total: 119,
+  };
+  const out = (w: 58 | 80, d = data) => renderToStaticMarkup(createElement(ThermalRenderer, { data: d, paperWidth: w }));
+
+  it("is a tax invoice with the shop's address, a cash customer, the time, counts and the amount in words", () => {
+    const h = out(80);
+    for (const text of ["TAX INVOICE", "Thana Chowk, Latehar", "Cash", "Time: 3:14 pm", "Items: 2", "Qty: 3", "Rupees One Hundred Nineteen Only"]) expect(h).toContain(text);
+  });
+
+  it("shows the GST% column on 80mm only, and a bill of supply has no tax lines", () => {
+    expect(out(80)).toContain("GST%</th>");
+    // On 58mm the rate shows only in the summary under the bill, not as a column.
+    expect(out(80).split("GST%</th>").length - 1).toBe(2);
+    expect(out(58).split("GST%</th>").length - 1).toBe(1);
+    const composition = out(80, { ...data, isComposition: true });
+    expect(composition).toContain("BILL OF SUPPLY");
+    expect(composition).not.toContain("Taxable Value");
+  });
+
+  it("sums tax per GST rate, working the taxable value back from the tax", () => {
+    expect(gstSummary(data.items)).toEqual([
+      { rate: 0, taxable: 1, tax: 0 },
+      { rate: 18, taxable: 100, tax: 18 },
+    ]);
+    expect(gstSummary([{ name: "x", qty: 1, rate: 1, amount: 1 }])).toEqual([]);
   });
 });
 

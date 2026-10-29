@@ -70,17 +70,28 @@ export default async function PrintBillPage({
   // Same fields the on-screen thermal preview (thermalData, below) shows —
   // a customer's physical Bluetooth-printed receipt must carry the same
   // GST breakdown the owner previewed, not a collapsed "Tax" line.
+  const billAt = new Date(bill.created_at);
+  const billDate = billAt.toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata", day: "2-digit", month: "2-digit", year: "numeric" });
+  const billTime = billAt.toLocaleTimeString("en-IN", { timeZone: "Asia/Kolkata", hour: "numeric", minute: "2-digit", hour12: true });
   const receiptData = {
     shopName: shop.name,
+    shopAddress: a4Data.shopAddress,
     gstin: shop.gstin,
+    isComposition: invoice.isComposition,
     invoiceNumber: bill.invoice_number,
-    dateText: formatDateTime(bill.created_at),
+    dateText: billDate,
+    timeText: billTime,
     customerName: party?.name ?? null,
+    customerPhone: customer?.phone ?? null,
+    customerGstin: party?.gstin ?? null,
+    paymentLabel,
     items: items.map((it) => ({
       name: it.product_name,
       qty: Number(it.quantity),
       price: Number(it.unit_price),
       lineTotal: Number(it.line_total),
+      gstPercent: it.gst_percent != null ? Number(it.gst_percent) : null,
+      taxAmount: Number(it.cgst_amount ?? 0) + Number(it.sgst_amount ?? 0) + Number(it.igst_amount ?? 0),
     })),
     subtotal: Number(bill.subtotal),
     discount: Number(bill.discount_amount) || undefined,
@@ -104,10 +115,12 @@ export default async function PrintBillPage({
 
   const thermalData: ThermalReceiptData = {
     shopName: shop.name,
+    shopAddress: a4Data.shopAddress,
     gstin: shop.gstin,
     isComposition: invoice.isComposition,
     invoiceNumber: bill.invoice_number,
-    dateText: formatDateTime(bill.created_at),
+    dateText: billDate,
+    timeText: billTime,
     customerName: party?.name ?? null,
     customerPhone: customer?.phone ?? null,
     customerGstin: party?.gstin ?? null,
@@ -118,6 +131,8 @@ export default async function PrintBillPage({
       qty: Number(it.quantity),
       rate: Number(it.unit_price),
       amount: Number(it.line_total),
+      gstPercent: it.gst_percent != null ? Number(it.gst_percent) : null,
+      taxAmount: Number(it.cgst_amount ?? 0) + Number(it.sgst_amount ?? 0) + Number(it.igst_amount ?? 0),
       mrp: it.mrp != null ? Number(it.mrp) : null,
       warrantyText: warrantyText(it.warranty_expires_on),
     })),
