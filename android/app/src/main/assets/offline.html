@@ -12,6 +12,8 @@
   h1 { margin: 12px 0 6px; font-size: 20px; }
   p { margin: 0 0 20px; color: var(--muted); font-size: 14px; line-height: 1.5; }
   button { width: 100%; padding: 14px; border: 0; border-radius: 12px; background: var(--brand); color: #fff; font-size: 15px; font-weight: 600; }
+  button.second { margin-top: 10px; background: transparent; color: var(--brand); border: 2px solid var(--brand); }
+  .note { margin: 12px 0 0; font-size: 12px; }
 </style>
 </head>
 <body>
@@ -20,8 +22,18 @@
     <h1>No internet connection</h1>
     <p>The Ray needs internet to load your shop. Check Wi-Fi or mobile data, then try again.<br />इंटरनेट चालू करके फिर से कोशिश करें।<br />इंटरनेट सुरू करून पुन्हा प्रयत्न करा.</p>
     <button onclick="retry()">Try again · फिर कोशिश करें</button>
+    <button class="second" onclick="offlineBilling()">Bill without internet · बिना इंटरनेट बिल बनाएं</button>
+    <p class="note" id="note"></p>
   </div>
 <script>
+  // Offline billing works with no internet once the app has been opened online and Sell visited
+  // (the page and the shop's items are then kept on the phone). Bills sync when the internet is back.
+  function offlineBilling() {
+    location.replace("https://bill.theray.in/offline-bill");
+  }
+  if (decodeURIComponent(location.hash.slice(1)).indexOf("/offline-bill") !== -1) {
+    document.getElementById("note").textContent = "Offline billing isn't ready on this phone yet: open the app once with internet and visit Sell. · पहले एक बार इंटरनेट के साथ ऐप खोलें और Sell देखें।";
+  }
   function retry() {
     var target = decodeURIComponent(location.hash.slice(1)) || "https://bill.theray.in/";
     location.replace(target);

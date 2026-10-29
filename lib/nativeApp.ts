@@ -23,7 +23,7 @@ export function isNativeApp(): boolean {
 /** The newest Android app build. When a new APK is released, upload it (see
  * android/README.md) and raise this: older installs then see a one-tap
  * "update the app" banner, and /download hands out the new file. */
-export const LATEST_APP_VERSION = "1.0.4";
+export const LATEST_APP_VERSION = "1.0.5";
 export const APP_DOWNLOAD_URL = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/app/TheRay-v${LATEST_APP_VERSION}.apk`;
 
 /** The installed app's version, from the "TheRayApp/1.0.2" every version
