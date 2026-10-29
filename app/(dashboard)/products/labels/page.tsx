@@ -8,7 +8,7 @@ export default async function LabelsPage() {
 
   const { data: products } = await admin
     .from("products")
-    .select("id, name, price, unit, barcode")
+    .select("id, name, price, mrp, unit, barcode")
     .eq("shop_id", session.shopId)
     .order("name");
 
@@ -19,6 +19,7 @@ export default async function LabelsPage() {
         id: p.id,
         name: p.name,
         price: Number(p.price),
+        mrp: p.mrp != null ? Number(p.mrp) : null,
         unit: p.unit,
         barcode: p.barcode,
       }))}
