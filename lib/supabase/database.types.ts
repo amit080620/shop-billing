@@ -444,6 +444,7 @@ export interface Database {
           buyer_address: string | null;
           buyer_state: string | null;
           buyer_state_code: string | null;
+          client_ref: string | null;
           id: string;
           shop_id: string;
           customer_id: string | null;
@@ -487,6 +488,7 @@ export interface Database {
           buyer_address?: string | null;
           buyer_state?: string | null;
           buyer_state_code?: string | null;
+          client_ref?: string | null;
           id?: string;
           shop_id: string;
           customer_id?: string | null;
@@ -530,6 +532,7 @@ export interface Database {
           buyer_address?: string | null;
           buyer_state?: string | null;
           buyer_state_code?: string | null;
+          client_ref?: string | null;
           id?: string;
           shop_id?: string;
           customer_id?: string | null;

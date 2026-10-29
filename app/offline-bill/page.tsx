@@ -10,7 +10,6 @@ import {
   queueOfflineBill,
   getPendingBills,
   removePendingBill,
-  updatePendingBill,
   type ShopContext,
   type CachedProduct,
   type CachedCustomer,
@@ -20,7 +19,7 @@ import {
 import { calculateTransactionTotals } from "@/lib/validation/totals";
 import { determineSupplyType } from "@/lib/gst";
 import { useOnlineStatus } from "@/lib/useOnlineStatus";
-import { syncOfflineBillAction } from "@/lib/actions/bills";
+import { OFFLINE_BILLS_EVENT, belongsTo, offlineSlipData, printOfflineSlip, syncPendingBills } from "@/lib/offlineSync";
 import { useT } from "@/lib/i18n/LangContext";
 
 function formatMoney(n: number) {
@@ -48,6 +47,8 @@ export default function OfflineBillPage() {
   const [pending, setPending] = useState<PendingBill[]>([]);
   const [syncing, setSyncing] = useState(false);
   const [syncLog, setSyncLog] = useState<string | null>(null);
+  const [lastSaved, setLastSaved] = useState<PendingBill | null>(null);
+  const [printNote, setPrintNote] = useState<string | null>(null);
 
   useEffect(() => {
     async function load() {
@@ -60,11 +61,26 @@ export default function OfflineBillPage() {
       setShop(s ?? null);
       setProducts(p);
       setCustomers(c);
-      setPending(pb);
+      setPending(s ? pb.filter((b) => belongsTo(b, s.shopId)) : pb);
       setLoading(false);
     }
     load();
   }, []);
+
+  useEffect(() => {
+    const reload = () => {
+      void getPendingBills().then((pb) => setPending(shop ? pb.filter((b) => belongsTo(b, shop.shopId)) : pb));
+    };
+    window.addEventListener(OFFLINE_BILLS_EVENT, reload);
+    return () => window.removeEventListener(OFFLINE_BILLS_EVENT, reload);
+  }, [shop]);
+
+  // Back online: the waiting bills go up by themselves.
+  const pendingCount = pending.filter((b) => b.status !== "failed").length;
+  useEffect(() => {
+    if (isOnline && shop && pendingCount > 0) void syncNow(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- syncNow reads the latest state itself
+  }, [isOnline, shop, pendingCount]);
 
   const selectedCustomer = customers.find((c) => c.id === customerId) ?? null;
   const supplyType = shop
@@ -77,6 +93,7 @@ export default function OfflineBillPage() {
         items: cart.map((c) => ({ quantity: c.quantity, unitPrice: c.unitPrice, gstPercent: c.gstPercent })),
         discountType: "flat",
         discountValue: 0,
+        // Only the total is shown here; what was paid is settled when the bill is saved.
         paidAmount: typeof paidAmount === "number" ? paidAmount : 0,
         supplyType,
         // Caches written before this field existed fall back to the
@@ -134,62 +151,52 @@ export default function OfflineBillPage() {
       })),
       discountType: "flat",
       discountValue: 0,
-      paidAmount: typeof paidAmount === "number" ? paidAmount : 0,
+      // Left empty: paid in full, as the box's hint (the total) says.
+      paidAmount: typeof paidAmount === "number" ? paidAmount : totals.total,
       paymentMethod,
       createdAt: new Date().toISOString(),
       status: "pending",
+      shopId: shop.shopId,
     };
     await queueOfflineBill(bill);
     setPending((prev) => [...prev, bill]);
     setCart([]);
     setCustomerId(null);
     setPaidAmount("");
+    setLastSaved(bill);
     setSavedNotice(
       `Saved. Provisional total ${formatMoney(totals.total)} — this will get its real GST invoice number once you're back online and it syncs.`,
     );
   }
 
-  async function syncNow() {
-    if (!isOnline || syncing) return;
+  async function printSlip(bill: PendingBill) {
+    if (!shop) return;
+    setPrintNote(null);
+    const r = await printOfflineSlip(offlineSlipData(bill, shop.shopName, shop.priceIncludesGst));
+    setPrintNote(r.error ?? "Slip printed.");
+  }
+
+  async function discard(bill: PendingBill) {
+    const ok = window.confirm(
+      `Delete this bill (${bill.customerName ?? "Walk-in"}, ${formatMoney(bill.items.reduce((s, i) => s + i.quantity * i.unitPrice, 0))})? It will never reach your records. Do this only if the sale didn't happen or you've made it again by hand.`,
+    );
+    if (!ok) return;
+    await removePendingBill(bill.localId);
+    setPending((prev) => prev.filter((b) => b.localId !== bill.localId));
+  }
+
+  async function syncNow(retryFailed = true) {
+    if (!isOnline || syncing || !shop) return;
     setSyncing(true);
     setSyncLog(null);
-    let successCount = 0;
-    let failCount = 0;
-
-    const queue = await getPendingBills();
-    for (const bill of queue) {
-      try {
-        const result = await syncOfflineBillAction({
-          customerId: bill.customerId,
-          items: bill.items.map((i) => ({
-            productId: i.productId,
-            description: i.name,
-            hsnCode: i.hsnCode ?? undefined,
-            quantity: i.quantity,
-            unitPrice: i.unitPrice,
-            gstPercent: i.gstPercent,
-          })),
-          discountType: bill.discountType,
-          discountValue: bill.discountValue,
-          paidAmount: bill.paidAmount,
-          paymentMethod: bill.paymentMethod,
-        });
-        if ("error" in result) {
-          failCount++;
-          await updatePendingBill({ ...bill, status: "failed", syncError: result.error });
-        } else {
-          successCount++;
-          await removePendingBill(bill.localId);
-        }
-      } catch {
-        failCount++;
-        await updatePendingBill({ ...bill, status: "failed", syncError: "Network error during sync" });
-      }
-    }
-
-    setPending(await getPendingBills());
+    const r = await syncPendingBills(shop.shopId, { retryFailed });
+    setPending((await getPendingBills()).filter((b) => belongsTo(b, shop.shopId)));
     setSyncing(false);
-    setSyncLog(`Synced ${successCount} bill(s)${failCount > 0 ? `, ${failCount} failed — will retry` : ""}.`);
+    if (r.synced || r.failed || r.stillOffline) {
+      setSyncLog(
+        `Synced ${r.synced} bill(s)${r.failed ? `, ${r.failed} need attention` : ""}${r.stillOffline ? " — connection dropped, will continue when it's back" : ""}.`,
+      );
+    }
   }
 
   if (loading) {
@@ -229,8 +236,9 @@ export default function OfflineBillPage() {
 
       <p className="rounded-lg border border-dashed border-border bg-surface px-3.5 py-3 text-xs text-muted">
         For when there&apos;s no internet — bills you save here get a provisional total, then sync
-        to a real GST invoice number automatically once you&apos;re back online. Product prices
-        and stock reflect the last time this device was online, not necessarily this instant.
+        to a real GST invoice number by themselves once you&apos;re back online, dated when you made
+        them. Product prices and stock are as of the last time this device was online; the bill is
+        priced from your catalogue again when it syncs.
       </p>
 
       {pending.length > 0 && (
@@ -241,7 +249,7 @@ export default function OfflineBillPage() {
             </p>
             {isOnline && (
               <button
-                onClick={syncNow}
+                onClick={() => void syncNow(true)}
                 disabled={syncing}
                 className="rounded-lg bg-brand px-3 py-1.5 text-xs font-medium text-white disabled:opacity-60"
               >
@@ -252,12 +260,22 @@ export default function OfflineBillPage() {
           {syncLog && <p className="mt-1 text-xs text-credit">{syncLog}</p>}
           <ul className="mt-2 flex flex-col gap-1">
             {pending.map((b) => (
-              <li key={b.localId} className="flex justify-between text-xs text-credit">
-                <span>
-                  {b.customerName ?? "Walk-in"} · {b.items.length} item(s)
-                  {b.status === "failed" ? " · failed, will retry" : ""}
-                </span>
-                <span>{formatMoney(b.items.reduce((s, i) => s + i.quantity * i.unitPrice, 0))}</span>
+              <li key={b.localId} className="flex flex-col gap-0.5 border-t border-credit/20 pt-1.5 text-xs text-credit first:border-0 first:pt-0">
+                <div className="flex justify-between gap-2">
+                  <span>
+                    {b.customerName ?? "Walk-in"} · {b.items.length} item(s) · {new Date(b.createdAt).toLocaleString("en-IN", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" })}
+                  </span>
+                  <span className="font-semibold">{formatMoney(b.items.reduce((s, i) => s + i.quantity * i.unitPrice, 0))}</span>
+                </div>
+                {b.status === "failed" && <span className="text-danger">Not synced: {b.syncError ?? "the server refused it"}. Fix the item online and tap Sync now, or delete it.</span>}
+                <div className="flex gap-3">
+                  <button onClick={() => void printSlip(b)} className="underline">
+                    Print slip
+                  </button>
+                  <button onClick={() => void discard(b)} className="text-danger underline">
+                    Delete
+                  </button>
+                </div>
               </li>
             ))}
           </ul>
@@ -267,11 +285,19 @@ export default function OfflineBillPage() {
       {savedNotice && (
         <div className="rounded-lg border border-brand bg-brand-soft px-3.5 py-3 text-sm text-brand-text">
           {savedNotice}
-          <button onClick={() => setSavedNotice(null)} className="ml-2 underline">
-            OK
-          </button>
+          <div className="mt-2 flex gap-3">
+            {lastSaved && (
+              <button onClick={() => void printSlip(lastSaved)} className="font-medium underline">
+                Print slip
+              </button>
+            )}
+            <button onClick={() => setSavedNotice(null)} className="underline">
+              OK
+            </button>
+          </div>
         </div>
       )}
+      {printNote && <p className="text-xs text-muted">{printNote}</p>}
 
       <section className="flex flex-col gap-2">
         <p className="text-sm font-medium text-foreground">Customer</p>

@@ -41,6 +41,9 @@ export type PendingBillItem = {
 
 export type PendingBill = {
   localId: string; // temporary, client-generated — replaced by the real invoice number on sync
+  /** The shop it was made for: it syncs only into that shop, whoever logs in on this phone next.
+   * Missing on bills queued before this field existed. */
+  shopId?: string;
   customerId: string | null;
   customerName: string | null;
   items: PendingBillItem[];
@@ -89,6 +92,9 @@ export async function cacheForOffline(
 ) {
   const db = await getDb();
   const tx = db.transaction(["shopContext", "products", "customers"], "readwrite");
+  // A fresh copy replaces the old one entirely: items since deleted go, and another shop's items
+  // (someone else logged in on this phone before) never mix in.
+  await Promise.all([tx.objectStore("shopContext").clear(), tx.objectStore("products").clear(), tx.objectStore("customers").clear()]);
   await tx.objectStore("shopContext").put({ ...shop, cachedAt: new Date().toISOString() });
   await Promise.all([
     ...products.map((p) => tx.objectStore("products").put(p)),
@@ -132,4 +138,13 @@ export async function updatePendingBill(bill: PendingBill) {
 export async function removePendingBill(localId: string) {
   const db = await getDb();
   await db.delete("pendingBills", localId);
+}
+
+/** On the log-in page: forget the shop's items, customers and details kept on this phone. Bills
+ * waiting to sync are kept — they are sales already made — and sync into their own shop later. */
+export async function clearOfflineCopy() {
+  const db = await getDb();
+  const tx = db.transaction(["shopContext", "products", "customers"], "readwrite");
+  await Promise.all([tx.objectStore("shopContext").clear(), tx.objectStore("products").clear(), tx.objectStore("customers").clear()]);
+  await tx.done;
 }

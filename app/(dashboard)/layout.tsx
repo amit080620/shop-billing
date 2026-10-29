@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "@/lib/link";
 import { requireSession } from "@/lib/auth";
+import { OfflineBillsSync } from "@/app/components/OfflineBillsSync";
 import { getLang } from "@/lib/i18n/server";
 import { LangProvider } from "@/lib/i18n/LangContext";
 import { BusinessTypeProvider } from "@/lib/BusinessTypeContext";
@@ -107,6 +108,7 @@ export default async function DashboardLayout({
         </div>
       </header>
 
+      <OfflineBillsSync shopId={session.shopId} />
       <main className="page-enter mx-auto max-w-lg px-4 py-4 pb-24 md:max-w-5xl md:px-8 md:py-8 md:pb-8 xl:max-w-6xl">
         {isDemoEmail(session.email) && <DemoBanner />}
         <AppUpdateBanner />

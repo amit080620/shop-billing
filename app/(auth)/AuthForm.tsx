@@ -87,6 +87,8 @@ export function AuthForm({
   // Screens kept on this phone (lib/screenCache) belong to the last session: none outlive it.
   useEffect(() => {
     void clearScreens();
+    // The shop's items and customers kept for offline billing too (bills waiting to sync stay).
+    void import("@/lib/offline-db").then(({ clearOfflineCopy }) => clearOfflineCopy()).catch(() => {});
   }, []);
 
   // Success hands back a destination; go there with a full page load (see

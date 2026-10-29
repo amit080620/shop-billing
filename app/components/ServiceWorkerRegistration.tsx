@@ -2,34 +2,38 @@
 
 import { useEffect } from "react";
 
-/** DIAGNOSTIC + likely permanent fix: after several rounds of
- * service-worker cache versioning fixes that didn't fully resolve a
- * persistent, mobile-data-only "Cannot read properties of undefined
- * (reading 'call')" crash, this actively REMOVES any existing service
- * worker and its caches instead of registering a new one. Two
- * reasons this is the right call, not just a workaround:
- *  1. It's the cleanest way to find out whether the SW was ever
- *     really the cause, or whether something else entirely (a mobile
- *     carrier's network-level compression/proxy corrupting JS in
- *     transit, which several rounds of cache-version fixes couldn't
- *     touch at all) was actually responsible.
- *  2. A billing app needs live, accurate prices/stock/GST rules —
- *     aggressively caching JS for offline use was never a great
- *     tradeoff here to begin with. Removing it removes the whole
- *     class of stale-cache bug, not just this specific symptom. */
+const BUILD = process.env.NEXT_PUBLIC_BUILD_ID ?? "dev";
+const OFFLINE_WORKER = "/ray-offline-sw.js";
+
+/** Keeps Offline billing working with no internet (public/ray-offline-sw.js), and nothing else.
+ *
+ * An earlier worker cached the app's files and served them first, and pages built from older
+ * files crashed ("Cannot read properties of undefined (reading 'call')"), so it was removed; any
+ * copy of it still on a phone is unregistered here, with its caches. The offline worker never
+ * serves a file while the network answers, so it can't bring that back. The admin panel's
+ * notification worker is left alone. Registered once the screen is idle, so it never slows the
+ * first screen; a new app version registers a new worker (?v=<build>), which replaces the old copy. */
 export function ServiceWorkerRegistration() {
   useEffect(() => {
-    if (!("serviceWorker" in navigator)) return;
+    if (!("serviceWorker" in navigator) || process.env.NODE_ENV !== "production") return;
 
-    navigator.serviceWorker.getRegistrations().then((registrations) => {
-      // The platform team's notification worker (admin panel only, no caching) is the one kept.
-      registrations
-        .filter((registration) => !(registration.active ?? registration.waiting ?? registration.installing)?.scriptURL.endsWith("/admin-push-sw.js"))
-        .forEach((registration) => registration.unregister());
+    void navigator.serviceWorker.getRegistrations().then((registrations) => {
+      for (const registration of registrations) {
+        const script = (registration.active ?? registration.waiting ?? registration.installing)?.scriptURL ?? "";
+        if (script.endsWith("/admin-push-sw.js") || script.includes(OFFLINE_WORKER)) continue;
+        void registration.unregister();
+      }
     });
     if ("caches" in window) {
-      caches.keys().then((keys) => keys.forEach((key) => caches.delete(key)));
+      void caches.keys().then((keys) => keys.filter((k) => !k.startsWith("ray-offline-")).forEach((k) => void caches.delete(k)));
     }
+
+    const register = () => {
+      void navigator.serviceWorker.register(`${OFFLINE_WORKER}?v=${encodeURIComponent(BUILD)}`, { scope: "/" }).catch(() => {});
+    };
+    const idle = (window as Window & { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number }).requestIdleCallback;
+    const timer = setTimeout(() => (idle ? idle(register, { timeout: 5000 }) : register()), 8000);
+    return () => clearTimeout(timer);
   }, []);
 
   return null;

@@ -20,6 +20,7 @@ import { undoBillUsage } from "../billUndo";
 import { settleChallansForBill } from "../challanData";
 import { freeFollowUp } from "../followUp";
 import { gapsReady } from "../gapsData";
+import { isClientRef, offlineBillsReady, offlineIssuedAt } from "../offlineBills";
 import { dueDateFor, partyTerms } from "../wholesaleData";
 import { loadPackages, packageUsable, salonExtrasReady, walletBalance } from "../salonExtras";
 import { addDaysIso } from "../dateHelpers";
@@ -36,10 +37,24 @@ export type ActionState = { error?: string } | null;
 export async function createBillCore(
   session: SessionContext,
   parsedData: BillInput,
+  /** A bill made offline on the phone: its own id (so a retried sync never makes it twice) and when
+   * it was really issued (see offlineIssuedAt). */
+  offline?: { clientRef: string; issuedAt: Date },
 ): Promise<{ billId: string; invoiceNumber: string } | { error: string }> {
   const { customerId, items, discountType, discountValue, paidAmount, paymentMethod, doctorName, patientName, tripVehicleId, tripKm, tripDriverName, tripLoadWeight, tripLoadUnit, serviceProviderName, exchangeMetal, exchangeDescription, exchangeGrossWeight, exchangePurityPercent, exchangeRatePerGram, exchangeValue, redeemedPoints, b2b, buyerName, buyerGstin, buyerAddress } = parsedData;
 
   const admin = createSupabaseAdminClient();
+
+  // An offline bill whose earlier sync went through although the phone never heard back: hand back
+  // that bill rather than make it again (and before any check that might now refuse it).
+  const refReady = offline ? await offlineBillsReady(admin) : false;
+  const alreadyMade = async () => {
+    if (!offline || !refReady) return null;
+    const { data } = await admin.from("bills").select("id, invoice_number").eq("shop_id", session.shopId).eq("client_ref", offline.clientRef).maybeSingle();
+    return data ? { billId: data.id as string, invoiceNumber: data.invoice_number as string } : null;
+  };
+  const existing = await alreadyMade();
+  if (existing) return existing;
 
   // Speed: every lookup that doesn't depend on another starts now, together, instead of one after
   // the other — on a bill this was a dozen round trips in a row. Each is awaited where it is used;
@@ -265,7 +280,7 @@ export async function createBillCore(
     return { error: `The scheme is worth ${formatMoney(scheme.value)} — pick jewellery worth at least that much.` };
   }
 
-  const financialYear = financialYearFor(new Date());
+  const financialYear = financialYearFor(offline?.issuedAt ?? new Date());
   const { data: issuedNumber, error: numberError } = await admin.rpc(
     "next_invoice_number",
     { p_shop_id: session.shopId, p_financial_year: financialYear },
@@ -286,6 +301,7 @@ export async function createBillCore(
       shop_id: session.shopId,
       customer_id: customerId,
       staff_id: session.userId,
+      ...(offline ? { created_at: offline.issuedAt.toISOString(), ...(refReady ? { client_ref: offline.clientRef } : {}) } : {}),
       branch_id: staffRow?.branch_id ?? null,
       invoice_number: invoiceNumber,
       financial_year: financialYear,
@@ -317,7 +333,14 @@ export async function createBillCore(
     .select("id")
     .single();
 
-  if (billError || !bill) return { error: "Could not create bill" };
+  if (billError || !bill) {
+    // Two syncs of the same offline bill at once: the other one made it.
+    if (billError?.code === "23505") {
+      const made = await alreadyMade();
+      if (made) return made;
+    }
+    return { error: "Could not create bill" };
+  }
 
   const buildRows = () => verifiedItems.map((item, i) => {
     const line = totals.lines[i];
@@ -658,12 +681,20 @@ export async function syncOfflineBillAction(
 ): Promise<{ billId: string; invoiceNumber: string } | { error: string }> {
   const session = await requireSession();
 
-  const parsed = billSchema.safeParse(payload);
+  // { bill, clientRef, createdAt } from the offline page; a bare bill from a page loaded before that.
+  const wrapped = payload && typeof payload === "object" && "bill" in payload ? (payload as { bill: unknown; clientRef?: unknown; createdAt?: unknown }) : null;
+  const parsed = billSchema.safeParse(wrapped ? wrapped.bill : payload);
   if (!parsed.success) {
     return { error: parsed.error.issues[0].message };
   }
 
-  return createBillCore(session, parsed.data);
+  const offline = wrapped && isClientRef(wrapped.clientRef) ? { clientRef: wrapped.clientRef, issuedAt: offlineIssuedAt(wrapped.createdAt) } : undefined;
+  const result = await createBillCore(session, parsed.data, offline);
+  if (!("error" in result)) {
+    revalidatePath("/bills");
+    revalidatePath("/dashboard");
+  }
+  return result;
 }
 
 /**
