@@ -119,10 +119,10 @@ export async function bulkImportProductsAction(rows: ImportRow[]): Promise<Impor
         hsn_code: row.hsnCode?.trim() || null,
         barcode: row.barcode?.trim() || null,
         category_id: row.category.trim() ? categoryMap.get(row.category.trim()) ?? null : null,
-        // A pharma row with a batch always needs tracking on, regardless
-        // of what the trackInventory column said, or the batch quantity
-        // would be invisible in stock badges/New Bill.
-        track_inventory: row.trackInventory || (row.isPharma && !!row.batchNumber),
+        // A pharma row with a batch, or any row with a stock quantity, needs tracking on whatever the
+        // trackInventory column said (often left blank): otherwise the quantity is saved but never
+        // shown in stock badges or New Bill, nor taken off when it sells.
+        track_inventory: row.trackInventory || (row.isPharma && !!row.batchNumber) || (!Number.isNaN(row.stockQuantity) && row.stockQuantity > 0),
         stock_quantity: Number.isNaN(row.stockQuantity) ? 0 : row.stockQuantity,
         low_stock_threshold: Number.isNaN(row.lowStockThreshold) ? 0 : row.lowStockThreshold,
         is_pharma: row.isPharma,
