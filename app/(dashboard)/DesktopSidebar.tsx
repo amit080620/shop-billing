@@ -1,5 +1,6 @@
 "use client";
 
+import { canOpen } from "@/lib/staffAccess";
 import Link from "@/lib/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
@@ -72,11 +73,13 @@ export function DesktopSidebar({
 
       <nav className="flex flex-1 flex-col overflow-y-auto px-3" aria-label="Main">
         <ul className="flex flex-col gap-0.5">
-          <li>
-            <SidebarLink href="/dashboard" active={pathname === "/dashboard"} icon={<LayoutDashboard size={18} strokeWidth={pathname === "/dashboard" ? 2.2 : 1.8} />}>
-              {t("nav.home")}
-            </SidebarLink>
-          </li>
+          {canOpen({ role: "staff", businessType, permissions }, "/dashboard") && (
+            <li>
+              <SidebarLink href="/dashboard" active={pathname === "/dashboard"} icon={<LayoutDashboard size={18} strokeWidth={pathname === "/dashboard" ? 2.2 : 1.8} />}>
+                {t("nav.home")}
+              </SidebarLink>
+            </li>
+          )}
           {tabs.map((tab) => {
             const active = tab.href === activeHref;
             const Icon = tab.icon;

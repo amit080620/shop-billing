@@ -10,6 +10,7 @@ import Link from "@/lib/link";
 import { ThermalRenderer, type ThermalReceiptData } from "@/lib/print/ThermalRenderer";
 import { THERMAL_SIZE_LEVELS, thermalFormatFor } from "@/lib/print/thermalFormat";
 import { HARDWARE_PRICES_LIVE } from "@/lib/sales";
+import { RECEIPT_FIELDS, type ReceiptField } from "@/lib/print/receiptFields";
 
 // A made-up receipt, so the look can be judged without making a real bill.
 const SAMPLE_RECEIPT: ThermalReceiptData = {
@@ -170,6 +171,7 @@ export function ThermalPrintSettingsClient({ initial, initialDefaultFormat, offe
   const [defaultFormat, setDefaultFormat] = useState(initialDefaultFormat);
   const [isPending, startTransition] = useTransition();
   const [saved, setSaved] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [previewPaper, setPreviewPaper] = useState<58 | 80>(58);
 
   function update<K extends keyof ThermalPrintSettings>(key: K, value: ThermalPrintSettings[K]) {
@@ -179,6 +181,7 @@ export function ThermalPrintSettingsClient({ initial, initialDefaultFormat, offe
   function save() {
     startTransition(async () => {
       const [r1, r2] = await Promise.all([saveThermalPrintSettingsAction(settings), saveDefaultPrintFormatAction(defaultFormat)]);
+      setSaveError(r1.error ?? r2.error ?? null);
       if (!r1.error && !r2.error) {
         setSaved(true);
         setTimeout(() => setSaved(false), 1500);
@@ -256,6 +259,11 @@ export function ThermalPrintSettingsClient({ initial, initialDefaultFormat, offe
         </p>
       </div>
 
+      <ReceiptFieldsSection
+        hidden={settings.hiddenFields}
+        onChange={(hiddenFields) => update("hiddenFields", hiddenFields)}
+      />
+
       <p className="text-xs text-muted">
         {t("A Bluetooth thermal printer draws its own built-in text, so it takes only some of these: bold and alignment are sent to it (a Large size or above prints bold), and the item table bold. Size and italic depend on the printer model and can print stray characters, so they are not sent to it. 58mm and 80mm paper are set separately.")}
       </p>
@@ -307,6 +315,55 @@ export function ThermalPrintSettingsClient({ initial, initialDefaultFormat, offe
       <button onClick={save} disabled={isPending} className={`btn-primary w-full text-center disabled:opacity-60 ${saved ? "animate-save-success" : ""}`}>
         {isPending ? t("Saving…") : saved ? t("Saved ✓") : t("Save settings")}
       </button>
+      {saveError && <p className="text-sm text-danger">{saveError}</p>}
+    </div>
+  );
+}
+
+const GROUPS: ReceiptField["group"][] = ["Top of the bill", "Bill details", "Items", "Totals", "Bottom of the bill"];
+
+/** Show or hide every part of the receipt. Things a GST tax invoice must carry are marked: hiding
+ * one is the owner's call, with a warning. */
+function ReceiptFieldsSection({ hidden, onChange }: { hidden: string[]; onChange: (hidden: string[]) => void }) {
+  const { t } = useT();
+  const off = new Set(hidden);
+  const set = (key: string, show: boolean) => {
+    const next = new Set(off);
+    if (show) next.delete(key);
+    else next.add(key);
+    onChange([...next]);
+  };
+  const hiddenGst = RECEIPT_FIELDS.filter((f) => f.gstNeeds && off.has(f.key));
+  return (
+    <div className="rounded-xl border border-border bg-surface p-3.5">
+      <div className="mb-1 flex items-center justify-between gap-2">
+        <p className="text-sm font-semibold text-foreground">{t("What prints on the bill")}</p>
+        {off.size > 0 && (
+          <button type="button" onClick={() => onChange([])} className="text-xs font-medium text-brand-text underline">
+            {t("Show everything")}
+          </button>
+        )}
+      </div>
+      <p className="mb-3 text-xs text-muted">{t("Switch off anything you don't want on the printed bill. The preview above changes as you go. Applies to 58mm and 80mm, and to Bluetooth printers.")}</p>
+      {hiddenGst.length > 0 && (
+        <p className="mb-3 rounded-lg border border-credit bg-credit-soft px-3 py-2 text-xs text-credit">
+          {t("A GST tax invoice must show these — hidden now:")} {hiddenGst.map((f) => t(f.label)).join(", ")}
+        </p>
+      )}
+      <div className="flex flex-col gap-3">
+        {GROUPS.map((group) => (
+          <div key={group}>
+            <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted">{t(group)}</p>
+            <div className="flex flex-col divide-y divide-border rounded-lg border border-border px-3">
+              {RECEIPT_FIELDS.filter((f) => f.group === group).map((f) => (
+                <div key={f.key} className="py-0.5">
+                  <Toggle label={`${t(f.label)}${f.wideOnly ? " · 80mm" : ""}${f.gstNeeds ? " · GST" : ""}`} checked={!off.has(f.key)} onChange={(v) => set(f.key, v)} />
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import Link from "@/lib/link";
 import { requireSession } from "@/lib/auth";
+import { canOpen } from "@/lib/staffAccess";
 import { LogoutButton } from "./LogoutButton";
 import { getTranslator } from "@/lib/i18n/server";
 import { getTerminology } from "@/lib/businessType";
@@ -320,6 +321,8 @@ async function MenuGroup({ title, children }: { title: string; children: React.R
 
 async function MenuLink({ href, label, sub, icon: Icon, locked = null }: { href: string; label: string; sub: string; icon: LucideIcon; /** The plan that unlocks it, when this shop's plan doesn't. */ locked?: PlanKey | null }) {
   const { t } = await getTranslator();
+  // Left out for a staff member the owner hasn't given this screen (lib/staffAccess).
+  if (!canOpen(await requireSession(), href)) return null;
   return (
     <Link href={href} className="flex items-center gap-3 px-3.5 py-3 transition-colors hover:bg-surface-2 active:bg-surface-2">
       <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${locked ? "bg-surface-2 text-muted" : "bg-brand-soft text-brand-text"}`}>

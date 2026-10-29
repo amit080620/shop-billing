@@ -1,5 +1,6 @@
 "use server";
 
+import { cleanHidden } from "../print/receiptFields";
 import { revalidatePath } from "next/cache";
 import { requireOwner, requireSession, revalidateStaffCache } from "../auth";
 import { createSupabaseAdminClient } from "../supabase/admin";
@@ -292,6 +293,8 @@ export type ThermalPrintSettings = {
   t80TotalSize: number;
   t80TotalItalic: boolean;
   t80TotalAlign: "left" | "center" | "right";
+  /** Parts of the receipt the owner hid (lib/print/receiptFields), for both paper widths. */
+  hiddenFields: string[];
 };
 
 const THERMAL_PRINT_DEFAULTS: ThermalPrintSettings = {
@@ -313,6 +316,7 @@ const THERMAL_PRINT_DEFAULTS: ThermalPrintSettings = {
   t80TotalSize: 2,
   t80TotalItalic: false,
   t80TotalAlign: "left",
+  hiddenFields: [],
 };
 
 export async function getThermalPrintSettingsAction(): Promise<ThermalPrintSettings> {
@@ -339,6 +343,8 @@ export async function getThermalPrintSettingsAction(): Promise<ThermalPrintSetti
     t80TotalSize: data.t80_total_size,
     t80TotalItalic: data.t80_total_italic,
     t80TotalAlign: data.t80_total_align,
+    // Missing until migration 0057 is run: nothing hidden.
+    hiddenFields: cleanHidden((data as { hidden_fields?: unknown }).hidden_fields),
   };
 }
 
@@ -365,9 +371,12 @@ export async function saveThermalPrintSettingsAction(settings: ThermalPrintSetti
     t80_total_size: settings.t80TotalSize,
     t80_total_italic: settings.t80TotalItalic,
     t80_total_align: settings.t80TotalAlign,
+    hidden_fields: cleanHidden(settings.hiddenFields),
     updated_at: new Date().toISOString(),
   });
   if (error) {
+    // Before migration 0057 the column isn't there: say so rather than a bare failure.
+    if (/hidden_fields/.test(error.message ?? "")) return { error: "Showing and hiding parts of the bill needs a one-time database update (migration 0057). Ask your admin to run it." };
     console.error("Could not save thermal print settings", error);
     return { error: "Could not save settings" };
   }

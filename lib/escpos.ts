@@ -7,6 +7,7 @@
 import { THERMAL_58_DEFAULT, THERMAL_80_DEFAULT } from "./print/printerProfile";
 import { buildDivider, buildHeaderRow, buildItemRowLines } from "./print/textGrid";
 import { amountInWords } from "./amountInWords";
+import { shownWith } from "./print/receiptFields";
 
 const ESC = 0x1b;
 const GS = 0x1d;
@@ -215,6 +216,8 @@ export type ReceiptFormatSettings = {
   totalItalic: boolean;
   totalSize: number;
   totalAlign: "left" | "center" | "right";
+  /** Parts of the receipt the owner hid (lib/print/receiptFields). */
+  hidden?: string[];
 };
 
 const DEFAULT_FORMAT_SETTINGS: ReceiptFormatSettings = {
@@ -250,6 +253,8 @@ export function buildReceiptEscPos(data: ReceiptData, charsWide: 32 | 48 = 32, f
   // Tax lines only for a GST-registered regular dealer; a caller that doesn't say (no gstin field)
   // still gets them whenever it passes a taxable value.
   const showTax = !data.isComposition && (data.gstin === undefined || !!data.gstin);
+  // What the owner chose to print (Settings → Thermal print settings → What prints).
+  const show = shownWith(format.hidden);
 
   const b = new EscPosBuilder();
   // A totals line: label and amount sit at the right in one column, like a counter bill; `left`
@@ -260,39 +265,45 @@ export function buildReceiptEscPos(data: ReceiptData, charsWide: 32 | 48 = 32, f
   };
   b.init();
 
-  b.align("center").text(data.gstin && showTax ? "TAX INVOICE" : data.isComposition ? "BILL OF SUPPLY" : "INVOICE").newline();
-  b.align(format.shopNameAlign).sizeLevel(format.shopNameSize).bold(format.shopNameBold || format.shopNameSize >= 2).italic(format.shopNameItalic).text(data.shopName).newline();
+  if (show("title")) b.align("center").text(data.gstin && showTax ? "TAX INVOICE" : data.isComposition ? "BILL OF SUPPLY" : "INVOICE").newline();
+  if (show("shopName")) b.align(format.shopNameAlign).sizeLevel(format.shopNameSize).bold(format.shopNameBold || format.shopNameSize >= 2).italic(format.shopNameItalic).text(data.shopName).newline();
   b.sizeLevel(1).bold(false).italic(false).align("center");
-  for (const line of wrap(data.shopAddress ?? "", charsWide)) b.text(line).newline();
-  if (data.gstin) b.text(`GSTIN: ${data.gstin}`).newline();
+  if (show("address")) for (const line of wrap(data.shopAddress ?? "", charsWide)) b.text(line).newline();
+  if (show("gstin") && data.gstin) b.text(`GSTIN: ${data.gstin}`).newline();
   b.align("left");
   b.text(buildDivider(profile)).newline();
 
   const customer = `Customer: ${data.customerName || "Cash"}`;
   if (wide) {
     // Customer on the left, bill number / date / time on the right.
-    const left = [customer, data.customerPhone ? `Mobile: ${data.customerPhone}` : "", data.paymentLabel ? `Payment: ${data.paymentLabel}` : ""].filter(Boolean);
-    const right = [`Bill No. ${data.invoiceNumber}`, data.timeText ? `Date: ${data.dateText}` : data.dateText, data.timeText ? `Time: ${data.timeText}` : ""].filter(Boolean);
+    const left = [show("customer") ? customer : "", show("mobile") && data.customerPhone ? `Mobile: ${data.customerPhone}` : "", show("payment") && data.paymentLabel ? `Payment: ${data.paymentLabel}` : ""].filter(Boolean);
+    const right = [show("billNo") ? `Bill No. ${data.invoiceNumber}` : "", show("date") ? (data.timeText ? `Date: ${data.dateText}` : data.dateText) : "", show("time") && data.timeText ? `Time: ${data.timeText}` : ""].filter(Boolean);
     for (let i = 0; i < Math.max(left.length, right.length); i++) {
       const r = right[i] ?? "";
       b.row((left[i] ?? "").slice(0, Math.max(0, charsWide - r.length - 1)), r, charsWide);
     }
   } else {
-    b.row("Bill No.", data.invoiceNumber, charsWide);
-    if (data.timeText) b.row(data.dateText, data.timeText, charsWide);
-    else b.text(data.dateText).newline();
-    for (const line of wrap(customer, charsWide)) b.text(line).newline();
-    if (data.customerPhone) b.text(`Mobile: ${data.customerPhone}`).newline();
-    if (data.paymentLabel) b.text(`Payment: ${data.paymentLabel}`).newline();
+    if (show("billNo")) b.row("Bill No.", data.invoiceNumber, charsWide);
+    const date = show("date") ? data.dateText : "";
+    const time = show("time") ? (data.timeText ?? "") : "";
+    if (date && time) b.row(date, time, charsWide);
+    else if (date || time) b.text(date || time).newline();
+    if (show("customer")) for (const line of wrap(customer, charsWide)) b.text(line).newline();
+    if (show("mobile") && data.customerPhone) b.text(`Mobile: ${data.customerPhone}`).newline();
+    if (show("payment") && data.paymentLabel) b.text(`Payment: ${data.paymentLabel}`).newline();
   }
-  if (data.customerGstin) b.text(`GSTIN: ${data.customerGstin}`).newline();
+  if (show("customerGstin") && data.customerGstin) b.text(`GSTIN: ${data.customerGstin}`).newline();
   b.text(buildDivider(profile)).newline();
 
   b.bold(format.itemsBold);
-  b.text(buildHeaderRow(profile)).newline();
+  // A hidden column stays as blank space, so the others keep their place under their headings.
+  let header = buildHeaderRow(profile);
+  if (!show("qty")) header = header.replace("QTY", "   ");
+  if (!show("rate")) header = header.replace("RATE", "    ");
+  b.text(header).newline();
   b.text(buildDivider(profile)).newline();
   for (const item of data.items) {
-    const rowLines = buildItemRowLines(item.name, qty(item.qty), item.price.toFixed(2), item.lineTotal.toFixed(2), profile);
+    const rowLines = buildItemRowLines(item.name, show("qty") ? qty(item.qty) : "", show("rate") ? item.price.toFixed(2) : "", item.lineTotal.toFixed(2), profile);
     for (const line of rowLines) b.text(line).newline();
   }
   b.bold(false);
@@ -300,28 +311,31 @@ export function buildReceiptEscPos(data: ReceiptData, charsWide: 32 | 48 = 32, f
 
   const qtyTotal = data.items.reduce((sum, it) => sum + it.qty, 0);
   const counts = [`Items: ${data.items.length}`, `Qty: ${qty(qtyTotal)}`];
-  const lines: [string, string][] = [["Sub Total:", n(data.subtotal)]];
-  if (data.discount) lines.push(["Discount:", `-${n(data.discount)}`]);
+  const lines: [string, string][] = show("subtotal") ? [["Sub Total:", n(data.subtotal)]] : [];
+  if (show("discount") && data.discount) lines.push(["Discount:", `-${n(data.discount)}`]);
   if (data.taxableAmount != null) {
     if (showTax) {
-      lines.push(["Taxable Value:", n(data.taxableAmount)]);
-      if (data.isIntraState) {
+      if (show("taxable")) lines.push(["Taxable Value:", n(data.taxableAmount)]);
+      if (!show("taxLines")) {
+        // (tax lines hidden by the owner)
+      } else if (data.isIntraState) {
         if (data.cgstAmount) lines.push(["CGST:", n(data.cgstAmount)]);
         if (data.sgstAmount) lines.push(["SGST:", n(data.sgstAmount)]);
       } else if (data.igstAmount) {
         lines.push(["IGST:", n(data.igstAmount)]);
       }
     }
-    if (data.roundOffAmount && Math.abs(data.roundOffAmount) > 0.001) {
+    if (show("roundOff") && data.roundOffAmount && Math.abs(data.roundOffAmount) > 0.001) {
       lines.push(["Round Off:", `${data.roundOffAmount > 0 ? "+" : "-"}${n(Math.abs(data.roundOffAmount))}`]);
     }
   } else if (data.taxTotal) {
     lines.push(["Tax:", n(data.taxTotal)]);
   }
   // On 58mm the counts take a line of their own; on 80mm they sit beside the first totals.
-  if (!wide) b.text(counts.join("   ")).newline();
-  lines.forEach(([label, value], i) => total(label, value, wide ? (counts[i] ?? "") : ""));
-  if (wide) for (const c of counts.slice(lines.length)) b.text(c).newline();
+  const shownCounts = show("counts") ? counts : [];
+  if (!wide && shownCounts.length) b.text(shownCounts.join("   ")).newline();
+  lines.forEach(([label, value], i) => total(label, value, wide ? (shownCounts[i] ?? "") : ""));
+  if (wide) for (const c of shownCounts.slice(lines.length)) b.text(c).newline();
 
   b.text(buildDivider(profile, "=")).newline();
   b.bold(format.totalBold || format.totalSize >= 2).italic(format.totalItalic).sizeLevel(format.totalSize);
@@ -335,18 +349,18 @@ export function buildReceiptEscPos(data: ReceiptData, charsWide: 32 | 48 = 32, f
   b.align("left");
   b.sizeLevel(1).bold(false).italic(false);
   b.text(buildDivider(profile, "=")).newline();
-  for (const line of wrap(amountInWords(data.total), charsWide)) b.text(line).newline();
+  if (show("amountWords")) for (const line of wrap(amountInWords(data.total), charsWide)) b.text(line).newline();
 
   if (data.exchangeLabel && data.exchangeAmount && data.exchangeAmount > 0) total(`${data.exchangeLabel}:`, `-${n(data.exchangeAmount)}`);
   // (Nothing more to say when old gold, a scheme or prepaid balance covered it all.)
-  if (data.paidAmount !== undefined && (data.paidAmount > 0 || !data.exchangeAmount)) total(data.paymentLabel ? `Paid (${data.paymentLabel}):` : "Paid:", n(data.paidAmount));
-  if (data.creditAmount) total("Balance due (Udhaar):", n(data.creditAmount));
-  if (data.savingsOffMrp) b.newline().align("center").text(`You saved Rs.${n(data.savingsOffMrp)} on MRP`).newline().align("left");
+  if (show("paid") && data.paidAmount !== undefined && (data.paidAmount > 0 || !data.exchangeAmount)) total(data.paymentLabel ? `Paid (${data.paymentLabel}):` : "Paid:", n(data.paidAmount));
+  if (show("balance") && data.creditAmount) total("Balance due (Udhaar):", n(data.creditAmount));
+  if (show("savings") && data.savingsOffMrp) b.newline().align("center").text(`You saved Rs.${n(data.savingsOffMrp)} on MRP`).newline().align("left");
 
   // GST per rate — what a customer (or their CA) needs to check or claim the tax. The taxable part
   // is worked back from each line's tax, so it holds whether prices include GST or not.
   const rates = new Map<number, { taxable: number; tax: number }>();
-  if (showTax && data.gstin && data.items.length > 0 && data.items.every((it) => it.gstPercent != null)) {
+  if (show("gstSummary") && showTax && data.gstin && data.items.length > 0 && data.items.every((it) => it.gstPercent != null)) {
     for (const it of data.items) {
       const rate = Number(it.gstPercent);
       const tax = Number(it.taxAmount ?? 0);
@@ -365,12 +379,14 @@ export function buildReceiptEscPos(data: ReceiptData, charsWide: 32 | 48 = 32, f
     }
   }
 
-  b.text(buildDivider(profile)).newline();
-  b.row("E.&O.E.", `For ${data.shopName}`.slice(0, charsWide - 9), charsWide);
+  if (show("eoe") || show("forShop")) {
+    b.text(buildDivider(profile)).newline();
+    b.row(show("eoe") ? "E.&O.E." : "", show("forShop") ? `For ${data.shopName}`.slice(0, charsWide - 9) : "", charsWide);
+  }
   b.newline();
   b.align("center");
-  if (data.footerText) b.text(data.footerText).newline();
-  b.text("Thank you! Visit again").newline();
+  if (show("footer") && data.footerText) b.text(data.footerText).newline();
+  if (show("thankYou")) b.text("Thank you! Visit again").newline();
 
   b.feedAndCut();
   return b.build();

@@ -59,7 +59,10 @@ function route(request: NextRequest) {
     if (loggedIn && HOME_SCREENS.has(home)) return NextResponse.redirect(new URL(home, request.url));
   }
 
-  return NextResponse.next();
+  // Which screen this is, for the staff access check in requireSession (lib/staffAccess).
+  const forward = new Headers(request.headers);
+  forward.set("x-ray-path", pathname);
+  return NextResponse.next({ request: { headers: forward } });
 }
 
 export const config = {

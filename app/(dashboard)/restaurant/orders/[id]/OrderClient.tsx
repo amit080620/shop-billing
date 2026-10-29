@@ -995,7 +995,7 @@ function BillPrintView({
       taxTotal: order.cgstAmount + order.sgstAmount + order.igstAmount,
       total: order.total,
     };
-    return buildReceiptEscPos(receipt, paperWidth, format);
+    return buildReceiptEscPos(receipt, paperWidth, { ...format, hidden: settings.hiddenFields });
   }
 
   function shareOnWhatsApp() {

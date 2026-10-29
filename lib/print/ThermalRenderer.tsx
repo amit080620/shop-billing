@@ -1,6 +1,7 @@
 import type { CSSProperties, ReactNode } from "react";
 import { amountInWords } from "../amountInWords";
 import { DEFAULT_THERMAL_FORMAT, sizeEm, type ThermalFormat } from "./thermalFormat";
+import { shownWith } from "./receiptFields";
 
 export type ThermalReceiptItem = {
   name: string;
@@ -85,13 +86,18 @@ export function ThermalRenderer({
   format?: ThermalFormat;
 }) {
   const wide = paperWidth === 80;
+  // What the owner chose to print (Settings → Thermal print settings → What prints).
+  const show = shownWith(format.hidden);
   const showTax = !data.isComposition && !!data.gstin;
   // The GST% column only fits on 80mm paper; on 58mm the rate shows in the summary below.
-  const gstColumn = wide && showTax;
+  const gstColumn = wide && showTax && show("gstRate");
+  const qtyCol = show("qty");
+  const rateCol = show("rate");
+  const cols = 2 + (qtyCol ? 1 : 0) + (rateCol ? 1 : 0) + (gstColumn ? 1 : 0);
   const itemCount = data.items.length;
   const qtyTotal = data.items.reduce((s, it) => s + it.qty, 0);
   const roundOff = data.roundOffAmount && Math.abs(data.roundOffAmount) > 0.001 ? data.roundOffAmount : 0;
-  const summary = showTax ? gstSummary(data.items) : [];
+  const summary = showTax && show("gstSummary") ? gstSummary(data.items) : [];
 
   const cell: CSSProperties = { padding: "1px 0", verticalAlign: "top" };
   const num: CSSProperties = { ...cell, textAlign: "right", whiteSpace: "nowrap", paddingLeft: 4 };
@@ -122,10 +128,12 @@ export function ThermalRenderer({
       )}
 
       {/* Header */}
-      <div style={{ textAlign: "center", fontSize: "0.8em", fontWeight: 800, letterSpacing: "0.12em" }}>
-        {showTax ? "TAX INVOICE" : data.isComposition ? "BILL OF SUPPLY" : "INVOICE"}
-      </div>
-      <div
+      {show("title") && (
+        <div style={{ textAlign: "center", fontSize: "0.8em", fontWeight: 800, letterSpacing: "0.12em" }}>
+          {showTax ? "TAX INVOICE" : data.isComposition ? "BILL OF SUPPLY" : "INVOICE"}
+        </div>
+      )}
+      {show("shopName") && <div
         style={{
           fontSize: `${sizeEm(format.shopNameSize) * SHOP_NAME_SCALE}em`,
           fontWeight: format.shopNameBold ? 700 : 400,
@@ -137,70 +145,77 @@ export function ThermalRenderer({
         }}
       >
         {data.shopName}
-      </div>
-      {data.tagline && <div style={{ textAlign: "center", fontSize: "0.9em" }}>{data.tagline}</div>}
-      {data.shopAddress && <div style={{ textAlign: "center", fontSize: "0.9em", textTransform: "uppercase" }}>{data.shopAddress}</div>}
-      {data.gstin && <div style={{ textAlign: "center", fontWeight: 800, marginTop: 1 }}>GSTIN: {data.gstin}</div>}
+      </div>}
+      {show("tagline") && data.tagline && <div style={{ textAlign: "center", fontSize: "0.9em" }}>{data.tagline}</div>}
+      {show("address") && data.shopAddress && <div style={{ textAlign: "center", fontSize: "0.9em", textTransform: "uppercase" }}>{data.shopAddress}</div>}
+      {show("gstin") && data.gstin && <div style={{ textAlign: "center", fontWeight: 800, marginTop: 1 }}>GSTIN: {data.gstin}</div>}
       {data.isComposition && <div style={{ textAlign: "center", fontSize: "0.85em" }}>Composition taxable person, not eligible to collect tax on supplies</div>}
 
       {/* Customer | bill number, date, time — side by side on 80mm, one under the other on 58mm */}
       <div style={{ borderTop: RULE, borderBottom: RULE, marginTop: 4, padding: "3px 0", display: "flex", flexDirection: wide ? "row" : "column-reverse", gap: wide ? 6 : 2 }}>
         <div style={{ flex: "1 1 auto", minWidth: 0 }}>
-          <Field label="Customer" value={data.customerName || "Cash"} />
-          {data.customerPhone && <Field label="Mobile" value={data.customerPhone} />}
-          {data.customerGstin && <Field label="GSTIN" value={data.customerGstin} />}
+          {show("customer") && <Field label="Customer" value={data.customerName || "Cash"} />}
+          {show("mobile") && data.customerPhone && <Field label="Mobile" value={data.customerPhone} />}
+          {show("customerGstin") && data.customerGstin && <Field label="GSTIN" value={data.customerGstin} />}
           {data.serviceProviderName && <Field label="Stylist" value={data.serviceProviderName} />}
-          <Field label="Payment" value={data.paymentLabel} />
+          {show("payment") && <Field label="Payment" value={data.paymentLabel} />}
         </div>
         {wide ? (
           <div style={{ flex: "0 0 auto", textAlign: "right", whiteSpace: "nowrap" }}>
-            <div>
-              Bill No. <b style={{ fontWeight: 800 }}>{data.invoiceNumber}</b>
-            </div>
-            <div>Date: {data.dateText}</div>
-            {data.timeText && <div>Time: {data.timeText}</div>}
+            {show("billNo") && (
+              <div>
+                Bill No. <b style={{ fontWeight: 800 }}>{data.invoiceNumber}</b>
+              </div>
+            )}
+            {show("date") && <div>Date: {data.dateText}</div>}
+            {show("time") && data.timeText && <div>Time: {data.timeText}</div>}
           </div>
         ) : (
           <div>
-            <div style={{ display: "flex", justifyContent: "space-between", gap: 4 }}>
-              <span>Bill No.</span>
-              <b style={{ fontWeight: 800 }}>{data.invoiceNumber}</b>
-            </div>
-            <div style={{ display: "flex", justifyContent: "space-between", gap: 4 }}>
-              <span>{data.dateText}</span>
-              <span>{data.timeText}</span>
-            </div>
+            {show("billNo") && (
+              <div style={{ display: "flex", justifyContent: "space-between", gap: 4 }}>
+                <span>Bill No.</span>
+                <b style={{ fontWeight: 800 }}>{data.invoiceNumber}</b>
+              </div>
+            )}
+            {(show("date") || show("time")) && (
+              <div style={{ display: "flex", justifyContent: "space-between", gap: 4 }}>
+                <span>{show("date") ? data.dateText : ""}</span>
+                <span>{show("time") ? data.timeText : ""}</span>
+              </div>
+            )}
           </div>
         )}
       </div>
-      {data.placeOfSupplyText && <div style={{ fontSize: "0.85em", padding: "1px 0" }}>{data.placeOfSupplyText}</div>}
+      {show("place") && data.placeOfSupplyText && <div style={{ fontSize: "0.85em", padding: "1px 0" }}>{data.placeOfSupplyText}</div>}
 
       {/* Items */}
       <table style={{ width: "100%", borderCollapse: "collapse", marginTop: 2, fontWeight: format.itemsBold ? 700 : 600 }}>
         <thead>
           <tr>
             <th style={{ ...cell, ...head, textAlign: "left" }}>{wide ? "S. Description" : "Item"}</th>
-            <th style={{ ...mid, ...head }}>Qty</th>
-            <th style={{ ...num, ...head }}>Rate</th>
+            {qtyCol && <th style={{ ...mid, ...head }}>Qty</th>}
+            {rateCol && <th style={{ ...num, ...head }}>Rate</th>}
             {gstColumn && <th style={{ ...mid, ...head, paddingLeft: 6 }}>GST%</th>}
             <th style={{ ...num, ...head }}>Amt</th>
           </tr>
         </thead>
         <tbody>
           {data.items.flatMap((it, i) => {
-            const showMrp = it.mrp != null && it.mrp > it.rate;
+            const showMrp = show("mrp") && it.mrp != null && it.mrp > it.rate;
+            const warranty = show("warranty") ? it.warrantyText : null;
             const notes = (
               <>
                 {showMrp && <Sub>MRP {money(it.mrp!)}</Sub>}
-                {it.warrantyText && <Sub>{it.warrantyText}</Sub>}
+                {warranty && <Sub>{warranty}</Sub>}
               </>
             );
             // On 58mm the name column is narrow: a longer name (or one with notes) gets the whole
             // line, and its numbers go on the next line under their headings.
-            const ownLine = !wide && (it.name.length > 12 || showMrp || !!it.warrantyText);
+            const ownLine = !wide && (it.name.length > 12 || showMrp || !!warranty);
             const name = ownLine ? null : (
               <td style={{ ...cell, overflowWrap: "anywhere", paddingTop: 3 }}>
-                {wide && <span>{i + 1}. </span>}
+                {wide && show("serial") && <span>{i + 1}. </span>}
                 {it.name}
                 {notes}
               </td>
@@ -208,7 +223,7 @@ export function ThermalRenderer({
             const rows = ownLine
               ? [
                   <tr key={`${i}n`}>
-                    <td colSpan={4} style={{ ...cell, overflowWrap: "anywhere", paddingTop: 3 }}>
+                    <td colSpan={cols} style={{ ...cell, overflowWrap: "anywhere", paddingTop: 3 }}>
                       {it.name}
                       {notes}
                     </td>
@@ -219,8 +234,8 @@ export function ThermalRenderer({
               ...rows,
               <tr key={i}>
               {name ?? <td style={cell} />}
-              <td style={{ ...mid, paddingTop: 3 }}>{qtyText(it.qty)}</td>
-              <td style={{ ...num, paddingTop: 3 }}>{money(it.rate)}</td>
+              {qtyCol && <td style={{ ...mid, paddingTop: 3 }}>{qtyText(it.qty)}</td>}
+              {rateCol && <td style={{ ...num, paddingTop: 3 }}>{money(it.rate)}</td>}
               {gstColumn && <td style={{ ...mid, paddingLeft: 6, paddingTop: 3 }}>{it.gstPercent != null ? pctText(it.gstPercent) : ""}</td>}
               <td style={{ ...num, paddingTop: 3 }}>{money(it.amount)}</td>
               </tr>,
@@ -231,19 +246,21 @@ export function ThermalRenderer({
 
       {/* Totals */}
       <div style={{ borderTop: RULE, marginTop: 3, paddingTop: 3, display: "flex", gap: 6 }}>
-        <div style={{ flex: "0 0 auto", fontSize: "0.9em", whiteSpace: "nowrap" }}>
-          Items: {itemCount}
-          <br />
-          Qty: {qtyText(qtyTotal)}
-        </div>
+        {show("counts") && (
+          <div style={{ flex: "0 0 auto", fontSize: "0.9em", whiteSpace: "nowrap" }}>
+            Items: {itemCount}
+            <br />
+            Qty: {qtyText(qtyTotal)}
+          </div>
+        )}
         <div style={{ flex: 1 }}>
-          <Line label="Sub Total" value={money(data.subtotal)} />
-          {data.discountAmount != null && data.discountAmount > 0 && <Line label={data.discountLabel ?? "Discount"} value={`- ${money(data.discountAmount)}`} />}
-          {showTax && <Line label="Taxable Value" value={money(data.taxableAmount)} />}
-          {showTax && data.isIntraState && !!data.cgstAmount && <Line label="CGST" value={money(data.cgstAmount)} />}
-          {showTax && data.isIntraState && !!data.sgstAmount && <Line label="SGST" value={money(data.sgstAmount)} />}
-          {showTax && !data.isIntraState && !!data.igstAmount && <Line label="IGST" value={money(data.igstAmount)} />}
-          {roundOff !== 0 && <Line label="Round Off" value={`${roundOff > 0 ? "+" : "-"} ${money(Math.abs(roundOff))}`} />}
+          {show("subtotal") && <Line label="Sub Total" value={money(data.subtotal)} />}
+          {show("discount") && data.discountAmount != null && data.discountAmount > 0 && <Line label={data.discountLabel ?? "Discount"} value={`- ${money(data.discountAmount)}`} />}
+          {showTax && show("taxable") && <Line label="Taxable Value" value={money(data.taxableAmount)} />}
+          {showTax && show("taxLines") && data.isIntraState && !!data.cgstAmount && <Line label="CGST" value={money(data.cgstAmount)} />}
+          {showTax && show("taxLines") && data.isIntraState && !!data.sgstAmount && <Line label="SGST" value={money(data.sgstAmount)} />}
+          {showTax && show("taxLines") && !data.isIntraState && !!data.igstAmount && <Line label="IGST" value={money(data.igstAmount)} />}
+          {show("roundOff") && roundOff !== 0 && <Line label="Round Off" value={`${roundOff > 0 ? "+" : "-"} ${money(Math.abs(roundOff))}`} />}
         </div>
       </div>
 
@@ -267,13 +284,13 @@ export function ThermalRenderer({
           <div style={{ ...style, textAlign: format.totalAlign }}>TOTAL Rs.{money(data.total)}</div>
         );
       })()}
-      <div style={{ fontSize: "0.9em", padding: "2px 0" }}>{amountInWords(data.total)}</div>
+      {show("amountWords") && <div style={{ fontSize: "0.9em", padding: "2px 0" }}>{amountInWords(data.total)}</div>}
 
       {data.exchangeLabel && data.exchangeAmount != null && data.exchangeAmount > 0 && <Line label={data.exchangeLabel} value={`- ${money(data.exchangeAmount)}`} />}
-      {(data.paidAmount > 0 || !data.exchangeAmount) && <Line label={`Paid (${data.paymentLabel})`} value={money(data.paidAmount)} />}
-      {data.creditAmount != null && data.creditAmount > 0 && <Line label="Balance due (Udhaar)" value={money(data.creditAmount)} strong />}
+      {show("paid") && (data.paidAmount > 0 || !data.exchangeAmount) && <Line label={`Paid (${data.paymentLabel})`} value={money(data.paidAmount)} />}
+      {show("balance") && data.creditAmount != null && data.creditAmount > 0 && <Line label="Balance due (Udhaar)" value={money(data.creditAmount)} strong />}
 
-      {data.savingsOffMrp != null && data.savingsOffMrp > 0 && (
+      {show("savings") && data.savingsOffMrp != null && data.savingsOffMrp > 0 && (
         <div style={{ border: RULE, textAlign: "center", fontWeight: 800, margin: "4px 0", padding: "2px 0" }}>
           You saved Rs.{money(data.savingsOffMrp)} on MRP
         </div>
@@ -314,19 +331,22 @@ export function ThermalRenderer({
         </table>
       )}
 
-      {data.bankDetails && <Block>{data.bankDetails}</Block>}
-      {data.termsAndConditions && (
+      {show("bank") && data.bankDetails && <Block>{data.bankDetails}</Block>}
+      {show("terms") && data.termsAndConditions && (
         <Block>
           <div style={{ fontWeight: 800 }}>Terms &amp; Conditions</div>
           {data.termsAndConditions}
         </Block>
       )}
 
-      <div style={{ borderTop: RULE, marginTop: 4, paddingTop: 3, display: "flex", justifyContent: "space-between", fontSize: "0.85em" }}>
-        <span>E.&amp;O.E.</span>
-        <span>For {data.shopName}</span>
-      </div>
-      <div style={{ textAlign: "center", fontWeight: 800, marginTop: 4 }}>{data.footerText || "Thank you! Visit again"}</div>
+      {(show("eoe") || show("forShop")) && (
+        <div style={{ borderTop: RULE, marginTop: 4, paddingTop: 3, display: "flex", justifyContent: "space-between", fontSize: "0.85em" }}>
+          <span>{show("eoe") ? "E.&O.E." : ""}</span>
+          <span>{show("forShop") ? `For ${data.shopName}` : ""}</span>
+        </div>
+      )}
+      {show("footer") && data.footerText && <div style={{ textAlign: "center", fontWeight: 800, marginTop: 4 }}>{data.footerText}</div>}
+      {show("thankYou") && <div style={{ textAlign: "center", fontWeight: 800, marginTop: 4 }}>Thank you! Visit again</div>}
     </div>
   );
 }

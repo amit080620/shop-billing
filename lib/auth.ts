@@ -2,6 +2,8 @@ import "server-only";
 
 import { AsyncLocalStorage } from "node:async_hooks";
 import { redirect } from "next/navigation";
+import { headers } from "next/headers";
+import { canOpen } from "./staffAccess";
 import { after } from "next/server";
 import { firstRequestHere, INSTANCE_ID } from "./instance";
 import { istDay } from "./speedWatch";
@@ -203,7 +205,14 @@ export async function requireSession(): Promise<SessionContext> {
     redirect("/login");
   }
 
-  return sessionFromStaff(user.id, user.email ?? null, staff);
+  const session = sessionFromStaff(user.id, user.email ?? null, staff);
+  // A staff member opening a screen the owner hasn't given them (lib/staffAccess) — by a link or by
+  // typing its address — is shown why instead. The middleware passes on which screen it is.
+  if (session.role !== "owner") {
+    const path = (await headers()).get("x-ray-path");
+    if (path && !canOpen(session, path)) redirect(`/no-access?from=${encodeURIComponent(path)}`);
+  }
+  return session;
 }
 
 /** For Admin → Speed: a request that met a server instance which had only just started (a cold

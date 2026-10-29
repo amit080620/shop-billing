@@ -14,6 +14,8 @@ export type ThermalFormat = {
   totalItalic: boolean;
   totalSize: number;
   totalAlign: ThermalAlign;
+  /** Parts of the receipt the owner hid (lib/print/receiptFields). Same for both paper widths. */
+  hidden?: string[];
 };
 
 /** Size steps offered in settings. The number stored in the database is the
@@ -53,6 +55,7 @@ type SavedSettings = {
   t58ItemsBold: boolean; t58TotalBold: boolean; t58TotalItalic: boolean; t58TotalSize: number; t58TotalAlign: ThermalAlign;
   t80ShopNameBold: boolean; t80ShopNameItalic: boolean; t80ShopNameSize: number; t80ShopNameAlign: ThermalAlign;
   t80ItemsBold: boolean; t80TotalBold: boolean; t80TotalItalic: boolean; t80TotalSize: number; t80TotalAlign: ThermalAlign;
+  hiddenFields?: string[];
 };
 
 /** Picks the saved settings for one paper width. */
@@ -61,9 +64,11 @@ export function thermalFormatFor(settings: SavedSettings, paper: 58 | 80): Therm
     ? {
         shopNameBold: settings.t58ShopNameBold, shopNameItalic: settings.t58ShopNameItalic, shopNameSize: settings.t58ShopNameSize, shopNameAlign: settings.t58ShopNameAlign,
         itemsBold: settings.t58ItemsBold, totalBold: settings.t58TotalBold, totalItalic: settings.t58TotalItalic, totalSize: settings.t58TotalSize, totalAlign: settings.t58TotalAlign,
+        hidden: settings.hiddenFields ?? [],
       }
     : {
         shopNameBold: settings.t80ShopNameBold, shopNameItalic: settings.t80ShopNameItalic, shopNameSize: settings.t80ShopNameSize, shopNameAlign: settings.t80ShopNameAlign,
         itemsBold: settings.t80ItemsBold, totalBold: settings.t80TotalBold, totalItalic: settings.t80TotalItalic, totalSize: settings.t80TotalSize, totalAlign: settings.t80TotalAlign,
+        hidden: settings.hiddenFields ?? [],
       };
 }

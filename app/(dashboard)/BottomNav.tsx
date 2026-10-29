@@ -1,5 +1,6 @@
 "use client";
 
+import { canOpen } from "@/lib/staffAccess";
 import Link from "@/lib/link";
 import { usePathname } from "next/navigation";
 import {
@@ -27,7 +28,12 @@ import { mobileTabs } from "@/lib/mobileTabs";
 import { useKeepReady } from "@/lib/useKeepReady";
 import type { Lang } from "@/lib/i18n/dictionary";
 
+/** The tabs this person may open: a staff member sees only those the owner gave them (lib/staffAccess). */
 export function tabsFor(businessType: string, t: (key: string) => string, permissions: string[] = [], fastBillingEnabled = false) {
+  return allTabsFor(businessType, t, permissions, fastBillingEnabled).filter((tab) => canOpen({ role: "staff", businessType, permissions }, tab.href));
+}
+
+function allTabsFor(businessType: string, t: (key: string) => string, permissions: string[] = [], fastBillingEnabled = false) {
   if (permissions.includes("kitchen_only")) {
     return [{ href: "/restaurant-kds", label: t("nav.kitchen"), icon: KitchenIcon }];
   }

@@ -1,7 +1,9 @@
 "use server";
 
+import { PERMISSIONS } from "../permissions";
+import { ACCESS_V2, STAFF_AREAS } from "../staffAccess";
 import { revalidatePath } from "next/cache";
-import { requireOwner } from "../auth";
+import { requireOwner, revalidateStaffCache } from "../auth";
 import { createSupabaseAdminClient } from "../supabase/admin";
 import { staffLimitError } from "../planLimits";
 import { staffInviteSchema } from "../validation/schemas";
@@ -48,6 +50,8 @@ export async function addStaffAction(
     shop_id: session.shopId,
     name: parsed.data.name,
     role: parsed.data.role,
+    // A new staff member can bill and nothing more until the owner gives them more (lib/staffAccess).
+    permissions: [ACCESS_V2],
   });
   if (staffError) {
     await admin.auth.admin.deleteUser(authData.user.id);
@@ -176,11 +180,16 @@ export async function savePermissionsAction(staffId: string, permissions: string
   if (!existing) return { error: "Staff member not found" };
   if (existing.role === "owner") return { error: "Owner accounts always have every permission." };
 
+  // Only known permissions; saving here always puts the staff member on the area list (lib/staffAccess).
+  const known = new Set<string>([...PERMISSIONS.map((p) => p.key), ...STAFF_AREAS.map((a) => a.key)]);
+  permissions = [ACCESS_V2, ...new Set(permissions.filter((p) => known.has(p)))];
   const { error } = await admin.from("staff").update({ permissions }).eq("id", staffId).eq("shop_id", session.shopId);
   if (error) {
     console.error("Could not save permissions", error);
     return { error: "Could not save permissions" };
   }
+  // Their very next screen follows the new permissions, not a copy kept for a minute.
+  await revalidateStaffCache(staffId);
 
   await logAuditEvent({
     admin,
