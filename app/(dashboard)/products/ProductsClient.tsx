@@ -168,9 +168,9 @@ export function ProductsClient({
         ? await updateProductAction(editingProduct.id, prev, formData)
         : await createProductAction(prev, formData);
       if (!result?.error) {
-        // The list (and every other screen kept in memory) refreshes behind the scenes; the form
-        // closes now instead of waiting for the whole page to be rebuilt.
-        startTransition(() => router.refresh());
+        // The list (and every other screen kept in memory) refreshes behind the scenes, once this save
+        // has finished — inside it, React would keep the form open until the refresh was done too.
+        setTimeout(() => router.refresh(), 0);
         const name = String(formData.get("name") ?? "");
         if (!wasEditing && addAnotherRef.current) {
           setFormNonce((n) => n + 1);
