@@ -1,6 +1,7 @@
 "use client";
 
 import { startTransition, useActionState, useEffect, useState } from "react";
+import { clearScreens } from "@/lib/screenCache";
 import {
   Eye,
   EyeOff,
@@ -82,6 +83,11 @@ export function AuthForm({
   pleaseWaitLabel?: string;
 }) {
   const [state, formAction, isPending] = useActionState(action, null);
+
+  // Screens kept on this phone (lib/screenCache) belong to the last session: none outlive it.
+  useEffect(() => {
+    void clearScreens();
+  }, []);
 
   // Success hands back a destination; go there with a full page load (see
   // ActionState in lib/actions/auth.ts for why not a client-side redirect).
