@@ -661,6 +661,15 @@ function FastCheckoutButton({
      
   }, [voiceCustomer]);
   const [state, formAction, isPending] = useActionState(keepValuesOnError(createBillAction), null);
+  // Set the moment the bill is sent, cleared by the answer (an error) — as on New Bill, where the
+  // form's own pending status didn't show; after 25 s with no answer it clears too.
+  const [saving, setSaving] = useState(false);
+  useEffect(() => setSaving(false), [state]);
+  useEffect(() => {
+    if (!saving) return;
+    const timer = setTimeout(() => setSaving(false), 25000);
+    return () => clearTimeout(timer);
+  }, [saving]);
   const formRef = useRef<HTMLFormElement>(null);
 
   const subtotal = cart.reduce((s, l) => s + l.qty * l.price, 0);
@@ -854,9 +863,9 @@ function FastCheckoutButton({
       {paymentMethod === "cash" && cart.length > 0 && !focusMode && <CashChange total={payable} resetKey={cart.length === 0} />}
 
       {/* The bill shows the moment Checkout is tapped; its number and print follow from the server. */}
-      <SavingBill pending={isPending} lines={cart.map((l) => ({ name: l.name, quantity: l.qty, amount: Math.round(l.qty * l.price * 100) / 100 }))} total={payable} />
+      <SavingBill pending={isPending || saving} lines={cart.map((l) => ({ name: l.name, quantity: l.qty, amount: Math.round(l.qty * l.price * 100) / 100 }))} total={payable} />
 
-      <form ref={formRef} action={formAction} className={focusMode ? "hidden" : ""}>
+      <form ref={formRef} action={formAction} onSubmit={() => setSaving(true)} className={focusMode ? "hidden" : ""}>
         <input type="hidden" name="payload" value={payload} />
         <button
           type="button"
