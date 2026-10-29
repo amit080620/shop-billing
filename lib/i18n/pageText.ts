@@ -428,6 +428,15 @@ export const PAGE_TEXT: Record<string, [hi: string, mr: string]> = {
   "Which items show up, and any offer price/badge on them, is controlled per-item in Products — look for \"Show this item in the public catalog\" on each item.": ["कौन सा सामान दिखेगा और उस पर ऑफ़र, यह Products में हर सामान पर तय होता है — \"Show this item in the public catalog\" देखें।", "कोणत्या वस्तू दिसतील व त्यावरील ऑफर, हे Products मध्ये प्रत्येक वस्तूवर ठरते — \"Show this item in the public catalog\" पहा."],
   "View incoming orders": ["आए ऑर्डर देखें", "आलेले ऑर्डर पहा"],
 
+  // Change to give back
+  "Customer gave (for change)": ["ग्राहक ने दिए (छुट्टे के लिए)","ग्राहकाने दिले (सुट्ट्यांसाठी)"],
+  "Exact": ["पूरे","बरोबर"],
+  "Other ₹": ["दूसरा ₹","इतर ₹"],
+  "Amount the customer gave": ["ग्राहक ने कितने दिए","ग्राहकाने किती दिले"],
+  "Exact — no change": ["पूरे — छुट्टे नहीं","बरोबर — सुट्टे नाहीत"],
+  "Give back {amount}": ["{amount} वापस दें","{amount} परत द्या"],
+  "{amount} short": ["{amount} कम हैं","{amount} कमी आहेत"],
+
   // Thermal print: what prints
   "What prints on the bill": ["बिल पर क्या छपे","बिलावर काय छापले जाईल"],
   "Show everything": ["सब दिखाएं","सर्व दाखवा"],

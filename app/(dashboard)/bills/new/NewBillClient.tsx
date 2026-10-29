@@ -1,5 +1,6 @@
 "use client";
 
+import { CashChange } from "@/app/components/CashChange";
 import { keepValuesOnError } from "@/lib/keepValuesOnError";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "@/lib/link";
@@ -1592,6 +1593,15 @@ export function NewBillClient({
             className="rounded-lg border border-border px-3.5 py-2.5 text-sm outline-none focus:border-brand"
           />
         </label>
+
+        {/* Cash at the counter: what the customer handed over, and the change to give back. */}
+        {paymentMethod === "cash" && paidAmount !== 0 && cart.length > 0 && (
+          <CashChange
+            total={Math.max(0, round2(totals.total - exchangeValue))}
+            onPaidInFull={() => setPaidAmount(Math.max(0, round2(totals.total - exchangeValue)))}
+            resetKey={cart.length === 0}
+          />
+        )}
 
         {typeof paidAmount === "number" && paidAmount > 0 && (
           <div className="border-t border-border pt-3">

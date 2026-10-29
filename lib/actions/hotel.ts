@@ -1,5 +1,6 @@
 "use server";
 
+import { issueInvoiceNumber } from "../invoiceNumber";
 import { revalidatePath } from "next/cache";
 import { requireSession, hasPermission, type SessionContext } from "../auth";
 import { createSupabaseAdminClient } from "../supabase/admin";
@@ -687,10 +688,9 @@ async function insertStayBill(
     buyer: Buyer | null;
   },
 ): Promise<{ billId: string; invoiceNumber: string } | { error: string }> {
-  const financialYear = financialYearFor(new Date());
-  const { data: issued, error: numberError } = await admin.rpc("next_invoice_number", { p_shop_id: session.shopId, p_financial_year: financialYear });
-  if (numberError || issued == null) return { error: "Could not generate an invoice number. Please try again." };
-  const invoiceNumber = `${financialYear}/${String(issued).padStart(5, "0")}`;
+  const issued = await issueInvoiceNumber(admin, session.shopId);
+  if (!issued) return { error: "Could not generate an invoice number. Please try again." };
+  const { invoiceNumber, financialYear } = issued;
   const { data: staffRow } = await admin.from("staff").select("branch_id").eq("id", session.userId).single();
 
   const { data: bill, error } = await admin

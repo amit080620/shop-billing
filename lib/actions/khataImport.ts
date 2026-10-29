@@ -4,6 +4,7 @@ import { requireSession } from "../auth";
 import { createSupabaseAdminClient } from "../supabase/admin";
 import { findOrCreateCustomerByPhone } from "./customers";
 import { financialYearFor } from "../gst";
+import { formatInvoiceNumber } from "../invoiceNumber";
 
 export type KhataImportEntry = { name: string; phone: string | null; amount: number };
 
@@ -20,6 +21,8 @@ export async function createOpeningBalanceEntriesAction(entries: KhataImportEntr
   const session = await requireSession();
   const admin = createSupabaseAdminClient();
   const financialYear = financialYearFor(new Date());
+  const { data: shopRow } = await admin.from("shops").select("invoice_prefix").eq("id", session.shopId).single();
+  const prefix = shopRow?.invoice_prefix ?? null;
 
   let created = 0;
   for (const entry of entries) {
@@ -41,7 +44,7 @@ export async function createOpeningBalanceEntriesAction(entries: KhataImportEntr
 
     const { data: issuedNumber, error: numberError } = await admin.rpc("next_invoice_number", { p_shop_id: session.shopId, p_financial_year: financialYear });
     if (numberError || issuedNumber == null) continue;
-    const invoiceNumber = `${financialYear}/${String(issuedNumber).padStart(5, "0")}`;
+    const invoiceNumber = formatInvoiceNumber(prefix, financialYear, Number(issuedNumber));
 
     const { data: bill, error: billError } = await admin
       .from("bills")

@@ -1,5 +1,7 @@
 "use client";
 
+import { formatInvoiceNumber } from "@/lib/invoiceNumber";
+import { financialYearFor } from "@/lib/gst";
 import { keepValuesOnError } from "@/lib/keepValuesOnError";
 import { useActionState, useEffect, useRef, useState, useTransition } from "react";
 import { useFormStatus } from "react-dom";
@@ -221,8 +223,9 @@ export function SettingsClient({ shop }: { shop: ShopSettings }) {
             defaultValue={shop.invoicePrefix}
           />
           <p className="text-xs text-muted">
-            Invoices are numbered {shop.invoicePrefix || "INV"}-2026-27/00001 style — sequential
-            per financial year, as required for GST filing.
+            Your bills are numbered like <strong>{formatInvoiceNumber(shop.invoicePrefix, financialYearFor(new Date()), 1)}</strong> —
+            sequential per financial year, as GST needs. Leave it as INV for plain numbers (2026-27/00001). At most 16 characters in all,
+            so a long prefix is shortened.
           </p>
         </Section>
 

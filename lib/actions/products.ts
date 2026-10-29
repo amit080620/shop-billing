@@ -140,7 +140,8 @@ export async function createProductAction(
     return { error: "Could not save product" };
   }
 
-  revalidatePath("/products");
+  // No page re-render here: the save answers at once and the Products screen refreshes itself
+  // behind the scenes (ProductsClient) — re-rendering it in this reply held "Saving…" ~2 s.
   await invalidateCache(`ray:cache:products:${session.shopId}`);
   return { productId: inserted?.id };
 }
@@ -248,7 +249,8 @@ export async function updateProductAction(
     console.error("Could not update product", error);
     return { error: "Could not update product" };
   }
-  revalidatePath("/products");
+  // No page re-render here: the save answers at once and the Products screen refreshes itself
+  // behind the scenes (ProductsClient) — re-rendering it in this reply held "Saving…" ~2 s.
   await invalidateCache(`ray:cache:products:${session.shopId}`);
   return null;
 }

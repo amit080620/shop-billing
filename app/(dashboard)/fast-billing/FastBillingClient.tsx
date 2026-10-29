@@ -1,5 +1,6 @@
 "use client";
 
+import { CashChange } from "@/app/components/CashChange";
 import { keepValuesOnError } from "@/lib/keepValuesOnError";
 import { useMemo, useState, useActionState, useRef, useEffect, useCallback } from "react";
 import Image from "next/image";
@@ -847,6 +848,9 @@ function FastCheckoutButton({
           </span>
         </button>
       )}
+
+      {/* Cash at the counter: what the customer handed over, and the change to give back. */}
+      {paymentMethod === "cash" && cart.length > 0 && !focusMode && <CashChange total={payable} resetKey={cart.length === 0} />}
 
       <form ref={formRef} action={formAction} className={focusMode ? "hidden" : ""}>
         <input type="hidden" name="payload" value={payload} />

@@ -6,7 +6,7 @@ import { revalidatePath } from "next/cache";
 import { requireSession, hasPermission, type SessionContext } from "../auth";
 import { createSupabaseAdminClient } from "../supabase/admin";
 import { billSchema, calculateTransactionTotals, type BillInput } from "../validation/schemas";
-import { determineSupplyType, financialYearFor, isPastGstPeriod, round2 } from "../gst";
+import { determineSupplyType, isPastGstPeriod, round2 } from "../gst";
 import { logAuditEvent } from "../audit";
 import { findOrCreateCustomerByPhone, awardLoyaltyPoints } from "./customers";
 import { invalidateCache } from "../cache";
@@ -21,6 +21,7 @@ import { settleChallansForBill } from "../challanData";
 import { freeFollowUp } from "../followUp";
 import { gapsReady } from "../gapsData";
 import { isClientRef, offlineBillsReady, offlineIssuedAt } from "../offlineBills";
+import { issueInvoiceNumber } from "../invoiceNumber";
 import { dueDateFor, partyTerms } from "../wholesaleData";
 import { loadPackages, packageUsable, salonExtrasReady, walletBalance } from "../salonExtras";
 import { addDaysIso } from "../dateHelpers";
@@ -280,15 +281,12 @@ export async function createBillCore(
     return { error: `The scheme is worth ${formatMoney(scheme.value)} — pick jewellery worth at least that much.` };
   }
 
-  const financialYear = financialYearFor(offline?.issuedAt ?? new Date());
-  const { data: issuedNumber, error: numberError } = await admin.rpc(
-    "next_invoice_number",
-    { p_shop_id: session.shopId, p_financial_year: financialYear },
-  );
-  if (numberError || issuedNumber == null) {
+  // The shop's own prefix, when it set one ("SS/26-27/00042"; lib/invoiceNumber).
+  const issued = await issueInvoiceNumber(admin, session.shopId, offline?.issuedAt ?? new Date());
+  if (!issued) {
     return { error: "Could not generate an invoice number. Please try again." };
   }
-  const invoiceNumber = `${financialYear}/${String(issuedNumber).padStart(5, "0")}`;
+  const { invoiceNumber, financialYear } = issued;
 
   // Auto-tag the bill with whichever branch this staff member is
   // assigned to — the owner (or unassigned staff) end up with a null
