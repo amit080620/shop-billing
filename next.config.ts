@@ -12,7 +12,10 @@ const nextConfig: NextConfig = {
   experimental: {
     // How long a screen loaded ahead (the bottom bar's billing screens) is used as it is before
     // being fetched again — short, so stock and customer lists are never far behind.
-    staleTimes: { static: 120 },
+    // A screen opened in the last 30 seconds shows again at once, from the phone's memory, instead of
+    // waiting on the network (what made switching tabs lag). A save that changes data clears it
+    // (revalidatePath), and one that doesn't is caught by lib/actionGuard + FreshAfterSave.
+    staleTimes: { static: 120, dynamic: 30 },
     serverActions: {
       // Genuinely raised from the 1MB default — a real medicine
       // database CSV/Excel import (thousands of rows, each with long

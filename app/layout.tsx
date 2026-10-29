@@ -9,6 +9,7 @@ import { FocusScrollIntoView } from "./components/FocusScrollIntoView";
 import { VersionWatcher } from "./components/VersionWatcher";
 import { SpeedWatch } from "./components/SpeedWatch";
 import { PrefetchOnTouch } from "./components/PrefetchOnTouch";
+import { FreshAfterSave } from "./components/FreshAfterSave";
 import { TapFeedback } from "./components/TapFeedback";
 import { INSTANCE_ID } from "@/lib/instance";
 import { CalculatorAmountProvider } from "@/lib/calculatorAmount";
@@ -177,6 +178,7 @@ export default async function RootLayout({
         <VersionWatcher words={{ available: t("A new version is available"), refresh: t("Refresh") }} />
         <SpeedWatch />
         <PrefetchOnTouch />
+        <FreshAfterSave />
         <TapFeedback />
         <CalculatorAmountProvider>
           <ToastProvider>{children}</ToastProvider>

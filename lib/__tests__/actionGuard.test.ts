@@ -54,3 +54,21 @@ describe("installActionGuard", () => {
     expect(reload).toHaveBeenCalled();
   });
 });
+
+describe("remembered screens after a save", () => {
+  it("are marked for a refresh only when the save didn't clear them itself", async () => {
+    const { takeScreensStale } = await import("../actionGuard");
+    let p = page({ "x-ray-build": "build-old", "x-action-revalidated": "[[],0,0]" });
+    await p.win.fetch("/bills/new", action);
+    expect(takeScreensStale()).toBe(true);
+    expect(takeScreensStale()).toBe(false);
+
+    p = page({ "x-ray-build": "build-old", "x-action-revalidated": "[[],1,0]" });
+    await p.win.fetch("/bills/new", action);
+    expect(takeScreensStale()).toBe(false);
+
+    p = page({ "x-ray-build": "build-old" });
+    await p.win.fetch("/api/version");
+    expect(takeScreensStale()).toBe(false);
+  });
+});

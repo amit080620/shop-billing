@@ -22,6 +22,20 @@ function isServerAction(init?: RequestInit): boolean {
  * crash screen reloaded the old page, so a new bill looked like it had failed
  * and could be made twice. The middleware stamps every server action reply with
  * the server's deploy id (x-ray-build). Normal replies pass straight through. */
+/** Screens remembered in the router may be out of date after a save. */
+export function markScreensStale() {
+  if (typeof window !== "undefined") (window as Window & { __rayScreensStale?: boolean }).__rayScreensStale = true;
+}
+
+/** True once after a save marked them, then false until the next. */
+export function takeScreensStale(): boolean {
+  if (typeof window === "undefined") return false;
+  const w = window as Window & { __rayScreensStale?: boolean };
+  const stale = !!w.__rayScreensStale;
+  w.__rayScreensStale = false;
+  return stale;
+}
+
 export function installActionGuard() {
   if (typeof window === "undefined" || !CLIENT_BUILD) return;
   const w = window as Window & { __rayActionGuard?: boolean };
@@ -32,6 +46,9 @@ export function installActionGuard() {
   window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
     const res = await originalFetch(input, init);
     if (!isServerAction(init)) return res;
+    // A save that didn't clear the remembered screens may have changed what they show: the next
+    // screen opened is refreshed right after it appears (FreshAfterSave).
+    if (!res.headers.get("x-action-redirect") && (res.headers.get("x-action-revalidated") ?? NOTHING_REVALIDATED) === NOTHING_REVALIDATED) markScreensStale();
     const serverBuild = res.headers.get("x-ray-build");
     if (!serverBuild || serverBuild === CLIENT_BUILD) return res;
     const redirect = res.headers.get("x-action-redirect")?.split(";")[0];
