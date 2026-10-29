@@ -1,6 +1,7 @@
 /** Screens kept on this phone or computer (IndexedDB), so a busy screen like New Bill opens at once
- * from the last copy while a fresh one loads. Each copy is tied to the app version that saved it:
- * after an update the screen's shape may differ, so an older copy is never shown.
+ * from the last copy while a fresh one loads. Each copy carries SHAPE, the version of the screens'
+ * data: a copy of another shape is never shown. It used to be the app's release id, which threw
+ * every copy away on each release — so after every update billing waited on the network again.
  *
  * Everything here fails quietly — no storage (private window, old phone) just means the screen
  * waits for the network, as it would without this. Cleared on the log-in page, so a copy never
@@ -8,7 +9,9 @@
 
 const DB = "ray-screens";
 const STORE = "copies";
-const BUILD = process.env.NEXT_PUBLIC_BUILD_ID ?? "dev";
+/** Bump whenever what lib/billing/newBillScreen.ts or fastBillingScreen.ts returns changes shape
+ * (a field added, renamed or retyped in NewBillClient's or FastBillingClient's props). */
+const SHAPE = "2026-10-29";
 
 type Copy<T> = { build: string; savedAt: number; data: T };
 
@@ -45,11 +48,11 @@ async function run<T>(mode: IDBTransactionMode, fn: (store: IDBObjectStore) => I
 /** The copy saved under `key` by this version of the app, or null. */
 export async function readScreen<T>(key: string): Promise<{ data: T; savedAt: number } | null> {
   const copy = await run<Copy<T> | undefined>("readonly", (s) => s.get(key) as IDBRequest<Copy<T> | undefined>);
-  return copy && copy.build === BUILD ? { data: copy.data, savedAt: copy.savedAt } : null;
+  return copy && copy.build === SHAPE ? { data: copy.data, savedAt: copy.savedAt } : null;
 }
 
 export async function saveScreen<T>(key: string, data: T): Promise<void> {
-  await run("readwrite", (s) => s.put({ build: BUILD, savedAt: Date.now(), data } satisfies Copy<T>, key));
+  await run("readwrite", (s) => s.put({ build: SHAPE, savedAt: Date.now(), data } satisfies Copy<T>, key));
 }
 
 /** Forget every kept screen (on the log-in page, and so on log-out). */
