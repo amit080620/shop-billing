@@ -5,11 +5,9 @@
 name: Keep the app warm
 
 on:
-  schedule:
-    # Every 5 minutes, all day: shops open early, restaurants close late, and an idle server is
-    # exactly when the first tap is slow. (While a shop has the app open, useKeepReady keeps its
-    # own screens warm too.)
-    - cron: "*/5 * * * *"
+  # No schedule any more: rendering ~30 screens every 5 minutes, together with the database's
+  # pg_cron job, used up the hosting plan's server time and Vercel paused the site (29 Oct 2026).
+  # Between deploys the database job keeps one server warm with a single light request.
   # Every deploy starts on cold servers: Speed watch caught the first app opening after one taking
   # 5.6 s. On a push, wait for the new deploy to go live, then wake it before a shop gets there.
   push:
@@ -38,7 +36,8 @@ jobs:
 
       - name: Wake the main screens
         run: |
-          paths="/ /login /dashboard /bills/new /fast-billing /bills /customers /products /purchases /reports /more /plans /offers /help /daily-summary /reminders /restaurant /restaurant-kds /hotel /videos /api/version /api/customers/search /api/customers/all /admin /admin/login /admin/support /admin/enquiries /admin/videos /admin/speed"
+          # The screens a shop opens first; the rest load in a tenth of a second on a warm server.
+          paths="/login /dashboard /bills/new /fast-billing /products"
           # Twice after a deploy: the first round starts the servers, the second finds them warm.
           rounds=1
           if [ "${{ github.event_name }}" = "push" ]; then rounds=2; fi
@@ -53,7 +52,7 @@ jobs:
         run: |
           # Several at once, so more than one server instance gets it; each says how long loading took
           # (a cold one shows its real start-up cost).
-          for i in 1 2 3 4 5 6; do
+          for i in 1 2 3; do
             curl -s -m 30 "https://bill.theray.in/api/version?warm=1" &
           done
           wait
