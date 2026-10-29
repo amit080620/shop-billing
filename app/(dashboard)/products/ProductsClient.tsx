@@ -161,6 +161,7 @@ export function ProductsClient({
   const [formNonce, setFormNonce] = useState(0);
 
   const { showToast } = useToast();
+  const [savedCount, setSavedCount] = useState(0);
   const [productState, productAction] = useActionState(
     keepValuesOnError(async (prev: { error?: string } | null, formData: FormData) => {
       const wasEditing = !!editingProduct;
@@ -168,9 +169,10 @@ export function ProductsClient({
         ? await updateProductAction(editingProduct.id, prev, formData)
         : await createProductAction(prev, formData);
       if (!result?.error) {
-        // The list (and every other screen kept in memory) refreshes behind the scenes, once this save
-        // has finished — inside it, React would keep the form open until the refresh was done too.
-        setTimeout(() => router.refresh(), 0);
+        // The list (and every other screen kept in memory) refreshes behind the scenes once the form
+        // has closed (the effect below) — started from here, React kept the form open until the
+        // refresh was done too.
+        setSavedCount((n) => n + 1);
         const name = String(formData.get("name") ?? "");
         if (!wasEditing && addAnotherRef.current) {
           setFormNonce((n) => n + 1);
@@ -203,6 +205,9 @@ export function ProductsClient({
   );
 
   const router = useRouter();
+  useEffect(() => {
+    if (savedCount > 0) router.refresh();
+  }, [savedCount, router]);
   const [generatingBarcodeFor, setGeneratingBarcodeFor] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [blockedProductId, setBlockedProductId] = useState<string | null>(null);

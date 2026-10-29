@@ -2,7 +2,9 @@ import { NextResponse } from "next/server";
 import { getRedis } from "@/lib/redis";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { keepWarmSource, KEEP_WARM_KEY } from "@/lib/speedWatch";
-import { INSTANCE_ID } from "@/lib/instance";
+import { INSTANCE_ID, firstRequestHere } from "@/lib/instance";
+import { after } from "next/server";
+import { warmServerCode } from "@/lib/warmUp";
 
 export const dynamic = "force-dynamic";
 
@@ -26,6 +28,14 @@ const timed = async (fn: () => PromiseLike<unknown>): Promise<number> => {
  * Auth (milliseconds; negative when it failed), to tell which one a slow moment waits on. No data
  * is returned. */
 export async function GET(request: Request) {
+  const here = firstRequestHere();
+  const url = new URL(request.url);
+  // Every phone asks this every few minutes, and the keep-warm jobs too: each time, this server
+  // makes sure billing, item and settings code is loaded (once per instance), so the shop's next
+  // save never waits for it. ?warm=1 waits for it and says how long each part took.
+  let warm: Record<string, number> | undefined;
+  if (url.searchParams.get("warm") === "1") warm = await warmServerCode();
+  else after(() => warmServerCode().then(() => undefined));
   const source = keepWarmSource(request.headers.get("user-agent"));
   if (source) {
     try {
@@ -68,7 +78,7 @@ export async function GET(request: Request) {
     }
   }
   return NextResponse.json(
-    { id: process.env.NEXT_PUBLIC_BUILD_ID, instance: INSTANCE_ID, monitoring: { sentry: !!process.env.SENTRY_DSN, posthog: !!process.env.NEXT_PUBLIC_POSTHOG_KEY }, ...(probe ? { probe } : {}) },
+    { id: process.env.NEXT_PUBLIC_BUILD_ID, instance: INSTANCE_ID, ...(warm ? { warm, cold: here.cold, upMs: here.upMs } : {}), monitoring: { sentry: !!process.env.SENTRY_DSN, posthog: !!process.env.NEXT_PUBLIC_POSTHOG_KEY }, ...(probe ? { probe } : {}) },
     { headers: { "Cache-Control": "no-store" } },
   );
 }
