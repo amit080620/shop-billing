@@ -32,8 +32,9 @@ export function StockRuleToggle({ initial }: { initial: boolean }) {
         <span className="flex flex-col gap-0.5">
           <span className="text-sm font-medium text-foreground">Don&apos;t bill more than the stock</span>
           <span className="text-xs text-muted">
-            On: a bill can&apos;t be saved if an item would go below zero — the counter is told how many are left. Off: billing goes on and
-            the stock can show a minus (fix it later with a stock count).
+            On (recommended): a bill can&apos;t be saved for more than is in stock — the counter is told how many are left. Off: billing goes
+            on, the stock stops at zero (never below) and what was short is written in the activity log; fix the count later with a stock
+            count.
           </span>
         </span>
         <input type="checkbox" checked={block} disabled={isPending} onChange={(e) => change(e.target.checked)} className="mt-1 h-5 w-5 shrink-0 accent-[var(--brand)]" />

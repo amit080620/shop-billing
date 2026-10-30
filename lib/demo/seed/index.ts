@@ -2,6 +2,7 @@ import { buildSessionForUser, runAsSession } from "@/lib/auth";
 import { demoBusiness, DEMO_TYPES, type DemoType } from "../config";
 import { rng } from "../util";
 import { emptyShopForDeletion } from "@/lib/shopDeletion";
+import { missingColumn } from "@/lib/stockRule";
 import type { Admin, SeedCtx } from "./common";
 import { seedRetail } from "./retail";
 import { seedRestaurant } from "./restaurant";
@@ -48,6 +49,17 @@ export async function removeDemoShop(admin: Admin, userId: string): Promise<void
   if (error) throw new Error(`demo: could not remove old shop: ${error.message}`);
 }
 
+/** A demo shop bills past its stock (Settings → Stock off): its made-up month of sales would
+ * otherwise run some items out and be refused. Stock still never goes below zero — it stops at zero
+ * and the shortfall is written down, like any shop with the rule off. Where the setting doesn't
+ * exist yet (migrations 0059/0060 not run) every shop already bills that way. */
+export async function letDemoBillPastStock(admin: Admin, shopId: string): Promise<void> {
+  // Recorded as chosen (migration 0060), so no change of default turns it back on.
+  let { error } = await admin.from("shops").update({ block_oversell: false, block_oversell_chosen_at: new Date().toISOString() }).eq("id", shopId);
+  if (error && missingColumn(error)) ({ error } = await admin.from("shops").update({ block_oversell: false }).eq("id", shopId));
+  if (error && !missingColumn(error)) throw new Error(`demo: could not set the stock rule: ${error.message}`);
+}
+
 /** Creates the demo shop for a business type and fills it. `userId` is the demo owner's login. */
 export async function seedDemoShop(admin: Admin, type: DemoType, userId: string, email: string): Promise<{ shopId: string }> {
   const biz = demoBusiness(type);
@@ -82,6 +94,7 @@ export async function seedDemoShop(admin: Admin, type: DemoType, userId: string,
     .select("id")
     .single();
   if (shopError || !shop) throw new Error(`demo: could not create shop: ${shopError?.message}`);
+  await letDemoBillPastStock(admin, shop.id);
 
   const { error: staffError } = await admin.from("staff").insert({ id: userId, shop_id: shop.id, name: biz.ownerName, role: "owner" });
   if (staffError) throw new Error(`demo: could not create owner: ${staffError.message}`);

@@ -2,6 +2,7 @@ import Link from "@/lib/link";
 import { requireSession } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { formatMoney, formatDateTime } from "@/lib/format";
+import { RestoreStockButton } from "./RestoreStockButton";
 
 export default async function ReturnDetailPage({
   params,
@@ -26,6 +27,14 @@ export default async function ReturnDetailPage({
   }
 
   const { data: items } = await admin.from("return_items").select("id, product_name, quantity, line_total").eq("return_id", id);
+  // Goods of a counted item that didn't go back on the shelf (its database call failed): offered again.
+  // A return recorded whole (it has its request id, migration 0060) put back what it owed as it was
+  // saved — a line at 0 there took nothing at the sale, and nothing is waiting.
+  const { data: whole } = await admin.from("returns").select("client_ref").eq("id", id).maybeSingle();
+  const { data: backs, error: backsError } = await admin.from("return_items").select("product_id, stock_back").eq("return_id", id);
+  const waiting = backsError || whole?.client_ref ? [] : (backs ?? []).filter((b) => b.product_id && b.stock_back === 0).map((b) => b.product_id as string);
+  const { data: counted } = waiting.length ? await admin.from("products").select("id").eq("shop_id", session.shopId).eq("track_inventory", true).in("id", waiting) : { data: [] };
+  const stockNotBack = (counted ?? []).length > 0;
 
   const bill = Array.isArray(ret.bills) ? ret.bills[0] : ret.bills;
   const customer = Array.isArray(ret.customers) ? ret.customers[0] : ret.customers;
@@ -48,6 +57,8 @@ export default async function ReturnDetailPage({
           Print credit note
         </Link>
       </div>
+
+      {stockNotBack && <RestoreStockButton returnId={id} />}
 
       <ul className="flex flex-col gap-2">
         {(items ?? []).map((item) => (

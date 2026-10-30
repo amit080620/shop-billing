@@ -1,7 +1,7 @@
 "use client";
 
 import { keepValuesOnError } from "@/lib/keepValuesOnError";
-import { useActionState, useMemo, useState } from "react";
+import { useActionState, useEffect, useMemo, useState } from "react";
 import { useFormStatus } from "react-dom";
 import Link from "@/lib/link";
 import { createReturnAction } from "@/lib/actions/returns";
@@ -64,6 +64,12 @@ export function ReturnClient({
   const lines = JSON.stringify(selectedLines.map((l) => ({ billItemId: l.item.id, quantity: l.quantity })));
 
   const [state, formAction] = useActionState(keepValuesOnError(createReturnAction), null);
+  // One id for this return request, kept while the page is open: Save pressed again after a lost
+  // answer sends the same id, and the server saves the return once. Made after loading, in the browser.
+  const [clientRef, setClientRef] = useState("");
+  useEffect(() => {
+    setClientRef(globalThis.crypto?.randomUUID?.() ?? `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 12)}`);
+  }, []);
 
   if (items.length === 0) {
     return (
@@ -80,6 +86,7 @@ export function ReturnClient({
     <form action={formAction} className="flex flex-col gap-4">
       <input type="hidden" name="billId" value={billId} />
       <input type="hidden" name="lines" value={lines} />
+      <input type="hidden" name="clientRef" value={clientRef} />
 
       <div className="flex items-center justify-between">
         <div>

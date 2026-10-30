@@ -23,7 +23,7 @@ export type LineInput = {
 };
 
 const PRODUCT_COLUMNS =
-  "id, name, price, offer_price, units_per_pack, bulk_min_qty, bulk_price, gst_percent, hsn_code, track_inventory, stock_quantity, is_pharma, requires_prescription, has_warranty, warranty_months, mrp";
+  "id, name, unit, price, offer_price, units_per_pack, bulk_min_qty, bulk_price, gst_percent, hsn_code, track_inventory, stock_quantity, is_pharma, requires_prescription, has_warranty, warranty_months, mrp";
 
 /** The lines of a bill (or a quotation) as the shop really sells them: every catalogue item
  * checked to belong to this shop, priced from the catalogue — offer price, bulk rate, a loose

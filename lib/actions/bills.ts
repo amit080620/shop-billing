@@ -22,15 +22,40 @@ import { freeFollowUp } from "../followUp";
 import { gapsReady } from "../gapsData";
 import { isClientRef, offlineBillsReady, offlineIssuedAt } from "../offlineBills";
 import { issueInvoiceNumber } from "../invoiceNumber";
-import { oversellError, shopBlocksOversell } from "../stockRule";
+import { missingColumn, oversellError, shopBlocksOversell } from "../stockRule";
 import { dueDateFor, partyTerms } from "../wholesaleData";
 import { loadPackages, packageUsable, salonExtrasReady, walletBalance } from "../salonExtras";
 import { addDaysIso } from "../dateHelpers";
 import { isModuleEnabled } from "../modules";
 import { moduleLockMessage } from "../plans";
 import { dishesWithRecipes, recipesReady, takeForSale } from "../recipeData";
+import { billHasCreditAdjustment, billStockTaken, editBillStock, logStockProblem, moveStock, returnedBack, round3, takeBillStock, voidBillStock, type StockLine } from "../stockMoves";
 
 export type ActionState = { error?: string } | null;
+
+const CREDIT_ADJUSTMENT_BLOCKS_VOID = "This bill has an Udhaar adjustment return. Reverse or resolve the adjustment before voiding the bill.";
+
+/** A bill saved but not completed (its stock was refused, or not confirmed): taken back. Deleted
+ * (its lines go with it); if that fails twice it is voided, so it counts nowhere; if even that fails
+ * it is written down and the counter is told which bill to void. Returns what the counter must know,
+ * or null when the bill is gone. */
+async function takeBillBack(admin: ReturnType<typeof createSupabaseAdminClient>, session: SessionContext, billId: string, invoiceNumber: string, why: string): Promise<string | null> {
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const { data, error } = await admin.from("bills").delete().eq("id", billId).eq("shop_id", session.shopId).select("id");
+    if (!error && data) return null;
+    console.error("Could not take back an incomplete bill", billId, error);
+  }
+  const { data: voided, error: voidError } = await admin
+    .from("bills")
+    .update({ status: "voided", voided_at: new Date().toISOString(), voided_by: session.userId, void_reason: `Not completed: ${why}` })
+    .eq("id", billId)
+    .eq("shop_id", session.shopId)
+    .select("id");
+  if (!voidError && voided?.length) return `(Bill ${invoiceNumber} was kept as voided — it counts nowhere.)`;
+  console.error("Could not void an incomplete bill", billId, voidError);
+  await logAuditEvent({ admin, shopId: session.shopId, staffId: session.userId, action: "bill_cleanup_failed", entityType: "bill", entityId: billId, details: { invoiceNumber, reason: why } });
+  return `Bill ${invoiceNumber} could not be removed — void it from All bills before billing again.`;
+}
 
 /** The actual bill-creation logic, shared by the normal online form
  * submission and the offline-sync path — one source of truth for invoice
@@ -57,6 +82,11 @@ export async function createBillCore(
   };
   const existing = await alreadyMade();
   if (existing) return existing;
+
+  // Every line sells a real quantity, whoever calls this (an accepted catalog order, a clinic or a
+  // lab skips the bill form's own checks): never zero, negative or not a number.
+  const badLine = items.find((i) => !(Number(i.quantity) > 0) || !Number.isFinite(Number(i.quantity)) || (i.stockQuantity != null && !(Number(i.stockQuantity) >= 0 && Number.isFinite(Number(i.stockQuantity)))));
+  if (badLine) return { error: `${badLine.description || "An item"}: the quantity must be more than 0.` };
 
   // Speed: every lookup that doesn't depend on another starts now, together, instead of one after
   // the other — on a bill this was a dozen round trips in a row. Each is awaited where it is used;
@@ -285,9 +315,12 @@ export async function createBillCore(
   }
 
   // The shop's own prefix, when it set one ("SS/26-27/00042"; lib/invoiceNumber).
-  // Before a number is taken: a shop that doesn't bill past its stock stops here. A dish made from a
-  // recipe takes its ingredients instead, so it isn't counted against its own stock.
-  if (await oversellP) {
+  // Before a number is taken: a shop that doesn't bill past its stock (the default) stops here. A
+  // dish made from a recipe takes its ingredients instead, so it isn't counted against its own stock.
+  // A bill made offline was already handed over, so it is recorded whatever the stock says: stock then
+  // stops at zero and the shortfall is written down.
+  const blocksOversell = !offline && (await oversellP);
+  if (blocksOversell) {
     const short = oversellError(verifiedItems, productMap, await recipeDishesP);
     if (short) return { error: short };
   }
@@ -350,6 +383,8 @@ export async function createBillCore(
     return { error: "Could not create bill" };
   }
 
+  // Each line's id chosen here, so its stock record (below) is written on the right line.
+  const lineIds = verifiedItems.map(() => crypto.randomUUID());
   const buildRows = () => verifiedItems.map((item, i) => {
     const line = totals.lines[i];
     let warrantyExpiresOn: string | null = null;
@@ -362,6 +397,7 @@ export async function createBillCore(
       warrantyExpiresOn = expiry.toISOString().slice(0, 10);
     }
     return {
+      id: lineIds[i],
       bill_id: bill.id,
       product_id: item.productId,
       product_name: item.productName,
@@ -397,6 +433,55 @@ export async function createBillCore(
     // Roll back the orphaned bill header so we don't leave partial data.
     await admin.from("bills").delete().eq("id", bill.id);
     return { error: "Could not save bill items" };
+  }
+
+  // Stock comes off now, before anything else hangs on the bill: every counted line in one database
+  // transaction (lib/stockMoves) — all of them or none, never below zero. When another counter sold
+  // the last units a moment ago, a shop that doesn't bill past its stock gets the bill taken back,
+  // with the item, what is in stock and what was asked. Goods that already left with the delivery
+  // challans being billed aren't taken again; a dish made from a recipe takes its raw materials below.
+  // Each counted line keeps what it really took (with what its challan took) — what a return or a void
+  // of this bill puts back later, whatever the item's settings are by then (lib/stockMoves takeBillStock).
+  const recipeDishes = await recipeDishesP;
+  const challanOut = new Map<string, number>();
+  if (parsedData.challanIds?.length && (await gapsReady(admin))) {
+    const { data: out } = await admin.from("delivery_challans").select("items, stock_taken").eq("shop_id", session.shopId).eq("status", "open").in("id", parsedData.challanIds);
+    for (const c of out ?? []) if (c.stock_taken) for (const l of c.items) if (l.productId) challanOut.set(l.productId, round3((challanOut.get(l.productId) ?? 0) + Number(l.quantity)));
+  }
+  const counted = verifiedItems.flatMap((item, i) => {
+    const product = item.productId ? productMap.get(item.productId) : undefined;
+    if (!product?.track_inventory || recipeDishes.has(product.id)) return [];
+    const out = challanOut.get(product.id) ?? 0;
+    const covered = round3(Math.min(out, item.stockQuantity));
+    if (covered > 0) challanOut.set(product.id, round3(out - covered));
+    // To the gram: stock is kept to 3 decimals.
+    const quantity = round3(item.stockQuantity - covered);
+    return quantity > 0 || covered > 0 ? [{ product, item, quantity, covered, billItemId: lineIds[i] }] : [];
+  });
+  // A dish made from a recipe takes its raw materials in the same transaction (the sale is made, so a
+  // short one stops at zero and is written down), its line marked as sold by its recipe.
+  const dishLines = verifiedItems.flatMap((item, i) => (item.productId && recipeDishes.has(item.productId) ? [lineIds[i]] : []));
+  const stock = await takeBillStock(admin, {
+    shopId: session.shopId,
+    staffId: session.userId,
+    billId: bill.id,
+    lines: counted.map((l) => ({ billItemId: l.billItemId, productId: l.product.id, quantity: l.quantity, covered: l.covered, perUnit: l.item.stockQuantity / Number(l.item.quantity) })),
+    dishes: dishLines,
+    allowShort: !blocksOversell,
+  });
+  // The answer was lost, but the database may have done it all: then the bill stands, with its stock —
+  // never a bill taken back while its stock, batches and raw materials stay taken.
+  const recorded = stock.ok ? !!stock.recorded : !stock.refused && (await billStockTaken(admin, bill.id)) === true;
+  // No bill stays without its stock having moved. Refused: nothing moved. No answer from the
+  // database: it may have moved, so each line is written down for the owner to check.
+  if (!stock.ok && !recorded) {
+    if (!stock.refused) {
+      for (const l of counted.filter((l) => l.quantity > 0)) {
+        await logStockProblem(admin, { shopId: session.shopId, staffId: session.userId, source: "bill", sourceId: bill.id, productId: l.product.id, requested: l.quantity, reason: "unknown_outcome" });
+      }
+    }
+    const leftover = await takeBillBack(admin, session, bill.id, invoiceNumber, stock.refused ? "stock refused" : "stock not confirmed");
+    return { error: [stock.refused ? stock.error : "Stock couldn't be updated, so the bill wasn't saved. Check these items' stock before billing them again.", leftover].filter(Boolean).join(" ") };
   }
 
   // Transport & Materials business type — a bill that included a
@@ -446,17 +531,11 @@ export async function createBillCore(
     });
   }
 
-  // Stock decrement — best-effort (the bill is already committed at this
-  // point, so a failure here doesn't roll back the sale, just logs for
-  // review). Pharma items draw from the earliest-expiring batch(es) first
-  // (FEFO); everything else just decrements the product's aggregate stock
-  // as before. Different items are genuinely independent of each other
-  // (different products, no shared state), so they run concurrently
-  // rather than one-at-a-time — the FEFO batch loop for pharma items
-  // stays sequential WITHIN itself since it tracks a running
-  // "remaining" counter across a single product's own batches.
-  const recipeDishes = await recipeDishesP;
-  if (recipeDishes.size) {
+  // Before migration 0060 (no record): a dish's raw materials are taken here (the sale is made, so a
+  // short one stops at zero and is written down), and pharma items draw their batches, earliest expiry
+  // first (FEFO) — each item's batch loop runs on its own, the items side by side. With the migration
+  // both were done in the stock's own transaction above, and aren't done again.
+  if (recipeDishes.size && !recorded) {
     await takeForSale(admin, {
       shopId: session.shopId,
       staffId: session.userId,
@@ -465,24 +544,8 @@ export async function createBillCore(
       alsoItems: false,
     });
   }
-  // Goods that already left stock with the delivery challans being billed are not taken again.
-  const challanOut = new Map<string, number>();
-  if (parsedData.challanIds?.length && (await gapsReady(admin))) {
-    const { data: out } = await admin.from("delivery_challans").select("items, stock_taken").eq("shop_id", session.shopId).eq("status", "open").in("id", parsedData.challanIds);
-    for (const c of out ?? []) if (c.stock_taken) for (const l of c.items) if (l.productId) challanOut.set(l.productId, round2((challanOut.get(l.productId) ?? 0) + Number(l.quantity)));
-  }
-  const toTake = verifiedItems.map((item) => {
-    const out = item.productId ? (challanOut.get(item.productId) ?? 0) : 0;
-    const covered = Math.min(out, item.stockQuantity);
-    if (covered > 0) challanOut.set(item.productId as string, round2(out - covered));
-    return round2(item.stockQuantity - covered);
-  });
   const stockWork = Promise.all(
-    verifiedItems.map(async (item, index) => {
-      const product = item.productId ? productMap.get(item.productId) : undefined;
-      if (!product?.track_inventory || recipeDishes.has(product.id)) return;
-      if (!(toTake[index] > 0)) return;
-
+    (recorded ? [] : counted.filter((l) => l.quantity > 0)).map(async ({ product, item }) => {
       if (product.is_pharma) {
         // Earliest expiry first, never an expired batch (checked above before billing).
         const { data: batches } = await admin
@@ -513,17 +576,10 @@ export async function createBillCore(
           await admin.from("bill_items").update({ batch_id: firstBatchId }).eq("bill_id", bill.id).eq("product_id", product.id);
         }
       }
-
-      // Atomic — the decrement happens inside the database as one UPDATE,
-      // not read-then-write from application code, so two concurrent
-      // sales of the same product can never both read the same stale
-      // stock value and silently oversell.
-      const { error: stockError } = await admin.rpc("decrement_stock", { p_product_id: product.id, p_quantity: toTake[index] });
-      if (stockError) console.error("Could not update stock for product", product.id, stockError);
     }),
   );
 
-  // Loyalty points — best-effort, and alongside the stock work (both points calls are single
+  // Loyalty points — best-effort, and alongside the batch work (both points calls are single
   // atomic updates in the database, so running them together can't lose a point).
   // Points redemption: the redeem_loyalty_points RPC itself floors at 0, so this can never push a
   // customer's balance negative even in a rare race between two bills redeeming at the same time.
@@ -738,54 +794,80 @@ export async function voidBillAction(
   if (isPastGstPeriod(bill.created_at)) {
     return { error: "This bill is from an earlier month, which may already be filed with the government — voiding it now would silently change that month's GST reports. Process a Return (credit note) instead; it keeps a proper record of the correction." };
   }
+  // A return of this bill was adjusted against udhaar: voiding would count that adjustment twice.
+  // Checked here for the message; the database checks again while holding the bill (void_bill_stock),
+  // so a return saved a moment later can't slip past.
+  if (await billHasCreditAdjustment(admin, session.shopId, billId)) return { error: CREDIT_ADJUSTMENT_BLOCKS_VOID };
 
-  // Restore stock for any tracked products on this bill before marking it voided.
-  const { data: items } = await admin
-    .from("bill_items")
-    .select("product_id, quantity")
-    .eq("bill_id", billId);
-
+  // The lines whose stock goes back. A bill made from migration 0060 on: the lines whose record says
+  // they took stock at the sale (bill_items.stock_taken), whatever the item's setting is today — each
+  // gives back what it took. A bill from before (no record): the old rule — its items counted in stock
+  // today, not a dish sold by its recipe (it took its raw materials, not itself — they go back with
+  // undoBillUsage below; known from the kitchen's ledger having this bill in it); a line whose
+  // quantity isn't above zero gives nothing back (written down).
+  type Line = { id: string; product_id: string | null; quantity: number; stock_taken?: number | null };
+  const withRecord = await admin.from("bill_items").select("id, product_id, quantity, stock_taken").eq("bill_id", billId);
+  const items = (withRecord.error && missingColumn(withRecord.error) ? (await admin.from("bill_items").select("id, product_id, quantity").eq("bill_id", billId)).data : withRecord.data) as Line[] | null;
+  const hasRecord = (i: Line) => i.stock_taken != null;
   const productIds = [...new Set((items ?? []).map((i) => i.product_id).filter(Boolean))] as string[];
+  let lines: { billItemId: string; productId: string; quantity: number }[] = [];
+  // What each line has out: its record, or (no record) its quantity sold.
+  const out = new Map((items ?? []).map((i) => [i.id, hasRecord(i) ? Number(i.stock_taken) : Number(i.quantity)]));
   if (productIds.length > 0) {
     const { data: products } = await admin
       .from("products")
-      .select("id, track_inventory, stock_quantity")
+      .select("id, track_inventory")
+      .eq("shop_id", session.shopId)
       .in("id", productIds);
-    const productMap = new Map((products ?? []).map((p) => [p.id, p]));
-
-    // A dish sold by its recipe took its raw materials, not itself (they go back with the void
-    // below) — known from the kitchen's ledger having this bill in it.
-    const { count: recipeUse } = (await recipesReady(admin))
+    const inShop = new Map((products ?? []).map((p) => [p.id, p.track_inventory]));
+    const legacy = (items ?? []).filter((i) => !hasRecord(i));
+    const { count: recipeUse } = legacy.length && (await recipesReady(admin))
       ? await admin.from("kitchen_usage").select("id", { count: "exact", head: true }).eq("bill_id", billId)
       : { count: 0 };
     const recipeDishes = (recipeUse ?? 0) > 0 ? await dishesWithRecipes(admin, session.shopId, productIds) : new Set<string>();
-    // Genuinely independent per item (different products, atomic RPC),
-    // so restoring them concurrently is safe and faster than one-at-a-time.
-    await Promise.all(
-      (items ?? []).map(async (item) => {
-        if (!item.product_id || recipeDishes.has(item.product_id)) return;
-        const product = productMap.get(item.product_id);
-        if (!product?.track_inventory) return;
-        await admin.rpc("increment_stock", { p_product_id: item.product_id, p_quantity: Number(item.quantity) });
-      }),
-    );
-    await invalidateCache(`ray:cache:products:${session.shopId}`);
+    const back = (items ?? []).filter((i) => {
+      if (!i.product_id || !inShop.has(i.product_id)) return false;
+      return hasRecord(i) ? Number(i.stock_taken) > 0 : inShop.get(i.product_id) && !recipeDishes.has(i.product_id);
+    });
+    for (const i of back.filter((i) => !hasRecord(i) && !(Number(i.quantity) > 0))) {
+      await logStockProblem(admin, { shopId: session.shopId, staffId: session.userId, source: "bill_void", sourceId: billId, productId: i.product_id, requested: Number(i.quantity), reason: "invalid_quantity" });
+    }
+    lines = back.filter((i) => hasRecord(i) || Number(i.quantity) > 0).map((i) => ({ billItemId: i.id, productId: i.product_id as string, quantity: Number(i.quantity) }));
   }
 
-  const { error } = await admin
-    .from("bills")
-    .update({
-      status: "voided",
-      voided_at: new Date().toISOString(),
-      voided_by: session.userId,
-      void_reason: reason.trim(),
-    })
-    .eq("id", billId);
-
-  if (error) {
-    console.error("Could not void bill", error);
-    return { error: "Could not void bill" };
+  // Voided, and its stock given back less what its returns already gave back, in one database
+  // transaction holding the bill (lib/stockMoves voidBillStock): two voids, or a void and a return at
+  // the same moment, give the same goods back once.
+  const result = await voidBillStock(admin, { shopId: session.shopId, staffId: session.userId, billId, reason: reason.trim(), lines });
+  if (result === "already_voided") return { error: "This bill is already voided" };
+  if (result === "has_credit_adjustment") return { error: CREDIT_ADJUSTMENT_BLOCKS_VOID };
+  if (result === "failed") return { error: "Could not void bill" };
+  if (result === "missing") {
+    // Before migration 0060 (or the API not reloaded yet): voided only from active (two voids give back
+    // once), then what each line has out less what returns gave back.
+    const { data: voided, error } = await admin
+      .from("bills")
+      .update({ status: "voided", voided_at: new Date().toISOString(), voided_by: session.userId, void_reason: reason.trim() })
+      .eq("id", billId)
+      .eq("status", "active")
+      .select("id");
+    if (error) {
+      console.error("Could not void bill", error);
+      return { error: "Could not void bill" };
+    }
+    if (!voided?.length) return { error: "This bill is already voided" };
+    const returned = lines.length ? await returnedBack(admin, billId) : new Map<string, number>();
+    const given = await moveStock(admin, {
+      shopId: session.shopId,
+      staffId: session.userId,
+      source: "bill_void",
+      sourceId: billId,
+      give: lines.map((l) => ({ productId: l.productId, quantity: round3((out.get(l.billItemId) ?? l.quantity) - (returned.get(l.billItemId) ?? 0)) })).filter((l) => l.quantity > 0),
+      allowShort: false,
+    });
+    if (!given.ok) console.error("Could not give a voided bill's stock back", billId, given.error);
   }
+  if (lines.length) await invalidateCache(`ray:cache:products:${session.shopId}`);
   // A gold scheme, package session, prepaid balance or advance it used is given back.
   await undoBillUsage(admin, session.shopId, billId);
 
@@ -860,29 +942,12 @@ export async function editBillQuantitiesAction(
 
   const updateByItemId = new Map(lineUpdates.map((u) => [u.billItemId, u.newQuantity]));
   for (const u of lineUpdates) {
-    if (!u.newQuantity || u.newQuantity <= 0) return { error: "Quantity must be greater than 0" };
+    if (!Number.isFinite(u.newQuantity) || !(u.newQuantity > 0)) return { error: "Quantity must be greater than 0" };
   }
 
-  // Stock delta: restore each item's OLD quantity, then deduct the NEW
-  // one — net effect is correct whether the edit increases or decreases
-  // quantity, without needing a separate "was already restored" flag.
-  // Different line items are genuinely independent, so this runs
-  // concurrently rather than one item's DB round-trip at a time.
-  await Promise.all(
-    items.map(async (item) => {
-      const newQty = updateByItemId.get(item.id);
-      if (newQty === undefined || newQty === Number(item.quantity) || !item.product_id) return;
-
-      const { data: product } = await admin.from("products").select("track_inventory").eq("id", item.product_id).single();
-      if (product?.track_inventory) {
-        const delta = Number(item.quantity) - newQty; // positive = give stock back, negative = take more
-        if (delta > 0) await admin.rpc("increment_stock", { p_product_id: item.product_id, p_quantity: delta });
-        else if (delta < 0) await admin.rpc("decrement_stock", { p_product_id: item.product_id, p_quantity: Math.abs(delta) });
-      }
-    }),
-  );
-  await invalidateCache(`ray:cache:products:${session.shopId}`);
-
+  // The bill as it will read. Every line is rewritten, not just the edited ones: the bill-level
+  // discount is spread across all lines, so one quantity change moves every line's taxable value and
+  // GST — which the printed invoice and GSTR-1 read.
   const updatedItems = items.map((item) => ({
     ...item,
     quantity: updateByItemId.get(item.id) ?? Number(item.quantity),
@@ -896,51 +961,81 @@ export async function editBillQuantitiesAction(
     supplyType: bill.supply_type,
     priceMode: bill.price_includes_gst ? "inclusive" : "exclusive",
   });
+  const lineFigures = (idx: number) => {
+    const line = totals.lines[idx];
+    return { line_subtotal: line.lineSubtotal, cgst_amount: line.cgst, sgst_amount: line.sgst, igst_amount: line.igst, line_gst: line.lineGst, line_total: round2(line.lineSubtotal + line.lineGst) };
+  };
+  const billFigures = {
+    subtotal: totals.subtotal,
+    discount_amount: totals.discountAmount,
+    taxable_amount: totals.taxableAmount,
+    cgst_amount: totals.cgstAmount,
+    sgst_amount: totals.sgstAmount,
+    igst_amount: totals.igstAmount,
+    gst_amount: totals.gstAmount,
+    round_off_amount: totals.roundOffAmount,
+    total: totals.total,
+    paid_amount: totals.paidAmount,
+    credit_amount: totals.balanceAmount,
+  };
 
-  // Rewrite every line, not just the edited ones: the bill-level discount
-  // is spread across all lines, so one quantity change moves every line's
-  // taxable value and GST — which the printed invoice and GSTR-1 read.
-  await Promise.all(
-    updatedItems.map((i, idx) => {
-      const line = totals.lines[idx];
-      return admin
-        .from("bill_items")
-        .update({
-          quantity: i.quantity,
-          line_subtotal: line.lineSubtotal,
-          cgst_amount: line.cgst,
-          sgst_amount: line.sgst,
-          igst_amount: line.igst,
-          line_gst: line.lineGst,
-          line_total: round2(line.lineSubtotal + line.lineGst),
-        })
-        .eq("id", i.id);
-    }),
-  );
-
-  const { error } = await admin
-    .from("bills")
-    .update({
-      subtotal: totals.subtotal,
-      discount_amount: totals.discountAmount,
-      taxable_amount: totals.taxableAmount,
-      cgst_amount: totals.cgstAmount,
-      sgst_amount: totals.sgstAmount,
-      igst_amount: totals.igstAmount,
-      gst_amount: totals.gstAmount,
-      round_off_amount: totals.roundOffAmount,
-      total: totals.total,
-      paid_amount: totals.paidAmount,
-      credit_amount: totals.balanceAmount,
-      edited_at: new Date().toISOString(),
-      edited_by: session.userId,
-      edit_reason: reason.trim(),
-    })
-    .eq("id", billId);
-  if (error) {
-    console.error("Could not save bill edit", error);
-    return { error: "Could not save changes" };
+  // All of it in one database transaction holding the bill (lib/stockMoves editBillStock): the stock
+  // each line moves — by its record (what it took, per unit sold), so a line that took nothing at the
+  // sale moves nothing whatever the item's setting is today; a bill from before migration 0060 by the
+  // old rule — the medicines' batches, a recipe dish's raw materials, every line and the bill's totals.
+  // Anything refused or failing leaves the bill, its stock, batches and raw materials as they were: a
+  // shop that doesn't bill past its stock is refused here with the bill unchanged.
+  const blocks = await shopBlocksOversell(admin, session.shopId);
+  const saved = await editBillStock(admin, {
+    shopId: session.shopId,
+    staffId: session.userId,
+    billId,
+    lines: updatedItems.map((i, idx) => ({ billItemId: i.id, quantity: Number(i.quantity), figures: lineFigures(idx) })),
+    bill: billFigures,
+    reason: reason.trim(),
+    allowShort: !blocks,
+  });
+  if (saved === "voided") return { error: "Can't edit a voided bill" };
+  if (typeof saved === "object") {
+    if (!saved.ok) return { error: saved.refused ? saved.error : "Could not reach the database to save the edit, so the bill wasn't changed. Check the bill and the items' stock before trying again." };
+  } else {
+    // Before migration 0060 (or the API not reloaded yet): the old way, step by step. A bill with a
+    // record must not move that way, which would leave the record behind.
+    const { count } = await admin.from("bill_items").select("id", { count: "exact", head: true }).eq("bill_id", billId).not("stock_taken", "is", null);
+    if ((count ?? 0) > 0) return { error: "Could not change the stock just now — try again in a minute." };
+    // By the change in quantity, for the items counted in stock today. A dish sold by its recipe isn't
+    // itself in stock (its raw materials were taken), so it doesn't move.
+    const changedIds = [...new Set(items.filter((i) => i.product_id && updateByItemId.has(i.id)).map((i) => i.product_id as string))];
+    if (changedIds.length) {
+      const [{ data: products }, recipeUse] = await Promise.all([
+        admin.from("products").select("id, track_inventory").eq("shop_id", session.shopId).in("id", changedIds),
+        (await recipesReady(admin)) ? admin.from("kitchen_usage").select("id", { count: "exact", head: true }).eq("bill_id", billId).then((r) => r.count ?? 0) : 0,
+      ]);
+      const recipeDishes = recipeUse > 0 ? await dishesWithRecipes(admin, session.shopId, changedIds) : new Set<string>();
+      const tracked = new Set((products ?? []).filter((p) => p.track_inventory && !recipeDishes.has(p.id)).map((p) => p.id));
+      const take: StockLine[] = [];
+      const give: StockLine[] = [];
+      for (const item of items) {
+        const newQty = updateByItemId.get(item.id);
+        if (newQty === undefined || !item.product_id || !tracked.has(item.product_id)) continue;
+        const delta = round3(Number(item.quantity) - newQty); // positive = give stock back, negative = take more
+        if (delta > 0) give.push({ productId: item.product_id, quantity: delta });
+        else if (delta < 0) take.push({ productId: item.product_id, quantity: -delta });
+      }
+      const moved = await moveStock(admin, { shopId: session.shopId, staffId: session.userId, source: "bill_edit", sourceId: billId, take, give, allowShort: !blocks });
+      if (!moved.ok) return { error: moved.refused ? moved.error : "Could not reach the database to move the stock, so the bill wasn't changed. Check the items' stock before trying again." };
+    }
+    await Promise.all(updatedItems.map((i, idx) => admin.from("bill_items").update({ quantity: i.quantity, ...lineFigures(idx) }).eq("id", i.id)));
+    const { error } = await admin
+      .from("bills")
+      .update({ ...billFigures, edited_at: new Date().toISOString(), edited_by: session.userId, edit_reason: reason.trim() })
+      .eq("id", billId);
+    if (error) {
+      console.error("Could not save bill edit", error);
+      return { error: "Could not save changes" };
+    }
   }
+  await invalidateCache(`ray:cache:products:${session.shopId}`);
 
   await logAuditEvent({
     admin,

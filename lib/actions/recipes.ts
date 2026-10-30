@@ -9,6 +9,8 @@ import { moduleLockMessage } from "../plans";
 import { productLimitError } from "../planLimits";
 import { recipesReady } from "../recipeData";
 import { todayIso } from "../dateHelpers";
+import { moveStock } from "../stockMoves";
+import { shopBlocksOversell } from "../stockRule";
 
 const NOT_READY = "Recipes need a one-time database update — ask the owner to run migration 0050.";
 /** The units a raw material is bought and counted in. */
@@ -108,9 +110,16 @@ export async function recordKitchenLossAction(input: { ingredientId: string; qua
   if (input.kind !== "wastage" && input.kind !== "staff_meal") return { error: "Choose wastage or staff meal." };
   const { data: item } = await admin.from("products").select("id, track_inventory").eq("id", input.ingredientId).eq("shop_id", session.shopId).maybeSingle();
   if (!item?.track_inventory) return { error: "Raw material not found." };
+  // Off the stock first: more than is in stock is refused (or, where the shop bills past its stock,
+  // stops at zero and is written down) — then the entry.
+  const taken = await moveStock(admin, { shopId: session.shopId, staffId: session.userId, source: "kitchen", sourceId: item.id, take: [{ productId: item.id, quantity: qty }], allowShort: !(await shopBlocksOversell(admin, session.shopId)) });
+  if (!taken.ok) return { error: taken.refused ? taken.error : "Could not save — try again." };
   const { error } = await admin.from("kitchen_usage").insert({ shop_id: session.shopId, ingredient_id: item.id, kind: input.kind, quantity: qty, note: input.note.trim().slice(0, 200) || null, staff_id: session.userId });
-  if (error) return { error: "Could not save — try again." };
-  await admin.rpc("decrement_stock", { p_product_id: item.id, p_quantity: qty });
+  if (error) {
+    // Not written down, so the stock goes back.
+    await moveStock(admin, { shopId: session.shopId, staffId: session.userId, source: "kitchen", sourceId: item.id, give: [{ productId: item.id, quantity: qty }], allowShort: false });
+    return { error: "Could not save — try again." };
+  }
   await invalidateCache(`ray:cache:products:${session.shopId}`);
   refresh();
   return {};
@@ -127,7 +136,8 @@ export async function deleteKitchenLossAction(id: string): Promise<{ error?: str
   if (session.role !== "owner" && day !== todayIso()) return { error: "Only the owner can remove an older entry." };
   const { error } = await admin.from("kitchen_usage").delete().eq("id", id);
   if (error) return { error: "Could not remove — try again." };
-  await admin.rpc("increment_stock", { p_product_id: row.ingredient_id, p_quantity: Number(row.quantity) });
+  const back = await moveStock(admin, { shopId: session.shopId, staffId: session.userId, source: "kitchen", sourceId: id, give: [{ productId: row.ingredient_id, quantity: Number(row.quantity) }], allowShort: false });
+  if (!back.ok) console.error("Could not put a removed kitchen entry back in stock", id, back.error);
   await invalidateCache(`ray:cache:products:${session.shopId}`);
   refresh();
   return {};

@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { requireSession } from "../auth";
 import { createSupabaseAdminClient } from "../supabase/admin";
 import { invalidateCache } from "../cache";
+import { moveStock } from "../stockMoves";
 
 export type ActionState = { error?: string } | null;
 
@@ -25,7 +26,7 @@ export async function addBatchAction(
   if (typeof productId !== "string" || !productId) return { error: "Missing product" };
   if (typeof batchNumber !== "string" || !batchNumber.trim()) return { error: "Enter a batch number" };
   if (typeof expiryDate !== "string" || !expiryDate) return { error: "Enter an expiry date" };
-  if (!quantity || quantity <= 0) return { error: "Enter a quantity greater than 0" };
+  if (!Number.isFinite(quantity) || !(quantity > 0)) return { error: "Enter a quantity greater than 0" };
 
   const { data: product } = await admin
     .from("products")
@@ -53,7 +54,8 @@ export async function addBatchAction(
   // Keep the product's aggregate stock in sync with the sum of its batches,
   // so the rest of the app (stock badges, New Bill, low-stock alerts) sees
   // one consistent number without needing to know batches exist.
-  await admin.rpc("increment_stock", { p_product_id: productId, p_quantity: quantity });
+  const added = await moveStock(admin, { shopId: session.shopId, staffId: session.userId, source: "pharmacy", sourceId: productId, give: [{ productId, quantity }], allowShort: false });
+  if (!added.ok) console.error("Could not add a batch to the item's stock", productId, added.error);
   await admin.from("products").update({ track_inventory: true }).eq("id", productId);
 
   revalidatePath(`/pharmacy/batches/${productId}`);
@@ -94,8 +96,11 @@ export async function deleteBatchAction(batchId: string, productId: string): Pro
     return { error: "Could not remove batch" };
   }
 
-  if (product) {
-    await admin.rpc("decrement_stock", { p_product_id: productId, p_quantity: Number(batch.quantity) });
+  // The batch's units leave the item's stock too — never below zero (if the item's count was already
+  // lower, it stops at zero and that is written down).
+  if (product && Number(batch.quantity) > 0) {
+    const removed = await moveStock(admin, { shopId: session.shopId, staffId: session.userId, source: "pharmacy", sourceId: batchId, take: [{ productId, quantity: Number(batch.quantity) }], allowShort: true });
+    if (!removed.ok) console.error("Could not take a deleted batch off stock", batchId, removed.error);
     await invalidateCache(`ray:cache:products:${session.shopId}`);
   }
 
@@ -119,7 +124,7 @@ export async function writeOffBatchAction(
 
   if (typeof batchId !== "string" || !batchId) return { error: "Missing batch" };
   if (typeof productId !== "string" || !productId) return { error: "Missing product" };
-  if (!quantity || quantity <= 0) return { error: "Enter a quantity greater than 0" };
+  if (!Number.isFinite(quantity) || !(quantity > 0)) return { error: "Enter a quantity greater than 0" };
   if (typeof reason !== "string" || !["expired", "damaged", "other"].includes(reason)) {
     return { error: "Choose a reason" };
   }
@@ -160,12 +165,15 @@ export async function writeOffBatchAction(
   }
 
   // Reduce both the batch and the product's aggregate stock — this is a
-  // loss, not a sale, so no revenue or invoice is generated for it.
+  // loss, not a sale, so no revenue or invoice is generated for it. Neither goes below zero: the
+  // database refuses a batch below zero, and an item whose count was already lower stops at zero
+  // (written down).
   await admin
     .from("medicine_batches")
     .update({ quantity: round2(Number(batch.quantity) - quantity) })
     .eq("id", batchId);
-  await admin.rpc("decrement_stock", { p_product_id: productId, p_quantity: quantity });
+  const removed = await moveStock(admin, { shopId: session.shopId, staffId: session.userId, source: "pharmacy", sourceId: batchId, take: [{ productId, quantity }], allowShort: true });
+  if (!removed.ok) console.error("Could not take a write-off off stock", batchId, removed.error);
   await invalidateCache(`ray:cache:products:${session.shopId}`);
 
   revalidatePath(`/pharmacy/batches/${productId}`);

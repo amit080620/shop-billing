@@ -18,10 +18,10 @@ describe("not billing past the stock", () => {
       { productId: "tub", productName: "TUB", quantity: 1 },
       { productId: "tub", productName: "TUB", quantity: 2 },
     ];
-    expect(oversellError(lines, products)).toMatch(/TUB@199: only 2 left/);
+    expect(oversellError(lines, products)).toMatch(/^TUB@199: only 2 in stock — 3 asked for\./);
   });
   it("says out of stock at zero, and ignores untracked items and recipe dishes", () => {
-    expect(oversellError([{ productId: "dal", productName: "Dal", quantity: 1 }], products)).toMatch(/out of stock/);
+    expect(oversellError([{ productId: "dal", productName: "Dal", quantity: 1 }], products)).toMatch(/^Dal tadka is out of stock \(0 in stock, 1 asked for\)/);
     expect(oversellError([{ productId: "bag", productName: "Bag", quantity: 9 }], products)).toBeNull();
     expect(oversellError([{ productId: "dal", productName: "Dal", quantity: 1 }], products, new Set(["dal"]))).toBeNull();
   });

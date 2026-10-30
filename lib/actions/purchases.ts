@@ -8,6 +8,7 @@ import { determineSupplyType, round2 } from "../gst";
 import { partyStateCode } from "../gstBuyer";
 import { findDuplicateProductAI } from "./duplicateCheck";
 import { invalidateCache } from "../cache";
+import { moveStock } from "../stockMoves";
 
 export type ActionState = { error?: string } | null;
 
@@ -313,17 +314,19 @@ export async function createPurchaseAction(
     return { error: "Could not save purchase items" };
   }
 
-  // Basic stock increment — only for products with tracking turned on.
-  // Genuinely independent per item, so this runs concurrently.
-  await Promise.all(
-    resolvedItems.map(async (item) => {
+  // What came in goes on the shelf (paid and free units) — the tracked items all together, in one go.
+  const received = await moveStock(admin, {
+    shopId: session.shopId,
+    staffId: session.userId,
+    source: "purchase",
+    sourceId: purchase.id,
+    give: resolvedItems.flatMap((item) => {
       const product = item.productId ? productMap.get(item.productId) : undefined;
-      if (!product?.track_inventory) return;
-      const totalReceived = item.quantity + (item.freeQuantity ?? 0);
-      const { error: stockError } = await admin.rpc("increment_stock", { p_product_id: product.id, p_quantity: totalReceived });
-      if (stockError) console.error("Could not update stock for product", product.id, stockError);
+      return product?.track_inventory ? [{ productId: product.id, quantity: item.quantity + (item.freeQuantity ?? 0) }] : [];
     }),
-  );
+    allowShort: false,
+  });
+  if (!received.ok) console.error("Could not put a purchase's goods in stock", purchase.id, received.error);
 
   // For pharma products where batch details were filled in on this
   // purchase line, record the batch too — the stock increment above

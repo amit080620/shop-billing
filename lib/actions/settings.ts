@@ -7,6 +7,7 @@ import { createSupabaseAdminClient } from "../supabase/admin";
 import { shopSettingsSchema, LOGO_MAX_BYTES, LOGO_ALLOWED_TYPES } from "../validation/schemas";
 import { stateNameForCode } from "../constants/states";
 import { hotelSchemaReady } from "../hotel/server";
+import { missingColumn } from "../stockRule";
 
 export type ActionState = { error?: string; success?: boolean } | null;
 
@@ -430,7 +431,9 @@ export async function saveBlockOversellAction(block: boolean): Promise<{ error?:
   const demoBlock = demoLocked(session);
   if (demoBlock) return { error: demoBlock };
   const admin = createSupabaseAdminClient();
-  const { error } = await admin.from("shops").update({ block_oversell: block }).eq("id", session.shopId);
+  // With when it was chosen (migration 0060), so a later change of default never overrides it.
+  let { error } = await admin.from("shops").update({ block_oversell: block, block_oversell_chosen_at: new Date().toISOString() }).eq("id", session.shopId);
+  if (error && missingColumn(error) && /chosen_at/.test(error.message ?? "")) ({ error } = await admin.from("shops").update({ block_oversell: block }).eq("id", session.shopId));
   if (error) {
     if (/block_oversell/.test(error.message ?? "")) return { error: "This needs a one-time database update (migration 0059). Ask your admin to run it." };
     console.error("Could not save the stock rule", error);

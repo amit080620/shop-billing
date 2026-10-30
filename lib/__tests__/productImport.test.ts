@@ -114,4 +114,31 @@ describe("item import file", () => {
   it("takes yes/no in English and Hindi, and money with ₹ and commas", () => {
     expect(parseItem({ name: "A", price: "₹1,250.50", showInCatalog: "nahi", isRentable: "haan" }).item).toEqual({ name: "A", price: 1250.5, showInCatalog: false, isRentable: true });
   });
+
+  it("refuses a stock below zero (never saved as 0), keeps decimals, and leaves a blank stock alone", () => {
+    for (const stock of ["-1", "-1750", "-0.5"]) {
+      const { item, problems } = parseItem({ name: "Sugar", price: "40", stockQuantity: stock });
+      expect(problems).toEqual(["Stock qty can't be below 0"]);
+      expect(item.stockQuantity).toBeUndefined();
+    }
+    expect(parseItem({ name: "Rice", price: "60", stockQuantity: "2.375" }).item.stockQuantity).toBe(2.375);
+    expect(parseItem({ name: "Rice", price: "60", stockQuantity: "0" }).item.stockQuantity).toBe(0);
+    expect(parseItem({ name: "Rice", price: "60", stockQuantity: "" }).item.stockQuantity).toBeUndefined();
+    expect(parseItem({ name: "Rice", price: "60", stockQuantity: "ten" }).problems).toEqual(['Stock qty "ten" is not a number']);
+  });
+
+  it("refuses a negative stock in every trade's template, from Excel and from CSV", () => {
+    for (const trade of Object.keys(TRADE_NAMES)) {
+      const headers = columnsFor(trade).map((c) => c.header);
+      expect(headers, trade).toContain("Stock qty");
+      const row = headers.map((h) => (h === "Item name" ? "Test item" : h === "Selling price" ? "10" : h === "Stock qty" ? "-3" : ""));
+      const { rows } = readItemRows(XLSX, fileOf([["Items", XLSX.utils.aoa_to_sheet([headers, row])]]), trade);
+      expect(rows, trade).toHaveLength(1);
+      expect(parseItem(rows[0].cells).problems, trade).toContain("Stock qty can't be below 0");
+      const csv = new TextEncoder().encode([headers, row].map((r) => r.map((c) => `"${c}"`).join(",")).join("\n"));
+      const fromCsv = readItemRows(XLSX, csv.buffer as ArrayBuffer, trade).rows;
+      expect(fromCsv, `${trade} csv`).toHaveLength(1);
+      expect(parseItem(fromCsv[0].cells).problems, `${trade} csv`).toContain("Stock qty can't be below 0");
+    }
+  });
 });

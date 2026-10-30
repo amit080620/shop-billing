@@ -34,6 +34,8 @@ export interface Database {
           loyalty_redemption_value: number;
           fast_billing_enabled: boolean;
           block_oversell: boolean;
+          /** Migration 0060: when the owner last chose the stock rule (null: never — the default applies). */
+          block_oversell_chosen_at?: string | null;
           price_includes_gst: boolean;
           invoice_prefix: string;
           logo_url: string | null;
@@ -74,6 +76,7 @@ export interface Database {
           loyalty_redemption_value?: number;
           fast_billing_enabled?: boolean;
           block_oversell?: boolean;
+          block_oversell_chosen_at?: string | null;
           price_includes_gst?: boolean;
           invoice_prefix?: string;
           logo_url?: string | null;
@@ -114,6 +117,7 @@ export interface Database {
           loyalty_redemption_value?: number;
           fast_billing_enabled?: boolean;
           block_oversell?: boolean;
+          block_oversell_chosen_at?: string | null;
           price_includes_gst?: boolean;
           invoice_prefix?: string;
           logo_url?: string | null;
@@ -601,6 +605,9 @@ export interface Database {
           warranty_expires_on: string | null;
           mrp: number | null;
           hallmark_number: string | null;
+          stock_taken: number | null;
+          stock_per_unit: number | null;
+          recipe_sale: boolean;
         };
         Insert: {
           id?: string;
@@ -2206,8 +2213,8 @@ export interface Database {
         Relationships: [];
       };
       kitchen_usage: {
-        Row: { id: string; shop_id: string; ingredient_id: string; kind: "sale" | "wastage" | "staff_meal"; quantity: number; order_id: string | null; bill_id: string | null; note: string | null; staff_id: string | null; created_at: string };
-        Insert: { id?: string; shop_id: string; ingredient_id: string; kind: "sale" | "wastage" | "staff_meal"; quantity: number; order_id?: string | null; bill_id?: string | null; note?: string | null; staff_id?: string | null; created_at?: string };
+        Row: { id: string; shop_id: string; ingredient_id: string; kind: "sale" | "wastage" | "staff_meal"; quantity: number; order_id: string | null; bill_id: string | null; note: string | null; staff_id: string | null; created_at: string; stock_taken: number | null };
+        Insert: { id?: string; shop_id: string; ingredient_id: string; kind: "sale" | "wastage" | "staff_meal"; quantity: number; order_id?: string | null; bill_id?: string | null; note?: string | null; staff_id?: string | null; created_at?: string; stock_taken?: number | null };
         Update: { id?: string; shop_id?: string; ingredient_id?: string; kind?: "sale" | "wastage" | "staff_meal"; quantity?: number; order_id?: string | null; bill_id?: string | null; note?: string | null; staff_id?: string | null; created_at?: string };
         Relationships: [];
       };
@@ -2278,6 +2285,7 @@ export interface Database {
           total: number;
           refund_method: "cash" | "card" | "upi" | "online" | "other" | "credit_adjustment";
           created_at: string;
+          client_ref: string | null;
         };
         Insert: {
           id?: string;
@@ -2333,11 +2341,14 @@ export interface Database {
           sgst_amount: number;
           igst_amount: number;
           line_total: number;
+          /** Migration 0060: how much went back on the shelf (null: returns from before it — all of it). */
+          stock_back?: number | null;
         };
         Insert: {
           id?: string;
           return_id: string;
           bill_item_id: string;
+          stock_back?: number | null;
           product_id?: string | null;
           product_name: string;
           quantity: number;
@@ -2353,6 +2364,7 @@ export interface Database {
           id?: string;
           return_id?: string;
           bill_item_id?: string;
+          stock_back?: number | null;
           product_id?: string | null;
           product_name?: string;
           quantity?: number;
@@ -2842,6 +2854,30 @@ export interface Database {
       increment_stock: {
         Args: { p_product_id: string; p_quantity: number };
         Returns: undefined;
+      };
+      move_stock: {
+        Args: { p_shop_id: string; p_take?: Json; p_give?: Json; p_allow_short?: boolean };
+        Returns: Json;
+      };
+      give_back_return: {
+        Args: { p_shop_id: string; p_return_id: string; p_lines: Json };
+        Returns: string;
+      };
+      record_return: {
+        Args: { p_shop_id: string; p_bill_id: string; p_staff_id: string; p_client_ref: string | null; p_header: Json; p_lines: Json; p_credit_note?: string | null };
+        Returns: Json;
+      };
+      void_bill_stock: {
+        Args: { p_shop_id: string; p_bill_id: string; p_staff_id: string; p_reason: string; p_lines: Json };
+        Returns: Json;
+      };
+      take_bill_stock: {
+        Args: { p_shop_id: string; p_bill_id: string; p_lines: Json; p_allow_short?: boolean; p_dishes?: Json };
+        Returns: Json;
+      };
+      edit_bill_stock: {
+        Args: { p_shop_id: string; p_bill_id: string; p_lines: Json; p_bill: Json; p_allow_short?: boolean };
+        Returns: Json;
       };
       increment_loyalty_points: {
         Args: { p_customer_id: string; p_points: number };

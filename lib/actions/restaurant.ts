@@ -13,6 +13,7 @@ import { todayIso } from "../dateHelpers";
 import { billLimitError } from "../planLimits";
 import { isModuleEnabled } from "../modules";
 import { recipesReady, takeForSale } from "../recipeData";
+import { moveStock } from "../stockMoves";
 
 export type ActionState = { error?: string } | null;
 
@@ -388,6 +389,8 @@ export async function addOrderItemAction(
   itemNote?: string,
 ): Promise<{ error?: string }> {
   const session = await requireSession();
+  // A table never orders zero, a minus or not-a-number of something (half a plate is fine).
+  if (!Number.isFinite(quantity) || !(quantity > 0)) return { error: "Quantity must be greater than 0" };
   const admin = createSupabaseAdminClient();
 
   const { data: order } = await admin
@@ -798,15 +801,20 @@ export async function settleOrderAction(
       .eq("order_id", orderId)
       .neq("status", "cancelled")
       .not("product_id", "is", null);
-    // Genuinely independent per item, so this runs concurrently rather
-    // than one product's DB round-trip at a time.
-    await Promise.all(
-      (items ?? []).map(async (item) => {
-        const { data: product } = await admin.from("products").select("id, track_inventory").eq("id", item.product_id).single();
-        if (!product?.track_inventory) return;
-        await admin.rpc("decrement_stock", { p_product_id: product.id, p_quantity: Number(item.quantity) });
-      }),
-    );
+    // All of the table's counted items in one go. The food is served and paid for, so this can't be
+    // refused: what isn't in stock stops at zero (never below) and is written down.
+    const ids = [...new Set((items ?? []).map((i) => i.product_id as string))];
+    const { data: products } = ids.length ? await admin.from("products").select("id, track_inventory").eq("shop_id", session.shopId).in("id", ids) : { data: [] };
+    const tracked = new Set((products ?? []).filter((p) => p.track_inventory).map((p) => p.id));
+    const moved = await moveStock(admin, {
+      shopId: session.shopId,
+      staffId: session.userId,
+      source: "restaurant",
+      sourceId: orderId,
+      take: (items ?? []).filter((i) => tracked.has(i.product_id as string) && Number(i.quantity) > 0).map((i) => ({ productId: i.product_id, quantity: Number(i.quantity) })),
+      allowShort: true,
+    });
+    if (!moved.ok) console.error("Could not take a settled table's stock", orderId, moved.error);
   }
   await invalidateCache(`ray:cache:products:${session.shopId}`);
 

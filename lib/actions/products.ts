@@ -11,6 +11,7 @@ import { checkManagerPin } from "../managerPin";
 import { changedFields, itemSnapshot } from "../auditChanges";
 import { findDuplicateProductAI } from "./duplicateCheck";
 import { invalidateCache } from "../cache";
+import { stockEditError } from "../stockRule";
 
 export type ActionState = { error?: string; productId?: string } | null;
 
@@ -156,6 +157,9 @@ export async function updateProductAction(
 ): Promise<ActionState> {
   const session = await requireSession();
   requireArea(session, "manage_products");
+  // The stock typed is checked below against the item's own count (one already below zero can be
+  // kept or corrected upward), so the form check sees it only when it isn't below zero.
+  const typedStock = Number(formData.get("stockQuantity") || 0);
   const parsed = productSchema.safeParse({
     name: formData.get("name"),
     price: formData.get("price"),
@@ -165,7 +169,7 @@ export async function updateProductAction(
     unit: formData.get("unit") || "NOS",
     categoryId: formData.get("categoryId") || null,
     trackInventory: formData.get("trackInventory") === "on",
-    stockQuantity: formData.get("stockQuantity") || 0,
+    stockQuantity: typedStock < 0 ? 0 : formData.get("stockQuantity") || 0,
     lowStockThreshold: formData.get("lowStockThreshold") || 0,
     isRentable: formData.get("isRentable") === "on",
     rentalRateHourly: formData.get("rentalRateHourly") || null,
@@ -204,7 +208,9 @@ export async function updateProductAction(
   const { data: before } = await admin.from("products").select("*").eq("id", productId).eq("shop_id", session.shopId).maybeSingle();
   if (!before) return { error: "This item is no longer in your list — it may have been deleted." };
   // With stock counting switched off the form sends no count: the one on record stays, it isn't zeroed.
-  const stockQuantity = formData.has("stockQuantity") ? parsed.data.stockQuantity : Number(before.stock_quantity);
+  const stockQuantity = !formData.has("stockQuantity") ? Number(before.stock_quantity) : typedStock < 0 ? typedStock : parsed.data.stockQuantity;
+  const stockError = stockEditError(stockQuantity, Number(before.stock_quantity));
+  if (stockError) return { error: stockError };
   const lowStockThreshold = formData.has("lowStockThreshold") ? parsed.data.lowStockThreshold : Number(before.low_stock_threshold);
   // Typing over the stock count is how stock goes missing without a sale — it needs the manager PIN.
   const stockChanged = Math.abs(stockQuantity - Number(before.stock_quantity)) > 1e-9;

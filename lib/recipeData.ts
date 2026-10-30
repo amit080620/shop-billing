@@ -1,5 +1,7 @@
 import type { createSupabaseAdminClient } from "./supabase/admin";
 import { stockToTake, type ComboMap, type RecipeMap } from "./recipes";
+import { moveStock } from "./stockMoves";
+import { missingColumn } from "./stockRule";
 
 type Admin = ReturnType<typeof createSupabaseAdminClient>;
 
@@ -77,17 +79,41 @@ export async function takeForSale(
     if (!productIds.length) return;
     const [recipes, { data: products }] = await Promise.all([
       loadRecipeMap(admin, opts.shopId, productIds),
-      admin.from("products").select("id, track_inventory").in("id", productIds),
+      // Only this shop's items: a combo can't take another shop's stock.
+      admin.from("products").select("id, track_inventory").eq("shop_id", opts.shopId).in("id", productIds),
     ]);
     const tracked = new Set((products ?? []).filter((p) => p.track_inventory).map((p) => p.id));
     const { ingredients, items } = stockToTake(opts.lines, recipes, combos, tracked);
 
-    await Promise.all([...ingredients].map(([id, qty]) => admin.rpc("decrement_stock", { p_product_id: id, p_quantity: qty })));
-    if (opts.alsoItems) await Promise.all([...items].map(([id, qty]) => admin.rpc("decrement_stock", { p_product_id: id, p_quantity: qty })));
+    // One go, never below zero: the sale is made, so what isn't there stops at zero and is written down.
+    const take = [...ingredients, ...(opts.alsoItems ? items : [])].map(([productId, quantity]) => ({ productId, quantity }));
+    const missing = new Map<string, number>();
+    const moved = await moveStock(admin, {
+      shopId: opts.shopId,
+      staffId: opts.staffId,
+      source: opts.billId ? "bill" : "restaurant",
+      sourceId: opts.billId ?? opts.orderId ?? null,
+      take,
+      allowShort: true,
+      onShort: (short) => short.forEach((s) => missing.set(s.product_id, Number(s.requested) - Number(s.taken))),
+    });
+    if (!moved.ok) console.error("Could not take raw materials for a sale", moved.error);
     if (ingredients.size) {
-      const { error } = await admin.from("kitchen_usage").insert(
-        [...ingredients].map(([id, qty]) => ({ shop_id: opts.shopId, ingredient_id: id, kind: "sale" as const, quantity: qty, order_id: opts.orderId ?? null, bill_id: opts.billId ?? null, staff_id: opts.staffId })),
-      );
+      // Each raw material's usage, and what really came off the shelf for it (stock_taken) — what a
+      // void puts back: less where stock stopped at zero, nothing where the move didn't go through.
+      const rows = [...ingredients].map(([id, qty]) => ({
+        shop_id: opts.shopId,
+        ingredient_id: id,
+        kind: "sale" as const,
+        quantity: qty,
+        order_id: opts.orderId ?? null,
+        bill_id: opts.billId ?? null,
+        staff_id: opts.staffId,
+      }));
+      const taken = (id: string, qty: number) => (moved.ok ? Math.max(0, Math.round((qty - (missing.get(id) ?? 0)) * 10000) / 10000) : 0);
+      let { error } = await admin.from("kitchen_usage").insert(rows.map((r) => ({ ...r, stock_taken: taken(r.ingredient_id, r.quantity) })));
+      // Before migration 0060 there is no stock_taken column.
+      if (error && missingColumn(error)) ({ error } = await admin.from("kitchen_usage").insert(rows));
       if (error) console.error("Could not write the kitchen's usage", error);
     }
   } catch (error) {
@@ -95,11 +121,20 @@ export async function takeForSale(
   }
 }
 
-/** A voided bill's raw materials go back on the shelf. */
+/** A voided bill's raw materials go back on the shelf: what really came off for it (stock_taken), or —
+ * written before migration 0060 — its quantity. With migration 0060 the void itself did this, in its
+ * own transaction (void_bill_stock), and removed the rows: nothing is left here to give back twice. */
 export async function giveBackForBill(admin: Admin, shopId: string, billId: string): Promise<void> {
-  const { data } = await admin.from("kitchen_usage").select("id, ingredient_id, quantity").eq("shop_id", shopId).eq("bill_id", billId).eq("kind", "sale");
+  const usage = (cols: string) => admin.from("kitchen_usage").select(cols).eq("shop_id", shopId).eq("bill_id", billId).eq("kind", "sale");
+  const withTaken = await usage("id, ingredient_id, quantity, stock_taken");
+  const data = (withTaken.error && missingColumn(withTaken.error) ? (await usage("id, ingredient_id, quantity")).data : withTaken.data) as { id: string; ingredient_id: string; quantity: number; stock_taken?: number | null }[] | null;
   if (!data?.length) return;
-  await Promise.all(data.map((r) => admin.rpc("increment_stock", { p_product_id: r.ingredient_id, p_quantity: Number(r.quantity) })));
+  const give = data.map((r) => ({ productId: r.ingredient_id, quantity: Number(r.stock_taken ?? r.quantity) })).filter((l) => l.quantity > 0);
+  const moved = give.length ? await moveStock(admin, { shopId, staffId: null, source: "bill_void", sourceId: billId, give, allowShort: false }) : { ok: true as const };
+  if (!moved.ok) {
+    console.error("Could not give a voided bill's raw materials back", billId, moved.error);
+    return;
+  }
   await admin.from("kitchen_usage").delete().in("id", data.map((r) => r.id));
 }
 

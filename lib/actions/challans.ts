@@ -11,6 +11,7 @@ import { normalizePhone } from "../phone";
 import { gapsReady, GAPS_NOT_READY } from "../gapsData";
 import { cleanChallanLines, type ChallanLine } from "../challans";
 import { moveChallanStock } from "../challanData";
+import { shopBlocksOversell } from "../stockRule";
 import { findOrCreateCustomerByPhone } from "./customers";
 
 const text = (v: unknown, max: number) => (typeof v === "string" ? v.trim().slice(0, max) : "") || null;
@@ -83,7 +84,15 @@ export async function createChallanAction(input: {
     .select("id")
     .single();
   if (error || !row) return { error: "Could not save — try again." };
-  if (input.takeStock) await moveChallanStock(admin, session.shopId, items, -1);
+  if (input.takeStock) {
+    // Goods that aren't in stock can't leave on a challan in a shop that doesn't bill past its stock:
+    // the challan is taken back (its number stays unused).
+    const taken = await moveChallanStock(admin, session.shopId, items, -1, { staffId: session.userId, challanId: row.id, allowShort: !(await shopBlocksOversell(admin, session.shopId)) });
+    if (!taken.ok && taken.refused) {
+      await admin.from("delivery_challans").delete().eq("id", row.id);
+      return { error: taken.error };
+    }
+  }
   revalidatePath("/challans");
   return { id: row.id };
 }
@@ -109,7 +118,7 @@ export async function cancelChallanAction(id: string): Promise<{ error?: string 
   if (c.status === "billed") return { error: "This challan is billed — void the bill first." };
   if (c.status === "cancelled") return {};
   const { data: done } = await admin.from("delivery_challans").update({ status: "cancelled" }).eq("id", id).eq("status", "open").select("id");
-  if (done?.length && c.stock_taken) await moveChallanStock(admin, session.shopId, c.items, 1);
+  if (done?.length && c.stock_taken) await moveChallanStock(admin, session.shopId, c.items, 1, { staffId: session.userId, challanId: id, allowShort: false });
   revalidatePath("/challans");
   revalidatePath(`/challans/${id}`);
   return {};

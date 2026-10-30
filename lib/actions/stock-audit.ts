@@ -6,6 +6,7 @@ import { logAuditEvent } from "../audit";
 import { revalidatePath } from "next/cache";
 import { requireSession, requireArea } from "../auth";
 import { createSupabaseAdminClient } from "../supabase/admin";
+import { moveStock, round3 } from "../stockMoves";
 
 export async function startAuditAction(): Promise<{ auditId?: string; error?: string }> {
   const session = await requireSession();
@@ -114,17 +115,34 @@ export async function completeAuditAction(auditId: string, managerPin: string | 
     const pinError = await checkManagerPin(admin, session, managerPin, `change the stock of ${changes.length} item(s)`);
     if (pinError) return { error: pinError };
   }
-  for (const item of items ?? []) {
-    if (item.counted_quantity == null || !item.product_id || !ownedIds.has(item.product_id)) continue;
-    const difference = Number(item.counted_quantity) - Number(item.system_quantity);
-    if (difference > 0) await admin.rpc("increment_stock", { p_product_id: item.product_id, p_quantity: difference });
-    else if (difference < 0) await admin.rpc("decrement_stock", { p_product_id: item.product_id, p_quantity: -difference });
-  }
-
-  await admin
+  // Completed first, and only from draft: a second tap (or another phone) applies the count once.
+  const { data: claimed } = await admin
     .from("stock_audits")
     .update({ status: "completed", completed_at: new Date().toISOString() })
-    .eq("id", auditId);
+    .eq("id", auditId)
+    .eq("status", "draft")
+    .select("id");
+  if (!claimed?.length) return { error: "Already completed" };
+
+  // Every difference in one go. Found more: added. Found fewer: taken off, never below zero — if
+  // today's stock is already lower than the count's shortfall (sold while counting), it stops at
+  // zero and that is written down. An item already below zero is corrected upward by its count.
+  const moved = await moveStock(admin, {
+    shopId: session.shopId,
+    staffId: session.userId,
+    source: "stock_count",
+    sourceId: auditId,
+    give: changes.filter((c) => Number(c.counted_quantity) > Number(c.system_quantity)).map((c) => ({ productId: c.product_id, quantity: round3(Number(c.counted_quantity) - Number(c.system_quantity)) })),
+    take: changes.filter((c) => Number(c.counted_quantity) < Number(c.system_quantity)).map((c) => ({ productId: c.product_id, quantity: round3(Number(c.system_quantity) - Number(c.counted_quantity)) })),
+    allowShort: true,
+  });
+  if (!moved.ok && moved.refused) {
+    // Nothing moved: the count can be completed again.
+    await admin.from("stock_audits").update({ status: "draft", completed_at: null }).eq("id", auditId);
+    return { error: moved.error };
+  }
+  // No answer: it may or may not have gone through, so it isn't offered again (that could apply it twice).
+  if (!moved.ok) return { error: "The count was saved, but the connection dropped while stock was updated — check a few counted items' stock before changing anything." };
   if (changes.length) {
     const { data: names } = await admin.from("products").select("id, name, unit").in("id", changes.map((c) => c.product_id!));
     const nameOf = new Map((names ?? []).map((p) => [p.id, p]));

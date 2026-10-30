@@ -737,7 +737,8 @@ export function ProductsClient({
                   </div>
                 </div>
               ) : (
-                <Field name="stockQuantity" label={t("products.currentStock")} type="number" step="0.01" min="0" defaultValue={editingProduct ? String(editingProduct.stockQuantity) : "0"} />
+                // Never below zero; an item already below zero can only be corrected upward from where it is.
+                <Field name="stockQuantity" label={t("products.currentStock")} type="number" step="0.001" min={editingProduct && editingProduct.stockQuantity < 0 ? String(editingProduct.stockQuantity) : "0"} defaultValue={editingProduct ? String(editingProduct.stockQuantity) : "0"} />
               )}
               <Field name="lowStockThreshold" label={t("products.lowStockAlertBelow")} type="number" step="0.01" min="0" defaultValue={editingProduct ? String(editingProduct.lowStockThreshold) : "0"} />
               {editingProduct && stockUnlocked && (

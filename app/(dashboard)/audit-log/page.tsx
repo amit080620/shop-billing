@@ -5,7 +5,7 @@ import { PageHeader } from "@/app/components/PageHeader";
 import { EmptyState } from "@/app/components/EmptyState";
 import { formatDateTime } from "@/lib/format";
 import {
-  Trash2, Pencil, UserPlus, UserMinus, KeyRound, Activity, Lock, Unlock, PiggyBank, Wallet, FileMinus, Upload, PackageCheck, ShieldAlert, BedDouble, ChevronDown,
+  Trash2, Pencil, UserPlus, UserMinus, KeyRound, Activity, Lock, Unlock, PiggyBank, Wallet, FileMinus, Upload, PackageCheck, PackageX, ShieldAlert, BedDouble, ChevronDown,
 } from "lucide-react";
 import { isModuleEnabled } from "@/lib/modules";
 import { ModuleBlocked } from "@/app/components/ModuleBlocked";
@@ -38,6 +38,15 @@ const ACTION_INFO: Record<string, Info> = {
   products_deleted: { icon: Trash2, label: "Items deleted together", tone: "text-danger", group: "items" },
   products_imported: { icon: Upload, label: "Items imported from Excel", tone: "text-info", group: "items" },
   stock_count_applied: { icon: PackageCheck, label: "Stock count applied", tone: "text-warning", group: "stock" },
+  stock_refused: { icon: PackageX, label: "Stock change refused", tone: "text-danger", group: "stock" },
+  stock_short: { icon: PackageX, label: "Sold more than the stock", tone: "text-warning", group: "stock" },
+  bill_cleanup_failed: { icon: Trash2, label: "Unfinished bill not removed", tone: "text-danger", group: "bills" },
+  return_not_confirmed: { icon: FileMinus, label: "Return not confirmed", tone: "text-warning", group: "bills" },
+  return_cleanup_failed: { icon: FileMinus, label: "Unwanted credit note not removed", tone: "text-danger", group: "bills" },
+  return_stock_not_restored: { icon: PackageX, label: "Returned goods not back in stock", tone: "text-danger", group: "stock" },
+  return_stock_unclear: { icon: PackageX, label: "Returned goods: stock unclear", tone: "text-danger", group: "stock" },
+  return_stock_restored: { icon: PackageCheck, label: "Returned goods put back", tone: "text-success", group: "stock" },
+  return_adjustment_skipped: { icon: FileMinus, label: "Udhaar adjustment skipped", tone: "text-warning", group: "money" },
   manager_pin_wrong: { icon: ShieldAlert, label: "Wrong manager PIN tried", tone: "text-danger", group: "security" },
 };
 
@@ -91,8 +100,20 @@ function concern(action: string, d: Details | null): string | null {
     return short ? `${short} item(s) short in the count` : null;
   }
   if (action === "day_closed" && Math.abs(Number(d?.difference ?? 0)) >= 1) return "Cash didn't match";
+  if (action === "stock_short") return "Stock count is off";
+  if (action === "bill_cleanup_failed") return "Void this bill";
+  if (action === "return_not_confirmed") return "Check this bill's returns";
+  if (action === "return_cleanup_failed") return "Delete this credit note";
+  if (action === "return_stock_not_restored") return "Open it and tap Put back in stock";
+  if (action === "return_stock_unclear") return "Check these items' stock";
+  if (action === "stock_refused" && d?.reason === "unknown_outcome") return "Check this item's stock";
   return null;
 }
+
+const STOCK_SOURCE: Record<string, string> = {
+  bill: "Bill", bill_edit: "Bill edit", bill_void: "Bill void", return: "Return", purchase: "Purchase", restaurant: "Table settled",
+  kitchen: "Kitchen", stock_count: "Stock count", pharmacy: "Medicine batch", challan: "Delivery challan",
+};
 
 /** The one-line summary under the title. */
 function summary(action: string, d: Details | null, ctx: Ctx, entityId: string | null): string {
@@ -139,6 +160,27 @@ function summary(action: string, d: Details | null, ctx: Ctx, entityId: string |
       return `${((d.items ?? []) as unknown[]).length} item(s) changed`;
     case "manager_pin_wrong":
       return `While trying to ${d.tried}`;
+    case "bill_cleanup_failed":
+      return `${String(d.invoiceNumber)} — saved but not completed (${String(d.reason)})`;
+    case "return_not_confirmed":
+      return `${String(d.returnNumber)}: the connection dropped while saving — it may or may not have been saved`;
+    case "return_cleanup_failed":
+      return `${String(d.returnNumber)} — ${String(d.reason)}, but it could not be removed`;
+    case "return_stock_not_restored":
+    case "return_stock_restored":
+    case "return_adjustment_skipped":
+      return `${String(d.returnNumber ?? "")}${d.reason ? ` — ${String(d.reason)}` : ""}`;
+    case "return_stock_unclear":
+      return `${((d.lines ?? []) as unknown[]).length} line(s): went back on the shelf but couldn't be marked or undone`;
+    case "stock_refused":
+    case "stock_short": {
+      const source = STOCK_SOURCE[String(d.source)] ?? String(d.source);
+      if (d.reason === "invalid_quantity") return `${source}: quantity ${String(d.requested)} isn't above zero — nothing moved`;
+      if (d.reason === "unknown_item") return `${source}: an item no longer in this shop's list (deleted?) — its stock didn't move`;
+      if (d.reason === "unknown_outcome") return `${source}: ${qty(d.requested)} — the connection dropped, so the bill wasn't kept; the stock may or may not have come off`;
+      const left = d.available != null ? `, ${qty(d.available)} in stock` : "";
+      return action === "stock_short" ? `${source}: ${qty(d.requested)} sold${left} — took ${qty(d.taken)}${Number(d.available) >= 0 ? ", stock now 0" : ""}` : `${source}: ${qty(d.requested)} asked${left} — refused`;
+    }
     default:
       return "";
   }
