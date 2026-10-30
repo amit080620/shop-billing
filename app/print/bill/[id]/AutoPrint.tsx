@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { PRINT_EVENT } from "@/lib/printHelper";
+import { notePrinted } from "@/lib/keyboardBilling";
 
 /** Set on a computer from the one-click printing page; remembered by that computer's browser only. */
 export const AUTO_PRINT_KEY = "ray-auto-print";
@@ -19,6 +20,8 @@ export function AutoPrint({ fresh }: { fresh: boolean }) {
       // No storage (private window): print by hand.
     }
     if (!on) return;
+    // Printing by itself: Enter on the bill (keyboard billing) doesn't print it again.
+    notePrinted();
     // A moment for the bill's fonts and layout to settle, so the printout is the finished bill.
     const timer = setTimeout(() => window.dispatchEvent(new Event(PRINT_EVENT)), 500);
     return () => clearTimeout(timer);

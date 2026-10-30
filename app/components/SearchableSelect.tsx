@@ -16,6 +16,7 @@ export function SearchableSelect<T>({
   placeholder,
   leadingIcon,
   lang,
+  billSearch,
 }: {
   items: T[];
   getLabel: (item: T) => string;
@@ -30,6 +31,9 @@ export function SearchableSelect<T>({
   placeholder: string;
   leadingIcon?: ReactNode;
   lang?: Lang;
+  /** The bill's item search (lib/keyboardBilling): Enter with nothing typed moves the bill on, and
+   * with keyboard billing on the box starts focused. */
+  billSearch?: { autoFocus: boolean };
 }) {
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
@@ -44,6 +48,11 @@ export function SearchableSelect<T>({
   useEffect(() => {
     setVoiceSupported(getSpeechRecognition() !== null);
   }, []);
+
+  const autoFocus = !!billSearch?.autoFocus;
+  useEffect(() => {
+    if (autoFocus) inputRef.current?.focus({ preventScroll: true });
+  }, [autoFocus]);
 
   function startVoiceSearch() {
     const SpeechRecognitionCtor = getSpeechRecognition();
@@ -148,6 +157,7 @@ export function SearchableSelect<T>({
         onBlur={() => setTimeout(() => setOpen(false), 150)}
         placeholder={placeholder}
         enterKeyHint="done"
+        data-bill-search={billSearch ? "" : undefined}
         role="combobox"
         aria-expanded={open && filtered.length > 0}
         aria-controls={listId}

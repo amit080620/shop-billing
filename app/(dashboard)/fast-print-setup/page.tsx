@@ -1,6 +1,7 @@
 import { PageHeader } from "@/app/components/PageHeader";
 import { Download, Printer } from "lucide-react";
 import { AutoPrintToggle } from "./AutoPrintToggle";
+import { KeyboardBillingToggle } from "./KeyboardBillingToggle";
 import { PrintHelperSetup } from "./PrintHelperSetup";
 import { BackLink } from "@/app/components/BackLink";
 
@@ -49,6 +50,10 @@ export default function FastPrintSetupPage() {
           Works with the Print Helper or the Fast Print shortcut. With the shortcut, turn it on inside the Fast Print window (open this page
           there): each window remembers it separately.
         </p>
+      </div>
+
+      <div className="neu-card flex flex-col gap-2 p-4">
+        <KeyboardBillingToggle />
       </div>
 
       <div className="neu-card flex flex-col gap-3 p-4">

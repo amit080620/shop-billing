@@ -5,6 +5,7 @@ import Link from "@/lib/link";
 import { Printer } from "lucide-react";
 import { useT } from "@/lib/i18n/LangContext";
 import { PRINT_EVENT } from "@/lib/printHelper";
+import { notePrinted } from "@/lib/keyboardBilling";
 
 export function PrintButton({ labels }: { labels?: { print: string; printing: string; kioskHint: string } }) {
   const [justClicked, setJustClicked] = useState(false);
@@ -15,7 +16,10 @@ export function PrintButton({ labels }: { labels?: { print: string; printing: st
 
   // "Print as soon as a bill is saved" (AutoPrint).
   useEffect(() => {
-    const onPrint = () => window.print();
+    const onPrint = () => {
+      window.print();
+      notePrinted();
+    };
     window.addEventListener(PRINT_EVENT, onPrint);
     return () => window.removeEventListener(PRINT_EVENT, onPrint);
   }, []);
@@ -26,6 +30,7 @@ export function PrintButton({ labels }: { labels?: { print: string; printing: st
         onClick={() => {
           setJustClicked(true);
           window.print();
+          notePrinted();
           setTimeout(() => setJustClicked(false), 900);
         }}
         className={`bill-action ${justClicked ? "animate-save-success" : ""}`}

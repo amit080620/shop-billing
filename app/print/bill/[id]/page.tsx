@@ -20,6 +20,7 @@ import { EditBillButton } from "./EditBillButton";
 import { DownloadImageButton } from "./DownloadImageButton";
 import { SharePdfButton } from "./SharePdfButton";
 import { BluetoothPrintButton } from "./BluetoothPrintButton";
+import { BillPageKeys } from "./BillPageKeys";
 import { BillSuccessSound } from "./BillSuccessSound";
 import { AutoPrint } from "./AutoPrint";
 import { ThermalPageSize } from "./ThermalPageSize";
@@ -284,6 +285,7 @@ export default async function PrintBillPage({
           <DownloadImageButton invoiceNumber={bill.invoice_number} upiLink={upiLink} isThermal={isThermal} />
           <SharePdfButton invoiceNumber={bill.invoice_number} shopName={shop.name} upiLink={upiLink} isThermal={isThermal} />
         </div>
+        <BillPageKeys newBillHref={homePathFor(session.businessType, session.fastBillingEnabled)} />
 
         <div className="flex items-center justify-between gap-2">
           <span className="text-xs font-medium text-muted">{t("billPage.paperSize")}</span>

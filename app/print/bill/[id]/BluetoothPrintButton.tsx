@@ -7,6 +7,7 @@ import { buildReceiptEscPos, type ReceiptData } from "@/lib/escpos";
 import { getThermalPrintSettingsAction } from "@/lib/actions/settings";
 import { useT } from "@/lib/i18n/LangContext";
 import { PRINT_EVENT, helperSettings, printViaHelper } from "@/lib/printHelper";
+import { notePrinted } from "@/lib/keyboardBilling";
 
 /** THE print button — one, simple, always labeled just "Print". No
  * separate "Bluetooth print" vs regular "Print" for the person to
@@ -31,7 +32,19 @@ export function BluetoothPrintButton({ receipt, paperWidth }: { receipt: Receipt
     setRemembered(hasRememberedPrinter());
   }, [status]);
 
+  // One print at a time: a key, the auto-print and a tap arriving together print one copy.
+  const printing = useRef(false);
   async function handlePrint() {
+    if (printing.current) return;
+    printing.current = true;
+    try {
+      await printOnce();
+    } finally {
+      printing.current = false;
+    }
+  }
+
+  async function printOnce() {
     // A computer with The Ray Print Helper: straight to its printer, no dialog. If the helper isn't
     // running, print the usual way below instead.
     const helper = helperSettings();
@@ -40,6 +53,7 @@ export function BluetoothPrintButton({ receipt, paperWidth }: { receipt: Receipt
       setError(null);
       const result = await printViaHelper(buildReceiptEscPos(receipt, paperWidth, await formatFor()), helper.printer);
       if (!result.error) {
+        notePrinted();
         setStatus("done");
         setTimeout(() => setStatus("idle"), 2000);
         return;
@@ -55,6 +69,7 @@ export function BluetoothPrintButton({ receipt, paperWidth }: { receipt: Receipt
 
     if (!bluetoothSupported) {
       window.print();
+      notePrinted();
       return;
     }
 
@@ -67,6 +82,7 @@ export function BluetoothPrintButton({ receipt, paperWidth }: { receipt: Receipt
       setError(result.error);
       return;
     }
+    notePrinted();
     setStatus("done");
     setTimeout(() => setStatus("idle"), 2000);
   }

@@ -7,6 +7,9 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "@/lib/link";
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
+import { pressWhenReady, rememberBillingScreen, savePresser, SETTLE_MS } from "@/lib/keyboardBilling";
+import { useBillingKeys } from "@/lib/useBillingKeys";
+import { KeyboardHint } from "@/app/components/KeyboardHint";
 import { createBillAction } from "@/lib/actions/bills";
 import { saveQuotationAction } from "@/lib/actions/quotations";
 import { customerBillExtrasAction } from "@/lib/actions/salonExtras";
@@ -107,6 +110,7 @@ function SubmitButton({ blocked, generatingLabel, submitLabel }: { blocked: bool
   return (
     <button
       type="submit"
+      data-keyboard-save
       disabled={pending || blocked}
       className="btn-primary flex w-full items-center justify-center gap-2 text-center"
     >
@@ -465,6 +469,33 @@ export function NewBillClient({
     const timer = setTimeout(() => setSaving(false), 25000);
     return () => clearTimeout(timer);
   }, [saving]);
+
+  // Keyboard billing (lib/keyboardBilling): Enter on the empty item search opens the ticket, Enter
+  // there saves; F10 / Ctrl+Enter saves from either; Esc goes back to the items.
+  useEffect(() => rememberBillingScreen("/bills/new"), []);
+  const ticketOpenedAt = useRef(0);
+  useEffect(() => {
+    if (step === "ticket") ticketOpenedAt.current = Date.now();
+  }, [step]);
+  const keySave = useMemo(savePresser, []);
+  const keyboardBilling = useBillingKeys((key) => {
+    if (saving) return true;
+    if (key === "save") {
+      if (step === "cart") void pressWhenReady("[data-keyboard-next]", 2).then((opened) => opened && keySave());
+      else keySave();
+      return true;
+    }
+    if (key === "next") {
+      if (step === "cart") void pressWhenReady("[data-keyboard-next]", 2);
+      else if (Date.now() - ticketOpenedAt.current >= SETTLE_MS) keySave();
+      return true;
+    }
+    if (step === "ticket") {
+      setStep("cart");
+      return true;
+    }
+    return false;
+  });
 
   // The floating calculator picks this up automatically when opened.
   useSyncCalculatorAmount(cart.length > 0 ? totals.total : null);
@@ -960,6 +991,7 @@ export function NewBillClient({
             getLabel={(p) => p.name}
             getKeywords={(p) => [p.barcode, p.salt].filter(Boolean).join(" ")}
             leadingIcon={<ScanBarcode size={17} />}
+            billSearch={{ autoFocus: keyboardBilling }}
             onEnter={(text) => {
               const code = barcodeScanMode === "off" ? null : barcodeFromQuery(text, products);
               if (code) handleBarcodeScan(code);
@@ -1237,9 +1269,10 @@ export function NewBillClient({
             <span className="text-2xl font-bold tracking-tight text-foreground">{formatMoney(totals.subtotal)}</span>
           </div>
           <p className="text-xs text-muted">{t("GST, discount and payment come next.")}</p>
-          <button disabled={!canComplete} onClick={complete} className="btn-primary w-full disabled:opacity-40">
+          <button data-keyboard-next disabled={!canComplete} onClick={complete} className="btn-primary w-full disabled:opacity-40">
             {t("bill.completeTicket")} →
           </button>
+          {keyboardBilling && <KeyboardHint keys={[["Enter", "next"], ["F10", "save now"]]} />}
         </aside>
 
         <div className="fixed inset-x-0 bottom-[calc(var(--bottom-nav-h)+env(safe-area-inset-bottom))] z-20 border-t border-border bg-surface px-4 py-3 md:hidden">
@@ -1248,7 +1281,7 @@ export function NewBillClient({
               <p className="text-xs text-muted">{t("bill.subtotal")}</p>
               <p className="truncate text-lg font-bold text-foreground">{formatMoney(totals.subtotal)}</p>
             </div>
-            <button disabled={!canComplete} onClick={complete} className="btn-primary shrink-0 px-6 text-center disabled:opacity-40">
+            <button data-keyboard-next disabled={!canComplete} onClick={complete} className="btn-primary shrink-0 px-6 text-center disabled:opacity-40">
               {t("bill.completeTicket")} →
             </button>
           </div>
@@ -1769,6 +1802,7 @@ export function NewBillClient({
       )}
 
       <SubmitButton blocked={(customerMode === "walkin" && totals.balanceAmount > 0) || b2bInvalid} generatingLabel={t("bill.generating")} submitLabel={t("bill.generateInvoice")} />
+      {keyboardBilling && <KeyboardHint keys={[["Enter", "save"], ["Esc", "back to items"]]} />}
       {/* The bill shows the moment Save is tapped; its number and print follow from the server. */}
       <SavingBill pending={saving} lines={cart.map((c) => ({ name: c.name, quantity: c.quantity, unit: c.unit, amount: round2(c.price * c.quantity) }))} total={totals.total} />
 

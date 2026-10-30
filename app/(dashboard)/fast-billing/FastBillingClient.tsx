@@ -17,6 +17,9 @@ import { useTranslation } from "@/lib/i18n/useTranslation";
 import { QuantityGrid } from "./QuantityGrid";
 import { FastCustomerPicker, type CounterCustomer } from "./FastCustomerPicker";
 import { useT } from "@/lib/i18n/LangContext";
+import { rememberBillingScreen, savePresser, SETTLE_MS } from "@/lib/keyboardBilling";
+import { useBillingKeys } from "@/lib/useBillingKeys";
+import { KeyboardHint } from "@/app/components/KeyboardHint";
 import { forgetCounterCustomers, loadCounterCustomers } from "@/lib/counterCustomers";
 import { calculateTransactionTotals } from "@/lib/validation/totals";
 import { productLinePrice } from "@/lib/linePrice";
@@ -262,6 +265,52 @@ export function FastBillingClient({
   // The floating calculator picks this up automatically when opened.
   useSyncCalculatorAmount(itemCount > 0 ? total : null);
 
+  // Keyboard billing (lib/keyboardBilling): an item's name + Enter adds it; Enter on the empty search
+  // opens the bill, Enter there checks out; F10 / Ctrl+Enter checks out from either; Esc closes the bill.
+  useEffect(() => rememberBillingScreen("/fast-billing"), []);
+  const searchRef = useRef<HTMLInputElement>(null);
+  const sheetOpenedAt = useRef(0);
+  useEffect(() => {
+    if (showBill) sheetOpenedAt.current = Date.now();
+  }, [showBill]);
+  const keySave = useMemo(savePresser, []);
+  const keyboardBilling = useBillingKeys((key) => {
+    if (key === "save") {
+      if (cart.length === 0) return true;
+      setShowBill(true);
+      keySave();
+      return true;
+    }
+    if (key === "next") {
+      if (!showBill) {
+        if (cart.length > 0) setShowBill(true);
+      } else if (Date.now() - sheetOpenedAt.current >= SETTLE_MS) keySave();
+      return true;
+    }
+    if (showBill) {
+      setShowBill(false);
+      return true;
+    }
+    return false;
+  });
+  // The search box is focused for the next item, and let go while the bill is open, so keys typed
+  // there don't fill a box hidden behind it.
+  useEffect(() => {
+    if (!keyboardBilling) return;
+    if (showBill) searchRef.current?.blur();
+    else searchRef.current?.focus({ preventScroll: true });
+  }, [keyboardBilling, showBill]);
+
+  /** Name typed, Enter: the first item it matches goes on the bill (one more each time). */
+  function addFromSearch(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (!keyboardBilling || e.key !== "Enter" || e.repeat || !search.trim()) return;
+    e.preventDefault();
+    const product = visibleProducts.find((p) => !(p.trackInventory && p.stockQuantity <= 0));
+    if (!product) return;
+    addToCart(product, 1);
+    setSearch("");
+  }
+
   function addToCart(product: FastProduct, qty: number) {
     setCart((prev) => {
       const existing = prev.find((l) => l.productId === product.id);
@@ -323,8 +372,11 @@ export function FastBillingClient({
           <div className="flex flex-1 items-center gap-2 rounded-full bg-surface px-3 py-2">
             <Search size={16} className="text-muted" />
             <input
+              ref={searchRef}
+              data-bill-search
               value={search}
               onChange={(e) => setSearch(e.target.value)}
+              onKeyDown={addFromSearch}
               placeholder="Search products…"
               className="flex-1 bg-transparent text-sm outline-none"
             />
@@ -441,6 +493,11 @@ export function FastBillingClient({
       {/* Persistent bottom bar — always know item count + total */}
       {itemCount > 0 && (
         <div className="fixed inset-x-0 bottom-[calc(var(--bottom-nav-h)+env(safe-area-inset-bottom))] z-20 border-t border-border bg-surface px-3 py-2.5 md:bottom-0 md:left-72">
+          {keyboardBilling && (
+            <div className="mb-1.5">
+              <KeyboardHint keys={[["Name + Enter", "add item"], ["Enter", "view bill"], ["F10", "save now"]]} />
+            </div>
+          )}
           <button onClick={() => setShowBill(true)} className="btn-primary flex w-full items-center justify-between px-4">
             <span>
               {itemCount} item{itemCount === 1 ? "" : "s"}
@@ -478,6 +535,7 @@ export function FastBillingClient({
           voiceCustomer={voiceCustomer}
           canDiscount={canDiscount}
           shopId={shopId}
+          keyboardBilling={keyboardBilling}
         />
       )}
     </div>
@@ -508,9 +566,11 @@ function FastBillSheet({
   voiceCustomer,
   canDiscount,
   shopId,
+  keyboardBilling,
 }: {
   shopId: string;
   canDiscount: boolean;
+  keyboardBilling: boolean;
   priceIncludesGst: boolean;
   gstScheme: "regular" | "composition";
   cart: FastCartLine[];
@@ -528,7 +588,7 @@ function FastBillSheet({
   const itemCount = cart.reduce((s, l) => s + l.qty, 0);
 
   return (
-    <div className="fixed inset-0 z-30 flex flex-col bg-background">
+    <div data-keyboard-billing className="fixed inset-0 z-30 flex flex-col bg-background">
       <div className="flex items-center justify-between border-b border-border px-4 py-3">
         <p className="text-base font-semibold text-foreground">Current bill</p>
         <button onClick={onClose} className="rounded-full p-1.5 text-muted" aria-label="Close">
@@ -590,6 +650,11 @@ function FastBillSheet({
             <div className="mb-3 flex items-center justify-between text-sm">
               <span className="text-muted">Subtotal</span>
               <span className="font-semibold text-foreground">{formatMoney(subtotal)}</span>
+            </div>
+          )}
+          {keyboardBilling && !customerFocus && (
+            <div className="mb-2">
+              <KeyboardHint keys={[["Enter", "checkout"], ["Esc", "back"]]} />
             </div>
           )}
           <FastCheckoutButton cart={cart} loyaltyRedemptionValue={loyaltyRedemptionValue} priceIncludesGst={priceIncludesGst} gstScheme={gstScheme} voiceCustomer={voiceCustomer} canDiscount={canDiscount} shopId={shopId} focusMode={customerFocus} onFocusMode={setCustomerFocus} />
@@ -869,6 +934,7 @@ function FastCheckoutButton({
         <input type="hidden" name="payload" value={payload} />
         <button
           type="button"
+          data-keyboard-save
           disabled={isPending || cart.length === 0}
           onClick={() => {
             // Udhar strictly needs a phone number to recover from.
