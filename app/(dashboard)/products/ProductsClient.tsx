@@ -15,10 +15,13 @@ import {
   deleteCategoryAction,
   deleteProductAction,
   forceDeleteProductAction,
+  deleteProductsAction,
   generateBarcodeAction,
   uploadProductImageAction,
 } from "@/lib/actions/products";
-import { Package, Camera, Tag, ShieldCheck, Layers, Sparkles, Loader2, Pencil, Trash2, ScanBarcode, X } from "lucide-react";
+import { Package, Camera, Tag, ShieldCheck, Layers, Sparkles, Loader2, Pencil, Trash2, ScanBarcode, X, Lock, CheckSquare } from "lucide-react";
+import { ManagerPinBox } from "@/app/components/ManagerPinBox";
+import { pinRequest } from "@/lib/managerPinText";
 import { suggestProductPriceAction } from "@/lib/actions/priceSuggestion";
 import { formatMoney, unitLabel, unitName } from "@/lib/format";
 import { EmptyState } from "@/app/components/EmptyState";
@@ -79,6 +82,7 @@ type Product = {
   offerLabel: string | null;
   showInCatalog: boolean;
   showInFastBilling: boolean;
+  wholesalePrice?: number | null;
 };
 type Category = { id: string; name: string };
 
@@ -212,9 +216,46 @@ export function ProductsClient({
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [blockedProductId, setBlockedProductId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  // Editing an item: the stock count stays locked until "Change" — typing over it needs the manager PIN.
+  const [stockUnlocked, setStockUnlocked] = useState(false);
+  // Ticking items in the list to delete many at once.
+  const [selectMode, setSelectMode] = useState(false);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [bulkDelete, setBulkDelete] = useState<{ pinMessage: string | null; busy: boolean; note: string | null }>({ pinMessage: null, busy: false, note: null });
+  const toggleSelected = (id: string) =>
+    setSelected((cur) => {
+      const next = new Set(cur);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  async function deleteSelected(pin: string | null) {
+    const ids = [...selected];
+    if (!ids.length) return;
+    if (!pin && !confirm(`Delete ${ids.length} item(s)? Items that already have sales stay. Every deleted item is kept in the audit log with its price and stock.`)) return;
+    setBulkDelete({ pinMessage: null, busy: true, note: null });
+    try {
+      const res = await deleteProductsAction(ids, pin, "selected");
+      const ask = pinRequest(res.error);
+      if (ask) return setBulkDelete({ pinMessage: ask, busy: false, note: null });
+      if (res.error) return setBulkDelete({ pinMessage: null, busy: false, note: res.error });
+      // Items kept (they have sales) stay ticked; the rest are gone.
+      const keptNames = new Set(res.kept.map((k) => k.name));
+      setSelected(new Set(ids.filter((id) => keptNames.has(initialProducts.find((p) => p.id === id)?.name ?? ""))));
+      const kept = res.kept.length ? ` ${res.kept.length} kept — they have sales on record: ${res.kept.slice(0, 5).map((k) => k.name).join(", ")}${res.kept.length > 5 ? "…" : ""}` : "";
+      setBulkDelete({ pinMessage: null, busy: false, note: `${res.deleted} item(s) deleted.${kept}` });
+      if (res.deleted) {
+        showToast(`${res.deleted} item(s) deleted`, "info");
+        router.refresh();
+      }
+    } catch {
+      setBulkDelete({ pinMessage: null, busy: false, note: "Could not reach the server — nothing was deleted. Try again." });
+    }
+  }
 
   function openNewProductForm() {
     setEditingProduct(null);
+    setStockUnlocked(false);
     setTrackInventory(false);
     setIsRentable(false);
     setIsPharma(false);
@@ -228,6 +269,7 @@ export function ProductsClient({
 
   function openEditProductForm(p: Product) {
     setEditingProduct(p);
+    setStockUnlocked(false);
     setTrackInventory(p.trackInventory);
     setIsRentable(p.isRentable);
     setIsPharma(p.isPharma);
@@ -331,6 +373,17 @@ export function ProductsClient({
           <Link href="/products/scan-menu" className="flex shrink-0 items-center gap-1.5 rounded-full border border-border bg-surface px-3 py-1.5 text-xs font-medium text-foreground hover:bg-surface-2">
             {t("Scan price list")}
           </Link>
+          <button
+            type="button"
+            onClick={() => {
+              setSelectMode((v) => !v);
+              setSelected(new Set());
+              setBulkDelete({ pinMessage: null, busy: false, note: null });
+            }}
+            className={`flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium ${selectMode ? "border-brand bg-brand-soft text-brand-text" : "border-border bg-surface text-foreground hover:bg-surface-2"}`}
+          >
+            <CheckSquare size={13} /> {selectMode ? t("Done selecting") : t("Select to delete")}
+          </button>
           <button type="button" onClick={() => setShowCategoryForm((v) => !v)} className="flex shrink-0 items-center gap-1.5 rounded-full border border-border bg-surface px-3 py-1.5 text-xs font-medium text-foreground hover:bg-surface-2">
             {t("Categories")}
           </button>
@@ -672,8 +725,30 @@ export function ProductsClient({
           </label>
           {trackInventory && (
             <div className="grid grid-cols-2 gap-3">
-              <Field name="stockQuantity" label={t("products.currentStock")} type="number" step="0.01" min="0" defaultValue={editingProduct ? String(editingProduct.stockQuantity) : "0"} />
+              {editingProduct && !stockUnlocked ? (
+                <div className="flex flex-col gap-1.5 text-sm">
+                  <span className="font-medium text-foreground">{t("products.currentStock")}</span>
+                  <div className="flex items-center gap-1.5">
+                    {/* Disabled, so it isn't sent: the count on record stays as it is. */}
+                    <input disabled value={String(editingProduct.stockQuantity)} aria-label={t("products.currentStock")} className="w-full min-w-0 rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-muted" />
+                    <button type="button" onClick={() => setStockUnlocked(true)} title="Changing stock needs the manager PIN" className="flex shrink-0 items-center gap-1 rounded-lg border border-border px-2 py-2 text-xs font-medium text-foreground">
+                      <Lock size={12} /> {t("Change")}
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <Field name="stockQuantity" label={t("products.currentStock")} type="number" step="0.01" min="0" defaultValue={editingProduct ? String(editingProduct.stockQuantity) : "0"} />
+              )}
               <Field name="lowStockThreshold" label={t("products.lowStockAlertBelow")} type="number" step="0.01" min="0" defaultValue={editingProduct ? String(editingProduct.lowStockThreshold) : "0"} />
+              {editingProduct && stockUnlocked && (
+                <label className="col-span-2 flex flex-col gap-1.5 rounded-lg border border-warning bg-warning/10 p-2.5 text-sm">
+                  <span className="flex items-center gap-1.5 font-medium text-foreground">
+                    <Lock size={13} /> {t("Manager PIN")}
+                  </span>
+                  <input name="managerPin" type="password" inputMode="numeric" autoComplete="off" placeholder="PIN" className="w-40 rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-brand" />
+                  <span className="text-[11px] text-muted">{t("A new stock count is saved only with the manager PIN. Stock coming in should go through Purchases.")}</span>
+                </label>
+              )}
             </div>
           )}
           {showRentalSection && (
@@ -839,7 +914,7 @@ export function ProductsClient({
               </button>
             </div>
           ) : (
-            productState?.error && <p className="text-sm text-credit">{productState.error}</p>
+            productState?.error && <p className="text-sm text-credit">{pinRequest(productState.error) ?? productState.error}</p>
           )}
           <div className="flex gap-2">
             <div className="contents" onClickCapture={() => (addAnotherRef.current = false)}>
@@ -889,6 +964,40 @@ export function ProductsClient({
         </div>
       )}
 
+      {selectMode && (
+        <div className="sticky top-0 z-10 flex flex-col gap-2 rounded-xl border border-border bg-surface p-3 shadow-sm">
+          <div className="flex flex-wrap items-center gap-2 text-xs">
+            <span className="font-semibold text-foreground">{selected.size} {t("selected")}</span>
+            <button type="button" onClick={() => setSelected(new Set(filtered.map((p) => p.id)))} className="rounded-full border border-border px-2.5 py-1 font-medium text-foreground">
+              {t("Select all shown")} ({filtered.length})
+            </button>
+            {selected.size > 0 && (
+              <button type="button" onClick={() => setSelected(new Set())} className="px-1 text-muted underline">
+                {t("Clear")}
+              </button>
+            )}
+            <button
+              type="button"
+              disabled={!selected.size || bulkDelete.busy}
+              onClick={() => void deleteSelected(null)}
+              className="ml-auto flex items-center gap-1 rounded-lg bg-danger px-3 py-1.5 font-semibold text-white disabled:opacity-50"
+            >
+              <Trash2 size={13} /> {bulkDelete.busy ? t("Deleting…") : `${t("Delete")} ${selected.size || ""}`}
+            </button>
+          </div>
+          <p className="text-[11px] text-muted">{t("Tip: search or pick a category first, then Select all shown.")}</p>
+          {bulkDelete.pinMessage && (
+            <ManagerPinBox
+              message={bulkDelete.pinMessage}
+              busy={bulkDelete.busy}
+              submitLabel={`${t("Delete")} ${selected.size}`}
+              onSubmit={(pin) => void deleteSelected(pin)}
+              onCancel={() => setBulkDelete({ pinMessage: null, busy: false, note: null })}
+            />
+          )}
+          {bulkDelete.note && <p className="text-xs font-medium text-brand-text">{bulkDelete.note}</p>}
+        </div>
+      )}
       {deleteError && <p className="rounded-lg bg-credit-soft px-3.5 py-2.5 text-sm text-credit">{deleteError}</p>}
       {imageError && <p className="rounded-lg bg-credit-soft px-3.5 py-2.5 text-sm text-credit">{imageError}</p>}
 
@@ -918,6 +1027,15 @@ export function ProductsClient({
                 className={`neu-card flex items-center justify-between gap-3 px-3.5 py-3 ${deletingId === p.id && blockedProductId !== p.id ? "animate-delete" : ""}`}
                 style={tone ? { borderLeft: `3px solid ${TONE_COLORS[tone]}` } : undefined}
               >
+                {selectMode && (
+                  <input
+                    type="checkbox"
+                    checked={selected.has(p.id)}
+                    onChange={() => toggleSelected(p.id)}
+                    aria-label={`${t("Select")} ${p.name}`}
+                    className="h-5 w-5 shrink-0 rounded border-border"
+                  />
+                )}
                 <label title={t("Add a photo")} aria-label={t("Add a photo of {name}", { name: p.name })} className="relative flex h-12 w-12 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-lg border border-dashed border-border bg-background text-[10px] text-muted">
                   {p.imageUrl ? (
                     <Image src={p.imageUrl} alt="" fill sizes="48px" className="object-cover" />
@@ -941,9 +1059,11 @@ export function ProductsClient({
                   className="min-w-0 flex-1 cursor-pointer"
                   role="button"
                   tabIndex={0}
-                  onClick={() => openEditProductForm(p)}
+                  onClick={() => (selectMode ? toggleSelected(p.id) : openEditProductForm(p))}
                   onKeyDown={(e) => {
-                    if (e.key === "Enter") openEditProductForm(p);
+                    if (e.key !== "Enter") return;
+                    if (selectMode) toggleSelected(p.id);
+                    else openEditProductForm(p);
                   }}
                 >
                   <p className="truncate text-sm font-medium text-foreground">

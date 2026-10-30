@@ -9,6 +9,10 @@ import { isModuleEnabled } from "../modules";
 import { productRoomLeft } from "../planLimits";
 import { allRows } from "../supabase/allRows";
 import { invalidateCache } from "../cache";
+import { logAuditEvent } from "../audit";
+import { changedFields } from "../auditChanges";
+import { checkManagerPin, PIN_NEEDED } from "../managerPin";
+import { wholesaleReady } from "../wholesaleData";
 import { parseItem, productColumnsOf, type FieldKey, type ParsedItem } from "../import/productColumns";
 
 /** One row of the owner's file: its row number in Excel and its cells by field, as text. */
@@ -22,6 +26,11 @@ export type ImportResult = {
   /** Rows whose name the shop already has, or that repeat a name earlier in the file. With
    * duplicates "ask" (the default), nothing is saved while there are any: the owner decides. */
   duplicates?: { row: number; name: string; why: "already" | "twice" }[];
+  /** Set when the file changes the stock of items already in the shop: nothing was saved, and the
+   * screen asks for the manager PIN (the message) and sends the file again with it. */
+  needsPin?: string;
+  /** The new items this import made — for "delete what this import brought in". */
+  insertedIds?: string[];
 };
 
 /** What to do with rows whose name is already taken: stop and ask, leave them out, import them as
@@ -37,7 +46,7 @@ const CHUNK = 200;
 type ProductInsert = Database["public"]["Tables"]["products"]["Insert"];
 type Planned = { row: number; name: string; item: ParsedItem; existingId: string | null };
 
-export async function bulkImportProductsAction(rows: ImportRow[], duplicates: DuplicateChoice = "ask"): Promise<ImportResult> {
+export async function bulkImportProductsAction(rows: ImportRow[], duplicates: DuplicateChoice = "ask", managerPin: string | null = null): Promise<ImportResult> {
   const session = await requireSession();
   requireArea(session, "manage_products");
   if (!isModuleEnabled(session.enabledModules, "bulk_import_export")) {
@@ -59,12 +68,14 @@ export async function bulkImportProductsAction(rows: ImportRow[], duplicates: Du
   }
 
   const { data: existing, error: readError } = await allRows((from, to) =>
-    admin.from("products").select("id, name, barcode").eq("shop_id", session.shopId).order("id").range(from, to),
+    admin.from("products").select("id, name, barcode, stock_quantity").eq("shop_id", session.shopId).order("id").range(from, to),
   );
   if (readError) return { inserted: 0, errors: [...errors, { row: 0, name: "", message: "Could not read your items — try again." }] };
   const byName = new Map<string, string>();
   const byBarcode = new Map<string, { id: string; name: string }>();
+  const stockOf = new Map<string, number>();
   for (const p of existing ?? []) {
+    stockOf.set(p.id, Number(p.stock_quantity));
     if (!byName.has(sameName(p.name))) byName.set(sameName(p.name), p.id);
     if (p.barcode) byBarcode.set(p.barcode, { id: p.id, name: p.name });
   }
@@ -126,6 +137,18 @@ export async function bulkImportProductsAction(rows: ImportRow[], duplicates: Du
   const inserts = kept.filter((p) => !p.existingId);
   const updates = kept.filter((p) => p.existingId);
   if (!inserts.length && !updates.length) return { inserted: 0, updated: 0, errors };
+
+  // A file that types over the stock of items already in the shop needs the manager PIN, as the item form does.
+  const stockChanges = updates.filter((p) => typeof p.item.stockQuantity === "number" && Math.abs(p.item.stockQuantity - (stockOf.get(p.existingId!) ?? 0)) > 1e-9);
+  if (stockChanges.length) {
+    const pinError = await checkManagerPin(admin, session, managerPin, `change the stock of ${stockChanges.length} item(s)`);
+    if (pinError) return { inserted: 0, updated: 0, errors, needsPin: pinError.slice(PIN_NEEDED.length) };
+  }
+  // Wholesale rates need migration 0053; without it the column is left out and said so.
+  if (kept.some((p) => p.item.wholesalePrice !== undefined) && !(await wholesaleReady(admin))) {
+    for (const p of kept) delete p.item.wholesalePrice;
+    errors.push({ row: 0, name: "", message: "Wholesale price was not saved — it needs a one-time database update (migration 0053)." });
+  }
 
   // The plan's item allowance: no new item is saved past it.
   const room = await productRoomLeft(session);
@@ -189,7 +212,13 @@ export async function bulkImportProductsAction(rows: ImportRow[], duplicates: Du
   }
   const inserted = saved.length;
 
-  // Items already there: only the columns the file filled in change.
+  // Items already there: only the columns the file filled in change. Their rows as they were, for the audit log.
+  const beforeRows = new Map<string, Record<string, unknown>>();
+  for (let i = 0; i < updates.length; i += CHUNK) {
+    const { data } = await admin.from("products").select("*").eq("shop_id", session.shopId).in("id", updates.slice(i, i + CHUNK).map((p) => p.existingId!));
+    for (const r of data ?? []) beforeRows.set(r.id, r as Record<string, unknown>);
+  }
+  const changedItems: { name: string; changes: ReturnType<typeof changedFields> }[] = [];
   let updated = 0;
   for (let i = 0; i < updates.length; i += 10) {
     await Promise.all(
@@ -199,6 +228,8 @@ export async function bulkImportProductsAction(rows: ImportRow[], duplicates: Du
         if (Object.keys(cols).length) {
           const { error } = await admin.from("products").update(cols as Partial<ProductInsert>).eq("id", p.existingId!).eq("shop_id", session.shopId);
           if (error) return insertError(p, error);
+          const diff = changedFields(beforeRows.get(p.existingId!) ?? {}, cols);
+          if (Object.keys(diff).length) changedItems.push({ name: String(beforeRows.get(p.existingId!)?.name ?? p.name), changes: diff });
         }
         updated++;
         saved.push({ p, id: p.existingId! });
@@ -240,11 +271,58 @@ export async function bulkImportProductsAction(rows: ImportRow[], duplicates: Du
     }
   }
 
+  if (inserted || changedItems.length) {
+    await logAuditEvent({
+      admin,
+      shopId: session.shopId,
+      staffId: session.userId,
+      action: "products_imported",
+      entityType: "product",
+      details: {
+        inserted,
+        updated,
+        failedRows: errors.filter((e) => e.row > 0).length,
+        ids: saved.filter((s) => !s.p.existingId).map((s) => s.id),
+        items: saved.filter((s) => !s.p.existingId).map((s) => ({ name: s.p.name, price: s.p.item.price ?? null, stock: s.p.item.stockQuantity ?? 0 })),
+        changed: changedItems,
+        ...(stockChanges.length ? { pinUsed: true } : {}),
+      },
+      by: { name: session.staffName, role: session.role },
+    });
+  }
   await invalidateCache(`ray:cache:products:${session.shopId}`);
   revalidatePath("/products");
   revalidatePath("/pharmacy/expiry");
   errors.sort((a, b) => a.row - b.row);
-  return { inserted, updated, errors };
+  return { inserted, updated, errors, insertedIds: saved.filter((s) => !s.p.existingId).map((s) => s.id) };
+}
+
+/** The newest import that brought in new items, and how many of them are still in the list — so
+ * the owner can take a whole import back out in one go. */
+export async function lastImportAction(): Promise<{ at: string; by: string | null; total: number; ids: string[] } | null> {
+  const session = await requireSession();
+  requireArea(session, "manage_products");
+  const admin = createSupabaseAdminClient();
+  const { data: logs } = await admin
+    .from("audit_logs")
+    .select("created_at, details")
+    .eq("shop_id", session.shopId)
+    .eq("action", "products_imported")
+    .order("created_at", { ascending: false })
+    .limit(10);
+  for (const log of logs ?? []) {
+    const d = (log.details ?? {}) as { ids?: unknown; _by?: { name?: string } };
+    const ids = Array.isArray(d.ids) ? d.ids.filter((x): x is string => typeof x === "string") : [];
+    if (!ids.length) continue;
+    const still: string[] = [];
+    for (let i = 0; i < ids.length; i += CHUNK) {
+      const { data } = await admin.from("products").select("id").eq("shop_id", session.shopId).in("id", ids.slice(i, i + CHUNK));
+      still.push(...(data ?? []).map((p) => p.id));
+    }
+    if (!still.length) continue;
+    return { at: log.created_at, by: d._by?.name ?? null, total: ids.length, ids: still };
+  }
+  return null;
 }
 
 // ─── Customers / Patients ────────────────────────────────────────────────

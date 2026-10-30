@@ -12,7 +12,7 @@ function fileOf(sheets: [string, XLSX.WorkSheet][]): ArrayBuffer {
 
 const FULL: ParsedItem = {
   name: "Test Everything", price: 99.5, gstPercent: 18, unit: "box", hsnCode: "0402", barcode: "0012345678905", category: "Tests",
-  trackInventory: true, stockQuantity: 12, lowStockThreshold: 3, mrp: 120, bulkMinQty: 10, bulkPrice: 90, offerPrice: 95, offerLabel: "Diwali",
+  trackInventory: true, stockQuantity: 12, lowStockThreshold: 3, mrp: 120, bulkMinQty: 10, bulkPrice: 90, wholesalePrice: 85, offerPrice: 95, offerLabel: "Diwali",
   showInCatalog: false, showInFastBilling: true, hasWarranty: true, warrantyMonths: 12, isRentable: true, rentalRateHourly: 5, rentalRateDaily: 50,
   rentalRateWeekly: 300, rentalRateMonthly: 1000, securityDeposit: 500, metalType: "gold", purity: "22K", makingChargeType: "per_gram",
   makingChargeValue: 450, wastagePercent: 5, hallmarkNumber: "AB12CD", isPharma: true, requiresPrescription: true, saltComposition: "Para 500",
@@ -21,7 +21,7 @@ const FULL: ParsedItem = {
 
 describe("item import file", () => {
   it("has a column for every field and each header leads back to its field", () => {
-    expect(PRODUCT_COLUMNS).toHaveLength(41);
+    expect(PRODUCT_COLUMNS).toHaveLength(42);
     for (const c of PRODUCT_COLUMNS) {
       expect(fieldForHeader(c.header)).toBe(c.key);
       expect(fieldForHeader(`${c.header} *`)).toBe(c.key);
@@ -38,6 +38,10 @@ describe("item import file", () => {
     expect(keys("jewellery")).toEqual(expect.arrayContaining(["metalType", "purity", "makingChargeType", "hallmarkNumber"]));
     expect(keys("restaurant")).not.toContain("mrp");
     expect(keys("rental")).toContain("rentalRateDaily");
+    expect(keys("wholesale")).toContain("wholesalePrice");
+    // "Wholesale price" is its own column, not the bulk price.
+    expect(fieldForHeader("Wholesale price")).toBe("wholesalePrice");
+    expect(fieldForHeader("Bulk price")).toBe("bulkPrice");
   });
 
   it("every trade's example rows are valid, and a template left as it is imports nothing", () => {
@@ -64,13 +68,13 @@ describe("item import file", () => {
     const db = productColumnsOf(item);
     expect(db).toMatchObject({
       name: "Test Everything", price: 99.5, gst_percent: 18, unit: "BOX", hsn_code: "0402", barcode: "0012345678905",
-      track_inventory: true, stock_quantity: 12, low_stock_threshold: 3, mrp: 120, bulk_min_qty: 10, bulk_price: 90,
+      track_inventory: true, stock_quantity: 12, low_stock_threshold: 3, mrp: 120, bulk_min_qty: 10, bulk_price: 90, wholesale_price: 85,
       offer_price: 95, offer_label: "Diwali", show_in_catalog: false, show_in_fast_billing: true, has_warranty: true, warranty_months: 12,
       is_rentable: true, rental_rate_hourly: 5, rental_rate_daily: 50, rental_rate_weekly: 300, rental_rate_monthly: 1000, security_deposit: 500,
       metal_type: "gold", purity: "22K", making_charge_type: "per_gram", making_charge_value: 450, wastage_percent: 5, hallmark_number: "AB12CD",
       is_pharma: true, requires_prescription: true, salt_composition: "Para 500", units_per_pack: 10, loose_unit_name: "tablet", rack_location: "R1", drug_schedule: "h1",
     });
-    expect(Object.keys(db)).toHaveLength(37);
+    expect(Object.keys(db)).toHaveLength(38);
   });
 
   it("reads the old template's file, Excel date cells, number barcodes and blank rows", () => {

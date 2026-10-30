@@ -1,6 +1,8 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { checkManagerPin } from "../managerPin";
+import { logAuditEvent } from "../audit";
 import { revalidatePath } from "next/cache";
 import { requireSession, requireArea } from "../auth";
 import { createSupabaseAdminClient } from "../supabase/admin";
@@ -77,7 +79,7 @@ export async function updateAuditItemAction(
   return {};
 }
 
-export async function completeAuditAction(auditId: string): Promise<{ error?: string }> {
+export async function completeAuditAction(auditId: string, managerPin: string | null = null): Promise<{ error?: string }> {
   const session = await requireSession();
   requireArea(session, "manage_products");
   const admin = createSupabaseAdminClient();
@@ -106,6 +108,12 @@ export async function completeAuditAction(auditId: string): Promise<{ error?: st
     .eq("shop_id", session.shopId)
     .in("id", (items ?? []).map((i) => i.product_id).filter(Boolean) as string[]);
   const ownedIds = new Set((owned ?? []).map((p) => p.id));
+  const changes = (items ?? []).filter((i) => i.counted_quantity != null && i.product_id && ownedIds.has(i.product_id) && Math.abs(Number(i.counted_quantity) - Number(i.system_quantity)) > 1e-9);
+  // A count that changes stock is the same as typing a new count on the item: it needs the manager PIN.
+  if (changes.length) {
+    const pinError = await checkManagerPin(admin, session, managerPin, `change the stock of ${changes.length} item(s)`);
+    if (pinError) return { error: pinError };
+  }
   for (const item of items ?? []) {
     if (item.counted_quantity == null || !item.product_id || !ownedIds.has(item.product_id)) continue;
     const difference = Number(item.counted_quantity) - Number(item.system_quantity);
@@ -117,6 +125,22 @@ export async function completeAuditAction(auditId: string): Promise<{ error?: st
     .from("stock_audits")
     .update({ status: "completed", completed_at: new Date().toISOString() })
     .eq("id", auditId);
+  if (changes.length) {
+    const { data: names } = await admin.from("products").select("id, name, unit").in("id", changes.map((c) => c.product_id!));
+    const nameOf = new Map((names ?? []).map((p) => [p.id, p]));
+    await logAuditEvent({
+      admin,
+      shopId: session.shopId,
+      staffId: session.userId,
+      action: "stock_count_applied",
+      entityType: "stock_audit",
+      entityId: auditId,
+      details: {
+        items: changes.map((c) => ({ name: nameOf.get(c.product_id!)?.name ?? "(deleted item)", unit: nameOf.get(c.product_id!)?.unit ?? "", system: Number(c.system_quantity), counted: Number(c.counted_quantity) })),
+      },
+      by: { name: session.staffName, role: session.role },
+    });
+  }
 
   revalidatePath("/products");
   revalidatePath(`/stock-audit/${auditId}`);

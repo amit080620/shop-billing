@@ -7,6 +7,8 @@ import { createSupabaseAdminClient } from "../supabase/admin";
 import { productLimitError } from "../planLimits";
 import { productSchema, categorySchema } from "../validation/schemas";
 import { logAuditEvent } from "../audit";
+import { checkManagerPin } from "../managerPin";
+import { changedFields, itemSnapshot } from "../auditChanges";
 import { findDuplicateProductAI } from "./duplicateCheck";
 import { invalidateCache } from "../cache";
 
@@ -199,9 +201,18 @@ export async function updateProductAction(
   }
 
   const admin = createSupabaseAdminClient();
-  const { error } = await admin
-    .from("products")
-    .update({
+  const { data: before } = await admin.from("products").select("*").eq("id", productId).eq("shop_id", session.shopId).maybeSingle();
+  if (!before) return { error: "This item is no longer in your list — it may have been deleted." };
+  // With stock counting switched off the form sends no count: the one on record stays, it isn't zeroed.
+  const stockQuantity = formData.has("stockQuantity") ? parsed.data.stockQuantity : Number(before.stock_quantity);
+  const lowStockThreshold = formData.has("lowStockThreshold") ? parsed.data.lowStockThreshold : Number(before.low_stock_threshold);
+  // Typing over the stock count is how stock goes missing without a sale — it needs the manager PIN.
+  const stockChanged = Math.abs(stockQuantity - Number(before.stock_quantity)) > 1e-9;
+  if (stockChanged) {
+    const pinError = await checkManagerPin(admin, session, formData.get("managerPin"), "change the stock count");
+    if (pinError) return { error: pinError };
+  }
+  const changes = {
       name: parsed.data.name,
       price: parsed.data.price,
       gst_percent: parsed.data.gstPercent,
@@ -210,8 +221,8 @@ export async function updateProductAction(
       unit: parsed.data.unit,
       category_id: parsed.data.categoryId ?? null,
       track_inventory: parsed.data.trackInventory,
-      stock_quantity: parsed.data.stockQuantity,
-      low_stock_threshold: parsed.data.lowStockThreshold,
+      stock_quantity: stockQuantity,
+      low_stock_threshold: lowStockThreshold,
       is_rentable: parsed.data.isRentable,
       rental_rate_hourly: parsed.data.rentalRateHourly ?? null,
       rental_rate_daily: parsed.data.rentalRateDaily ?? null,
@@ -240,7 +251,10 @@ export async function updateProductAction(
       offer_label: parsed.data.offerLabel ?? null,
       show_in_catalog: parsed.data.showInCatalog,
       show_in_fast_billing: parsed.data.showInFastBilling,
-    })
+  };
+  const { error } = await admin
+    .from("products")
+    .update(changes)
     .eq("id", productId)
     .eq("shop_id", session.shopId); // ownership check baked into the query
 
@@ -250,6 +264,19 @@ export async function updateProductAction(
     }
     console.error("Could not update product", error);
     return { error: "Could not update product" };
+  }
+  const diff = changedFields(before as Record<string, unknown>, changes);
+  if (Object.keys(diff).length) {
+    await logAuditEvent({
+      admin,
+      shopId: session.shopId,
+      staffId: session.userId,
+      action: "product_updated",
+      entityType: "product",
+      entityId: productId,
+      details: { name: before.name, unit: before.unit, changes: diff, ...(stockChanged ? { pinUsed: true } : {}) },
+      by: { name: session.staffName, role: session.role },
+    });
   }
   // No page re-render here: the save answers at once and the Products screen refreshes itself
   // behind the scenes (ProductsClient) — re-rendering it in this reply held "Saving…" ~2 s.
@@ -261,6 +288,8 @@ export async function deleteProductAction(productId: string): Promise<{ error?: 
   const session = await requireSession();
   requireArea(session, "manage_products");
   const admin = createSupabaseAdminClient();
+  const { data: was } = await admin.from("products").select("name, price, mrp, stock_quantity, unit, barcode, track_inventory").eq("id", productId).eq("shop_id", session.shopId).maybeSingle();
+  if (!was) return {};
   const { error } = await admin
     .from("products")
     .delete()
@@ -280,6 +309,16 @@ export async function deleteProductAction(productId: string): Promise<{ error?: 
     console.error("Could not delete product", error);
     return { error: "Could not delete item" };
   }
+  await logAuditEvent({
+    admin,
+    shopId: session.shopId,
+    staffId: session.userId,
+    action: "product_deleted",
+    entityType: "product",
+    entityId: productId,
+    details: { items: [itemSnapshot(was)] },
+    by: { name: session.staffName, role: session.role },
+  });
   revalidatePath("/products");
   await invalidateCache(`ray:cache:products:${session.shopId}`);
   return {};
@@ -298,7 +337,7 @@ export async function forceDeleteProductAction(productId: string): Promise<{ err
   requireArea(session, "manage_products");
   const admin = createSupabaseAdminClient();
 
-  const { data: product } = await admin.from("products").select("id").eq("id", productId).eq("shop_id", session.shopId).single();
+  const { data: product } = await admin.from("products").select("name, price, mrp, stock_quantity, unit, barcode, track_inventory").eq("id", productId).eq("shop_id", session.shopId).single();
   if (!product) return { error: "Item not found" };
 
   const { count: comboUsage } = await admin.from("combo_items").select("id", { count: "exact", head: true }).eq("product_id", productId);
@@ -325,6 +364,8 @@ export async function forceDeleteProductAction(productId: string): Promise<{ err
     action: "product_force_deleted",
     entityType: "product",
     entityId: productId,
+    details: { items: [itemSnapshot(product)] },
+    by: { name: session.staffName, role: session.role },
   });
 
   revalidatePath("/products");
@@ -567,4 +608,55 @@ export async function uploadProductImageAction(productId: string, formData: Form
   revalidatePath("/products");
   await invalidateCache(`ray:cache:products:${session.shopId}`);
   return { imageUrl };
+}
+
+export type BulkDeleteResult = { deleted: number; kept: { name: string; why: string }[]; error?: string };
+
+/** Many items at once — ticked in the list, or everything one import brought in. Guarded by the
+ * manager PIN, and every item deleted is kept in the audit log with its price and stock as it was.
+ * Items with sales or orders on record are left in place (named in `kept`), as with a single delete. */
+export async function deleteProductsAction(productIds: string[], managerPin: string | null, source: "selected" | "import" = "selected"): Promise<BulkDeleteResult> {
+  const session = await requireSession();
+  requireArea(session, "manage_products");
+  const ids = [...new Set((Array.isArray(productIds) ? productIds : []).filter((id) => typeof id === "string"))];
+  if (!ids.length) return { deleted: 0, kept: [] };
+  if (ids.length > 10000) return { deleted: 0, kept: [], error: "Too many items in one go — delete up to 10,000 at a time." };
+  const admin = createSupabaseAdminClient();
+  const pinError = await checkManagerPin(admin, session, managerPin, `delete ${ids.length} items`);
+  if (pinError) return { deleted: 0, kept: [], error: pinError };
+
+  const rows: { id: string; name: string; price: number; mrp: number | null; stock_quantity: number; unit: string; barcode: string | null; track_inventory: boolean }[] = [];
+  for (let i = 0; i < ids.length; i += 200) {
+    const { data } = await admin.from("products").select("id, name, price, mrp, stock_quantity, unit, barcode, track_inventory").eq("shop_id", session.shopId).in("id", ids.slice(i, i + 200));
+    rows.push(...(data ?? []));
+  }
+  const deleted: typeof rows = [];
+  const kept: BulkDeleteResult["kept"] = [];
+  const one = async (p: (typeof rows)[number]) => {
+    const { error } = await admin.from("products").delete().eq("id", p.id).eq("shop_id", session.shopId);
+    if (!error) deleted.push(p);
+    else kept.push({ name: p.name, why: error.code === "23503" ? "has sales or orders on record" : "could not be deleted" });
+  };
+  // 100 at a time; when the database refuses a group (one item with sales), that group goes one by one.
+  for (let i = 0; i < rows.length; i += 100) {
+    const group = rows.slice(i, i + 100);
+    const { error } = await admin.from("products").delete().eq("shop_id", session.shopId).in("id", group.map((p) => p.id));
+    if (!error) deleted.push(...group);
+    else for (let j = 0; j < group.length; j += 10) await Promise.all(group.slice(j, j + 10).map(one));
+  }
+
+  if (deleted.length) {
+    await logAuditEvent({
+      admin,
+      shopId: session.shopId,
+      staffId: session.userId,
+      action: "products_deleted",
+      entityType: "product",
+      details: { source, count: deleted.length, keptCount: kept.length, items: deleted.map(itemSnapshot) },
+      by: { name: session.staffName, role: session.role },
+    });
+  }
+  revalidatePath("/products");
+  await invalidateCache(`ray:cache:products:${session.shopId}`);
+  return { deleted: deleted.length, kept };
 }

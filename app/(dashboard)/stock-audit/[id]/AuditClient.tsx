@@ -5,6 +5,8 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { updateAuditItemAction, completeAuditAction, discardAuditAction } from "@/lib/actions/stock-audit";
 import { BackLink } from "@/app/components/BackLink";
+import { ManagerPinBox } from "@/app/components/ManagerPinBox";
+import { pinRequest } from "@/lib/managerPinText";
 
 type Item = {
   id: string;
@@ -45,10 +47,13 @@ export function AuditClient({
     });
   }
 
-  function handleComplete() {
+  const [pinMessage, setPinMessage] = useState<string | null>(null);
+  function handleComplete(pin: string | null = null) {
     startTransition(async () => {
-      const result = await completeAuditAction(auditId);
-      if (result?.error) setError(result.error);
+      const result = await completeAuditAction(auditId, pin);
+      const ask = pinRequest(result?.error);
+      setPinMessage(ask);
+      if (result?.error && !ask) setError(result.error);
     });
   }
 
@@ -113,6 +118,7 @@ export function AuditClient({
       </ul>
 
       {error && <p className="text-sm text-danger">{error}</p>}
+      {pinMessage && <ManagerPinBox message={pinMessage} busy={isPending} submitLabel="Apply count" onSubmit={(pin) => handleComplete(pin)} onCancel={() => setPinMessage(null)} />}
 
       {isDraft && (
         <div className="fixed inset-x-0 bottom-[calc(var(--bottom-nav-h)+env(safe-area-inset-bottom))] z-20 flex gap-2 border-t border-border bg-surface p-3 md:bottom-0 md:left-72">
@@ -138,7 +144,7 @@ export function AuditClient({
               Items you didn&apos;t count are left untouched. This can&apos;t be undone.
             </p>
             <div className="mt-4 flex gap-2">
-              <button onClick={handleComplete} disabled={isPending} className="btn-primary flex-1 text-center disabled:opacity-60">
+              <button onClick={() => handleComplete()} disabled={isPending} className="btn-primary flex-1 text-center disabled:opacity-60">
                 {isPending ? "Applying…" : "Yes, apply"}
               </button>
               <button onClick={() => setShowConfirm(false)} className="rounded-lg border border-border px-4 py-2 text-sm font-medium text-muted">

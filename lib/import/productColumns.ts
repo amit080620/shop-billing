@@ -6,7 +6,7 @@
 export type FieldKey =
   | "name" | "price" | "gstPercent" | "unit" | "hsnCode" | "barcode" | "category"
   | "trackInventory" | "stockQuantity" | "lowStockThreshold"
-  | "mrp" | "bulkMinQty" | "bulkPrice" | "offerPrice" | "offerLabel" | "showInCatalog" | "showInFastBilling"
+  | "mrp" | "bulkMinQty" | "bulkPrice" | "wholesalePrice" | "offerPrice" | "offerLabel" | "showInCatalog" | "showInFastBilling"
   | "hasWarranty" | "warrantyMonths"
   | "isRentable" | "rentalRateHourly" | "rentalRateDaily" | "rentalRateWeekly" | "rentalRateMonthly" | "securityDeposit"
   | "metalType" | "purity" | "makingChargeType" | "makingChargeValue" | "wastagePercent" | "hallmarkNumber"
@@ -52,7 +52,8 @@ export const PRODUCT_COLUMNS: ProductColumn[] = [
   { key: "lowStockThreshold", header: "Low stock alert at", aliases: ["lowstockthreshold", "lowstock", "reorderlevel", "minstock"], kind: money, hint: "Warn when stock falls to this." },
   { key: "mrp", header: "MRP", aliases: ["mrp"], kind: money, hint: "Printed MRP. Optional.", trades: GROCERY_LIKE },
   { key: "bulkMinQty", header: "Bulk min qty", aliases: ["bulkminqty", "bulkqty", "wholesaleqty"], kind: money, hint: "Buy this many or more…", trades: [...GROCERY_LIKE, "hardware"] },
-  { key: "bulkPrice", header: "Bulk price (each)", aliases: ["bulkprice", "wholesaleprice"], kind: money, hint: "…and each one costs this.", trades: [...GROCERY_LIKE, "hardware"] },
+  { key: "bulkPrice", header: "Bulk price (each)", aliases: ["bulkprice", "bulkrate"], kind: money, hint: "…and each one costs this.", trades: [...GROCERY_LIKE, "hardware"] },
+  { key: "wholesalePrice", header: "Wholesale price", aliases: ["wholesalerate", "dealerprice", "wsprice"], kind: money, hint: "Rate for wholesale/dealer customers. Optional.", trades: ["wholesale", ...GROCERY_LIKE, "hardware"] },
   { key: "offerPrice", header: "Offer price", aliases: ["offerprice", "saleofferprice", "discountprice"], kind: money, hint: "Optional. A lower price for now." },
   { key: "offerLabel", header: "Offer badge", aliases: ["offerlabel", "offerbadge", "offer"], kind: { type: "text", max: 40 }, hint: "Optional. e.g. Diwali offer." },
   { key: "showInCatalog", header: "Show in catalog", aliases: ["showincatalog", "catalog", "online"], kind: yesNo, hint: "yes / no. Blank = yes." },
@@ -195,7 +196,7 @@ export function productColumnsOf(item: ParsedItem): Record<string, CellValue> {
   const map: [FieldKey, string][] = [
     ["name", "name"], ["price", "price"], ["gstPercent", "gst_percent"], ["unit", "unit"], ["hsnCode", "hsn_code"], ["barcode", "barcode"],
     ["trackInventory", "track_inventory"], ["stockQuantity", "stock_quantity"], ["lowStockThreshold", "low_stock_threshold"],
-    ["mrp", "mrp"], ["bulkMinQty", "bulk_min_qty"], ["bulkPrice", "bulk_price"], ["offerPrice", "offer_price"], ["offerLabel", "offer_label"],
+    ["mrp", "mrp"], ["bulkMinQty", "bulk_min_qty"], ["bulkPrice", "bulk_price"], ["wholesalePrice", "wholesale_price"], ["offerPrice", "offer_price"], ["offerLabel", "offer_label"],
     ["showInCatalog", "show_in_catalog"], ["showInFastBilling", "show_in_fast_billing"], ["hasWarranty", "has_warranty"], ["warrantyMonths", "warranty_months"],
     ["isRentable", "is_rentable"], ["rentalRateHourly", "rental_rate_hourly"], ["rentalRateDaily", "rental_rate_daily"], ["rentalRateWeekly", "rental_rate_weekly"],
     ["rentalRateMonthly", "rental_rate_monthly"], ["securityDeposit", "security_deposit"], ["metalType", "metal_type"], ["purity", "purity"],
@@ -259,7 +260,7 @@ export function sampleItemsFor(businessType: string): ParsedItem[] {
     default:
       return [
         { name: "Amul Milk 500ml", price: 28, gstPercent: 5, unit: "PKT", hsnCode: "0402", barcode: "8901262010016", category: "Dairy", stockQuantity: 50, lowStockThreshold: 10, mrp: 29, showInFastBilling: true },
-        { name: "Tata Salt 1kg", price: 26, gstPercent: 0, unit: "PKT", hsnCode: "2501", barcode: "8904043901015", category: "Grocery", stockQuantity: 40, mrp: 28, bulkMinQty: 10, bulkPrice: 25, offerPrice: 25, offerLabel: "Weekend offer" },
+        { name: "Tata Salt 1kg", price: 26, gstPercent: 0, unit: "PKT", hsnCode: "2501", barcode: "8904043901015", category: "Grocery", stockQuantity: 40, mrp: 28, bulkMinQty: 10, bulkPrice: 25, wholesalePrice: 24, offerPrice: 25, offerLabel: "Weekend offer" },
       ];
   }
 }

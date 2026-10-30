@@ -8,6 +8,7 @@ import { getBarcodeScanModeAction } from "@/lib/actions/settings";
 import { cached } from "@/lib/cache";
 import { allRows } from "@/lib/supabase/allRows";
 import { recipesReady } from "@/lib/recipeData";
+import { wholesaleReady } from "@/lib/wholesaleData";
 
 export default async function ProductsPage() {
   const session = await requireSession();
@@ -38,6 +39,16 @@ export default async function ProductsPage() {
     ]),
   );
 
+  // Wholesale rates (set on the Rate list) go into the Excel export, so a file sent back keeps them.
+  const importExport = isModuleEnabled(session.enabledModules, "bulk_import_export");
+  const wholesaleOf = new Map<string, number>();
+  if (importExport && (await wholesaleReady(admin))) {
+    const { data: rates } = await allRows((from, to) =>
+      admin.from("products").select("id, wholesale_price").eq("shop_id", session.shopId).not("wholesale_price", "is", null).order("id").range(from, to),
+    );
+    for (const r of rates ?? []) wholesaleOf.set(r.id, Number(r.wholesale_price));
+  }
+
   // Raw materials (migration 0050) are marked in the list: their price is what they cost to buy.
   const rawMaterialIds = (await recipesReady(admin)) ? ((await admin.from("products").select("id").eq("shop_id", session.shopId).eq("is_raw_material", true)).data ?? []).map((p) => p.id) : [];
 
@@ -47,7 +58,7 @@ export default async function ProductsPage() {
       lang={lang}
       businessType={session.businessType}
       isOwner={session.role === "owner"}
-      bulkImportExportEnabled={isModuleEnabled(session.enabledModules, "bulk_import_export")}
+      bulkImportExportEnabled={importExport}
       barcodeScanMode={barcodeScanMode}
       initialProducts={(products ?? []).map((p) => ({
         id: p.id,
@@ -90,6 +101,7 @@ export default async function ProductsPage() {
         offerLabel: p.offer_label,
         showInCatalog: p.show_in_catalog,
         showInFastBilling: p.show_in_fast_billing,
+        wholesalePrice: wholesaleOf.get(p.id) ?? null,
         categoryName: Array.isArray(p.categories)
           ? p.categories[0]?.name
           : (p.categories as { name: string } | null)?.name ?? null,

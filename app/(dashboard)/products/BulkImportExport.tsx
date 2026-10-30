@@ -1,7 +1,11 @@
 "use client";
 
-import { useRef, useState } from "react";
-import { bulkImportProductsAction, type DuplicateChoice, type ImportResult, type ImportRow } from "@/lib/actions/bulk-import";
+import { useEffect, useRef, useState } from "react";
+import { bulkImportProductsAction, lastImportAction, type DuplicateChoice, type ImportResult, type ImportRow } from "@/lib/actions/bulk-import";
+import { deleteProductsAction } from "@/lib/actions/products";
+import { ManagerPinBox } from "@/app/components/ManagerPinBox";
+import { pinRequest } from "@/lib/managerPinText";
+import { formatDateTime } from "@/lib/format";
 import { PRODUCT_COLUMNS, TRADE_NAMES, columnsFor, sampleItemsFor, sheetNameFor, type FieldKey, type ParsedItem } from "@/lib/import/productColumns";
 import { HOW_TO, howToSheet, itemSheet, readItemRows, save } from "@/lib/import/productFile";
 import { useT } from "@/lib/i18n/LangContext";
@@ -43,15 +47,45 @@ export function BulkImportExport({ products, onImported, businessType }: { produ
     save(XLSX, wb, `the-ray-items-${new Date().toISOString().slice(0, 10)}.xlsx`);
   }
 
-  // Rows read from the file, kept while the owner decides about names already taken.
+  // Rows read from the file, kept while the owner decides about names already taken or gives the PIN.
   const [pendingRows, setPendingRows] = useState<ImportRow[] | null>(null);
+  const [lastChoice, setLastChoice] = useState<DuplicateChoice>("ask");
+  // The newest import still in the list, to take back out in one go.
+  const [lastImport, setLastImport] = useState<{ at: string; by: string | null; total: number; ids: string[] } | null>(null);
+  const [removing, setRemoving] = useState<{ ids: string[]; pinMessage: string | null; busy: boolean; done: string | null }>({ ids: [], pinMessage: null, busy: false, done: null });
 
-  async function runImport(rows: ImportRow[], choice: DuplicateChoice) {
-    setIsImporting(true);
+  useEffect(() => {
+    if (!open) return;
+    let alive = true;
+    lastImportAction().then((r) => alive && setLastImport(r)).catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, [open, result]);
+
+  async function removeItems(ids: string[], pin: string | null) {
+    if (!pin && !confirm(`Delete these ${ids.length} item(s)? Items that already have sales stay. Every deleted item is kept in the audit log.`)) return;
+    setRemoving({ ids, pinMessage: null, busy: true, done: null });
     try {
-      const res = await bulkImportProductsAction(rows, choice);
+      const res = await deleteProductsAction(ids, pin, "import");
+      const ask = pinRequest(res.error);
+      if (ask) return setRemoving({ ids, pinMessage: ask, busy: false, done: null });
+      if (res.error) return setRemoving({ ids: [], pinMessage: null, busy: false, done: res.error });
+      setRemoving({ ids: [], pinMessage: null, busy: false, done: `${res.deleted} item(s) deleted.${res.kept.length ? ` ${res.kept.length} kept — they have sales on record: ${res.kept.slice(0, 5).map((k) => k.name).join(", ")}${res.kept.length > 5 ? "…" : ""}` : ""}` });
+      setResult(null);
+      if (res.deleted) onImported();
+    } catch {
+      setRemoving({ ids: [], pinMessage: null, busy: false, done: "Could not reach the server — nothing was deleted. Try again." });
+    }
+  }
+
+  async function runImport(rows: ImportRow[], choice: DuplicateChoice, pin: string | null = null) {
+    setIsImporting(true);
+    setLastChoice(choice);
+    try {
+      const res = await bulkImportProductsAction(rows, choice, pin);
       setResult(res);
-      if (!res.duplicates?.length) setPendingRows(null);
+      if (!res.duplicates?.length && !res.needsPin) setPendingRows(null);
       if (res.inserted > 0 || (res.updated ?? 0) > 0) onImported();
     } catch (err) {
       console.error("Import failed:", err);
@@ -99,13 +133,20 @@ export function BulkImportExport({ products, onImported, businessType }: { produ
     );
   }
 
+  const undoIds = result?.insertedIds?.length ? result.insertedIds : null;
   const already = result?.duplicates?.filter((d) => d.why === "already").length ?? 0;
 
   return (
     <div className="flex flex-col gap-3 rounded-xl border border-border bg-surface p-4">
       <div className="flex items-center justify-between">
         <p className="text-sm font-semibold text-brand-text">{tr("Bulk import / export")}</p>
-        <button onClick={() => setOpen(false)} className="flex items-center gap-1 text-xs font-medium text-muted">
+        <button onClick={() => {
+            setOpen(false);
+            setResult(null);
+            setNotes([]);
+            setPendingRows(null);
+            setRemoving({ ids: [], pinMessage: null, busy: false, done: null });
+          }} className="flex items-center gap-1 text-xs font-medium text-muted">
           {/* eslint-disable-next-line @next/next/no-img-element -- small branded SVG icon */}
           <img src="/assets/ray-icons/close.svg" alt="" className="h-3 w-3" /> Close
         </button>
@@ -182,7 +223,19 @@ export function BulkImportExport({ products, onImported, businessType }: { produ
           {already > 0 && <p>Update changes only the cells filled in the file — a blank cell leaves that field as it is.</p>}
         </div>
       )}
-      {result && !(result.duplicates && result.duplicates.length > 0) && (
+      {result?.needsPin && pendingRows && (
+        <ManagerPinBox
+          message={`${result.needsPin} Nothing is saved until then.`}
+          busy={isImporting}
+          submitLabel="Save with PIN"
+          onSubmit={(pin) => void runImport(pendingRows, lastChoice, pin)}
+          onCancel={() => {
+            setResult(null);
+            setPendingRows(null);
+          }}
+        />
+      )}
+      {result && !result.needsPin && !(result.duplicates && result.duplicates.length > 0) && (
         <div className="rounded-lg bg-surface p-3 text-xs">
           <p className="font-medium text-brand-text">
             {result.inserted} new item(s) saved{result.updated ? `, ${result.updated} item(s) updated` : ""}.
@@ -199,6 +252,32 @@ export function BulkImportExport({ products, onImported, businessType }: { produ
           )}
         </div>
       )}
+      {undoIds && !removing.busy && (
+        <button type="button" onClick={() => void removeItems(undoIds, null)} className="self-start text-xs font-medium text-danger underline">
+          Wrong file? Delete the {undoIds.length} new item(s) this import added
+        </button>
+      )}
+      {!undoIds && lastImport && !result && (
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border px-3 py-2 text-xs text-muted">
+          <span>
+            Last import: {formatDateTime(lastImport.at)}{lastImport.by ? ` by ${lastImport.by}` : ""} — {lastImport.ids.length} of its {lastImport.total} new item(s) still in your list.
+          </span>
+          <button type="button" disabled={removing.busy} onClick={() => void removeItems(lastImport.ids, null)} className="font-medium text-danger underline disabled:opacity-50">
+            Delete those {lastImport.ids.length}
+          </button>
+        </div>
+      )}
+      {removing.pinMessage && (
+        <ManagerPinBox
+          message={removing.pinMessage}
+          busy={removing.busy}
+          submitLabel={`Delete ${removing.ids.length}`}
+          onSubmit={(pin) => void removeItems(removing.ids, pin)}
+          onCancel={() => setRemoving({ ids: [], pinMessage: null, busy: false, done: null })}
+        />
+      )}
+      {removing.busy && <p className="text-xs text-muted">Deleting…</p>}
+      {removing.done && <p className="text-xs font-medium text-brand-text">{removing.done}</p>}
     </div>
   );
 }
