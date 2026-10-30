@@ -4,54 +4,38 @@ import { revalidatePath } from "next/cache";
 import { after } from "next/server";
 import { requireSession, requireArea } from "../auth";
 import { createSupabaseAdminClient } from "../supabase/admin";
+import type { Database } from "../supabase/database.types";
 import { isModuleEnabled } from "../modules";
 import { productRoomLeft } from "../planLimits";
 import { allRows } from "../supabase/allRows";
+import { invalidateCache } from "../cache";
+import { parseItem, productColumnsOf, type FieldKey, type ParsedItem } from "../import/productColumns";
 
-export type ImportRow = {
-  name: string;
-  price: number;
-  gstPercent: number;
-  unit: string;
-  hsnCode: string;
-  barcode: string;
-  category: string;
-  trackInventory: boolean;
-  stockQuantity: number;
-  lowStockThreshold: number;
-  // Pharmacy fields — all optional, ignored for non-medicine rows.
-  isPharma: boolean;
-  requiresPrescription: boolean;
-  saltComposition: string;
-  unitsPerPack: number;
-  looseUnitName: string;
-  rackLocation: string;
-  drugSchedule: string;
-  // Optional initial batch — if a pharma row includes these, a starting
-  // batch is created too (and stockQuantity feeds that batch, not just
-  // the product's aggregate count), so a whole existing pharmacy's stock
-  // can be brought in with expiry dates in one file instead of having to
-  // re-enter every batch by hand afterward.
-  batchNumber: string;
-  expiryDate: string;
-  mfgDate: string;
-};
+/** One row of the owner's file: its row number in Excel and its cells by field, as text. */
+export type ImportRow = { row: number; cells: Partial<Record<FieldKey, string>> };
 
 export type ImportResult = {
   inserted: number;
+  /** Items already in the shop that the file changed ("update" choice). */
+  updated?: number;
   errors: { row: number; name: string; message: string }[];
   /** Rows whose name the shop already has, or that repeat a name earlier in the file. With
-   * duplicates "ask" (the default), nothing is imported while there are any: the owner decides. */
+   * duplicates "ask" (the default), nothing is saved while there are any: the owner decides. */
   duplicates?: { row: number; name: string; why: "already" | "twice" }[];
 };
 
-/** What to do with rows whose name is already taken: stop and ask, leave them out, or import anyway. */
-export type DuplicateChoice = "ask" | "skip" | "import";
+/** What to do with rows whose name is already taken: stop and ask, leave them out, import them as
+ * new items anyway, or change the existing item with what the file gives. */
+export type DuplicateChoice = "ask" | "skip" | "import" | "update";
 
 /** Names compared the way a person reads them: case, spaces and "@" spacing don't matter. */
 const sameName = (name: string) => name.trim().toLowerCase().replace(/\s+/g, " ").replace(/\s*@\s*/g, "@");
 
-const VALID_SCHEDULES = new Set(["otc", "h", "h1", "x", "g"]);
+const MAX_ROWS = 10000;
+const CHUNK = 200;
+
+type ProductInsert = Database["public"]["Tables"]["products"]["Insert"];
+type Planned = { row: number; name: string; item: ParsedItem; existingId: string | null };
 
 export async function bulkImportProductsAction(rows: ImportRow[], duplicates: DuplicateChoice = "ask"): Promise<ImportResult> {
   const session = await requireSession();
@@ -59,158 +43,208 @@ export async function bulkImportProductsAction(rows: ImportRow[], duplicates: Du
   if (!isModuleEnabled(session.enabledModules, "bulk_import_export")) {
     return { inserted: 0, errors: [{ row: 0, name: "", message: "Bulk import/export isn't enabled for this shop." }] };
   }
+  if (!Array.isArray(rows) || rows.length === 0) return { inserted: 0, errors: [{ row: 0, name: "", message: "The file has no item rows." }] };
+  if (rows.length > MAX_ROWS) return { inserted: 0, errors: [{ row: 0, name: "", message: `One file can bring up to ${MAX_ROWS} items — split it into smaller files.` }] };
   const admin = createSupabaseAdminClient();
+  const errors: ImportResult["errors"] = [];
 
-  // Resolve/create categories by name first, so every row can just
-  // reference a category_id without a per-row lookup query.
-  const categoryNames = [...new Set(rows.map((r) => r.category.trim()).filter(Boolean))];
-  const categoryMap = new Map<string, string>();
-  if (categoryNames.length > 0) {
-    const { data: existing } = await admin
-      .from("categories")
-      .select("id, name")
-      .eq("shop_id", session.shopId)
-      .in("name", categoryNames);
-    for (const c of existing ?? []) categoryMap.set(c.name, c.id);
-
-    const missing = categoryNames.filter((n) => !categoryMap.has(n));
-    if (missing.length > 0) {
-      const { data: created } = await admin
-        .from("categories")
-        .insert(missing.map((name) => ({ shop_id: session.shopId, name })))
-        .select("id, name");
-      for (const c of created ?? []) categoryMap.set(c.name, c.id);
-    }
+  // Every cell checked again here (the browser's copy can't be trusted), every problem of a row listed.
+  const parsed: { row: number; name: string; item: ParsedItem }[] = [];
+  for (const r of rows) {
+    const { item, problems } = parseItem(r.cells ?? {});
+    const name = typeof item.name === "string" ? item.name : "";
+    if (!name) problems.unshift("Item name is missing");
+    if (problems.length) errors.push({ row: r.row, name: name || "(blank)", message: problems.join("; ") });
+    else parsed.push({ row: r.row, name, item });
   }
 
-  const errors: ImportResult["errors"] = [];
-  const validRows: (ImportRow & { rowIndex: number })[] = [];
-
-  rows.forEach((row, i) => {
-    if (!row.name?.trim()) {
-      errors.push({ row: i + 2, name: row.name || "(blank)", message: "Missing product name" });
-      return;
-    }
-    if (Number.isNaN(row.price) || row.price < 0) {
-      errors.push({ row: i + 2, name: row.name, message: "Invalid price" });
-      return;
-    }
-    if (row.isPharma && row.drugSchedule && !VALID_SCHEDULES.has(row.drugSchedule.toLowerCase())) {
-      errors.push({ row: i + 2, name: row.name, message: `drugSchedule must be one of: otc, h, h1, x, g (got "${row.drugSchedule}")` });
-      return;
-    }
-    if (row.isPharma && row.expiryDate && Number.isNaN(new Date(row.expiryDate).getTime())) {
-      errors.push({ row: i + 2, name: row.name, message: `expiryDate "${row.expiryDate}" isn't a valid date — use YYYY-MM-DD` });
-      return;
-    }
-    validRows.push({ ...row, rowIndex: i + 2 });
-  });
-
-  if (validRows.length === 0) {
-    return { inserted: 0, errors };
+  const { data: existing, error: readError } = await allRows((from, to) =>
+    admin.from("products").select("id, name, barcode").eq("shop_id", session.shopId).order("id").range(from, to),
+  );
+  if (readError) return { inserted: 0, errors: [...errors, { row: 0, name: "", message: "Could not read your items — try again." }] };
+  const byName = new Map<string, string>();
+  const byBarcode = new Map<string, { id: string; name: string }>();
+  for (const p of existing ?? []) {
+    if (!byName.has(sameName(p.name))) byName.set(sameName(p.name), p.id);
+    if (p.barcode) byBarcode.set(p.barcode, { id: p.id, name: p.name });
   }
 
   // The same item twice — already in the shop, or twice in this file — splits its stock and makes
   // the counter pick between two of them. Found before anything is saved.
-  if (duplicates !== "import") {
-    const { data: existing } = await allRows((from, to) =>
-      admin.from("products").select("id, name").eq("shop_id", session.shopId).order("id").range(from, to),
-    );
-    const taken = new Set((existing ?? []).map((p) => sameName(p.name)));
-    const seen = new Set<string>();
-    const found: NonNullable<ImportResult["duplicates"]> = [];
-    for (const row of validRows) {
-      const key = sameName(row.name);
-      if (taken.has(key)) found.push({ row: row.rowIndex, name: row.name.trim(), why: "already" });
-      else if (seen.has(key)) found.push({ row: row.rowIndex, name: row.name.trim(), why: "twice" });
-      seen.add(key);
-    }
-    if (found.length && duplicates === "ask") return { inserted: 0, errors, duplicates: found };
-    if (found.length && duplicates === "skip") {
-      const skip = new Set(found.map((d) => d.row));
-      for (let i = validRows.length - 1; i >= 0; i--) if (skip.has(validRows[i].rowIndex)) validRows.splice(i, 1);
-      if (validRows.length === 0) return { inserted: 0, errors };
-    }
+  const found: NonNullable<ImportResult["duplicates"]> = [];
+  const seen = new Set<string>();
+  for (const p of parsed) {
+    const key = sameName(p.name);
+    if (byName.has(key)) found.push({ row: p.row, name: p.name, why: "already" });
+    else if (seen.has(key)) found.push({ row: p.row, name: p.name, why: "twice" });
+    seen.add(key);
   }
-  // The plan's item allowance: nothing is imported past it.
+  if (found.length && duplicates === "ask") return { inserted: 0, errors, duplicates: found };
+
+  const plan: Planned[] = [];
+  const firstRowOf = new Map<string, number>();
+  for (const p of parsed) {
+    const key = sameName(p.name);
+    const existingId = byName.get(key) ?? null;
+    const earlier = firstRowOf.get(key);
+    if (!firstRowOf.has(key)) firstRowOf.set(key, p.row);
+    if (existingId && duplicates === "skip") continue;
+    if (earlier !== undefined && duplicates !== "import") {
+      if (duplicates === "update") errors.push({ row: p.row, name: p.name, message: `Same name as row ${earlier} — only row ${earlier} was used` });
+      continue;
+    }
+    const isUpdate = !!existingId && duplicates === "update";
+    if (!isUpdate && p.item.price === undefined) {
+      errors.push({ row: p.row, name: p.name, message: "Selling price is missing" });
+      continue;
+    }
+    plan.push({ row: p.row, name: p.name, item: p.item, existingId: isUpdate ? existingId : null });
+  }
+
+  // A barcode belongs to one item: one already on another item, or given twice in the file, stops
+  // that row only — before, one such row failed the whole file.
+  const barcodeRow = new Map<string, number>();
+  const kept: Planned[] = [];
+  for (const p of plan) {
+    const code = typeof p.item.barcode === "string" ? p.item.barcode : null;
+    if (code) {
+      const owner = byBarcode.get(code);
+      if (owner && owner.id !== p.existingId) {
+        errors.push({ row: p.row, name: p.name, message: `Barcode ${code} is already on "${owner.name}"` });
+        continue;
+      }
+      const other = barcodeRow.get(code);
+      if (other !== undefined) {
+        errors.push({ row: p.row, name: p.name, message: `Barcode ${code} is also on row ${other} of this file` });
+        continue;
+      }
+      barcodeRow.set(code, p.row);
+    }
+    kept.push(p);
+  }
+
+  const inserts = kept.filter((p) => !p.existingId);
+  const updates = kept.filter((p) => p.existingId);
+  if (!inserts.length && !updates.length) return { inserted: 0, updated: 0, errors };
+
+  // The plan's item allowance: no new item is saved past it.
   const room = await productRoomLeft(session);
-  if (room !== null && validRows.length > room) {
+  if (room !== null && inserts.length > room) {
     return {
       inserted: 0,
-      errors: [...errors, { row: 0, name: "", message: `Your plan has room for ${room} more item(s) and this file has ${validRows.length}. Upgrade in More → Plan & billing, or import fewer.` }],
+      errors: [...errors, { row: 0, name: "", message: `Your plan has room for ${room} more item(s) and this file has ${inserts.length} new. Upgrade in More → Plan & billing, or import fewer.` }],
     };
   }
 
-  const { error, data } = await admin
-    .from("products")
-    .insert(
-      validRows.map((row) => ({
-        shop_id: session.shopId,
-        name: row.name.trim(),
-        price: row.price,
-        gst_percent: Number.isNaN(row.gstPercent) ? 0 : row.gstPercent,
-        unit: row.unit?.trim() || "NOS",
-        hsn_code: row.hsnCode?.trim() || null,
-        barcode: row.barcode?.trim() || null,
-        category_id: row.category.trim() ? categoryMap.get(row.category.trim()) ?? null : null,
-        // A pharma row with a batch, or any row with a stock quantity, needs tracking on whatever the
-        // trackInventory column said (often left blank): otherwise the quantity is saved but never
-        // shown in stock badges or New Bill, nor taken off when it sells.
-        track_inventory: row.trackInventory || (row.isPharma && !!row.batchNumber) || (!Number.isNaN(row.stockQuantity) && row.stockQuantity > 0),
-        stock_quantity: Number.isNaN(row.stockQuantity) ? 0 : row.stockQuantity,
-        low_stock_threshold: Number.isNaN(row.lowStockThreshold) ? 0 : row.lowStockThreshold,
-        is_pharma: row.isPharma,
-        requires_prescription: row.requiresPrescription,
-        salt_composition: row.saltComposition?.trim() || null,
-        units_per_pack: row.unitsPerPack && row.unitsPerPack > 0 ? row.unitsPerPack : null,
-        loose_unit_name: row.looseUnitName?.trim() || null,
-        rack_location: row.rackLocation?.trim() || null,
-        drug_schedule: row.isPharma && row.drugSchedule ? row.drugSchedule.toLowerCase() : null,
-      })),
-    )
-    .select("id, name");
-
-  if (error) {
-    console.error("Bulk import failed", error);
-    // Most likely a duplicate barcode collision — report it generically
-    // rather than losing the whole batch silently.
-    return {
-      inserted: 0,
-      errors: [
-        ...errors,
-        { row: 0, name: "", message: `Import failed: ${error.message}. Check for duplicate barcodes.` },
-      ],
-    };
+  // Categories by name, ignoring case; new names are made once.
+  const categoryId = new Map<string, string>();
+  const wanted = [...new Set(kept.map((p) => (typeof p.item.category === "string" ? p.item.category : "")).filter(Boolean))];
+  if (wanted.length) {
+    const { data: cats } = await allRows((from, to) => admin.from("categories").select("id, name").eq("shop_id", session.shopId).order("id").range(from, to));
+    for (const c of cats ?? []) if (!categoryId.has(c.name.trim().toLowerCase())) categoryId.set(c.name.trim().toLowerCase(), c.id);
+    const missing = [...new Map(wanted.filter((n) => !categoryId.has(n.toLowerCase())).map((n) => [n.toLowerCase(), n])).values()];
+    if (missing.length) {
+      const { data: made, error } = await admin.from("categories").insert(missing.map((name) => ({ shop_id: session.shopId, name }))).select("id, name");
+      if (error) console.error("Bulk import: categories", error);
+      for (const c of made ?? []) categoryId.set(c.name.trim().toLowerCase(), c.id);
+    }
   }
+  const columnsOf = (p: Planned) => {
+    const cols: Record<string, unknown> = productColumnsOf(p.item);
+    if (typeof p.item.category === "string") cols.category_id = categoryId.get(p.item.category.toLowerCase()) ?? null;
+    return cols;
+  };
+  const medicineShop = session.businessType === "pharmacy";
+  const saved: { p: Planned; id: string }[] = [];
 
-  // Second pass: create the initial batch for any pharma row that included
-  // one. Done after the product insert since a batch needs the new
-  // product's id, and kept as a best-effort step — if a batch fails, the
-  // product itself is still saved (better than losing the whole row).
-  const batchRows = validRows
-    .map((row, i) => ({ row, product: data?.[i] }))
-    .filter(({ row }) => row.isPharma && row.batchNumber && row.expiryDate);
+  // New items, 200 at a time; a chunk the database refuses is saved row by row so only the bad rows stay out.
+  const newRow = (p: Planned) => ({
+    shop_id: session.shopId,
+    name: p.name,
+    price: p.item.price as number,
+    gst_percent: 0,
+    unit: "NOS",
+    track_inventory: false,
+    stock_quantity: 0,
+    low_stock_threshold: 0,
+    is_pharma: medicineShop && p.item.isPharma === undefined,
+    show_in_catalog: true,
+    show_in_fast_billing: false,
+    ...columnsOf(p),
+  }) as ProductInsert;
+  const insertError = (p: Planned, e: { code?: string; message: string }) =>
+    errors.push({ row: p.row, name: p.name, message: e.code === "23505" ? "That barcode is already used by another item" : `Not saved: ${e.message}` });
+  for (let i = 0; i < inserts.length; i += CHUNK) {
+    const chunk = inserts.slice(i, i + CHUNK);
+    const { data, error } = await admin.from("products").insert(chunk.map(newRow)).select("id");
+    if (!error && data && data.length === chunk.length) {
+      chunk.forEach((p, j) => saved.push({ p, id: data[j].id }));
+      continue;
+    }
+    for (const p of chunk) {
+      const one = await admin.from("products").insert(newRow(p)).select("id").single();
+      if (one.error) insertError(p, one.error);
+      else saved.push({ p, id: one.data.id });
+    }
+  }
+  const inserted = saved.length;
 
-  if (batchRows.length > 0) {
-    const { error: batchError } = await admin.from("medicine_batches").insert(
-      batchRows.map(({ row, product }) => ({
-        shop_id: session.shopId,
-        product_id: product!.id,
-        batch_number: row.batchNumber.trim(),
-        expiry_date: row.expiryDate,
-        mfg_date: row.mfgDate || null,
-        quantity: Number.isNaN(row.stockQuantity) ? 0 : row.stockQuantity,
-      })),
+  // Items already there: only the columns the file filled in change.
+  let updated = 0;
+  for (let i = 0; i < updates.length; i += 10) {
+    await Promise.all(
+      updates.slice(i, i + 10).map(async (p) => {
+        const cols = columnsOf(p);
+        delete cols.name; // the name is how it was matched — its spelling in the shop stays
+        if (Object.keys(cols).length) {
+          const { error } = await admin.from("products").update(cols as Partial<ProductInsert>).eq("id", p.existingId!).eq("shop_id", session.shopId);
+          if (error) return insertError(p, error);
+        }
+        updated++;
+        saved.push({ p, id: p.existingId! });
+      }),
     );
-    if (batchError) {
-      console.error("Bulk import: batch creation failed", batchError);
-      errors.push({ row: 0, name: "", message: "Products were imported, but their initial batches could not be saved — add them manually via Pharmacy → Manage batches." });
+  }
+
+  // First batch for rows that give a batch number and expiry (a batch already there by that number is left alone).
+  const batchFor = saved.filter(({ p }) => typeof p.item.batchNumber === "string");
+  for (const { p } of batchFor) if (!p.item.expiryDate) errors.push({ row: p.row, name: p.name, message: "Saved, but the batch needs an expiry date — add it in Pharmacy → Manage batches" });
+  const withExpiry = batchFor.filter(({ p }) => p.item.expiryDate);
+  if (withExpiry.length) {
+    const ids = [...new Set(withExpiry.map((s) => s.id))];
+    const have = new Set<string>();
+    for (let i = 0; i < ids.length; i += CHUNK) {
+      const { data } = await admin.from("medicine_batches").select("product_id, batch_number").eq("shop_id", session.shopId).in("product_id", ids.slice(i, i + CHUNK));
+      for (const b of data ?? []) have.add(`${b.product_id}|${b.batch_number}`);
+    }
+    const batches = withExpiry
+      .filter(({ p, id }) => !have.has(`${id}|${p.item.batchNumber}`))
+      .map(({ p, id }) => ({
+        shop_id: session.shopId,
+        product_id: id,
+        batch_number: p.item.batchNumber as string,
+        expiry_date: p.item.expiryDate as string,
+        mfg_date: (p.item.mfgDate as string | undefined) ?? null,
+        quantity: typeof p.item.stockQuantity === "number" ? p.item.stockQuantity : 0,
+      }));
+    // Batches go with medicine-type items: an item given a batch is marked as one.
+    const notYet = withExpiry.filter(({ p }) => p.item.isPharma === undefined && !(medicineShop && !p.existingId)).map((s) => s.id);
+    if (notYet.length) await admin.from("products").update({ is_pharma: true }).eq("shop_id", session.shopId).in("id", notYet);
+    for (let i = 0; i < batches.length; i += CHUNK) {
+      const { error } = await admin.from("medicine_batches").insert(batches.slice(i, i + CHUNK));
+      if (error) {
+        console.error("Bulk import: batches", error);
+        errors.push({ row: 0, name: "", message: "Items were saved, but some first batches were not — add them in Pharmacy → Manage batches." });
+        break;
+      }
     }
   }
 
+  await invalidateCache(`ray:cache:products:${session.shopId}`);
   revalidatePath("/products");
   revalidatePath("/pharmacy/expiry");
-  return { inserted: data?.length ?? 0, errors };
+  errors.sort((a, b) => a.row - b.row);
+  return { inserted, updated, errors };
 }
 
 // ─── Customers / Patients ────────────────────────────────────────────────

@@ -340,18 +340,7 @@ export function ProductsClient({
           {bulkImportExportEnabled && (
             <BulkImportExport
               businessType={businessType}
-              products={initialProducts.map((p) => ({
-                name: p.name,
-                price: p.price,
-                gstPercent: p.gstPercent,
-                hsnCode: p.hsnCode,
-                barcode: p.barcode,
-                unit: p.unit,
-                categoryName: p.categoryName,
-                trackInventory: p.trackInventory,
-                stockQuantity: p.stockQuantity,
-                lowStockThreshold: p.lowStockThreshold,
-              }))}
+              products={initialProducts}
               onImported={() => router.refresh()}
             />
           )}

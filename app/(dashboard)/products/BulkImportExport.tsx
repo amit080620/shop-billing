@@ -2,87 +2,45 @@
 
 import { useRef, useState } from "react";
 import { bulkImportProductsAction, type DuplicateChoice, type ImportResult, type ImportRow } from "@/lib/actions/bulk-import";
-import { downloadCsv } from "@/app/components/downloadCsv";
+import { PRODUCT_COLUMNS, TRADE_NAMES, columnsFor, sampleItemsFor, sheetNameFor, type FieldKey, type ParsedItem } from "@/lib/import/productColumns";
+import { HOW_TO, howToSheet, itemSheet, readItemRows, save } from "@/lib/import/productFile";
 import { useT } from "@/lib/i18n/LangContext";
 
-type Product = {
-  name: string;
-  price: number;
-  gstPercent: number;
-  hsnCode: string | null;
-  barcode: string | null;
-  unit: string;
-  categoryName: string | null;
-  trackInventory: boolean;
-  stockQuantity: number;
-  lowStockThreshold: number;
-  isPharma?: boolean;
-  requiresPrescription?: boolean;
-};
+/** An item as the Products screen has it — every field the form edits, plus its category's name. */
+export type ExportProduct = Partial<Record<FieldKey, string | number | boolean | null>> & { categoryName?: string | null };
 
-const HEADERS = [
-  "name",
-  "price",
-  "gstPercent",
-  "unit",
-  "hsnCode",
-  "barcode",
-  "category",
-  "trackInventory",
-  "stockQuantity",
-  "lowStockThreshold",
-  "isPharma",
-  "requiresPrescription",
-  "saltComposition",
-  "unitsPerPack",
-  "looseUnitName",
-  "rackLocation",
-  "drugSchedule",
-  "batchNumber",
-  "expiryDate",
-  "mfgDate",
-];
-
-function normalizeKey(k: string) {
-  return k.trim().toLowerCase().replace(/[\s_-]/g, "");
-}
-
-function toBool(v: unknown) {
-  const s = String(v ?? "").trim().toLowerCase();
-  return s === "true" || s === "yes" || s === "y" || s === "1";
-}
-
-export function BulkImportExport({ products, onImported, businessType }: { products: Product[]; onImported: () => void; businessType: string }) {
+export function BulkImportExport({ products, onImported, businessType }: { products: ExportProduct[]; onImported: () => void; businessType: string }) {
   const { t: tr } = useT();
   const [open, setOpen] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   const [result, setResult] = useState<ImportResult | null>(null);
+  const [notes, setNotes] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  function downloadTemplate() {
-    downloadCsv("inventory-import-template.csv", HEADERS, sampleRowsFor(businessType));
+  async function downloadTemplate() {
+    const XLSX = await import("xlsx");
+    const wb = XLSX.utils.book_new();
+    // One file: this shop's trade first, a sheet for every other trade after it, and how to fill.
+    const trades = [businessType, ...Object.keys(TRADE_NAMES).filter((t) => t !== businessType)];
+    XLSX.utils.book_append_sheet(wb, itemSheet(XLSX, columnsFor(businessType), sampleItemsFor(businessType)), sheetNameFor(businessType));
+    XLSX.utils.book_append_sheet(wb, howToSheet(XLSX, businessType), HOW_TO);
+    for (const t of trades.slice(1)) XLSX.utils.book_append_sheet(wb, itemSheet(XLSX, columnsFor(t), sampleItemsFor(t)), sheetNameFor(t));
+    save(XLSX, wb, `the-ray-items-template-${businessType}.xlsx`);
   }
 
-  function exportInventory() {
-    downloadCsv(
-      "inventory-export.csv",
-      HEADERS,
-      products.map((p) => [
-        p.name,
-        p.price,
-        p.gstPercent,
-        p.unit,
-        p.hsnCode ?? "",
-        p.barcode ?? "",
-        p.categoryName ?? "",
-        p.trackInventory ? "TRUE" : "FALSE",
-        p.stockQuantity,
-        p.lowStockThreshold,
-        p.isPharma ? "TRUE" : "FALSE",
-        p.requiresPrescription ? "TRUE" : "FALSE",
-        "", "", "", "", "", "", "",
-      ]),
-    );
+  async function exportInventory() {
+    const XLSX = await import("xlsx");
+    const items: ParsedItem[] = products.map(({ categoryName, ...p }) => ({ ...p, category: categoryName ?? null }));
+    // This trade's columns, and any other column some item has a value in, so nothing is lost on the way back in.
+    const own = new Set(columnsFor(businessType).map((c) => c.key));
+    const cols = PRODUCT_COLUMNS.filter((c) => own.has(c.key) || items.some((it) => {
+      const v = it[c.key];
+      return v !== null && v !== undefined && v !== "" && v !== false && v !== 0;
+    }));
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, itemSheet(XLSX, cols, items), sheetNameFor(businessType));
+    XLSX.utils.book_append_sheet(wb, howToSheet(XLSX, businessType), HOW_TO);
+    save(XLSX, wb, `the-ray-items-${new Date().toISOString().slice(0, 10)}.xlsx`);
   }
 
   // Rows read from the file, kept while the owner decides about names already taken.
@@ -94,7 +52,10 @@ export function BulkImportExport({ products, onImported, businessType }: { produ
       const res = await bulkImportProductsAction(rows, choice);
       setResult(res);
       if (!res.duplicates?.length) setPendingRows(null);
-      if (res.inserted > 0) onImported();
+      if (res.inserted > 0 || (res.updated ?? 0) > 0) onImported();
+    } catch (err) {
+      console.error("Import failed:", err);
+      setResult({ inserted: 0, errors: [{ row: 0, name: "", message: "The import didn't reach the server — check the internet and try again. Nothing was lost." }] });
     } finally {
       setIsImporting(false);
     }
@@ -103,47 +64,20 @@ export function BulkImportExport({ products, onImported, businessType }: { produ
   async function handleFile(file: File) {
     setIsImporting(true);
     setResult(null);
+    setNotes([]);
     try {
       const XLSX = await import("xlsx");
-      const buffer = await file.arrayBuffer();
-      const workbook = XLSX.read(buffer, { type: "array" });
-      const sheet = workbook.Sheets[workbook.SheetNames[0]];
-      const rawRows = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, { defval: "" });
-
-      const rows = rawRows.map((raw) => {
-        const normalized: Record<string, unknown> = {};
-        for (const [k, v] of Object.entries(raw)) {
-          normalized[normalizeKey(k)] = v;
-        }
-        return {
-          name: String(normalized.name ?? "").trim(),
-          price: Number(normalized.price),
-          gstPercent: Number(normalized.gstpercent ?? normalized.gst ?? 0),
-          unit: String(normalized.unit ?? "NOS").trim(),
-          hsnCode: String(normalized.hsncode ?? normalized.hsn ?? "").trim(),
-          barcode: String(normalized.barcode ?? "").trim(),
-          category: String(normalized.category ?? "").trim(),
-          trackInventory: toBool(normalized.trackinventory),
-          stockQuantity: Number(normalized.stockquantity ?? 0),
-          lowStockThreshold: Number(normalized.lowstockthreshold ?? 0),
-          isPharma: toBool(normalized.ispharma),
-          requiresPrescription: toBool(normalized.requiresprescription ?? normalized.rx),
-          saltComposition: String(normalized.saltcomposition ?? normalized.composition ?? "").trim(),
-          unitsPerPack: Number(normalized.unitsperpack ?? 0),
-          looseUnitName: String(normalized.looseunitname ?? "").trim(),
-          rackLocation: String(normalized.racklocation ?? normalized.rack ?? "").trim(),
-          drugSchedule: String(normalized.drugschedule ?? normalized.schedule ?? "").trim(),
-          batchNumber: String(normalized.batchnumber ?? normalized.batch ?? "").trim(),
-          expiryDate: String(normalized.expirydate ?? normalized.expiry ?? "").trim(),
-          mfgDate: String(normalized.mfgdate ?? normalized.manufacturedate ?? "").trim(),
-        };
-      });
-
+      const { rows, notes } = readItemRows(XLSX, await file.arrayBuffer(), businessType);
+      setNotes(notes);
+      if (!rows.length) {
+        setResult({ inserted: 0, errors: [{ row: 0, name: "", message: "No items found in this file." }] });
+        return;
+      }
       setPendingRows(rows);
       await runImport(rows, "ask");
     } catch (err) {
       console.error("Import parsing failed:", err);
-      setResult({ inserted: 0, errors: [{ row: 0, name: "", message: "Could not read that file. Use the CSV template above." }] });
+      setResult({ inserted: 0, errors: [{ row: 0, name: "", message: "Could not read that file. Use the Excel template above." }] });
     } finally {
       setIsImporting(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -165,6 +99,8 @@ export function BulkImportExport({ products, onImported, businessType }: { produ
     );
   }
 
+  const already = result?.duplicates?.filter((d) => d.why === "already").length ?? 0;
+
   return (
     <div className="flex flex-col gap-3 rounded-xl border border-border bg-surface p-4">
       <div className="flex items-center justify-between">
@@ -175,14 +111,13 @@ export function BulkImportExport({ products, onImported, businessType }: { produ
         </button>
       </div>
       <p className="text-xs text-muted">
-        For setting up your whole catalog at once — download the template, fill it in Excel or
-        Google Sheets, then import. Medicine rows can also include batch number + expiry date to
-        create their first batch straight away — leave those columns blank for non-medicine items.
+        One Excel file with a sheet for your trade ({TRADE_NAMES[businessType] ?? "Shop"}) — every field of the item form is a column.
+        Fill it, then import. Export gives the same file with all your items, so you can change prices or stock in Excel and import it back.
       </p>
       <div className="flex flex-wrap gap-2">
         <button
           type="button"
-          onClick={downloadTemplate}
+          onClick={() => void downloadTemplate()}
           className="flex items-center gap-1 rounded-lg border border-border bg-surface px-3 py-1.5 text-xs font-medium text-foreground"
         >
           {/* eslint-disable-next-line @next/next/no-img-element -- small branded SVG icon */}
@@ -190,32 +125,37 @@ export function BulkImportExport({ products, onImported, businessType }: { produ
         </button>
         <button
           type="button"
-          onClick={exportInventory}
+          onClick={() => void exportInventory()}
           disabled={products.length === 0}
           className="rounded-lg border border-border bg-surface px-3 py-1.5 text-xs font-medium text-foreground disabled:opacity-50"
         >
-          Export current inventory
+          Export all items
         </button>
       </div>
       <label className="flex flex-col gap-1.5 text-sm">
-        <span className="font-medium text-brand-text">Import CSV or Excel file</span>
+        <span className="font-medium text-brand-text">Import Excel or CSV file</span>
         <input
           ref={fileInputRef}
           type="file"
-          accept=".csv,.xlsx,.xls"
+          accept=".xlsx,.xls,.csv"
           onChange={(e) => {
             const file = e.target.files?.[0];
-            if (file) handleFile(file);
+            if (file) void handleFile(file);
           }}
           disabled={isImporting}
           className="text-xs text-muted file:mr-3 file:rounded-lg file:border file:border-border file:bg-surface file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-foreground"
         />
       </label>
       {isImporting && <p className="text-xs text-muted">Importing…</p>}
+      {notes.length > 0 && (
+        <div className="flex flex-col gap-0.5 text-xs text-muted">
+          {notes.map((n, i) => <p key={i}>{n}</p>)}
+        </div>
+      )}
       {result?.duplicates && result.duplicates.length > 0 && pendingRows && (
         <div className="flex flex-col gap-2 rounded-lg border border-credit bg-credit-soft p-3 text-xs text-credit">
           <p className="font-semibold">
-            {result.duplicates.length} item name(s) are already taken — nothing imported yet. The same item twice splits its stock and the
+            {result.duplicates.length} item name(s) are already taken — nothing saved yet. The same item twice splits its stock and the
             counter has to pick between them.
           </p>
           <div className="flex flex-col gap-0.5">
@@ -227,81 +167,38 @@ export function BulkImportExport({ products, onImported, businessType }: { produ
             {result.duplicates.length > 15 && <p>…and {result.duplicates.length - 15} more.</p>}
           </div>
           <div className="flex flex-wrap gap-2">
-            <button type="button" disabled={isImporting} onClick={() => void runImport(pendingRows, "skip")} className="btn-primary-sm disabled:opacity-60">
+            {already > 0 && (
+              <button type="button" disabled={isImporting} onClick={() => void runImport(pendingRows, "update")} className="btn-primary-sm disabled:opacity-60">
+                Update those items with this file
+              </button>
+            )}
+            <button type="button" disabled={isImporting} onClick={() => void runImport(pendingRows, "skip")} className={`${already > 0 ? "rounded-lg border border-credit px-3 py-1.5 font-medium" : "btn-primary-sm"} disabled:opacity-60`}>
               Leave these out, import the rest
             </button>
             <button type="button" disabled={isImporting} onClick={() => void runImport(pendingRows, "import")} className="rounded-lg border border-credit px-3 py-1.5 font-medium disabled:opacity-60">
-              Import all anyway
+              Import as new items anyway
             </button>
           </div>
+          {already > 0 && <p>Update changes only the cells filled in the file — a blank cell leaves that field as it is.</p>}
         </div>
       )}
       {result && !(result.duplicates && result.duplicates.length > 0) && (
         <div className="rounded-lg bg-surface p-3 text-xs">
-          <p className="font-medium text-brand-text">{result.inserted} product(s) imported.</p>
+          <p className="font-medium text-brand-text">
+            {result.inserted} new item(s) saved{result.updated ? `, ${result.updated} item(s) updated` : ""}.
+            {result.errors.length > 0 ? ` ${result.errors.filter((e) => e.row > 0).length} row(s) need fixing:` : ""}
+          </p>
           {result.errors.length > 0 && (
-            <div className="mt-1.5 flex flex-col gap-0.5 text-credit">
-              {result.errors.slice(0, 10).map((e, i) => (
+            <div className="mt-1.5 flex max-h-60 flex-col gap-0.5 overflow-y-auto text-credit">
+              {result.errors.map((e, i) => (
                 <p key={i}>
-                  Row {e.row}{e.name ? ` (${e.name})` : ""}: {e.message}
+                  {e.row > 0 ? `Row ${e.row}` : "Note"}{e.name ? ` (${e.name})` : ""}: {e.message}
                 </p>
               ))}
-              {result.errors.length > 10 && <p>...and {result.errors.length - 10} more.</p>}
             </div>
           )}
         </div>
       )}
     </div>
   );
-}
-
-/** Business-appropriate example rows for the template — a restaurant
- * seeing "Amul Milk" as the sample makes the whole template feel like it
- * wasn't built for them; each vertical gets an example shaped like what
- * they'd actually type in. Columns always match HEADERS' 20-column order. */
-function sampleRowsFor(businessType: string): (string | number)[][] {
-  const blank20 = (row: (string | number)[]) => [...row, ...Array(20 - row.length).fill("")];
-
-  switch (businessType) {
-    case "hotel":
-      return [
-        blank20(["Veg Thali", "220", "5", "PLATE", "", "", "Meals", "FALSE", "", ""]),
-        blank20(["Laundry (per piece)", "30", "18", "NOS", "", "", "Services", "FALSE", "", ""]),
-      ];
-    case "restaurant":
-      return [
-        blank20(["Butter Chicken", "280", "5", "PLATE", "", "", "Main Course", "FALSE", "", ""]),
-        blank20(["Masala Chai", "20", "5", "GLASS", "", "", "Beverages", "FALSE", "", ""]),
-      ];
-    case "transport":
-      return [
-        blank20(["River Sand", "1200", "5", "TON", "2505", "", "Sand", "TRUE", "50", "5"]),
-        blank20(["Cement OPC 43", "380", "28", "BAG", "2523", "", "Cement", "TRUE", "100", "20"]),
-      ];
-    case "rental":
-      return [
-        blank20(["Plastic Chair", "0", "18", "NOS", "", "", "Furniture", "TRUE", "50", "5"]),
-        blank20(["Round Table (6-seater)", "0", "18", "NOS", "", "", "Furniture", "TRUE", "10", "2"]),
-      ];
-    case "hardware":
-      return [
-        blank20(["PVC Pipe 1 inch", "45", "18", "MTR", "3917", "", "Plumbing", "TRUE", "200", "20"]),
-        blank20(["Cement Nails 2 inch", "120", "18", "KG", "7317", "", "Nails & Fasteners", "TRUE", "30", "5"]),
-      ];
-    case "pharmacy":
-      return [
-        // Batch/expiry columns fill in its first stock too, so it shows up
-        // correctly on the Expiry alerts page right away.
-        [
-          "Paracetamol 500", "50", "12", "STRIP", "3004", "",
-          "Medicines", "TRUE", "20", "5",
-          "TRUE", "FALSE", "Paracetamol 500mg", "10", "tablet", "Rack 3B", "otc",
-          "B001", "2027-06-30", "2026-01-15",
-        ],
-      ];
-    default:
-      return [
-        blank20(["Amul Milk 500ml", "28", "5", "PKT", "0402", "8901234567890", "Dairy", "TRUE", "50", "10"]),
-      ];
-  }
 }
