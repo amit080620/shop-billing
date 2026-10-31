@@ -29,6 +29,8 @@ import { addDaysIso } from "../dateHelpers";
 import { isModuleEnabled } from "../modules";
 import { moduleLockMessage } from "../plans";
 import { dishesWithRecipes, recipesReady, takeForSale } from "../recipeData";
+import { recordBillPayments } from "../billPayments";
+import { singleModeRows, splitError, splitPaid } from "../billPaymentSplit";
 import { billHasCreditAdjustment, billStockTaken, editBillStock, logStockProblem, moveStock, returnedBack, round3, takeBillStock, voidBillStock, type StockLine } from "../stockMoves";
 
 export type ActionState = { error?: string } | null;
@@ -68,7 +70,14 @@ export async function createBillCore(
    * it was really issued (see offlineIssuedAt). */
   offline?: { clientRef: string; issuedAt: Date },
 ): Promise<{ billId: string; invoiceNumber: string } | { error: string }> {
-  const { customerId, items, discountType, discountValue, paidAmount, paymentMethod, doctorName, patientName, tripVehicleId, tripKm, tripDriverName, tripLoadWeight, tripLoadUnit, serviceProviderName, exchangeMetal, exchangeDescription, exchangeGrossWeight, exchangePurityPercent, exchangeRatePerGram, exchangeValue, redeemedPoints, b2b, buyerName, buyerGstin, buyerAddress } = parsedData;
+  const { customerId, items, discountType, discountValue, paidAmount: paidAsSent, paymentMethod: methodAsSent, payments: paymentsAsSent, doctorName, patientName, tripVehicleId, tripKm, tripDriverName, tripLoadWeight, tripLoadUnit, serviceProviderName, exchangeMetal, exchangeDescription, exchangeGrossWeight, exchangePurityPercent, exchangeRatePerGram, exchangeValue, redeemedPoints, b2b, buyerName, buyerGstin, buyerAddress } = parsedData;
+
+  // Paid more than one way: the payments say what was paid in money, and the mode that took the most
+  // is the bill's mode (a zero row is dropped). Udhaar is what they leave. A single-mode bill (and a
+  // bill queued offline before split payments) sends no payments and is read as before.
+  const split = paymentsAsSent ? splitPaid(paymentsAsSent) : null;
+  const paidAmount = split ? split.paid : paidAsSent;
+  const paymentMethod = split ? split.method : methodAsSent;
 
   const admin = createSupabaseAdminClient();
 
@@ -313,6 +322,14 @@ export async function createBillCore(
   if (scheme && totals.total + 0.005 < scheme.value) {
     return { error: `The scheme is worth ${formatMoney(scheme.value)} — pick jewellery worth at least that much.` };
   }
+  // What pays without being money: old gold handed over, a scheme, prepaid balance (folded into the
+  // paid amount as before; never a payment row). A split bill must add up: never more than the bill,
+  // and what is left is udhaar only for a customer — checked before the invoice number is taken.
+  const nonMoney = round2(exchangeWorth + (scheme?.value ?? 0) + walletAmount);
+  if (split) {
+    const wrong = splitError({ total: totals.total, nonMoney, paid: split.paid, hasCustomer: !!customerId });
+    if (wrong) return { error: wrong };
+  }
 
   // The shop's own prefix, when it set one ("SS/26-27/00042"; lib/invoiceNumber).
   // Before a number is taken: a shop that doesn't bill past its stock (the default) stops here. A
@@ -433,6 +450,18 @@ export async function createBillCore(
     // Roll back the orphaned bill header so we don't leave partial data.
     await admin.from("bills").delete().eq("id", bill.id);
     return { error: "Could not save bill items" };
+  }
+
+  // How it was paid, one row per money payment (lib/billPayments, migration 0061) — a single-mode
+  // bill gets its one row too, so every bill from now on reads the same way. Written before any
+  // stock moves: if they can't be written the bill is taken back with nothing else touched. Before
+  // migration 0061 the bill keeps its one mode, as every bill did.
+  const nonMoneyApplied = Math.min(nonMoney, totals.paidAmount);
+  const paymentRows = split ? split.rows : singleModeRows({ paidAmount: totals.paidAmount, nonMoney: nonMoneyApplied, method: paymentMethod });
+  const paid = await recordBillPayments(admin, { shopId: session.shopId, billId: bill.id, staffId: session.userId, rows: paymentRows, nonMoney: nonMoneyApplied });
+  if (paid !== "ok" && paid !== "missing") {
+    const leftover = await takeBillBack(admin, session, bill.id, invoiceNumber, "payments not saved");
+    return { error: [typeof paid === "object" ? paid.error : "The payments couldn't be saved, so the bill wasn't saved. Please try again.", leftover].filter(Boolean).join(" ") };
   }
 
   // Stock comes off now, before anything else hangs on the bill: every counted line in one database
@@ -961,6 +990,9 @@ export async function editBillQuantitiesAction(
     supplyType: bill.supply_type,
     priceMode: bill.price_includes_gst ? "inclusive" : "exclusive",
   });
+  // Money already received is never quietly shrunk: a bill paid more than its new total is refunded
+  // through a return first (migration 0061 refuses it in the database too).
+  if (totals.total < Number(bill.paid_amount) - 0.005) return { error: "This bill was already paid more than its new total — process a return or refund for the difference first, then edit it." };
   const lineFigures = (idx: number) => {
     const line = totals.lines[idx];
     return { line_subtotal: line.lineSubtotal, cgst_amount: line.cgst, sgst_amount: line.sgst, igst_amount: line.igst, line_gst: line.lineGst, line_total: round2(line.lineSubtotal + line.lineGst) };

@@ -2,6 +2,7 @@
 
 import { SavingBill } from "@/app/components/SavingBill";
 import { CashChange } from "@/app/components/CashChange";
+import { SplitPayments, splitSum, splitToSend, type SplitRow } from "@/app/components/SplitPayments";
 import { keepValuesOnError } from "@/lib/keepValuesOnError";
 import { useMemo, useState, useActionState, useRef, useEffect, useCallback } from "react";
 import Image from "next/image";
@@ -712,6 +713,8 @@ function FastCheckoutButton({
   const [discountValue, setDiscountValue] = useState(0);
   const [showDiscountInput, setShowDiscountInput] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<"cash" | "card" | "upi" | "online" | "other" | "udhar">("cash");
+  // Paid more than one way (cash + UPI…): a row per payment. null = one mode, as before.
+  const [split, setSplit] = useState<SplitRow[] | null>(null);
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
   const [customerError, setCustomerError] = useState<string | null>(null);
@@ -810,8 +813,9 @@ function FastCheckoutButton({
     // other payment method keeps the original full-paid behaviour
     // (the same safe Math.min(paid, total) behaviour used everywhere
     // else in the app), so there's no separate total math here.
-    paidAmount: isUdhar ? 0 : Number.MAX_SAFE_INTEGER,
+    paidAmount: split ? splitSum(split) : isUdhar ? 0 : Number.MAX_SAFE_INTEGER,
     paymentMethod: isUdhar ? "other" : paymentMethod,
+    ...(split ? { payments: splitToSend(split) } : {}),
     redeemedPoints: discountType === "flat" && redeemPoints ? redeemedPointsCount : 0,
   });
 
@@ -828,6 +832,7 @@ function FastCheckoutButton({
             key={m}
             onClick={() => {
               setPaymentMethod(m);
+              setSplit(null);
               setCustomerError(null);
             }}
             className={`rounded-full py-2 text-xs font-medium capitalize ${
@@ -925,7 +930,18 @@ function FastCheckoutButton({
       )}
 
       {/* Cash at the counter: what the customer handed over, and the change to give back. */}
-      {paymentMethod === "cash" && cart.length > 0 && !focusMode && <CashChange total={payable} resetKey={cart.length === 0} />}
+      {cart.length > 0 && !focusMode && !isUdhar && (split ? (
+        <SplitPayments rows={split} onChange={setSplit} payable={payable} canUdhaar={!!matchedCustomer || customerPhone.length === 10} onSingle={() => setSplit(null)} />
+      ) : (
+        <button
+          type="button"
+          onClick={() => setSplit([{ method: paymentMethod, amount: payable, reference: "" }, { method: paymentMethod === "upi" ? "cash" : "upi", amount: "", reference: "" }])}
+          className="flex items-center gap-1 self-start rounded-full border border-border px-3 py-1.5 text-xs font-medium text-brand-text"
+        >
+          <Plus size={13} /> {t("Split payment (cash + UPI…)")}
+        </button>
+      ))}
+      {paymentMethod === "cash" && !split && cart.length > 0 && !focusMode && <CashChange total={payable} resetKey={cart.length === 0} />}
 
       {/* The bill shows the moment Checkout is tapped; its number and print follow from the server. */}
       <SavingBill pending={isPending || saving} lines={cart.map((l) => ({ name: l.name, quantity: l.qty, amount: Math.round(l.qty * l.price * 100) / 100 }))} total={payable} />

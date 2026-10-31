@@ -17,7 +17,8 @@ export function formatDateTime(iso: string) {
   return DATE_TIME.format(new Date(iso));
 }
 
-const PAYMENT_LABELS: Record<string, string> = { upi: "UPI", udhar: "Udhar", cash: "Cash", card: "Card", online: "Online", other: "Other", adjustment: "Adjusted (return)" };
+// "online" is also how a bank transfer (NEFT/RTGS/IMPS) is recorded: one stored mode, named for both.
+const PAYMENT_LABELS: Record<string, string> = { upi: "UPI", udhar: "Udhar", cash: "Cash", card: "Card", online: "Bank Transfer / Online", other: "Other", adjustment: "Adjusted (return)" };
 
 /** Display name for a stored payment method ("upi" → "UPI"). CSS
  * capitalize turned it into "Upi". */

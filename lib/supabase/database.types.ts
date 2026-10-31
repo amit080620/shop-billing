@@ -2212,6 +2212,12 @@ export interface Database {
         Update: { id?: string; shop_id?: string; dish_id?: string; ingredient_id?: string; quantity?: number; created_at?: string };
         Relationships: [];
       };
+      bill_payments: {
+        Row: { id: string; shop_id: string; bill_id: string; payment_method: "cash" | "card" | "upi" | "online" | "other"; amount: number; reference: string | null; created_by: string | null; created_at: string };
+        Insert: { id?: string; shop_id: string; bill_id: string; payment_method: "cash" | "card" | "upi" | "online" | "other"; amount: number; reference?: string | null; created_by?: string | null; created_at?: string };
+        Update: { id?: string; shop_id?: string; bill_id?: string; payment_method?: "cash" | "card" | "upi" | "online" | "other"; amount?: number; reference?: string | null; created_by?: string | null; created_at?: string };
+        Relationships: [];
+      };
       kitchen_usage: {
         Row: { id: string; shop_id: string; ingredient_id: string; kind: "sale" | "wastage" | "staff_meal"; quantity: number; order_id: string | null; bill_id: string | null; note: string | null; staff_id: string | null; created_at: string; stock_taken: number | null };
         Insert: { id?: string; shop_id: string; ingredient_id: string; kind: "sale" | "wastage" | "staff_meal"; quantity: number; order_id?: string | null; bill_id?: string | null; note?: string | null; staff_id?: string | null; created_at?: string; stock_taken?: number | null };
@@ -2869,6 +2875,10 @@ export interface Database {
       };
       void_bill_stock: {
         Args: { p_shop_id: string; p_bill_id: string; p_staff_id: string; p_reason: string; p_lines: Json };
+        Returns: Json;
+      };
+      set_bill_payments: {
+        Args: { p_shop_id: string; p_bill_id: string; p_payments: Json; p_staff_id?: string | null; p_non_money?: number | null };
         Returns: Json;
       };
       take_bill_stock: {

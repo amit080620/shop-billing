@@ -2,6 +2,7 @@
 
 import { SavingBill } from "@/app/components/SavingBill";
 import { CashChange } from "@/app/components/CashChange";
+import { SplitPayments, splitSum, splitToSend, type SplitRow } from "@/app/components/SplitPayments";
 import { keepValuesOnError } from "@/lib/keepValuesOnError";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "@/lib/link";
@@ -369,6 +370,12 @@ export function NewBillClient({
   const [redeemPoints, setRedeemPoints] = useState(false);
   const [paidAmount, setPaidAmount] = useState<number | "">("");
   const [paymentMethod, setPaymentMethod] = useState<"cash" | "card" | "upi" | "online" | "other">("cash");
+  // Paid more than one way: a row per payment. null = one mode, as before. paidAmount follows the rows.
+  const [split, setSplit] = useState<SplitRow[] | null>(null);
+  const changeSplit = (rows: SplitRow[]) => {
+    setSplit(rows);
+    setPaidAmount(splitSum(rows));
+  };
   const [doctorName, setDoctorName] = useState("");
   const [patientName, setPatientName] = useState("");
   // The stylist: one from the list when the name matches (an appointment's may be typed differently).
@@ -1314,6 +1321,7 @@ export function NewBillClient({
     redeemedPoints: discountType === "flat" && redeemPoints ? redeemedPointsCount : 0,
     paidAmount: typeof paidAmount === "number" ? paidAmount : 0,
     paymentMethod,
+    ...(split ? { payments: splitToSend(split) } : {}),
     doctorName,
     patientName,
     tripVehicleId: tripInfo?.vehicleId ?? null,
@@ -1599,6 +1607,19 @@ export function NewBillClient({
 
       <section className="flex flex-col gap-3 neu-card p-4">
         <p className="text-sm font-medium text-foreground">{t("bill.howMuchPaid")}</p>
+        {split ? (
+          <SplitPayments
+            rows={split}
+            onChange={changeSplit}
+            payable={Math.max(0, round2(totals.total - exchangeValue))}
+            canUdhaar={customerMode !== "walkin"}
+            onSingle={() => {
+              setSplit(null);
+              setPaidAmount(Math.max(0, round2(totals.total - exchangeValue)));
+            }}
+          />
+        ) : (
+        <>
         <div className="flex gap-2">
           <button
             type="button"
@@ -1669,6 +1690,24 @@ export function NewBillClient({
               ))}
             </div>
           </div>
+        )}
+        {cart.length > 0 && businessType !== "hotel" && businessType !== "restaurant" && (
+          <button
+            type="button"
+            onClick={() => {
+              const due = Math.max(0, round2(totals.total - exchangeValue));
+              const first = typeof paidAmount === "number" && paidAmount > 0 && paidAmount < due ? paidAmount : due;
+              changeSplit([
+                { method: paymentMethod, amount: first, reference: "" },
+                { method: paymentMethod === "upi" ? "cash" : "upi", amount: round2(due - first), reference: "" },
+              ]);
+            }}
+            className="flex items-center gap-1 self-start rounded-full border border-border px-3 py-1.5 text-xs font-medium text-brand-text"
+          >
+            <Plus size={13} /> {t("Split payment (cash + UPI…)")}
+          </button>
+        )}
+        </>
         )}
 
         {totals.balanceAmount > 0 && (

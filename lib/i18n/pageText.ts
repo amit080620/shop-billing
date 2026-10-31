@@ -556,6 +556,7 @@ export const PAGE_TEXT: Record<string, [hi: string, mr: string]> = {
   "Cash": ["नकद", "रोख"],
   "Card": ["कार्ड", "कार्ड"],
   "Online": ["ऑनलाइन", "ऑनलाइन"],
+  "Bank Transfer / Online": ["बैंक ट्रांसफर / ऑनलाइन", "बँक ट्रान्सफर / ऑनलाइन"],
   "Other": ["अन्य", "इतर"],
   "Udhar": ["उधार", "उधारी"],
 

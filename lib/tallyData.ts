@@ -1,4 +1,6 @@
 import type { createSupabaseAdminClient } from "./supabase/admin";
+import { loadBillPayments } from "./billPayments";
+import { paidByMode } from "./billPaymentSplit";
 import { buildTallyXml, type TallyInvoice, type TallyMoney, type TallyParty } from "./tally";
 
 type Admin = ReturnType<typeof createSupabaseAdminClient>;
@@ -30,6 +32,7 @@ export async function loadTallyExport(admin: Admin, shopId: string, from: string
     admin.from("purchase_payments").select("id, vendor_id, amount, payment_method, created_at").eq("shop_id", shopId).gte("created_at", fromTs).lte("created_at", toTs).order("created_at").limit(20000),
   ]);
 
+  const splitRows = await loadBillPayments(admin, (bills ?? []).map((b) => b.id));
   const billItems = await inChunks((bills ?? []).map((b) => b.id), async (ids) => (await admin.from("bill_items").select("bill_id, gst_percent, line_subtotal").in("bill_id", ids)).data ?? []);
   const purchaseItems = await inChunks((purchases ?? []).map((p) => p.id), async (ids) => (await admin.from("purchase_items").select("purchase_id, gst_percent, line_subtotal").in("purchase_id", ids)).data ?? []);
   const customerIds = [...new Set([...(bills ?? []).map((b) => b.customer_id), ...(pays ?? []).map((p) => p.customer_id)].filter((x): x is string => !!x))];
@@ -65,6 +68,7 @@ export async function loadTallyExport(admin: Admin, shopId: string, from: string
       igst: Number(b.igst_amount),
       total: Number(b.total),
       paid: Number(b.paid_amount),
+      ...(splitRows.has(b.id) ? { paidBy: paidByMode(Number(b.paid_amount), b.payment_method, splitRows.get(b.id)) } : {}),
     };
   });
   const receipts: TallyMoney[] = (pays ?? [])

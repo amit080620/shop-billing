@@ -350,7 +350,7 @@ describe("editing a bill's quantities moves stock by its record", () => {
     vi.mocked(requireSession).mockResolvedValue(session);
   });
   const rows = (table: string, op: Op, single: boolean) => {
-    if (table === "bills" && op === "select" && single) return { data: { id: "bill-1", shop_id: "shop-1", status: "active", created_at: new Date().toISOString(), discount_type: "flat", discount_value: 0, supply_type: "intra", paid_amount: 200, price_includes_gst: false }, error: null };
+    if (table === "bills" && op === "select" && single) return { data: { id: "bill-1", shop_id: "shop-1", status: "active", created_at: new Date().toISOString(), discount_type: "flat", discount_value: 0, supply_type: "intra", paid_amount: 50, price_includes_gst: false }, error: null };
     if (table === "bill_items" && op === "select" && !single) return { data: [{ id: "bi-1", product_id: "sugar", quantity: 5, unit_price: 40, gst_percent: 0 }], error: null, count: 0 };
     return undefined;
   };
@@ -372,6 +372,13 @@ describe("editing a bill's quantities moves stock by its record", () => {
   it("refused by the stock (or below what was returned): the bill isn't changed", async () => {
     const { log } = fakeDb({ product: sugar(10), answer: rows, rpc: { edit_bill_stock: refusedByDb } });
     expect(await editBillQuantitiesAction("bill-1", [{ billItemId: "bi-1", newQuantity: 9 }], "typo")).toEqual({ error: "Sugar 1kg: only 2 PCS in stock — 5 PCS asked for." });
+    expect(log.filter((w) => (w.table === "bill_items" || w.table === "bills") && w.op === "update")).toEqual([]);
+  });
+
+  it("a bill already paid more than its new total isn't edited: a return or refund comes first", async () => {
+    const { rpc, log } = fakeDb({ product: sugar(10), answer: rows, rpc: { edit_bill_stock: { data: { result: "ok", short: [] } } } });
+    expect(await editBillQuantitiesAction("bill-1", [{ billItemId: "bi-1", newQuantity: 1 }], "typo")).toEqual({ error: expect.stringMatching(/return or refund/) });
+    expect(rpc.map(([n]) => n)).not.toContain("edit_bill_stock");
     expect(log.filter((w) => (w.table === "bill_items" || w.table === "bills") && w.op === "update")).toEqual([]);
   });
 

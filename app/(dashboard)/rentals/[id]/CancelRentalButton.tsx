@@ -60,7 +60,7 @@ export function CancelRentalButton({ rentalId, paidAmount }: { rentalId: string;
               <option value="cash">{t("Cash")}</option>
               <option value="upi">UPI</option>
               <option value="card">{t("Card")}</option>
-              <option value="online">{t("Online")}</option>
+              <option value="online">{t("Bank Transfer / Online")}</option>
             </select>
           </div>
         </>

@@ -7,6 +7,7 @@ import type { createSupabaseAdminClient } from "../supabase/admin";
 import type { A4InvoiceData } from "./A4Renderer";
 import { wholesaleReady } from "../wholesaleData";
 import { formatIsoDate } from "../dateHelpers";
+import { paymentSummary } from "../billPaymentSplit";
 
 type Admin = ReturnType<typeof createSupabaseAdminClient>;
 
@@ -19,7 +20,7 @@ export function paymentMethodLabel(method: string) {
     case "upi":
       return "UPI";
     case "online":
-      return "Online";
+      return "Bank Transfer / Online";
     default:
       return "Other";
   }
@@ -84,7 +85,13 @@ export async function loadBillInvoice(admin: Admin, billId: string, shopId?: str
   const isComposition = shop.gst_scheme === "composition";
 
   const isIntra = bill.supply_type === "intra";
-  const paymentLabel = paymentMethodLabel(bill.payment_method);
+  // Paid more than one way (migration 0061's payment rows): "Cash ₹500.00 + UPI ₹1,500.00" on the
+  // invoice, thermal slip and WhatsApp. One row, none, or no table yet: the one mode, as before.
+  const { data: payRows } = await admin.from("bill_payments").select("payment_method, amount").eq("bill_id", bill.id).order("created_at");
+  const paymentLabel =
+    payRows && payRows.length > 1
+      ? paymentSummary(payRows.map((r) => ({ method: r.payment_method, amount: Number(r.amount) })), bill.payment_method)
+      : paymentMethodLabel(bill.payment_method);
   // Within the state the place of supply is the shop's own state; across states, the buyer's.
   const placeOfSupply = isIntra ? `${shop.state ?? "Same state"} (CGST + SGST)` : `${party?.state ?? "Different state"} (IGST)`;
 

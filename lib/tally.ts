@@ -28,6 +28,8 @@ export type TallyInvoice = Tax & {
   total: number;
   /** Paid at the time (a receipt or payment voucher follows for a party). */
   paid: number;
+  /** Paid more than one way: the paid amount by mode (adds up to paid). Missing: all in `method`. */
+  paidBy?: { method: string; amount: number }[];
 };
 export type TallyMoney = { number?: string; date: string; party: string; amount: number; method: string };
 
@@ -67,6 +69,16 @@ function voucherXml(type: "Sales" | "Receipt" | "Purchase" | "Payment", v: { num
 }
 
 /** A sale's entries: the party (or Cash / Bank) debited, sales and output tax credited, rounding on Round Off. */
+/** Cash and Bank debits for money paid by modes; the last takes any paisa left so they add up to `amount`. */
+function moneyEntries(paidBy: { method: string; amount: number }[], amount: number): Entry[] {
+  const by = new Map<string, number>();
+  for (const p of paidBy) by.set(moneyLedger(p.method), (by.get(moneyLedger(p.method)) ?? 0) + p.amount);
+  const out = [...by].map(([ledger, a]) => ({ ledger, amount: -r2(a) }));
+  const gap = r2(-amount - out.reduce((s, e) => s + e.amount, 0));
+  out[out.length - 1].amount = r2(out[out.length - 1].amount + gap);
+  return out;
+}
+
 export function saleEntries(s: TallyInvoice): Entry[] {
   const sales = splitByRate(s.byRate, s.taxable).map((l) => ({ ledger: salesLedger(l.rate), amount: l.amount }));
   const taxes = [
@@ -76,7 +88,9 @@ export function saleEntries(s: TallyInvoice): Entry[] {
   ];
   const credits = r2([...sales, ...taxes].reduce((a, e) => a + e.amount, 0));
   const round = r2(s.total - credits);
-  return [{ ledger: s.party ?? moneyLedger(s.method), amount: -r2(s.total) }, ...sales, ...taxes, { ledger: ROUND_OFF, amount: round }];
+  // A counter sale paid partly in cash and partly by bank goes to both ledgers.
+  const debit = !s.party && s.paidBy && s.paidBy.length > 1 ? moneyEntries(s.paidBy, s.total) : [{ ledger: s.party ?? moneyLedger(s.method), amount: -r2(s.total) }];
+  return [...debit, ...sales, ...taxes, { ledger: ROUND_OFF, amount: round }];
 }
 
 /** A purchase's entries: purchase and input tax debited, the vendor credited. */
@@ -112,7 +126,7 @@ export function buildTallyXml(input: { parties: TallyParty[]; sales: TallyInvoic
   for (const s of input.sales) {
     for (const l of splitByRate(s.byRate, s.taxable)) add(salesLedger(l.rate), "Sales Accounts");
     vouchers.push(voucherXml("Sales", { number: s.number, date: s.date, party: s.party ?? moneyLedger(s.method) }, saleEntries(s)));
-    if (s.party && s.paid > 0) vouchers.push(voucherXml("Receipt", { date: s.date, party: s.party, narration: `Against ${s.number}` }, [{ ledger: moneyLedger(s.method), amount: -r2(s.paid) }, { ledger: s.party, amount: r2(s.paid) }]));
+    if (s.party && s.paid > 0) vouchers.push(voucherXml("Receipt", { date: s.date, party: s.party, narration: `Against ${s.number}` }, [...(s.paidBy && s.paidBy.length > 1 ? moneyEntries(s.paidBy, s.paid) : [{ ledger: moneyLedger(s.method), amount: -r2(s.paid) }]), { ledger: s.party, amount: r2(s.paid) }]));
   }
   for (const r of input.receipts) vouchers.push(voucherXml("Receipt", { number: r.number, date: r.date, party: r.party }, [{ ledger: moneyLedger(r.method), amount: -r2(r.amount) }, { ledger: r.party, amount: r2(r.amount) }]));
   for (const p of input.purchases) {

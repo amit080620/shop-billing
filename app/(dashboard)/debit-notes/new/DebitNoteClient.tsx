@@ -12,7 +12,7 @@ const METHODS = [
   ["cash", "Cash"],
   ["upi", "UPI"],
   ["card", "Card"],
-  ["online", "Online"],
+  ["online", "Bank Transfer / Online"],
   ["other", "Other"],
   ["udhar", "Add to udhaar"],
 ] as const;

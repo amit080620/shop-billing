@@ -5,7 +5,7 @@ import { useActionState, useEffect, useMemo, useState } from "react";
 import { useFormStatus } from "react-dom";
 import Link from "@/lib/link";
 import { createReturnAction } from "@/lib/actions/returns";
-import { formatMoney } from "@/lib/format";
+import { formatMoney, paymentMethodLabel } from "@/lib/format";
 import { returnFigures, type LineFigures } from "@/lib/returnMath";
 
 type BillItem = {
@@ -35,17 +35,20 @@ export function ReturnClient({
   invoiceNumber,
   customerName,
   businessType,
+  refundModes,
   items,
 }: {
   billId: string;
   invoiceNumber: string;
   customerName: string | null;
   businessType: string;
+  /** The modes this bill was paid in and what each can still refund; null = any mode (no payment rows). */
+  refundModes: { method: "cash" | "card" | "upi" | "online" | "other"; left: number }[] | null;
   items: BillItem[];
 }) {
   const [quantities, setQuantities] = useState<Record<string, number>>({});
   const [reason, setReason] = useState("");
-  const [refundMethod, setRefundMethod] = useState<"cash" | "card" | "upi" | "online" | "other" | "credit_adjustment">("cash");
+  const [refundMethod, setRefundMethod] = useState<"cash" | "card" | "upi" | "online" | "other" | "credit_adjustment">(refundModes?.[0]?.method ?? "cash");
 
   function setQty(itemId: string, qty: number, max: number) {
     setQuantities((prev) => ({ ...prev, [itemId]: Math.max(0, Math.min(qty, max)) }));
@@ -143,7 +146,7 @@ export function ReturnClient({
       <div className="flex flex-col gap-1.5">
         <p className="text-sm font-medium text-foreground">Refund given via</p>
         <div className="flex flex-wrap gap-2">
-          {(["cash", "card", "upi", "online", "credit_adjustment", "other"] as const).map((m) => (
+          {(refundModes ? [...refundModes.map((r) => r.method), "credit_adjustment" as const] : (["cash", "card", "upi", "online", "credit_adjustment", "other"] as const)).map((m) => (
             <button
               key={m}
               type="button"
@@ -157,7 +160,7 @@ export function ReturnClient({
                   : undefined
               }
             >
-              {m === "credit_adjustment" ? "Adjust against credit" : m}
+              {m === "credit_adjustment" ? "Adjust against credit" : refundModes ? `${paymentMethodLabel(m)} · up to ${formatMoney(refundModes.find((r) => r.method === m)?.left ?? 0)}` : m}
             </button>
           ))}
         </div>

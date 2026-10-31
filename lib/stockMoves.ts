@@ -356,6 +356,7 @@ export async function editBillStock(
       await logStockProblem(admin, { ...origin, productId: unknownItem(error.details), requested: 0, reason: "unknown_item" });
       return { ok: false, refused: true, error: NOT_IN_LIST };
     }
+    if (error.message === "paid_exceeds_total" || error.message === "payments_exceed_paid") return { ok: false, refused: true, error: "This bill was already paid more than its new total — process a return or refund for the difference first, then edit it." };
     if (error.message === "below_returned") {
       let returned = 0;
       try {
@@ -457,6 +458,7 @@ export async function recordReturn(
     if (error.message === "unknown_item") return { kind: "refused", error: "An item on this bill is no longer in this shop's list, so its stock can't go back — nothing was returned." };
     if (error.message === "batch_mismatch") return { kind: "refused", error: "A returned medicine's batch is missing or doesn't match the item, so it can't go back to its batch — nothing was returned." };
     if (error.message === "invalid_stock_move") return { kind: "refused", error: "This return couldn't be saved — refresh the bill and try again." };
+    if (error.message === "refund_exceeds_mode") return { kind: "refused", error: "This refund is more than the bill received in that payment mode — pick another mode the bill was paid in, or a smaller amount." };
     if (error.message === "request_conflict") return { kind: "refused", error: "This return form was already used for another bill — reload the page and try again." };
     console.error("Could not record a return", args.billId, error);
     return { kind: "failed" };

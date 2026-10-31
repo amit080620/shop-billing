@@ -196,7 +196,7 @@ const en: Record<string, string> = {
   "bill.cash": "Cash",
   "bill.card": "Card",
   "bill.upi": "UPI",
-  "bill.online": "Online",
+  "bill.online": "Bank Transfer / Online",
   "bill.other": "Other",
   "bill.willAddCredit": "{amount} will be added to this customer's credit (udhaar).",
   "bill.walkinNoCredit": "Walk-in sales can't carry credit — attach an existing customer to track this balance.",

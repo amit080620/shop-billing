@@ -4,6 +4,7 @@ import { getPendingBills, removePendingBill, updatePendingBill, type PendingBill
 import { syncOfflineBillAction } from "./actions/bills";
 import { buildReceiptEscPos, type ReceiptData } from "./escpos";
 import { calculateTransactionTotals } from "./validation/totals";
+import { paymentSummary } from "./billPaymentSplit";
 import { helperSettings, printViaHelper } from "./printHelper";
 import { printViaBluetooth, shouldDefaultToBluetooth } from "./bluetooth-print";
 
@@ -49,6 +50,7 @@ export function syncPendingBills(shopId: string, { retryFailed = false } = {}): 
               discountValue: bill.discountValue,
               paidAmount: bill.paidAmount,
               paymentMethod: bill.paymentMethod,
+              ...(bill.payments ? { payments: bill.payments } : {}),
             },
           });
         } catch {
@@ -91,7 +93,7 @@ export function offlineSlipData(bill: PendingBill, shopName: string, priceInclud
     dateText: at.toLocaleDateString("en-IN", { day: "2-digit", month: "2-digit", year: "numeric" }),
     timeText: at.toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit", hour12: true }),
     customerName: bill.customerName,
-    paymentLabel: bill.paymentMethod.toUpperCase(),
+    paymentLabel: bill.payments && bill.payments.length > 1 ? paymentSummary(bill.payments, bill.paymentMethod) : bill.paymentMethod.toUpperCase(),
     items: bill.items.map((i) => ({ name: i.name, qty: i.quantity, price: i.unitPrice, lineTotal: Math.round(i.quantity * i.unitPrice * 100) / 100 })),
     subtotal: totals.subtotal,
     discount: totals.discountAmount || undefined,

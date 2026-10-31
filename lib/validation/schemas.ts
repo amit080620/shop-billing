@@ -176,6 +176,20 @@ export const billSchema = z.object({
   discountValue: z.coerce.number().min(0).default(0),
   paidAmount: z.coerce.number().min(0),
   paymentMethod: z.enum(paymentMethods).default("cash"),
+  /** Paid more than one way (split payment): each money payment's mode, amount and an optional
+   * reference. When sent, these are what was paid in money — paidAmount and paymentMethod are worked
+   * out from them — and what they leave unpaid is udhaar. Never sent by a single-mode bill, or by a
+   * bill queued offline before split payments existed. */
+  payments: z
+    .array(
+      z.object({
+        method: z.enum(paymentMethods),
+        amount: z.coerce.number().finite().min(0).max(1e10).refine((n) => Math.abs(n * 100 - Math.round(n * 100)) < 1e-6, "Amounts are to the paisa"),
+        reference: optionalText(100),
+      }),
+    )
+    .max(10, "At most 10 payments on one bill")
+    .optional(),
   doctorName: optionalText(120),
   patientName: optionalText(120),
   // Present only when a transport-charge line was added (Transport &

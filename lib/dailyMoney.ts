@@ -3,6 +3,8 @@ import { buyerSchemaReady } from "./gstBuyer";
 import { cashMovementsReady } from "./cashMovements";
 import { payrollReady } from "./payrollData";
 import { transportExtrasReady } from "./transportData";
+import { loadBillPayments } from "./billPayments";
+import { paidByMode } from "./billPaymentSplit";
 
 type Admin = ReturnType<typeof createSupabaseAdminClient>;
 
@@ -127,9 +129,11 @@ export async function computeDailyMoney(admin: Admin, shopId: string, date: stri
 
   const salesByMethod = emptyTotals();
   let newCreditGiven = 0;
+  // A bill paid more than one way counts each payment in its own mode (migration 0061).
+  const splitRows = await loadBillPayments(admin, (bills ?? []).filter((b) => !b.hotel_booking_id).map((b) => b.id));
   for (const b of bills ?? []) {
     // A hotel stay invoice's paid amount is already in hotel_payments below.
-    if (!b.hotel_booking_id) salesByMethod[b.payment_method as Method] += Number(b.paid_amount);
+    if (!b.hotel_booking_id) for (const p of paidByMode(Number(b.paid_amount), b.payment_method, splitRows.get(b.id))) salesByMethod[p.method as Method] += p.amount;
     newCreditGiven += Number(b.credit_amount);
   }
   for (const p of hotelPayments ?? []) {

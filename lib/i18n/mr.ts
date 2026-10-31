@@ -186,7 +186,7 @@ const mr: Record<string, string> = {
   "bill.cash": "रोख",
   "bill.card": "कार्ड",
   "bill.upi": "UPI",
-  "bill.online": "ऑनलाइन",
+  "bill.online": "बँक ट्रान्सफर / ऑनलाइन",
   "bill.other": "इतर",
   "bill.willAddCredit": "{amount} या ग्राहकाच्या उधारीत जोडले जाईल.",
   "bill.walkinNoCredit": "वॉक-इन विक्रीवर उधारी ठेवता येत नाही — यासाठी सध्याचा ग्राहक निवडा.",

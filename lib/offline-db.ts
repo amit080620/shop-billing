@@ -51,6 +51,9 @@ export type PendingBill = {
   discountValue: number;
   paidAmount: number;
   paymentMethod: "cash" | "card" | "upi" | "online" | "other";
+  /** Paid more than one way (split payment). Missing on single-mode bills and on bills queued
+   * before split payments existed — those sync with paidAmount and paymentMethod as always. */
+  payments?: { method: "cash" | "card" | "upi" | "online" | "other"; amount: number; reference?: string | null }[];
   createdAt: string; // client clock — used to preserve chronological sync order
   status: "pending" | "syncing" | "failed";
   syncError?: string;
