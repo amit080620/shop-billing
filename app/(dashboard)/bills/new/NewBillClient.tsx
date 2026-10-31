@@ -845,6 +845,8 @@ export function NewBillClient({
 
   if (step === "cart") {
     const canComplete = cart.length > 0 && !(customerMode === "existing" && !selectedCustomer);
+    // Said where the button is, instead of a greyed button with no reason.
+    const completeBlocked = cart.length === 0 ? t("Add an item to continue") : !canComplete ? t("Pick the customer to continue") : null;
     const complete = () => {
       // What a scheme or old gold already covers isn't asked for again (prepaid balance is chosen
       // on the next screen, so it starts unused).
@@ -1179,7 +1181,8 @@ export function NewBillClient({
                         onClick={() =>
                           updateQuantity(line.productId, round2(line.quantity - quantityStep(line.unit)))
                         }
-                        className="h-7 w-7 shrink-0 rounded-full border border-border text-sm font-medium text-foreground"
+                        aria-label={t("Decrease")}
+                        className="h-11 w-11 shrink-0 rounded-full border border-border text-lg font-medium text-foreground"
                       >
                         −
                       </button>
@@ -1191,7 +1194,8 @@ export function NewBillClient({
                         onClick={() =>
                           updateQuantity(line.productId, round2(line.quantity + quantityStep(line.unit)))
                         }
-                        className="h-7 w-7 shrink-0 rounded-full border border-border text-sm font-medium text-foreground"
+                        aria-label={t("Increase")}
+                        className="h-11 w-11 shrink-0 rounded-full border border-border text-lg font-medium text-foreground"
                       >
                         +
                       </button>
@@ -1275,7 +1279,7 @@ export function NewBillClient({
             <span className="text-sm text-muted">{t("bill.subtotal")}</span>
             <span className="text-2xl font-bold tracking-tight text-foreground">{formatMoney(totals.subtotal)}</span>
           </div>
-          <p className="text-xs text-muted">{t("GST, discount and payment come next.")}</p>
+          <p className={`text-xs ${completeBlocked ? "text-credit" : "text-muted"}`}>{completeBlocked ?? t("GST, discount and payment come next.")}</p>
           <button data-keyboard-next disabled={!canComplete} onClick={complete} className="btn-primary w-full disabled:opacity-40">
             {t("bill.completeTicket")} →
           </button>
@@ -1285,7 +1289,7 @@ export function NewBillClient({
         <div className="fixed inset-x-0 bottom-[calc(var(--bottom-nav-h)+env(safe-area-inset-bottom))] z-20 border-t border-border bg-surface px-4 py-3 md:hidden">
           <div className="mx-auto flex max-w-lg items-center justify-between gap-3 md:max-w-5xl xl:max-w-6xl">
             <div className="min-w-0">
-              <p className="text-xs text-muted">{t("bill.subtotal")}</p>
+              <p className={`truncate text-xs ${completeBlocked ? "font-medium text-credit" : "text-muted"}`}>{completeBlocked ?? t("bill.subtotal")}</p>
               <p className="truncate text-lg font-bold text-foreground">{formatMoney(totals.subtotal)}</p>
             </div>
             <button data-keyboard-next disabled={!canComplete} onClick={complete} className="btn-primary shrink-0 px-6 text-center disabled:opacity-40">
@@ -1645,6 +1649,9 @@ export function NewBillClient({
             {t("bill.fullUdhaar")}
           </button>
         </div>
+        {customerMode === "walkin" && (
+          <p className="text-xs text-muted">{t("Udhaar needs a customer — go back to the cart and pick Existing customer.")}</p>
+        )}
         <label className="flex flex-col gap-1.5 text-sm">
           <span className="font-medium text-foreground">{t("bill.orPartPayment")}</span>
           <input
@@ -1673,13 +1680,13 @@ export function NewBillClient({
             <p className="mb-2 text-sm font-medium text-foreground">
               {t("bill.howWasPaid", { amount: formatMoney(paidAmount) })}
             </p>
-            <div className="flex flex-wrap gap-2">
-              {(["cash", "card", "upi", "online", "other"] as const).map((m) => (
+            <div className="grid grid-cols-3 gap-1.5">
+              {(["cash", "upi", "card", "online", "other"] as const).map((m) => (
                 <button
                   key={m}
                   type="button"
                   onClick={() => setPaymentMethod(m)}
-                  className={`rounded-full border px-3.5 py-1.5 text-xs font-medium ${
+                  className={`flex min-h-10 items-center justify-center rounded-xl border px-1.5 py-1.5 text-center text-xs font-medium leading-tight ${
                     paymentMethod === m
                       ? "border-brand bg-brand-soft text-brand-text"
                       : "border-border text-muted"
@@ -1704,7 +1711,7 @@ export function NewBillClient({
             }}
             className="flex items-center gap-1 self-start rounded-full border border-border px-3 py-1.5 text-xs font-medium text-brand-text"
           >
-            <Plus size={13} /> {t("Split payment (cash + UPI…)")}
+            <Plus size={13} /> {t("Split payment")}
           </button>
         )}
         </>
@@ -1712,7 +1719,9 @@ export function NewBillClient({
 
         {totals.balanceAmount > 0 && (
           <p className="text-sm text-credit">
-            {t("bill.willAddCredit", { amount: formatMoney(totals.balanceAmount) })}
+            {customerMode === "walkin"
+              ? t("{amount} is unpaid. A walk-in bill must be paid in full — or go back to the cart and pick the customer to give udhaar.", { amount: formatMoney(totals.balanceAmount) })
+              : t("bill.willAddCredit", { amount: formatMoney(totals.balanceAmount) })}
           </p>
         )}
         {totals.balanceAmount > 0 && credit?.limit != null && credit.balance + totals.balanceAmount > credit.limit && (
@@ -2062,7 +2071,7 @@ function QuantityInput({ value, onCommit }: { value: number; onCommit: (n: numbe
           (e.target as HTMLInputElement).blur();
         }
       }}
-      className="w-14 rounded-lg border border-border px-1 py-1 text-center text-sm font-medium text-foreground outline-none focus:border-brand"
+      className="h-11 w-14 rounded-lg border border-border px-1 text-center text-base font-medium text-foreground outline-none focus:border-brand"
     />
   );
 }

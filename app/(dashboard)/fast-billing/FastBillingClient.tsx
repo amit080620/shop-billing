@@ -619,22 +619,22 @@ function FastBillSheet({
                   {/* At 1 the minus becomes a bin: one control takes it out, with no red trash beside +. */}
                   <button
                     onClick={() => onUpdateQty(line.productId, line.qty - 1)}
-                    className={`flex h-7 w-7 items-center justify-center rounded-full bg-background ${line.qty <= 1 ? "text-danger" : ""}`}
+                    className={`flex h-11 w-11 items-center justify-center rounded-full bg-background ${line.qty <= 1 ? "text-danger" : ""}`}
                     style={{ boxShadow: "var(--elev-xs)" }}
                     aria-label={line.qty <= 1 ? "Remove" : "Decrease"}
                   >
-                    {line.qty <= 1 ? <Trash2 size={13} /> : <Minus size={13} />}
+                    {line.qty <= 1 ? <Trash2 size={16} /> : <Minus size={16} />}
                   </button>
                   <button onClick={() => setEditingQty(line)} className="w-7 text-center text-sm font-semibold text-foreground">
                     {line.qty}
                   </button>
                   <button
                     onClick={() => onUpdateQty(line.productId, line.qty + 1)}
-                    className="flex h-7 w-7 items-center justify-center rounded-full bg-background"
+                    className="flex h-11 w-11 items-center justify-center rounded-full bg-background"
                     style={{ boxShadow: "var(--elev-xs)" }}
                     aria-label="Increase"
                   >
-                    <Plus size={13} />
+                    <Plus size={16} />
                   </button>
                 </div>
                 <p className="w-16 shrink-0 text-right text-sm font-semibold text-foreground">{formatMoney(line.qty * line.price)}</p>
@@ -944,7 +944,7 @@ function FastCheckoutButton({
           onClick={() => setSplit([{ method: paymentMethod, amount: payable, reference: "" }, { method: paymentMethod === "upi" ? "cash" : "upi", amount: "", reference: "" }])}
           className="flex items-center gap-1 self-start rounded-full border border-border px-3 py-1.5 text-xs font-medium text-brand-text"
         >
-          <Plus size={13} /> {t("Split payment (cash + UPI…)")}
+          <Plus size={13} /> {t("Split payment")}
         </button>
       ))}
       {paymentMethod === "cash" && !split && cart.length > 0 && !focusMode && <CashChange total={payable} resetKey={cart.length === 0} />}
