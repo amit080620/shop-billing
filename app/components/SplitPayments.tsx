@@ -57,7 +57,17 @@ export function SplitPayments({ rows, onChange, payable, canUdhaar, onSingle, on
     if (e.key !== "Enter") return;
     e.preventDefault();
     e.currentTarget.blur();
-    setTimeout(() => document.querySelector<HTMLElement>("[data-keyboard-save]")?.scrollIntoView({ block: "end", behavior: "smooth" }), 300);
+    // To the middle of the screen, clear of the bottom bar; again once the keyboard has finished
+    // closing, since its closing can cut the first scroll short (New Bill is a long page).
+    const bring = () => {
+      const btn = document.querySelector<HTMLElement>("[data-keyboard-save]");
+      if (!btn) return;
+      const r = btn.getBoundingClientRect();
+      const h = window.visualViewport?.height ?? window.innerHeight;
+      if (r.top < 80 || r.bottom > h * 0.7) btn.scrollIntoView({ block: "center", behavior: "smooth" });
+    };
+    setTimeout(bring, 350);
+    setTimeout(bring, 900);
   }
   function focusOut() {
     // Moving between the payment boxes keeps focus mode; leaving them all ends it.
