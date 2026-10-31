@@ -100,6 +100,7 @@ export function PlanForm({ shopId, currentPlan, businessType, disabled }: { shop
           <div className="grid grid-cols-2 gap-2">
             {[
               ["limitBills", "Bills / month"],
+              ["limitCustomers", "New customers / month"],
               ["limitProducts", "Items"],
               ["limitStaff", "Logins"],
               ["limitBranches", "Branches"],

@@ -36,6 +36,16 @@ export async function billLimitError(session: SessionContext): Promise<string | 
   return limitMessage("bills", limit, session.plan, session.businessType);
 }
 
+/** Before a new customer is saved: Free covers a set number of new customers a month (IST). */
+export async function customerLimitError(session: SessionContext): Promise<string | null> {
+  const limit = session.planLimits.newCustomersPerMonth;
+  if (limit == null) return null;
+  const admin = createSupabaseAdminClient();
+  const { count } = await admin.from("customers").select("id", { count: "exact", head: true }).eq("shop_id", session.shopId).gte("created_at", istMonthStart().toISOString());
+  if ((count ?? 0) < limit) return null;
+  return limitMessage("customers", limit, session.plan, session.businessType);
+}
+
 /** How many more items the plan allows (null: no limit). */
 export async function productRoomLeft(session: SessionContext): Promise<number | null> {
   const limit = session.planLimits.products;
@@ -72,14 +82,16 @@ export async function branchLimitError(session: SessionContext): Promise<string 
 /** What the Plan screen shows: how much of each limit is used. */
 export async function planUsage(session: SessionContext) {
   const admin = createSupabaseAdminClient();
-  const [billsThisMonth, products, staff, branches] = await Promise.all([
+  const [billsThisMonth, products, staff, branches, newCustomers] = await Promise.all([
     salesThisMonth(admin, session.shopId),
     admin.from("products").select("id", { count: "exact", head: true }).eq("shop_id", session.shopId),
     admin.from("staff").select("id", { count: "exact", head: true }).eq("shop_id", session.shopId),
     admin.from("branches").select("id", { count: "exact", head: true }).eq("shop_id", session.shopId),
+    admin.from("customers").select("id", { count: "exact", head: true }).eq("shop_id", session.shopId).gte("created_at", istMonthStart().toISOString()),
   ]);
   return {
     billsThisMonth,
+    newCustomers: newCustomers.count ?? 0,
     products: products.count ?? 0,
     staff: staff.count ?? 0,
     branches: branches.count ?? 0,

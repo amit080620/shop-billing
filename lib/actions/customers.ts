@@ -6,6 +6,7 @@ import { createSupabaseAdminClient } from "../supabase/admin";
 import { customerSchema, paymentSchema } from "../validation/schemas";
 import { stateNameForCode } from "../constants/states";
 import { normalizePhone } from "../phone";
+import { customerLimitError } from "../planLimits";
 
 export type ActionState = { error?: string } | null;
 
@@ -17,12 +18,17 @@ export type ActionState = { error?: string } | null;
  * history across two records. Fills in a blank name on an existing
  * customer if one is now available, but never overwrites a name
  * that's already set. */
+type Admin = ReturnType<typeof createSupabaseAdminClient>;
+export async function findOrCreateCustomerByPhone(admin: Admin, shopId: string, phone: string, name?: string): Promise<{ id: string; created: boolean } | null>;
+export async function findOrCreateCustomerByPhone(admin: Admin, shopId: string, phone: string, name: string | undefined, beforeCreate: () => Promise<string | null>): Promise<{ id: string; created: boolean } | { error: string } | null>;
 export async function findOrCreateCustomerByPhone(
   admin: ReturnType<typeof createSupabaseAdminClient>,
   shopId: string,
   phone: string,
   name?: string,
-): Promise<{ id: string; created: boolean } | null> {
+  /** Run only when a new customer would be made: a plan limit message stops it. */
+  beforeCreate?: () => Promise<string | null>,
+): Promise<{ id: string; created: boolean } | { error: string } | null> {
   const normalized = normalizePhone(phone);
   if (!normalized) return null;
 
@@ -41,6 +47,9 @@ export async function findOrCreateCustomerByPhone(
     }
     return { id: existing.id, created: false };
   }
+
+  const blocked = beforeCreate ? await beforeCreate() : null;
+  if (blocked) return { error: blocked };
 
   const { data: created, error } = await admin
     .from("customers")
@@ -110,6 +119,8 @@ export async function createCustomerAction(
   if (existing) {
     return { error: "A customer with this phone number already exists" };
   }
+  const overLimit = await customerLimitError(session);
+  if (overLimit) return { error: overLimit };
 
   const { error } = await admin.from("customers").insert({
     shop_id: session.shopId,
@@ -322,6 +333,8 @@ export async function quickCreateCustomerAction(
     // second record that would split their udhar/loyalty history.
     return { customer: existing };
   }
+  const overLimit = await customerLimitError(session);
+  if (overLimit) return { error: overLimit };
 
   const { data, error } = await admin
     .from("customers")

@@ -8,6 +8,8 @@ export type PlanKey = "free" | "basic" | "pro" | "pro_plus" | "custom";
 export type PlanLimits = {
   /** Bills a shop may create per calendar month; null means no limit. */
   billsPerMonth: number | null;
+  /** New customers a shop may add per calendar month; null means no limit. */
+  newCustomersPerMonth?: number | null;
   /** Items in the catalog; null means no limit. */
   products: number | null;
   /** Logins, owner included. */
@@ -38,8 +40,9 @@ const ALL_MODULES: ModuleKey[] = MODULES.map((m) => m.key);
 // KOT, appointments, rates by karat, bilty…).
 // The ladder is built so most shops land on Pro: Basic is a light step up (no limits on bills, the
 // counter's everyday helpers), Pro is where the money is — WhatsApp udhaar recovery, profit
-// reports, online orders, staff salary, and the AI tools at a real daily allowance — for ₹1,000
-// more than Basic; Pro + is for more than one shop, many staff or heavy AI use.
+// reports, online orders, staff salary, and the AI tools at a real daily allowance; Pro + is for
+// more than one shop, many staff or heavy AI use. Prices and limits follow the website's
+// docs/PRICING.md (31 Oct 2026): monthly = yearly ÷ 10.
 const BASIC_MODULES: ModuleKey[] = ["bulk_import_export", "quotations", "offers"];
 const PRO_MODULES: ModuleKey[] = [
   ...BASIC_MODULES,
@@ -69,11 +72,11 @@ export const PLANS: Record<Exclude<PlanKey, "custom">, Plan> & { custom: Plan } 
     priceMonthly: 0,
     badge: { label: "Free", bg: "#E2E8F0", text: "#334155", border: "#CBD5E1" },
     modules: [],
-    limits: { billsPerMonth: 100, products: 60, staff: 1, branches: 1 },
+    limits: { billsPerMonth: 30, newCustomersPerMonth: 10, products: 50, staff: 1, branches: 1 },
     highlights: [
       "GST invoices, thermal and A4 printing",
       "GSTR-1, GSTR-3B and purchase register — always free",
-      "100 bills a month, 60 items, 1 login",
+      "30 bills and 10 new customers a month, 50 items, 1 login",
       "Udhaar khata, day summary, closing the day and sales reports",
       "Works offline, and on the Android app",
     ],
@@ -82,34 +85,34 @@ export const PLANS: Record<Exclude<PlanKey, "custom">, Plan> & { custom: Plan } 
     key: "basic",
     name: "Basic",
     tagline: "No limit on bills — for a counter that is getting busy",
-    priceYearly: 999,
-    priceMonthly: 99,
+    priceYearly: 6999,
+    priceMonthly: 699,
     badge: { label: "Basic", bg: "#D1FAE5", text: "#065F46", border: "#6EE7B7" },
     modules: BASIC_MODULES,
-    limits: { billsPerMonth: null, products: 300, staff: 2, branches: 1 },
-    highlights: ["Unlimited bills", "300 items, 2 logins", "AI tools to try: a few a day"],
+    limits: { billsPerMonth: null, newCustomersPerMonth: null, products: 300, staff: 2, branches: 1 },
+    highlights: ["Unlimited bills and customers", "300 items, 2 logins", "AI tools to try: a few a day", "WhatsApp support"],
   },
   pro: {
     key: "pro",
     name: "Pro",
     tagline: "The full shop: udhaar recovery, profit, online orders, staff — and AI",
-    priceYearly: 1999,
-    priceMonthly: 199,
+    priceYearly: 14999,
+    priceMonthly: 1499,
     badge: { label: "Pro", bg: "#E0E7FF", text: "#3730A3", border: "#A5B4FC" },
     modules: PRO_MODULES,
-    limits: { billsPerMonth: null, products: null, staff: 5, branches: 1 },
-    highlights: ["Unlimited items, 5 logins", "AI assistant, speak-to-bill and photo scan every day"],
+    limits: { billsPerMonth: null, newCustomersPerMonth: null, products: null, staff: 3, branches: 1 },
+    highlights: ["Unlimited items, 3 logins", "AI assistant, speak-to-bill and photo scan every day", "Set-up call with our team"],
   },
   pro_plus: {
     key: "pro_plus",
     name: "Pro +",
     tagline: "More than one shop, many staff, or heavy AI use",
-    priceYearly: 2999,
-    priceMonthly: 299,
+    priceYearly: 24999,
+    priceMonthly: 2499,
     badge: { label: "Pro +", bg: "#FEF3C7", text: "#92400E", border: "#FCD34D" },
     modules: ALL_MODULES,
-    limits: { billsPerMonth: null, products: null, staff: null, branches: 5 },
-    highlights: ["Unlimited logins, up to 5 branches", "The most AI every day", "Priority support", "Set-up done for you: items loaded, printer, Google Business"],
+    limits: { billsPerMonth: null, newCustomersPerMonth: null, products: null, staff: null, branches: 5 },
+    highlights: ["Unlimited logins, up to 5 branches", "The most AI every day", "Priority WhatsApp support", "Set-up done for you: items loaded, printer, Google Business"],
   },
   custom: {
     key: "custom",
@@ -119,7 +122,7 @@ export const PLANS: Record<Exclude<PlanKey, "custom">, Plan> & { custom: Plan } 
     priceMonthly: 0,
     badge: { label: "Custom", bg: "#FCE7F3", text: "#9D174D", border: "#F9A8D4" },
     modules: ALL_MODULES,
-    limits: { billsPerMonth: null, products: null, staff: null, branches: null },
+    limits: { billsPerMonth: null, newCustomersPerMonth: null, products: null, staff: null, branches: null },
     highlights: ["Modules and limits set for this shop by The Ray"],
   },
 };
@@ -128,11 +131,11 @@ export const PAID_PLAN_ORDER: PlanKey[] = ["free", "basic", "pro", "pro_plus"];
 
 /** Restaurants and hotels run a kitchen, a floor and rooms — KOT, the kitchen screen, waiter and
  * captain logins, QR table orders, food cost per plate, room board and OTA bookings — so they buy
- * one complete plan, Pro + for their trade, at ₹12,000 a year (the price of a restaurant POS such
- * as Petpooja, with GST, udhaar and AI included). A smaller place builds a Custom plan instead. */
+ * one complete plan, Pro + for their trade, at ₹29,999 a year: above Pro + (₹24,999), since it adds
+ * the kitchen, floor and rooms. A smaller place builds a Custom plan instead. */
 const VENUE_TRADES = ["restaurant", "hotel"] as const;
 export const isVenueTrade = (businessType?: string | null) => VENUE_TRADES.includes(businessType as (typeof VENUE_TRADES)[number]);
-const VENUE_PRICE = { yearly: 12000, monthly: 1199 };
+const VENUE_PRICE = { yearly: 29999, monthly: 2999 };
 
 /** The plans this kind of shop is offered, in order. */
 export function offeredPlans(businessType?: string | null): PlanKey[] {
@@ -174,31 +177,31 @@ export const AI_DAILY: Record<PlanKey, AiAllowance> = {
 /** "Build your own plan": a base, then each feature the shop drops into its bucket, per year.
  * Priced so a full bucket costs more than the matching package — the screen then points to the
  * package (see cheaperPackage), which is what most shops should buy. */
-export const CUSTOM_BASE = { standard: 499, venue: 4999 };
+export const CUSTOM_BASE = { standard: 2499, venue: 24999 };
 export const CUSTOM_MODULE_PRICE: Record<ModuleKey, number> = {
-  bulk_import_export: 99,
-  quotations: 149,
-  offers: 149,
-  whatsapp_reminders: 399,
-  delivery_challan: 199,
-  staff_payroll: 299,
-  customer_prepaid: 249,
-  gold_schemes: 299,
-  karigar_jobs: 249,
-  advanced_reports: 399,
-  public_catalog: 399,
-  petty_cash: 99,
-  stock_audit: 149,
-  stylist_commission: 199,
-  vehicle_profit: 249,
-  recipe_stock: 1499,
-  leads_crm: 199,
-  class_schedule: 199,
-  self_checkin_kiosk: 299,
-  audit_log: 199,
-  multi_branch: 999,
+  bulk_import_export: 749,
+  quotations: 1129,
+  offers: 1129,
+  whatsapp_reminders: 2999,
+  delivery_challan: 1499,
+  staff_payroll: 2249,
+  customer_prepaid: 1879,
+  gold_schemes: 2249,
+  karigar_jobs: 1879,
+  advanced_reports: 2999,
+  public_catalog: 2999,
+  petty_cash: 749,
+  stock_audit: 1129,
+  stylist_commission: 1499,
+  vehicle_profit: 1879,
+  recipe_stock: 11249,
+  leads_crm: 1499,
+  class_schedule: 1499,
+  self_checkin_kiosk: 2249,
+  audit_log: 1499,
+  multi_branch: 7499,
 };
-export const CUSTOM_EXTRAS = { ai: 499, unlimitedItems: 199, extraLogins: 299 } as const;
+export const CUSTOM_EXTRAS = { ai: 3749, unlimitedItems: 1499, extraLogins: 2249 } as const;
 /** Restaurant and hotel features cost more to run and support. */
 const VENUE_FACTOR = 1.5;
 
@@ -283,6 +286,7 @@ export function limitsForPlan(planKey: PlanKey, override: Partial<PlanLimits> | 
   if (!override) return base;
   return {
     billsPerMonth: override.billsPerMonth === undefined ? base.billsPerMonth : override.billsPerMonth,
+    newCustomersPerMonth: override.newCustomersPerMonth === undefined ? base.newCustomersPerMonth : override.newCustomersPerMonth,
     products: override.products === undefined ? base.products : override.products,
     staff: override.staff === undefined ? base.staff : override.staff,
     branches: override.branches === undefined ? base.branches : override.branches,
@@ -291,11 +295,12 @@ export function limitsForPlan(planKey: PlanKey, override: Partial<PlanLimits> | 
 
 /** The message a shop sees when it runs into a limit — names the limit and
  * the plan that removes it, rather than a bare "not allowed". */
-export function limitMessage(what: "bills" | "products" | "staff" | "branches", limit: number, planKey: PlanKey, businessType?: string | null): string {
+export function limitMessage(what: "bills" | "customers" | "products" | "staff" | "branches", limit: number, planKey: PlanKey, businessType?: string | null): string {
   const next = nextPlanAfter(planKey, businessType);
   const nextName = next ? planName(next, businessType) : "a bigger plan";
   const nouns = {
     bills: `${limit} bills a month`,
+    customers: `${limit} new customers a month`,
     products: `${limit} items`,
     staff: `${limit} ${limit === 1 ? "login" : "logins"}`,
     branches: `${limit} ${limit === 1 ? "branch" : "branches"}`,

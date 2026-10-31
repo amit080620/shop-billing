@@ -260,7 +260,7 @@ function sessionFromStaff(userId: string, email: string | null, staff: StaffAndS
     : { key: "pro_plus" as PlanKey, onTrial: false, expired: false };
   const planLimits = plansReady
     ? limitsForPlan(plan.key, (shopPlanFields?.plan_limits as Partial<PlanLimits> | null) ?? null)
-    : { billsPerMonth: null, products: null, staff: null, branches: null };
+    : { billsPerMonth: null, newCustomersPerMonth: null, products: null, staff: null, branches: null };
 
   return {
     userId,

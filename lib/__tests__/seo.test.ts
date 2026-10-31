@@ -27,8 +27,8 @@ describe("trade pages", () => {
   });
 
   it("quote the trade's own prices", () => {
-    expect(commonFaqs("restaurant", "restaurant")[0].a).toContain("₹12,000");
-    expect(commonFaqs("grocery", "kirana store")[0].a).toContain("₹999");
+    expect(commonFaqs("restaurant", "restaurant")[0].a).toContain("₹29,999");
+    expect(commonFaqs("grocery", "kirana store")[0].a).toContain("₹6,999");
   });
 });
 

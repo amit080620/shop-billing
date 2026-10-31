@@ -100,6 +100,7 @@ export async function adminAssignPlanAction(_prev: ActionState, formData: FormDa
     const limits: Record<string, number> = {};
     for (const [field, key] of [
       ["limitBills", "billsPerMonth"],
+      ["limitCustomers", "newCustomersPerMonth"],
       ["limitProducts", "products"],
       ["limitStaff", "staff"],
       ["limitBranches", "branches"],

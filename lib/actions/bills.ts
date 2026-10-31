@@ -1,7 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { billLimitError } from "../planLimits";
+import { billLimitError, customerLimitError } from "../planLimits";
 import { revalidatePath } from "next/cache";
 import { requireSession, hasPermission, type SessionContext } from "../auth";
 import { createSupabaseAdminClient } from "../supabase/admin";
@@ -734,7 +734,8 @@ export async function createBillAction(
   // request first: one trip to the server instead of two.
   const fresh = parsed.data.newCustomer;
   if (!parsed.data.customerId && fresh) {
-    const customer = await findOrCreateCustomerByPhone(createSupabaseAdminClient(), session.shopId, fresh.phone, fresh.name || `Customer ${fresh.phone.slice(-4)}`);
+    const customer = await findOrCreateCustomerByPhone(createSupabaseAdminClient(), session.shopId, fresh.phone, fresh.name || `Customer ${fresh.phone.slice(-4)}`, () => customerLimitError(session));
+    if (customer && "error" in customer) return { error: `${customer.error} Or bill without the customer's number.` };
     if (!customer) return { error: "Could not save the customer's details" };
     parsed.data.customerId = customer.id;
   }

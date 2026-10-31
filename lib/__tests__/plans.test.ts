@@ -44,22 +44,22 @@ describe("plans", () => {
     expect(moduleLockMessage("recipe_stock", "restaurant")).toMatch(/Pro \+ Restaurant plan/);
   });
 
-  it("sells at the owner's prices: ₹99 / ₹199 / ₹299 a month, ₹999 / ₹1,999 / ₹2,999 a year", () => {
+  it("sells at the website's prices (PRICING.md): ₹699 / ₹1,499 / ₹2,499 a month, ₹6,999 / ₹14,999 / ₹24,999 a year", () => {
     expect([PLANS.basic, PLANS.pro, PLANS.pro_plus].map((p) => [p.priceMonthly, p.priceYearly])).toEqual([
-      [99, 999],
-      [199, 1999],
-      [299, 2999],
+      [699, 6999],
+      [1499, 14999],
+      [2499, 24999],
     ]);
   });
 
-  it("restaurants and hotels get one complete plan at ₹12,000 a year", () => {
+  it("restaurants and hotels get one complete plan at ₹29,999 a year, above Pro +", () => {
     for (const trade of ["restaurant", "hotel"]) {
       expect(offeredPlans(trade)).toEqual(["free", "pro_plus"]);
-      expect(planPrice("pro_plus", trade).yearly).toBe(12000);
+      expect(planPrice("pro_plus", trade).yearly).toBe(29999);
       expect(minPlanForModule("offers", trade)).toBe("pro_plus");
     }
     expect(planName("pro_plus", "hotel")).toBe("Pro + Hotel");
-    expect(planPrice("pro_plus", "grocery").yearly).toBe(2999);
+    expect(planPrice("pro_plus", "grocery").yearly).toBe(24999);
     expect(limitMessage("bills", 100, "free", "restaurant")).toMatch(/Upgrade to Pro \+ Restaurant/);
   });
 
@@ -70,14 +70,14 @@ describe("plans", () => {
 
   it("prices a custom bucket and points to Pro when Pro has it all for less", () => {
     const small = { modules: ["quotations" as const], ai: false, unlimitedItems: false, extraLogins: false };
-    expect(customQuote(small, "grocery")).toBe(649);
+    expect(customQuote(small, "grocery")).toBe(3629);
     expect(cheaperPackage(small, "grocery")).toBeNull();
     const big = { modules: ["whatsapp_reminders", "advanced_reports", "public_catalog", "staff_payroll"] as const, ai: true, unlimitedItems: false, extraLogins: false };
     const pick = { ...big, modules: [...big.modules] };
-    expect(customQuote(pick, "grocery")).toBeGreaterThan(1999);
-    expect(cheaperPackage(pick, "grocery")).toMatchObject({ plan: "pro", yearly: 1999 });
-    // A restaurant's bucket starts higher and is weighed against its own ₹12,000 plan.
-    expect(customQuote({ modules: [], ai: false, unlimitedItems: false, extraLogins: false }, "restaurant")).toBe(4999);
+    expect(customQuote(pick, "grocery")).toBeGreaterThan(14999);
+    expect(cheaperPackage(pick, "grocery")).toMatchObject({ plan: "pro", yearly: 14999 });
+    // A restaurant's bucket starts higher and is weighed against its own ₹29,999 plan.
+    expect(customQuote({ modules: [], ai: false, unlimitedItems: false, extraLogins: false }, "restaurant")).toBe(24999);
   });
 
   it("each tier includes everything the tier below it has", () => {
@@ -123,8 +123,8 @@ describe("plans", () => {
   });
 
   it("limit overrides apply field by field", () => {
-    expect(limitsForPlan("free", null).billsPerMonth).toBe(100);
-    expect(limitsForPlan("free", { billsPerMonth: 500 })).toMatchObject({ billsPerMonth: 500, products: 60 });
+    expect(limitsForPlan("free", null)).toMatchObject({ billsPerMonth: 30, newCustomersPerMonth: 10, products: 50, staff: 1 });
+    expect(limitsForPlan("free", { billsPerMonth: 500 })).toMatchObject({ billsPerMonth: 500, newCustomersPerMonth: 10, products: 50 });
     expect(limitsForPlan("free", { billsPerMonth: null }).billsPerMonth).toBeNull();
   });
 

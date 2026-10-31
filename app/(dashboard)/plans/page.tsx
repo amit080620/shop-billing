@@ -113,6 +113,7 @@ export default async function PlansPage() {
             {usage && (
               <div className="flex flex-col gap-2.5 border-t border-border pt-3">
                 <UsageBar label={t("Sales this month")} used={usage.billsThisMonth} limit={session.planLimits.billsPerMonth} />
+                {session.planLimits.newCustomersPerMonth != null && <UsageBar label={t("New customers this month")} used={usage.newCustomers} limit={session.planLimits.newCustomersPerMonth} />}
                 <UsageBar label={t("Items in catalog")} used={usage.products} limit={session.planLimits.products} />
                 <UsageBar label={t("Logins")} used={usage.staff} limit={session.planLimits.staff} />
                 {(session.planLimits.branches ?? 0) > 1 && <UsageBar label={t("Branches")} used={usage.branches} limit={session.planLimits.branches} />}
@@ -275,6 +276,7 @@ export default async function PlansPage() {
                     {[
                       ...(PLAN_PRICES_LIVE ? [{ name: t("Per year"), cells: offered.map((k) => (planPrice(k, type).yearly ? rupees(planPrice(k, type).yearly) : "₹0")) }] : []),
                       { name: t("Sales a month"), cells: offered.map((k) => t(limitText(planFor(k).limits.billsPerMonth, ""))) },
+                      { name: t("New customers a month"), cells: offered.map((k) => t(limitText(planFor(k).limits.newCustomersPerMonth ?? null, ""))) },
                       { name: t("Items"), cells: offered.map((k) => t(limitText(planFor(k).limits.products, ""))) },
                       { name: t("Logins"), cells: offered.map((k) => t(limitText(planFor(k).limits.staff, ""))) },
                       { name: t("Branches"), cells: offered.map((k) => t(limitText(planFor(k).limits.branches, ""))) },
