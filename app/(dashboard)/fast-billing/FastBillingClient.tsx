@@ -8,7 +8,7 @@ import { useMemo, useState, useActionState, useRef, useEffect, useCallback } fro
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { X, Minus, Plus, Trash2, Search, Mic } from "lucide-react";
-import { formatMoney } from "@/lib/format";
+import { formatMoney, paymentMethodLabel } from "@/lib/format";
 import { createBillAction } from "@/lib/actions/bills";
 import { useSyncCalculatorAmount } from "@/lib/calculatorAmount";
 import { parseVoiceOrderAction } from "@/lib/actions/voiceOrder";
@@ -829,11 +829,11 @@ function FastCheckoutButton({
     <div className="flex flex-col gap-2.5">
       {state?.error && <p className="text-sm text-danger">{state.error}</p>}
 
-      {/* Payment method — always-visible capsule row, no tap needed to
-          reveal it. Cash is the sane default so most sales need zero
-          taps here at all. */}
-      <div className={`grid grid-cols-5 gap-1.5 ${focusMode ? "hidden" : ""}`}>
-        {(["cash", "upi", "card", "udhar", "other"] as const).map((m) => (
+      {/* Payment method — always-visible chips, no tap needed to reveal them. Cash is the sane
+          default so most sales need zero taps here at all. Named as everywhere else in the app;
+          Bank Transfer / Online is the existing "online" mode. */}
+      <div className={`grid grid-cols-3 gap-1.5 ${focusMode ? "hidden" : ""}`}>
+        {(["cash", "upi", "card", "online", "other", "udhar"] as const).map((m) => (
           <button
             key={m}
             onClick={() => {
@@ -841,7 +841,7 @@ function FastCheckoutButton({
               setSplit(null);
               setCustomerError(null);
             }}
-            className={`rounded-full py-2 text-xs font-medium capitalize ${
+            className={`flex min-h-10 items-center justify-center rounded-xl px-1.5 py-1.5 text-center text-xs font-medium leading-tight ${
               m === "udhar"
                 ? paymentMethod === m
                   ? "bg-danger text-white"
@@ -851,7 +851,7 @@ function FastCheckoutButton({
                   : "bg-surface text-muted"
             }`}
           >
-            {m}
+            {m === "udhar" ? t("Udhaar") : t(paymentMethodLabel(m))}
           </button>
         ))}
       </div>
