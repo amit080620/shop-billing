@@ -4,7 +4,7 @@ import { getPendingBills, removePendingBill, updatePendingBill, type PendingBill
 import { syncOfflineBillAction } from "./actions/bills";
 import { buildReceiptEscPos, type ReceiptData } from "./escpos";
 import { calculateTransactionTotals } from "./validation/totals";
-import { paymentSummary } from "./billPaymentSplit";
+import { onlyUdhaar, paymentSummary } from "./billPaymentSplit";
 import { helperSettings, printViaHelper } from "./printHelper";
 import { printViaBluetooth, shouldDefaultToBluetooth } from "./bluetooth-print";
 
@@ -93,7 +93,8 @@ export function offlineSlipData(bill: PendingBill, shopName: string, priceInclud
     dateText: at.toLocaleDateString("en-IN", { day: "2-digit", month: "2-digit", year: "numeric" }),
     timeText: at.toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit", hour12: true }),
     customerName: bill.customerName,
-    paymentLabel: bill.payments && bill.payments.length > 1 ? paymentSummary(bill.payments, bill.paymentMethod) : bill.paymentMethod.toUpperCase(),
+    // Nothing paid, all on udhaar: the slip says so (as the invoice does), not the mode left selected.
+    paymentLabel: onlyUdhaar(totals.paidAmount, totals.balanceAmount) ? "UDHAAR" : bill.payments && bill.payments.length > 1 ? paymentSummary(bill.payments, bill.paymentMethod) : bill.paymentMethod.toUpperCase(),
     items: bill.items.map((i) => ({ name: i.name, qty: i.quantity, price: i.unitPrice, lineTotal: Math.round(i.quantity * i.unitPrice * 100) / 100 })),
     subtotal: totals.subtotal,
     discount: totals.discountAmount || undefined,

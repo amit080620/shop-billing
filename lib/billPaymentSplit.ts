@@ -62,3 +62,63 @@ export function paidByMode(paid: number, method: string, rows: BillPayment[] | u
   if (rest > 0.005) out.push({ method, amount: rest });
   return out;
 }
+
+/** A bill that took no money and leaves udhaar: its receipt says "Udhaar", not the mode it was saved
+ * with (New Bill saves "cash" by default), and has no "Paid (Cash): 0.00". `moneyPaid` is the paid
+ * amount less old gold, a gold scheme or prepaid balance. Display only — the bill is not changed. */
+export function onlyUdhaar(moneyPaid: number, credit: number): boolean {
+  return moneyPaid <= 0.005 && credit > 0.005;
+}
+
+const MONEY_MODES: PaymentMode[] = ["cash", "card", "upi", "online", "other"];
+export const isMoneyMode = (method: string): method is PaymentMode => (MONEY_MODES as string[]).includes(method);
+
+/** How much a return may still give back in money, by mode. */
+export type RefundRoom = { method: PaymentMode; left: number }[];
+
+/** What a return on one bill may give back in money: each mode the bill was paid in, up to what that
+ * mode took less what earlier returns already gave back in it — the rule migration 0061 keeps in the
+ * database for a bill with payment rows. A bill without rows (from before split payments, or one that
+ * took no money) has its one mode, holding what was paid in money (the paid amount less old gold, a
+ * scheme or prepaid balance) less every money refund it has had. Udhaar is never refunded as money:
+ * it was never received. Modes with nothing left are left out. */
+export function refundRoom(opts: {
+  /** bills.paid_amount and bills.payment_method. */
+  paid: number;
+  method: string;
+  /** Old gold, a gold scheme and prepaid balance used on the bill — read only for a bill without rows. */
+  nonMoney: number;
+  rows: BillPayment[];
+  /** The bill's earlier returns: how each gave back, and how much. */
+  refunds: { method: string; total: number }[];
+}): RefundRoom {
+  const givenBack = (match: (method: string) => boolean) => round2(opts.refunds.filter((r) => match(r.method)).reduce((s, r) => s + r.total, 0));
+  if (opts.rows.length > 0) {
+    const received = new Map<PaymentMode, number>();
+    for (const r of opts.rows) received.set(r.method, round2((received.get(r.method) ?? 0) + r.amount));
+    return [...received]
+      .map(([method, amount]) => ({ method, left: Math.max(0, round2(amount - givenBack((m) => m === method))) }))
+      .filter((m) => m.left > 0.005);
+  }
+  if (!isMoneyMode(opts.method)) return [];
+  const money = round2(opts.paid - Math.min(Math.max(0, opts.nonMoney), opts.paid));
+  const left = Math.max(0, round2(money - givenBack(isMoneyMode)));
+  return left > 0.005 ? [{ method: opts.method, left }] : [];
+}
+
+/** Why a return can't give `total` back this way, or null. Adjusting it against the customer's
+ * udhaar ("credit_adjustment") gives no money back, so it isn't limited here. */
+export function refundError(room: RefundRoom, method: string, total: number, hasCustomer: boolean): string | null {
+  if (method === "credit_adjustment" || total <= 0.005) return null;
+  if (!isMoneyMode(method)) return "Pick how the refund was given.";
+  const orUdhaar = hasCustomer ? ", or adjust it against the customer's udhaar" : "";
+  const mode = room.find((m) => m.method === method);
+  if (!mode) {
+    if (room.length === 0) return `No money is left to refund on this bill — it took none, or it was already refunded${hasCustomer ? ". Adjust the return against the customer's udhaar instead" : ""}.`;
+    return `This bill wasn't paid by ${paymentMethodLabel(method)}. Refund it by ${room.map((m) => paymentMethodLabel(m.method)).join(" or ")}${orUdhaar}.`;
+  }
+  if (total > mode.left + 0.005) {
+    return `Only ${formatMoney(mode.left)} can be refunded by ${paymentMethodLabel(method)} on this bill — what it took, less earlier refunds. Return fewer items${orUdhaar}.`;
+  }
+  return null;
+}

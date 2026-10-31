@@ -352,8 +352,9 @@ export function buildReceiptEscPos(data: ReceiptData, charsWide: 32 | 48 = 32, f
   if (show("amountWords")) for (const line of wrap(amountInWords(data.total), charsWide)) b.text(line).newline();
 
   if (data.exchangeLabel && data.exchangeAmount && data.exchangeAmount > 0) total(`${data.exchangeLabel}:`, `-${n(data.exchangeAmount)}`);
-  // (Nothing more to say when old gold, a scheme or prepaid balance covered it all.)
-  if (show("paid") && data.paidAmount !== undefined && (data.paidAmount > 0 || !data.exchangeAmount)) total(data.paymentLabel ? `Paid (${data.paymentLabel}):` : "Paid:", n(data.paidAmount));
+  // (Nothing more to say when old gold, a scheme or prepaid balance covered it all — or when nothing
+  // was paid and the whole bill is udhaar: the balance due says it.)
+  if (show("paid") && data.paidAmount !== undefined && (data.paidAmount > 0 || (!data.exchangeAmount && !data.creditAmount))) total(data.paymentLabel ? `Paid (${data.paymentLabel}):` : "Paid:", n(data.paidAmount));
   if (show("balance") && data.creditAmount) total("Balance due (Udhaar):", n(data.creditAmount));
   if (show("savings") && data.savingsOffMrp) b.newline().align("center").text(`You saved Rs.${n(data.savingsOffMrp)} on MRP`).newline().align("left");
 

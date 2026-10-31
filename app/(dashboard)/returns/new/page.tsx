@@ -3,6 +3,7 @@ import { requireSession } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { ReturnClient } from "./ReturnClient";
 import { NO_FIGURES, sumReturned, type LineFigures } from "@/lib/returnMath";
+import { loadRefundRoom } from "@/lib/billPayments";
 
 export default async function NewReturnPage({
   searchParams,
@@ -20,7 +21,7 @@ export default async function NewReturnPage({
 
   const { data: bill } = await admin
     .from("bills")
-    .select("id, invoice_number, status, customers ( name )")
+    .select("id, invoice_number, status, customer_id, paid_amount, payment_method, customers ( name )")
     .eq("id", billId)
     .eq("shop_id", session.shopId)
     .single();
@@ -54,17 +55,13 @@ export default async function NewReturnPage({
     returnedByItem.set(id, sumReturned((existingReturnItems ?? []).filter((ri) => ri.bill_item_id === id)));
   }
 
-  // A bill paid by modes (migration 0061) refunds only in a mode it was paid in, up to what that mode
-  // received less refunds already given in it. No rows (an older bill, or before 0061): every mode, as before.
-  const { data: paidRows, error: paidRowsError } = await admin.from("bill_payments").select("payment_method, amount").eq("bill_id", billId);
-  let refundModes: { method: "cash" | "card" | "upi" | "online" | "other"; left: number }[] | null = null;
-  if (!paidRowsError && paidRows && paidRows.length > 0) {
-    const { data: pastReturns } = await admin.from("returns").select("refund_method, total").eq("bill_id", billId);
-    const left = new Map<string, number>();
-    for (const r of paidRows) left.set(r.payment_method, (left.get(r.payment_method) ?? 0) + Number(r.amount));
-    for (const r of pastReturns ?? []) if (left.has(r.refund_method)) left.set(r.refund_method, (left.get(r.refund_method) ?? 0) - Number(r.total));
-    refundModes = [...left].map(([method, amount]) => ({ method: method as "cash", left: Math.max(0, Math.round(amount * 100) / 100) }));
-  }
+  // What each way of refunding can still give back — the same rule the server checks on Save
+  // (lib/billPaymentSplit refundRoom): only the modes the bill took money in, never udhaar.
+  const [refundModes, { data: pinRow }] = await Promise.all([
+    loadRefundRoom(admin, { shopId: session.shopId, businessType: session.businessType, bill }),
+    // Whether the shop has a Manager PIN — never the PIN itself.
+    admin.from("shops").select("manager_pin").eq("id", session.shopId).single(),
+  ]);
 
   const customer = Array.isArray(bill.customers) ? bill.customers[0] : bill.customers;
 
@@ -74,7 +71,8 @@ export default async function NewReturnPage({
       invoiceNumber={bill.invoice_number}
       customerName={customer?.name ?? null}
       businessType={session.businessType}
-      refundModes={refundModes}
+      refundModes={refundModes ?? []}
+      needsPin={!!pinRow?.manager_pin}
       items={(billItems ?? [])
         .map((item) => {
           const returned = returnedByItem.get(item.id) ?? NO_FIGURES;

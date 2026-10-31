@@ -1,6 +1,7 @@
 "use client";
 
 import { formatMoney } from "@/lib/format";
+import { onlyUdhaar } from "@/lib/billPaymentSplit";
 import { useTranslation } from "@/lib/i18n/useTranslation";
 import type { Lang } from "@/lib/i18n/dictionary";
 import { buildWhatsAppLink } from "@/lib/whatsapp";
@@ -120,8 +121,10 @@ export function WhatsAppSendButton({
 
   lines.push(`*${t("wa.billTotalLabel")}: ${formatMoney(total)}*`);
   if (exchange && exchange.amount > 0) lines.push(`${exchange.label}: −${formatMoney(exchange.amount)}`);
-  // (Nothing more paid when the old gold or the scheme covered it all.)
-  if (paidAmount > 0 || !exchange?.amount)
+  // (Nothing more paid when the old gold or the scheme covered it all.) A bill that took no money and
+  // leaves udhaar says so, as its receipt does — not "Paid: ₹0.00".
+  if (onlyUdhaar(paidAmount, creditAmount)) lines.push(`${t("Payment")}: ${t("Udhaar")}`);
+  else if (paidAmount > 0 || !exchange?.amount)
     lines.push(
       fullInvoice && details.paymentLabel && paidAmount > 0
         ? `${t("Paid")} (${details.paymentLabel}): ${formatMoney(paidAmount)}`

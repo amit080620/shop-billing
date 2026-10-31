@@ -10,6 +10,8 @@ import { buyerSchemaReady } from "../gstBuyer";
 import { giveBackReturn, recordReturn } from "../stockMoves";
 import { missingColumn } from "../stockRule";
 import { logAuditEvent } from "../audit";
+import { loadRefundRoom } from "../billPayments";
+import { refundError } from "../billPaymentSplit";
 
 export type ActionState = { error?: string } | null;
 
@@ -62,7 +64,7 @@ export async function createReturnAction(
 
   const { data: bill } = await admin
     .from("bills")
-    .select("id, customer_id, status")
+    .select("id, customer_id, status, paid_amount, payment_method")
     .eq("id", billId)
     .eq("shop_id", session.shopId)
     .single();
@@ -135,6 +137,15 @@ export async function createReturnAction(
     };
   });
 
+  // Money goes back only the way it came in, and never more than came in that way: udhaar never
+  // received, old gold, a scheme or prepaid balance are not refunded as money (lib/billPaymentSplit
+  // refundRoom). Checked before a credit-note number is used up.
+  const method = typeof refundMethod === "string" ? refundMethod : "cash";
+  const room = await loadRefundRoom(admin, { shopId: session.shopId, businessType: session.businessType, bill, clientRef: formRef });
+  if (!room) return { error: "Couldn't check this bill's earlier refunds — check the connection and try again." };
+  const refundRefused = refundError(room, method, total, !!bill.customer_id);
+  if (refundRefused) return { error: refundRefused };
+
   const financialYear = financialYearFor(new Date());
   const { data: issuedNumber, error: numberError } = await admin.rpc("next_return_number", {
     p_shop_id: session.shopId,
@@ -144,7 +155,6 @@ export async function createReturnAction(
     return { error: "Could not generate a return number. Please try again." };
   }
   const returnNumber = `CN/${financialYear}/${String(issuedNumber).padStart(5, "0")}`;
-  const method = typeof refundMethod === "string" ? (refundMethod as "cash" | "card" | "upi" | "online" | "other" | "credit_adjustment") : "cash";
   // "Adjust against credit": the refund comes off what the customer owes. Written as an adjustment
   // entry in payments, which every balance, reminder and ledger already counts, and the daily cash
   // summary leaves out (no money changed hands). Needs migration 0042, which allows that payment

@@ -35,4 +35,17 @@ describe("phone preview of the printed receipt", () => {
     expect(lines.find((l) => l.text.startsWith("TOTAL"))?.bold).toBe(true);
     expect(lines.at(-1)?.text.trim()).toBe("Thank you! Visit again");
   });
+
+  it("a bill that took no money says Udhaar, with only the balance due — no \"Paid (…): 0.00\"", () => {
+    const udhaar = escPosLines(buildReceiptEscPos({ ...receipt, customerName: "Sanjay Iyer", paymentLabel: "Udhaar", paidAmount: 0, creditAmount: 70 }, 32));
+    expect(udhaar.some((l) => l.text.includes("Payment: Udhaar"))).toBe(true);
+    expect(udhaar.some((l) => /^Balance due \(Udhaar\):\s+70\.00$/.test(l.text.trim()))).toBe(true);
+    expect(udhaar.some((l) => l.text.trim().startsWith("Paid"))).toBe(false);
+  });
+
+  it("part paid: the paid line stays, with its mode", () => {
+    const part = escPosLines(buildReceiptEscPos({ ...receipt, paidAmount: 50, creditAmount: 20 }, 32));
+    expect(part.some((l) => /^Paid \(UPI\):\s+50\.00$/.test(l.text.trim()))).toBe(true);
+    expect(part.some((l) => /^Balance due \(Udhaar\):\s+20\.00$/.test(l.text.trim()))).toBe(true);
+  });
 });

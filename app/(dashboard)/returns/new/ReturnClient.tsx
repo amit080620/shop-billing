@@ -7,6 +7,7 @@ import Link from "@/lib/link";
 import { createReturnAction } from "@/lib/actions/returns";
 import { formatMoney, paymentMethodLabel } from "@/lib/format";
 import { returnFigures, type LineFigures } from "@/lib/returnMath";
+import { refundError, type RefundRoom } from "@/lib/billPaymentSplit";
 
 type BillItem = {
   id: string;
@@ -21,10 +22,10 @@ type BillItem = {
   returned: LineFigures;
 };
 
-function SubmitButton() {
+function SubmitButton({ blocked }: { blocked: boolean }) {
   const { pending } = useFormStatus();
   return (
-    <button type="submit" disabled={pending} className="btn-primary w-full text-center disabled:opacity-60">
+    <button type="submit" disabled={pending || blocked} className="btn-primary w-full text-center disabled:opacity-60">
       {pending ? "Processing…" : "Confirm return"}
     </button>
   );
@@ -36,19 +37,22 @@ export function ReturnClient({
   customerName,
   businessType,
   refundModes,
+  needsPin,
   items,
 }: {
   billId: string;
   invoiceNumber: string;
   customerName: string | null;
   businessType: string;
-  /** The modes this bill was paid in and what each can still refund; null = any mode (no payment rows). */
-  refundModes: { method: "cash" | "card" | "upi" | "online" | "other"; left: number }[] | null;
+  /** The modes this bill took money in, and what each can still give back (lib/billPaymentSplit refundRoom). */
+  refundModes: RefundRoom;
+  /** The shop has a Manager PIN, so a return asks for it. */
+  needsPin: boolean;
   items: BillItem[];
 }) {
   const [quantities, setQuantities] = useState<Record<string, number>>({});
   const [reason, setReason] = useState("");
-  const [refundMethod, setRefundMethod] = useState<"cash" | "card" | "upi" | "online" | "other" | "credit_adjustment">(refundModes?.[0]?.method ?? "cash");
+  const [refundMethod, setRefundMethod] = useState<"cash" | "card" | "upi" | "online" | "other" | "credit_adjustment">(refundModes[0]?.method ?? "credit_adjustment");
 
   function setQty(itemId: string, qty: number, max: number) {
     setQuantities((prev) => ({ ...prev, [itemId]: Math.max(0, Math.min(qty, max)) }));
@@ -63,6 +67,9 @@ export function ReturnClient({
     for (const line of selectedLines) total += returnFigures(line.item.original, line.item.returned, line.quantity).total;
     return { total: Math.round(total * 100) / 100 };
   }, [selectedLines]);
+
+  // The same check the server makes on Save, shown before it.
+  const refusal = refundError(refundModes, refundMethod, totals.total, !!customerName);
 
   const lines = JSON.stringify(selectedLines.map((l) => ({ billItemId: l.item.id, quantity: l.quantity })));
 
@@ -146,12 +153,12 @@ export function ReturnClient({
       <div className="flex flex-col gap-1.5">
         <p className="text-sm font-medium text-foreground">Refund given via</p>
         <div className="flex flex-wrap gap-2">
-          {(refundModes ? [...refundModes.map((r) => r.method), "credit_adjustment" as const] : (["cash", "card", "upi", "online", "credit_adjustment", "other"] as const)).map((m) => (
+          {[...refundModes.map((r) => r.method), "credit_adjustment" as const].map((m) => (
             <button
               key={m}
               type="button"
               onClick={() => setRefundMethod(m)}
-              className={`rounded-full border px-3 py-1.5 text-xs font-medium capitalize ${
+              className={`rounded-full border px-3 py-1.5 text-xs font-medium ${
                 refundMethod === m ? "border-brand bg-brand-soft text-brand-text" : "border-border text-muted"
               }`}
               style={
@@ -160,26 +167,29 @@ export function ReturnClient({
                   : undefined
               }
             >
-              {m === "credit_adjustment" ? "Adjust against credit" : refundModes ? `${paymentMethodLabel(m)} · up to ${formatMoney(refundModes.find((r) => r.method === m)?.left ?? 0)}` : m}
+              {m === "credit_adjustment" ? "Adjust against credit" : `${paymentMethodLabel(m)} · up to ${formatMoney(refundModes.find((r) => r.method === m)?.left ?? 0)}`}
             </button>
           ))}
         </div>
         <input type="hidden" name="refundMethod" value={refundMethod} />
+        {refundModes.length === 0 && <p className="text-xs text-muted">No money is left to refund on this bill — it took none (udhaar), or it was already refunded.</p>}
+        {refusal && <p className="text-xs text-danger">{refusal}</p>}
       </div>
 
-      <label className="flex flex-col gap-1.5 text-sm">
-        <span className="font-medium text-foreground">Manager PIN (if your shop uses one)</span>
-        <input
-          name="managerPin"
-          type="text"
-          inputMode="numeric"
-          placeholder="Leave blank if not set up"
-          className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand"
-        />
-      </label>
+      {needsPin && (
+        <label className="flex flex-col gap-1.5 text-sm">
+          <span className="font-medium text-foreground">Manager PIN</span>
+          <input
+            name="managerPin"
+            type="text"
+            inputMode="numeric"
+            className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand"
+          />
+        </label>
+      )}
 
       {state?.error && <p className="text-sm text-danger">{state.error}</p>}
-      <SubmitButton />
+      <SubmitButton blocked={!!refusal} />
     </form>
   );
 }

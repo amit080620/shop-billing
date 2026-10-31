@@ -35,7 +35,8 @@ function fakeDb(opts: { rpc?: Record<string, Answer>; answer?: (table: string, o
     const own = opts.answer?.(table, op, single, n);
     if (own) return own;
     if (table === "shops") return { data: { manager_pin: null } };
-    if (table === "bills" && op === "select" && single) return { data: { id: "bill-1", customer_id: "cust-1", status: "active" } };
+    // A ₹50 bill paid in cash, before split payments (no payment rows).
+    if (table === "bills" && op === "select" && single) return { data: { id: "bill-1", customer_id: "cust-1", status: "active", paid_amount: 50, payment_method: "cash" } };
     if (table === "bill_items") return { data: [{ id: "bi-1", product_id: "p1", product_name: "Soap", quantity: 5, unit_price: 10, gst_percent: 0, batch_id: null, line_subtotal: 50, cgst_amount: 0, sgst_amount: 0, igst_amount: 0 }] };
     if (table === "returns" && op === "insert") return { data: { id: "ret-legacy" } };
     if (table === "return_items" && op === "insert") return { data: [{ id: "ri-1", bill_item_id: "bi-1", product_id: "p1", quantity: 2 }] };
@@ -210,6 +211,66 @@ describe("Put back in stock (retry)", () => {
   it("nothing left to put back: no call at all", async () => {
     const db = fakeDb({ answer: (table) => (table === "returns" ? { data: { id: "ret-1", return_number: "CN/1" } } : table === "return_items" ? { data: [{ id: "ri-1", product_id: "p1", quantity: 2, stock_back: 2 }] } : undefined) });
     expect(await retryReturnStockAction("ret-1")).toEqual({});
+    expect(db.rpc).toEqual([]);
+  });
+});
+
+describe("refunds go back only the way the money came in (#82)", () => {
+  // The form returns 2 × Soap at ₹10 — a ₹20 refund.
+  const saves = { record_return: { data: { result: "ok", return_id: "ret-1" } } };
+  const billOf = (fields: Record<string, unknown>) => (table: string, op: Op, single: boolean) =>
+    table === "bills" && op === "select" && single ? { data: { id: "bill-1", customer_id: "cust-1", status: "active", ...fields } } : undefined;
+  const splitRows = { data: [{ bill_id: "bill-1", payment_method: "cash", amount: 20 }, { bill_id: "bill-1", payment_method: "upi", amount: 30 }] };
+  const splitBill = (returns: unknown[] = []) => (table: string, op: Op, single: boolean) =>
+    table === "bill_payments" ? splitRows : table === "returns" && op === "select" && !single ? { data: returns } : billOf({ paid_amount: 50, payment_method: "upi" })(table, op, single);
+
+  it("a bill fully on udhaar: no cash refund — refused before a credit-note number is used up", async () => {
+    const db = fakeDb({ rpc: saves, answer: billOf({ paid_amount: 0, payment_method: "cash" }) });
+    expect(await run(form("cash"))).toEqual({ result: { error: "No money is left to refund on this bill — it took none, or it was already refunded. Adjust the return against the customer's udhaar instead." } });
+    expect(db.rpc).toEqual([]);
+  });
+
+  it("the same udhaar bill: adjusting the return against udhaar goes through", async () => {
+    fakeDb({ rpc: saves, answer: billOf({ paid_amount: 0, payment_method: "cash" }) });
+    expect(await run(form("credit_adjustment"))).toEqual({ redirect: "/returns/ret-1" });
+  });
+
+  it("part paid (₹15 cash, the rest udhaar): cash only up to ₹15", async () => {
+    fakeDb({ rpc: saves, answer: billOf({ paid_amount: 15, payment_method: "cash" }) });
+    expect(await run(form("cash"))).toEqual({ result: { error: "Only ₹15.00 can be refunded by Cash on this bill — what it took, less earlier refunds. Return fewer items, or adjust it against the customer's udhaar." } });
+  });
+
+  it("a split bill (₹20 cash + ₹30 UPI): UPI goes through; a mode it wasn't paid in is refused", async () => {
+    fakeDb({ rpc: saves, answer: splitBill() });
+    expect(await run(form("upi"))).toEqual({ redirect: "/returns/ret-1" });
+    fakeDb({ rpc: saves, answer: splitBill() });
+    expect(await run(form("card"))).toEqual({ result: { error: "This bill wasn't paid by Card. Refund it by Cash or UPI, or adjust it against the customer's udhaar." } });
+  });
+
+  it("repeated returns: what an earlier return gave back by UPI is not given again", async () => {
+    fakeDb({ rpc: saves, answer: splitBill([{ refund_method: "upi", total: 15, client_ref: "earlier-request" }]) });
+    expect(await run(form("upi"))).toEqual({ result: { error: "Only ₹15.00 can be refunded by UPI on this bill — what it took, less earlier refunds. Return fewer items, or adjust it against the customer's udhaar." } });
+  });
+
+  it("the same request sent again after a lost answer isn't counted against itself, and opens its credit note", async () => {
+    // The first try saved ₹20 by UPI under this form's id; another return gave back ₹10 by UPI.
+    const db = fakeDb({
+      rpc: { record_return: { data: { result: "duplicate", return_id: "ret-1" } } },
+      answer: splitBill([{ refund_method: "upi", total: 20, client_ref: "ref-12345678" }, { refund_method: "upi", total: 10, client_ref: "other-request" }]),
+    });
+    expect(await run(form("upi"))).toEqual({ redirect: "/returns/ret-1" });
+    expect(db.rpc.filter(([n]) => n === "record_return")).toHaveLength(1);
+  });
+
+  it("old gold inside the paid amount is not refunded as cash", async () => {
+    // Paid ₹50: ₹40 of it old gold, ₹10 cash.
+    fakeDb({ rpc: saves, answer: (table, op, single) => (table === "jewellery_exchanges" ? { data: { exchange_value: 40 } } : billOf({ paid_amount: 50, payment_method: "cash" })(table, op, single)) });
+    expect(await run(form("cash"))).toEqual({ result: { error: "Only ₹10.00 can be refunded by Cash on this bill — what it took, less earlier refunds. Return fewer items, or adjust it against the customer's udhaar." } });
+  });
+
+  it("earlier refunds can't be read: no money refund on a guess", async () => {
+    const db = fakeDb({ rpc: saves, answer: (table, op, single) => (table === "returns" && op === "select" && !single ? { error: { message: "fetch failed" } } : undefined) });
+    expect(await run(form("cash"))).toEqual({ result: { error: "Couldn't check this bill's earlier refunds — check the connection and try again." } });
     expect(db.rpc).toEqual([]);
   });
 });

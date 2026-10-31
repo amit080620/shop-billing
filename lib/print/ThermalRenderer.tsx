@@ -287,7 +287,7 @@ export function ThermalRenderer({
       {show("amountWords") && <div style={{ fontSize: "0.9em", padding: "2px 0" }}>{amountInWords(data.total)}</div>}
 
       {data.exchangeLabel && data.exchangeAmount != null && data.exchangeAmount > 0 && <Line label={data.exchangeLabel} value={`- ${money(data.exchangeAmount)}`} />}
-      {show("paid") && (data.paidAmount > 0 || !data.exchangeAmount) && <Line label={`Paid (${data.paymentLabel})`} value={money(data.paidAmount)} />}
+      {show("paid") && (data.paidAmount > 0 || (!data.exchangeAmount && !data.creditAmount)) && <Line label={`Paid (${data.paymentLabel})`} value={money(data.paidAmount)} />}
       {show("balance") && data.creditAmount != null && data.creditAmount > 0 && <Line label="Balance due (Udhaar)" value={money(data.creditAmount)} strong />}
 
       {show("savings") && data.savingsOffMrp != null && data.savingsOffMrp > 0 && (
