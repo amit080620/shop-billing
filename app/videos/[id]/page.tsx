@@ -45,7 +45,7 @@ export default async function PublicVideoPage({ params, searchParams }: { params
   return (
     <div className="min-h-screen bg-background">
       <header className="mx-auto flex max-w-3xl items-center justify-between gap-3 px-4 py-4">
-        <Link href={back} className="text-sm font-medium text-brand-text">
+        <Link href={back} rel={type ? "nofollow" : undefined} className="text-sm font-medium text-brand-text">
           ← {t("All videos")}
         </Link>
         <Link href="/signup" className="btn-primary-sm">
@@ -96,9 +96,10 @@ export default async function PublicVideoPage({ params, searchParams }: { params
             {transcript.map((part) => (
               <div key={part.start} className="flex flex-col gap-1">
                 <h3 className="text-xs font-semibold text-foreground">
-                  <Link href={`/videos/${video.id}?t=${part.start}`} className="text-brand-text">
+                  {/* A plain anchor: the browser's own hash change moves the player (VideoPlayer). */}
+                  <a href={`#t=${part.start}`} className="text-brand-text">
                     {mmss(part.start)}
-                  </Link>{" "}
+                  </a>{" "}
                   {part.title}
                 </h3>
                 <p className="text-sm leading-relaxed text-muted">{part.text}</p>
@@ -113,6 +114,8 @@ export default async function PublicVideoPage({ params, searchParams }: { params
               <Link
                 key={v.id}
                 href={`/videos/${v.id}${type ? `?type=${encodeURIComponent(type)}` : ""}`}
+                // With a business picked, the same video under a second address: not one to follow.
+                rel={type ? "nofollow" : undefined}
                 className="flex items-center justify-between gap-2 rounded-lg border border-border px-3 py-2 text-sm"
               >
                 <span className="min-w-0 truncate text-foreground">{v.title}</span>

@@ -53,7 +53,7 @@ export default async function PublicVideosPage({ searchParams }: { searchParams:
               {t("All")}
             </Link>
             {BUSINESS_TYPES.map((b) => (
-              <Link key={b.value} href={`/videos?type=${b.value}`} className={`rounded-full border px-3 py-1 text-xs font-medium ${picked === b.value ? "border-brand bg-brand-soft text-brand-text" : "border-border text-muted"}`}>
+              <Link key={b.value} href={`/videos?type=${b.value}`} rel="nofollow" className={`rounded-full border px-3 py-1 text-xs font-medium ${picked === b.value ? "border-brand bg-brand-soft text-brand-text" : "border-border text-muted"}`}>
                 {t(b.label)}
               </Link>
             ))}
@@ -63,16 +63,16 @@ export default async function PublicVideosPage({ searchParams }: { searchParams:
         {own.length > 0 && (
           <section className="flex flex-col gap-2">
             <h2 className="text-sm font-semibold text-foreground">{t("For your business")}</h2>
-            <VideoList videos={own} href={href} />
+            <VideoList videos={own} href={href} rel={picked ? "nofollow" : undefined} />
           </section>
         )}
         <section className="flex flex-col gap-2">
           <h2 className="text-sm font-semibold text-foreground">{t("For every shop")}</h2>
-          <VideoList videos={common} href={href} />
+          <VideoList videos={common} href={href} rel={picked ? "nofollow" : undefined} />
         </section>
         <section className="flex flex-col gap-2">
           <h2 className="text-sm font-semibold text-foreground">{picked ? t("Other businesses ({n})", { n: other.length }) : t("Business by business")}</h2>
-          <VideoList videos={other} href={href} />
+          <VideoList videos={other} href={href} rel={picked ? "nofollow" : undefined} />
         </section>
       </main>
     </div>

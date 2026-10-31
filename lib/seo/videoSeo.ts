@@ -1,5 +1,5 @@
 import "server-only";
-import { SITE_URL } from "./site";
+import { ORGANIZATION_ID, SITE_URL } from "./site";
 import type { TrainingVideo } from "../trainingVideos";
 import { loadYoutubeDates } from "../youtubeData";
 
@@ -64,7 +64,7 @@ export function videoObject(video: TrainingVideo, opts: { youtubeId: string | nu
     duration: isoDuration(video.seconds),
     inLanguage: "hi-IN",
     ...(opts.youtubeId ? { embedUrl: `https://www.youtube.com/embed/${opts.youtubeId}` } : { contentUrl: opts.mp4 }),
-    publisher: { "@id": `${SITE_URL}/#organization` },
+    publisher: { "@id": ORGANIZATION_ID },
     hasPart: video.topics.map(([start, name], i) => ({
       "@type": "Clip",
       name,

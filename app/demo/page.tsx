@@ -8,8 +8,8 @@ import { mainVideoFor, mmss, videoById, videoFiles } from "@/lib/trainingVideos"
 import { loadYoutubeIds } from "@/lib/youtubeData";
 
 export const metadata: Metadata = {
-  title: "Try The Ray: live demo for every business",
-  description: "Open a ready-made shop for your kind of business and try billing, GST, udhaar, stock and reports with sample data. No sign-up.",
+  title: "Free live demo — try The Ray billing app, no signup",
+  description: "Open a ready-made shop (kirana, pharmacy, restaurant, hotel and more) and try GST billing, udhaar and stock with sample data. Free, no signup.",
   alternates: { canonical: "/demo" },
 };
 

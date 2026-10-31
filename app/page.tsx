@@ -1,8 +1,12 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { requireSession } from "@/lib/auth";
 import { getAuthenticatedUser } from "@/lib/supabase/server";
 import { homePathFor } from "@/lib/businessType";
 import { LandingPage } from "./LandingPage";
+
+// The landing page has one address: /?ref=… and similar variants point here.
+export const metadata: Metadata = { alternates: { canonical: "/" } };
 
 /** The app's front door. A shop opens the app dozens of times a day to do
  * one thing — make a sale — so a logged-in owner goes straight to that

@@ -1,9 +1,17 @@
+import type { Metadata } from "next";
 import Link from "@/lib/link";
 import { loginAction } from "@/lib/actions/auth";
 import { AuthForm } from "@/app/(auth)/AuthForm";
 import { getTranslator } from "@/lib/i18n/server";
 import { Login3DScene } from "./Login3DScene";
 import { getLiteMode } from "@/lib/theme";
+
+// Signing in isn't something to find in search: the brand search belongs to www.theray.in.
+export const metadata: Metadata = {
+  title: "Log in | The Ray",
+  description: "Log in to your shop on The Ray billing app.",
+  robots: { index: false, follow: true },
+};
 
 /** The login screen only — a deliberately different, more theatrical
  * first impression than the rest of the app. Every other auth screen

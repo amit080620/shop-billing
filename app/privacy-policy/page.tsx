@@ -1,4 +1,11 @@
+import type { Metadata } from "next";
 import Link from "@/lib/link";
+
+export const metadata: Metadata = {
+  title: "Privacy notice | The Ray",
+  description: "How The Ray collects, uses and protects your shop's and your customers' data.",
+  alternates: { canonical: "/privacy-policy" },
+};
 
 export default function PrivacyPolicyPage() {
   return (

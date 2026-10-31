@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "@/lib/link";
 import { signupAction } from "@/lib/actions/auth";
 import { AuthForm } from "../AuthForm";
@@ -7,6 +8,12 @@ import { getTheme } from "@/lib/theme";
 import { BUSINESS_TYPES } from "@/lib/businessType";
 import { INDIAN_STATES } from "@/lib/constants/states";
 import { hotelSchemaReady } from "@/lib/hotel/server";
+
+export const metadata: Metadata = {
+  title: "Start your free trial | The Ray billing app",
+  description: "Set up your shop on The Ray in two minutes: GST bills, udhaar khata, stock and reports. Free 14-day trial, no card needed.",
+  alternates: { canonical: "/signup" },
+};
 
 export default async function SignupPage() {
   const { lang, t } = await getTranslator();

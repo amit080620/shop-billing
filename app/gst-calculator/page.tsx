@@ -3,7 +3,7 @@ import Link from "@/lib/link";
 import { ArrowRight } from "lucide-react";
 import { MarketingShell } from "@/app/components/MarketingShell";
 import { JsonLd } from "@/app/components/JsonLd";
-import { breadcrumbs, faqPage, graph, organization, SITE_URL } from "@/lib/seo/site";
+import { breadcrumbs, faqPage, graph, organization, ORGANIZATION_ID, SITE_URL } from "@/lib/seo/site";
 import { GstCalculator } from "./GstCalculator";
 
 const DESCRIPTION =
@@ -56,7 +56,7 @@ export default function GstCalculatorPage() {
             operatingSystem: "Any",
             isAccessibleForFree: true,
             offers: { "@type": "Offer", price: 0, priceCurrency: "INR" },
-            publisher: { "@id": `${SITE_URL}/#organization` },
+            publisher: { "@id": ORGANIZATION_ID },
           },
           faqPage(FAQS),
           breadcrumbs([

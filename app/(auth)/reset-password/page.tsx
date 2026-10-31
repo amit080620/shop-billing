@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "@/lib/link";
 import { resetPasswordAction } from "@/lib/actions/auth";
 import { AuthShell } from "../AuthShell";
@@ -5,6 +6,11 @@ import { AuthForm } from "../AuthForm";
 import { getTranslator } from "@/lib/i18n/server";
 import { getTheme } from "@/lib/theme";
 import { ResetLinkGate } from "./ResetLinkGate";
+
+export const metadata: Metadata = {
+  title: "Set a new password | The Ray",
+  robots: { index: false, follow: true },
+};
 
 export default async function ResetPasswordPage() {
   const { lang, t } = await getTranslator();

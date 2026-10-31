@@ -2,13 +2,14 @@ import Link from "@/lib/link";
 import { PlayCircle } from "lucide-react";
 import { mmss, videoFiles, type TrainingVideo } from "@/lib/trainingVideos";
 
-/** Training videos as cards with a picture and the length; `href` is where each one opens. */
-export function VideoList({ videos, href }: { videos: TrainingVideo[]; href: (id: string) => string }) {
+/** Training videos as cards with a picture and the length; `href` is where each one opens. `rel`
+ * marks links search engines needn't follow (the same video under a business's address). */
+export function VideoList({ videos, href, rel }: { videos: TrainingVideo[]; href: (id: string) => string; rel?: string }) {
   return (
     <ul className="grid grid-cols-2 gap-2.5 md:grid-cols-3">
       {videos.map((v) => (
         <li key={v.id}>
-          <Link href={href(v.id)} className="neu-card flex h-full flex-col overflow-hidden">
+          <Link href={href(v.id)} rel={rel} className="neu-card flex h-full flex-col overflow-hidden">
             <div className="relative aspect-[3/4] w-full overflow-hidden bg-surface-2">
               {/* eslint-disable-next-line @next/next/no-img-element -- a poster from storage */}
               <img src={videoFiles(v.id).poster} alt="" loading="lazy" className="h-full w-full object-cover object-top" />

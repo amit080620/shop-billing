@@ -99,6 +99,30 @@ export function VideoPlayer({
     });
   }
 
+  // A "#t=90" address (the transcript's times link this way, so search engines see one page, not one
+  // per second): the video starts there, and a tap on another time moves it — without a new page.
+  const jumpTo = useRef(jump);
+  useEffect(() => {
+    jumpTo.current = jump;
+  });
+  useEffect(() => {
+    const asked = () => {
+      const m = /^#t=(\d+)$/.exec(window.location.hash);
+      return m ? Number(m[1]) : null;
+    };
+    const first = asked();
+    if (first !== null) {
+      setFrom(first);
+      setNow(first);
+    }
+    const onHash = () => {
+      const t = asked();
+      if (t !== null) jumpTo.current(t);
+    };
+    window.addEventListener("hashchange", onHash);
+    return () => window.removeEventListener("hashchange", onHash);
+  }, []);
+
   const mmss = (s: number) => `${Math.floor(s / 60)}:${String(Math.round(s % 60)).padStart(2, "0")}`;
   const current = topics.filter(([t]) => t <= now + 0.5).pop()?.[0];
 

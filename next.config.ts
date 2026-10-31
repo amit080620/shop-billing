@@ -29,6 +29,15 @@ const nextConfig: NextConfig = {
   // Genuinely enables gzip/brotli compression for all responses —
   // measurably reduces transfer size for JS, CSS, and HTML.
   compress: true,
+  // Files that aren't pages — the videos' subtitles and the app manifest — stay out of search
+  // results ("crawled, not indexed" in Search Console). They still load for the player and the
+  // phone as before; only search engines read this header.
+  async headers() {
+    return [
+      { source: "/training-videos/:file(.*\\.vtt)", headers: [{ key: "X-Robots-Tag", value: "noindex" }] },
+      { source: "/manifest.json", headers: [{ key: "X-Robots-Tag", value: "noindex" }] },
+    ];
+  },
   // The main site (www.theray.in) has a page for each trade; this site's copies send people and
   // search engines there, so the two never compete. Wholesale has no page there and stays here.
   async redirects() {
