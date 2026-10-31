@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { Plus, X } from "lucide-react";
 import { useT } from "@/lib/i18n/LangContext";
 import { formatMoney, paymentMethodLabel } from "@/lib/format";
@@ -49,6 +49,16 @@ export function SplitPayments({ rows, onChange, payable, canUdhaar, onSingle, on
     onFocusMode?.(true);
     if (e.target instanceof HTMLInputElement) keepInSight(e.target);
   }
+  // The amount as typed ("12." on its way to "12.5"), only while its box is being typed in.
+  const [draft, setDraft] = useState<{ i: number; text: string } | null>(null);
+  // The keyboard's ✓ (or Enter): close the keyboard, then bring the save button (Generate invoice /
+  // Checkout) into sight, as the normal bill does.
+  function done(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key !== "Enter") return;
+    e.preventDefault();
+    e.currentTarget.blur();
+    setTimeout(() => document.querySelector<HTMLElement>("[data-keyboard-save]")?.scrollIntoView({ block: "end", behavior: "smooth" }), 300);
+  }
   function focusOut() {
     // Moving between the payment boxes keeps focus mode; leaving them all ends it.
     setTimeout(() => {
@@ -79,17 +89,21 @@ export function SplitPayments({ rows, onChange, payable, canUdhaar, onSingle, on
               </option>
             ))}
           </select>
+          {/* A text box with the number pad (not type=number): Android then shows ✓ on the keyboard. */}
           <input
-            type="number"
-            min="0"
-            step="0.01"
+            type="text"
             inputMode="decimal"
             enterKeyHint="done"
+            autoComplete="off"
             placeholder="₹"
             aria-label={t("Amount")}
-            value={r.amount}
+            value={draft?.i === i ? draft.text : r.amount === "" ? "" : String(r.amount)}
+            onKeyDown={done}
+            onBlur={() => setDraft(null)}
             onChange={(e) => {
-              const amount = e.target.value === "" ? "" : Math.max(0, Number(e.target.value));
+              const text = e.target.value.replace(/[^0-9.]/g, "").replace(/(\..*)\./g, "$1");
+              setDraft({ i, text });
+              const amount = text === "" || text === "." ? "" : Math.max(0, Number(text));
               // Two payments: typing the second sets the first to the rest of the bill, so they add up.
               // The first is then free to change (anything left over goes on udhaar).
               if (rows.length === 2 && i === 1 && typeof amount === "number" && amount <= payable) {
@@ -110,6 +124,7 @@ export function SplitPayments({ rows, onChange, payable, canUdhaar, onSingle, on
               type="text"
               maxLength={100}
               placeholder={t("Ref (optional)")}
+              onKeyDown={done}
               value={r.reference}
               onChange={(e) => set(i, { reference: e.target.value })}
               enterKeyHint="done"
