@@ -73,6 +73,7 @@ export default async function NewReturnPage({
       businessType={session.businessType}
       refundModes={refundModes ?? []}
       needsPin={!!pinRow?.manager_pin}
+      canAdjust={!!bill.customer_id}
       items={(billItems ?? [])
         .map((item) => {
           const returned = returnedByItem.get(item.id) ?? NO_FIGURES;

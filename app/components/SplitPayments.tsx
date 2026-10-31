@@ -61,7 +61,8 @@ export function SplitPayments({ rows, onChange, payable, canUdhaar, onSingle, on
     // closing, since its closing can cut the first scroll short (New Bill is a long page).
     const bring = () => {
       const btn = document.querySelector<HTMLElement>("[data-keyboard-save]");
-      if (!btn) return;
+      // Already in sight in New Bill's fixed bar.
+      if (!btn || btn.closest("[data-sticky-action]")) return;
       const r = btn.getBoundingClientRect();
       const h = window.visualViewport?.height ?? window.innerHeight;
       if (r.top < 80 || r.bottom > h * 0.7) btn.scrollIntoView({ block: "center", behavior: "smooth" });

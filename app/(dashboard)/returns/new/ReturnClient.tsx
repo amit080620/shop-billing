@@ -38,6 +38,7 @@ export function ReturnClient({
   businessType,
   refundModes,
   needsPin,
+  canAdjust,
   items,
 }: {
   billId: string;
@@ -48,11 +49,15 @@ export function ReturnClient({
   refundModes: RefundRoom;
   /** The shop has a Manager PIN, so a return asks for it. */
   needsPin: boolean;
+  /** The bill has a customer, whose udhaar a return can be adjusted against; a walk-in bill has no khata. */
+  canAdjust: boolean;
   items: BillItem[];
 }) {
   const [quantities, setQuantities] = useState<Record<string, number>>({});
   const [reason, setReason] = useState("");
-  const [refundMethod, setRefundMethod] = useState<"cash" | "card" | "upi" | "online" | "other" | "credit_adjustment">(refundModes[0]?.method ?? "credit_adjustment");
+  // The ways this bill can be refunded: the modes it took money in, and its customer's udhaar.
+  const ways = [...refundModes.map((r) => r.method), ...(canAdjust ? (["credit_adjustment"] as const) : [])];
+  const [refundMethod, setRefundMethod] = useState<"cash" | "card" | "upi" | "online" | "other" | "credit_adjustment" | "">(ways[0] ?? "");
 
   function setQty(itemId: string, qty: number, max: number) {
     setQuantities((prev) => ({ ...prev, [itemId]: Math.max(0, Math.min(qty, max)) }));
@@ -69,7 +74,7 @@ export function ReturnClient({
   }, [selectedLines]);
 
   // The same check the server makes on Save, shown before it.
-  const refusal = refundError(refundModes, refundMethod, totals.total, !!customerName);
+  const refusal = ways.length === 0 ? null : refundError(refundModes, refundMethod, totals.total, canAdjust);
 
   const lines = JSON.stringify(selectedLines.map((l) => ({ billItemId: l.item.id, quantity: l.quantity })));
 
@@ -153,7 +158,7 @@ export function ReturnClient({
       <div className="flex flex-col gap-1.5">
         <p className="text-sm font-medium text-foreground">Refund given via</p>
         <div className="flex flex-wrap gap-2">
-          {[...refundModes.map((r) => r.method), "credit_adjustment" as const].map((m) => (
+          {ways.map((m) => (
             <button
               key={m}
               type="button"
@@ -172,7 +177,11 @@ export function ReturnClient({
           ))}
         </div>
         <input type="hidden" name="refundMethod" value={refundMethod} />
-        {refundModes.length === 0 && <p className="text-xs text-muted">No money is left to refund on this bill — it took none (udhaar), or it was already refunded.</p>}
+        {ways.length === 0 ? (
+          <p className="text-xs text-danger">Nothing can be refunded on this bill — no money is left to give back, and a walk-in bill has no udhaar khata to adjust.</p>
+        ) : (
+          refundModes.length === 0 && <p className="text-xs text-muted">No money is left to refund on this bill — it took none (udhaar), or it was already refunded.</p>
+        )}
         {refusal && <p className="text-xs text-danger">{refusal}</p>}
       </div>
 
@@ -189,7 +198,7 @@ export function ReturnClient({
       )}
 
       {state?.error && <p className="text-sm text-danger">{state.error}</p>}
-      <SubmitButton blocked={!!refusal} />
+      <SubmitButton blocked={!!refusal || ways.length === 0} />
     </form>
   );
 }

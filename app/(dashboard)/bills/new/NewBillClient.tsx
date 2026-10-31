@@ -32,7 +32,7 @@ import { useSyncCalculatorAmount } from "@/lib/calculatorAmount";
 import { SearchableSelect } from "@/app/components/SearchableSelect";
 import { InlineQuickAdd } from "@/app/components/InlineQuickAdd";
 import { Spinner } from "@/app/components/Spinner";
-import { Zap, Package, AlertTriangle, Pill, Truck, Gem, Recycle, Mic, ScanBarcode, ShoppingCart, Sparkles, X, Plus } from "lucide-react";
+import { Zap, Package, AlertTriangle, Pill, Truck, Gem, Recycle, Mic, ScanBarcode, ShoppingCart, Sparkles, X, Plus, ChevronLeft, ChevronDown } from "lucide-react";
 import { barcodeFromQuery } from "@/lib/barcodeQuery";
 import { saltKey, substitutesFor } from "@/lib/salt";
 import { freeUnits, nextFree, type Bxgy } from "@/lib/bxgy";
@@ -201,6 +201,12 @@ export function NewBillClient({
   const { t } = useTranslation(lang);
   const isOnline = useOnlineStatus();
   const [step, setStep] = useState<"cart" | "ticket">("cart");
+  // Complete bill on a phone: the GST detail and a long item list fold away, and the discount opens
+  // on a tap — a computer shows them all.
+  const [showTax, setShowTax] = useState(false);
+  const [showAllLines, setShowAllLines] = useState(false);
+  const [discountOpen, setDiscountOpen] = useState(false);
+  const discountInputRef = useRef<HTMLInputElement>(null);
   const [cart, setCart] = useState<CartLine[]>(() => (fromQuote ? cartFromQuote(fromQuote.lines, products, fromQuote.honourPrices) : fromChallans ? cartFromQuote(fromChallans.lines, products, false) : []));
   const router = useRouter();
   const [quoteDays, setQuoteDays] = useState(15);
@@ -1084,13 +1090,13 @@ export function NewBillClient({
         )}
 
         {cart.length === 0 && (
-          <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed border-border px-4 py-7 text-center">
-            <ShoppingCart size={22} className="text-muted" />
-            <p className="text-sm text-muted">
+          <div className="flex items-center gap-2.5 rounded-xl border border-dashed border-border px-3.5 py-3">
+            <ShoppingCart size={18} className="shrink-0 text-muted" />
+            <p className="min-w-0 flex-1 text-sm text-muted">
               {products.length === 0 ? t("bill.noProductsYet") : t("bill.emptyCart")}
             </p>
             {products.length === 0 && (
-              <Link href="/products" className="btn-primary-sm">
+              <Link href="/products" className="btn-primary-sm shrink-0">
                 {t("bill.addFirstProduct")}
               </Link>
             )}
@@ -1104,105 +1110,105 @@ export function NewBillClient({
               {cart.map((line) => (
                 <li
                   key={line.productId}
-                  className="flex flex-col gap-2 neu-card px-3.5 py-2.5"
+                  className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1.5 neu-card px-3.5 py-2.5 md:grid-cols-[minmax(0,1fr)_auto_6.5rem]"
                 >
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium text-foreground">
-                        {line.name}
-                      </p>
-                      <p className="text-xs text-muted">
-                        {line.packageId
-                          ? t("From the package · ₹0 · {left} left after this", { left: (line.packageLeft ?? 0) - line.quantity })
-                          : <>{formatMoney(line.price)}/{line.saleMode === "loose" ? line.looseUnitName : unitLabel(line.unit)} · GST {line.gstPercent}%</>}
-                      </p>
-                      {line.bulkMinQty && line.bulkPrice && (
-                        <p className="flex items-center gap-1 text-[11px] text-brand">
-                          <Package size={10} />
-                          {line.price === line.bulkPrice
-                            ? `Bulk price applied (${line.bulkMinQty}+)`
-                            : `${line.bulkMinQty}+ gets ${formatMoney(line.bulkPrice)}/unit`}
-                        </p>
-                      )}
-                      {line.unitsPerPack && line.looseUnitName && (
-                        <div className="mt-1 flex gap-1.5">
-                          <button
-                            onClick={() => toggleSaleMode(line.productId, "pack")}
-                            className={`rounded-full border px-2 py-0.5 text-[11px] font-medium ${
-                              line.saleMode === "pack" ? "border-brand bg-brand-soft text-brand-text" : "border-border text-muted"
-                            }`}
-                          >
-                            Full {unitLabel(line.unit)}
-                          </button>
-                          <button
-                            onClick={() => toggleSaleMode(line.productId, "loose")}
-                            className={`rounded-full border px-2 py-0.5 text-[11px] font-medium capitalize ${
-                              line.saleMode === "loose" ? "border-brand bg-brand-soft text-brand-text" : "border-border text-muted"
-                            }`}
-                          >
-                            Loose {line.looseUnitName}
-                          </button>
-                        </div>
-                      )}
-                      {line.trackInventory && (
-                        <StockIndicator
-                          remaining={round2(
-                            line.stockQuantity -
-                              (line.saleMode === "loose" && line.unitsPerPack ? line.quantity / line.unitsPerPack : line.quantity),
-                          )}
-                          threshold={line.lowStockThreshold}
-                          unit={line.unit}
-                        />
-                      )}
-                      {!line.packageId && saltOf(line.productId) > 0 && (
-                        <button type="button" onClick={() => setSubsFor(line.productId)} className="mt-0.5 flex items-center gap-1 text-[11px] font-medium text-brand-text">
-                          <Pill size={11} /> {t("Same salt: {n} more", { n: saltOf(line.productId) })}
-                        </button>
-                      )}
-                      {freeFee.has(line.productId) && followUp && (
-                        <p className="mt-0.5 text-[11px] font-medium text-success">
-                          {t("Free follow-up — paid visit on {date}, free till {until}", { date: formatIsoDate(followUp.lastPaid), until: formatIsoDate(followUp.until) })}
-                        </p>
-                      )}
-                      {(() => {
-                        const offer = offerById.get(line.productId);
-                        if (!offer || line.saleMode !== "pack" || line.priceOverride || line.packageId) return null;
-                        const free = freeOf(line);
-                        const next = nextFree(line.quantity, offer);
-                        return (
-                          <p className="mt-0.5 text-[11px] font-medium text-success">
-                            🎁 {free > 0 ? t("{n} free · {offer}", { n: free, offer: t("Buy {buy} get {free} free", { buy: offer.buy, free: offer.free }) }) : next ? t("Add {n} more — free ({offer})", { n: next.more, offer: t("Buy {buy} get {free} free", { buy: offer.buy, free: offer.free }) }) : t("Buy {buy} get {free} free", { buy: offer.buy, free: offer.free })}
-                          </p>
-                        );
-                      })()}
-                    </div>
-                    <div className="flex shrink-0 items-center gap-1.5">
-                      <button
-                        onClick={() =>
-                          updateQuantity(line.productId, round2(line.quantity - quantityStep(line.unit)))
-                        }
-                        aria-label={t("Decrease")}
-                        className="h-11 w-11 shrink-0 rounded-full border border-border text-lg font-medium text-foreground"
-                      >
-                        −
-                      </button>
-                      <QuantityInput
-                        value={line.quantity}
-                        onCommit={(num) => updateQuantity(line.productId, num)}
-                      />
-                      <button
-                        onClick={() =>
-                          updateQuantity(line.productId, round2(line.quantity + quantityStep(line.unit)))
-                        }
-                        aria-label={t("Increase")}
-                        className="h-11 w-11 shrink-0 rounded-full border border-border text-lg font-medium text-foreground"
-                      >
-                        +
-                      </button>
-                    </div>
+                  <div className="col-span-2 flex items-baseline justify-between gap-3 md:col-span-1">
+                    <p className="min-w-0 truncate text-sm font-medium text-foreground">{line.name}</p>
+                    <p className="shrink-0 text-sm font-semibold text-foreground md:hidden">{formatMoney(round2(line.price * (line.quantity - freeOf(line))))}</p>
                   </div>
+                  <div className="col-start-1 row-start-2 min-w-0">
+                    <p className="text-xs text-muted">
+                      {line.packageId
+                        ? t("From the package · ₹0 · {left} left after this", { left: (line.packageLeft ?? 0) - line.quantity })
+                        : <>{formatMoney(line.price)}/{line.saleMode === "loose" ? line.looseUnitName : unitLabel(line.unit)} <span className="whitespace-nowrap">· GST {line.gstPercent}%</span></>}
+                    </p>
+                    {line.bulkMinQty && line.bulkPrice && (
+                      <p className="flex items-center gap-1 text-[11px] text-brand">
+                        <Package size={10} />
+                        {line.price === line.bulkPrice
+                          ? `Bulk price applied (${line.bulkMinQty}+)`
+                          : `${line.bulkMinQty}+ gets ${formatMoney(line.bulkPrice)}/unit`}
+                      </p>
+                    )}
+                    {line.unitsPerPack && line.looseUnitName && (
+                      <div className="mt-1 flex gap-1.5">
+                        <button
+                          onClick={() => toggleSaleMode(line.productId, "pack")}
+                          className={`rounded-full border px-2 py-0.5 text-[11px] font-medium ${
+                            line.saleMode === "pack" ? "border-brand bg-brand-soft text-brand-text" : "border-border text-muted"
+                          }`}
+                        >
+                          Full {unitLabel(line.unit)}
+                        </button>
+                        <button
+                          onClick={() => toggleSaleMode(line.productId, "loose")}
+                          className={`rounded-full border px-2 py-0.5 text-[11px] font-medium capitalize ${
+                            line.saleMode === "loose" ? "border-brand bg-brand-soft text-brand-text" : "border-border text-muted"
+                          }`}
+                        >
+                          Loose {line.looseUnitName}
+                        </button>
+                      </div>
+                    )}
+                    {line.trackInventory && (
+                      <StockIndicator
+                        remaining={round2(
+                          line.stockQuantity -
+                            (line.saleMode === "loose" && line.unitsPerPack ? line.quantity / line.unitsPerPack : line.quantity),
+                        )}
+                        threshold={line.lowStockThreshold}
+                        unit={line.unit}
+                      />
+                    )}
+                    {!line.packageId && saltOf(line.productId) > 0 && (
+                      <button type="button" onClick={() => setSubsFor(line.productId)} className="mt-0.5 flex items-center gap-1 text-[11px] font-medium text-brand-text">
+                        <Pill size={11} /> {t("Same salt: {n} more", { n: saltOf(line.productId) })}
+                      </button>
+                    )}
+                    {freeFee.has(line.productId) && followUp && (
+                      <p className="mt-0.5 text-[11px] font-medium text-success">
+                        {t("Free follow-up — paid visit on {date}, free till {until}", { date: formatIsoDate(followUp.lastPaid), until: formatIsoDate(followUp.until) })}
+                      </p>
+                    )}
+                    {(() => {
+                      const offer = offerById.get(line.productId);
+                      if (!offer || line.saleMode !== "pack" || line.priceOverride || line.packageId) return null;
+                      const free = freeOf(line);
+                      const next = nextFree(line.quantity, offer);
+                      return (
+                        <p className="mt-0.5 text-[11px] font-medium text-success">
+                          🎁 {free > 0 ? t("{n} free · {offer}", { n: free, offer: t("Buy {buy} get {free} free", { buy: offer.buy, free: offer.free }) }) : next ? t("Add {n} more — free ({offer})", { n: next.more, offer: t("Buy {buy} get {free} free", { buy: offer.buy, free: offer.free }) }) : t("Buy {buy} get {free} free", { buy: offer.buy, free: offer.free })}
+                        </p>
+                      );
+                    })()}
+                  </div>
+                  <div className="col-start-2 row-start-2 flex shrink-0 items-center gap-1.5 self-center md:row-span-2 md:row-start-1">
+                    <button
+                      onClick={() =>
+                        updateQuantity(line.productId, round2(line.quantity - quantityStep(line.unit)))
+                      }
+                      aria-label={t("Decrease")}
+                      className="h-11 w-11 shrink-0 rounded-full border border-border text-lg font-medium text-foreground"
+                    >
+                      −
+                    </button>
+                    <QuantityInput
+                      value={line.quantity}
+                      onCommit={(num) => updateQuantity(line.productId, num)}
+                    />
+                    <button
+                      onClick={() =>
+                        updateQuantity(line.productId, round2(line.quantity + quantityStep(line.unit)))
+                      }
+                      aria-label={t("Increase")}
+                      className="h-11 w-11 shrink-0 rounded-full border border-border text-lg font-medium text-foreground"
+                    >
+                      +
+                    </button>
+                  </div>
+                  <p className="hidden text-right text-sm font-semibold text-foreground md:col-start-3 md:row-span-2 md:row-start-1 md:block">{formatMoney(round2(line.price * (line.quantity - freeOf(line))))}</p>
                   {quantityPresets(line.unit).length > 0 && (
-                    <div className="flex flex-wrap items-center gap-1.5">
+                    <div className="col-span-2 flex flex-wrap items-center gap-1.5 md:col-span-3">
                       {quantityPresets(line.unit).map((preset) => (
                         <button
                           key={preset}
@@ -1227,12 +1233,6 @@ export function NewBillClient({
                 </li>
               ))}
             </ul>
-            <div className="flex items-center justify-between rounded-lg bg-brand-soft px-3.5 py-2.5 text-sm">
-              <span className="text-brand-text">{t("bill.subtotal")}</span>
-              <span className="font-semibold text-brand-text">
-                {formatMoney(totals.subtotal)}
-              </span>
-            </div>
             {basketBuddy && (
               <div className="flex items-center gap-2 rounded-lg border border-dashed border-brand/40 px-3 py-2 text-sm">
                 <Sparkles size={14} className="shrink-0 text-brand-text" />
@@ -1286,11 +1286,11 @@ export function NewBillClient({
           {keyboardBilling && <KeyboardHint keys={[["Enter", "next"], ["F10", "save now"]]} />}
         </aside>
 
-        <div className="fixed inset-x-0 bottom-[calc(var(--bottom-nav-h)+env(safe-area-inset-bottom))] z-20 border-t border-border bg-surface px-4 py-3 md:hidden">
+        <div className="fixed inset-x-0 bottom-[calc(var(--bottom-nav-h)+env(safe-area-inset-bottom))] z-20 border-t border-border bg-surface px-4 py-2 md:hidden">
           <div className="mx-auto flex max-w-lg items-center justify-between gap-3 md:max-w-5xl xl:max-w-6xl">
             <div className="min-w-0">
-              <p className={`truncate text-xs ${completeBlocked ? "font-medium text-credit" : "text-muted"}`}>{completeBlocked ?? t("bill.subtotal")}</p>
-              <p className="truncate text-lg font-bold text-foreground">{formatMoney(totals.subtotal)}</p>
+              <p className={`line-clamp-2 text-xs leading-tight ${completeBlocked ? "font-medium text-credit" : "text-muted"}`}>{completeBlocked ?? t("bill.subtotal")}</p>
+              <p className="truncate text-lg font-bold leading-tight text-foreground">{formatMoney(totals.subtotal)}</p>
             </div>
             <button data-keyboard-next disabled={!canComplete} onClick={complete} className="btn-primary shrink-0 px-6 text-center disabled:opacity-40">
               {t("bill.completeTicket")} →
@@ -1345,568 +1345,635 @@ export function NewBillClient({
       : {}),
   });
 
+  // A discount already given keeps its controls open.
+  const discountShown = discountOpen || discountValue > 0;
+  // On a phone the summary shows the first lines of a long bill until asked for the rest.
+  const foldLines = !showAllLines && cart.length > 4;
+
   return (
-    <form action={formAction} onSubmit={() => setSaving(true)} className="flex flex-col gap-4">
+    <form action={formAction} onSubmit={() => setSaving(true)} className="flex flex-col gap-4 md:grid md:grid-cols-[minmax(0,1fr)_22rem] md:items-start md:gap-6">
       <input type="hidden" name="payload" value={payload} />
 
-      <div className="flex items-center gap-2">
+      {/* Back to the items and where this is, in one row. */}
+      <div className="flex items-center gap-1 md:col-span-2">
         <button
           type="button"
           onClick={() => setStep("cart")}
-          className="text-sm text-muted"
+          aria-label={t("bill.backToCart")}
+          title={t("bill.backToCart")}
+          className="-ml-2 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-foreground hover:bg-surface-2"
         >
-          {t("bill.backToCart")}
+          <ChevronLeft size={22} />
         </button>
+        <h1 className="text-lg font-bold tracking-tight text-foreground md:text-2xl">{t("bill.completeTicket")}</h1>
       </div>
-      <h1 className="text-lg font-bold tracking-tight text-foreground md:text-2xl">{t("bill.completeTicket")}</h1>
 
-      <section className="neu-card p-4">
-        <p className="text-sm font-medium text-foreground">
-          {customerMode === "existing"
-            ? selectedCustomer?.name
-            : businessType === "clinic"
-              ? "Walk-in patient"
-              : businessType === "gym"
-                ? "Walk-in member"
-                : t("common.walkinCustomer")}
-        </p>
-        <ul className="mt-2 flex flex-col gap-1.5">
-          {cart.map((line) => (
-            <li key={line.productId} className="flex justify-between text-sm">
-              <span className="min-w-0 flex-1 truncate text-muted">
-                {line.name} × {line.quantity}
-                {freeOf(line) > 0 ? ` (${t("{n} free", { n: freeOf(line) })})` : ""}
+      {/* The bill: first on a phone; on a computer a column of its own that stays in view, ending with
+          the button that saves it. */}
+      <aside className="flex flex-col gap-3 md:sticky md:top-24 md:col-start-2 md:row-start-2">
+        <section className="neu-card p-4">
+          <p className="text-sm font-medium text-foreground">
+            {customerMode === "existing"
+              ? selectedCustomer?.name
+              : businessType === "clinic"
+                ? "Walk-in patient"
+                : businessType === "gym"
+                  ? "Walk-in member"
+                  : t("common.walkinCustomer")}
+          </p>
+          <ul className="mt-2 flex flex-col gap-1.5 md:max-h-[40vh] md:overflow-y-auto">
+            {cart.map((line, i) => (
+              <li key={line.productId} className={`flex justify-between gap-2 text-sm ${foldLines && i >= 3 ? "max-md:hidden" : ""}`}>
+                <span className="min-w-0 flex-1 truncate text-muted">
+                  {line.name} × {line.quantity}
+                  {freeOf(line) > 0 ? ` (${t("{n} free", { n: freeOf(line) })})` : ""}
+                </span>
+                <span className="shrink-0 text-foreground">
+                  {formatMoney(line.price * (line.quantity - freeOf(line)))}
+                </span>
+              </li>
+            ))}
+          </ul>
+          {cart.length > 4 && (
+            <button type="button" onClick={() => setShowAllLines((all) => !all)} className="mt-1.5 text-xs font-medium text-brand-text md:hidden">
+              {showAllLines ? t("Show fewer") : t("Show all {n} items", { n: cart.length })}
+            </button>
+          )}
+          <div className="mt-3 flex flex-col gap-1.5 border-t border-border pt-3 text-sm">
+            <Row label={t("bill.subtotal")} value={formatMoney(totals.subtotal)} />
+            {totals.discountAmount > 0 && <Row label={t("bill.discount")} value={`− ${formatMoney(totals.discountAmount)}`} />}
+            {/* The tax lines (#43): a tap away on a phone, always shown on a computer. */}
+            <button
+              type="button"
+              onClick={() => setShowTax((shown) => !shown)}
+              aria-expanded={showTax}
+              className="flex items-center justify-between gap-2 py-0.5 text-xs font-medium text-muted md:hidden"
+            >
+              {t("GST details")}
+              <ChevronDown size={14} className={`shrink-0 transition-transform ${showTax ? "rotate-180" : ""}`} />
+            </button>
+            <div className={`${showTax ? "flex" : "hidden"} flex-col gap-1.5 md:flex`}>
+              <span className="text-xs font-medium uppercase tracking-wide text-muted">
+                {supplyType === "intra" ? t("bill.localSale") : t("bill.interStateSale")}
               </span>
-              <span className="shrink-0 text-foreground">
-                {formatMoney(line.price * (line.quantity - freeOf(line)))}
-              </span>
-            </li>
-          ))}
-        </ul>
-      </section>
+              <Row label={t("bill.taxableValue")} value={formatMoney(totals.taxableAmount)} />
+              {supplyType === "intra" ? (
+                <>
+                  <Row label="CGST" value={`+ ${formatMoney(totals.cgstAmount)}`} />
+                  <Row label="SGST" value={`+ ${formatMoney(totals.sgstAmount)}`} />
+                </>
+              ) : (
+                <Row label="IGST" value={`+ ${formatMoney(totals.igstAmount)}`} />
+              )}
+            </div>
+            {totals.roundOffAmount !== 0 && (
+              <Row
+                label="Round off"
+                value={`${totals.roundOffAmount > 0 ? "+ " : "− "}${formatMoney(Math.abs(totals.roundOffAmount))}`}
+              />
+            )}
+            <div className="my-1 h-px bg-border" />
+            <Row label={t("bill.total")} value={formatMoney(totals.total)} bold />
+          </div>
+        </section>
 
-      {b2bAvailable && (
-        <section className="neu-card flex flex-col gap-3 p-4">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <p className="text-sm font-medium text-foreground">{t("B2B invoice (with the buyer's GSTIN)")}</p>
-              <p className="text-xs text-muted">{t("For a business that will claim the GST back. It can be a different company than the customer — like their employer.")}</p>
+        {/* Saving the bill (#40, #41): on a phone a bar fixed at the bottom — over the tab bar, as this
+            step is for finishing the bill (#34) — and on a computer the end of this column. One button
+            either way, so keyboard billing (data-keyboard-save) finds it as before. */}
+        <div
+          data-sticky-action
+          className="fixed inset-x-0 bottom-0 z-30 flex min-h-[calc(var(--bottom-nav-h)+env(safe-area-inset-bottom))] flex-col justify-center border-t border-border bg-surface px-4 pb-[env(safe-area-inset-bottom)] pt-2 md:static md:z-auto md:min-h-0 md:border-0 md:bg-transparent md:p-0"
+        >
+          <div className="mx-auto flex w-full max-w-lg flex-col gap-2 pb-2 md:max-w-none md:pb-0">
+            {state?.error && <p className="rounded-lg bg-credit-soft px-3 py-2 text-sm text-credit">{state.error}</p>}
+            <div className="flex items-center gap-3">
+              <div className="min-w-0 shrink-0 md:hidden">
+                <p className="text-xs text-muted">{t("bill.total")}</p>
+                <p className="truncate text-lg font-bold leading-tight text-foreground">{formatMoney(totals.total)}</p>
+              </div>
+              <div className="min-w-0 flex-1">
+                <SubmitButton blocked={(customerMode === "walkin" && totals.balanceAmount > 0) || b2bInvalid} generatingLabel={t("bill.generating")} submitLabel={t("bill.generateInvoice")} />
+              </div>
+            </div>
+            {keyboardBilling && <KeyboardHint keys={[["Enter", "save"], ["Esc", "back to items"]]} />}
+          </div>
+        </div>
+      </aside>
+
+      <div className="flex flex-col gap-4 md:col-start-1 md:row-start-2">
+        <section className="flex flex-col gap-3 neu-card p-4">
+          {shopContext.canDiscount ? (
+            <button
+              type="button"
+              onClick={() => {
+                setDiscountOpen((open) => !open);
+                if (!discountOpen) requestAnimationFrame(() => discountInputRef.current?.focus());
+              }}
+              aria-expanded={discountShown}
+              className="flex items-center justify-between gap-3 text-left md:pointer-events-none"
+            >
+              <span className="text-sm font-medium text-foreground">{t("bill.discount")}</span>
+              <span className="text-sm text-muted md:hidden">
+                {discountValue > 0
+                  ? discountType === "flat"
+                    ? t("{amount} off", { amount: formatMoney(discountValue) })
+                    : t("{percent}% off", { percent: discountValue })
+                  : t("None · tap to add")}
+              </span>
+            </button>
+          ) : (
+            <p className="text-sm font-medium text-foreground">{t("bill.discount")}</p>
+          )}
+          {!shopContext.canDiscount && <p className="text-xs text-muted">{t("Only loyalty points can be taken off — ask the owner to allow discounts for your login.")}</p>}
+          {shopContext.canDiscount && (
+            <div className={`${discountShown ? "flex" : "hidden"} flex-col gap-3 md:flex`}>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setDiscountType("flat")}
+                className={`flex-1 rounded-lg border px-3 py-2 text-sm font-medium ${
+                  discountType === "flat"
+                    ? "border-brand bg-brand-soft text-brand-text"
+                    : "border-border text-muted"
+                }`}
+              >
+                {t("bill.flatAmount")}
+              </button>
+              <button
+                type="button"
+                onClick={() => setDiscountType("percent")}
+                className={`flex-1 rounded-lg border px-3 py-2 text-sm font-medium ${
+                  discountType === "percent"
+                    ? "border-brand bg-brand-soft text-brand-text"
+                    : "border-border text-muted"
+                }`}
+              >
+                {t("bill.percentage")}
+              </button>
+            </div>
+            <input
+              type="number"
+              min="0"
+              max={discountType === "percent" ? 100 : undefined}
+              step="0.01"
+              ref={discountInputRef}
+              value={discountValue || ""}
+              onChange={(e) => setDiscountValue(Number(e.target.value) || 0)}
+              placeholder={discountType === "flat" ? "e.g. 20" : "e.g. 10"}
+              className="rounded-lg border border-border px-3.5 py-2.5 text-sm outline-none focus:border-brand"
+            />
+            </div>
+          )}
+
+          {customerMode === "existing" && selectedCustomer && (selectedCustomer.loyalty_points ?? 0) > 0 && (
+            <p className="text-xs font-medium text-brand-text">
+              {t("bill.loyaltyHas", { name: selectedCustomer.name, points: selectedCustomer.loyalty_points ?? 0 })}
+            </p>
+          )}
+
+          {customerMode === "existing" && networkReliability && networkReliability.shopsVisited >= 2 && (
+            <p
+              className={`flex items-center gap-1 text-xs font-medium ${networkReliability.tier === "trusted" ? "text-success" : "text-muted"}`}
+            >
+              {networkReliability.tier === "trusted" ? "🌟" : "🔹"} Known at {networkReliability.shopsVisited} shops on The Ray
+              {networkReliability.tier === "trusted" ? " — reliably settles udhar" : ""}
+            </p>
+          )}
+
+          {customerMode === "existing" &&
+            selectedCustomer &&
+            (selectedCustomer.loyalty_points ?? 0) > 0 &&
+            loyaltyRedemptionValue > 0 &&
+            (discountType === "flat" ? (
+              <label className="flex items-center gap-2 rounded-lg bg-brand-soft px-3 py-2.5 text-sm">
+                <input type="checkbox" checked={redeemPoints} onChange={(e) => setRedeemPoints(e.target.checked)} className="h-4 w-4" />
+                <span className="text-brand-text">
+                  Redeem {redeemedPointsCount || selectedCustomer.loyalty_points} points for {formatMoney(redemptionValue || (selectedCustomer.loyalty_points ?? 0) * loyaltyRedemptionValue)} off
+                </span>
+              </label>
+            ) : (
+              <p className="text-xs text-muted">
+                {selectedCustomer.name} has {selectedCustomer.loyalty_points} points — switch to &quot;Flat amount&quot; above to redeem them.
+              </p>
+            ))}
+        </section>
+
+        {businessType === "jewellery" && (
+          <ExchangeCalculator
+            exchangeInfo={exchangeInfo}
+            pureRates={{ gold: goldRates["24K"], silver: silverRate }}
+            // Old gold handed over pays part of the bill, so the cash still to be paid goes down by its value
+            // (the server adds the exchange value to the cash paid, so it is never counted twice).
+            onSet={(info) => {
+              setExchangeInfo(info);
+              setPaidAmount((prev) => Math.max(0, (typeof prev === "number" ? prev : 0) - info.value));
+            }}
+            onClear={() => {
+              if (exchangeInfo) {
+                setPaidAmount((prev) => Math.min(totals.total, (typeof prev === "number" ? prev : 0) + exchangeInfo.value));
+              }
+              setExchangeInfo(null);
+            }}
+          />
+        )}
+
+        {fromScheme && (
+          <section className="flex items-center justify-between gap-3 rounded-xl border border-brand bg-brand-soft px-4 py-3">
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-brand-text">{t("Gold scheme {number}", { number: fromScheme.number })}</p>
+              <p className="text-xs text-brand-text/80">{fromScheme.complete ? t("Instalments + bonus, used for this jewellery") : t("Instalments paid so far (no bonus yet)")}</p>
+            </div>
+            <p className="shrink-0 text-base font-bold text-brand-text">− {formatMoney(fromScheme.value)}</p>
+          </section>
+        )}
+
+        {extras && extras.wallet > 0 && (
+          <section className="flex items-center justify-between gap-3 rounded-xl border border-brand bg-brand-soft px-4 py-3">
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-brand-text">{t("Prepaid balance")}</p>
+              <p className="text-xs text-brand-text/80">
+                {walletUse > 0
+                  ? t("{used} used · {left} stays", { used: formatMoney(walletUse), left: formatMoney(round2(extras.wallet - walletUse)) })
+                  : t("{amount} available", { amount: formatMoney(extras.wallet) })}
+              </p>
             </div>
             <button
               type="button"
-              onClick={() => setB2bOn((on) => !on)}
-              role="switch"
-              aria-checked={b2bOn}
-              aria-label={t("B2B invoice")}
-              className={`relative h-8 w-14 shrink-0 rounded-full p-1 transition-colors ${b2bOn ? "bg-brand-soft" : ""}`}
-              style={{ boxShadow: "var(--elev-inset)" }}
+              onClick={() => {
+                const cash = typeof paidAmount === "number" ? paidAmount : 0;
+                if (walletUse > 0) {
+                  setPaidAmount(round2(cash + walletUse));
+                  setWalletUse(0);
+                  return;
+                }
+                const use = round2(Math.min(extras.wallet, Math.max(0, totals.total - (exchangeInfo?.value ?? 0) - (fromScheme?.value ?? 0))));
+                setWalletUse(use);
+                setPaidAmount(round2(Math.max(0, cash - use)));
+              }}
+              className={`shrink-0 rounded-full px-3.5 py-1.5 text-xs font-semibold ${walletUse > 0 ? "bg-brand text-white" : "border border-brand text-brand-text"}`}
             >
-              <span
-                className={`absolute left-1 top-1 h-6 w-6 rounded-full transition-transform ${b2bOn ? "translate-x-6 bg-brand" : "translate-x-0 bg-background"}`}
-                style={{ boxShadow: "var(--elev-xs)" }}
-              />
+              {walletUse > 0 ? `− ${formatMoney(walletUse)} ✓` : t("Pay from it")}
+            </button>
+          </section>
+        )}
+
+        <section className="flex flex-col gap-3 neu-card p-4">
+          <p className="text-sm font-medium text-foreground">{t("bill.howMuchPaid")}</p>
+          {split ? (
+            <SplitPayments
+              rows={split}
+              onChange={changeSplit}
+              payable={Math.max(0, round2(totals.total - exchangeValue))}
+              canUdhaar={customerMode !== "walkin"}
+              onSingle={() => {
+                setSplit(null);
+                setPaidAmount(Math.max(0, round2(totals.total - exchangeValue)));
+              }}
+            />
+          ) : (
+          <>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => setPaidAmount(Math.max(0, totals.total - exchangeValue))}
+              className={`flex-1 rounded-lg border px-3 py-2 text-sm font-medium ${
+                typeof paidAmount === "number" && paidAmount + exchangeValue === totals.total
+                  ? "border-brand bg-brand-soft text-brand-text"
+                  : "border-border text-muted"
+              }`}
+            >
+              {t("bill.fullyPaid")}
+            </button>
+            <button
+              type="button"
+              onClick={() => setPaidAmount(0)}
+              disabled={customerMode === "walkin"}
+              className={`flex-1 rounded-lg border px-3 py-2 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-40 ${
+                paidAmount === 0
+                  ? "border-danger bg-danger text-white"
+                  : "border-danger bg-danger-soft text-danger"
+              }`}
+            >
+              {t("bill.fullUdhaar")}
             </button>
           </div>
-          {b2bOn && (
-            <div className="flex flex-col gap-2.5">
-              <label className="flex flex-col gap-1 text-xs font-medium text-muted">
-                {t("Business name (as registered)")}
-                <input
-                  value={buyer.name}
-                  onChange={(e) => setBuyer((b) => ({ ...b, name: e.target.value }))}
-                  placeholder={t("e.g. ABC Traders Pvt Ltd")}
-                  className="rounded-lg border border-border bg-surface px-3.5 py-2.5 text-sm font-normal text-foreground outline-none focus:border-brand"
-                />
-              </label>
-              <label className="flex flex-col gap-1 text-xs font-medium text-muted">
-                GSTIN
-                <input
-                  value={buyer.gstin}
-                  onChange={(e) => setBuyer((b) => ({ ...b, gstin: e.target.value.toUpperCase().replace(/s/g, "").slice(0, 15) }))}
-                  placeholder="27ABCDE1234F1Z5"
-                  autoCapitalize="characters"
-                  className="rounded-lg border border-border bg-surface px-3.5 py-2.5 font-mono text-sm font-normal uppercase text-foreground outline-none focus:border-brand"
-                />
-              </label>
-              <label className="flex flex-col gap-1 text-xs font-medium text-muted">
-                {t("Billing address (optional)")}
-                <input
-                  value={buyer.address}
-                  onChange={(e) => setBuyer((b) => ({ ...b, address: e.target.value }))}
-                  placeholder={t("Company address for the invoice")}
-                  className="rounded-lg border border-border bg-surface px-3.5 py-2.5 text-sm font-normal text-foreground outline-none focus:border-brand"
-                />
-              </label>
-              {buyer.gstin.length > 0 && !buyerGstinValid ? (
-                <p className="text-xs text-danger">{t("Check the GSTIN — it should be 15 characters, like 27ABCDE1234F1Z5.")}</p>
-              ) : buyerGstinValid ? (
-                <p className="text-xs text-muted">
-                  {INDIAN_STATES.find((st) => st.code === buyer.gstin.slice(0, 2))?.name ?? buyer.gstin.slice(0, 2)} ·{" "}
-                  {supplyType === "inter" ? t("another state, so IGST") : t("same state, so CGST + SGST")}
-                </p>
-              ) : null}
+          {customerMode === "walkin" && (
+            <p className="text-xs text-muted">{t("Udhaar needs a customer — go back to the cart and pick Existing customer.")}</p>
+          )}
+          <label className="flex flex-col gap-1.5 text-sm">
+            <span className="font-medium text-foreground">{t("bill.orPartPayment")}</span>
+            <input
+              type="number"
+              min="0"
+              step="0.01"
+              value={paidAmount}
+              onChange={(e) =>
+                setPaidAmount(e.target.value === "" ? "" : Number(e.target.value))
+              }
+              className="rounded-lg border border-border px-3.5 py-2.5 text-sm outline-none focus:border-brand"
+            />
+          </label>
+
+          {typeof paidAmount === "number" && paidAmount > 0 && (
+            <div className="border-t border-border pt-3">
+              <p className="mb-2 text-sm font-medium text-foreground">
+                {t("bill.howWasPaid", { amount: formatMoney(paidAmount) })}
+              </p>
+              <div className="grid grid-cols-3 gap-1.5">
+                {(["cash", "upi", "card", "online", "other"] as const).map((m) => (
+                  <button
+                    key={m}
+                    type="button"
+                    onClick={() => setPaymentMethod(m)}
+                    className={`flex min-h-10 items-center justify-center rounded-xl border px-1.5 py-1.5 text-center text-xs font-medium leading-tight ${
+                      paymentMethod === m
+                        ? "border-brand bg-brand-soft text-brand-text"
+                        : "border-border text-muted"
+                    }`}
+                  >
+                    {t(`bill.${m}`)}
+                  </button>
+                ))}
+              </div>
             </div>
           )}
-        </section>
-      )}
-
-      <section className="flex flex-col gap-3 neu-card p-4">
-        <p className="text-sm font-medium text-foreground">{t("bill.discount")}</p>
-        {!shopContext.canDiscount && <p className="text-xs text-muted">{t("Only loyalty points can be taken off — ask the owner to allow discounts for your login.")}</p>}
-        {shopContext.canDiscount && (<>
-        <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={() => setDiscountType("flat")}
-            className={`flex-1 rounded-lg border px-3 py-2 text-sm font-medium ${
-              discountType === "flat"
-                ? "border-brand bg-brand-soft text-brand-text"
-                : "border-border text-muted"
-            }`}
-          >
-            {t("bill.flatAmount")}
-          </button>
-          <button
-            type="button"
-            onClick={() => setDiscountType("percent")}
-            className={`flex-1 rounded-lg border px-3 py-2 text-sm font-medium ${
-              discountType === "percent"
-                ? "border-brand bg-brand-soft text-brand-text"
-                : "border-border text-muted"
-            }`}
-          >
-            {t("bill.percentage")}
-          </button>
-        </div>
-        <input
-          type="number"
-          min="0"
-          max={discountType === "percent" ? 100 : undefined}
-          step="0.01"
-          value={discountValue || ""}
-          onChange={(e) => setDiscountValue(Number(e.target.value) || 0)}
-          placeholder={discountType === "flat" ? "e.g. 20" : "e.g. 10"}
-          className="rounded-lg border border-border px-3.5 py-2.5 text-sm outline-none focus:border-brand"
-        />
-        </>)}
-
-        {customerMode === "existing" && selectedCustomer && (selectedCustomer.loyalty_points ?? 0) > 0 && (
-          <p className="text-xs font-medium text-brand-text">
-            {t("bill.loyaltyHas", { name: selectedCustomer.name, points: selectedCustomer.loyalty_points ?? 0 })}
-          </p>
-        )}
-
-        {customerMode === "existing" && networkReliability && networkReliability.shopsVisited >= 2 && (
-          <p
-            className={`flex items-center gap-1 text-xs font-medium ${networkReliability.tier === "trusted" ? "text-success" : "text-muted"}`}
-          >
-            {networkReliability.tier === "trusted" ? "🌟" : "🔹"} Known at {networkReliability.shopsVisited} shops on The Ray
-            {networkReliability.tier === "trusted" ? " — reliably settles udhar" : ""}
-          </p>
-        )}
-
-        {customerMode === "existing" &&
-          selectedCustomer &&
-          (selectedCustomer.loyalty_points ?? 0) > 0 &&
-          loyaltyRedemptionValue > 0 &&
-          (discountType === "flat" ? (
-            <label className="flex items-center gap-2 rounded-lg bg-brand-soft px-3 py-2.5 text-sm">
-              <input type="checkbox" checked={redeemPoints} onChange={(e) => setRedeemPoints(e.target.checked)} className="h-4 w-4" />
-              <span className="text-brand-text">
-                Redeem {redeemedPointsCount || selectedCustomer.loyalty_points} points for {formatMoney(redemptionValue || (selectedCustomer.loyalty_points ?? 0) * loyaltyRedemptionValue)} off
-              </span>
-            </label>
-          ) : (
-            <p className="text-xs text-muted">
-              {selectedCustomer.name} has {selectedCustomer.loyalty_points} points — switch to &quot;Flat amount&quot; above to redeem them.
-            </p>
-          ))}
-      </section>
-
-      <section className="neu-card flex flex-col gap-2 p-4 text-sm">
-        <div className="mb-1 flex items-center justify-between">
-          <span className="text-xs font-medium uppercase tracking-wide text-muted">
-            {supplyType === "intra" ? t("bill.localSale") : t("bill.interStateSale")}
-          </span>
-        </div>
-        <Row label={t("bill.subtotal")} value={formatMoney(totals.subtotal)} />
-        <Row label={t("bill.discount")} value={`− ${formatMoney(totals.discountAmount)}`} />
-        <Row label={t("bill.taxableValue")} value={formatMoney(totals.taxableAmount)} />
-        {supplyType === "intra" ? (
-          <>
-            <Row label="CGST" value={`+ ${formatMoney(totals.cgstAmount)}`} />
-            <Row label="SGST" value={`+ ${formatMoney(totals.sgstAmount)}`} />
+          {/* Cash at the counter: what the customer handed over, and the change to give back. */}
+          {paymentMethod === "cash" && paidAmount !== 0 && cart.length > 0 && (
+            <CashChange
+              total={Math.max(0, round2(totals.total - exchangeValue))}
+              onPaidInFull={() => setPaidAmount(Math.max(0, round2(totals.total - exchangeValue)))}
+              resetKey={cart.length === 0}
+            />
+          )}
+          {cart.length > 0 && businessType !== "hotel" && businessType !== "restaurant" && (
+            <button
+              type="button"
+              onClick={() => {
+                const due = Math.max(0, round2(totals.total - exchangeValue));
+                const first = typeof paidAmount === "number" && paidAmount > 0 && paidAmount < due ? paidAmount : due;
+                changeSplit([
+                  { method: paymentMethod, amount: first, reference: "" },
+                  { method: paymentMethod === "upi" ? "cash" : "upi", amount: round2(due - first), reference: "" },
+                ]);
+              }}
+              className="flex items-center gap-1 self-start rounded-full border border-border px-3 py-1.5 text-xs font-medium text-brand-text"
+            >
+              <Plus size={13} /> {t("Split payment")}
+            </button>
+          )}
           </>
-        ) : (
-          <Row label="IGST" value={`+ ${formatMoney(totals.igstAmount)}`} />
-        )}
-        <div className="my-1 h-px bg-border" />
-        {totals.roundOffAmount !== 0 && (
-          <Row
-            label="Round off"
-            value={`${totals.roundOffAmount > 0 ? "+ " : "− "}${formatMoney(Math.abs(totals.roundOffAmount))}`}
-          />
-        )}
-        <Row label={t("bill.total")} value={formatMoney(totals.total)} bold />
-      </section>
+          )}
 
-      {businessType === "jewellery" && (
-        <ExchangeCalculator
-          exchangeInfo={exchangeInfo}
-          pureRates={{ gold: goldRates["24K"], silver: silverRate }}
-          // Old gold handed over pays part of the bill, so the cash still to be paid goes down by its value
-          // (the server adds the exchange value to the cash paid, so it is never counted twice).
-          onSet={(info) => {
-            setExchangeInfo(info);
-            setPaidAmount((prev) => Math.max(0, (typeof prev === "number" ? prev : 0) - info.value));
-          }}
-          onClear={() => {
-            if (exchangeInfo) {
-              setPaidAmount((prev) => Math.min(totals.total, (typeof prev === "number" ? prev : 0) + exchangeInfo.value));
-            }
-            setExchangeInfo(null);
-          }}
-        />
-      )}
-
-      {fromScheme && (
-        <section className="flex items-center justify-between gap-3 rounded-xl border border-brand bg-brand-soft px-4 py-3">
-          <div className="min-w-0">
-            <p className="text-sm font-semibold text-brand-text">{t("Gold scheme {number}", { number: fromScheme.number })}</p>
-            <p className="text-xs text-brand-text/80">{fromScheme.complete ? t("Instalments + bonus, used for this jewellery") : t("Instalments paid so far (no bonus yet)")}</p>
-          </div>
-          <p className="shrink-0 text-base font-bold text-brand-text">− {formatMoney(fromScheme.value)}</p>
-        </section>
-      )}
-
-      {extras && extras.wallet > 0 && (
-        <section className="flex items-center justify-between gap-3 rounded-xl border border-brand bg-brand-soft px-4 py-3">
-          <div className="min-w-0">
-            <p className="text-sm font-semibold text-brand-text">{t("Prepaid balance")}</p>
-            <p className="text-xs text-brand-text/80">
-              {walletUse > 0
-                ? t("{used} used · {left} stays", { used: formatMoney(walletUse), left: formatMoney(round2(extras.wallet - walletUse)) })
-                : t("{amount} available", { amount: formatMoney(extras.wallet) })}
+          {totals.balanceAmount > 0 && (
+            <p className="text-sm text-credit">
+              {customerMode === "walkin"
+                ? t("{amount} is unpaid. A walk-in bill must be paid in full — or go back to the cart and pick the customer to give udhaar.", { amount: formatMoney(totals.balanceAmount) })
+                : t("bill.willAddCredit", { amount: formatMoney(totals.balanceAmount) })}
             </p>
-          </div>
-          <button
-            type="button"
-            onClick={() => {
-              const cash = typeof paidAmount === "number" ? paidAmount : 0;
-              if (walletUse > 0) {
-                setPaidAmount(round2(cash + walletUse));
-                setWalletUse(0);
-                return;
-              }
-              const use = round2(Math.min(extras.wallet, Math.max(0, totals.total - (exchangeInfo?.value ?? 0) - (fromScheme?.value ?? 0))));
-              setWalletUse(use);
-              setPaidAmount(round2(Math.max(0, cash - use)));
-            }}
-            className={`shrink-0 rounded-full px-3.5 py-1.5 text-xs font-semibold ${walletUse > 0 ? "bg-brand text-white" : "border border-brand text-brand-text"}`}
-          >
-            {walletUse > 0 ? `− ${formatMoney(walletUse)} ✓` : t("Pay from it")}
-          </button>
-        </section>
-      )}
-
-      <section className="flex flex-col gap-3 neu-card p-4">
-        <p className="text-sm font-medium text-foreground">{t("bill.howMuchPaid")}</p>
-        {split ? (
-          <SplitPayments
-            rows={split}
-            onChange={changeSplit}
-            payable={Math.max(0, round2(totals.total - exchangeValue))}
-            canUdhaar={customerMode !== "walkin"}
-            onSingle={() => {
-              setSplit(null);
-              setPaidAmount(Math.max(0, round2(totals.total - exchangeValue)));
-            }}
-          />
-        ) : (
-        <>
-        <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={() => setPaidAmount(Math.max(0, totals.total - exchangeValue))}
-            className={`flex-1 rounded-lg border px-3 py-2 text-sm font-medium ${
-              typeof paidAmount === "number" && paidAmount + exchangeValue === totals.total
-                ? "border-brand bg-brand-soft text-brand-text"
-                : "border-border text-muted"
-            }`}
-          >
-            {t("bill.fullyPaid")}
-          </button>
-          <button
-            type="button"
-            onClick={() => setPaidAmount(0)}
-            disabled={customerMode === "walkin"}
-            className={`flex-1 rounded-lg border px-3 py-2 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-40 ${
-              paidAmount === 0
-                ? "border-danger bg-danger text-white"
-                : "border-danger bg-danger-soft text-danger"
-            }`}
-          >
-            {t("bill.fullUdhaar")}
-          </button>
-        </div>
-        {customerMode === "walkin" && (
-          <p className="text-xs text-muted">{t("Udhaar needs a customer — go back to the cart and pick Existing customer.")}</p>
-        )}
-        <label className="flex flex-col gap-1.5 text-sm">
-          <span className="font-medium text-foreground">{t("bill.orPartPayment")}</span>
-          <input
-            type="number"
-            min="0"
-            step="0.01"
-            value={paidAmount}
-            onChange={(e) =>
-              setPaidAmount(e.target.value === "" ? "" : Number(e.target.value))
-            }
-            className="rounded-lg border border-border px-3.5 py-2.5 text-sm outline-none focus:border-brand"
-          />
-        </label>
-
-        {/* Cash at the counter: what the customer handed over, and the change to give back. */}
-        {paymentMethod === "cash" && paidAmount !== 0 && cart.length > 0 && (
-          <CashChange
-            total={Math.max(0, round2(totals.total - exchangeValue))}
-            onPaidInFull={() => setPaidAmount(Math.max(0, round2(totals.total - exchangeValue)))}
-            resetKey={cart.length === 0}
-          />
-        )}
-
-        {typeof paidAmount === "number" && paidAmount > 0 && (
-          <div className="border-t border-border pt-3">
-            <p className="mb-2 text-sm font-medium text-foreground">
-              {t("bill.howWasPaid", { amount: formatMoney(paidAmount) })}
+          )}
+          {totals.balanceAmount > 0 && credit?.limit != null && credit.balance + totals.balanceAmount > credit.limit && (
+            <p className="flex items-start gap-1.5 rounded-lg border border-danger/30 bg-danger-soft px-3.5 py-2.5 text-xs text-danger">
+              <AlertTriangle size={13} className="mt-0.5 shrink-0" />
+              <span>
+                {t("Over the udhaar limit: owes {owes} already, this bill adds {adds} — {total} against a limit of {limit}.", {
+                  owes: formatMoney(credit.balance),
+                  adds: formatMoney(totals.balanceAmount),
+                  total: formatMoney(round2(credit.balance + totals.balanceAmount)),
+                  limit: formatMoney(credit.limit),
+                })}
+              </span>
             </p>
-            <div className="grid grid-cols-3 gap-1.5">
-              {(["cash", "upi", "card", "online", "other"] as const).map((m) => (
-                <button
-                  key={m}
-                  type="button"
-                  onClick={() => setPaymentMethod(m)}
-                  className={`flex min-h-10 items-center justify-center rounded-xl border px-1.5 py-1.5 text-center text-xs font-medium leading-tight ${
-                    paymentMethod === m
-                      ? "border-brand bg-brand-soft text-brand-text"
-                      : "border-border text-muted"
-                  }`}
-                >
-                  {t(`bill.${m}`)}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-        {cart.length > 0 && businessType !== "hotel" && businessType !== "restaurant" && (
-          <button
-            type="button"
-            onClick={() => {
-              const due = Math.max(0, round2(totals.total - exchangeValue));
-              const first = typeof paidAmount === "number" && paidAmount > 0 && paidAmount < due ? paidAmount : due;
-              changeSplit([
-                { method: paymentMethod, amount: first, reference: "" },
-                { method: paymentMethod === "upi" ? "cash" : "upi", amount: round2(due - first), reference: "" },
-              ]);
-            }}
-            className="flex items-center gap-1 self-start rounded-full border border-border px-3 py-1.5 text-xs font-medium text-brand-text"
-          >
-            <Plus size={13} /> {t("Split payment")}
-          </button>
-        )}
-        </>
+          )}
+        </section>
+
+
+        {(ewayGoodsValue > 50000 || businessType === "salon" || cart.some((c) => c.requiresPrescription)) && (
+          <section className="flex flex-col gap-3 neu-card p-4">
+            {ewayGoodsValue > 50000 && (
+              <p className="flex items-start gap-1.5 rounded-lg border border-credit/25 bg-credit-soft px-3.5 py-2.5 text-xs text-credit">
+                <AlertTriangle size={13} className="mt-0.5 shrink-0" />
+                {tripInfo
+                  ? t("This delivery carries goods worth over ₹50,000 — an e-way bill is legally required before the vehicle leaves. Generate it on ewaybillgst.gov.in.")
+                  : supplyType === "inter"
+                    ? t("Goods worth over ₹50,000 going to another state need an e-way bill before they are moved. Generate it on ewaybillgst.gov.in before dispatch.")
+                    : t("Goods worth over ₹50,000 need an e-way bill before they are moved by vehicle (within some states the limit is ₹1 lakh). Generate it on ewaybillgst.gov.in before dispatch.")}
+              </p>
+            )}
+
+            {businessType === "salon" && (
+              <div className="flex flex-col gap-1.5 text-sm">
+                <span className="font-medium text-foreground">{t("Stylist / staff")}</span>
+                {stylists.length > 0 && (
+                  <select
+                    value={otherStylist ? "__other" : serviceProviderName}
+                    onChange={(e) => {
+                      if (e.target.value === "__other") {
+                        setOtherStylist(true);
+                        setServiceProviderName("");
+                      } else {
+                        setOtherStylist(false);
+                        setServiceProviderName(e.target.value);
+                      }
+                    }}
+                    aria-label={t("Stylist / staff")}
+                    className="rounded-lg border border-border bg-surface px-3.5 py-2.5 text-sm outline-none focus:border-brand"
+                  >
+                    <option value="">{t("— Who did it? —")}</option>
+                    {stylists.map((name) => (
+                      <option key={name} value={name}>
+                        {name}
+                      </option>
+                    ))}
+                    <option value="__other">{t("Someone else…")}</option>
+                  </select>
+                )}
+                {(stylists.length === 0 || otherStylist) && (
+                  <input
+                    value={serviceProviderName}
+                    onChange={(e) => setServiceProviderName(e.target.value)}
+                    placeholder={t("Who performed the service?")}
+                    className="rounded-lg border border-border bg-surface px-3.5 py-2.5 text-sm outline-none focus:border-brand"
+                  />
+                )}
+                {stylists.length === 0 && (
+                  <Link href="/staff-attendance/people" className="text-xs text-brand-text">
+                    {t("Add your stylists (with their commission %) in Staff attendance → People →")}
+                  </Link>
+                )}
+                {stylists.length > 0 && cart.length > 1 && (
+                  <details className="rounded-lg border border-border bg-surface px-3 py-2" open={Object.values(lineProviders).some(Boolean)}>
+                    <summary className="cursor-pointer text-xs font-medium text-brand-text">{t("Someone else did part of it?")}</summary>
+                    <div className="mt-2 flex flex-col gap-1.5">
+                      {cart.map((line) => (
+                        <label key={line.productId} className="flex items-center justify-between gap-2 text-xs">
+                          <span className="min-w-0 flex-1 truncate text-foreground">{line.name}</span>
+                          <select
+                            value={lineProviders[line.productId] ?? ""}
+                            onChange={(e) => setLineProviders((prev) => ({ ...prev, [line.productId]: e.target.value }))}
+                            className="w-32 shrink-0 rounded-lg border border-border bg-surface px-2 py-1.5 text-xs outline-none focus:border-brand"
+                          >
+                            <option value="">{serviceProviderName ? t("Same ({name})", { name: serviceProviderName }) : t("Same as above")}</option>
+                            {stylists.map((name) => (
+                              <option key={name} value={name}>
+                                {name}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                      ))}
+                    </div>
+                  </details>
+                )}
+              </div>
+            )}
+
+            {cart.some((c) => c.requiresPrescription) && (
+              <div className="flex flex-col gap-2 rounded-lg border border-border bg-surface p-3">
+                <p className="flex items-start gap-1.5 text-xs font-medium text-brand-text">
+                  <Pill size={13} className="mt-0.5 shrink-0" />
+                  One or more items need a prescription (Rx) — enter both before generating the invoice.
+                </p>
+                <input
+                  value={doctorName}
+                  onChange={(e) => setDoctorName(e.target.value)}
+                  placeholder="Doctor's name"
+                  className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand"
+                />
+                <input
+                  value={patientName}
+                  onChange={(e) => setPatientName(e.target.value)}
+                  placeholder="Patient's name"
+                  className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand"
+                />
+              </div>
+            )}
+          </section>
         )}
 
-        {totals.balanceAmount > 0 && (
-          <p className="text-sm text-credit">
-            {customerMode === "walkin"
-              ? t("{amount} is unpaid. A walk-in bill must be paid in full — or go back to the cart and pick the customer to give udhaar.", { amount: formatMoney(totals.balanceAmount) })
-              : t("bill.willAddCredit", { amount: formatMoney(totals.balanceAmount) })}
-          </p>
-        )}
-        {totals.balanceAmount > 0 && credit?.limit != null && credit.balance + totals.balanceAmount > credit.limit && (
-          <p className="flex items-start gap-1.5 rounded-lg border border-danger/30 bg-danger-soft px-3.5 py-2.5 text-xs text-danger">
-            <AlertTriangle size={13} className="mt-0.5 shrink-0" />
-            <span>
-              {t("Over the udhaar limit: owes {owes} already, this bill adds {adds} — {total} against a limit of {limit}.", {
-                owes: formatMoney(credit.balance),
-                adds: formatMoney(totals.balanceAmount),
-                total: formatMoney(round2(credit.balance + totals.balanceAmount)),
-                limit: formatMoney(credit.limit),
-              })}
-            </span>
-          </p>
-        )}
-
-        {ewayGoodsValue > 50000 && (
-          <p className="flex items-start gap-1.5 rounded-lg border border-credit/25 bg-credit-soft px-3.5 py-2.5 text-xs text-credit">
-            <AlertTriangle size={13} className="mt-0.5 shrink-0" />
-            {tripInfo
-              ? t("This delivery carries goods worth over ₹50,000 — an e-way bill is legally required before the vehicle leaves. Generate it on ewaybillgst.gov.in.")
-              : supplyType === "inter"
-                ? t("Goods worth over ₹50,000 going to another state need an e-way bill before they are moved. Generate it on ewaybillgst.gov.in before dispatch.")
-                : t("Goods worth over ₹50,000 need an e-way bill before they are moved by vehicle (within some states the limit is ₹1 lakh). Generate it on ewaybillgst.gov.in before dispatch.")}
-          </p>
-        )}
-
-        {businessType === "salon" && (
-          <div className="flex flex-col gap-1.5 text-sm">
-            <span className="font-medium text-foreground">{t("Stylist / staff")}</span>
-            {stylists.length > 0 && (
-              <select
-                value={otherStylist ? "__other" : serviceProviderName}
-                onChange={(e) => {
-                  if (e.target.value === "__other") {
-                    setOtherStylist(true);
-                    setServiceProviderName("");
-                  } else {
-                    setOtherStylist(false);
-                    setServiceProviderName(e.target.value);
-                  }
-                }}
-                aria-label={t("Stylist / staff")}
-                className="rounded-lg border border-border bg-surface px-3.5 py-2.5 text-sm outline-none focus:border-brand"
+        {/* Less-used, so after the payment (#42): its explanation shows once it is switched on. */}
+        {b2bAvailable && (
+          <section className="neu-card flex flex-col gap-3 p-4">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-sm font-medium text-foreground">{t("B2B invoice (with the buyer's GSTIN)")}</p>
+                {b2bOn && <p className="text-xs text-muted">{t("For a business that will claim the GST back. It can be a different company than the customer — like their employer.")}</p>}
+              </div>
+              <button
+                type="button"
+                onClick={() => setB2bOn((on) => !on)}
+                role="switch"
+                aria-checked={b2bOn}
+                aria-label={t("B2B invoice")}
+                className={`relative h-8 w-14 shrink-0 rounded-full p-1 transition-colors ${b2bOn ? "bg-brand-soft" : ""}`}
+                style={{ boxShadow: "var(--elev-inset)" }}
               >
-                <option value="">{t("— Who did it? —")}</option>
-                {stylists.map((name) => (
-                  <option key={name} value={name}>
-                    {name}
-                  </option>
-                ))}
-                <option value="__other">{t("Someone else…")}</option>
-              </select>
+                <span
+                  className={`absolute left-1 top-1 h-6 w-6 rounded-full transition-transform ${b2bOn ? "translate-x-6 bg-brand" : "translate-x-0 bg-background"}`}
+                  style={{ boxShadow: "var(--elev-xs)" }}
+                />
+              </button>
+            </div>
+            {b2bOn && (
+              <div className="flex flex-col gap-2.5">
+                <label className="flex flex-col gap-1 text-xs font-medium text-muted">
+                  {t("Business name (as registered)")}
+                  <input
+                    value={buyer.name}
+                    onChange={(e) => setBuyer((b) => ({ ...b, name: e.target.value }))}
+                    placeholder={t("e.g. ABC Traders Pvt Ltd")}
+                    className="rounded-lg border border-border bg-surface px-3.5 py-2.5 text-sm font-normal text-foreground outline-none focus:border-brand"
+                  />
+                </label>
+                <label className="flex flex-col gap-1 text-xs font-medium text-muted">
+                  GSTIN
+                  <input
+                    value={buyer.gstin}
+                    onChange={(e) => setBuyer((b) => ({ ...b, gstin: e.target.value.toUpperCase().replace(/s/g, "").slice(0, 15) }))}
+                    placeholder="27ABCDE1234F1Z5"
+                    autoCapitalize="characters"
+                    className="rounded-lg border border-border bg-surface px-3.5 py-2.5 font-mono text-sm font-normal uppercase text-foreground outline-none focus:border-brand"
+                  />
+                </label>
+                <label className="flex flex-col gap-1 text-xs font-medium text-muted">
+                  {t("Billing address (optional)")}
+                  <input
+                    value={buyer.address}
+                    onChange={(e) => setBuyer((b) => ({ ...b, address: e.target.value }))}
+                    placeholder={t("Company address for the invoice")}
+                    className="rounded-lg border border-border bg-surface px-3.5 py-2.5 text-sm font-normal text-foreground outline-none focus:border-brand"
+                  />
+                </label>
+                {buyer.gstin.length > 0 && !buyerGstinValid ? (
+                  <p className="text-xs text-danger">{t("Check the GSTIN — it should be 15 characters, like 27ABCDE1234F1Z5.")}</p>
+                ) : buyerGstinValid ? (
+                  <p className="text-xs text-muted">
+                    {INDIAN_STATES.find((st) => st.code === buyer.gstin.slice(0, 2))?.name ?? buyer.gstin.slice(0, 2)} ·{" "}
+                    {supplyType === "inter" ? t("another state, so IGST") : t("same state, so CGST + SGST")}
+                  </p>
+                ) : null}
+              </div>
             )}
-            {(stylists.length === 0 || otherStylist) && (
-              <input
-                value={serviceProviderName}
-                onChange={(e) => setServiceProviderName(e.target.value)}
-                placeholder={t("Who performed the service?")}
-                className="rounded-lg border border-border bg-surface px-3.5 py-2.5 text-sm outline-none focus:border-brand"
-              />
-            )}
-            {stylists.length === 0 && (
-              <Link href="/staff-attendance/people" className="text-xs text-brand-text">
-                {t("Add your stylists (with their commission %) in Staff attendance → People →")}
-              </Link>
-            )}
-            {stylists.length > 0 && cart.length > 1 && (
-              <details className="rounded-lg border border-border bg-surface px-3 py-2" open={Object.values(lineProviders).some(Boolean)}>
-                <summary className="cursor-pointer text-xs font-medium text-brand-text">{t("Someone else did part of it?")}</summary>
-                <div className="mt-2 flex flex-col gap-1.5">
-                  {cart.map((line) => (
-                    <label key={line.productId} className="flex items-center justify-between gap-2 text-xs">
-                      <span className="min-w-0 flex-1 truncate text-foreground">{line.name}</span>
-                      <select
-                        value={lineProviders[line.productId] ?? ""}
-                        onChange={(e) => setLineProviders((prev) => ({ ...prev, [line.productId]: e.target.value }))}
-                        className="w-32 shrink-0 rounded-lg border border-border bg-surface px-2 py-1.5 text-xs outline-none focus:border-brand"
-                      >
-                        <option value="">{serviceProviderName ? t("Same ({name})", { name: serviceProviderName }) : t("Same as above")}</option>
-                        {stylists.map((name) => (
-                          <option key={name} value={name}>
-                            {name}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                  ))}
-                </div>
-              </details>
-            )}
-          </div>
+          </section>
         )}
 
-        {cart.some((c) => c.requiresPrescription) && (
-          <div className="flex flex-col gap-2 rounded-lg border border-border bg-surface p-3">
-            <p className="flex items-start gap-1.5 text-xs font-medium text-brand-text">
-              <Pill size={13} className="mt-0.5 shrink-0" />
-              One or more items need a prescription (Rx) — enter both before generating the invoice.
-            </p>
-            <input
-              value={doctorName}
-              onChange={(e) => setDoctorName(e.target.value)}
-              placeholder="Doctor's name"
-              className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand"
-            />
-            <input
-              value={patientName}
-              onChange={(e) => setPatientName(e.target.value)}
-              placeholder="Patient's name"
-              className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand"
-            />
-          </div>
-        )}
-        {totals.balanceAmount > 0 && customerMode === "walkin" && (
-          <p className="text-sm text-credit">
-            {t("bill.walkinNoCredit")}
-          </p>
-        )}
-      </section>
 
-      {state?.error && (
-        <p className="rounded-lg bg-credit-soft px-3 py-2 text-sm text-credit">
-          {state.error}
-        </p>
-      )}
+        {/* The bill shows the moment Save is tapped; its number and print follow from the server. */}
+        <SavingBill pending={saving} lines={cart.map((c) => ({ name: c.name, quantity: c.quantity, unit: c.unit, amount: round2(c.price * c.quantity) }))} total={totals.total} />
 
-      <SubmitButton blocked={(customerMode === "walkin" && totals.balanceAmount > 0) || b2bInvalid} generatingLabel={t("bill.generating")} submitLabel={t("bill.generateInvoice")} />
-      {keyboardBilling && <KeyboardHint keys={[["Enter", "save"], ["Esc", "back to items"]]} />}
-      {/* The bill shows the moment Save is tapped; its number and print follow from the server. */}
-      <SavingBill pending={saving} lines={cart.map((c) => ({ name: c.name, quantity: c.quantity, unit: c.unit, amount: round2(c.price * c.quantity) }))} total={totals.total} />
-
-      {/* Not selling yet — the customer wants a price first. Same cart, saved as a quotation. */}
-      {ordersAvailable && !fromQuote && customerMode === "existing" && selectedCustomer && (
-        <div className="flex flex-col gap-2 rounded-xl border border-brand bg-brand-soft p-3">
-          <p className="text-xs text-brand-text">{t("Taking an order on the route? Save it now — the office bills it when the goods go out.")}</p>
-          <button
-            type="button"
-            disabled={quoteSaving}
-            onClick={async () => {
-              setQuoteError(null);
-              setQuoteSaving(true);
-              const r = await saveQuotationAction(payload, 0, "", "order");
-              setQuoteSaving(false);
-              if (r.error || !r.quotationId) setQuoteError(r.error ?? "Could not save");
-              else router.push("/orders");
-            }}
-            className="btn-primary text-center disabled:opacity-60"
-          >
-            {quoteSaving ? t("Saving…") : t("Save as order")}
-          </button>
-        </div>
-      )}
-      {quotationsAvailable && !fromQuote && (
-        <div className="flex flex-col gap-2 rounded-xl border border-dashed border-border p-3">
-          <p className="text-xs text-muted">{t("Customer only wants a price for now?")}</p>
-          <div className="flex items-center gap-2">
-            <select value={quoteDays} onChange={(e) => setQuoteDays(Number(e.target.value))} className="rounded-lg border border-border px-2 py-2 text-xs outline-none focus:border-brand" aria-label={t("Valid for")}>
-              {[7, 15, 30, 60].map((d) => (
-                <option key={d} value={d}>
-                  {t("Valid {n} days", { n: d })}
-                </option>
-              ))}
-            </select>
+        {/* Not selling yet (#48): apart from Generate invoice, which sits in the bar or the summary. */}
+        {ordersAvailable && !fromQuote && customerMode === "existing" && selectedCustomer && (
+          <div className="flex flex-col gap-2 rounded-xl border border-brand bg-brand-soft p-3">
+            <p className="text-xs text-brand-text">{t("Taking an order on the route? Save it now — the office bills it when the goods go out.")}</p>
             <button
               type="button"
               disabled={quoteSaving}
               onClick={async () => {
                 setQuoteError(null);
                 setQuoteSaving(true);
-                const r = await saveQuotationAction(payload, quoteDays, "");
+                const r = await saveQuotationAction(payload, 0, "", "order");
                 setQuoteSaving(false);
                 if (r.error || !r.quotationId) setQuoteError(r.error ?? "Could not save");
-                else router.push(`/print/quotation/${r.quotationId}`);
+                else router.push("/orders");
               }}
-              className="flex-1 rounded-lg border border-brand bg-brand-soft px-3 py-2 text-sm font-medium text-brand-text disabled:opacity-60"
+              className="btn-primary text-center disabled:opacity-60"
             >
-              {quoteSaving ? t("Saving…") : t("Save as quotation")}
+              {quoteSaving ? t("Saving…") : t("Save as order")}
             </button>
           </div>
-          {quoteError && <p className="text-xs text-danger">{quoteError}</p>}
-        </div>
-      )}
-      {fromQuote && <p className="text-center text-xs text-muted">{t("Billing quotation {number}", { number: fromQuote.number })}</p>}
-      {fromChallans && <p className="text-center text-xs text-muted">{t("Billing challan(s) {numbers}", { numbers: fromChallans.numbers.join(", ") })}</p>}
+        )}
+        {quotationsAvailable && !fromQuote && (
+          <div className="flex flex-col gap-2 rounded-xl border border-dashed border-border p-3">
+            <p className="text-xs text-muted">{t("Customer only wants a price for now?")}</p>
+            <div className="flex items-center gap-2">
+              <select value={quoteDays} onChange={(e) => setQuoteDays(Number(e.target.value))} className="rounded-lg border border-border px-2 py-2 text-xs outline-none focus:border-brand" aria-label={t("Valid for")}>
+                {[7, 15, 30, 60].map((d) => (
+                  <option key={d} value={d}>
+                    {t("Valid {n} days", { n: d })}
+                  </option>
+                ))}
+              </select>
+              <button
+                type="button"
+                disabled={quoteSaving}
+                onClick={async () => {
+                  setQuoteError(null);
+                  setQuoteSaving(true);
+                  const r = await saveQuotationAction(payload, quoteDays, "");
+                  setQuoteSaving(false);
+                  if (r.error || !r.quotationId) setQuoteError(r.error ?? "Could not save");
+                  else router.push(`/print/quotation/${r.quotationId}`);
+                }}
+                className="flex-1 rounded-lg border border-brand bg-brand-soft px-3 py-2 text-sm font-medium text-brand-text disabled:opacity-60"
+              >
+                {quoteSaving ? t("Saving…") : t("Save as quotation")}
+              </button>
+            </div>
+            {quoteError && <p className="text-xs text-danger">{quoteError}</p>}
+          </div>
+        )}
+        {fromQuote && <p className="text-center text-xs text-muted">{t("Billing quotation {number}", { number: fromQuote.number })}</p>}
+        {fromChallans && <p className="text-center text-xs text-muted">{t("Billing challan(s) {numbers}", { numbers: fromChallans.numbers.join(", ") })}</p>}
+      </div>
     </form>
   );
 }
@@ -2010,20 +2077,20 @@ function StockIndicator({
   if (isLow) {
     return (
       <p className="text-xs font-semibold text-danger">
-        ● Low stock: {remaining} {unit} left
+        ● Low stock: {remaining} {unitLabel(unit)} left
       </p>
     );
   }
   if (isNearLow) {
     return (
       <p className="text-xs font-medium" style={{ color: "#c2760f" }}>
-        ● {remaining} {unit} left — getting low
+        ● {remaining} {unitLabel(unit)} left — getting low
       </p>
     );
   }
   return (
     <p className="text-xs text-muted">
-      {remaining} {unit} in stock
+      {remaining} {unitLabel(unit)} in stock
     </p>
   );
 }
