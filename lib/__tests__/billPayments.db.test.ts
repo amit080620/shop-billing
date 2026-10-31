@@ -378,3 +378,112 @@ describe("rollback (separate database)", { timeout: 30_000 }, () => {
     expect((await d.query<{ t: string | null }>("select to_regclass('public.bill_payments')::text as t")).rows[0].t).toBe("bill_payments");
   });
 });
+
+// ─── Migration 0062: the same limit, in the database, for bills without payment rows ─────────────
+describe("0062 — a legacy bill's refunds, checked in the database", { timeout: 60_000 }, () => {
+  const M0062 = read("0062_legacy_refund_guard.sql");
+  beforeAll(async () => {
+    // A fresh database with 0060, 0061 and 0062, and the tables holding a bill's non-money part.
+    db = await newDb();
+    await db.exec(`
+      create table jewellery_exchanges (id uuid primary key default gen_random_uuid(), shop_id uuid, bill_id uuid, exchange_value numeric(12, 2) not null);
+      create table gold_schemes (id uuid primary key default gen_random_uuid(), shop_id uuid, redeemed_bill_id uuid, installment_amount numeric(12, 2) not null, total_installments integer not null, bonus_amount numeric(12, 2) not null default 0);
+      create table gold_scheme_payments (id uuid primary key default gen_random_uuid(), shop_id uuid, scheme_id uuid not null, amount numeric(12, 2) not null);
+      create table wallet_entries (id uuid primary key default gen_random_uuid(), shop_id uuid, customer_id uuid, kind text not null, credit numeric(12, 2) not null, bill_id uuid);
+    `);
+    await db.exec(M0062);
+  });
+  const count = async (billId: string) => (await one<{ n: number }>("select count(*)::int as n from returns where bill_id = $1", [billId])).n;
+
+  it("no payment rows, paid ₹100 cash: cash up to ₹100 over all its returns; another mode refused", async () => {
+    const b = await bill(100, { method: "cash" });
+    await ret(b.id, b.line, 3, 30, "cash", "lg-1");
+    const over = await retFails(b.id, b.line, 2, 80, "cash", "lg-2"); // within the units left, over the money
+    expect(over.message).toBe("refund_exceeds_mode");
+    expect(JSON.parse(over.detail!)).toEqual({ method: "cash", received: 100, refunded: 30, asked: 80 });
+    expect((await retFails(b.id, b.line, 1, 10, "card", "lg-3")).message).toBe("refund_exceeds_mode");
+    await ret(b.id, b.line, 7, 70, "cash", "lg-4");
+    expect(await count(b.id)).toBe(2);
+  });
+
+  it("part paid (₹40 cash, ₹60 udhaar): cash up to ₹40; the udhaar part only as an adjustment", async () => {
+    const b = await bill(100, { paid: 40, method: "cash" });
+    await ret(b.id, b.line, 3, 30, "cash", "lg-part-1");
+    expect((await retFails(b.id, b.line, 2, 20, "cash", "lg-part-2")).message).toBe("refund_exceeds_mode");
+    await ret(b.id, b.line, 2, 20, "credit_adjustment", "lg-part-3");
+    expect(await count(b.id)).toBe(2);
+  });
+
+  it("fully on udhaar: no money refund at all; an adjustment is not limited", async () => {
+    const b = await bill(100, { paid: 0, method: "cash" });
+    expect((await retFails(b.id, b.line, 1, 10, "cash", "lg-udh-1")).message).toBe("refund_exceeds_mode");
+    await ret(b.id, b.line, 5, 50, "credit_adjustment", "lg-udh-2");
+    expect(await count(b.id)).toBe(1);
+  });
+
+  it("an earlier refund in another mode (saved before this rule) still counts against the money taken", async () => {
+    const b = await bill(100, { method: "cash" });
+    await db.exec("alter table returns disable trigger returns_refund_within_mode");
+    await db.query("insert into returns (shop_id, bill_id, total, refund_method) values ($1, $2, 50, 'upi')", [SHOP, b.id]);
+    await db.exec("alter table returns enable trigger returns_refund_within_mode");
+    const over = await retFails(b.id, b.line, 6, 60, "cash", "lg-old-1");
+    expect(JSON.parse(over.detail!)).toEqual({ method: "cash", received: 100, refunded: 50, asked: 60 });
+    await ret(b.id, b.line, 5, 50, "cash", "lg-old-2");
+  });
+
+  it("old gold, a gold scheme and prepaid balance in the paid amount are not refunded as money", async () => {
+    // ₹100 paid: ₹70 of it old gold → ₹30 money.
+    const g = await bill(100, { method: "cash" });
+    await db.query("insert into jewellery_exchanges (shop_id, bill_id, exchange_value) values ($1, $2, 70)", [SHOP, g.id]);
+    expect((await retFails(g.id, g.line, 4, 40, "cash", "lg-gold-1")).message).toBe("refund_exceeds_mode");
+    await ret(g.id, g.line, 3, 30, "cash", "lg-gold-2");
+    // ₹150 paid: a complete scheme (2 × ₹50 + ₹20 bonus = ₹120) → ₹30 money.
+    const s = await bill(150, { method: "cash" });
+    const scheme = (await one<{ id: string }>("insert into gold_schemes (shop_id, redeemed_bill_id, installment_amount, total_installments, bonus_amount) values ($1, $2, 50, 2, 20) returning id", [SHOP, s.id])).id;
+    await db.query("insert into gold_scheme_payments (shop_id, scheme_id, amount) values ($1, $2, 50), ($1, $2, 50)", [SHOP, scheme]);
+    expect((await retFails(s.id, s.line, 3, 45, "cash", "lg-scheme-1")).message).toBe("refund_exceeds_mode");
+    await ret(s.id, s.line, 2, 30, "cash", "lg-scheme-2");
+    // ₹100 paid: ₹40 from prepaid balance → ₹60 money.
+    const w = await bill(100, { method: "upi" });
+    await db.query("insert into wallet_entries (shop_id, customer_id, kind, credit, bill_id) values ($1, $2, 'spend', -40, $3)", [SHOP, CUSTOMER, w.id]);
+    expect((await retFails(w.id, w.line, 7, 70, "upi", "lg-wallet-1")).message).toBe("refund_exceeds_mode");
+    await ret(w.id, w.line, 6, 60, "upi", "lg-wallet-2");
+  });
+
+  it("a bill with payment rows keeps 0061's per-mode rule (split ₹10 cash + ₹90 UPI)", async () => {
+    const b = await bill(100);
+    await setPays(b.id, [{ method: "cash", amount: 10 }, { method: "upi", amount: 90 }], 0);
+    await ret(b.id, b.line, 1, 10, "cash", "lg-split-1");
+    expect((await retFails(b.id, b.line, 1, 10, "cash", "lg-split-2")).message).toBe("refund_exceeds_mode");
+    expect((await retFails(b.id, b.line, 1, 10, "card", "lg-split-3")).message).toBe("refund_exceeds_mode");
+    await ret(b.id, b.line, 9, 90, "upi", "lg-split-4");
+  });
+
+  it("the same request sent again (same clientRef) answers with the saved return — not refused, not saved twice", async () => {
+    const b = await bill(100, { method: "cash" });
+    const first = (await ret(b.id, b.line, 10, 100, "cash", "lg-dup")).rows[0] as { r: { result: string; return_id: string } };
+    expect(first.r.result).toBe("ok");
+    const again = (await ret(b.id, b.line, 10, 100, "cash", "lg-dup")).rows[0] as { r: { result: string; return_id: string } };
+    expect(again.r).toEqual({ result: "duplicate", return_id: first.r.return_id });
+    expect(await count(b.id)).toBe(1);
+  });
+
+  it("back-to-back returns each within the limit but not together: the second is refused (sequential — PGlite has one connection, so this is not a concurrency test)", async () => {
+    const b = await bill(100, { method: "cash" });
+    await ret(b.id, b.line, 6, 60, "cash", "lg-seq-1");
+    expect((await retFails(b.id, b.line, 4, 60, "cash", "lg-seq-2")).message).toBe("refund_exceeds_mode");
+    // The check holds the bill's row before it counts earlier refunds — what makes two at once wait for each other on a real server.
+    const src = (await one<{ s: string }>("select prosrc as s from pg_proc where proname = 'returns_refund_within_mode'")).s;
+    expect(src.indexOf("for update")).toBeGreaterThan(-1);
+    expect(src.indexOf("for update")).toBeLessThan(src.indexOf("from returns"));
+  });
+
+  it("rollback puts back 0061's function: legacy bills are again left to the app", async () => {
+    const rollback = M0062.slice(M0062.indexOf("-- [rollback-start]"), M0062.indexOf("-- [rollback-end]")).split("\n").filter((l) => l.startsWith("-- ") && !l.startsWith("-- [rollback")).map((l) => l.slice(3)).join("\n");
+    await db.exec(rollback);
+    const b = await bill(100, { method: "cash" });
+    await ret(b.id, b.line, 2, 20, "card", "lg-rb-1");
+    expect(await count(b.id)).toBe(1);
+    await db.exec(M0062);
+  });
+});

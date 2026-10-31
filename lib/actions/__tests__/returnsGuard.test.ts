@@ -274,3 +274,17 @@ describe("refunds go back only the way the money came in (#82)", () => {
     expect(db.rpc).toEqual([]);
   });
 });
+
+describe("udhaar adjustment needs a customer (walk-in fix)", () => {
+  const saves = { record_return: { data: { result: "ok", return_id: "ret-1" } } };
+  it("a walk-in bill: adjusting against udhaar is refused before a credit-note number is used up", async () => {
+    const db = fakeDb({ rpc: saves, answer: (table, op, single) => (table === "bills" && op === "select" && single ? { data: { id: "bill-1", customer_id: null, status: "active", paid_amount: 50, payment_method: "cash" } } : undefined) });
+    expect(await run(form("credit_adjustment"))).toEqual({ result: { error: "This bill has no customer, so there is no udhaar khata to adjust — refund it in money instead." } });
+    expect(db.rpc).toEqual([]);
+  });
+  it("a registered customer's bill: the adjustment goes through as before, with its udhaar note", async () => {
+    const db = fakeDb({ rpc: saves });
+    expect(await run(form("credit_adjustment"))).toEqual({ redirect: "/returns/ret-1" });
+    expect(db.rpc.find(([n]) => n === "record_return")?.[1]).toMatchObject({ p_credit_note: "Return CN/2026-27/00003 adjusted against udhaar" });
+  });
+});

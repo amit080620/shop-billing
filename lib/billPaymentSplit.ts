@@ -107,9 +107,13 @@ export function refundRoom(opts: {
 }
 
 /** Why a return can't give `total` back this way, or null. Adjusting it against the customer's
- * udhaar ("credit_adjustment") gives no money back, so it isn't limited here. */
+ * udhaar ("credit_adjustment") gives no money back, so it isn't limited here — but it needs a
+ * customer: a walk-in bill has no khata to adjust. */
 export function refundError(room: RefundRoom, method: string, total: number, hasCustomer: boolean): string | null {
-  if (method === "credit_adjustment" || total <= 0.005) return null;
+  if (method === "credit_adjustment") {
+    return hasCustomer ? null : "This bill has no customer, so there is no udhaar khata to adjust — refund it in money instead.";
+  }
+  if (total <= 0.005) return null;
   if (!isMoneyMode(method)) return "Pick how the refund was given.";
   const orUdhaar = hasCustomer ? ", or adjust it against the customer's udhaar" : "";
   const mode = room.find((m) => m.method === method);

@@ -108,3 +108,13 @@ describe("onlyUdhaar — the receipt says Udhaar", () => {
     expect(onlyUdhaar(1763, 0)).toBe(false);
   });
 });
+
+describe("refundError — udhaar adjustment needs a customer", () => {
+  it("a walk-in bill (no customer) can't be adjusted against udhaar: there is no khata", () => {
+    expect(refundError([], "credit_adjustment", 50, false)).toBe("This bill has no customer, so there is no udhaar khata to adjust — refund it in money instead.");
+  });
+  it("a customer's bill still can, whatever the money room", () => {
+    expect(refundError([], "credit_adjustment", 50, true)).toBeNull();
+    expect(refundError([{ method: "cash", left: 10 }], "credit_adjustment", 500, true)).toBeNull();
+  });
+});
