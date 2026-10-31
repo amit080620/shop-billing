@@ -585,6 +585,8 @@ function FastBillSheet({
   // While the customer's number or name is being typed, the item list folds
   // to one line so the customer box and its suggestions sit above the keyboard.
   const [customerFocus, setCustomerFocus] = useState(false);
+  // The same while a split payment's amount or reference is typed: only the payment rows show.
+  const [payFocus, setPayFocus] = useState(false);
   const subtotal = cart.reduce((s, l) => s + l.qty * l.price, 0);
   const itemCount = cart.reduce((s, l) => s + l.qty, 0);
 
@@ -597,7 +599,7 @@ function FastBillSheet({
         </button>
       </div>
 
-      {customerFocus ? (
+      {customerFocus || payFocus ? (
         <p className="border-b border-border px-4 py-2 text-xs text-muted">
           {itemCount === 1 ? t("1 item") : t("{count} items", { count: itemCount })} · {formatMoney(subtotal)}
         </p>
@@ -646,7 +648,7 @@ function FastBillSheet({
       )}
 
       {cart.length > 0 && (
-        <div className={`border-t border-border px-4 py-3 ${customerFocus ? "min-h-0 flex-1 overflow-y-auto" : ""}`}>
+        <div className={`overflow-y-auto overscroll-contain border-t border-border px-4 py-3 ${customerFocus || payFocus ? "min-h-0 flex-1" : "max-h-[60dvh] shrink-0"}`}>
           {!customerFocus && (
             <div className="mb-3 flex items-center justify-between text-sm">
               <span className="text-muted">Subtotal</span>
@@ -658,7 +660,7 @@ function FastBillSheet({
               <KeyboardHint keys={[["Enter", "checkout"], ["Esc", "back"]]} />
             </div>
           )}
-          <FastCheckoutButton cart={cart} loyaltyRedemptionValue={loyaltyRedemptionValue} priceIncludesGst={priceIncludesGst} gstScheme={gstScheme} voiceCustomer={voiceCustomer} canDiscount={canDiscount} shopId={shopId} focusMode={customerFocus} onFocusMode={setCustomerFocus} />
+          <FastCheckoutButton cart={cart} loyaltyRedemptionValue={loyaltyRedemptionValue} priceIncludesGst={priceIncludesGst} gstScheme={gstScheme} voiceCustomer={voiceCustomer} canDiscount={canDiscount} shopId={shopId} focusMode={customerFocus || payFocus} payFocus={payFocus} onFocusMode={setCustomerFocus} onPayFocus={setPayFocus} />
         </div>
       )}
 
@@ -695,11 +697,15 @@ function FastCheckoutButton({
   canDiscount,
   shopId,
   focusMode,
+  payFocus,
+  onPayFocus,
   onFocusMode,
 }: {
   shopId: string;
   /** The customer box is being typed in: show only it. */
   focusMode: boolean;
+  payFocus: boolean;
+  onPayFocus: (on: boolean) => void;
   onFocusMode: (on: boolean) => void;
   canDiscount: boolean;
   cart: FastCartLine[];
@@ -853,6 +859,7 @@ function FastCheckoutButton({
       {/* Customer — always available (not just for Udhar), since ANY
           paid sale can earn/redeem loyalty points, not only credit
           ones. Required only when Udhar is selected. */}
+      <div className={payFocus ? "hidden" : "contents"}>
       <FastCustomerPicker
         shopId={shopId}
         isUdhar={isUdhar}
@@ -865,6 +872,7 @@ function FastCheckoutButton({
         onPick={handlePick}
         onFocusMode={onFocusMode}
       />
+      </div>
       <div className={`flex flex-col gap-2 ${focusMode ? "hidden" : ""}`}>
         {matchedCustomer && matchedCustomer.loyaltyPoints > 0 && loyaltyRedemptionValue > 0 && (
           discountType === "flat" ? (
@@ -930,8 +938,8 @@ function FastCheckoutButton({
       )}
 
       {/* Cash at the counter: what the customer handed over, and the change to give back. */}
-      {cart.length > 0 && !focusMode && !isUdhar && (split ? (
-        <SplitPayments rows={split} onChange={setSplit} payable={payable} canUdhaar={!!matchedCustomer || customerPhone.length === 10} onSingle={() => setSplit(null)} />
+      {cart.length > 0 && (!focusMode || payFocus) && !isUdhar && (split ? (
+        <SplitPayments rows={split} onChange={setSplit} payable={payable} canUdhaar={!!matchedCustomer || customerPhone.length === 10} onSingle={() => setSplit(null)} onFocusMode={onPayFocus} />
       ) : (
         <button
           type="button"

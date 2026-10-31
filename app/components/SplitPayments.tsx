@@ -1,5 +1,6 @@
 "use client";
 
+import { useRef } from "react";
 import { Plus, X } from "lucide-react";
 import { useT } from "@/lib/i18n/LangContext";
 import { formatMoney, paymentMethodLabel } from "@/lib/format";
@@ -29,8 +30,32 @@ export function splitProblem(rows: SplitRow[], payable: number, canUdhaar: boole
 /** A bill paid more than one way: a row per payment (mode, amount, reference), what they add up to,
  * and — said plainly — what is left as udhaar on the customer's khata. Cash change is for the cash
  * row only. `payable` is what is due in money (the bill less old gold, a scheme or prepaid balance). */
-export function SplitPayments({ rows, onChange, payable, canUdhaar, onSingle }: { rows: SplitRow[]; onChange: (rows: SplitRow[]) => void; payable: number; canUdhaar: boolean; onSingle: () => void }) {
+export function SplitPayments({ rows, onChange, payable, canUdhaar, onSingle, onFocusMode }: { rows: SplitRow[]; onChange: (rows: SplitRow[]) => void; payable: number; canUdhaar: boolean; onSingle: () => void; onFocusMode?: (on: boolean) => void }) {
   const { t } = useT();
+  const rootRef = useRef<HTMLDivElement>(null);
+  // The field being typed stays in sight above the keyboard, in whatever box scrolls (the Fast
+  // Billing sheet or the page): once now, and again when the keyboard has finished opening.
+  function keepInSight(el: HTMLElement) {
+    const show = () => {
+      if (document.activeElement !== el) return;
+      const r = el.getBoundingClientRect();
+      const bottom = window.visualViewport?.height ?? window.innerHeight;
+      if (r.top < 60 || r.bottom > bottom - 16) el.scrollIntoView({ block: "center", behavior: "smooth" });
+    };
+    requestAnimationFrame(show);
+    setTimeout(show, 350);
+  }
+  function focusIn(e: React.FocusEvent) {
+    onFocusMode?.(true);
+    if (e.target instanceof HTMLInputElement) keepInSight(e.target);
+  }
+  function focusOut() {
+    // Moving between the payment boxes keeps focus mode; leaving them all ends it.
+    setTimeout(() => {
+      if (rootRef.current?.contains(document.activeElement)) return;
+      onFocusMode?.(false);
+    }, 0);
+  }
   const paid = splitSum(rows);
   const left = round2(payable - paid);
   const problem = splitProblem(rows, payable, canUdhaar);
@@ -38,14 +63,15 @@ export function SplitPayments({ rows, onChange, payable, canUdhaar, onSingle }: 
   const cash = rows.find((r) => r.method === "cash" && typeof r.amount === "number" && r.amount > 0);
 
   return (
-    <div className="flex flex-col gap-2">
+    <div ref={rootRef} onFocus={focusIn} onBlur={focusOut} className="flex min-w-0 flex-col gap-2">
       {rows.map((r, i) => (
-        <div key={i} className="flex flex-wrap items-center gap-2">
+        <div key={i} className="flex min-w-0 flex-col gap-1.5 rounded-lg border border-border p-2">
+          <div className="flex min-w-0 items-center gap-2">
           <select
             aria-label={t("Payment mode")}
             value={r.method}
             onChange={(e) => set(i, { method: e.target.value as PaymentMode })}
-            className="rounded-lg border border-border bg-surface px-2.5 py-2 text-sm"
+            className="min-w-0 flex-1 rounded-lg border border-border bg-surface px-2 py-2 text-sm"
           >
             {MODES.map((m) => (
               <option key={m} value={m}>
@@ -58,11 +84,27 @@ export function SplitPayments({ rows, onChange, payable, canUdhaar, onSingle }: 
             min="0"
             step="0.01"
             inputMode="decimal"
+            enterKeyHint="done"
+            placeholder="₹"
             aria-label={t("Amount")}
             value={r.amount}
-            onChange={(e) => set(i, { amount: e.target.value === "" ? "" : Math.max(0, Number(e.target.value)) })}
-            className="w-28 rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-brand"
+            onChange={(e) => {
+              const amount = e.target.value === "" ? "" : Math.max(0, Number(e.target.value));
+              // Two payments: typing the second sets the first to the rest of the bill, so they add up.
+              // The first is then free to change (anything left over goes on udhaar).
+              if (rows.length === 2 && i === 1 && typeof amount === "number" && amount <= payable) {
+                const rest = round2(payable - amount);
+                onChange(rows.map((r2, j) => (j === i ? { ...r2, amount } : { ...r2, amount: rest > 0 ? rest : "" })));
+              } else set(i, { amount });
+            }}
+            className="w-28 shrink-0 rounded-lg border border-border px-3 py-2 text-base outline-none focus:border-brand"
           />
+          {rows.length > 1 && (
+            <button type="button" onClick={() => onChange(rows.filter((_, j) => j !== i))} aria-label={t("Remove payment")} className="shrink-0 rounded-lg border border-border p-2 text-muted">
+              <X size={14} />
+            </button>
+          )}
+          </div>
           {r.method !== "cash" && (
             <input
               type="text"
@@ -70,13 +112,9 @@ export function SplitPayments({ rows, onChange, payable, canUdhaar, onSingle }: 
               placeholder={t("Ref (optional)")}
               value={r.reference}
               onChange={(e) => set(i, { reference: e.target.value })}
-              className="min-w-0 flex-1 rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-brand"
+              enterKeyHint="done"
+              className="w-full min-w-0 rounded-lg border border-border px-3 py-2 text-base outline-none focus:border-brand"
             />
-          )}
-          {rows.length > 1 && (
-            <button type="button" onClick={() => onChange(rows.filter((_, j) => j !== i))} aria-label={t("Remove payment")} className="rounded-lg border border-border p-2 text-muted">
-              <X size={14} />
-            </button>
           )}
         </div>
       ))}
