@@ -330,13 +330,18 @@ export default async function PrintBillPage({
                 items={(items ?? []).map((i) => ({ id: i.id, productName: i.product_name, quantity: Number(i.quantity) }))}
               />
             )}
-            {!periodClosed && hasPermission(session, "void_bills") && <VoidBillButton billId={bill.id} invoiceNumber={bill.invoice_number} />}
           </div>
         )}
         {bill.status === "active" && periodClosed && (hasPermission(session, "edit_bills") || hasPermission(session, "void_bills")) && (
           <p className="mt-2 text-xs text-muted">
             {t("This bill is from an earlier month, so it can't be edited or voided — that month may already be filed. Use Return (value down) or Debit note (value up) for any correction.")}
           </p>
+        )}
+        {/* Apart from the everyday actions above: voiding can't be undone. */}
+        {bill.status === "active" && !periodClosed && hasPermission(session, "void_bills") && (
+          <div className="mt-4 border-t border-border pt-3">
+            <VoidBillButton billId={bill.id} invoiceNumber={bill.invoice_number} />
+          </div>
         )}
       </div>
 

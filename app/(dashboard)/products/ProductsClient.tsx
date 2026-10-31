@@ -267,6 +267,21 @@ export function ProductsClient({
     setShowForm(true);
   }
 
+  // Delete sits inside the item's edit form, away from the list's everyday taps, and still asks
+  // first. An item with sales on record is refused; the owner then sees "Force delete" on its row.
+  function deleteProduct(p: Product) {
+    if (!confirm(`Delete "${p.name}"?`)) return;
+    setShowForm(false);
+    setEditingProduct(null);
+    setDeletingId(p.id);
+    startTransition(async () => {
+      const result = await deleteProductAction(p.id);
+      setDeleteError(result?.error ?? null);
+      setBlockedProductId(result?.error ? p.id : null);
+      if (!result?.error) showToast("Item deleted", "info");
+    });
+  }
+
   function openEditProductForm(p: Product) {
     setEditingProduct(p);
     setStockUnlocked(false);
@@ -947,6 +962,18 @@ export function ProductsClient({
               </button>
             )}
           </div>
+          {editingProduct && (
+            <div className="border-t border-border pt-3">
+              <button
+                type="button"
+                disabled={isPending}
+                onClick={() => deleteProduct(editingProduct)}
+                className="flex items-center gap-1.5 rounded-lg px-1 py-1.5 text-sm font-medium text-danger disabled:opacity-50"
+              >
+                <Trash2 size={15} /> {t("products.delete")}
+              </button>
+            </div>
+          )}
         </form>
         </div>
         </div>
@@ -1145,25 +1172,6 @@ export function ProductsClient({
                       className="rounded-md p-1.5 text-muted hover:bg-surface-2 hover:text-brand-text"
                     >
                       <Pencil size={15} />
-                    </button>
-                    <button
-                      disabled={isPending}
-                      onClick={() => {
-                        // One stray tap used to delete a product outright.
-                        if (!confirm(`Delete "${p.name}"?`)) return;
-                        setDeletingId(p.id);
-                        startTransition(async () => {
-                          const result = await deleteProductAction(p.id);
-                          setDeleteError(result?.error ?? null);
-                          setBlockedProductId(result?.error ? p.id : null);
-                          if (!result?.error) showToast("Item deleted", "info");
-                        });
-                      }}
-                      aria-label={`${t("products.delete")} ${p.name}`}
-                      title={t("products.delete")}
-                      className="rounded-md p-1.5 text-muted hover:bg-danger-soft hover:text-danger disabled:opacity-50"
-                    >
-                      <Trash2 size={15} />
                     </button>
                     {isOwner && blockedProductId === p.id && (
                       <button

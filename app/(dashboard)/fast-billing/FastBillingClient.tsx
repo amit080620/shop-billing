@@ -616,13 +616,14 @@ function FastBillSheet({
                   <p className="text-xs text-muted">{formatMoney(line.price)} each</p>
                 </div>
                 <div className="flex shrink-0 items-center gap-1.5">
+                  {/* At 1 the minus becomes a bin: one control takes it out, with no red trash beside +. */}
                   <button
                     onClick={() => onUpdateQty(line.productId, line.qty - 1)}
-                    className="flex h-7 w-7 items-center justify-center rounded-full bg-background"
+                    className={`flex h-7 w-7 items-center justify-center rounded-full bg-background ${line.qty <= 1 ? "text-danger" : ""}`}
                     style={{ boxShadow: "var(--elev-xs)" }}
-                    aria-label="Decrease"
+                    aria-label={line.qty <= 1 ? "Remove" : "Decrease"}
                   >
-                    <Minus size={13} />
+                    {line.qty <= 1 ? <Trash2 size={13} /> : <Minus size={13} />}
                   </button>
                   <button onClick={() => setEditingQty(line)} className="w-7 text-center text-sm font-semibold text-foreground">
                     {line.qty}
@@ -634,9 +635,6 @@ function FastBillSheet({
                     aria-label="Increase"
                   >
                     <Plus size={13} />
-                  </button>
-                  <button onClick={() => onUpdateQty(line.productId, 0)} className="ml-1 text-danger" aria-label="Remove">
-                    <Trash2 size={16} />
                   </button>
                 </div>
                 <p className="w-16 shrink-0 text-right text-sm font-semibold text-foreground">{formatMoney(line.qty * line.price)}</p>
