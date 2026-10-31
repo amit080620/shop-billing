@@ -49,7 +49,8 @@ export default async function CustomersPage({
     fitnessGoal: c.fitness_goal,
     heightCm: c.height_cm ? Number(c.height_cm) : null,
     weightKg: c.weight_kg ? Number(c.weight_kg) : null,
-    balance: Math.max(0, balances.get(c.id) ?? 0),
+    // Below zero: the customer has paid ahead (an advance) — shown as such, not as settled.
+    balance: Math.round((balances.get(c.id) ?? 0) * 100) / 100,
   }));
 
   return (

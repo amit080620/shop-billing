@@ -227,11 +227,17 @@ export function CustomersClient({
                 </div>
                 <div className="shrink-0 text-right">
                   {c.balance > 0 ? (
-                    <p className="text-sm font-semibold text-credit">
-                      {formatMoney(c.balance)}
-                    </p>
+                    <>
+                      <p className="text-sm font-semibold text-credit">{formatMoney(c.balance)}</p>
+                      <p className="text-xs text-muted">{t("Due")}</p>
+                    </>
+                  ) : c.balance < 0 ? (
+                    <>
+                      <p className="text-sm font-semibold text-success">{formatMoney(-c.balance)}</p>
+                      <p className="text-xs text-muted">{t("Paid in advance")}</p>
+                    </>
                   ) : (
-                    <p className="text-sm text-muted">Settled</p>
+                    <p className="text-sm text-muted">{t("Settled")}</p>
                   )}
                 </div>
               </Link>
