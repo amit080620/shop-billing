@@ -117,6 +117,8 @@ export function SearchableSelect<T>({
   // by default), arrows move through the list, Escape closes it.
   function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
     if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+      // Keyboard billing: with nothing typed, the arrows choose a line of the bill (lib/keyboardBilling).
+      if (autoFocus && !query.trim()) return;
       e.preventDefault();
       setOpen(true);
       const step = e.key === "ArrowDown" ? 1 : -1;

@@ -21,9 +21,29 @@ describe("readBillingKey", () => {
     expect(readBillingKey(key("Enter"), "search", false)).toBe("ignore");
   });
 
-  it("leaves Enter in a field, on a button or a link, to them", () => {
-    expect(readBillingKey(key("Enter"), "field", true)).toBe("ignore");
+  it("Enter in a box is offered to the screen as 'done' (it leaves it alone unless it is one of its boxes); a button or link keeps it", () => {
+    expect(readBillingKey(key("Enter"), "field", true)).toBe("done");
     expect(readBillingKey(key("Enter"), "control", true)).toBe("ignore");
+  });
+
+  it("with the item search empty: + − change the quantity, ↑ ↓ choose the line", () => {
+    expect(readBillingKey(key("+"), "search", true)).toBe("plus");
+    expect(readBillingKey(key("="), "page", true)).toBe("plus");
+    expect(readBillingKey(key("-"), "search", true)).toBe("minus");
+    expect(readBillingKey(key("ArrowUp"), "search", true)).toBe("up");
+    expect(readBillingKey(key("ArrowDown"), "page", true)).toBe("down");
+  });
+
+  it("with something typed in the search, + − ↑ ↓ stay the search's own (text, suggestions)", () => {
+    for (const k of ["+", "-", "ArrowUp", "ArrowDown"]) expect(readBillingKey(key(k), "search", false)).toBe("other");
+    expect(readBillingKey(key("-"), "field", true)).toBe("other");
+  });
+
+  it("F2 / F3 / F4 from anywhere but a button or link", () => {
+    expect(readBillingKey(key("F2"), "search", false)).toBe("f2");
+    expect(readBillingKey(key("F3"), "field", true)).toBe("f3");
+    expect(readBillingKey(key("F4"), "page", true)).toBe("f4");
+    expect(readBillingKey(key("F2"), "control", true)).toBe("ignore");
   });
 
   it("does nothing on a held key or while an IME is composing", () => {

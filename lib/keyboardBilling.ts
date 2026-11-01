@@ -1,7 +1,10 @@
 /** Keyboard billing on a computer: make and print a bill without the mouse, the way counter
  * software like Marg works. Enter on an empty item search opens the bill's last screen, Enter there
  * saves it (and "Print as soon as a bill is saved" prints it); F10 or Ctrl+Enter saves at once; Esc
- * goes back. On the printed bill Enter prints, P prints again and N (or Esc) starts the next bill.
+ * goes back. With the item search empty, + and − change the chosen line's quantity, ↑ ↓ choose the
+ * line and F2 types its quantity. On the bill's last screen F2 is the discount, F3 the amount paid,
+ * F4 the next payment mode, and Enter in one of those boxes confirms it (a second Enter saves).
+ * On the printed bill Enter prints, P prints again and N (or Esc) starts the next bill.
  *
  * Turned on per computer (this browser) and off until then, so phones and shops that never asked for
  * it see no change. */
@@ -51,7 +54,7 @@ export function lastBillingScreen(): string | null {
 /** Where the keyboard is: nowhere in particular ("page"), the bill's item search, a field being
  * typed in, or a button/link (where Enter presses it, as always). */
 export type FocusKind = "page" | "search" | "field" | "control";
-export type BillingKey = "next" | "save" | "back" | "other" | "ignore";
+export type BillingKey = "next" | "save" | "back" | "plus" | "minus" | "up" | "down" | "f2" | "f3" | "f4" | "done" | "other" | "ignore";
 
 type KeyInfo = { key: string; ctrlKey: boolean; metaKey: boolean; altKey: boolean; shiftKey: boolean; repeat: boolean; isComposing?: boolean };
 
@@ -62,8 +65,21 @@ export function readBillingKey(k: KeyInfo, focus: FocusKind, searchEmpty: boolea
   if (k.repeat || k.isComposing) return "ignore";
   if (k.key === "F10" || (k.key === "Enter" && (k.ctrlKey || k.metaKey) && !k.altKey)) return focus === "control" ? "ignore" : "save";
   if (k.ctrlKey || k.metaKey || k.altKey) return "ignore";
+  if (k.key === "F2" || k.key === "F3" || k.key === "F4") return focus === "control" ? "ignore" : (k.key.toLowerCase() as "f2" | "f3" | "f4");
   if (k.key === "Escape") return focus === "page" || focus === "search" ? "back" : "ignore";
-  if (k.key === "Enter") return !k.shiftKey && (focus === "page" || (focus === "search" && searchEmpty)) ? "next" : "ignore";
+  if (k.key === "Enter") {
+    if (k.shiftKey) return "ignore";
+    if (focus === "page" || (focus === "search" && searchEmpty)) return "next";
+    // A box being typed in: the screen may take it as "done with this box" (else it is left alone).
+    return focus === "field" ? "done" : "ignore";
+  }
+  // With nothing typed in the item search, these work on the bill's lines instead of the text.
+  if (focus === "page" || (focus === "search" && searchEmpty)) {
+    if (k.key === "+" || k.key === "=") return "plus";
+    if (k.key === "-") return "minus";
+    if (k.key === "ArrowUp") return "up";
+    if (k.key === "ArrowDown") return "down";
+  }
   return "other";
 }
 

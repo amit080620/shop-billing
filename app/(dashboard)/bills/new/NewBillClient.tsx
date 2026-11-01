@@ -207,6 +207,10 @@ export function NewBillClient({
   const [showAllLines, setShowAllLines] = useState(false);
   const [discountOpen, setDiscountOpen] = useState(false);
   const discountInputRef = useRef<HTMLInputElement>(null);
+  // Keyboard billing: the cart line + / − / F2 work on (the one added last unless ↑ ↓ moved it), and
+  // the amount-paid box F3 jumps to.
+  const [activeId, setActiveId] = useState<string | null>(null);
+  const paidInputRef = useRef<HTMLInputElement>(null);
   const [cart, setCart] = useState<CartLine[]>(() => (fromQuote ? cartFromQuote(fromQuote.lines, products, fromQuote.honourPrices) : fromChallans ? cartFromQuote(fromChallans.lines, products, false) : []));
   const router = useRouter();
   const [quoteDays, setQuoteDays] = useState(15);
@@ -503,12 +507,62 @@ export function NewBillClient({
       else if (Date.now() - ticketOpenedAt.current >= SETTLE_MS) keySave();
       return true;
     }
-    if (step === "ticket") {
+    if (key === "back") {
+      if (step !== "ticket") return false;
       setStep("cart");
+      return true;
+    }
+    if (step === "cart") {
+      const line = cart.find((c) => c.productId === activeId) ?? cart[cart.length - 1];
+      if (!line) return false;
+      const at = cart.indexOf(line);
+      if (key === "up" || key === "down") {
+        setActiveId(cart[Math.min(cart.length - 1, Math.max(0, at + (key === "up" ? -1 : 1)))].productId);
+        return true;
+      }
+      if (key === "plus" || key === "minus") {
+        const by = quantityStep(line.unit);
+        updateQuantity(line.productId, round2(line.quantity + (key === "plus" ? by : -by)));
+        setActiveId(line.productId);
+        return true;
+      }
+      if (key === "f2") {
+        const box = document.querySelector<HTMLInputElement>(`input[data-qty-for="${CSS.escape(line.productId)}"]`);
+        box?.focus();
+        box?.select();
+        return !!box;
+      }
+      return false;
+    }
+    // The bill's last screen.
+    if (key === "f2" && shopContext.canDiscount) {
+      setDiscountOpen(true);
+      requestAnimationFrame(() => {
+        discountInputRef.current?.focus();
+        discountInputRef.current?.select();
+      });
+      return true;
+    }
+    if (key === "f3") {
+      const box = paidInputRef.current ?? document.querySelector<HTMLInputElement>('input[aria-label="Amount"]');
+      box?.focus();
+      box?.select();
+      return !!box;
+    }
+    if (key === "f4" && !split && typeof paidAmount === "number" && paidAmount > 0) {
+      const modes = ["cash", "upi", "card", "online", "other"] as const;
+      setPaymentMethod(modes[(modes.indexOf(paymentMethod) + 1) % modes.length]);
+      return true;
+    }
+    if (key === "done" && document.activeElement instanceof HTMLInputElement && document.activeElement.dataset.keyDone !== undefined) {
+      // The box is confirmed: the next Enter (nothing focused) saves.
+      document.activeElement.blur();
       return true;
     }
     return false;
   });
+  const focusItemSearch = () => document.querySelector<HTMLInputElement>("input[data-bill-search]")?.focus();
+  const activeLineId = (cart.find((c) => c.productId === activeId) ?? cart[cart.length - 1])?.productId;
 
   // The floating calculator picks this up automatically when opened.
   useSyncCalculatorAmount(cart.length > 0 ? totals.total : null);
@@ -546,6 +600,7 @@ export function NewBillClient({
 
   function addProduct(input: Product) {
     const p = atLevel(input);
+    setActiveId(p.id);
     setCart((prev) => {
       const existing = prev.find((c) => c.productId === p.id);
       if (existing) {
@@ -1110,7 +1165,7 @@ export function NewBillClient({
               {cart.map((line) => (
                 <li
                   key={line.productId}
-                  className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1.5 neu-card px-3.5 py-2.5 md:grid-cols-[minmax(0,1fr)_auto_6.5rem]"
+                  className={`grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1.5 neu-card px-3.5 py-2.5 md:grid-cols-[minmax(0,1fr)_auto_6.5rem] ${keyboardBilling && line.productId === activeLineId ? "ring-2 ring-brand/50" : ""}`}
                 >
                   <div className="col-span-2 flex items-baseline justify-between gap-3 md:col-span-1">
                     <p className="min-w-0 truncate text-sm font-medium text-foreground">{line.name}</p>
@@ -1195,6 +1250,8 @@ export function NewBillClient({
                     <QuantityInput
                       value={line.quantity}
                       onCommit={(num) => updateQuantity(line.productId, num)}
+                      productId={line.productId}
+                      onEnter={keyboardBilling ? focusItemSearch : undefined}
                     />
                     <button
                       onClick={() =>
@@ -1283,7 +1340,7 @@ export function NewBillClient({
           <button data-keyboard-next disabled={!canComplete} onClick={complete} className="btn-primary w-full disabled:opacity-40">
             {t("bill.completeTicket")} →
           </button>
-          {keyboardBilling && <KeyboardHint keys={[["Enter", "next"], ["F10", "save now"]]} />}
+          {keyboardBilling && <KeyboardHint keys={[["Enter", "next"], ["+ −", "quantity"], ["↑ ↓", "item"], ["F2", "type quantity"], ["F10", "save now"]]} />}
         </aside>
 
         <div className="fixed inset-x-0 bottom-[calc(var(--bottom-nav-h)+env(safe-area-inset-bottom))] z-20 border-t border-border bg-surface px-4 py-2 md:hidden">
@@ -1455,7 +1512,7 @@ export function NewBillClient({
                 <SubmitButton blocked={(customerMode === "walkin" && totals.balanceAmount > 0) || b2bInvalid} generatingLabel={t("bill.generating")} submitLabel={t("bill.generateInvoice")} />
               </div>
             </div>
-            {keyboardBilling && <KeyboardHint keys={[["Enter", "save"], ["Esc", "back to items"]]} />}
+            {keyboardBilling && <KeyboardHint keys={[["F2", "discount"], ["F3", "amount paid"], ["F4", "payment mode"], ["Enter", "save"], ["Esc", "back to items"]]} />}
           </div>
         </div>
       </aside>
@@ -1517,6 +1574,7 @@ export function NewBillClient({
               max={discountType === "percent" ? 100 : undefined}
               step="0.01"
               ref={discountInputRef}
+            data-key-done
               value={discountValue || ""}
               onChange={(e) => setDiscountValue(Number(e.target.value) || 0)}
               placeholder={discountType === "flat" ? "e.g. 20" : "e.g. 10"}
@@ -1663,6 +1721,8 @@ export function NewBillClient({
           <label className="flex flex-col gap-1.5 text-sm">
             <span className="font-medium text-foreground">{t("bill.orPartPayment")}</span>
             <input
+              ref={paidInputRef}
+              data-key-done
               type="number"
               min="0"
               step="0.01"
@@ -2107,7 +2167,7 @@ function presetLabel(value: number, unit: string): string {
  * number, since "" isn't a valid quantity yet. This keeps its own text
  * buffer so clearing/retyping feels normal, and only commits the parsed
  * number to the cart on blur (or Enter). */
-function QuantityInput({ value, onCommit }: { value: number; onCommit: (n: number) => void }) {
+function QuantityInput({ value, onCommit, productId, onEnter }: { value: number; onCommit: (n: number) => void; productId?: string; /** After Enter: keyboard billing goes back to the item search. */ onEnter?: () => void }) {
   const [text, setText] = useState(String(value));
 
   useEffect(() => {
@@ -2132,10 +2192,12 @@ function QuantityInput({ value, onCommit }: { value: number; onCommit: (n: numbe
       value={text}
       onChange={(e) => setText(e.target.value)}
       onBlur={commit}
+      data-qty-for={productId}
       onKeyDown={(e) => {
         if (e.key === "Enter") {
           e.preventDefault();
           (e.target as HTMLInputElement).blur();
+          onEnter?.();
         }
       }}
       className="h-11 w-14 rounded-lg border border-border px-1 text-center text-base font-medium text-foreground outline-none focus:border-brand"

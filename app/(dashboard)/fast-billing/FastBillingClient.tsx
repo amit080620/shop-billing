@@ -288,7 +288,7 @@ export function FastBillingClient({
       } else if (Date.now() - sheetOpenedAt.current >= SETTLE_MS) keySave();
       return true;
     }
-    if (showBill) {
+    if (key === "back" && showBill) {
       setShowBill(false);
       return true;
     }
