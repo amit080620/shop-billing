@@ -8,13 +8,20 @@ import { getTranslator } from "@/lib/i18n/server";
 import { PageHeader } from "@/app/components/PageHeader";
 import { SlidersHorizontal } from "lucide-react";
 import { BackLink } from "@/app/components/BackLink";
+import { requireSession } from "@/lib/auth";
+import { newUiAllowed, getUiVersion } from "@/lib/uiVersion";
+import { UiVersionToggle } from "@/app/components/UiVersionToggle";
 
 export default async function PreferencesPage() {
+  const session = await requireSession();
   const { lang, t } = await getTranslator();
   const theme = await getTheme();
   const calculatorEnabled = await getCalculatorEnabled();
   const assistantEnabled = await getAssistantEnabled();
   const liteSetting = await getLiteSetting();
+  // The look switch shows only for a shop on the New-look allowlist (lib/uiVersion).
+  const uiAllowed = newUiAllowed(session);
+  const uiVersion = await getUiVersion(session);
 
   return (
     <div className="flex flex-col gap-4 pb-6">
@@ -55,6 +62,12 @@ export default async function PreferencesPage() {
       <div className="neu-tray flex flex-col gap-2 p-2">
         <LiteModeToggle setting={liteSetting} />
       </div>
+
+      {uiAllowed && (
+        <div className="neu-tray flex flex-col gap-2 p-2">
+          <UiVersionToggle version={uiVersion} />
+        </div>
+      )}
     </div>
   );
 }

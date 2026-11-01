@@ -2128,4 +2128,18 @@ export const PAGE_TEXT: Record<string, [hi: string, mr: string]> = {
   "GST calculator": ["GST कैलकुलेटर", "GST कॅल्क्युलेटर"],
   "Billing software for every shop": ["हर दुकान के लिए बिलिंग सॉफ़्टवेयर", "प्रत्येक दुकानासाठी बिलिंग सॉफ्टवेअर"],
   "What is said in this video": ["इस वीडियो में क्या बताया गया है", "या व्हिडिओत काय सांगितले आहे"],
+  // Preferences → App look (lib/uiVersion)
+  "App look (testing)": ["ऐप का लुक (टेस्टिंग)", "ॲपचा लुक (टेस्टिंग)"],
+  "Classic": ["क्लासिक", "क्लासिक"],
+  "New look": ["नया लुक", "नवीन लुक"],
+  "Only shops chosen to try the new design see this. Billing, stock and accounts work the same in both looks.": [
+    "यह सिर्फ़ उन दुकानों को दिखता है जिन्हें नया डिज़ाइन आज़माने के लिए चुना गया है। बिलिंग, स्टॉक और हिसाब दोनों लुक में बिल्कुल एक जैसे चलते हैं।",
+    "हे फक्त नवीन डिझाइन वापरून पाहण्यासाठी निवडलेल्या दुकानांना दिसते. बिलिंग, स्टॉक आणि हिशोब दोन्ही लुकमध्ये अगदी सारखेच चालतात.",
+  ],
+  "Training videos show the Classic look. Switching reloads the app on this device.": [
+    "ट्रेनिंग वीडियो क्लासिक लुक में हैं। बदलने पर इस डिवाइस पर ऐप दोबारा खुलता है।",
+    "ट्रेनिंग व्हिडिओ क्लासिक लुकमध्ये आहेत. बदलल्यावर या डिव्हाइसवर ॲप पुन्हा उघडते.",
+  ],
+  "Couldn't switch the look — try again.": ["लुक नहीं बदल सका — फिर कोशिश करें।", "लुक बदलता आला नाही — पुन्हा प्रयत्न करा."],
+  "The new look isn't open for this shop yet.": ["नया लुक अभी इस दुकान के लिए चालू नहीं है।", "नवीन लुक अजून या दुकानासाठी चालू नाही."],
 };

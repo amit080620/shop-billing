@@ -1140,3 +1140,113 @@ select,
   from { transform: scaleX(0.08); }
   to { transform: scaleX(0.92); }
 }
+
+/* ============================================================
+   New look (Preferences → App look; lib/uiVersion) — the colours of
+   the approved design (THERAY_FINAL_DESIGN), as its screens render
+   them. Only [data-ui="new"] carries them: the dashboard wrapper of an
+   allowlisted shop that chose the New look, and <html> once such a
+   page has loaded (NewUiRoot). Classic never matches these rules.
+   The --elev-* and --focus-ring lines repeat because they read
+   --border / --brand where they are declared.
+   ============================================================ */
+[data-ui="new"] {
+  --background: #faf8ff;
+  --surface: #ffffff;
+  --surface-2: #f2f3ff;
+  --overlay: #ffffff;
+  --edge-highlight: rgba(255, 255, 255, 0.6);
+  --foreground: #131b2e;
+  --muted: #434655;
+  --border: #e2e7ff;
+  --border-strong: #c3c6d7;
+
+  --brand: #004ac6;
+  --brand-dark: #003ea8;
+  --brand-light: #2563eb;
+  --brand-soft: #dbe1ff;
+  --brand-text: #004ac6;
+  --ray-gradient: linear-gradient(135deg, #2563eb 0%, #7c3aed 52%, #e11d48 100%);
+
+  --secondary: #712ae2;
+  --secondary-soft: #eaddff;
+
+  --success: #047857;
+  --success-soft: #ecfdf5;
+  --warning: #b45309;
+  --warning-soft: #fffbeb;
+  --info: #2563eb;
+  --info-soft: #eff6ff;
+  --danger: #ba1a1a;
+  --danger-soft: #fef2f2;
+  /* Udhaar keeps the app's amber: the design colours udhaar green and
+     dues red, which would clash with "paid" and "error" here. */
+  --credit: #b45309;
+  --credit-soft: #fffbeb;
+
+  --elevation-1: 0 1px 3px 0 rgba(15, 23, 42, 0.04), 0 1px 2px -1px rgba(15, 23, 42, 0.04);
+  --elevation-2: 0 8px 20px -4px rgba(37, 99, 235, 0.08);
+  --elevation-3: 0 20px 25px -5px rgba(15, 23, 42, 0.1), 0 8px 10px -6px rgba(15, 23, 42, 0.06);
+  --elev-xs: 0 0 0 1px var(--border), 0 1px 2px rgba(15, 23, 42, 0.04);
+  --elev-sm: 0 0 0 1px var(--border), 0 1px 3px rgba(15, 23, 42, 0.04), 0 1px 2px -1px rgba(15, 23, 42, 0.04);
+  --elev-md: 0 0 0 1px var(--border), 0 8px 20px -4px rgba(37, 99, 235, 0.08);
+  --elev-inset: inset 0 0 0 1px var(--border), inset 0 1px 2px rgba(15, 23, 42, 0.04);
+  --focus-ring: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+.dark [data-ui="new"],
+.dark[data-ui="new"] {
+  --background: #12131a;
+  --surface: #1e1f26;
+  --surface-2: #1a1b22;
+  --overlay: #292931;
+  --edge-highlight: rgba(255, 255, 255, 0.04);
+  --foreground: #e3e1ec;
+  --muted: #ccc3d8;
+  --border: #353747;
+  --border-strong: #4a4455;
+
+  --brand: #7c3aed;
+  --brand-dark: #5a00c6;
+  --brand-light: #d2bbff;
+  --brand-soft: #31244e;
+  --brand-text: #d2bbff;
+  --ray-gradient: linear-gradient(135deg, #1e40af 0%, #7c3aed 50%, #db2777 100%);
+
+  --secondary: #b8c4ff;
+  --secondary-soft: #1f273e;
+
+  /* The design's dark status colours, on a 12% tint of each over the card. */
+  --success: #34d399;
+  --success-soft: #1c3231;
+  --warning: #fbbf24;
+  --warning-soft: #382e23;
+  --info: #b8c4ff;
+  --info-soft: #1f273e;
+  --danger: #f87171;
+  --danger-soft: #37232a;
+  --credit: #fbbf24;
+  --credit-soft: #382e23;
+
+  /* Kept light on purpose: the design leans on surface steps and
+     hairlines rather than shadows, and big blurs cost old phones. */
+  --elevation-1: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --elevation-2: 0 4px 20px -2px rgba(0, 0, 0, 0.45);
+  --elevation-3: 0 12px 32px -4px rgba(0, 0, 0, 0.65);
+  --elev-xs: 0 0 0 1px var(--border), 0 1px 2px rgba(0, 0, 0, 0.3);
+  --elev-sm: 0 0 0 1px var(--border), 0 2px 6px rgba(0, 0, 0, 0.32);
+  --elev-md: 0 0 0 1px var(--border), 0 6px 18px rgba(0, 0, 0, 0.36);
+  --elev-inset: inset 0 0 0 1px var(--border), inset 0 1px 2px rgba(0, 0, 0, 0.3);
+  --focus-ring: 0 0 0 2px rgba(124, 58, 237, 0.25);
+}
+
+/* New look, dark: buttons keep the violet with white text, but violet
+   text on a dark card is too faint to read — the design writes it in
+   its light violet. In the utilities layer and at a class's weight, so
+   a hover:/focus: colour on the same element still wins. */
+@layer utilities {
+  :where(.dark [data-ui="new"]) .text-brand,
+  :where(.dark[data-ui="new"]) .text-brand {
+    color: var(--brand-light);
+  }
+}

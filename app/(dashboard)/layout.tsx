@@ -26,6 +26,8 @@ import { RememberHome } from "@/app/components/RememberHome";
 import { homePathFor } from "@/lib/businessType";
 import { AppUpdateBanner } from "@/app/components/AppUpdateBanner";
 import { isDemoEmail } from "@/lib/demo/config";
+import { getUiVersion } from "@/lib/uiVersion";
+import { NewUiRoot } from "@/app/components/NewUiRoot";
 
 export default async function DashboardLayout({
   children,
@@ -39,13 +41,16 @@ export default async function DashboardLayout({
   const calculatorEnabled = await getCalculatorEnabled();
   const assistantEnabled = await getAssistantEnabled();
   const roleLabel = session.role === "owner" ? translate(lang, "role.owner") : translate(lang, "role.staff");
+  // Classic for every shop not on the New-look allowlist, whatever its cookie says (lib/uiVersion).
+  const newUi = (await getUiVersion(session)) === "new";
 
   return (
     <LangProvider lang={lang} messages={messagesFor(lang)}>
     <BusinessTypeProvider value={session.businessType}>
     <MenuDrawerProvider title={translate(lang, "more.title")} menu={<MoreMenu />}>
     <NavDepthTracker />
-    <div className="min-h-screen bg-background pb-24 md:pb-0 md:pl-72">
+    <div className="min-h-screen bg-background pb-24 md:pb-0 md:pl-72" data-ui={newUi ? "new" : undefined}>
+      {newUi && <NewUiRoot />}
       <DesktopSidebar
         lang={lang}
         businessType={session.businessType}
