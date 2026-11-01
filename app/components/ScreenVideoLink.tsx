@@ -19,8 +19,9 @@ type Video = NonNullable<Awaited<ReturnType<typeof screenVideoAction>>>;
 /** "▶ Video" in the top bar: the training video for this screen, from the right second, in a popup
  * over the screen — a bill half made (its cart lives only on this screen) is still there after
  * watching. The phone's Back closes the popup rather than leaving the screen. Lives in the bar (not
- * the page title) so screens with their own header — New Bill, Home, Settings — get it too. */
-export function ScreenVideoLink() {
+ * the page title) so screens with their own header — New Bill, Home, Settings — get it too.
+ * `classicNote`: in the New look (lib/uiVersion), says the video was made in the Classic look. */
+export function ScreenVideoLink({ classicNote }: { classicNote?: boolean }) {
   const type = useBusinessType();
   const pathname = usePathname();
   const { t } = useT();
@@ -87,6 +88,7 @@ export function ScreenVideoLink() {
                 <X size={18} />
               </button>
             </div>
+            {classicNote && <p className="mb-2 text-xs text-muted">{t("This video shows the Classic look.")}</p>}
             {video ? (
               <VideoPlayer
                 src={video.mp4}

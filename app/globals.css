@@ -1167,6 +1167,8 @@ select,
   --brand-soft: #dbe1ff;
   --brand-text: #004ac6;
   --ray-gradient: linear-gradient(135deg, #2563eb 0%, #7c3aed 52%, #e11d48 100%);
+  /* The open screen's row in the sidebar: filled, with white text. */
+  --nav-active: #2563eb;
 
   --secondary: #712ae2;
   --secondary-soft: #eaddff;
@@ -1212,6 +1214,7 @@ select,
   --brand-soft: #31244e;
   --brand-text: #d2bbff;
   --ray-gradient: linear-gradient(135deg, #1e40af 0%, #7c3aed 50%, #db2777 100%);
+  --nav-active: #7c3aed;
 
   --secondary: #b8c4ff;
   --secondary-soft: #1f273e;
@@ -1248,5 +1251,28 @@ select,
   :where(.dark [data-ui="new"]) .text-brand,
   :where(.dark[data-ui="new"]) .text-brand {
     color: var(--brand-light);
+  }
+}
+
+/* New look's top-bar search (app/(dashboard)/_newui/NewHeader): fills the
+   bar's left side on a computer, as a soft filled field. The selector
+   repeats the global field rule's :not()s so it outweighs it. */
+[data-ui="new"] .new-search > div {
+  width: 100%;
+}
+[data-ui="new"] .new-search input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"]):not(.bg-transparent) {
+  background: var(--surface-2) !important;
+  border-radius: 0.75rem !important;
+  box-shadow: inset 0 0 0 1px var(--border) !important;
+}
+[data-ui="new"] .new-search input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"]):not(.bg-transparent):focus {
+  background: var(--surface) !important;
+  box-shadow: inset 0 0 0 1.5px var(--brand), var(--focus-ring) !important;
+}
+/* From 768 px the field shows the "Ctrl K" hint at its right end: keep the
+   words clear of it when the bar is narrow (a tablet beside the sidebar). */
+@media (min-width: 768px) {
+  [data-ui="new"] .new-search input {
+    padding-right: 4rem;
   }
 }

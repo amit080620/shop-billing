@@ -2142,4 +2142,5 @@ export const PAGE_TEXT: Record<string, [hi: string, mr: string]> = {
   ],
   "Couldn't switch the look — try again.": ["लुक नहीं बदल सका — फिर कोशिश करें।", "लुक बदलता आला नाही — पुन्हा प्रयत्न करा."],
   "The new look isn't open for this shop yet.": ["नया लुक अभी इस दुकान के लिए चालू नहीं है।", "नवीन लुक अजून या दुकानासाठी चालू नाही."],
+  "This video shows the Classic look.": ["यह वीडियो क्लासिक लुक में है।", "हा व्हिडिओ क्लासिक लुकमध्ये आहे."],
 };

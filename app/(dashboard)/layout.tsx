@@ -27,7 +27,8 @@ import { homePathFor } from "@/lib/businessType";
 import { AppUpdateBanner } from "@/app/components/AppUpdateBanner";
 import { isDemoEmail } from "@/lib/demo/config";
 import { getUiVersion } from "@/lib/uiVersion";
-import { NewUiRoot } from "@/app/components/NewUiRoot";
+import { NewUiRoot, NewDesktopSidebar, NewBottomNav } from "./_newui/lazy";
+import { NewHeader } from "./_newui/NewHeader";
 
 export default async function DashboardLayout({
   children,
@@ -51,67 +52,100 @@ export default async function DashboardLayout({
     <NavDepthTracker />
     <div className="min-h-screen bg-background pb-24 md:pb-0 md:pl-72" data-ui={newUi ? "new" : undefined}>
       {newUi && <NewUiRoot />}
-      <DesktopSidebar
-        lang={lang}
-        businessType={session.businessType}
-        shopName={session.shopName}
-        staffName={session.staffName}
-        roleLabel={roleLabel}
-        shopLogoUrl={session.shopLogoUrl}
-        permissions={session.permissions}
-        fastBillingEnabled={fastBillingEnabled}
-        plan={session.plansReady ? session.plan : undefined}
-        onTrial={session.plansReady && session.onTrial}
-      />
+      {newUi ? (
+        <>
+          <NewDesktopSidebar
+            lang={lang}
+            businessType={session.businessType}
+            shopName={session.shopName}
+            staffName={session.staffName}
+            roleLabel={roleLabel}
+            shopLogoUrl={session.shopLogoUrl}
+            shopGstin={session.shopGstin}
+            permissions={session.permissions}
+            fastBillingEnabled={fastBillingEnabled}
+            plan={session.plansReady ? session.plan : undefined}
+            onTrial={session.plansReady && session.onTrial}
+          />
+          <NewHeader
+            lang={lang}
+            businessType={session.businessType}
+            shopName={session.shopName}
+            staffName={session.staffName}
+            roleLabel={roleLabel}
+            permissions={session.permissions}
+            fastBillingEnabled={fastBillingEnabled}
+            plan={session.plansReady ? session.plan : undefined}
+            onTrial={session.plansReady && session.onTrial}
+            calculator={calculatorEnabled}
+            assistant={assistantEnabled}
+          />
+        </>
+      ) : (
+        <>
+          <DesktopSidebar
+            lang={lang}
+            businessType={session.businessType}
+            shopName={session.shopName}
+            staffName={session.staffName}
+            roleLabel={roleLabel}
+            shopLogoUrl={session.shopLogoUrl}
+            permissions={session.permissions}
+            fastBillingEnabled={fastBillingEnabled}
+            plan={session.plansReady ? session.plan : undefined}
+            onTrial={session.plansReady && session.onTrial}
+          />
 
-      {/* One sticky top bar for both breakpoints. On mobile it carries the
-          shop identity row plus search; on desktop the identity lives in
-          the sidebar, so the bar is just search. Keeping both rows in a
-          single sticky element stops them stacking on top of each other
-          while scrolling. There's exactly one UniversalSearch instance,
-          so one Ctrl+K listener. */}
-      <header className="no-print sticky top-0 z-20 border-b border-border bg-surface">
-        <div className="mx-auto flex max-w-lg items-center gap-2.5 px-4 pb-2 pt-3 md:hidden">
-          <HamburgerToggle className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-foreground hover:bg-surface-2" />
-          <Link href="/profile" aria-label="Profile & settings" className="flex min-w-0 flex-1 items-center gap-2.5">
-            {session.shopLogoUrl ? (
-              <Image
-                src={session.shopLogoUrl}
-                alt=""
-                width={32}
-                height={32}
-                unoptimized
-                className="h-8 w-8 shrink-0 rounded-lg border border-border bg-surface object-contain"
-              />
-            ) : (
-              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand text-sm font-bold text-white">
-                {session.shopName.charAt(0).toUpperCase()}
-              </span>
-            )}
-            <span className="min-w-0">
-              <span className="flex items-center gap-1.5">
-                <span className="truncate text-sm font-semibold leading-tight text-foreground">{session.shopName}</span>
-                {session.plansReady && <PlanBadge plan={session.plan} size="xs" className="shrink-0" />}
-                {session.plansReady && session.onTrial && (
-                  <span className="shrink-0 rounded-full bg-brand-soft px-1.5 py-px text-[10px] font-semibold text-brand-text">
-                    {translate(lang, "Trial")}
+          {/* One sticky top bar for both breakpoints. On mobile it carries the
+              shop identity row plus search; on desktop the identity lives in
+              the sidebar, so the bar is just search. Keeping both rows in a
+              single sticky element stops them stacking on top of each other
+              while scrolling. There's exactly one UniversalSearch instance,
+              so one Ctrl+K listener. */}
+          <header className="no-print sticky top-0 z-20 border-b border-border bg-surface">
+            <div className="mx-auto flex max-w-lg items-center gap-2.5 px-4 pb-2 pt-3 md:hidden">
+              <HamburgerToggle className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-foreground hover:bg-surface-2" />
+              <Link href="/profile" aria-label="Profile & settings" className="flex min-w-0 flex-1 items-center gap-2.5">
+                {session.shopLogoUrl ? (
+                  <Image
+                    src={session.shopLogoUrl}
+                    alt=""
+                    width={32}
+                    height={32}
+                    unoptimized
+                    className="h-8 w-8 shrink-0 rounded-lg border border-border bg-surface object-contain"
+                  />
+                ) : (
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand text-sm font-bold text-white">
+                    {session.shopName.charAt(0).toUpperCase()}
                   </span>
                 )}
-              </span>
-              <span className="block truncate text-xs leading-tight text-muted">
-                {session.staffName} · {roleLabel}
-              </span>
-            </span>
-          </Link>
-          <HeaderTools calculator={calculatorEnabled} assistant={assistantEnabled} />
-        </div>
-        <div className="mx-auto max-w-lg px-4 pb-2.5 md:flex md:max-w-5xl md:items-center md:justify-end md:gap-1 md:px-8 md:py-3 xl:max-w-6xl">
-          <UniversalSearch />
-          <div className="hidden md:ml-2 md:flex md:gap-1">
-            <HeaderTools calculator={calculatorEnabled} assistant={assistantEnabled} />
-          </div>
-        </div>
-      </header>
+                <span className="min-w-0">
+                  <span className="flex items-center gap-1.5">
+                    <span className="truncate text-sm font-semibold leading-tight text-foreground">{session.shopName}</span>
+                    {session.plansReady && <PlanBadge plan={session.plan} size="xs" className="shrink-0" />}
+                    {session.plansReady && session.onTrial && (
+                      <span className="shrink-0 rounded-full bg-brand-soft px-1.5 py-px text-[10px] font-semibold text-brand-text">
+                        {translate(lang, "Trial")}
+                      </span>
+                    )}
+                  </span>
+                  <span className="block truncate text-xs leading-tight text-muted">
+                    {session.staffName} · {roleLabel}
+                  </span>
+                </span>
+              </Link>
+              <HeaderTools calculator={calculatorEnabled} assistant={assistantEnabled} />
+            </div>
+            <div className="mx-auto max-w-lg px-4 pb-2.5 md:flex md:max-w-5xl md:items-center md:justify-end md:gap-1 md:px-8 md:py-3 xl:max-w-6xl">
+              <UniversalSearch />
+              <div className="hidden md:ml-2 md:flex md:gap-1">
+                <HeaderTools calculator={calculatorEnabled} assistant={assistantEnabled} />
+              </div>
+            </div>
+          </header>
+        </>
+      )}
 
       <OfflineBillsSync shopId={session.shopId} />
       <main className="page-enter mx-auto max-w-lg px-4 py-4 pb-24 md:max-w-5xl md:px-8 md:py-8 md:pb-8 xl:max-w-6xl">
@@ -120,7 +154,11 @@ export default async function DashboardLayout({
         {children}
       </main>
 
-      <BottomNav lang={lang} businessType={session.businessType} permissions={session.permissions} fastBillingEnabled={fastBillingEnabled} />
+      {newUi ? (
+        <NewBottomNav lang={lang} businessType={session.businessType} permissions={session.permissions} fastBillingEnabled={fastBillingEnabled} />
+      ) : (
+        <BottomNav lang={lang} businessType={session.businessType} permissions={session.permissions} fastBillingEnabled={fastBillingEnabled} />
+      )}
       <WelcomeTour storageKey={`tour-seen-${session.shopId}`} businessType={session.businessType} />
       {isModuleEnabled(session.enabledModules, "public_catalog") && <CatalogOrderAlert />}
       {/* Shop-owner tools only — never on login, public storefront,

@@ -197,7 +197,7 @@ export function BottomNav({ lang, businessType, permissions = [], fastBillingEna
   );
 }
 
-const READY_AHEAD = new Set(["/dashboard", "/bills/new", "/fast-billing", "/restaurant"]);
+export const READY_AHEAD = new Set(["/dashboard", "/bills/new", "/fast-billing", "/restaurant"]);
 
 function HomeIcon({ active }: { active: boolean }) {
   return <House size={22} strokeWidth={active ? 2.3 : 1.8} />;
