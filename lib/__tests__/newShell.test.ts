@@ -108,7 +108,7 @@ describe("the comparison above reads real links", () => {
     pathname = "/dashboard";
     const p = props("grocery", [], true);
     const bar = links(render(createElement(NewBottomNav, p)), "nav");
-    expect(bar.map(([h]) => h)).toEqual(["/dashboard", "/bills/new", "/customers", "/reports", "/fast-billing"]);
+    expect(bar.map(([h]) => h)).toEqual(["/dashboard", "/bills/new", "/customers", "/purchases", "/fast-billing"]);
     expect(bar.filter(([, c]) => c)).toEqual([["/dashboard", "page"]]);
     expect(sidebarNav(render(createElement(NewDesktopSidebar, p)))).toEqual(["/dashboard", "/bills/new", "/customers", "/purchases", "/reports", "/fast-billing"]);
   });

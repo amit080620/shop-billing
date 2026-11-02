@@ -11,6 +11,7 @@ import { useFormStatus } from "react-dom";
 import { pressWhenReady, rememberBillingScreen, savePresser, SETTLE_MS } from "@/lib/keyboardBilling";
 import { useBillingKeys } from "@/lib/useBillingKeys";
 import { KeyboardHint } from "@/app/components/KeyboardHint";
+import { KeyboardBillingChip, SellingKeysSheet } from "@/app/components/KeyboardBillingChip";
 import { createBillAction } from "@/lib/actions/bills";
 import { saveQuotationAction } from "@/lib/actions/quotations";
 import { customerBillExtrasAction } from "@/lib/actions/salonExtras";
@@ -210,6 +211,7 @@ export function NewBillClient({
   // Keyboard billing: the cart line + / − / F2 work on (the one added last unless ↑ ↓ moved it), and
   // the amount-paid box F3 jumps to.
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [showKeys, setShowKeys] = useState(false);
   const paidInputRef = useRef<HTMLInputElement>(null);
   const [cart, setCart] = useState<CartLine[]>(() => (fromQuote ? cartFromQuote(fromQuote.lines, products, fromQuote.honourPrices) : fromChallans ? cartFromQuote(fromChallans.lines, products, false) : []));
   const router = useRouter();
@@ -512,7 +514,18 @@ export function NewBillClient({
       setStep("cart");
       return true;
     }
+    if (key === "help") {
+      setShowKeys(true);
+      return true;
+    }
     if (step === "cart") {
+      if (key === "f3") {
+        // The customer: Existing customer, its search ready to type in.
+        setCustomerMode("existing");
+        setSelectedCustomer(null);
+        requestAnimationFrame(() => requestAnimationFrame(() => document.querySelector<HTMLInputElement>("[data-customer-search] input")?.focus()));
+        return true;
+      }
       const line = cart.find((c) => c.productId === activeId) ?? cart[cart.length - 1];
       if (!line) return false;
       const at = cart.indexOf(line);
@@ -531,6 +544,12 @@ export function NewBillClient({
         box?.focus();
         box?.select();
         return !!box;
+      }
+      if (key === "remove") {
+        const next = cart[at + 1] ?? cart[at - 1];
+        updateQuantity(line.productId, 0);
+        setActiveId(next?.productId ?? null);
+        return true;
       }
       return false;
     }
@@ -974,7 +993,7 @@ export function NewBillClient({
                 </button>
               </div>
             ) : (
-              <div className="flex flex-col gap-2">
+              <div className="flex flex-col gap-2" data-customer-search>
                 <SearchableSelect
             lang={lang}
                   items={customers}
@@ -1039,7 +1058,11 @@ export function NewBillClient({
         )}
 
         <section className="flex flex-col gap-1.5">
-          <p className="text-xs font-semibold text-muted">{t("bill.addProducts")}</p>
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-xs font-semibold text-muted">{t("bill.addProducts")}</p>
+            <KeyboardBillingChip on={keyboardBilling} onHelp={() => setShowKeys(true)} />
+          </div>
+          {showKeys && <SellingKeysSheet onClose={() => setShowKeys(false)} />}
           {frequentProducts.length > 0 && (
             <div className="-mx-4 flex gap-2 overflow-x-auto scroll-hide px-4 pb-1">
               {frequentProducts.map((p) => (
@@ -1340,7 +1363,7 @@ export function NewBillClient({
           <button data-keyboard-next disabled={!canComplete} onClick={complete} className="btn-primary w-full disabled:opacity-40">
             {t("bill.completeTicket")} →
           </button>
-          {keyboardBilling && <KeyboardHint keys={[["Enter", "next"], ["+ −", "quantity"], ["↑ ↓", "item"], ["F2", "type quantity"], ["F10", "save now"]]} />}
+          {keyboardBilling && <KeyboardHint keys={[["Enter", "next"], ["+ −", "quantity"], ["↑ ↓", "item"], ["F2", "type quantity"], ["Del", "remove"], ["F3", "customer"], ["F10", "save now"], ["F1", "all keys"]]} />}
         </aside>
 
         <div className="fixed inset-x-0 bottom-[calc(var(--bottom-nav-h)+env(safe-area-inset-bottom))] z-20 border-t border-border bg-surface px-4 py-2 md:hidden">

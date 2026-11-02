@@ -10,14 +10,20 @@ describe("mobile bottom tabs", () => {
     expect(hrefs(["/bills/new", "/purchases", "/reports"])).toEqual(["/dashboard", "/bills/new", "/customers", "/purchases", "/reports"]);
   });
 
-  it("keeps five tabs when fast billing is on, moving Buy to More", () => {
+  it("keeps five tabs when fast billing is on, moving Reports to More so Purchase stays", () => {
     expect(hrefs(["/bills/new", "/purchases", "/reports", "/fast-billing"])).toEqual([
       "/dashboard",
       "/bills/new",
       "/customers",
-      "/reports",
+      "/purchases",
       "/fast-billing",
     ]);
+  });
+
+  it("keeps Purchase for trades with their own tab next to Sell", () => {
+    expect(hrefs(["/bills/new", "/rentals/new", "/purchases", "/reports"])).toEqual(["/dashboard", "/bills/new", "/customers", "/rentals/new", "/purchases"]);
+    // Seven would-be tabs (a trade tab and Fast Bill too): Purchase joins Reports in More, under Daily work.
+    expect(hrefs(["/bills/new", "/garment", "/purchases", "/reports", "/fast-billing"])).toEqual(["/dashboard", "/bills/new", "/customers", "/garment", "/fast-billing"]);
   });
 
   it("adds only Home where bills are not made on a tab", () => {

@@ -4,7 +4,7 @@ const en: Record<string, string> = {
   "nav.home": "Home",
   "nav.customers": "Customers",
   "nav.sell": "Sell",
-  "nav.buy": "Buy",
+  "nav.buy": "Purchase",
   "nav.reports": "Reports",
   "nav.more": "More",
   "nav.tables": "Tables",

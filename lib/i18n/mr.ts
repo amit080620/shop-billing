@@ -4,7 +4,7 @@ const mr: Record<string, string> = {
   "nav.home": "होम",
   "nav.sell": "विक्री करा",
   "nav.customers": "ग्राहक",
-  "nav.buy": "खरेदी करा",
+  "nav.buy": "खरेदी",
   "nav.reports": "अहवाल",
   "nav.more": "अधिक",
   "nav.tables": "टेबल",

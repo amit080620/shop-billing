@@ -28,6 +28,8 @@ import {
   FileClock,
   FileDown,
   ShoppingBag,
+  ShoppingCart,
+  RefreshCw,
   FlaskConical,
   Gem,
   Gift,
@@ -107,6 +109,16 @@ export async function MoreMenu() {
             <span className="text-muted" aria-hidden="true">›</span>
           </Link>
         )}
+        {/* Every day's work, first: on a phone Reports (or Purchase) can leave the bottom bar. */}
+        <MenuGroup title={t("Daily work")}>
+          <MenuLink href="/purchases/new" label={t("New purchase")} sub={t("Enter a vendor's bill — stock, cost and selling rates in one go")} icon={PackagePlus} />
+          <MenuLink href="/purchases" label={t("Purchases & vendor payments")} sub={t("Every purchase bill, what is paid and what is still due")} icon={ShoppingCart} />
+          {!["restaurant", "hotel", "clinic", "gym", "lab", "salon", "service", "transport", "rental"].includes(type) && (
+            <MenuLink href="/products/rates" label={t("Rate list")} sub={t("Cost, MRP, retail and wholesale rates with the margin — share on WhatsApp")} icon={ListChecks} />
+          )}
+          <MenuLink href="/reports" label={t("nav.reports")} sub={t("Sales, GST, profit and stock reports")} icon={BarChart3} />
+        </MenuGroup>
+
         {type === "restaurant" && (
           <MenuGroup title="Restaurant">
             <MenuLink href="/restaurant-kds" label="Kitchen display (TV)" sub="Big-screen view for the kitchen" icon={MonitorPlay} />
@@ -171,7 +183,6 @@ export async function MoreMenu() {
         {type === "wholesale" && (
           <MenuGroup title={t("Wholesale")}>
             <MenuLink href="/orders" label={t("Orders")} sub={t("Booked by salesmen on the route — bill them in one tap")} icon={ClipboardList} locked={lock("quotations")} />
-            <MenuLink href="/products/rates" label={t("Rate list")} sub={t("MRP, retail and wholesale rates — share on WhatsApp")} icon={ListChecks} />
             <MenuLink href="/reports/dues" label={t("Payments due")} sub={t("Bill by bill against credit days, beat by beat")} icon={CalendarClock} />
             <MenuLink href="/reports/schemes" label={t("Scheme report")} sub={t("Free goods in, free goods out, what you kept")} icon={Gift} locked={lock("advanced_reports")} />
             <MenuLink href="/challans" label={t("Delivery challans")} sub={t("Goods go first, the bill follows — one bill for many challans")} icon={Warehouse} locked={lock("delivery_challan")} />
@@ -246,9 +257,8 @@ export async function MoreMenu() {
 
         <MenuGroup title="Stock">
           <MenuLink href="/products" label={terminology.productPlural} sub={terminology.productSub} icon={Package} />
-          {["hardware", "general", "grocery", "mart", "pharmacy"].includes(type) && <MenuLink href="/products/rates" label={t("Rate list")} sub={t("MRP, retail and wholesale rates — share on WhatsApp")} icon={ListChecks} />}
           <MenuLink href="/stock-audit" label="Stock audit" sub="Count physical stock, reconcile mismatches" icon={ClipboardCheck} locked={lock("stock_audit")} />
-          <MenuLink href="/reorder" label="Reorder stock" sub="Send low-stock items to a vendor" icon={PackagePlus} />
+          <MenuLink href="/reorder" label="Reorder stock" sub="Send low-stock items to a vendor" icon={RefreshCw} />
           {/* Batch/expiry tracking is a per-product option any shop can use;
               doctor-wise sales and Schedule X are pharmacy-only. */}
           {!["restaurant", "hotel", "transport", "rental"].includes(type) && (

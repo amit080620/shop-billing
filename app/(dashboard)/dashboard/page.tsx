@@ -47,6 +47,7 @@ import {
   Rocket,
   PartyPopper,
   Package,
+  PackagePlus,
   Home,
   Check,
   ChevronRight,
@@ -263,11 +264,12 @@ const STOCK_BUSINESSES = new Set(["grocery", "mart", "hardware", "general", "pha
 function QuickLinks({ businessType, t }: { businessType: string; t: (key: string) => string }) {
   const links = [
     { href: "/products", label: t(getTerminology(businessType).productPlural), icon: Package },
+    { href: "/purchases/new", label: t("New purchase"), icon: PackagePlus },
     { href: "/bills/all", label: t("home.allBills"), icon: Receipt },
     { href: "/daily-summary", label: t("home.daySummary"), icon: Wallet },
   ];
   return (
-    <nav aria-label="Shortcuts" className="grid grid-cols-3 gap-2">
+    <nav aria-label="Shortcuts" className="grid grid-cols-4 gap-2">
       {links.map(({ href, label, icon: Icon }) => (
         <Link key={href} href={href} className="neu-card flex flex-col items-center gap-1.5 px-2 py-3 text-center">
           <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-soft text-brand-text">

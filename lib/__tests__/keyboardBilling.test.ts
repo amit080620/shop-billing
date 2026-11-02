@@ -81,6 +81,14 @@ describe("readBillingKey", () => {
     expect(readBillingKey(key("5"), "search", false)).toBe("other");
     expect(readBillingKey(key("a"), "page", true)).toBe("other");
   });
+
+  it("F1 lists the keys anywhere; Delete removes the chosen line only with the search empty", () => {
+    expect(readBillingKey(key("F1"), "field", true)).toBe("help");
+    expect(readBillingKey(key("Delete"), "search", true)).toBe("remove");
+    expect(readBillingKey(key("Delete"), "page", true)).toBe("remove");
+    expect(readBillingKey(key("Delete"), "search", false)).toBe("other");
+    expect(readBillingKey(key("Delete"), "field", true)).toBe("other");
+  });
 });
 
 describe("billing screen memory", () => {

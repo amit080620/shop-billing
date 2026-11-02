@@ -1,7 +1,8 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { requireSession, requireArea } from "../auth";
+import { revalidatePath } from "next/cache";
+import { requireSession, requireArea, hasPermission } from "../auth";
 import { createSupabaseAdminClient } from "../supabase/admin";
 import { purchaseSchema, calculateTransactionTotals } from "../validation/schemas";
 import { determineSupplyType, round2 } from "../gst";
@@ -9,6 +10,10 @@ import { partyStateCode } from "../gstBuyer";
 import { findDuplicateProductAI } from "./duplicateCheck";
 import { invalidateCache } from "../cache";
 import { moveStock } from "../stockMoves";
+import { wholesaleReady } from "../wholesaleData";
+import { rateChanges } from "../purchaseMath";
+import { defaultUnitFor } from "../businessType";
+import { UNITS } from "../constants/states";
 
 export type ActionState = { error?: string } | null;
 
@@ -141,7 +146,7 @@ export async function createPurchaseAction(
   if (!parsed.success) {
     return { error: parsed.error.issues[0].message };
   }
-  const { vendorId, vendorInvoiceNumber, purchaseDate, items, paidAmount, paymentMethod, itcEligible, reverseCharge } =
+  const { vendorId, vendorInvoiceNumber, purchaseDate, items, paidAmount, paymentMethod, itcEligible, reverseCharge, updateRates, allowDuplicate } =
     parsed.data;
 
   const admin = createSupabaseAdminClient();
@@ -160,31 +165,43 @@ export async function createPurchaseAction(
     };
   }
 
-  // Products referenced by id are looked up for a name/HSN snapshot only —
-  // price/GST for a purchase come from the vendor's own bill, not our catalog.
+  // The same vendor's bill entered twice doubles the stock and what is owed — asked first.
+  if (!allowDuplicate) {
+    const { data: same } = await admin
+      .from("purchases")
+      .select("purchase_date")
+      .eq("shop_id", session.shopId)
+      .eq("vendor_id", vendorId)
+      .ilike("vendor_invoice_number", vendorInvoiceNumber.replace(/[\\%_]/g, (c) => `\\${c}`))
+      .limit(1);
+    if (same?.length) {
+      return { error: `Bill #${vendorInvoiceNumber} from this vendor is already recorded (${same[0].purchase_date}). If it really is another bill, tick "It's a different bill" and save again.` };
+    }
+  }
+
+  const withWholesale = await wholesaleReady(admin);
+  // Rates move only for staff allowed to change items (the rate list's own rule); the purchase saves either way.
+  const mayChangeRates = updateRates && hasPermission(session, "manage_products");
+  const productColumns = withWholesale
+    ? "id, name, hsn_code, track_inventory, stock_quantity, is_pharma, price, mrp, gst_percent, barcode, wholesale_price"
+    : "id, name, hsn_code, track_inventory, stock_quantity, is_pharma, price, mrp, gst_percent, barcode";
+  type DbProduct = { id: string; name: string; hsn_code: string | null; track_inventory: boolean; stock_quantity: number; is_pharma: boolean; price: number; mrp: number | null; gst_percent: number; barcode: string | null; wholesale_price?: number | null };
+
+  // Products referenced by id are looked up for a name/HSN snapshot and their rates — price/GST
+  // for a purchase come from the vendor's own bill, not our catalog.
   const productIds = [...new Set(items.map((i) => i.productId).filter(Boolean))] as string[];
   const { data: dbProducts } = productIds.length
-    ? await admin.from("products").select("id, name, hsn_code, track_inventory, stock_quantity, is_pharma, price").eq("shop_id", session.shopId).in("id", productIds)
-    : { data: [] as { id: string; name: string; hsn_code: string | null; track_inventory: boolean; stock_quantity: number; is_pharma: boolean }[] };
-  const productMap = new Map((dbProducts ?? []).map((p) => [p.id, p]));
+    ? await admin.from("products").select(productColumns).eq("shop_id", session.shopId).in("id", productIds)
+    : { data: [] };
+  const productMap = new Map(((dbProducts ?? []) as unknown as DbProduct[]).map((p) => [p.id, p]));
 
-  // A purchase line with no matching product yet — a genuinely new item,
-  // whether typed by hand or read off a scanned/spoken vendor bill —
-  // becomes a real Product right here. Without this, buying something
-  // new only ever recorded a purchase-history line; it could never
-  // actually be sold, since the Sell screen only searches real
-  // products. The purchase RATE becomes its starting sale price (the
-  // shop almost always wants to mark it up before selling, but a
-  // sensible non-zero starting point beats a blank one) — genuinely
-  // editable afterwards from Products, same as any other item.
-  // Every existing product name — checked against any new/unmatched
-  // line BEFORE creating a fresh product, so "Mobile iPhone" bought
-  // today doesn't become a duplicate of an "iPhone Mobile" already in
-  // the catalog just because the vendor's bill (or a scan/voice
-  // entry) worded it differently. This is the actual fix for the
-  // duplicate-product problem: catching it at the one moment a
-  // duplicate could be CREATED, not after the fact.
+  // A purchase line with no matching product yet — a genuinely new item, whether typed by hand or
+  // read off a scanned/spoken vendor bill — becomes a real Product right here, so it can be sold.
+  // It starts at the selling rate typed on the line (or its MRP); only with neither does it start at
+  // the purchase rate, to be marked up from the rate list. Every existing name is checked first, so
+  // "Mobile iPhone" bought today doesn't duplicate an "iPhone Mobile" already in the catalog.
   const { data: allProductNames } = await admin.from("products").select("id, name").eq("shop_id", session.shopId).limit(2000); // safety cap, same reasoning as products.ts
+  const units = new Set(UNITS);
 
   const duplicatesAvoided: { typedAs: string; matchedTo: string; viaAI: boolean }[] = [];
   const resolvedItems = await Promise.all(
@@ -193,7 +210,9 @@ export async function createPurchaseAction(
 
       const existingMatch = await findDuplicateProductAI(item.description, allProductNames ?? []);
       if (existingMatch) {
-        const existingProduct = productMap.get(existingMatch.id) ?? (await admin.from("products").select("id, name, hsn_code, track_inventory, stock_quantity, is_pharma, price").eq("id", existingMatch.id).single()).data;
+        const existingProduct =
+          productMap.get(existingMatch.id) ??
+          ((await admin.from("products").select(productColumns).eq("id", existingMatch.id).single()).data as unknown as DbProduct | null);
         if (existingProduct) {
           productMap.set(existingProduct.id, existingProduct);
           duplicatesAvoided.push({ typedAs: item.description, matchedTo: existingMatch.name, viaAI: existingMatch.viaAI });
@@ -201,43 +220,78 @@ export async function createPurchaseAction(
         }
       }
 
+      const unit = item.unit && units.has(item.unit.toUpperCase()) ? item.unit.toUpperCase() : defaultUnitFor(session.businessType);
+      let barcode = item.barcode?.trim() || null;
+      if (barcode) {
+        const { data: taken } = await admin.from("products").select("id").eq("shop_id", session.shopId).eq("barcode", barcode).limit(1);
+        if (taken?.length) barcode = null;
+      }
+      const startPrice = item.saleRate || item.mrp || item.unitPrice;
       const { data: newProduct, error: newProductError } = await admin
         .from("products")
         .insert({
           shop_id: session.shopId,
           name: item.description.trim(),
-          price: item.unitPrice,
+          price: startPrice,
+          mrp: item.mrp || null,
+          ...(withWholesale && item.wholesaleRate ? { wholesale_price: item.wholesaleRate } : {}),
           gst_percent: item.gstPercent,
           hsn_code: item.hsnCode,
-          unit: "NOS",
+          unit,
+          barcode,
           track_inventory: true,
           stock_quantity: 0,
           low_stock_threshold: 0,
         })
-        .select("id, name, hsn_code, track_inventory, stock_quantity, is_pharma, price")
+        .select(productColumns)
         .single();
       if (newProductError || !newProduct) return item; // best-effort — falls back to the old purchase-only-line behavior if this genuinely fails
-      productMap.set(newProduct.id, newProduct);
+      const created = newProduct as unknown as DbProduct;
+      productMap.set(created.id, created);
       await invalidateCache(`ray:cache:products:${session.shopId}`);
-      return { ...item, productId: newProduct.id };
+      return { ...item, productId: created.id, createdHere: true };
     }),
   );
 
-  // Loss-prevention, not silent merging: buying the SAME product at a
-  // higher rate than before is completely normal (prices rise), but
-  // silently adding the new stock into the old total without a word
-  // means the shop keeper can easily keep selling at the OLD price —
-  // on a cost basis that no longer exists — until they lose money on
-  // every one of the new units without realizing why. A margin under
-  // 5% or a genuine loss (new cost at or above the current sale
-  // price) gets flagged here; anything healthier is left alone, since
-  // most price changes don't actually need a prompt.
+  // The rate list follows the purchase: the MRP, retail and wholesale rates typed on a line replace
+  // the item's (only those typed and different). A missing HSN is filled from the vendor's bill, and
+  // a GST-registered shop's item with no GST rate takes the bill's.
+  let ratesUpdated = 0;
+  if (mayChangeRates) {
+    const done = new Set<string>();
+    for (const item of resolvedItems) {
+      if (!item.productId || done.has(item.productId) || ("createdHere" in item && item.createdHere)) continue;
+      const product = productMap.get(item.productId);
+      if (!product) continue;
+      done.add(product.id);
+      const change = rateChanges(
+        { mrp: product.mrp != null ? Number(product.mrp) : null, price: Number(product.price), wholesale: product.wholesale_price != null ? Number(product.wholesale_price) : null },
+        { mrp: item.mrp ?? null, price: item.saleRate ?? null, wholesale: withWholesale ? (item.wholesaleRate ?? null) : null },
+      );
+      const patch: { mrp?: number; price?: number; wholesale_price?: number; hsn_code?: string; gst_percent?: number } = {};
+      if (change.mrp !== undefined) patch.mrp = change.mrp;
+      if (change.price !== undefined) patch.price = change.price;
+      if (change.wholesale !== undefined) patch.wholesale_price = change.wholesale;
+      if (!product.hsn_code && item.hsnCode) patch.hsn_code = item.hsnCode;
+      if (session.shopGstin && Number(product.gst_percent) === 0 && item.gstPercent > 0) patch.gst_percent = item.gstPercent;
+      if (!Object.keys(patch).length) continue;
+      const { error } = await admin.from("products").update(patch).eq("id", product.id).eq("shop_id", session.shopId);
+      if (error) continue;
+      if (change.mrp !== undefined || change.price !== undefined || change.wholesale !== undefined) ratesUpdated += 1;
+      productMap.set(product.id, { ...product, ...(patch as Partial<DbProduct>) });
+    }
+    if (ratesUpdated) await invalidateCache(`ray:cache:products:${session.shopId}`);
+  }
+
+  // Loss-prevention, not silent merging: buying the SAME product at a higher rate than before is
+  // normal, but selling the new stock at the OLD price loses money on every piece. A sale price
+  // (after any update above) that leaves under 5% over the new cost is flagged.
   const priceAlerts: { productName: string; newCost: number; currentSalePrice: number }[] = [];
   for (const item of resolvedItems) {
     if (!item.productId) continue;
     const product = productMap.get(item.productId);
-    if (!product || !("price" in product)) continue;
-    const currentSalePrice = Number((product as { price: number }).price);
+    if (!product) continue;
+    const currentSalePrice = Number(product.price);
     if (currentSalePrice > 0 && item.unitPrice >= currentSalePrice * 0.95) {
       priceAlerts.push({ productName: product.name, newCost: item.unitPrice, currentSalePrice });
     }
@@ -328,11 +382,9 @@ export async function createPurchaseAction(
   });
   if (!received.ok) console.error("Could not put a purchase's goods in stock", purchase.id, received.error);
 
-  // For pharma products where batch details were filled in on this
-  // purchase line, record the batch too — the stock increment above
-  // already covers the aggregate number, so this only adds the batch
-  // record, it doesn't touch stock_quantity again. Genuinely
-  // independent per item, so this runs concurrently.
+  // For pharma products where batch details were filled in on this purchase line, record the batch
+  // too — the stock increment above already covers the aggregate number, so this only adds the batch
+  // record, it doesn't touch stock_quantity again.
   await Promise.all(
     resolvedItems.map(async (item) => {
       const product = item.productId ? productMap.get(item.productId) : undefined;
@@ -354,9 +406,17 @@ export async function createPurchaseAction(
     console.log("Purchase: matched to existing products instead of creating duplicates", duplicatesAvoided);
   }
 
-  const redirectUrl = new URL(`/vendors/${vendorId}`, "https://placeholder.local");
+  revalidatePath("/purchases");
+  if (ratesUpdated || resolvedItems.some((i) => "createdHere" in i && i.createdHere)) {
+    revalidatePath("/products/rates");
+    revalidatePath("/bills/new");
+  }
+  const redirectUrl = new URL(`/purchases/${purchase.id}`, "https://placeholder.local");
+  redirectUrl.searchParams.set("saved", "1");
+  if (ratesUpdated) redirectUrl.searchParams.set("rates", String(ratesUpdated));
+  if (updateRates && !mayChangeRates) redirectUrl.searchParams.set("ratesSkipped", "1");
   if (priceAlerts.length > 0) {
-    redirectUrl.searchParams.set("priceAlerts", encodeURIComponent(JSON.stringify(priceAlerts)));
+    redirectUrl.searchParams.set("priceAlerts", encodeURIComponent(JSON.stringify(priceAlerts.slice(0, 20))));
   }
   redirect(`${redirectUrl.pathname}${redirectUrl.search}`);
 }

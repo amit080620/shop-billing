@@ -7,10 +7,12 @@ import { PageHeader } from "@/app/components/PageHeader";
 import { BackLink } from "@/app/components/BackLink";
 import { gapsReady } from "@/lib/gapsData";
 import { wholesaleReady } from "@/lib/wholesaleData";
+import { lastPurchases, costOf } from "@/lib/purchaseData";
 import { RateList } from "./RateList";
 
-/** The rate list: MRP, retail rate and wholesale rate for every item on one screen, rates set as
- * "MRP less x %", and the list shared on WhatsApp with the schemes. */
+/** The rate list: MRP, retail rate and wholesale rate for every item on one screen, beside what the
+ * item cost on its last purchase and the margin each rate leaves. Rates are set as "MRP less x %"
+ * or "cost plus x %", and the list is shared on WhatsApp with the schemes. */
 export default async function RatesPage() {
   const { t } = await getTranslator();
   const session = await requireSession();
@@ -25,9 +27,10 @@ export default async function RatesPage() {
     );
   }
   const offersOn = await gapsReady(admin);
-  const [{ data: products }, { data: categories }] = await Promise.all([
-    allRows((from, to) => admin.from("products").select("id, name, price, mrp, wholesale_price, unit, category_id, is_raw_material").eq("shop_id", session.shopId).order("name").order("id").range(from, to)),
+  const [{ data: products }, { data: categories }, last] = await Promise.all([
+    allRows((from, to) => admin.from("products").select("id, name, price, mrp, wholesale_price, unit, category_id, is_raw_material, gst_percent").eq("shop_id", session.shopId).order("name").order("id").range(from, to)),
     admin.from("categories").select("id, name").eq("shop_id", session.shopId).order("name"),
+    lastPurchases(admin, session.shopId),
   ]);
   const { data: schemes } = offersOn ? await admin.from("products").select("id, bxgy_buy, bxgy_free").eq("shop_id", session.shopId).not("bxgy_buy", "is", null) : { data: [] };
   const schemeOf = new Map((schemes ?? []).map((s) => [s.id, s.bxgy_buy && s.bxgy_free ? `${s.bxgy_buy}+${s.bxgy_free}` : null]));
@@ -41,7 +44,7 @@ export default async function RatesPage() {
         categories={categories ?? []}
         items={(products ?? [])
           .filter((p) => !p.is_raw_material)
-          .map((p) => ({ id: p.id, name: p.name, unit: p.unit, categoryId: p.category_id, mrp: p.mrp != null ? Number(p.mrp) : null, price: Number(p.price), wholesale: p.wholesale_price != null ? Number(p.wholesale_price) : null, scheme: schemeOf.get(p.id) ?? null }))}
+          .map((p) => ({ id: p.id, name: p.name, unit: p.unit, categoryId: p.category_id, mrp: p.mrp != null ? Number(p.mrp) : null, price: Number(p.price), wholesale: p.wholesale_price != null ? Number(p.wholesale_price) : null, scheme: schemeOf.get(p.id) ?? null, gst: Number(p.gst_percent), cost: costOf(last.get(p.id)) }))}
       />
     </div>
   );

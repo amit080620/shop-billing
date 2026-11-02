@@ -1,17 +1,23 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { focusKind, keyboardBillingOn, overlayOpen, readBillingKey, type BillingKey } from "./keyboardBilling";
+import { focusKind, KEYBOARD_BILLING_EVENT, keyboardBillingOn, overlayOpen, readBillingKey, type BillingKey } from "./keyboardBilling";
 
 /** Keyboard billing's keys on a billing screen (lib/keyboardBilling), when this computer has it on.
  * `onKey` gets "next", "save" or "back" and returns true when it acted, so the key does nothing else.
- * A key some field or popup already used is left alone. Returns whether keyboard billing is on. */
+ * A key some field or popup already used is left alone. Returns whether keyboard billing is on; it
+ * follows the switch at once when it is turned on or off on the screen itself. */
 export function useBillingKeys(onKey: (key: Exclude<BillingKey, "other" | "ignore">) => boolean): boolean {
   const [on, setOn] = useState(false);
   const handler = useRef(onKey);
   handler.current = onKey;
 
-  useEffect(() => setOn(keyboardBillingOn()), []);
+  useEffect(() => {
+    const read = () => setOn(keyboardBillingOn());
+    read();
+    window.addEventListener(KEYBOARD_BILLING_EVENT, read);
+    return () => window.removeEventListener(KEYBOARD_BILLING_EVENT, read);
+  }, []);
 
   useEffect(() => {
     if (!on) return;

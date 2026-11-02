@@ -139,7 +139,8 @@ export function PurchaseHubClient({ purchases, payments }: { purchases: Purchase
             ) : (
               <ul className="flex flex-col gap-2">
                 {purchases.map((p) => (
-                  <li key={p.id} className="neu-card flex items-center justify-between p-3">
+                  <li key={p.id}>
+                    <Link href={`/purchases/${p.id}`} className="neu-card flex items-center justify-between p-3 transition active:scale-[0.99]">
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-medium text-foreground">{p.vendorName}</p>
                       <p className="text-xs text-muted">
@@ -151,9 +152,10 @@ export function PurchaseHubClient({ purchases, payments }: { purchases: Purchase
                       {p.outstanding > 0 ? (
                         <p className="text-[11px] text-danger">{formatMoney(p.outstanding)} due</p>
                       ) : (
-                        <p className="text-[11px] text-emerald-600">Paid</p>
+                        <p className="text-[11px] text-emerald-600">{t("Paid")}</p>
                       )}
                     </div>
+                    </Link>
                   </li>
                 ))}
               </ul>

@@ -98,7 +98,7 @@ export const LOGO_ALLOWED_TYPES = ["image/png", "image/jpeg", "image/webp", "ima
 export const shopSettingsSchema = z.object({
   name: z.string().trim().min(1, "Shop name is required").max(120),
   businessType: z
-    .enum(["grocery", "restaurant", "mart", "hardware", "pharmacy", "rental", "transport", "service", "salon", "jewellery", "clinic", "gym", "lab", "hotel", "wholesale", "general"])
+    .enum(["grocery", "restaurant", "mart", "hardware", "pharmacy", "rental", "transport", "service", "salon", "jewellery", "clinic", "gym", "lab", "hotel", "wholesale", "garment", "general"])
     .default("general"),
   legalName: optionalText(160),
   gstin: optionalGstin,
@@ -229,11 +229,30 @@ export const purchaseSchema = z.object({
   purchaseDate: z.string().min(1),
   // Every purchase line needs a cost: a ₹0 line records stock with no cost,
   // no money out and no ITC.
-  items: z.array(lineItemSchema.extend({ unitPrice: z.coerce.number().positive("Enter the purchase cost for every item") })).min(1, "Add at least one item"),
+  items: z
+    .array(
+      lineItemSchema.extend({
+        unitPrice: z.coerce.number().positive("Enter the purchase cost for every item"),
+        // The vendor's trade discount, already taken off unitPrice — kept for the screen only.
+        discountPercent: z.coerce.number().min(0).max(100).nullable().optional(),
+        // Selling rates for the rate list (GST included, like the bill): MRP, retail, wholesale.
+        mrp: z.coerce.number().min(0).max(10_000_000).nullable().optional(),
+        saleRate: z.coerce.number().min(0).max(10_000_000).nullable().optional(),
+        wholesaleRate: z.coerce.number().min(0).max(10_000_000).nullable().optional(),
+        // A new item's unit and barcode.
+        unit: z.string().trim().max(12).nullable().optional(),
+        barcode: z.string().trim().max(64).nullable().optional(),
+      }),
+    )
+    .min(1, "Add at least one item"),
   paidAmount: z.coerce.number().min(0),
   paymentMethod: z.enum(paymentMethods).default("cash"),
   itcEligible: z.boolean().default(true),
   reverseCharge: z.boolean().default(false),
+  // Save the MRP / retail / wholesale rates typed on the lines into the items (the rate list).
+  updateRates: z.boolean().default(false),
+  // The same vendor's bill number is already recorded — saved anyway only when the person said so.
+  allowDuplicate: z.boolean().default(false),
 });
 export type PurchaseInput = z.infer<typeof purchaseSchema>;
 
@@ -254,7 +273,7 @@ export const staffInviteSchema = z.object({
 export const signupSchema = z.object({
   shopName: z.string().trim().min(1, "Shop name is required").max(120),
   businessType: z
-    .enum(["grocery", "restaurant", "mart", "hardware", "pharmacy", "rental", "transport", "service", "salon", "jewellery", "clinic", "gym", "lab", "hotel", "wholesale", "general"])
+    .enum(["grocery", "restaurant", "mart", "hardware", "pharmacy", "rental", "transport", "service", "salon", "jewellery", "clinic", "gym", "lab", "hotel", "wholesale", "garment", "general"])
     .default("general"),
   // Asked at signup so a new shop can bill immediately — billing is
   // blocked until the state is known (it decides CGST+SGST vs IGST).

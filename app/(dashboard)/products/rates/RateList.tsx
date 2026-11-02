@@ -6,12 +6,14 @@ import { Share2 } from "lucide-react";
 import { saveRateListAction } from "@/lib/actions/rates";
 import { formatMoney, unitLabel } from "@/lib/format";
 import { useT } from "@/lib/i18n/LangContext";
+import { margin, marginTone, rateFromCost } from "@/lib/purchaseMath";
 
-type Item = { id: string; name: string; unit: string; categoryId: string | null; mrp: number | null; price: number; wholesale: number | null; scheme: string | null };
+type Item = { id: string; name: string; unit: string; categoryId: string | null; mrp: number | null; price: number; wholesale: number | null; scheme: string | null; gst: number; cost: number | null };
 type Edit = { mrp: number | ""; price: number | ""; wholesale: number | "" };
 const num = (v: number | "") => (v === "" ? null : v);
 
-/** MRP · retail · wholesale for each item, set by hand or as "MRP less x %" for everything shown. */
+/** MRP · retail · wholesale for each item beside its cost (last purchase) and the margin the retail
+ * rate leaves, set by hand, as "MRP less x %" or as "cost plus x %" for everything shown. */
 export function RateList({ items, categories, shopName }: { items: Item[]; categories: { id: string; name: string }[]; shopName: string }) {
   const { t } = useT();
   const router = useRouter();
@@ -20,12 +22,30 @@ export function RateList({ items, categories, shopName }: { items: Item[]; categ
   const [edits, setEdits] = useState<Record<string, Edit>>({});
   const [retailPct, setRetailPct] = useState<number | "">("");
   const [wholesalePct, setWholesalePct] = useState<number | "">("");
+  const [costPct, setCostPct] = useState<number | "">("");
+  const [lossOnly, setLossOnly] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
 
-  const shown = useMemo(() => items.filter((i) => (cat === "all" || i.categoryId === cat) && (!q.trim() || i.name.toLowerCase().includes(q.trim().toLowerCase()))), [items, cat, q]);
   const value = (i: Item): Edit => edits[i.id] ?? { mrp: i.mrp ?? "", price: i.price, wholesale: i.wholesale ?? "" };
+  /** The margin the retail rate (as typed) leaves over the last purchase cost. */
+  const marginOf = (i: Item) => {
+    const v = value(i);
+    return margin(typeof v.price === "number" ? v.price : i.price, i.gst, i.cost);
+  };
+  const losing = items.filter((i) => (marginOf(i)?.percent ?? 0) < 0).length;
+  const shown = useMemo(
+    () =>
+      items.filter((i) => {
+        if (cat !== "all" && i.categoryId !== cat) return false;
+        if (q.trim() && !i.name.toLowerCase().includes(q.trim().toLowerCase())) return false;
+        if (!lossOnly) return true;
+        const e = edits[i.id];
+        return (margin(e && typeof e.price === "number" ? e.price : i.price, i.gst, i.cost)?.percent ?? 0) < 0;
+      }),
+    [items, cat, q, lossOnly, edits],
+  );
   const changed = items.filter((i) => {
     const e = edits[i.id];
     return !!e && (num(e.mrp) !== i.mrp || e.price !== i.price || num(e.wholesale) !== i.wholesale);
@@ -45,6 +65,19 @@ export function RateList({ items, categories, shopName }: { items: Item[]; categ
         const mrp = typeof cur.mrp === "number" ? cur.mrp : null;
         if (!mrp) continue;
         next[i.id] = { ...cur, [field]: Math.max(0, Math.round(mrp * (1 - pct / 100) * 100) / 100) };
+      }
+      return next;
+    });
+  }
+  /** "Cost plus x %" retail rate for every item shown that has been purchased — to the rupee. */
+  function fromCost(pct: number | "") {
+    if (typeof pct !== "number") return;
+    setMessage(null);
+    setEdits((prev) => {
+      const next = { ...prev };
+      for (const i of shown) {
+        if (!i.cost) continue;
+        next[i.id] = { ...(next[i.id] ?? value(i)), price: rateFromCost(i.cost, i.gst, pct) };
       }
       return next;
     });
@@ -80,6 +113,11 @@ export function RateList({ items, categories, shopName }: { items: Item[]; categ
             {c.name}
           </button>
         ))}
+        {losing > 0 && (
+          <button type="button" onClick={() => setLossOnly((v) => !v)} className={`shrink-0 rounded-full border px-3 py-1 text-xs font-semibold ${lossOnly ? "border-danger bg-danger text-white" : "border-danger/50 bg-danger-soft text-danger"}`}>
+            {t("Below cost ({n})", { n: losing })}
+          </button>
+        )}
       </div>
       <div className="neu-card flex flex-col gap-2 p-3 text-xs">
         <p className="text-muted">{t("Set the rates of the {n} items shown from their MRP:", { n: shown.length })}</p>
@@ -93,6 +131,15 @@ export function RateList({ items, categories, shopName }: { items: Item[]; categ
             </button>
           </div>
         ))}
+        <div className="flex items-center gap-2">
+          <span className="min-w-0 flex-1 text-foreground">{t("Retail rate = cost +")}</span>
+          <input type="number" min={0} max={500} value={costPct} onChange={(e) => setCostPct(e.target.value === "" ? "" : Number(e.target.value))} placeholder="20" aria-label={t("Retail rate = cost +")} className="w-16 rounded-lg border border-border px-2 py-1 text-right" />
+          <span className="text-muted">%</span>
+          <button type="button" onClick={() => fromCost(costPct)} className="rounded-lg border border-brand px-2.5 py-1 font-medium text-brand-text">
+            {t("Apply")}
+          </button>
+        </div>
+        <p className="text-[11px] text-muted">{t("Cost is each item's last purchase rate before GST; the margin is worked out before GST too.")}</p>
       </div>
       <div className="grid grid-cols-[1fr_4.2rem_4.2rem_4.2rem] gap-1.5 px-1 text-[11px] font-medium text-muted">
         <span>{t("Item")}</span>
@@ -104,13 +151,17 @@ export function RateList({ items, categories, shopName }: { items: Item[]; categ
         {shown.map((i) => {
           const v = value(i);
           const dirty = changed.some((c) => c.id === i.id);
+          const m = marginOf(i);
+          const tone = m ? marginTone(m.percent) : null;
           return (
-            <li key={i.id} className={`grid grid-cols-[1fr_4.2rem_4.2rem_4.2rem] items-center gap-1.5 rounded-lg border px-2 py-1.5 ${dirty ? "border-brand bg-brand-soft" : "border-border bg-surface"}`}>
+            <li key={i.id} className={`grid grid-cols-[1fr_4.2rem_4.2rem_4.2rem] items-center gap-1.5 rounded-lg border px-2 py-1.5 ${dirty ? "border-brand bg-brand-soft" : tone === "loss" ? "border-danger/50 bg-danger-soft" : "border-border bg-surface"}`}>
               <div className="min-w-0">
                 <p className="truncate text-sm text-foreground">{i.name}</p>
                 <p className="text-[11px] text-muted">
                   /{unitLabel(i.unit)}
                   {i.scheme ? ` · ${t("Scheme")} ${i.scheme}` : ""}
+                  {i.cost ? ` · ${t("Cost")} ${formatMoney(i.cost)}` : ""}
+                  {m && <span className={`font-semibold ${tone === "loss" ? "text-danger" : tone === "thin" ? "text-warning" : "text-success"}`}> · {m.percent}%</span>}
                 </p>
               </div>
               <input type="number" min={0} step="any" value={v.mrp} onChange={(e) => set(i, { mrp: e.target.value === "" ? "" : Number(e.target.value) })} aria-label={`${i.name} MRP`} className={input} />
