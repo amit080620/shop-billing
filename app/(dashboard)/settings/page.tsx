@@ -3,6 +3,7 @@ import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { SettingsClient } from "./SettingsClient";
 import { StockRuleToggle } from "./StockRuleToggle";
 import { shopBlocksOversell } from "@/lib/stockRule";
+import { garmentSchemaReady } from "@/lib/garment/server";
 
 export default async function SettingsPage() {
   const session = await requireOwner();
@@ -16,11 +17,12 @@ export default async function SettingsPage() {
     .eq("id", session.shopId)
     .single();
 
-  const blockOversell = await shopBlocksOversell(admin, session.shopId);
+  const [blockOversell, garmentReady] = await Promise.all([shopBlocksOversell(admin, session.shopId), garmentSchemaReady(admin)]);
 
   return (
     <div className="flex flex-col gap-4">
     <SettingsClient
+      garmentReady={garmentReady}
       shop={{
         name: shop?.name ?? "",
         legalName: shop?.legal_name ?? "",

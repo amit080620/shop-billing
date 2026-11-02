@@ -43,7 +43,7 @@ const ALL_MODULES: ModuleKey[] = MODULES.map((m) => m.key);
 // reports, online orders, staff salary, and the AI tools at a real daily allowance; Pro + is for
 // more than one shop, many staff or heavy AI use. Prices and limits follow the website's
 // docs/PRICING.md (31 Oct 2026): monthly = yearly ÷ 10.
-const BASIC_MODULES: ModuleKey[] = ["bulk_import_export", "quotations", "offers"];
+const BASIC_MODULES: ModuleKey[] = ["bulk_import_export", "quotations", "offers", "supplier_returns"];
 const PRO_MODULES: ModuleKey[] = [
   ...BASIC_MODULES,
   "whatsapp_reminders",
@@ -56,6 +56,7 @@ const PRO_MODULES: ModuleKey[] = [
   "public_catalog",
   "petty_cash",
   "stock_audit",
+  "garment_godowns",
   "stylist_commission",
   "vehicle_profit",
   "recipe_stock",
@@ -192,6 +193,8 @@ export const CUSTOM_MODULE_PRICE: Record<ModuleKey, number> = {
   public_catalog: 2999,
   petty_cash: 749,
   stock_audit: 1129,
+  garment_godowns: 2999,
+  supplier_returns: 1129,
   stylist_commission: 1499,
   vehicle_profit: 1879,
   recipe_stock: 11249,

@@ -16,10 +16,10 @@ export type StaffArea = { key: string; label: string; description: string; prefi
 export const STAFF_AREAS: StaffArea[] = [
   { key: "view_dashboard", label: "Home dashboard", description: "Today's sales, money at risk, shop health", prefixes: ["/dashboard"] },
   { key: "view_bills", label: "See all bills", description: "The list of bills and each bill's details", prefixes: ["/bills"] },
-  { key: "process_returns", label: "Returns & debit notes", description: "Take goods back, refund, add to a past bill", prefixes: ["/returns", "/debit-notes"] },
+  { key: "process_returns", label: "Returns & debit notes", description: "Take goods back, refund, add to a past bill", prefixes: ["/returns", "/debit-notes", "/garment/returns"] },
   { key: "view_reports", label: "Reports & insights", description: "Sales and GST reports, daily summary, profit leaks, shop highlight", prefixes: ["/reports", "/daily-summary", "/insights", "/profit-leak", "/shelf-watch", "/shop-highlight"] },
-  { key: "manage_products", label: "Items & stock", description: "Add or change items and prices, stock count, barcodes, reorder", prefixes: ["/products", "/stock-audit", "/barcode-settings", "/reorder", "/bulk-sale-entry"] },
-  { key: "purchases", label: "Purchases & suppliers", description: "Buying stock, supplier bills and payments", prefixes: ["/purchases", "/vendors"] },
+  { key: "manage_products", label: "Items & stock", description: "Add or change items and prices, stock count, barcodes, reorder", prefixes: ["/products", "/stock-audit", "/barcode-settings", "/reorder", "/bulk-sale-entry", "/garment"] },
+  { key: "purchases", label: "Purchases & suppliers", description: "Buying stock, supplier bills and payments", prefixes: ["/purchases", "/vendors", "/garment/supplier-returns"] },
   { key: "manage_customers", label: "Customers & udhaar", description: "Customer list, udhaar, loyalty, prepaid balance", prefixes: ["/customers", "/udhaar", "/parties", "/birthdays", "/loyalty-settings", "/import-khata", "/prepaid"] },
   { key: "manage_expenses", label: "Petty cash", description: "Day-to-day cash expenses", prefixes: ["/petty-cash"] },
   { key: "marketing", label: "Offers & marketing", description: "Offers, festival posters, WhatsApp reminders", prefixes: ["/offers", "/festivals", "/festival-poster", "/reminders"] },

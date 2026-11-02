@@ -1400,6 +1400,70 @@ const HOTEL_MR: HelpSection = {
  * kind of business — not the same Home/Sell/Buy walkthrough every
  * other business type gets too. Falls back to the retail section for
  * any business type without a dedicated one of its own. */
+const GARMENT_EN: HelpSection = {
+  title: "Garments: sizes, colours and godowns",
+  items: [
+    {
+      q: "How do I add a style in many sizes and colours?",
+      a: "Open Garments → Styles, add the style (name, HSN, GST%, MRP and price) and tick its colours and sizes. Each colour × size becomes its own item with its own barcode, price and stock, so it bills, scans and returns like any item.",
+    },
+    {
+      q: "Where is my stock — shop floor or godown?",
+      a: "Garments → Stock shows every size and colour at every godown. The counter sells from the shop floor (your default godown); goods in other godowns, on the way, or damaged can't be billed until they are moved or repaired.",
+    },
+    {
+      q: "How do I send stock from the godown to the shop or a branch?",
+      a: "Garments → Transfers: pick from and to, add sizes, then Dispatch. The goods show as in transit until the other side receives them; receive what really arrived and any shortage stays on record until it is settled.",
+    },
+    {
+      q: "How do I record damaged, missing or returned goods?",
+      a: "Damage, Missing stock and Supplier returns each have their own register. Nothing changes stock until it is approved, and every step keeps who did it and when.",
+    },
+  ],
+};
+const GARMENT_HI: HelpSection = {
+  title: "गारमेंट: साइज़, रंग और गोदाम",
+  items: [
+    {
+      q: "एक स्टाइल को कई साइज़ और रंग में कैसे जोड़ें?",
+      a: "Garments → Styles खोलें, स्टाइल जोड़ें (नाम, HSN, GST%, MRP और दाम) और उसके रंग व साइज़ चुनें। हर रंग × साइज़ अपना अलग आइटम बनता है — अपना बारकोड, दाम और स्टॉक — इसलिए बिल, स्कैन और वापसी किसी भी आइटम जैसी होती है।",
+    },
+    {
+      q: "मेरा स्टॉक कहाँ है — दुकान में या गोदाम में?",
+      a: "Garments → Stock हर साइज़ और रंग हर गोदाम में दिखाता है। काउंटर दुकान के फ़्लोर (डिफ़ॉल्ट गोदाम) से बेचता है; दूसरे गोदाम में, रास्ते में या ख़राब माल तब तक बिल नहीं होता जब तक उसे लाया या ठीक न किया जाए।",
+    },
+    {
+      q: "गोदाम से दुकान या ब्रांच में माल कैसे भेजें?",
+      a: "Garments → Transfers: कहाँ से, कहाँ — साइज़ जोड़ें, फिर Dispatch करें। माल दूसरी तरफ़ मिलने तक रास्ते में दिखता है; जितना सच में पहुँचा उतना रिसीव करें, कमी तब तक रिकॉर्ड में रहती है जब तक निपटाई न जाए।",
+    },
+    {
+      q: "ख़राब, ग़ायब या लौटाया माल कैसे दर्ज करें?",
+      a: "Damage, Missing stock और Supplier returns — हर एक का अपना रजिस्टर है। मंज़ूरी के बिना स्टॉक नहीं बदलता, और हर कदम पर किसने और कब किया, यह दर्ज रहता है।",
+    },
+  ],
+};
+const GARMENT_MR: HelpSection = {
+  title: "गारमेंट: साइज, रंग आणि गोदाम",
+  items: [
+    {
+      q: "एक स्टाइल अनेक साइज आणि रंगांत कसा जोडायचा?",
+      a: "Garments → Styles उघडा, स्टाइल जोडा (नाव, HSN, GST%, MRP आणि किंमत) आणि त्याचे रंग व साइज निवडा. प्रत्येक रंग × साइज स्वतंत्र आयटम बनतो — स्वतःचा बारकोड, किंमत आणि स्टॉक — म्हणून बिल, स्कॅन आणि परतावा कोणत्याही आयटमसारखाच होतो.",
+    },
+    {
+      q: "माझा स्टॉक कुठे आहे — दुकानात की गोदामात?",
+      a: "Garments → Stock प्रत्येक साइज आणि रंग प्रत्येक गोदामात दाखवते. काउंटर दुकानाच्या फ्लोअरवरून (डीफॉल्ट गोदाम) विकतो; दुसऱ्या गोदामातील, वाटेतील किंवा खराब माल हलवेपर्यंत किंवा दुरुस्त होईपर्यंत बिल होत नाही.",
+    },
+    {
+      q: "गोदामातून दुकानात किंवा शाखेत माल कसा पाठवायचा?",
+      a: "Garments → Transfers: कुठून, कुठे — साइज जोडा, मग Dispatch करा. माल दुसऱ्या बाजूला मिळेपर्यंत वाटेत दिसतो; खरोखर जितका पोहोचला तितका रिसीव्ह करा, कमतरता निकाली निघेपर्यंत नोंदीत राहते.",
+    },
+    {
+      q: "खराब, हरवलेला किंवा परत केलेला माल कसा नोंदवायचा?",
+      a: "Damage, Missing stock आणि Supplier returns — प्रत्येकाचे स्वतंत्र रजिस्टर आहे. मंजुरीशिवाय स्टॉक बदलत नाही, आणि प्रत्येक टप्प्यावर कोणी व केव्हा केले हे नोंदवले जाते.",
+    },
+  ],
+};
+
 export const BUSINESS_HELP_SECTION: Record<BusinessType, Record<Lang, HelpSection>> = {
   grocery: { en: RETAIL_EN, hi: RETAIL_HI, mr: RETAIL_MR },
   mart: { en: RETAIL_EN, hi: RETAIL_HI, mr: RETAIL_MR },
@@ -1417,4 +1481,5 @@ export const BUSINESS_HELP_SECTION: Record<BusinessType, Record<Lang, HelpSectio
   gym: { en: GYM_EN, hi: GYM_HI, mr: GYM_MR },
   lab: { en: LAB_EN, hi: LAB_HI, mr: LAB_MR },
   wholesale: { en: WHOLESALE_EN, hi: WHOLESALE_HI, mr: WHOLESALE_MR },
+  garment: { en: GARMENT_EN, hi: GARMENT_HI, mr: GARMENT_MR },
 };

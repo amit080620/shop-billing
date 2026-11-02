@@ -56,7 +56,8 @@ function SubmitButton({ hasError }: { hasError: boolean }) {
   );
 }
 
-export function SettingsClient({ shop }: { shop: ShopSettings }) {
+/** `garmentReady`: the garment trade is offered only once its tables exist (migration 0063). */
+export function SettingsClient({ shop, garmentReady = false }: { shop: ShopSettings; garmentReady?: boolean }) {
   const { t } = useT();
   const [state, formAction] = useActionState(keepValuesOnError(updateShopSettingsAction), null);
   const [gstin, setGstin] = useState(shop.gstin);
@@ -111,7 +112,7 @@ export function SettingsClient({ shop }: { shop: ShopSettings }) {
                   defaultValue={shop.businessType}
                   className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-brand"
                 >
-                  {BUSINESS_TYPES.map((b) => (
+                  {BUSINESS_TYPES.filter((b) => b.value !== "garment" || garmentReady || shop.businessType === "garment").map((b) => (
                     <option key={b.value} value={b.value}>
                       {b.label}
                     </option>

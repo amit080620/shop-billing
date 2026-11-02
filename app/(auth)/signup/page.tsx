@@ -8,6 +8,7 @@ import { getTheme } from "@/lib/theme";
 import { BUSINESS_TYPES } from "@/lib/businessType";
 import { INDIAN_STATES } from "@/lib/constants/states";
 import { hotelSchemaReady } from "@/lib/hotel/server";
+import { garmentSchemaReady } from "@/lib/garment/server";
 
 export const metadata: Metadata = {
   title: "Start your free trial | The Ray billing app",
@@ -20,8 +21,8 @@ export default async function SignupPage() {
   const theme = await getTheme();
   // Hotel is offered only once its tables exist (migration 0041), so nobody
   // can sign up into a half-working vertical.
-  const hotelReady = await hotelSchemaReady();
-  const offered = BUSINESS_TYPES.filter((b) => b.value !== "hotel" || hotelReady);
+  const [hotelReady, garmentReady] = await Promise.all([hotelSchemaReady(), garmentSchemaReady()]);
+  const offered = BUSINESS_TYPES.filter((b) => (b.value !== "hotel" || hotelReady) && (b.value !== "garment" || garmentReady));
 
   return (
     <AuthShell

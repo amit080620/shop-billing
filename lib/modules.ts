@@ -29,6 +29,8 @@ export const MODULES = [
   { key: "audit_log", label: "Audit & error logs", description: "Sensitive-action history and failure detection", href: "/audit-log" },
   { key: "petty_cash", label: "Petty cash", description: "Small day-to-day expense tracking", href: "/petty-cash" },
   { key: "stock_audit", label: "Stock audit", description: "Physical stock count reconciliation", href: "/stock-audit" },
+  { key: "garment_godowns", label: "Godowns & stock control", description: "Stock by godown, transfers with stock in transit, damage and missing-stock registers, godown counts, year-end carry forward", href: "/garment", businessTypes: ["garment"] },
+  { key: "supplier_returns", label: "Supplier returns", description: "Send purchased goods back to the vendor with a debit note — the vendor is owed less", href: "/garment/supplier-returns", businessTypes: ["garment"] },
 ] as const satisfies readonly { key: string; label: string; description: string; href: string; businessTypes?: readonly string[] }[];
 
 export type ModuleKey = (typeof MODULES)[number]["key"];

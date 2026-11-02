@@ -230,8 +230,7 @@ export interface Database {
           show_in_catalog: boolean;
           show_in_fast_billing: boolean;
           fast_billing_order: number;
-          created_at: string;
-        };
+          created_at: string; style_id?: string | null; variant_colour?: string | null; variant_size?: string | null; sku?: string | null; };
         Insert: {
           wholesale_price?: number | null;
           bxgy_buy?: number | null;
@@ -282,8 +281,7 @@ export interface Database {
           show_in_catalog?: boolean;
           show_in_fast_billing?: boolean;
           fast_billing_order?: number;
-          created_at?: string;
-        };
+          created_at?: string; style_id?: string | null; variant_colour?: string | null; variant_size?: string | null; sku?: string | null; };
         Update: {
           wholesale_price?: number | null;
           bxgy_buy?: number | null;
@@ -334,8 +332,7 @@ export interface Database {
           show_in_catalog?: boolean;
           show_in_fast_billing?: boolean;
           fast_billing_order?: number;
-          created_at?: string;
-        };
+          created_at?: string; style_id?: string | null; variant_colour?: string | null; variant_size?: string | null; sku?: string | null; };
         Relationships: [
           { foreignKeyName: "products_shop_id_fkey"; columns: ["shop_id"]; isOneToOne: false; referencedRelation: "shops"; referencedColumns: ["id"] },
           { foreignKeyName: "products_category_id_fkey"; columns: ["category_id"]; isOneToOne: false; referencedRelation: "categories"; referencedColumns: ["id"] },
@@ -2212,6 +2209,115 @@ export interface Database {
         Update: { id?: string; shop_id?: string; dish_id?: string; ingredient_id?: string; quantity?: number; created_at?: string };
         Relationships: [];
       };
+      // ─── Migration 0063: garments — styles, godowns, transfers, registers, year-end ───
+      product_styles: {
+        Row: { id: string; shop_id: string; name: string; code: string | null; brand: string | null; category_id: string | null; hsn_code: string | null; gst_percent: number; fabric: string | null; season: string | null; notes: string | null; is_active: boolean; created_at: string };
+        Insert: { id?: string; shop_id: string; name: string; code?: string | null; brand?: string | null; category_id?: string | null; hsn_code?: string | null; gst_percent?: number; fabric?: string | null; season?: string | null; notes?: string | null; is_active?: boolean; created_at?: string };
+        Update: { id?: string; shop_id?: string; name?: string; code?: string | null; brand?: string | null; category_id?: string | null; hsn_code?: string | null; gst_percent?: number; fabric?: string | null; season?: string | null; notes?: string | null; is_active?: boolean; created_at?: string };
+        Relationships: [];
+      };
+      godowns: {
+        Row: { id: string; shop_id: string; name: string; code: string; kind: "main" | "branch" | "shop_floor" | "warehouse" | "transit"; address: string | null; state: string | null; state_code: string | null; pin_code: string | null; contact_person: string | null; phone: string | null; gstin: string | null; branch_id: string | null; is_active: boolean; is_default: boolean; remarks: string | null; created_at: string };
+        Insert: { id?: string; shop_id: string; name: string; code: string; kind?: "main" | "branch" | "shop_floor" | "warehouse" | "transit"; address?: string | null; state?: string | null; state_code?: string | null; pin_code?: string | null; contact_person?: string | null; phone?: string | null; gstin?: string | null; branch_id?: string | null; is_active?: boolean; is_default?: boolean; remarks?: string | null; created_at?: string };
+        Update: { id?: string; shop_id?: string; name?: string; code?: string; kind?: "main" | "branch" | "shop_floor" | "warehouse" | "transit"; address?: string | null; state?: string | null; state_code?: string | null; pin_code?: string | null; contact_person?: string | null; phone?: string | null; gstin?: string | null; branch_id?: string | null; is_active?: boolean; is_default?: boolean; remarks?: string | null; created_at?: string };
+        Relationships: [];
+      };
+      garment_settings: {
+        Row: { shop_id: string; transfer_approval: boolean; blind_count: boolean; updated_at: string };
+        Insert: { shop_id: string; transfer_approval?: boolean; blind_count?: boolean; updated_at?: string };
+        Update: { shop_id?: string; transfer_approval?: boolean; blind_count?: boolean; updated_at?: string };
+        Relationships: [];
+      };
+      godown_stock: {
+        Row: { shop_id: string; godown_id: string; product_id: string; saleable: number; damaged: number; updated_at: string };
+        Insert: { shop_id: string; godown_id: string; product_id: string; saleable?: number; damaged?: number; updated_at?: string };
+        Update: { shop_id?: string; godown_id?: string; product_id?: string; saleable?: number; damaged?: number; updated_at?: string };
+        Relationships: [];
+      };
+      inventory_ledger: {
+        Row: { id: number; shop_id: string; product_id: string | null; product_name: string; godown_id: string | null; godown_name: string | null; bucket: "saleable" | "damaged" | "transit" | "pending"; quantity: number; kind: string; ref_type: string | null; ref_id: string | null; ref_number: string | null; staff_id: string | null; note: string | null; created_at: string };
+        Insert: { id?: number; shop_id: string; product_id?: string | null; product_name: string; godown_id?: string | null; godown_name?: string | null; bucket: "saleable" | "damaged" | "transit" | "pending"; quantity: number; kind: string; ref_type?: string | null; ref_id?: string | null; ref_number?: string | null; staff_id?: string | null; note?: string | null; created_at?: string };
+        Update: { id?: number; shop_id?: string; product_id?: string | null; product_name?: string; godown_id?: string | null; godown_name?: string | null; bucket?: "saleable" | "damaged" | "transit" | "pending"; quantity?: number; kind?: string; ref_type?: string | null; ref_id?: string | null; ref_number?: string | null; staff_id?: string | null; note?: string | null; created_at?: string };
+        Relationships: [];
+      };
+      godown_moves: {
+        Row: { id: string; shop_id: string; number: string; from_godown_id: string; to_godown_id: string; kind: "move" | "put_away" | "return_to_godown"; note: string | null; staff_id: string | null; created_at: string };
+        Insert: { id?: string; shop_id: string; number: string; from_godown_id: string; to_godown_id: string; kind?: "move" | "put_away" | "return_to_godown"; note?: string | null; staff_id?: string | null; created_at?: string };
+        Update: { id?: string; shop_id?: string; number?: string; from_godown_id?: string; to_godown_id?: string; kind?: "move" | "put_away" | "return_to_godown"; note?: string | null; staff_id?: string | null; created_at?: string };
+        Relationships: [];
+      };
+      stock_transfers: {
+        Row: { id: string; shop_id: string; number: string; transfer_date: string; from_godown_id: string; to_godown_id: string; status: "draft" | "requested" | "approved" | "dispatched" | "partially_received" | "received" | "closed" | "cancelled"; remarks: string | null; requested_by: string | null; requested_at: string | null; approved_by: string | null; approved_at: string | null; dispatched_by: string | null; dispatched_at: string | null; received_by: string | null; received_at: string | null; closed_by: string | null; closed_at: string | null; cancelled_by: string | null; cancelled_at: string | null; cancel_reason: string | null; from_gstin: string | null; to_gstin: string | null; from_state_code: string | null; to_state_code: string | null; movement_reason: string | null; consignment_value: number; transporter: string | null; vehicle_number: string | null; challan_ref: string | null; eway_bill_no: string | null; gst_review: boolean; created_by: string | null; created_at: string };
+        Insert: { id?: string; shop_id: string; number: string; transfer_date?: string; from_godown_id: string; to_godown_id: string; status?: "draft" | "requested" | "approved" | "dispatched" | "partially_received" | "received" | "closed" | "cancelled"; remarks?: string | null; requested_by?: string | null; requested_at?: string | null; approved_by?: string | null; approved_at?: string | null; dispatched_by?: string | null; dispatched_at?: string | null; received_by?: string | null; received_at?: string | null; closed_by?: string | null; closed_at?: string | null; cancelled_by?: string | null; cancelled_at?: string | null; cancel_reason?: string | null; from_gstin?: string | null; to_gstin?: string | null; from_state_code?: string | null; to_state_code?: string | null; movement_reason?: string | null; consignment_value?: number; transporter?: string | null; vehicle_number?: string | null; challan_ref?: string | null; eway_bill_no?: string | null; gst_review?: boolean; created_by?: string | null; created_at?: string };
+        Update: { id?: string; shop_id?: string; number?: string; transfer_date?: string; from_godown_id?: string; to_godown_id?: string; status?: "draft" | "requested" | "approved" | "dispatched" | "partially_received" | "received" | "closed" | "cancelled"; remarks?: string | null; requested_by?: string | null; requested_at?: string | null; approved_by?: string | null; approved_at?: string | null; dispatched_by?: string | null; dispatched_at?: string | null; received_by?: string | null; received_at?: string | null; closed_by?: string | null; closed_at?: string | null; cancelled_by?: string | null; cancelled_at?: string | null; cancel_reason?: string | null; from_gstin?: string | null; to_gstin?: string | null; from_state_code?: string | null; to_state_code?: string | null; movement_reason?: string | null; consignment_value?: number; transporter?: string | null; vehicle_number?: string | null; challan_ref?: string | null; eway_bill_no?: string | null; gst_review?: boolean; created_by?: string | null; created_at?: string };
+        Relationships: [];
+      };
+      stock_transfer_items: {
+        Row: { id: string; transfer_id: string; shop_id: string; product_id: string | null; product_name: string; quantity: number; dispatched: number; received: number; damaged: number; shortage: number; unit_value: number; note: string | null };
+        Insert: { id?: string; transfer_id: string; shop_id: string; product_id?: string | null; product_name: string; quantity: number; dispatched?: number; received?: number; damaged?: number; shortage?: number; unit_value?: number; note?: string | null };
+        Update: { id?: string; transfer_id?: string; shop_id?: string; product_id?: string | null; product_name?: string; quantity?: number; dispatched?: number; received?: number; damaged?: number; shortage?: number; unit_value?: number; note?: string | null };
+        Relationships: [];
+      };
+      stock_transfer_receipts: {
+        Row: { id: string; shop_id: string; transfer_id: string; client_ref: string | null; lines: Json; received_by: string | null; note: string | null; created_at: string };
+        Insert: { id?: string; shop_id: string; transfer_id: string; client_ref?: string | null; lines?: Json; received_by?: string | null; note?: string | null; created_at?: string };
+        Update: { id?: string; shop_id?: string; transfer_id?: string; client_ref?: string | null; lines?: Json; received_by?: string | null; note?: string | null; created_at?: string };
+        Relationships: [];
+      };
+      damage_reports: {
+        Row: { id: string; shop_id: string; number: string; report_date: string; godown_id: string; product_id: string | null; product_name: string; quantity: number; reason: "manufacturing_defect" | "torn" | "stained" | "colour_damage" | "water_damage" | "packaging_damage" | "customer_return_damage" | "handling_damage" | "other"; description: string | null; image_url: string | null; estimated_value: number; status: "reported" | "under_review" | "approved" | "rejected" | "dispositioned"; disposition: "return_to_supplier" | "repair" | "discounted_sale" | "scrap" | "non_saleable" | "other" | null; source_return_item_id: string | null; reported_by: string | null; reviewed_by: string | null; reviewed_at: string | null; approved_by: string | null; approved_at: string | null; rejected_by: string | null; rejected_at: string | null; dispositioned_by: string | null; dispositioned_at: string | null; decision_note: string | null; created_at: string };
+        Insert: { id?: string; shop_id: string; number: string; report_date?: string; godown_id: string; product_id?: string | null; product_name: string; quantity: number; reason: "manufacturing_defect" | "torn" | "stained" | "colour_damage" | "water_damage" | "packaging_damage" | "customer_return_damage" | "handling_damage" | "other"; description?: string | null; image_url?: string | null; estimated_value?: number; status?: "reported" | "under_review" | "approved" | "rejected" | "dispositioned"; disposition?: "return_to_supplier" | "repair" | "discounted_sale" | "scrap" | "non_saleable" | "other" | null; source_return_item_id?: string | null; reported_by?: string | null; reviewed_by?: string | null; reviewed_at?: string | null; approved_by?: string | null; approved_at?: string | null; rejected_by?: string | null; rejected_at?: string | null; dispositioned_by?: string | null; dispositioned_at?: string | null; decision_note?: string | null; created_at?: string };
+        Update: { id?: string; shop_id?: string; number?: string; report_date?: string; godown_id?: string; product_id?: string | null; product_name?: string; quantity?: number; reason?: "manufacturing_defect" | "torn" | "stained" | "colour_damage" | "water_damage" | "packaging_damage" | "customer_return_damage" | "handling_damage" | "other"; description?: string | null; image_url?: string | null; estimated_value?: number; status?: "reported" | "under_review" | "approved" | "rejected" | "dispositioned"; disposition?: "return_to_supplier" | "repair" | "discounted_sale" | "scrap" | "non_saleable" | "other" | null; source_return_item_id?: string | null; reported_by?: string | null; reviewed_by?: string | null; reviewed_at?: string | null; approved_by?: string | null; approved_at?: string | null; rejected_by?: string | null; rejected_at?: string | null; dispositioned_by?: string | null; dispositioned_at?: string | null; decision_note?: string | null; created_at?: string };
+        Relationships: [];
+      };
+      stock_discrepancies: {
+        Row: { id: string; shop_id: string; number: string; report_date: string; godown_id: string; product_id: string | null; product_name: string; kind: "missing" | "count_shortage" | "theft" | "unexplained" | "transit_shortage" | "handling_loss" | "count_difference"; system_qty: number; physical_qty: number; difference: number; estimated_value: number; reason: string | null; investigation_notes: string | null; resolution: "written_off" | "found" | "recovered" | "other" | null; attachments: string[]; transfer_id: string | null; status: "reported" | "investigation" | "reviewed" | "approved" | "rejected" | "adjusted" | "closed"; reported_by: string | null; investigated_by: string | null; investigated_at: string | null; reviewed_by: string | null; reviewed_at: string | null; approved_by: string | null; approved_at: string | null; rejected_by: string | null; rejected_at: string | null; adjusted_by: string | null; adjusted_at: string | null; closed_by: string | null; closed_at: string | null; created_at: string };
+        Insert: { id?: string; shop_id: string; number: string; report_date?: string; godown_id: string; product_id?: string | null; product_name: string; kind: "missing" | "count_shortage" | "theft" | "unexplained" | "transit_shortage" | "handling_loss" | "count_difference"; system_qty: number; physical_qty: number; difference: number; estimated_value?: number; reason?: string | null; investigation_notes?: string | null; resolution?: "written_off" | "found" | "recovered" | "other" | null; attachments?: string[]; transfer_id?: string | null; status?: "reported" | "investigation" | "reviewed" | "approved" | "rejected" | "adjusted" | "closed"; reported_by?: string | null; investigated_by?: string | null; investigated_at?: string | null; reviewed_by?: string | null; reviewed_at?: string | null; approved_by?: string | null; approved_at?: string | null; rejected_by?: string | null; rejected_at?: string | null; adjusted_by?: string | null; adjusted_at?: string | null; closed_by?: string | null; closed_at?: string | null; created_at?: string };
+        Update: { id?: string; shop_id?: string; number?: string; report_date?: string; godown_id?: string; product_id?: string | null; product_name?: string; kind?: "missing" | "count_shortage" | "theft" | "unexplained" | "transit_shortage" | "handling_loss" | "count_difference"; system_qty?: number; physical_qty?: number; difference?: number; estimated_value?: number; reason?: string | null; investigation_notes?: string | null; resolution?: "written_off" | "found" | "recovered" | "other" | null; attachments?: string[]; transfer_id?: string | null; status?: "reported" | "investigation" | "reviewed" | "approved" | "rejected" | "adjusted" | "closed"; reported_by?: string | null; investigated_by?: string | null; investigated_at?: string | null; reviewed_by?: string | null; reviewed_at?: string | null; approved_by?: string | null; approved_at?: string | null; rejected_by?: string | null; rejected_at?: string | null; adjusted_by?: string | null; adjusted_at?: string | null; closed_by?: string | null; closed_at?: string | null; created_at?: string };
+        Relationships: [];
+      };
+      godown_counts: {
+        Row: { id: string; shop_id: string; number: string; godown_id: string; count_date: string; blind: boolean; purpose: "count" | "opening"; status: "counting" | "submitted" | "approved" | "rejected" | "posted" | "cancelled"; note: string | null; created_by: string | null; submitted_by: string | null; submitted_at: string | null; approved_by: string | null; approved_at: string | null; rejected_by: string | null; rejected_at: string | null; posted_by: string | null; posted_at: string | null; created_at: string };
+        Insert: { id?: string; shop_id: string; number: string; godown_id: string; count_date?: string; blind?: boolean; purpose?: "count" | "opening"; status?: "counting" | "submitted" | "approved" | "rejected" | "posted" | "cancelled"; note?: string | null; created_by?: string | null; submitted_by?: string | null; submitted_at?: string | null; approved_by?: string | null; approved_at?: string | null; rejected_by?: string | null; rejected_at?: string | null; posted_by?: string | null; posted_at?: string | null; created_at?: string };
+        Update: { id?: string; shop_id?: string; number?: string; godown_id?: string; count_date?: string; blind?: boolean; purpose?: "count" | "opening"; status?: "counting" | "submitted" | "approved" | "rejected" | "posted" | "cancelled"; note?: string | null; created_by?: string | null; submitted_by?: string | null; submitted_at?: string | null; approved_by?: string | null; approved_at?: string | null; rejected_by?: string | null; rejected_at?: string | null; posted_by?: string | null; posted_at?: string | null; created_at?: string };
+        Relationships: [];
+      };
+      godown_count_items: {
+        Row: { id: string; count_id: string; shop_id: string; product_id: string | null; product_name: string; system_qty: number; physical_qty: number; posted_difference: number | null };
+        Insert: { id?: string; count_id: string; shop_id: string; product_id?: string | null; product_name: string; system_qty: number; physical_qty: number; posted_difference?: number | null };
+        Update: { id?: string; count_id?: string; shop_id?: string; product_id?: string | null; product_name?: string; system_qty?: number; physical_qty?: number; posted_difference?: number | null };
+        Relationships: [];
+      };
+      purchase_returns: {
+        Row: { id: string; shop_id: string; number: string; vendor_id: string; purchase_id: string; godown_id: string; return_date: string; status: "draft" | "posted" | "cancelled"; reason: string | null; taxable_value: number; gst_amount: number; total: number; credit_amount: number; debit_note_ref: string | null; transporter: string | null; vehicle_number: string | null; lr_number: string | null; created_by: string | null; posted_by: string | null; posted_at: string | null; cancelled_by: string | null; cancelled_at: string | null; created_at: string };
+        Insert: { id?: string; shop_id: string; number: string; vendor_id: string; purchase_id: string; godown_id: string; return_date?: string; status?: "draft" | "posted" | "cancelled"; reason?: string | null; taxable_value?: number; gst_amount?: number; total?: number; credit_amount?: number; debit_note_ref?: string | null; transporter?: string | null; vehicle_number?: string | null; lr_number?: string | null; created_by?: string | null; posted_by?: string | null; posted_at?: string | null; cancelled_by?: string | null; cancelled_at?: string | null; created_at?: string };
+        Update: { id?: string; shop_id?: string; number?: string; vendor_id?: string; purchase_id?: string; godown_id?: string; return_date?: string; status?: "draft" | "posted" | "cancelled"; reason?: string | null; taxable_value?: number; gst_amount?: number; total?: number; credit_amount?: number; debit_note_ref?: string | null; transporter?: string | null; vehicle_number?: string | null; lr_number?: string | null; created_by?: string | null; posted_by?: string | null; posted_at?: string | null; cancelled_by?: string | null; cancelled_at?: string | null; created_at?: string };
+        Relationships: [];
+      };
+      purchase_return_items: {
+        Row: { id: string; return_id: string; shop_id: string; purchase_item_id: string; product_id: string | null; product_name: string; quantity: number; rate: number; gst_percent: number; taxable_value: number; gst_amount: number; total: number; from_damaged: boolean; damage_report_id: string | null };
+        Insert: { id?: string; return_id: string; shop_id: string; purchase_item_id: string; product_id?: string | null; product_name: string; quantity: number; rate: number; gst_percent?: number; taxable_value?: number; gst_amount?: number; total?: number; from_damaged?: boolean; damage_report_id?: string | null };
+        Update: { id?: string; return_id?: string; shop_id?: string; purchase_item_id?: string; product_id?: string | null; product_name?: string; quantity?: number; rate?: number; gst_percent?: number; taxable_value?: number; gst_amount?: number; total?: number; from_damaged?: boolean; damage_report_id?: string | null };
+        Relationships: [];
+      };
+      return_dispositions: {
+        Row: { id: string; shop_id: string; return_id: string; return_item_id: string; product_id: string | null; product_name: string; quantity: number; disposition: "keep" | "to_godown" | "damaged" | "inspection" | "repair"; godown_id: string | null; damage_report_id: string | null; note: string | null; staff_id: string | null; created_at: string };
+        Insert: { id?: string; shop_id: string; return_id: string; return_item_id: string; product_id?: string | null; product_name: string; quantity: number; disposition: "keep" | "to_godown" | "damaged" | "inspection" | "repair"; godown_id?: string | null; damage_report_id?: string | null; note?: string | null; staff_id?: string | null; created_at?: string };
+        Update: { id?: string; shop_id?: string; return_id?: string; return_item_id?: string; product_id?: string | null; product_name?: string; quantity?: number; disposition?: "keep" | "to_godown" | "damaged" | "inspection" | "repair"; godown_id?: string | null; damage_report_id?: string | null; note?: string | null; staff_id?: string | null; created_at?: string };
+        Relationships: [];
+      };
+      fy_stock_closings: {
+        Row: { id: string; shop_id: string; financial_year: string; closing_date: string; opening_financial_year: string | null; opening_date: string | null; valuation_method: "latest_purchase_cost"; status: "closed" | "carried_forward"; total_quantity: number; total_value: number; negative_lines: number; note: string | null; closed_by: string | null; carried_by: string | null; carried_at: string | null; created_at: string };
+        Insert: { id?: string; shop_id: string; financial_year: string; closing_date: string; opening_financial_year?: string | null; opening_date?: string | null; valuation_method?: "latest_purchase_cost"; status?: "closed" | "carried_forward"; total_quantity?: number; total_value?: number; negative_lines?: number; note?: string | null; closed_by?: string | null; carried_by?: string | null; carried_at?: string | null; created_at?: string };
+        Update: { id?: string; shop_id?: string; financial_year?: string; closing_date?: string; opening_financial_year?: string | null; opening_date?: string | null; valuation_method?: "latest_purchase_cost"; status?: "closed" | "carried_forward"; total_quantity?: number; total_value?: number; negative_lines?: number; note?: string | null; closed_by?: string | null; carried_by?: string | null; carried_at?: string | null; created_at?: string };
+        Relationships: [];
+      };
+      fy_stock_closing_lines: {
+        Row: { id: string; closing_id: string; shop_id: string; product_id: string | null; product_name: string; style_id: string | null; variant_colour: string | null; variant_size: string | null; sku: string | null; barcode: string | null; unit: string | null; godown_id: string | null; godown_name: string | null; bucket: "saleable" | "damaged" | "transit" | "pending"; quantity: number; unit_cost: number; value: number; ref_type: string | null; ref_id: string | null };
+        Insert: { id?: string; closing_id: string; shop_id: string; product_id?: string | null; product_name: string; style_id?: string | null; variant_colour?: string | null; variant_size?: string | null; sku?: string | null; barcode?: string | null; unit?: string | null; godown_id?: string | null; godown_name?: string | null; bucket: "saleable" | "damaged" | "transit" | "pending"; quantity: number; unit_cost?: number; value?: number; ref_type?: string | null; ref_id?: string | null };
+        Update: { id?: string; closing_id?: string; shop_id?: string; product_id?: string | null; product_name?: string; style_id?: string | null; variant_colour?: string | null; variant_size?: string | null; sku?: string | null; barcode?: string | null; unit?: string | null; godown_id?: string | null; godown_name?: string | null; bucket?: "saleable" | "damaged" | "transit" | "pending"; quantity?: number; unit_cost?: number; value?: number; ref_type?: string | null; ref_id?: string | null };
+        Relationships: [];
+      };
       bill_payments: {
         Row: { id: string; shop_id: string; bill_id: string; payment_method: "cash" | "card" | "upi" | "online" | "other"; amount: number; reference: string | null; created_by: string | null; created_at: string };
         Insert: { id?: string; shop_id: string; bill_id: string; payment_method: "cash" | "card" | "upi" | "online" | "other"; amount: number; reference?: string | null; created_by?: string | null; created_at?: string };
@@ -2860,6 +2966,75 @@ export interface Database {
       increment_stock: {
         Args: { p_product_id: string; p_quantity: number };
         Returns: undefined;
+      };
+      // Migration 0063
+      next_godown_doc_number: {
+        Args: { p_shop: string; p_kind: string; p_prefix: string };
+        Returns: string;
+      };
+      godown_set_default: {
+        Args: { p_shop: string; p_godown: string; p_staff: string | null };
+        Returns: undefined;
+      };
+      godown_move_now: {
+        Args: { p_shop: string; p_from: string; p_to: string; p_lines: Json; p_kind: string; p_staff: string | null; p_note?: string | null };
+        Returns: string;
+      };
+      transfer_action: {
+        Args: { p_shop: string; p_transfer: string; p_action: string; p_staff: string | null; p_note?: string | null };
+        Returns: string;
+      };
+      transfer_dispatch: {
+        Args: { p_shop: string; p_transfer: string; p_staff: string | null };
+        Returns: undefined;
+      };
+      transfer_receive: {
+        Args: { p_shop: string; p_transfer: string; p_lines: Json; p_staff: string | null; p_client_ref?: string | null; p_note?: string | null };
+        Returns: Json;
+      };
+      transfer_close: {
+        Args: { p_shop: string; p_transfer: string; p_staff: string | null; p_note?: string | null };
+        Returns: number;
+      };
+      damage_action: {
+        Args: { p_shop: string; p_report: string; p_action: string; p_staff: string | null; p_note?: string | null };
+        Returns: string;
+      };
+      damage_dispose: {
+        Args: { p_shop: string; p_report: string; p_disposition: string; p_staff: string | null; p_note?: string | null };
+        Returns: undefined;
+      };
+      discrepancy_action: {
+        Args: { p_shop: string; p_id: string; p_action: string; p_staff: string | null; p_note?: string | null; p_resolution?: string | null };
+        Returns: string;
+      };
+      count_submit: {
+        Args: { p_shop: string; p_count: string; p_lines: Json; p_staff: string | null };
+        Returns: undefined;
+      };
+      count_action: {
+        Args: { p_shop: string; p_count: string; p_action: string; p_staff: string | null; p_note?: string | null };
+        Returns: string;
+      };
+      purchase_return_post: {
+        Args: { p_shop: string; p_return: string; p_staff: string | null };
+        Returns: Json;
+      };
+      return_disposition_post: {
+        Args: { p_shop: string; p_return_item: string; p_qty: number; p_disposition: string; p_godown: string | null; p_staff: string | null; p_note?: string | null };
+        Returns: string;
+      };
+      fy_close: {
+        Args: { p_shop: string; p_fy: string; p_closing_date: string; p_staff: string | null; p_note?: string | null };
+        Returns: string;
+      };
+      fy_carry_forward: {
+        Args: { p_shop: string; p_closing: string; p_opening_date: string; p_staff: string | null };
+        Returns: string;
+      };
+      gd_available: {
+        Args: { p_shop: string; p_godown: string; p_product: string };
+        Returns: number;
       };
       move_stock: {
         Args: { p_shop_id: string; p_take?: Json; p_give?: Json; p_allow_short?: boolean };

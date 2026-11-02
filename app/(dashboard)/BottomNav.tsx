@@ -21,6 +21,7 @@ import {
   Users,
   BedDouble,
   ConciergeBell,
+  Warehouse,
 } from "lucide-react";
 import { useTranslation } from "@/lib/i18n/useTranslation";
 import { activeTabHref } from "@/lib/activeTab";
@@ -136,6 +137,16 @@ function allTabsFor(businessType: string, t: (key: string) => string, permission
     ...fastBillingTab,
   ];
 
+  // Garments: the counter sells, Stock is the godowns (sizes and colours by godown, transfers).
+  const GARMENT_TABS = [
+    { href: "/bills/new", label: t("nav.sell"), icon: SellIcon },
+    { href: "/garment", label: t("Stock"), icon: GodownIcon },
+    { href: "/purchases", label: t("nav.buy"), icon: BuyIcon },
+    reportsTab,
+    ...fastBillingTab,
+  ];
+
+  if (businessType === "garment") return GARMENT_TABS;
   if (businessType === "restaurant") return RESTAURANT_TABS;
   if (businessType === "hotel") return HOTEL_TABS;
   if (businessType === "rental") return RENTAL_TABS;
@@ -246,6 +257,9 @@ function HotelNavIcon({ active }: { active: boolean }) {
 }
 function RoomsNavIcon({ active }: { active: boolean }) {
   return <BedDouble size={22} strokeWidth={active ? 2.3 : 1.8} />;
+}
+function GodownIcon({ active }: { active: boolean }) {
+  return <Warehouse size={22} strokeWidth={active ? 2.3 : 1.8} />;
 }
 function ClinicNavIcon({ active }: { active: boolean }) {
   return <Stethoscope size={22} strokeWidth={active ? 2.3 : 1.8} />;
