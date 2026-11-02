@@ -1276,3 +1276,77 @@ select,
     padding-right: 4rem;
   }
 }
+
+/* ============================================================
+   New look screens (app/components/newui) — the design system's
+   type scale and surfaces. Codes and small labels use the phone's
+   own monospace (the design's JetBrains Mono would be one more
+   download on every page).
+   ============================================================ */
+.n-card {
+  background: var(--surface);
+  border: 1px solid transparent;
+  border-radius: 0.75rem;
+  box-shadow: var(--elevation-1);
+}
+.dark .n-card {
+  border-color: var(--border);
+}
+.n-well {
+  background: var(--surface-2);
+  border-radius: 0.5rem;
+}
+.n-h1 {
+  font-size: 1.375rem;
+  line-height: 1.875rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+.n-h2 {
+  font-size: 1.125rem;
+  line-height: 1.625rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+.n-kpi {
+  font-size: 1.75rem;
+  line-height: 2.25rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+.n-label {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Roboto Mono", monospace;
+  font-size: 0.6875rem;
+  line-height: 0.875rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.n-code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Roboto Mono", monospace;
+  font-size: 0.8125rem;
+  line-height: 1.125rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+@media (min-width: 768px) {
+  .n-h1 {
+    font-size: 1.75rem;
+    line-height: 2.25rem;
+    letter-spacing: -0.02em;
+  }
+  .n-h2 {
+    font-size: 1.25rem;
+    line-height: 1.75rem;
+  }
+  .n-kpi {
+    font-size: 2.25rem;
+    line-height: 2.75rem;
+    letter-spacing: -0.03em;
+  }
+}
+/* The design's spectrum: the primary call to action and accent bars. */
+.n-gradient {
+  background: var(--ray-gradient);
+  color: #fff;
+}

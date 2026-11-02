@@ -17,6 +17,9 @@ import { getTerminology, customerNounFor } from "@/lib/businessType";
 import { getShopMoneySummary } from "@/lib/moneyBalances";
 import { goldRatesFrom, loadRateRows } from "@/lib/metalRates";
 import { hotelSchemaReady, loadFrontDesk } from "@/lib/hotel/server";
+import { getUiVersion } from "@/lib/uiVersion";
+import { HOME_PERIODS, loadNewHome, type HomePeriod } from "@/lib/newui/home";
+import { NewRetailHome } from "./NewRetailHome";
 import {
   Plus,
   AlertTriangle,
@@ -50,10 +53,12 @@ import {
   Sparkles,
 } from "lucide-react";
 
-export default async function DashboardPage() {
+export default async function DashboardPage({ searchParams }: { searchParams: Promise<{ p?: string }> }) {
   const session = await requireSession();
   const { t, lang } = await getTranslator();
   const admin = createSupabaseAdminClient();
+  // The New look's Home (THERAY_FINAL_DESIGN dashboard) for the shops it is drawn for.
+  const newHome = NEW_HOME_TYPES.has(session.businessType) && (await getUiVersion(session)) === "new";
 
   const isRestaurant = session.businessType === "restaurant";
   const isHotel = session.businessType === "hotel";
@@ -107,6 +112,30 @@ export default async function DashboardPage() {
   })
     .filter((f) => f.daysUntil >= 0 && f.daysUntil <= 25)
     .sort((a, b) => a.daysUntil - b.daysUntil)[0];
+
+  if (newHome) {
+    const { p } = await searchParams;
+    const period: HomePeriod = HOME_PERIODS.includes(p as HomePeriod) ? (p as HomePeriod) : "today";
+    return (
+      <NewRetailHome
+        data={await loadNewHome(admin, session, period)}
+        t={t}
+        shop={session}
+        greeting={t(greetingKey())}
+        setup={{ steps: setupSteps, next: nextStep }}
+        pendingOnlineOrders={pendingCatalogOrders ?? 0}
+        planBanner={<PlanBanner />}
+        scoreCard={<RayScoreCard shopId={session.shopId} businessType={session.businessType} lang={lang} t={t} />}
+        festival={
+          nextFestival
+            ? nextFestival.daysUntil === 1
+              ? t("home.festivalTomorrow", { name: t(nextFestival.name) })
+              : t("home.festivalIn", { name: t(nextFestival.name), days: nextFestival.daysUntil })
+            : undefined
+        }
+      />
+    );
+  }
 
   return (
     <div className="flex flex-col gap-3">
@@ -224,6 +253,9 @@ export default async function DashboardPage() {
     </div>
   );
 }
+
+// The trades the design's dashboard is drawn for (a retail counter); the others keep their own Home.
+const NEW_HOME_TYPES = new Set(["grocery", "mart", "hardware", "wholesale", "general"]);
 
 // Festival prompts are about stocking up — irrelevant to a clinic or gym.
 const STOCK_BUSINESSES = new Set(["grocery", "mart", "hardware", "general", "pharmacy", "jewellery", "restaurant", "hotel"]);
