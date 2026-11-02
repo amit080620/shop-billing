@@ -178,6 +178,19 @@ export async function MoreMenu() {
           </MenuGroup>
         )}
 
+        {type === "garment" && (
+          <MenuGroup title={t("Garments")}>
+            <MenuLink href="/garment/styles" label={t("Styles, sizes & colours")} sub={t("One style, every size and colour, each with its own barcode")} icon={Package} />
+            <MenuLink href="/garment/stock" label={t("Stock by godown")} sub={t("Every size and colour, every place")} icon={Warehouse} locked={lock("garment_godowns")} />
+            <MenuLink href="/garment/transfers" label={t("Transfers")} sub={t("Godown to godown, with stock in transit until received")} icon={Truck} locked={lock("garment_godowns")} />
+            <MenuLink href="/garment/damage" label={t("Damage register")} sub={t("Reporting doesn't move stock; approving moves it to damaged stock")} icon={AlertTriangle} locked={lock("garment_godowns")} />
+            <MenuLink href="/garment/counts" label={t("Godown stock count")} sub={t("Count, submit, approve, then post only the difference")} icon={ClipboardCheck} locked={lock("garment_godowns")} />
+            <MenuLink href="/garment/supplier-returns" label={t("Supplier returns")} sub={t("Goods back to the vendor against a purchase, with a debit note")} icon={Repeat} locked={lock("supplier_returns")} />
+            <MenuLink href="/garment/year-end" label={t("Year-end stock")} sub={t("Closing stock for the financial year, carried forward once")} icon={CalendarCheck} locked={lock("garment_godowns")} />
+            <MenuLink href="/garment/reports" label={t("Godown reports")} sub={t("Registers, movements and valuation")} icon={BarChart3} locked={lock("garment_godowns")} />
+          </MenuGroup>
+        )}
+
         {type === "jewellery" && (
           <MenuGroup title="Jewellery">
             <MenuLink href="/jewellery/rates" label="Today's rate" sub="Gold 24K / 22K / 18K and silver, per gram" icon={Gem} />

@@ -23,6 +23,11 @@ export const BUSINESS_TYPES: { value: BusinessType; label: string; icon: LucideI
   { value: "general", label: "General / Other", icon: Building2, colors: ["#94A3B8", "#475569"] },
 ];
 
+/** Business types built but waiting for their database update (garment: migration 0063). They
+ * stay off the public pages — demo shops, trade pages, training videos — and are offered at
+ * signup, in Settings and in the admin panel only once that update has run. */
+export const NOT_YET_PUBLIC: ReadonlySet<BusinessType> = new Set<BusinessType>(["garment"]);
+
 type Terminology = {
   productPlural: string;
   productSingular: string;

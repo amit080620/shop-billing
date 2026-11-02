@@ -23,10 +23,12 @@ export function BusinessTypeForm({
   shopId,
   businessType,
   locked,
+  garmentReady = false,
 }: {
   shopId: string;
   businessType: string;
   locked: boolean;
+  garmentReady?: boolean;
 }) {
   const [state, formAction] = useActionState(keepValuesOnError(adminSetBusinessTypeAction), null);
   // Controlled, not defaultValue/defaultChecked — after a save, the server
@@ -50,7 +52,7 @@ export function BusinessTypeForm({
         onChange={(e) => setSelectedType(e.target.value)}
         className="rounded-lg border border-gray-700 bg-gray-800 px-3 py-2 text-sm text-white outline-none focus:border-gray-500"
       >
-        {BUSINESS_TYPES.map((b) => (
+        {BUSINESS_TYPES.filter((b) => b.value !== "garment" || garmentReady || businessType === "garment").map((b) => (
           <option key={b.value} value={b.value}>
             {b.label}
           </option>

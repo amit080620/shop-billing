@@ -3,6 +3,7 @@ import { requireSuperAdmin } from "@/lib/admin-auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { RechargeForm } from "./RechargeForm";
 import { BusinessTypeForm } from "./BusinessTypeForm";
+import { garmentSchemaReady } from "@/lib/garment/server";
 import { ModulesForm } from "./ModulesForm";
 import { AdminResetPasswordButton } from "./AdminResetPasswordButton";
 import { DeleteShopButton } from "./DeleteShopButton";
@@ -171,7 +172,7 @@ export default async function AdminShopDetailPage({
 
       <RechargeForm shopId={shop.id} />
 
-      <BusinessTypeForm shopId={shop.id} businessType={shop.business_type} locked={shop.business_type_locked} />
+      <BusinessTypeForm shopId={shop.id} businessType={shop.business_type} locked={shop.business_type_locked} garmentReady={await garmentSchemaReady(admin)} />
 
       <ModulesForm
         shopId={shop.id}

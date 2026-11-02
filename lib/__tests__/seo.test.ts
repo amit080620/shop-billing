@@ -3,7 +3,7 @@ import { describe, it, expect, vi, afterEach } from "vitest";
 vi.mock("server-only", () => ({}));
 
 const { VERTICALS } = await import("../seo/verticals");
-const { BUSINESS_TYPES } = await import("../businessType");
+const { BUSINESS_TYPES, NOT_YET_PUBLIC } = await import("../businessType");
 const { videoById } = await import("../trainingVideos");
 const { loadTranscript, videoObject } = await import("../seo/videoSeo");
 const { commonFaqs } = await import("../seo/commonFaqs");
@@ -11,8 +11,8 @@ const { commonFaqs } = await import("../seo/commonFaqs");
 afterEach(() => vi.unstubAllGlobals());
 
 describe("trade pages", () => {
-  it("cover every business type once, with their own address", () => {
-    expect(new Set(VERTICALS.map((v) => v.type))).toEqual(new Set(BUSINESS_TYPES.map((b) => b.value)));
+  it("cover every public business type once, with their own address", () => {
+    expect(new Set(VERTICALS.map((v) => v.type))).toEqual(new Set(BUSINESS_TYPES.filter((b) => !NOT_YET_PUBLIC.has(b.value)).map((b) => b.value)));
     expect(new Set(VERTICALS.map((v) => v.slug)).size).toBe(VERTICALS.length);
     for (const v of VERTICALS) expect(v.slug).toMatch(/^[a-z-]+$/);
   });

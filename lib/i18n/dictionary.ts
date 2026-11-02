@@ -2,6 +2,7 @@ import { SCREEN_STRINGS } from "./screens";
 import { MENU_TEXT } from "./menuText";
 import { PAGE_TEXT } from "./pageText";
 import { HOTEL_TEXT } from "./hotelText";
+import { GARMENT_TEXT } from "./garmentText";
 import en from "./en";
 import hi from "./hi";
 import mr from "./mr";
@@ -19,7 +20,8 @@ for (const [key, [enText, hiText, mrText]] of Object.entries(SCREEN_STRINGS)) {
   translations.mr[key] ??= mrText;
 }
 // Menu/report text is keyed by its English wording (English falls back to the key).
-for (const [english, [hiText, mrText]] of [...Object.entries(MENU_TEXT), ...Object.entries(PAGE_TEXT), ...Object.entries(HOTEL_TEXT)]) {
+// Garment text comes last, so it only fills words the other tables don't have.
+for (const [english, [hiText, mrText]] of [...Object.entries(MENU_TEXT), ...Object.entries(PAGE_TEXT), ...Object.entries(HOTEL_TEXT), ...Object.entries(GARMENT_TEXT)]) {
   translations.hi[english] ??= hiText;
   translations.mr[english] ??= mrText;
 }

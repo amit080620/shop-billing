@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
 import Link from "@/lib/link";
 import { PlayCircle } from "lucide-react";
-import { BUSINESS_TYPES } from "@/lib/businessType";
+import { BUSINESS_TYPES as ALL_TYPES, NOT_YET_PUBLIC } from "@/lib/businessType";
 import { getTranslator } from "@/lib/i18n/server";
 import { VideoList } from "@/app/components/VideoList";
 import { TRAINING_VIDEOS, videosFor } from "@/lib/trainingVideos";
+
+const BUSINESS_TYPES = ALL_TYPES.filter((b) => !NOT_YET_PUBLIC.has(b.value));
 
 export const metadata: Metadata = {
   title: "The Ray training videos: billing, GST, udhaar, stock",

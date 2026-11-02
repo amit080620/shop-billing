@@ -54,7 +54,7 @@ const TAB_ROOTS = new Set([
   "/dashboard", "/bills/new", "/customers", "/purchases", "/reports", "/fast-billing",
   "/restaurant", "/restaurant-kds", "/hotel", "/hotel/rooms", "/rentals/new", "/transport/vehicles", "/service",
   "/salon/appointments", "/jewellery/rates", "/clinic/prescriptions/new", "/clinic/appointments",
-  "/gym/members/new", "/gym/members", "/lab/orders/new", "/lab/orders",
+  "/gym/members/new", "/gym/members", "/lab/orders/new", "/lab/orders", "/garment",
 ]);
 
 /** On-screen Back that behaves like the phone's back button: returns to

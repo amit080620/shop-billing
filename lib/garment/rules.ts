@@ -25,6 +25,66 @@ export const TRANSFER_STATUS_LABEL = {
 } as const;
 export type TransferStatus = keyof typeof TRANSFER_STATUS_LABEL;
 
+/** Every garment register's status, as a person reads it (transfers have their own words above). */
+export const STATUS_LABEL: Record<string, string> = {
+  ...TRANSFER_STATUS_LABEL,
+  reported: "Reported",
+  under_review: "Under review",
+  rejected: "Rejected",
+  dispositioned: "Decided",
+  investigation: "Under investigation",
+  reviewed: "Reviewed",
+  adjusted: "Stock adjusted",
+  counting: "Counting",
+  submitted: "Submitted",
+  posted: "Posted",
+  carried_forward: "Carried forward",
+};
+
+/** How a stock difference was settled. */
+export const RESOLUTION_LABEL: Record<string, string> = {
+  written_off: "Written off",
+  found: "Found — back in stock",
+  recovered: "Recovered",
+  other: "Other outcome",
+};
+
+/** The kinds of stock a godown line can hold. */
+export const BUCKET_LABEL: Record<string, string> = { saleable: "Saleable", damaged: "Damaged", transit: "In transit", pending: "Transit shortage" };
+
+/** Each stock-ledger movement (inventory_ledger.kind, as the migration 0063 functions write it). */
+export const MOVEMENT_LABEL: Record<string, string> = {
+  opening_adjust: "Opening stock",
+  move: "Moved",
+  put_away: "Put away",
+  return_to_godown: "Back to godown",
+  transfer_dispatch: "Transfer sent",
+  transfer_receive: "Transfer received",
+  transfer_receive_damaged: "Arrived damaged",
+  transfer_shortage: "Transit shortage",
+  shortage_settled: "Shortage settled",
+  shortage_found: "Shortage found",
+  damage: "Damaged",
+  damage_back_to_saleable: "Damage → saleable",
+  damage_writeoff: "Written off",
+  discrepancy_adjust: "Difference adjusted",
+  count_adjust: "Count adjusted",
+  purchase_return: "Returned to supplier",
+  customer_return: "Customer return → godown",
+  customer_return_damaged: "Customer return damaged",
+  opening_balance: "Year opening (record only)",
+};
+
+/** Where a customer-returned piece goes from the shop floor (return_disposition_post). */
+export type ReturnDisposition = "keep" | "to_godown" | "damaged" | "inspection" | "repair";
+export const RETURN_DISPOSITION_LABEL: Record<ReturnDisposition, string> = {
+  keep: "Keep on the shop floor",
+  to_godown: "Send to a godown",
+  damaged: "Damaged",
+  inspection: "Hold for inspection",
+  repair: "Send for repair",
+};
+
 export type TransferAction = "request" | "approve" | "cancel" | "dispatch" | "receive" | "close";
 
 /** What may be done to a transfer next, the way transfer_action / transfer_dispatch /

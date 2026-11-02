@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { BUSINESS_TYPES } from "../businessType";
+import { BUSINESS_TYPES, NOT_YET_PUBLIC } from "../businessType";
 import { DEMO_BUSINESSES, DEMO_TYPES, demoBusiness, demoEmail, isDemoEmail, isDemoType } from "../demo/config";
 import { demoLocked, isDemoSession } from "../demo/guard";
 import { guideBlocks, guideMarkdown } from "../demo/guide";
 import { dateOffset, fakePhone, isoAt, rng, todayIst } from "../demo/util";
 
 describe("demo setup", () => {
-  it("has a demo for every business type, and nothing extra", () => {
-    expect([...DEMO_TYPES].sort()).toEqual(BUSINESS_TYPES.map((b) => b.value).sort());
+  it("has a demo for every public business type, and nothing extra", () => {
+    expect([...DEMO_TYPES].sort()).toEqual(BUSINESS_TYPES.filter((b) => !NOT_YET_PUBLIC.has(b.value)).map((b) => b.value).sort());
     expect(DEMO_BUSINESSES.map((b) => b.type).sort()).toEqual([...DEMO_TYPES].sort());
   });
 
