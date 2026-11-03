@@ -10,7 +10,7 @@ import type { FastBillingProps, FastBillingScreen } from "@/lib/billing/fastBill
 /** Fast Billing, opened at once from the copy kept on this phone (lib/screenCache) while a fresh
  * copy loads; the fresh one takes its place without disturbing the bill being made. The server
  * prices every line from the catalogue again when the bill is saved. */
-export function CachedFastBilling({ cacheKey }: { cacheKey: string }) {
+export function CachedFastBilling({ cacheKey, look = "classic" }: { cacheKey: string; look?: "classic" | "new" }) {
   const router = useRouter();
   const [props, setProps] = useState<FastBillingProps | null>(null);
   const [failed, setFailed] = useState(false);
@@ -59,5 +59,5 @@ export function CachedFastBilling({ cacheKey }: { cacheKey: string }) {
     }
     return <PageLoadingSkeleton />;
   }
-  return <FastBillingClient {...props} />;
+  return <FastBillingClient {...props} look={look} />;
 }
