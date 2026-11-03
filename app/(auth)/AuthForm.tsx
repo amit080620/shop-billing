@@ -20,6 +20,8 @@ import {
   FlaskConical,
   Building2,
   BedDouble,
+  Warehouse,
+  Shirt,
   type LucideIcon,
 } from "lucide-react";
 
@@ -27,7 +29,9 @@ import {
 // (rather than passing the component itself through props) because a
 // Server Component can only pass plain, serializable data to a Client
 // Component; a React component reference can't cross that boundary.
-const BUSINESS_ICON_MAP: Record<string, LucideIcon> = {
+// lib/__tests__/signupIcons.test.ts keeps it matching businessType.ts, so a new trade can't
+// reach signup without its icon.
+export const BUSINESS_ICON_MAP: Record<string, LucideIcon> = {
   grocery: ShoppingCart,
   mart: Store,
   hardware: Wrench,
@@ -42,6 +46,8 @@ const BUSINESS_ICON_MAP: Record<string, LucideIcon> = {
   clinic: Stethoscope,
   gym: Dumbbell,
   lab: FlaskConical,
+  wholesale: Warehouse,
+  garment: Shirt,
   general: Building2,
 };
 
