@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { requireSuperAdmin } from "../admin-auth";
 import { createSupabaseAdminClient } from "../supabase/admin";
 import { hotelSchemaReady } from "../hotel/server";
+import { garmentSchemaReady } from "../garment/server";
 import { emptyShopForDeletion } from "../shopDeletion";
 
 export type ActionState = { error?: string; success?: boolean } | null;
@@ -24,6 +25,9 @@ export async function adminSetBusinessTypeAction(
 
   if (businessType === "hotel" && !(await hotelSchemaReady(db))) {
     return { error: "Run migration 0041_hotel.sql in the Supabase SQL editor first — hotel shops need its tables." };
+  }
+  if (businessType === "garment" && !(await garmentSchemaReady(db))) {
+    return { error: "Run migration 0063_garment_godowns.sql in the Supabase SQL editor first — garment shops need its tables." };
   }
 
   const { error } = await db

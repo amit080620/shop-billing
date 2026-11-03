@@ -52,11 +52,15 @@ export function BusinessTypeForm({
         onChange={(e) => setSelectedType(e.target.value)}
         className="rounded-lg border border-gray-700 bg-gray-800 px-3 py-2 text-sm text-white outline-none focus:border-gray-500"
       >
-        {BUSINESS_TYPES.filter((b) => b.value !== "garment" || garmentReady || businessType === "garment").map((b) => (
-          <option key={b.value} value={b.value}>
-            {b.label}
-          </option>
-        ))}
+        {/* Garment is listed but can't be picked until migration 0063 runs (the banner on /admin). */}
+        {BUSINESS_TYPES.map((b) => {
+          const waiting = b.value === "garment" && !garmentReady && businessType !== "garment";
+          return (
+            <option key={b.value} value={b.value} disabled={waiting}>
+              {waiting ? `${b.label} — after database update 0063` : b.label}
+            </option>
+          );
+        })}
       </select>
       <label className="flex items-center gap-2 text-xs text-gray-300">
         <input

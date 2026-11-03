@@ -29,6 +29,16 @@ const nextConfig: NextConfig = {
   // Genuinely enables gzip/brotli compression for all responses —
   // measurably reduces transfer size for JS, CSS, and HTML.
   compress: true,
+  // The admin panel's copy buttons for database updates still to run read these at run time
+  // (app/admin/migration/[file]), so the deploy has to carry them.
+  outputFileTracingIncludes: {
+    "/admin/migration": [
+      "./supabase/migrations/0060_stock_guard.sql",
+      "./supabase/migrations/0061_bill_payments.sql",
+      "./supabase/migrations/0062_legacy_refund_guard.sql",
+      "./supabase/migrations/0063_garment_godowns.sql",
+    ],
+  },
   // Files that aren't pages — the videos' subtitles and the app manifest — stay out of search
   // results ("crawled, not indexed" in Search Console). They still load for the player and the
   // phone as before; only search engines read this header.

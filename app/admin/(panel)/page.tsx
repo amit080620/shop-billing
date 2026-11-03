@@ -8,7 +8,9 @@ import { buildWhatsAppLink } from "@/lib/whatsapp";
 import { isDemoShopName } from "@/lib/demo/config";
 import { onboardingStatus } from "@/lib/onboarding";
 import { onboardingFactsCached, readOnboardingFile } from "@/lib/onboardingData";
+import { garmentPrerequisites, garmentSchemaReady } from "@/lib/garment/server";
 import { CopyMigrationButton } from "./CopyMigrationButton";
+import { CopyMigrationFileButton } from "./CopyMigrationFileButton";
 
 function statusFor(validUntil: string | null) {
   if (!validUntil) return { label: "Unlimited", tone: "neutral" as const };
@@ -59,11 +61,14 @@ export default async function AdminDashboardPage({ searchParams }: { searchParam
   // Fetched together rather than one after another. The plan columns come from migration 0040; if
   // they aren't there yet the shops are read again without them.
   const columns = "id, name, legal_name, gstin, subscription_valid_until, wallet_balance, created_at, business_type";
-  const [withPlans, enquiriesNew, ticksFile] = await Promise.all([
+  const [withPlans, enquiriesNew, ticksFile, garmentReady] = await Promise.all([
     admin.from("shops").select(`${columns}, plan, trial_ends_at, owner_phone`).order("created_at", { ascending: false }),
     admin.from("sales_enquiries").select("id", { count: "exact", head: true }).eq("status", "new"),
     readOnboardingFile(admin),
+    garmentSchemaReady(admin),
   ]);
+  // Garment waits for migration 0063, and 0063 for 0060 and 0061: which of them are still to run.
+  const garmentSteps = garmentReady ? null : await garmentPrerequisites(admin);
   const plansReady = !withPlans.error;
   const data = plansReady ? withPlans.data : (await admin.from("shops").select(columns).order("created_at", { ascending: false })).data;
   const everyShop = (data ?? []) as unknown as ShopRow[];
@@ -126,6 +131,36 @@ export default async function AdminDashboardPage({ searchParams }: { searchParam
             nothing here can be saved. Copy the SQL, paste it in the Supabase SQL editor and press Run — once.
           </p>
           <CopyMigrationButton />
+        </div>
+      )}
+
+      {garmentSteps && (
+        <div className="flex flex-col gap-2 rounded-xl border border-amber-700/50 bg-amber-900/20 p-4">
+          <p className="text-sm font-semibold text-amber-300">Garments / Clothing is waiting for its database update</p>
+          <p className="text-xs text-amber-200/80">
+            The garment trade (godowns, transfers, size × colour) is in the app, but it stays off the signup page and the business type picker
+            until migration 0063 runs — before that the database refuses the garment type. Copy each file below in this order, paste it in the
+            Supabase SQL editor and press Run, once each. Garment shows up at signup and here right after; no new deploy is needed.
+          </p>
+          <ol className="flex flex-col gap-2 text-xs text-amber-100">
+            {!garmentSteps.stockGuard && (
+              <li className="flex flex-wrap items-center gap-2">
+                <span>Stock guard (0060)</span>
+                <CopyMigrationFileButton file="0060_stock_guard.sql" label="Copy 0060" />
+              </li>
+            )}
+            {!garmentSteps.billPayments && (
+              <li className="flex flex-wrap items-center gap-2">
+                <span>Bill payments (0061, then 0062)</span>
+                <CopyMigrationFileButton file="0061_bill_payments.sql" label="Copy 0061" />
+                <CopyMigrationFileButton file="0062_legacy_refund_guard.sql" label="Copy 0062" />
+              </li>
+            )}
+            <li className="flex flex-wrap items-center gap-2">
+              <span>Garments (0063)</span>
+              <CopyMigrationFileButton file="0063_garment_godowns.sql" label="Copy 0063" />
+            </li>
+          </ol>
         </div>
       )}
 

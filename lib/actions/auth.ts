@@ -9,6 +9,7 @@ import { revalidateStaffCache } from "../auth";
 import { getAuthenticatedUser } from "../supabase/server";
 import { isDemoEmail } from "../demo/config";
 import { hotelSchemaReady } from "../hotel/server";
+import { garmentSchemaReady } from "../garment/server";
 import { notifyTeam } from "../push";
 import { getTranslator } from "../i18n/server";
 import { createClient } from "@supabase/supabase-js";
@@ -45,6 +46,10 @@ export async function signupAction(
   // shop insert would fail after the auth user was already created.
   if (businessType === "hotel" && !(await hotelSchemaReady(admin))) {
     return { error: "Hotel accounts are not switched on yet. Please pick another business type for now." };
+  }
+  // Garment the same way: the database takes the garment type only from migration 0063.
+  if (businessType === "garment" && !(await garmentSchemaReady(admin))) {
+    return { error: "Garment accounts are not switched on yet. Please pick another business type for now." };
   }
 
   // Max 10 signups per IP per hour — guards against a bot mass-creating

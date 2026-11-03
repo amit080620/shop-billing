@@ -14,3 +14,13 @@ export async function garmentSchemaReady(admin: Admin = createSupabaseAdminClien
   schemaReady = true;
   return true;
 }
+
+/** The database updates 0063 builds on (its header: run after 0060 and 0061), each found by a table
+ * it creates, so the admin panel can list what to run first while garment is waiting. */
+export async function garmentPrerequisites(admin: Admin = createSupabaseAdminClient()): Promise<{ stockGuard: boolean; billPayments: boolean }> {
+  const [stock, payments] = await Promise.all([
+    admin.from("bill_item_batches").select("id").limit(1),
+    admin.from("bill_payments").select("id").limit(1),
+  ]);
+  return { stockGuard: !stock.error, billPayments: !payments.error };
+}
