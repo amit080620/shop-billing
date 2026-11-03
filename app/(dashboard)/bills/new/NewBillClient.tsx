@@ -79,6 +79,8 @@ type Product = {
   bxgy?: Bxgy | null;
   /** The rate a wholesale party pays (Rate list). */
   wholesalePrice?: number | null;
+  /** The printed MRP, shown beside the rate so the counter sees what the customer saves. */
+  mrp?: number | null;
 };
 type Customer = { id: string; name: string; phone: string; gstin: string | null; state_code: string | null; loyalty_points?: number; priceLevel?: "retail" | "wholesale"; beat?: string | null };
 type CartLine = {
@@ -582,6 +584,13 @@ export function NewBillClient({
   });
   const focusItemSearch = () => document.querySelector<HTMLInputElement>("input[data-bill-search]")?.focus();
   const activeLineId = (cart.find((c) => c.productId === activeId) ?? cart[cart.length - 1])?.productId;
+  // The printed MRP beside each rate, and what the customer saves off it on this bill.
+  const mrpOf = useMemo(() => new Map(products.map((p) => [p.id, p.mrp ?? null])), [products]);
+  const mrpFor = (line: CartLine) => {
+    const m = line.saleMode === "loose" || line.packageId ? null : mrpOf.get(line.productId);
+    return m && m > line.price ? m : null;
+  };
+  const mrpSavings = round2(cart.reduce((s, line) => s + (mrpFor(line) ? (mrpFor(line)! - line.price) * (line.quantity - freeOf(line)) : 0), 0));
 
   // The floating calculator picks this up automatically when opened.
   useSyncCalculatorAmount(cart.length > 0 ? totals.total : null);
@@ -1198,7 +1207,7 @@ export function NewBillClient({
                     <p className="text-xs text-muted">
                       {line.packageId
                         ? t("From the package · ₹0 · {left} left after this", { left: (line.packageLeft ?? 0) - line.quantity })
-                        : <>{formatMoney(line.price)}/{line.saleMode === "loose" ? line.looseUnitName : unitLabel(line.unit)} <span className="whitespace-nowrap">· GST {line.gstPercent}%</span></>}
+                        : <>{formatMoney(line.price)}/{line.saleMode === "loose" ? line.looseUnitName : unitLabel(line.unit)} <span className="whitespace-nowrap">· GST {line.gstPercent}%</span>{mrpFor(line) && <span className="whitespace-nowrap"> · MRP <s>{formatMoney(mrpFor(line)!)}</s></span>}</>}
                     </p>
                     {line.bulkMinQty && line.bulkPrice && (
                       <p className="flex items-center gap-1 text-[11px] text-brand">
@@ -1514,6 +1523,7 @@ export function NewBillClient({
             )}
             <div className="my-1 h-px bg-border" />
             <Row label={t("bill.total")} value={formatMoney(totals.total)} bold />
+            {mrpSavings > 0 && <p className="text-right text-xs font-semibold text-success">{t("Customer saves {amount} off MRP", { amount: formatMoney(mrpSavings) })}</p>}
           </div>
         </section>
 

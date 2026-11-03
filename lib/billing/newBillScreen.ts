@@ -68,7 +68,7 @@ export async function loadNewBillScreen(
     allRows((from, to) =>
       admin
         .from("products")
-        .select("id, name, price, offer_price, gst_percent, hsn_code, barcode, unit, track_inventory, stock_quantity, low_stock_threshold, requires_prescription, units_per_pack, loose_unit_name, metal_type, purity, making_charge_type, making_charge_value, wastage_percent, bulk_min_qty, bulk_price, hallmark_number, salt_composition")
+        .select("id, name, price, offer_price, gst_percent, hsn_code, barcode, unit, track_inventory, stock_quantity, low_stock_threshold, requires_prescription, units_per_pack, loose_unit_name, metal_type, purity, making_charge_type, making_charge_value, wastage_percent, bulk_min_qty, bulk_price, hallmark_number, salt_composition, mrp")
         .eq("shop_id", session.shopId)
         .order("name")
         .order("id")
@@ -202,6 +202,7 @@ export async function loadNewBillScreen(
       salt: session.businessType === "pharmacy" ? p.salt_composition : null,
       bxgy: bxgyOffers.get(p.id) ?? null,
       wholesalePrice: wholesaleOf.get(p.id) ?? null,
+      mrp: p.mrp != null && Number(p.mrp) > 0 ? Number(p.mrp) : null,
     })),
     customers: (customers ?? []).map((c) => ({ ...c, priceLevel: partyOf.get(c.id)?.level ?? "retail", beat: partyOf.get(c.id)?.beat ?? null })),
     frequentProductIds,

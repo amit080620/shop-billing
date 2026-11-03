@@ -105,6 +105,8 @@ export const PURCHASE_TEXT: Record<string, [hi: string, mr: string]> = {
   "Save the purchase": ["खरीद सेव करें", "खरेदी सेव्ह करा"],
   "These shortcuts": ["ये शॉर्टकट", "हे शॉर्टकट"],
 
+  "Customer saves {amount} off MRP": ["ग्राहक की MRP से {amount} बचत", "ग्राहकाची MRP पेक्षा {amount} बचत"],
+
   // ─── Daily work menu ─────────────────────────────────────────────────────────
   "Daily work": ["रोज़ का काम", "रोजचे काम"],
   "New purchase": ["नई खरीद", "नवीन खरेदी"],
