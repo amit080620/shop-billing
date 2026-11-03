@@ -3,8 +3,7 @@ import { headers } from "next/headers";
 import Link from "@/lib/link";
 import { requireSession } from "@/lib/auth";
 import { getTranslator } from "@/lib/i18n/server";
-import { LangProvider } from "@/lib/i18n/LangContext";
-import { messagesFor } from "@/lib/i18n/dictionary";
+import { ShopLangProvider } from "@/lib/i18n/ShopLangProvider";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { formatMoney } from "@/lib/format";
 import { buildWhatsAppLink } from "@/lib/whatsapp";
@@ -39,7 +38,7 @@ export default async function QuotationPage({ params }: { params: Promise<{ id: 
   const whatsapp = phone ? buildWhatsAppLink(phone, quotationWhatsAppText(doc, pdfUrl)) : null;
 
   return (
-    <LangProvider lang={lang} messages={messagesFor(lang)}>
+    <ShopLangProvider lang={lang}>
       <div className="mx-auto max-w-2xl bg-background p-4 text-foreground md:p-8">
         <div className="no-print mb-6 flex flex-col gap-3">
           <div className="flex items-center justify-between gap-3">
@@ -99,6 +98,6 @@ export default async function QuotationPage({ params }: { params: Promise<{ id: 
           <A4Renderer data={a4Data} />
         </div>
       </div>
-    </LangProvider>
+    </ShopLangProvider>
   );
 }

@@ -2,8 +2,7 @@ import { notFound } from "next/navigation";
 import Link from "@/lib/link";
 import { requireSession } from "@/lib/auth";
 import { getTranslator } from "@/lib/i18n/server";
-import { LangProvider } from "@/lib/i18n/LangContext";
-import { messagesFor } from "@/lib/i18n/dictionary";
+import { ShopLangProvider } from "@/lib/i18n/ShopLangProvider";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { loadLrShop } from "@/lib/transportData";
 import { formatIsoDate } from "@/lib/dateHelpers";
@@ -23,7 +22,7 @@ export default async function PrintChallanPage({ params }: { params: Promise<{ i
   if (!c || !shop) notFound();
 
   return (
-    <LangProvider lang={lang} messages={messagesFor(lang)}>
+    <ShopLangProvider lang={lang}>
       <div className="mx-auto max-w-3xl bg-background p-4 text-foreground">
         <div className="no-print mb-4 flex flex-col gap-3">
           <Link href={`/challans/${c.id}`} className="text-sm font-medium text-muted hover:text-foreground">
@@ -101,6 +100,6 @@ export default async function PrintChallanPage({ params }: { params: Promise<{ i
           </div>
         </div>
       </div>
-    </LangProvider>
+    </ShopLangProvider>
   );
 }

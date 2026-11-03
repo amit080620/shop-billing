@@ -26,6 +26,7 @@ function route(request: NextRequest) {
   const isDashboardish =
     !pathname.startsWith("/_next") &&
     !pathname.startsWith("/api") &&
+    !pathname.startsWith("/i18n/") &&
     !pathname.startsWith("/print") &&
     !pathname.startsWith("/shop/") &&
     !pathname.startsWith("/order/") &&

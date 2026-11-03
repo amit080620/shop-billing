@@ -2,8 +2,7 @@ import { notFound } from "next/navigation";
 import Link from "@/lib/link";
 import { requireSession } from "@/lib/auth";
 import { getTranslator } from "@/lib/i18n/server";
-import { LangProvider } from "@/lib/i18n/LangContext";
-import { messagesFor } from "@/lib/i18n/dictionary";
+import { ShopLangProvider } from "@/lib/i18n/ShopLangProvider";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { loadConsignment, loadLrShop, transportExtrasReady } from "@/lib/transportData";
 import { LrDocument } from "@/lib/print/LrDocument";
@@ -26,7 +25,7 @@ export default async function PrintLrPage({ params, searchParams }: { params: Pr
   const copy = COPIES.find((x) => x === copyParam) ?? COPIES[0];
 
   return (
-    <LangProvider lang={lang} messages={messagesFor(lang)}>
+    <ShopLangProvider lang={lang}>
       <div className="mx-auto max-w-3xl bg-background p-4 text-foreground">
         <div className="no-print mb-4 flex flex-col gap-3">
           <Link href={`/transport/lr/${c.id}`} className="text-sm font-medium text-muted hover:text-foreground">
@@ -50,6 +49,6 @@ export default async function PrintLrPage({ params, searchParams }: { params: Pr
           </div>
         </div>
       </div>
-    </LangProvider>
+    </ShopLangProvider>
   );
 }

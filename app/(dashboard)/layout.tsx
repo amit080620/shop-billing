@@ -3,13 +3,13 @@ import Link from "@/lib/link";
 import { requireSession } from "@/lib/auth";
 import { OfflineBillsSync } from "@/app/components/OfflineBillsSync";
 import { getLang } from "@/lib/i18n/server";
-import { LangProvider } from "@/lib/i18n/LangContext";
+import { ShopLangProvider } from "@/lib/i18n/ShopLangProvider";
 import { BusinessTypeProvider } from "@/lib/BusinessTypeContext";
 import { PlanBadge } from "@/app/components/PlanBadge";
 import { MenuDrawerProvider } from "./MenuDrawer";
 import { MoreMenu } from "./more/MoreMenu";
 import { NavDepthTracker } from "@/app/components/BackLink";
-import { translate, messagesFor } from "@/lib/i18n/dictionary";
+import { translate } from "@/lib/i18n/dictionary";
 import { BottomNav } from "./BottomNav";
 import { DesktopSidebar } from "./DesktopSidebar";
 import { WelcomeTour } from "./WelcomeTour";
@@ -46,7 +46,7 @@ export default async function DashboardLayout({
   const newUi = (await getUiVersion(session)) === "new";
 
   return (
-    <LangProvider lang={lang} messages={messagesFor(lang)}>
+    <ShopLangProvider lang={lang}>
     <BusinessTypeProvider value={session.businessType}>
     <MenuDrawerProvider title={translate(lang, "more.title")} menu={<MoreMenu />}>
     <NavDepthTracker />
@@ -169,6 +169,6 @@ export default async function DashboardLayout({
     </div>
     </MenuDrawerProvider>
     </BusinessTypeProvider>
-    </LangProvider>
+    </ShopLangProvider>
   );
 }
