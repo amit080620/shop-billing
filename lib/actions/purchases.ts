@@ -10,6 +10,8 @@ import { partyStateCode } from "../gstBuyer";
 import { findDuplicateProductAI } from "./duplicateCheck";
 import { invalidateCache } from "../cache";
 import { moveStock } from "../stockMoves";
+import { receivePurchaseIntoGodown } from "../garment/purchaseReceive";
+import { isModuleEnabled } from "../modules";
 import { wholesaleReady } from "../wholesaleData";
 import { rateChanges } from "../purchaseMath";
 import { defaultUnitFor } from "../businessType";
@@ -146,7 +148,7 @@ export async function createPurchaseAction(
   if (!parsed.success) {
     return { error: parsed.error.issues[0].message };
   }
-  const { vendorId, vendorInvoiceNumber, purchaseDate, items, paidAmount, paymentMethod, itcEligible, reverseCharge, updateRates, allowDuplicate } =
+  const { vendorId, vendorInvoiceNumber, purchaseDate, items, paidAmount, paymentMethod, itcEligible, reverseCharge, updateRates, allowDuplicate, godownId } =
     parsed.data;
 
   const admin = createSupabaseAdminClient();
@@ -369,18 +371,35 @@ export async function createPurchaseAction(
   }
 
   // What came in goes on the shelf (paid and free units) — the tracked items all together, in one go.
+  const tracked = resolvedItems.flatMap((item) => {
+    const product = item.productId ? productMap.get(item.productId) : undefined;
+    return product?.track_inventory ? [{ productId: product.id, quantity: item.quantity + (item.freeQuantity ?? 0) }] : [];
+  });
+  // A garment shop's goods go into its godown (the one picked, or the shop floor) with a ledger row
+  // per item; whatever couldn't be placed there goes in the plain way below.
+  const placed =
+    session.businessType === "garment"
+      ? await receivePurchaseIntoGodown(admin, {
+          shopId: session.shopId,
+          staffId: session.userId,
+          purchaseId: purchase.id,
+          billNumber: vendorInvoiceNumber,
+          note: `Bill #${vendorInvoiceNumber}`,
+          godownId: godownId ?? null,
+          mayChoose: isModuleEnabled(session.enabledModules, "garment_godowns"),
+          lines: tracked,
+        })
+      : null;
   const received = await moveStock(admin, {
     shopId: session.shopId,
     staffId: session.userId,
     source: "purchase",
     sourceId: purchase.id,
-    give: resolvedItems.flatMap((item) => {
-      const product = item.productId ? productMap.get(item.productId) : undefined;
-      return product?.track_inventory ? [{ productId: product.id, quantity: item.quantity + (item.freeQuantity ?? 0) }] : [];
-    }),
+    give: placed ? placed.left : tracked,
     allowShort: false,
   });
   if (!received.ok) console.error("Could not put a purchase's goods in stock", purchase.id, received.error);
+  if (placed) revalidatePath("/garment");
 
   // For pharma products where batch details were filled in on this purchase line, record the batch
   // too — the stock increment above already covers the aggregate number, so this only adds the batch
@@ -415,6 +434,7 @@ export async function createPurchaseAction(
   redirectUrl.searchParams.set("saved", "1");
   if (ratesUpdated) redirectUrl.searchParams.set("rates", String(ratesUpdated));
   if (updateRates && !mayChangeRates) redirectUrl.searchParams.set("ratesSkipped", "1");
+  if (placed?.left.length) redirectUrl.searchParams.set("floor", String(placed.left.reduce((s, l) => s + l.quantity, 0)));
   if (priceAlerts.length > 0) {
     redirectUrl.searchParams.set("priceAlerts", encodeURIComponent(JSON.stringify(priceAlerts.slice(0, 20))));
   }

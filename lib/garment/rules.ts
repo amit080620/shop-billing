@@ -70,6 +70,7 @@ export const MOVEMENT_LABEL: Record<string, string> = {
   discrepancy_adjust: "Difference adjusted",
   count_adjust: "Count adjusted",
   purchase_return: "Returned to supplier",
+  purchase: "Purchase received",
   customer_return: "Customer return → godown",
   customer_return_damaged: "Customer return damaged",
   opening_balance: "Year opening (record only)",

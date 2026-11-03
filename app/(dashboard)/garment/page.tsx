@@ -1,6 +1,7 @@
 import Link from "@/lib/link";
-import { AlertTriangle, ArrowLeftRight, Boxes, CalendarCheck, ClipboardList, FileBarChart, Lock, PackageMinus, PackageX, RotateCcw, Shirt, Truck, Warehouse } from "lucide-react";
+import { AlertTriangle, ArrowLeftRight, Boxes, CalendarCheck, ClipboardList, FileBarChart, Lock, PackageMinus, PackagePlus, PackageX, RotateCcw, Shirt, Truck, Warehouse } from "lucide-react";
 import { PageHeader } from "@/app/components/PageHeader";
+import { formatMoney } from "@/lib/format";
 import { isModuleEnabled } from "@/lib/modules";
 import { loadGodowns, loadStockGrid } from "@/lib/garment/data";
 import { garmentGate } from "./gate";
@@ -13,9 +14,10 @@ export default async function GarmentHome() {
   const godownsOn = isModuleEnabled(session.enabledModules, "garment_godowns");
   const returnsOn = isModuleEnabled(session.enabledModules, "supplier_returns");
 
-  const [{ count: styleCount }, godowns] = await Promise.all([
+  const [{ count: styleCount }, godowns, { data: purchases }] = await Promise.all([
     admin.from("product_styles").select("id", { count: "exact", head: true }).eq("shop_id", session.shopId),
     loadGodowns(admin, session.shopId),
+    admin.from("purchases").select("id, purchase_date, vendor_invoice_number, total, vendors ( name )").eq("shop_id", session.shopId).order("created_at", { ascending: false }).limit(5),
   ]);
   const grid = godownsOn && godowns.length ? await loadStockGrid(admin, session.shopId) : null;
   const [openTransfers, damage, missing, counts] = godownsOn
@@ -92,6 +94,38 @@ export default async function GarmentHome() {
           </div>
         </section>
       )}
+
+      {/* Stock comes in through purchases: the size × colour grid there, and what came in last. */}
+      <section className="neu-card flex flex-col gap-2 p-3.5">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <p className="text-sm font-bold text-foreground">{t("Stock in: purchases")}</p>
+          <Link href="/purchases/new" className="btn-primary-sm flex items-center gap-1.5">
+            <PackagePlus size={15} aria-hidden="true" /> {t("Buy stock by size and colour")}
+          </Link>
+        </div>
+        {purchases?.length ? (
+          <ul className="flex flex-col divide-y divide-border text-sm">
+            {purchases.map((p) => {
+              const vendor = (Array.isArray(p.vendors) ? p.vendors[0] : p.vendors) as { name?: string } | null;
+              return (
+                <li key={p.id}>
+                  <Link href={`/purchases/${p.id}`} className="flex items-center justify-between gap-3 py-2">
+                    <span className="min-w-0">
+                      <span className="block truncate font-medium text-foreground">{vendor?.name ?? "—"}</span>
+                      <span className="block text-[11px] text-muted">
+                        {t("Bill #{no}", { no: p.vendor_invoice_number })} · {new Date(p.purchase_date).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
+                      </span>
+                    </span>
+                    <span className="shrink-0 font-semibold text-foreground">{formatMoney(Number(p.total))}</span>
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        ) : (
+          <p className="text-xs text-muted">{t("Each purchase adds its sizes and colours to stock, in the godown you pick.")}</p>
+        )}
+      </section>
 
       <nav className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3" aria-label={t("Garment stock")}>
         {links.map(({ href, icon: Icon, title, sub, locked }) => (

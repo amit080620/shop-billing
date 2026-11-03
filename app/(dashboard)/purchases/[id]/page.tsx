@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "@/lib/link";
-import { CheckCircle2, ListChecks, ShoppingCart } from "lucide-react";
+import { CheckCircle2, ListChecks, ShoppingCart, Tags } from "lucide-react";
 import { requireArea, requireSession } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { getTranslator } from "@/lib/i18n/server";
@@ -17,7 +17,7 @@ export default async function PurchaseDetailPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ saved?: string; rates?: string; ratesSkipped?: string; priceAlerts?: string }>;
+  searchParams: Promise<{ saved?: string; rates?: string; ratesSkipped?: string; priceAlerts?: string; floor?: string }>;
 }) {
   const [{ id }, sp] = await Promise.all([params, searchParams]);
   const session = await requireSession();
@@ -44,6 +44,19 @@ export default async function PurchaseDetailPage({
   const lines = items ?? [];
   const due = Math.max(0, Number(p.total) - Number(p.paid_amount));
   const pieces = lines.reduce((s, l) => s + Number(l.quantity) + Number(l.free_quantity ?? 0), 0);
+  const productIds = [...new Set(lines.map((l) => l.product_id).filter((x): x is string => !!x))];
+  // Where a garment shop's goods went (the godown ledger rows this purchase wrote), and how many
+  // pieces have a barcode to print a label for.
+  const [{ data: placed }, { data: coded }] = await Promise.all([
+    session.businessType === "garment"
+      ? admin.from("inventory_ledger").select("godown_name, quantity").eq("shop_id", session.shopId).eq("ref_type", "purchase").eq("ref_id", p.id)
+      : Promise.resolve({ data: [] as { godown_name: string | null; quantity: number }[] }),
+    productIds.length ? admin.from("products").select("id").eq("shop_id", session.shopId).in("id", productIds).not("barcode", "is", null) : Promise.resolve({ data: [] as { id: string }[] }),
+  ]);
+  const into = new Map<string, number>();
+  for (const r of placed ?? []) into.set(r.godown_name ?? "—", (into.get(r.godown_name ?? "—") ?? 0) + Number(r.quantity));
+  const withCode = new Set((coded ?? []).map((c) => c.id));
+  const labelPieces = lines.reduce((s, l) => (l.product_id && withCode.has(l.product_id) ? s + Number(l.quantity) + Number(l.free_quantity ?? 0) : s), 0);
 
   return (
     <div className="flex flex-col gap-4">
@@ -65,6 +78,16 @@ export default async function PurchaseDetailPage({
         </div>
       )}
       <PriceAlertBanner alerts={alerts} />
+      {into.size > 0 && (
+        <p className="rounded-xl border border-border bg-surface px-3.5 py-2.5 text-sm text-foreground">
+          {[...into].map(([godown, qty]) => t("{n} pieces went into {godown}", { n: qty, godown })).join(" · ")}
+        </p>
+      )}
+      {sp.floor && (
+        <p className="rounded-xl border border-warning/30 bg-warning-soft px-3.5 py-2.5 text-sm text-foreground">
+          {t("{n} pieces couldn't be put in the godown and are on the shop floor — move them from Stock → Move on the spot.", { n: Number(sp.floor) })}
+        </p>
+      )}
 
       <section className="neu-card overflow-x-auto p-0">
         <table className="w-full text-sm">
@@ -130,6 +153,11 @@ export default async function PurchaseDetailPage({
         <Link href="/products/rates" className="flex items-center gap-1 rounded-lg border border-border px-3 py-2 text-sm font-semibold text-foreground">
           <ListChecks size={15} /> {t("Rate list")}
         </Link>
+        {labelPieces > 0 && (
+          <Link href={`/products/labels?purchase=${p.id}`} className="flex items-center gap-1 rounded-lg border border-border px-3 py-2 text-sm font-semibold text-foreground">
+            <Tags size={15} /> {t("Print labels ({n})", { n: labelPieces })}
+          </Link>
+        )}
         {session.businessType === "garment" && (
           <Link href={`/garment/supplier-returns/new?vendor=${p.vendor_id}&purchase=${p.id}`} className="rounded-lg border border-border px-3 py-2 text-sm font-semibold text-foreground">
             {t("Return to supplier")}

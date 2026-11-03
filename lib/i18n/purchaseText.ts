@@ -115,4 +115,22 @@ export const PURCHASE_TEXT: Record<string, [hi: string, mr: string]> = {
   "Every purchase bill, what is paid and what is still due": ["हर खरीद बिल, कितना दिया और कितना बाकी", "प्रत्येक खरेदी बिल, किती दिले आणि किती बाकी"],
   "Cost, MRP, retail and wholesale rates with the margin — share on WhatsApp": ["लागत, MRP, रिटेल और होलसेल रेट मुनाफ़े के साथ — WhatsApp पर भेजें", "खर्च, MRP, किरकोळ आणि घाऊक दर नफ्यासह — WhatsApp वर पाठवा"],
   "Sales, GST, profit and stock reports": ["बिक्री, GST, मुनाफ़ा और स्टॉक रिपोर्ट", "विक्री, GST, नफा आणि स्टॉक अहवाल"],
+
+  // ─── Garment shops on purchase entry and the purchase page ────────────────────
+  "Sizes × colours": ["साइज़ × रंग", "साइज × रंग"],
+  "Goods go into": ["माल किस गोदाम में", "माल कोणत्या गोदामात"],
+  "shop floor": ["दुकान (काउंटर)", "दुकान (काउंटर)"],
+  "New style “{name}” with sizes and colours": ["नई स्टाइल “{name}” साइज़ और रंगों के साथ", "नवीन स्टाइल “{name}” साइज आणि रंगांसह"],
+  "{n} pieces went into {godown}": ["{n} पीस {godown} में गए", "{n} नग {godown} मध्ये गेले"],
+  "{n} pieces couldn't be put in the godown and are on the shop floor — move them from Stock → Move on the spot.": [
+    "{n} पीस गोदाम में नहीं जा पाए और दुकान (काउंटर) पर हैं — स्टॉक → वहीं जगह बदलें से उन्हें भेजें।",
+    "{n} नग गोदामात जाऊ शकले नाहीत आणि दुकानात (काउंटर) आहेत — स्टॉक → जागीच हलवा मधून ते पाठवा.",
+  ],
+  "Print labels ({n})": ["लेबल प्रिंट करें ({n})", "लेबल प्रिंट करा ({n})"],
+
+  // ─── Barcode labels opened from a purchase ────────────────────────────────────
+  "One label for each piece of bill #{no} is filled in below — change any number, then Print.": [
+    "बिल #{no} के हर पीस का एक लेबल नीचे भरा है — कोई भी संख्या बदलें, फिर Print दबाएं।",
+    "बिल #{no} च्या प्रत्येक नगाचे एक लेबल खाली भरले आहे — कोणतीही संख्या बदला, मग Print दाबा.",
+  ],
 };

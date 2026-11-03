@@ -4,7 +4,7 @@ import { SavingBill } from "@/app/components/SavingBill";
 import { CashChange } from "@/app/components/CashChange";
 import { SplitPayments, splitSum, splitToSend, type SplitRow } from "@/app/components/SplitPayments";
 import { keepValuesOnError } from "@/lib/keepValuesOnError";
-import { useMemo, useState, useActionState, useRef, useEffect, useCallback } from "react";
+import { lazy, Suspense, useMemo, useState, useActionState, useRef, useEffect, useCallback } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { X, Minus, Plus, Trash2, Search, Mic } from "lucide-react";
@@ -24,11 +24,11 @@ import { KeyboardHint } from "@/app/components/KeyboardHint";
 import { forgetCounterCustomers, loadCounterCustomers } from "@/lib/counterCustomers";
 import { calculateTransactionTotals } from "@/lib/validation/totals";
 import { productLinePrice } from "@/lib/linePrice";
-import dynamic from "next/dynamic";
 
 // The New look's counter (lib/uiVersion), loaded only for New shops — Classic never downloads it.
-const NewFastBilling = dynamic(() => import("./NewFastBilling").then((m) => m.NewFastBilling));
-const NewSettlement = dynamic(() => import("./NewFastBilling").then((m) => m.NewSettlement));
+// React's own lazy, not next/dynamic, whose loader would ride along on every Classic counter.
+const NewFastBilling = lazy(() => import("./NewFastBilling").then((m) => ({ default: m.NewFastBilling })));
+const NewSettlement = lazy(() => import("./NewFastBilling").then((m) => ({ default: m.NewSettlement })));
 
 export type FastProduct = {
   id: string;
@@ -363,35 +363,37 @@ export function FastBillingClient({
 
   if (products.length > 0 && look === "new") {
     return (
-      <NewFastBilling
-        categories={categories}
-        visibleProducts={visibleProducts}
-        productCount={products.length}
-        cart={cart}
-        itemCount={itemCount}
-        total={total}
-        search={search}
-        setSearch={setSearch}
-        activeCategory={activeCategory}
-        setActiveCategory={setActiveCategory}
-        addToCart={addToCart}
-        updateQty={updateQty}
-        clearCart={() => setCart([])}
-        stockOf={(id) => products.find((p) => p.id === id)}
-        searchRef={searchRef}
-        addFromSearch={addFromSearch}
-        keyboardBilling={keyboardBilling}
-        voice={{ supported: voiceSupported, listening: isListening, status: voiceStatus, start: startVoiceOrder, statusRef: voiceStatusRef }}
-        hold={{ start: startHold, end: endHold, consumed: () => (hold.current.opened ? ((hold.current.opened = false), true) : false) }}
-        selectedProduct={selectedProduct}
-        setSelectedProduct={setSelectedProduct}
-        setQuantity={setQuantity}
-        showBill={showBill}
-        setShowBill={setShowBill}
-        checkout={
-          <FastCheckoutButton look="new" cart={cart} loyaltyRedemptionValue={loyaltyRedemptionValue} priceIncludesGst={priceIncludesGst} gstScheme={gstScheme} voiceCustomer={voiceCustomer} canDiscount={canDiscount} shopId={shopId} focusMode={false} payFocus={false} onFocusMode={() => {}} onPayFocus={() => {}} />
-        }
-      />
+      <Suspense fallback={null}>
+        <NewFastBilling
+          categories={categories}
+          visibleProducts={visibleProducts}
+          productCount={products.length}
+          cart={cart}
+          itemCount={itemCount}
+          total={total}
+          search={search}
+          setSearch={setSearch}
+          activeCategory={activeCategory}
+          setActiveCategory={setActiveCategory}
+          addToCart={addToCart}
+          updateQty={updateQty}
+          clearCart={() => setCart([])}
+          stockOf={(id) => products.find((p) => p.id === id)}
+          searchRef={searchRef}
+          addFromSearch={addFromSearch}
+          keyboardBilling={keyboardBilling}
+          voice={{ supported: voiceSupported, listening: isListening, status: voiceStatus, start: startVoiceOrder, statusRef: voiceStatusRef }}
+          hold={{ start: startHold, end: endHold, consumed: () => (hold.current.opened ? ((hold.current.opened = false), true) : false) }}
+          selectedProduct={selectedProduct}
+          setSelectedProduct={setSelectedProduct}
+          setQuantity={setQuantity}
+          showBill={showBill}
+          setShowBill={setShowBill}
+          checkout={
+            <FastCheckoutButton look="new" cart={cart} loyaltyRedemptionValue={loyaltyRedemptionValue} priceIncludesGst={priceIncludesGst} gstScheme={gstScheme} voiceCustomer={voiceCustomer} canDiscount={canDiscount} shopId={shopId} focusMode={false} payFocus={false} onFocusMode={() => {}} onPayFocus={() => {}} />
+          }
+        />
+      </Suspense>
     );
   }
 
@@ -888,49 +890,51 @@ function FastCheckoutButton({
 
   if (look === "new") {
     return (
-      <NewSettlement
-        t={t}
-        figures={figures}
-        inclusive={priceIncludesGst}
-        units={cart.reduce((s, l) => s + l.qty, 0)}
-        error={state?.error}
-        pending={isPending || saving}
-        cart={cart}
-        isUdhar={isUdhar}
-        paymentMethod={paymentMethod}
-        choosePayment={(m) => {
-          setPaymentMethod(m);
-          setSplit(null);
-          setCustomerError(null);
-        }}
-        split={split}
-        setSplit={setSplit}
-        canDiscount={canDiscount}
-        discount={{ type: discountType, value: discountValue, setType: setDiscountType, setValue: setDiscountValue }}
-        loyalty={
-          matchedCustomer && matchedCustomer.loyaltyPoints > 0 && loyaltyRedemptionValue > 0
-            ? { flat: discountType === "flat", checked: redeemPoints, set: setRedeemPoints, points: redeemedPointsCount || matchedCustomer.loyaltyPoints, value: redemptionValue || matchedCustomer.loyaltyPoints * loyaltyRedemptionValue }
-            : null
-        }
-        canUdhaar={!!matchedCustomer || customerPhone.length === 10}
-        customer={
-          <FastCustomerPicker shopId={shopId} isUdhar={isUdhar} phone={customerPhone} name={customerName} matched={matchedCustomer} error={customerError} onPhoneChange={handlePhoneChange} onNameChange={setCustomerName} onPick={handlePick} onFocusMode={onFocusMode} />
-        }
-        form={
-          <form ref={formRef} action={formAction} onSubmit={() => setSaving(true)}>
-            <input type="hidden" name="payload" value={payload} />
-            <button
-              type="button"
-              data-keyboard-save
-              disabled={isPending || cart.length === 0}
-              onClick={checkout}
-              className={`flex h-14 w-full items-center justify-center gap-2 rounded-xl text-base font-extrabold text-white shadow-md transition-opacity disabled:opacity-50 ${isUdhar ? "bg-credit" : "n-gradient"}`}
-            >
-              {isPending ? t("Creating bill…") : isUdhar ? `${t("Book as udhaar")} · ${formatMoney(payable)}` : `${t("Save & print bill")} · ${formatMoney(payable)}`}
-            </button>
-          </form>
-        }
-      />
+      <Suspense fallback={null}>
+        <NewSettlement
+          t={t}
+          figures={figures}
+          inclusive={priceIncludesGst}
+          units={cart.reduce((s, l) => s + l.qty, 0)}
+          error={state?.error}
+          pending={isPending || saving}
+          cart={cart}
+          isUdhar={isUdhar}
+          paymentMethod={paymentMethod}
+          choosePayment={(m) => {
+            setPaymentMethod(m);
+            setSplit(null);
+            setCustomerError(null);
+          }}
+          split={split}
+          setSplit={setSplit}
+          canDiscount={canDiscount}
+          discount={{ type: discountType, value: discountValue, setType: setDiscountType, setValue: setDiscountValue }}
+          loyalty={
+            matchedCustomer && matchedCustomer.loyaltyPoints > 0 && loyaltyRedemptionValue > 0
+              ? { flat: discountType === "flat", checked: redeemPoints, set: setRedeemPoints, points: redeemedPointsCount || matchedCustomer.loyaltyPoints, value: redemptionValue || matchedCustomer.loyaltyPoints * loyaltyRedemptionValue }
+              : null
+          }
+          canUdhaar={!!matchedCustomer || customerPhone.length === 10}
+          customer={
+            <FastCustomerPicker shopId={shopId} isUdhar={isUdhar} phone={customerPhone} name={customerName} matched={matchedCustomer} error={customerError} onPhoneChange={handlePhoneChange} onNameChange={setCustomerName} onPick={handlePick} onFocusMode={onFocusMode} />
+          }
+          form={
+            <form ref={formRef} action={formAction} onSubmit={() => setSaving(true)}>
+              <input type="hidden" name="payload" value={payload} />
+              <button
+                type="button"
+                data-keyboard-save
+                disabled={isPending || cart.length === 0}
+                onClick={checkout}
+                className={`flex h-14 w-full items-center justify-center gap-2 rounded-xl text-base font-extrabold text-white shadow-md transition-opacity disabled:opacity-50 ${isUdhar ? "bg-credit" : "n-gradient"}`}
+              >
+                {isPending ? t("Creating bill…") : isUdhar ? `${t("Book as udhaar")} · ${formatMoney(payable)}` : `${t("Save & print bill")} · ${formatMoney(payable)}`}
+              </button>
+            </form>
+          }
+        />
+      </Suspense>
     );
   }
 

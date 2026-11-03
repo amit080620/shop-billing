@@ -334,3 +334,42 @@ describe("guards", () => {
     expect([await at(MAIN, p), await at(BRANCH, p), await at(FLOOR, p)]).toEqual([20, 4, 6]);
   });
 });
+
+// The app's purchase path for garment shops (lib/garment/purchaseReceive): each line goes through
+// gd_saleable_in into the godown picked on the purchase, marked with the purchase.
+describe("purchase into a godown", () => {
+  const PURCHASE = "00000000-0000-0000-0000-0000000000a1";
+  const buy = (godown: string, product: string, qty: number) =>
+    db.query("select gd_saleable_in($1, $2, $3, $4, 'purchase', 'purchase', $5, 'INV-7', $6, 'Bill #INV-7')", [SHOP, godown, product, qty, PURCHASE, STAFF]);
+
+  it("puts the pieces in the picked godown and the shop's total, and the ledger names the purchase", async () => {
+    const p = await kurti(0, 0, 4);
+    await buy(MAIN, p, 10);
+    expect([await at(MAIN, p), await at(FLOOR, p), await total(p)]).toEqual([10, 4, 14]);
+    const row = await one<{ kind: string; ref_number: string; godown_name: string; quantity: string }>(
+      "select kind, ref_number, godown_name, quantity from inventory_ledger where ref_type = 'purchase' and ref_id = $1 and product_id = $2",
+      [PURCHASE, p],
+    );
+    expect([row.kind, row.ref_number, row.godown_name, Number(row.quantity)]).toEqual(["purchase", "INV-7", "Main Godown", 10]);
+  });
+
+  it("onto the shop floor: the total grows and no godown row is kept for it", async () => {
+    const p = await kurti(5, 0, 2);
+    await buy(FLOOR, p, 3);
+    expect([await at(FLOOR, p), await at(MAIN, p), await total(p)]).toEqual([5, 5, 10]);
+    expect(await one("select 1 from godown_stock where godown_id = $1 and product_id = $2", [FLOOR, p])).toBeUndefined();
+  });
+
+  it("works even when the counter sold past the shop floor's stock (a put-away from the floor would be refused)", async () => {
+    const p = await kurti(5, 0, 0);
+    await db.query("update products set stock_quantity = 2 where id = $1", [p]); // floor = 2 − 5 = −3
+    await buy(MAIN, p, 10);
+    expect([await at(MAIN, p), await at(FLOOR, p), await total(p)]).toEqual([15, -3, 12]);
+  });
+
+  it("refuses another shop's godown", async () => {
+    const p = await kurti(0, 0, 1);
+    expect((await fails("select gd_saleable_in($1, $2, $3, 1, 'purchase', 'purchase', null, null, null, null)", [SHOP, OTHER_GODOWN, p])).message).toBe("unknown_godown");
+    expect(await total(p)).toBe(1);
+  });
+});

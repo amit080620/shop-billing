@@ -6,6 +6,8 @@ import { wholesaleReady } from "@/lib/wholesaleData";
 import { lastPurchases } from "@/lib/purchaseData";
 import { defaultUnitFor, getUnitsForBusinessType } from "@/lib/businessType";
 import { UNITS } from "@/lib/constants/states";
+import { garmentSchemaReady } from "@/lib/garment/server";
+import { isModuleEnabled } from "@/lib/modules";
 import { NewPurchaseClient } from "./NewPurchaseClient";
 
 /** Purchase entry: the vendor's bill line by line, with each item's last rate, stock and selling
@@ -19,17 +21,21 @@ export default async function NewPurchasePage({
   const session = await requireSession();
   const { lang } = await getTranslator();
   const admin = createSupabaseAdminClient();
-  const withWholesale = await wholesaleReady(admin);
-  const columns = withWholesale
-    ? "id, name, hsn_code, is_pharma, barcode, unit, gst_percent, price, mrp, stock_quantity, track_inventory, wholesale_price"
-    : "id, name, hsn_code, is_pharma, barcode, unit, gst_percent, price, mrp, stock_quantity, track_inventory";
-  type Row = { id: string; name: string; hsn_code: string | null; is_pharma: boolean; barcode: string | null; unit: string; gst_percent: number; price: number; mrp: number | null; stock_quantity: number; track_inventory: boolean; wholesale_price?: number | null };
+  // A garment shop (migration 0063 run) also gets each item's style, colour and size, its styles for
+  // the size × colour grid, and — with godowns in its plan — the godowns goods can go into.
+  const [withWholesale, garment] = await Promise.all([wholesaleReady(admin), session.businessType === "garment" ? garmentSchemaReady(admin) : false]);
+  const columns = `id, name, hsn_code, is_pharma, barcode, unit, gst_percent, price, mrp, stock_quantity, track_inventory${withWholesale ? ", wholesale_price" : ""}${garment ? ", style_id, variant_colour, variant_size" : ""}`;
+  type Row = { id: string; name: string; hsn_code: string | null; is_pharma: boolean; barcode: string | null; unit: string; gst_percent: number; price: number; mrp: number | null; stock_quantity: number; track_inventory: boolean; wholesale_price?: number | null; style_id?: string | null; variant_colour?: string | null; variant_size?: string | null };
+  const godownsOn = garment && isModuleEnabled(session.enabledModules, "garment_godowns");
 
-  const [{ data: vendors }, products, last, { data: recent }] = await Promise.all([
+  const [{ data: vendors }, products, last, { data: recent }, styles, categories, godowns] = await Promise.all([
     admin.from("vendors").select("id, name, gstin, phone, state_code").eq("shop_id", session.shopId).order("name"),
     allRows((from, to) => admin.from("products").select(columns).eq("shop_id", session.shopId).order("name").order("id").range(from, to)),
     lastPurchases(admin, session.shopId),
     admin.from("purchases").select("vendor_id, vendor_invoice_number").eq("shop_id", session.shopId).order("created_at", { ascending: false }).limit(1000),
+    garment ? admin.from("product_styles").select("id, name, code, brand, gst_percent").eq("shop_id", session.shopId).eq("is_active", true).order("name").then((r) => r.data ?? []) : [],
+    garment ? admin.from("categories").select("id, name").eq("shop_id", session.shopId).order("name").then((r) => r.data ?? []) : [],
+    godownsOn ? admin.from("godowns").select("id, name, is_default").eq("shop_id", session.shopId).eq("is_active", true).order("is_default", { ascending: false }).order("name").then((r) => r.data ?? []) : [],
   ]);
 
   return (
@@ -53,8 +59,19 @@ export default async function NewPurchasePage({
           wholesale: p.wholesale_price != null ? Number(p.wholesale_price) : null,
           stock: p.track_inventory ? Number(p.stock_quantity) : null,
           last: l ? { rate: l.rate, gstPercent: l.gstPercent, date: l.date, vendorId: l.vendorId } : null,
+          ...(p.style_id ? { styleId: p.style_id, colour: p.variant_colour ?? null, size: p.variant_size ?? null } : {}),
         };
       })}
+      garment={
+        garment
+          ? {
+              styles: styles.map((s) => ({ id: s.id, name: s.name, code: s.code, brand: s.brand, gstPercent: Number(s.gst_percent) })),
+              categories: categories.map((c) => ({ id: c.id, name: c.name })),
+              // Picking a godown only makes sense with somewhere besides the shop floor.
+              godowns: godowns.some((g) => g.is_default) && godowns.length > 1 ? godowns.map((g) => ({ id: g.id, name: g.name, isDefault: !!g.is_default })) : [],
+            }
+          : null
+      }
       recentBills={(recent ?? []).map((r) => ({ vendorId: r.vendor_id, number: r.vendor_invoice_number.trim().toLowerCase() }))}
       units={getUnitsForBusinessType(session.businessType, UNITS)}
       defaultUnit={defaultUnitFor(session.businessType)}

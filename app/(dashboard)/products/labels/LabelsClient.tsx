@@ -33,11 +33,20 @@ function save(key: string, value: unknown) {
   }
 }
 
-export function LabelsClient({ shopName, products: initialProducts }: { shopName: string; products: Product[] }) {
+/** `fromPurchase`: opened from a saved purchase — one label per piece it brought in, ready to print. */
+export function LabelsClient({
+  shopName,
+  products: initialProducts,
+  fromPurchase = null,
+}: {
+  shopName: string;
+  products: Product[];
+  fromPurchase?: { billNumber: string; quantities: Record<string, number> } | null;
+}) {
   const { t } = useT();
   const [products, setProducts] = useState(initialProducts);
   const [search, setSearch] = useState("");
-  const [quantities, setQuantities] = useState<Record<string, number>>({});
+  const [quantities, setQuantities] = useState<Record<string, number>>(fromPurchase?.quantities ?? {});
   const [generating, setGenerating] = useState<string | null>(null);
   const [layout, setLayout] = useState<LabelLayout>(DEFAULT_LABEL_LAYOUT);
   const [printer, setPrinter] = useState("");
@@ -125,6 +134,11 @@ export function LabelsClient({ shopName, products: initialProducts }: { shopName
         </div>
         <BackLink fallback="/products" />
       </div>
+      {fromPurchase && (
+        <p className="no-print rounded-xl border border-brand/40 bg-brand-soft px-3.5 py-2.5 text-sm text-foreground">
+          {t("One label for each piece of bill #{no} is filled in below — change any number, then Print.", { no: fromPurchase.billNumber })}
+        </p>
+      )}
 
       {/* The roll and the printer */}
       <div className="no-print neu-card flex flex-col gap-3 p-3.5">

@@ -2,7 +2,7 @@
 
 import { keepValuesOnError } from "@/lib/keepValuesOnError";
 import { todayIso } from "@/lib/dateHelpers";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import Link from "@/lib/link";
@@ -21,10 +21,15 @@ import { fileToBase64 } from "@/lib/fileToBase64";
 import { AIStatusBadge, type AIStatusBadgeHandle } from "@/app/components/AIStatusBadge";
 import { getOcrCorrectionsAction, saveOcrCorrectionsAction } from "@/lib/actions/ocrCorrections";
 import { applyCorrections } from "@/lib/applyCorrections";
-import { Camera, Image as ImageIcon, Keyboard, ListChecks, Loader2, ScanBarcode, Search, Trash2, X } from "lucide-react";
+import { Camera, Image as ImageIcon, Keyboard, ListChecks, Loader2, ScanBarcode, Search, Shirt, Trash2, X } from "lucide-react";
 import { REORDER_HANDOFF_KEY, type ReorderHandoff } from "@/lib/reorderHandoff";
 import { useT } from "@/lib/i18n/LangContext";
 import { aboveMrp, margin, marginTone, PURCHASE_SHORTCUTS, purchaseLine, rateChanges, rateFromCost, rateFromMrp, readPurchaseKey } from "@/lib/purchaseMath";
+import type { GridAdd, GridStyle } from "@/app/(dashboard)/garment/purchase/GarmentPurchaseGrid";
+import type { PurchaseVariant } from "@/lib/actions/garment";
+
+// Garment shops only, and only once opened: no other shop downloads it.
+const GarmentPurchaseGrid = lazy(() => import("@/app/(dashboard)/garment/purchase/GarmentPurchaseGrid").then((m) => ({ default: m.GarmentPurchaseGrid })));
 
 type Vendor = { id: string; name: string; gstin: string | null; phone: string | null; stateCode: string | null };
 type Product = {
@@ -40,7 +45,12 @@ type Product = {
   wholesale: number | null;
   stock: number | null;
   last: { rate: number; gstPercent: number; date: string; vendorId: string } | null;
+  // A garment style's item: which style, colour and size it is.
+  styleId?: string;
+  colour?: string | null;
+  size?: string | null;
 };
+type Garment = { styles: GridStyle[]; categories: { id: string; name: string }[]; godowns: { id: string; name: string; isDefault: boolean }[] };
 type Num = number | "";
 type Line = {
   key: string;
@@ -97,6 +107,7 @@ export function NewPurchaseClient({
   defaultUnit,
   canChangeRates,
   withWholesale,
+  garment = null,
 }: {
   vendors: Vendor[];
   products: Product[];
@@ -109,10 +120,21 @@ export function NewPurchaseClient({
   defaultUnit: string;
   canChangeRates: boolean;
   withWholesale: boolean;
+  /** A garment shop: its styles for the size × colour grid, and the godowns goods can go into. */
+  garment?: Garment | null;
 }) {
   const { t } = useT();
   const draftKey = `ray-purchase-draft-${shopId}`;
-  const byId = useMemo(() => new Map(products.map((p) => [p.id, p])), [products]);
+  // Sizes and colours (and styles) the grid made during this entry join the shop's items.
+  const [made, setMade] = useState<{ products: Product[]; styles: GridStyle[] }>({ products: [], styles: [] });
+  const allProducts = useMemo(() => {
+    if (!made.products.length) return products;
+    const fresh = new Map(made.products.map((p) => [p.id, p]));
+    return [...products.filter((p) => !fresh.has(p.id)), ...made.products];
+  }, [products, made.products]);
+  const byId = useMemo(() => new Map(allProducts.map((p) => [p.id, p])), [allProducts]);
+  const [gridFor, setGridFor] = useState<{ name: string | null } | null>(null);
+  const [godownId, setGodownId] = useState<string | null>(garment?.godowns.find((g) => g.isDefault)?.id ?? null);
   const [vendor, setVendor] = useState<Vendor | null>(vendors.find((v) => v.id === preselectedVendorId) ?? null);
   const [vendorInvoiceNumber, setVendorInvoiceNumber] = useState("");
   const [purchaseDate, setPurchaseDate] = useState(() => todayIso());
@@ -157,7 +179,7 @@ export function NewPurchaseClient({
   }
   /** A line for something not in the catalog yet — becomes an item when the purchase is saved. */
   function newLine(description: string, patch: Partial<Line> = {}): Line {
-    const match = products.find((p) => p.name.trim().toLowerCase() === description.trim().toLowerCase());
+    const match = allProducts.find((p) => p.name.trim().toLowerCase() === description.trim().toLowerCase());
     if (match) return lineFor(match, { ...patch, rate: patch.rate ?? match.last?.rate ?? "" });
     return {
       key: crypto.randomUUID(),
@@ -373,6 +395,32 @@ export function NewPurchaseClient({
     setLines((prev) => [...prev, line]);
     focusLine(line.key);
   }
+  /** The size × colour grid's cells as lines: an item already on the bill gets the quantity added
+   * (at the grid's rate), the rest come in as new lines in grid order. */
+  function addGridLines(variants: PurchaseVariant[], add: GridAdd[], style: GridStyle | null) {
+    const fresh: Product[] = variants.map((v) => ({ ...v, isPharma: false, wholesale: null, last: byId.get(v.id)?.last ?? null }));
+    if (fresh.length || style) {
+      setMade((m) => ({
+        products: [...m.products.filter((p) => !fresh.some((f) => f.id === p.id)), ...fresh],
+        styles: style ? [...m.styles, style] : m.styles,
+      }));
+    }
+    const find = (id: string) => fresh.find((p) => p.id === id) ?? byId.get(id);
+    setLines((prev) => {
+      const next = [...prev];
+      for (const a of add) {
+        const p = find(a.productId);
+        if (!p) continue;
+        const patch: Partial<Line> = { rate: a.rate, ...(a.mrp !== null ? { mrp: a.mrp } : {}), ...(a.saleRate !== null ? { saleRate: a.saleRate } : {}) };
+        const at = next.findIndex((l) => l.productId === p.id);
+        if (at >= 0) next[at] = { ...next[at], ...patch, quantity: n(next[at].quantity) + a.quantity };
+        else next.push(lineFor(p, { ...patch, quantity: a.quantity }));
+      }
+      return next;
+    });
+    setGridFor(null);
+    focusSearch();
+  }
   function updateLine(key: string, patch: Partial<Line>) {
     setLines((prev) => prev.map((l) => (l.key === key ? { ...l, ...patch } : l)));
   }
@@ -435,6 +483,7 @@ export function NewPurchaseClient({
     reverseCharge,
     updateRates: canChangeRates && updateRates,
     allowDuplicate,
+    godownId: garment?.godowns.length ? godownId : null,
   });
 
   // The screen's keys (lib/purchaseMath): F2 items, F3 vendor, F4 paid, F6 rate list, F10 save…
@@ -582,6 +631,18 @@ export function NewPurchaseClient({
           {t("Total on their bill (to check)")}
           <input type="number" min={0} step="any" inputMode="decimal" value={paperTotal} onChange={(e) => setPaperTotal(toNum(e.target.value))} placeholder="₹" className="rounded-lg border border-border px-3 py-2 text-right text-sm text-foreground outline-none focus:border-brand" />
         </label>
+        {garment && garment.godowns.length > 0 && (
+          <label className="col-span-2 flex flex-col gap-1.5 text-xs font-medium text-muted md:col-span-1">
+            {t("Goods go into")}
+            <select value={godownId ?? ""} onChange={(e) => setGodownId(e.target.value || null)} className="rounded-lg border border-border bg-surface px-3 py-2 text-sm text-foreground outline-none focus:border-brand">
+              {garment.godowns.map((g) => (
+                <option key={g.id} value={g.id}>
+                  {g.isDefault ? `${g.name} (${t("shop floor")})` : g.name}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
         {duplicate && (
           <label className="col-span-2 flex items-start gap-2 rounded-lg bg-warning-soft px-3 py-2 text-xs text-foreground md:col-span-4">
             <input type="checkbox" checked={allowDuplicate} onChange={(e) => setAllowDuplicate(e.target.checked)} className="mt-0.5" />
@@ -594,8 +655,13 @@ export function NewPurchaseClient({
       <section className="flex flex-col gap-2.5">
         <div className="flex flex-wrap items-center gap-2">
           <div className="min-w-0 flex-1 basis-full sm:basis-0">
-            <ItemSearch products={products} onPick={addProduct} onNew={addNew} vendorId={vendor?.id ?? null} />
+            <ItemSearch products={allProducts} onPick={addProduct} onNew={addNew} onNewStyle={garment ? (name) => setGridFor({ name }) : undefined} vendorId={vendor?.id ?? null} />
           </div>
+          {garment && (
+            <button type="button" onClick={() => setGridFor({ name: null })} className="flex items-center gap-1.5 rounded-lg border border-brand bg-brand-soft px-3 py-2.5 text-sm font-semibold text-brand-text">
+              <Shirt size={16} /> {t("Sizes × colours")}
+            </button>
+          )}
           <input
             ref={scanInputRef}
             type="file"
@@ -770,6 +836,19 @@ export function NewPurchaseClient({
         </p>
       )}
 
+      {garment && gridFor && (
+        <Suspense fallback={null}>
+          <GarmentPurchaseGrid
+            styles={[...garment.styles, ...made.styles]}
+            categories={garment.categories}
+            items={allProducts.flatMap((p) => (p.styleId ? [{ id: p.id, styleId: p.styleId, colour: p.colour ?? null, size: p.size ?? null, stock: p.stock, price: p.price, mrp: p.mrp, last: p.last }] : []))}
+            startNew={gridFor.name}
+            onAdd={addGridLines}
+            onClose={() => setGridFor(null)}
+          />
+        </Suspense>
+      )}
+
       {showHelp && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={() => setShowHelp(false)}>
           <div className="w-full max-w-sm rounded-2xl bg-surface p-4 shadow-xl" onClick={(e) => e.stopPropagation()} role="dialog" aria-label={t("Shortcuts")}>
@@ -797,7 +876,20 @@ export function NewPurchaseClient({
 }
 
 /** Scan a barcode or type: ↑ ↓ choose, Enter adds. Enter on a name that isn't an item starts a new one. */
-function ItemSearch({ products, onPick, onNew, vendorId }: { products: Product[]; onPick: (p: Product) => void; onNew: (name: string) => void; vendorId: string | null }) {
+function ItemSearch({
+  products,
+  onPick,
+  onNew,
+  onNewStyle,
+  vendorId,
+}: {
+  products: Product[];
+  onPick: (p: Product) => void;
+  onNew: (name: string) => void;
+  /** Garment shops: a name that isn't an item can start a style with its sizes and colours instead. */
+  onNewStyle?: (name: string) => void;
+  vendorId: string | null;
+}) {
   const { t } = useT();
   const [q, setQ] = useState("");
   const [at, setAt] = useState(0);
@@ -886,6 +978,21 @@ function ItemSearch({ products, onPick, onNew, vendorId }: { products: Product[]
               + {t("New item “{name}”", { name: q.trim() })}
             </button>
           </li>
+          {onNewStyle && (
+            <li>
+              <button
+                type="button"
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => {
+                  onNewStyle(q.trim());
+                  setQ("");
+                }}
+                className="flex w-full items-center gap-1.5 rounded-lg px-3 py-2 text-left text-sm font-semibold text-brand-text hover:bg-surface-2"
+              >
+                <Shirt size={14} aria-hidden="true" /> {t("New style “{name}” with sizes and colours", { name: q.trim() })}
+              </button>
+            </li>
+          )}
         </ul>
       )}
     </div>

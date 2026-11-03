@@ -3036,6 +3036,10 @@ export interface Database {
         Args: { p_shop: string; p_godown: string; p_product: string };
         Returns: number;
       };
+      gd_saleable_in: {
+        Args: { p_shop: string; p_godown: string; p_product: string; p_qty: number; p_kind: string; p_ref_type: string | null; p_ref_id: string | null; p_ref_number: string | null; p_staff: string | null; p_note?: string | null };
+        Returns: undefined;
+      };
       move_stock: {
         Args: { p_shop_id: string; p_take?: Json; p_give?: Json; p_allow_short?: boolean };
         Returns: Json;

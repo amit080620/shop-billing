@@ -251,6 +251,111 @@ export async function addVariantsAction(styleId: string, colours: string, sizes:
   return { id: styleId };
 }
 
+/** An item of a style as purchase entry shows it (the same fields as its other lines). */
+export type PurchaseVariant = {
+  id: string;
+  name: string;
+  barcode: string | null;
+  unit: string;
+  gstPercent: number;
+  hsnCode: string | null;
+  price: number;
+  mrp: number | null;
+  stock: number | null;
+  styleId: string;
+  colour: string | null;
+  size: string | null;
+};
+
+/** Purchase entry's size × colour grid: makes the style when it is new (every colour × size, as on
+ * New style) or the cells this purchase fills that the style doesn't have yet, and hands back all
+ * of the style's items to put on the bill. Anyone who records purchases may do it, the same as a
+ * new item typed on a purchase. */
+export async function prepareStyleForPurchaseAction(input: {
+  styleId: string | null;
+  style?: { name: string; code: string; brand: string; categoryId: string; hsnCode: string; gstPercent: number; price: number; mrp: number | null; fabric: string; season: string; autoBarcode: boolean; colours: string[]; sizes: string[] };
+  cells: { colour: string | null; size: string | null }[];
+}): Promise<{ error?: string; styleId?: string; variants?: PurchaseVariant[] }> {
+  const g = await guard("purchases", null);
+  if (!g.session) return { error: g.error };
+  const admin = createSupabaseAdminClient();
+  const clean = (s: string | null | undefined) => (typeof s === "string" && s.trim() ? s.trim().replace(/\s+/g, " ") : null);
+  let styleId = input.styleId;
+
+  if (!styleId) {
+    const s = input.style;
+    const name = clean(s?.name);
+    if (!s || !name) return { error: "Enter the style's name." };
+    if (!(s.price >= 0)) return { error: "Enter the selling price." };
+    if (s.mrp !== null && !(s.mrp >= s.price)) return { error: "MRP can't be below the selling price." };
+    const variants = variantMatrix(parseList(s.colours.join(",")), parseSizes(s.sizes.join(",")));
+    if (variants.length > 200) return { error: "That makes more than 200 sizes and colours — split it into styles." };
+    const code = clean(s.code)?.toUpperCase() ?? null;
+    const gst = Number.isFinite(s.gstPercent) && s.gstPercent >= 0 ? s.gstPercent : 5;
+    const { data: style, error } = await admin
+      .from("product_styles")
+      .insert({ shop_id: g.session.shopId, name, code, brand: clean(s.brand), category_id: clean(s.categoryId), hsn_code: clean(s.hsnCode), gst_percent: gst, fabric: clean(s.fabric), season: clean(s.season) })
+      .select("id")
+      .single();
+    if (error || !style) return { error: error?.code === "23505" ? "Another style already uses that code." : "Couldn't add the style." };
+    const added = await insertVariants(
+      g.session,
+      { id: style.id, name, code, hsn: clean(s.hsnCode), gst, categoryId: clean(s.categoryId), unit: "PCS", price: s.price, mrp: s.mrp, lowStock: 2, autoBarcode: s.autoBarcode },
+      variants,
+    );
+    if (added.error) {
+      await admin.from("product_styles").delete().eq("id", style.id).eq("shop_id", g.session.shopId);
+      return { error: added.error };
+    }
+    styleId = style.id;
+  } else {
+    const { data: s } = await admin.from("product_styles").select("id, name, code, hsn_code, gst_percent, category_id").eq("id", styleId).eq("shop_id", g.session.shopId).maybeSingle();
+    if (!s) return { error: "Style not found." };
+    const { data: existing } = await admin.from("products").select("price, mrp, unit, low_stock_threshold, barcode, variant_colour, variant_size").eq("style_id", styleId).eq("shop_id", g.session.shopId);
+    const have = new Set((existing ?? []).map((p) => `${(p.variant_colour ?? "").toLowerCase()}|${(p.variant_size ?? "").toLowerCase()}`));
+    const wanted = input.cells
+      .map((c) => ({ colour: clean(c.colour), size: clean(c.size) }))
+      .filter((c, i, all) => all.findIndex((o) => `${o.colour ?? ""}|${o.size ?? ""}`.toLowerCase() === `${c.colour ?? ""}|${c.size ?? ""}`.toLowerCase()) === i)
+      .filter((c) => !have.has(`${(c.colour ?? "").toLowerCase()}|${(c.size ?? "").toLowerCase()}`));
+    if (wanted.length) {
+      const sample = existing?.[0];
+      const added = await insertVariants(
+        g.session,
+        { id: s.id, name: s.name, code: s.code, hsn: s.hsn_code, gst: Number(s.gst_percent), categoryId: s.category_id, unit: sample?.unit ?? "PCS", price: Number(sample?.price ?? 0), mrp: sample?.mrp ?? null, lowStock: Number(sample?.low_stock_threshold ?? 0), autoBarcode: !existing?.length || !!sample?.barcode?.startsWith("29") },
+        wanted,
+      );
+      if (added.error) return { error: added.error };
+    }
+  }
+
+  const { data: rows, error } = await admin
+    .from("products")
+    .select("id, name, barcode, unit, gst_percent, hsn_code, price, mrp, stock_quantity, track_inventory, variant_colour, variant_size")
+    .eq("shop_id", g.session.shopId)
+    .eq("style_id", styleId)
+    .order("name");
+  if (error) return { error: "The sizes and colours were saved, but couldn't be loaded — open the purchase again." };
+  revalidatePath("/garment/styles");
+  revalidatePath("/products");
+  return {
+    styleId,
+    variants: (rows ?? []).map((p) => ({
+      id: p.id,
+      name: p.name,
+      barcode: p.barcode,
+      unit: p.unit,
+      gstPercent: Number(p.gst_percent),
+      hsnCode: p.hsn_code,
+      price: Number(p.price),
+      mrp: p.mrp != null ? Number(p.mrp) : null,
+      stock: p.track_inventory ? Number(p.stock_quantity) : null,
+      styleId: styleId as string,
+      colour: p.variant_colour ?? null,
+      size: p.variant_size ?? null,
+    })),
+  };
+}
+
 // ─── Opening stock and moves on the spot ───────────────────────────────────────
 type Line = { productId: string; quantity: number };
 const cleanLines = (lines: Line[]) =>

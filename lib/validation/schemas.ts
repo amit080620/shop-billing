@@ -253,6 +253,8 @@ export const purchaseSchema = z.object({
   updateRates: z.boolean().default(false),
   // The same vendor's bill number is already recorded — saved anyway only when the person said so.
   allowDuplicate: z.boolean().default(false),
+  // Garment shops with godowns: the godown the goods go into (the shop floor when not given).
+  godownId: z.string().uuid().nullable().optional(),
 });
 export type PurchaseInput = z.infer<typeof purchaseSchema>;
 
