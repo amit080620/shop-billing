@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { ArrowLeft, Plus, Search, Shirt, X } from "lucide-react";
 import { useT } from "@/lib/i18n/LangContext";
 import { formatMoney } from "@/lib/format";
@@ -157,13 +157,35 @@ export function GarmentPurchaseGrid({
     });
   }
 
+  // Something typed here that closing would lose.
+  const typed =
+    step === "grid"
+      ? Object.values(quantities).some((q) => q > 0) || (!style && !!draft.name.trim())
+      : step === "new" && [draft.name, draft.code, draft.brand, draft.price, draft.mrp, draft.colours, draft.sizes].some((v) => v.trim());
+  /** Only the ✕ closes it (a click beside it, or a text selection let go outside, must not), and
+   * asks first when something is typed. */
+  function close() {
+    if (typed && !window.confirm(t("Close without adding to the purchase? What you typed here will be lost."))) return;
+    onClose();
+  }
+  // Esc works wherever the focus is (a click beside the popup takes it out of the popup).
+  const closeRef = useRef(close);
+  closeRef.current = close;
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape" || e.defaultPrevented) return;
+      e.preventDefault();
+      closeRef.current();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 sm:items-center sm:p-4" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 sm:items-center sm:p-4">
       <div
         className="flex max-h-[100dvh] w-full max-w-3xl flex-col overflow-hidden bg-surface shadow-xl sm:max-h-[90vh] sm:rounded-2xl"
-        onClick={(e) => e.stopPropagation()}
         onKeyDown={(e) => {
-          if (e.key === "Escape") onClose();
           // It opens inside the purchase form: Enter in a box here must never save the purchase.
           if (e.key === "Enter" && e.target instanceof HTMLInputElement) e.preventDefault();
         }}
@@ -181,7 +203,7 @@ export function GarmentPurchaseGrid({
             {step === "pick" ? t("Buy by size and colour") : step === "new" ? t("New style") : style ? style.name : draft.name}
             {step === "grid" && !style && <span className="ml-2 rounded-full bg-brand-soft px-2 py-0.5 text-[10px] font-semibold text-brand-text">{t("new style")}</span>}
           </p>
-          <button type="button" onClick={onClose} aria-label={t("Close")} className="text-muted">
+          <button type="button" onClick={close} aria-label={t("Close")} className="text-muted">
             <X size={18} />
           </button>
         </header>
@@ -282,7 +304,7 @@ export function GarmentPurchaseGrid({
                 <input type="checkbox" checked={draft.autoBarcode} onChange={(e) => setDraft({ ...draft, autoBarcode: e.target.checked })} />
                 {t("Make a barcode for each size and colour (print labels from Products)")}
               </label>
-              <p className="text-xs text-muted">{t("{n} items will be created", { n: newVariants.length })}</p>
+              {(draft.colours.trim() || draft.sizes.trim()) && <p className="text-xs text-muted">{t("{n} items will be created", { n: newVariants.length })}</p>}
             </div>
           )}
 

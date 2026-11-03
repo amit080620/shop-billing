@@ -438,6 +438,7 @@ export const GARMENT_TEXT: Record<string, [hi: string, mr: string]> = {
   "{n} pieces": ["{n} पीस", "{n} नग"],
   "before GST": ["GST से पहले", "GST आधी"],
   "Add to purchase": ["खरीद में जोड़ें", "खरेदीत जोडा"],
+  "Close without adding to the purchase? What you typed here will be lost.": ["खरीद में जोड़े बिना बंद करें? यहाँ लिखा सब मिट जाएगा।", "खरेदीत न जोडता बंद करायचे? इथे लिहिलेले सर्व जाईल."],
 
   // ─── Stock home: stock in through purchases ───────────────────────────────────
   "Stock in: purchases": ["स्टॉक आया: खरीद", "स्टॉक आला: खरेदी"],
