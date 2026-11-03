@@ -593,7 +593,7 @@ export function NewPurchaseClient({
       {/* Item entry: scan or search; Enter on a name that isn't there starts a new item. */}
       <section className="flex flex-col gap-2.5">
         <div className="flex flex-wrap items-center gap-2">
-          <div className="min-w-0 flex-1">
+          <div className="min-w-0 flex-1 basis-full sm:basis-0">
             <ItemSearch products={products} onPick={addProduct} onNew={addNew} vendorId={vendor?.id ?? null} />
           </div>
           <input
