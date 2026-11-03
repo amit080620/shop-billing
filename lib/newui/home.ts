@@ -75,8 +75,18 @@ export async function loadNewHome(admin: Admin, shop: { shopId: string; enabledM
         .order("id")
         .range(a, b),
     ),
+    // Today is set against yesterday up to this same time — a whole yesterday would make every
+    // morning look like a fall.
     allRows<{ total: number }>((a, b) =>
-      admin.from("bills").select("total").eq("shop_id", shop.shopId).eq("status", "active").gte("created_at", startOf(prevFrom)).lte("created_at", endOf(prevTo)).order("id").range(a, b),
+      admin
+        .from("bills")
+        .select("total")
+        .eq("shop_id", shop.shopId)
+        .eq("status", "active")
+        .gte("created_at", startOf(prevFrom))
+        .lte("created_at", period === "today" ? new Date(Date.now() - 86_400_000).toISOString() : endOf(prevTo))
+        .order("id")
+        .range(a, b),
     ),
     getShopMoneySummary(admin, shop.shopId),
     allRows<{ id: string; name: string; stock_quantity: number; low_stock_threshold: number }>((a, b) =>
@@ -167,12 +177,21 @@ export async function loadNewHome(admin: Admin, shop: { shopId: string; enabledM
 
   const stock = products.data;
   const low = stock.filter((p) => Number(p.stock_quantity) <= Number(p.low_stock_threshold)).sort((a, b) => Number(a.stock_quantity) - Number(b.stock_quantity));
+  // The item that earned the most in the period (the Profit report's top row), with its margin.
+  const top = profit?.known.find((r) => r.revenue > 0 && r.profit > 0);
 
   return {
     period,
     from,
     to,
-    sales: { total, count: list.length, prevTotal, average: list.length ? round2(total / list.length) : 0 },
+    sales: {
+      total,
+      count: list.length,
+      prevTotal,
+      average: list.length ? round2(total / list.length) : 0,
+      // Change against the period it is compared with (none when that one had no sales).
+      changePct: prevTotal > 0 ? Math.round(((total - prevTotal) / prevTotal) * 1000) / 10 : null,
+    },
     byMode,
     udhaar,
     gst,
@@ -181,13 +200,20 @@ export async function loadNewHome(admin: Admin, shop: { shopId: string; enabledM
     recent,
     money,
     stock: { low: low.length, out: low.filter((p) => Number(p.stock_quantity) <= 0).length, names: low.slice(0, 4).map((p) => p.name) },
-    profit: profit ? { total: round2(profit.totalProfit), margin: profit.margin, uncosted: profit.unknown.length } : null,
+    profit: profit
+      ? {
+          total: round2(profit.totalProfit),
+          margin: profit.margin,
+          uncosted: profit.unknown.length,
+          top: top ? { name: top.name, profit: round2(top.profit), margin: Math.round((top.profit / top.revenue) * 1000) / 10 } : null,
+        }
+      : null,
     profitOn,
   };
 }
 
 function hourLabel(h: number) {
-  const suffix = h < 12 ? "am" : "pm";
+  const suffix = h < 12 ? " AM" : " PM";
   const n = h % 12 === 0 ? 12 : h % 12;
   return `${n}${suffix}`;
 }

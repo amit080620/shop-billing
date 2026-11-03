@@ -1,0 +1,31 @@
+/** The New look's Home (app/(dashboard)/dashboard/NewRetailHome), keyed by its English wording like
+ * pageText.ts. Merged into `translations` by dictionary.ts after the older tables, so it never
+ * changes a word they already have. */
+export const NEW_HOME_TEXT: Record<string, [hi: string, mr: string]> = {
+  "Stock in, rates set": ["माल अंदर, रेट तय", "माल आत, दर ठरले"],
+  "No money received yet": ["अभी कोई पैसा नहीं आया", "अजून पैसे आले नाहीत"],
+  "Top earner: {name}": ["सबसे ज़्यादा कमाई: {name}", "सर्वाधिक कमाई: {name}"],
+  "{amount} given · {period}": ["{amount} उधार दिया · {period}", "{amount} उधार दिले · {period}"],
+  "Send reminders": ["याद दिलाएं", "आठवण पाठवा"],
+  "Remind all": ["सबको याद दिलाएं", "सर्वांना आठवण द्या"],
+  "Busiest: {when}": ["सबसे व्यस्त: {when}", "सर्वाधिक गर्दी: {when}"],
+  "day {n}": ["तारीख़ {n}", "तारीख {n}"],
+  "Sales (₹)": ["बिक्री (₹)", "विक्री (₹)"],
+  "No sales in this period yet — the chart fills in as bills are made.": ["इस दौरान अभी कोई बिक्री नहीं — बिल बनते ही चार्ट भरेगा।", "या कालावधीत अजून विक्री नाही — बिले होताच चार्ट भरेल."],
+  "Busiest day": ["सबसे व्यस्त दिन", "सर्वाधिक गर्दीचा दिवस"],
+  "Busiest hour": ["सबसे व्यस्त घंटा", "सर्वाधिक गर्दीचा तास"],
+  "On khata: {amount}": ["खाते में: {amount}", "खात्यावर: {amount}"],
+  "Counter sale": ["काउंटर बिक्री", "काउंटर विक्री"],
+  "Print or share": ["प्रिंट या शेयर करें", "प्रिंट किंवा शेअर करा"],
+  "Showing the latest {n} of {total} bills · {period}": ["{total} में से आख़िरी {n} बिल · {period}", "{total} पैकी शेवटची {n} बिले · {period}"],
+  "View all": ["सभी देखें", "सर्व पहा"],
+  "Oldest dues first on the reminders screen": ["रिमाइंडर स्क्रीन पर सबसे पुराना बकाया पहले", "रिमाइंडर स्क्रीनवर सर्वात जुनी बाकी आधी"],
+  "Sell them first, or return them to the vendor": ["इन्हें पहले बेचें, या सप्लायर को लौटाएं", "हे आधी विका, किंवा पुरवठादाराला परत करा"],
+  "See batches": ["बैच देखें", "बॅच पहा"],
+  "Stock, dues and prices that are costing you": ["स्टॉक, बकाया और रेट जिनसे नुकसान हो रहा है", "स्टॉक, बाकी आणि दर ज्यामुळे नुकसान होत आहे"],
+  "CGST (central)": ["CGST (केंद्र)", "CGST (केंद्र)"],
+  "SGST (state)": ["SGST (राज्य)", "SGST (राज्य)"],
+  "Yesterday by this time": ["कल इसी समय तक", "काल याच वेळेपर्यंत"],
+  "Cash received": ["मिला कैश", "मिळालेली रोकड"],
+  "Cash from bills · {period}": ["बिलों से कैश · {period}", "बिलांमधून रोकड · {period}"],
+};

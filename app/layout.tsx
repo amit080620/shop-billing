@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Plus_Jakarta_Sans, Noto_Sans_Devanagari } from "next/font/google";
+import { Plus_Jakarta_Sans, Noto_Sans_Devanagari, JetBrains_Mono } from "next/font/google";
 import { getTheme, getLiteMode } from "@/lib/theme";
 import { getTranslator } from "@/lib/i18n/server";
 import { ServiceWorkerRegistration } from "./components/ServiceWorkerRegistration";
@@ -32,6 +32,16 @@ const notoSansDevanagari = Noto_Sans_Devanagari({
   subsets: ["devanagari"],
   weight: ["400", "500", "600", "700"],
   variable: "--font-noto-devanagari",
+  display: "swap",
+  preload: false,
+});
+
+// The New look's labels, codes and figures (the design's JetBrains Mono). Only New screens use it
+// (.n-label / .n-code / .n-tax), so the Classic look and the login never download it.
+const jetBrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  weight: ["500", "600", "700"],
+  variable: "--font-jetbrains",
   display: "swap",
   preload: false,
 });
@@ -100,7 +110,7 @@ export default async function RootLayout({
   return (
     <html
       lang={lang}
-      className={`${plusJakartaSans.variable} ${notoSansDevanagari.variable} ${theme === "dark" ? "dark" : ""} ${liteMode ? "lite-mode" : ""}`}
+      className={`${plusJakartaSans.variable} ${notoSansDevanagari.variable} ${jetBrainsMono.variable} ${theme === "dark" ? "dark" : ""} ${liteMode ? "lite-mode" : ""}`}
       // The Lite Mode script below may set the class before React loads.
       suppressHydrationWarning
     >
