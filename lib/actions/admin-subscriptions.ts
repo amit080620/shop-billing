@@ -6,13 +6,18 @@ import { createSupabaseAdminClient } from "../supabase/admin";
 import { hotelSchemaReady } from "../hotel/server";
 import { garmentSchemaReady } from "../garment/server";
 import { emptyShopForDeletion } from "../shopDeletion";
+import { BUSINESS_TYPES } from "../businessType";
 
 export type ActionState = { error?: string; success?: boolean } | null;
 
+/** `saved` is read back from the database after the update, so the admin form reports what the shop
+ * really is now — not what its dropdown happens to show. */
+export type BusinessTypeState = { error?: string; saved?: { businessType: string; locked: boolean } } | null;
+
 export async function adminSetBusinessTypeAction(
-  _prev: ActionState,
+  _prev: BusinessTypeState,
   formData: FormData,
-): Promise<ActionState> {
+): Promise<BusinessTypeState> {
   await requireSuperAdmin();
   const db = createSupabaseAdminClient();
 
@@ -21,7 +26,7 @@ export async function adminSetBusinessTypeAction(
   const locked = formData.get("locked") === "on";
 
   if (typeof shopId !== "string" || !shopId) return { error: "Missing shop" };
-  if (typeof businessType !== "string" || !businessType) return { error: "Missing business type" };
+  if (typeof businessType !== "string" || !BUSINESS_TYPES.some((b) => b.value === businessType)) return { error: "Pick a business type from the list." };
 
   if (businessType === "hotel" && !(await hotelSchemaReady(db))) {
     return { error: "Run migration 0041_hotel.sql in the Supabase SQL editor first — hotel shops need its tables." };
@@ -30,17 +35,19 @@ export async function adminSetBusinessTypeAction(
     return { error: "Run migration 0063_garment_godowns.sql in the Supabase SQL editor first — garment shops need its tables." };
   }
 
-  const { error } = await db
+  const { data, error } = await db
     .from("shops")
     .update({ business_type: businessType, business_type_locked: locked })
-    .eq("id", shopId);
-  if (error) {
+    .eq("id", shopId)
+    .select("business_type, business_type_locked")
+    .maybeSingle();
+  if (error || !data) {
     console.error("Could not update business type", error);
-    return { error: "Could not save changes" };
+    return { error: "Not saved — the database refused the change. Nothing about this shop was changed; try again." };
   }
 
   revalidatePath(`/admin/shops/${shopId}`);
-  return { success: true };
+  return { saved: { businessType: data.business_type, locked: data.business_type_locked } };
 }
 
 export async function rechargeShopAction(
