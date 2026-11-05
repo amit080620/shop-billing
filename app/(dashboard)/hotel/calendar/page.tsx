@@ -11,6 +11,7 @@ import { PageHeader } from "@/app/components/PageHeader";
 import { BackLink } from "@/app/components/BackLink";
 import { EmptyState } from "@/app/components/EmptyState";
 import { HotelSetupNotice } from "../HotelSetupNotice";
+import { CalendarClicks } from "./CalendarClicks";
 
 const DAYS = 14;
 
@@ -71,7 +72,7 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
 
           {/* On a phone one week fits the screen exactly (--day is a seventh of what is left after the room column);
               the second week is a swipe away. From tablet width every day gets a fixed width. */}
-          <div className="snap-x snap-proximity scroll-pl-16 overflow-x-auto overscroll-x-contain rounded-xl border border-border bg-surface scroll-hide [--day:calc((100vw-34px-64px)/7)] md:[--day:52px]">
+          <CalendarClicks className="snap-x snap-proximity scroll-pl-16 overflow-x-auto overscroll-x-contain rounded-xl border border-border bg-surface scroll-hide [--day:calc((100vw-34px-64px)/7)] md:[--day:52px]">
             <table className="min-w-full table-fixed border-separate border-spacing-0 text-xs" style={{ width: "calc(64px + 14 * var(--day))" }}>
               <colgroup>
                 <col style={{ width: 64 }} />
@@ -104,7 +105,7 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
                 })}
               </tbody>
             </table>
-          </div>
+          </CalendarClicks>
 
           {cal.unassigned.length > 0 && (
             <section className="flex flex-col gap-2">
@@ -170,12 +171,12 @@ function RoomRow({ roomId, label, sub, days, today, bars, blocked }: { roomId: s
     const bar = bars.find((b) => b.checkIn <= day && day < b.checkOut);
     if (!bar) {
       cells.push(
-        <td key={day} className={`border-b border-border/60 p-0.5 ${day === today ? "bg-brand-soft/40" : ""} ${blocked ? "bg-surface-2" : ""}`}>
-          {!blocked && (
-            <Link href={`/hotel/bookings/new?room=${roomId}&in=${day}`} aria-label={`${label} ${day}`} className="block h-9 rounded text-center text-[10px] leading-9 text-transparent hover:bg-surface-2 hover:text-muted">
-              +
-            </Link>
-          )}
+        <td
+          key={day}
+          {...(blocked ? {} : { "data-book": `/hotel/bookings/new?room=${roomId}&in=${day}`, role: "link", tabIndex: 0, "aria-label": `${label} ${day}` })}
+          className={`h-10 border-b border-border/60 text-center text-[10px] ${day === today ? "bg-brand-soft/40" : ""} ${blocked ? "bg-surface-2" : "cursor-pointer text-transparent hover:bg-surface-2 hover:text-muted"}`}
+        >
+          {!blocked && "+"}
         </td>,
       );
       i += 1;

@@ -291,8 +291,6 @@ export async function bulkImportProductsAction(rows: ImportRow[], duplicates: Du
     });
   }
   await invalidateCache(`ray:cache:products:${session.shopId}`);
-  revalidatePath("/products");
-  revalidatePath("/pharmacy/expiry");
   errors.sort((a, b) => a.row - b.row);
   return { inserted, updated, errors, insertedIds: saved.filter((s) => !s.p.existingId).map((s) => s.id) };
 }

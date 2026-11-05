@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Minus, Plus, Trash2 } from "lucide-react";
 import { createBookingAction, getAvailabilityAction } from "@/lib/actions/hotel";
@@ -21,7 +21,7 @@ type Line = { key: string; roomTypeId: string; roomId: string; rate: string };
 
 let lineSeq = 0;
 
-export function NewBookingClient({ today, initialCheckIn, presetRoom, accounts = [], request = null }: { today: string; initialCheckIn: string; presetRoom: { id: string; roomTypeId: string } | null; accounts?: AccountLite[]; request?: RequestPreset | null }) {
+export function NewBookingClient({ today, initialCheckIn, initialAvail = null, presetRoom, accounts = [], request = null }: { today: string; initialCheckIn: string; initialAvail?: AvailType[] | null; presetRoom: { id: string; roomTypeId: string } | null; accounts?: AccountLite[]; request?: RequestPreset | null }) {
   const { t } = useT();
   const router = useRouter();
   const { showToast } = useToast();
@@ -29,7 +29,7 @@ export function NewBookingClient({ today, initialCheckIn, presetRoom, accounts =
 
   const [checkIn, setCheckIn] = useState(initialCheckIn);
   const [checkOut, setCheckOut] = useState(request?.checkOut ?? addDays(initialCheckIn, 1));
-  const [avail, setAvail] = useState<AvailType[] | null>(null);
+  const [avail, setAvail] = useState<AvailType[] | null>(initialAvail);
   const [availError, setAvailError] = useState<string | null>(null);
   const [lines, setLines] = useState<Line[]>([]);
   const [presetApplied, setPresetApplied] = useState(false);
@@ -57,8 +57,17 @@ export function NewBookingClient({ today, initialCheckIn, presetRoom, accounts =
   const datesOk = isIsoDate(checkIn) && isIsoDate(checkOut) && checkOut > checkIn;
   const nights = datesOk ? nightsBetween(checkIn, checkOut) : 0;
 
+  // The page brought the first dates' rooms; a refresh after a save brings them again.
+  const firstDates = useRef(initialAvail ? `${checkIn}|${checkOut}` : null);
+  useEffect(() => {
+    if (initialAvail && firstDates.current === `${checkIn}|${checkOut}`) setAvail(initialAvail);
+    // Only when the server sends a new list; moving the dates is handled below.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialAvail]);
   useEffect(() => {
     if (!datesOk) return;
+    if (firstDates.current === `${checkIn}|${checkOut}`) return;
+    firstDates.current = null;
     let cancelled = false;
     setAvailError(null);
     const timer = setTimeout(async () => {

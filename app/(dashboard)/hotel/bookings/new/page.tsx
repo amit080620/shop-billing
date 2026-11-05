@@ -3,7 +3,8 @@ import { requireSession } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { getTranslator } from "@/lib/i18n/server";
 import { todayIso } from "@/lib/dateHelpers";
-import { isIsoDate } from "@/lib/hotel/dates";
+import { addDays, isIsoDate } from "@/lib/hotel/dates";
+import { getAvailabilityAction } from "@/lib/actions/hotel";
 import { hotelSchemaReady } from "@/lib/hotel/server";
 import { hotelOpsReady, loadAccounts, loose } from "@/lib/hotel/ops";
 import { isModuleEnabled } from "@/lib/modules";
@@ -27,6 +28,10 @@ export default async function NewBookingPage({ searchParams }: { searchParams: P
   const initialCheckIn = askedIn ?? (inParam && isIsoDate(inParam) && inParam >= today ? inParam : today);
   const accounts = opsReady && isModuleEnabled(session.enabledModules, "hotel_operations") ? await loadAccounts(admin, session.shopId) : [];
 
+  const initialCheckOut = (asked && askedIn ? (asked.check_out_date as string) : null) ?? addDays(initialCheckIn, 1);
+  const first = await getAvailabilityAction({ checkIn: initialCheckIn, checkOut: initialCheckOut });
+  const initialAvail = "types" in first && first.types ? first.types : null;
+
   let presetRoom: { id: string; roomTypeId: string } | null = null;
   if (room) {
     const { data } = await admin.from("hotel_rooms").select("id, room_type_id").eq("id", room).eq("shop_id", session.shopId).eq("is_active", true).maybeSingle();
@@ -40,6 +45,7 @@ export default async function NewBookingPage({ searchParams }: { searchParams: P
       <NewBookingClient
         today={today}
         initialCheckIn={initialCheckIn}
+        initialAvail={initialAvail}
         presetRoom={presetRoom}
         accounts={accounts}
         request={
