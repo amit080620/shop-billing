@@ -138,7 +138,7 @@ export default async function AdminSpeedPage({ searchParams }: { searchParams: P
           <span className={colds.length > 5 ? "text-amber-300" : "text-emerald-400"}>{colds.length} cold starts</span>
           {" · "}
           <span className={slowChecks.length ? "text-amber-300" : "text-emerald-400"}>
-            {slowChecks.length} slow sign-in checks{slowChecks.length ? ` (slowest ${Math.max(...slowChecks.map((n) => n.auth + n.shop))} ms)` : ""}
+            {slowChecks.length} slow sign-in checks{slowChecks.length ? ` (slowest ${Math.max(...slowChecks.map((n) => n.auth + n.shop))} ms; typically sign-in ${speedStats(slowChecks.map((n) => n.auth)).median} ms + shop lookup ${speedStats(slowChecks.map((n) => n.shop)).median} ms)` : ""}
           </span>
         </p>
         <p>

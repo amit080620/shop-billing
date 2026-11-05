@@ -219,6 +219,7 @@ export async function requireSession(): Promise<SessionContext> {
  * start), or whose sign-in check and shop lookup took over 700 ms. Written after the answer has
  * gone out, so it never slows the screen. */
 function noteServerTiming(cold: boolean, authMs: number, shopMs: number, userId: string) {
+  if (!process.env.VERCEL) return; // a test server on a computer shares this Redis; its timings aren't the shops'
   if (!cold && authMs + shopMs < 700) return;
   try {
     after(async () => {

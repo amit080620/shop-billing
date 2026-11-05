@@ -5,7 +5,7 @@ import { PlanBadge } from "@/app/components/PlanBadge";
 import { BUSINESS_TYPES } from "@/lib/businessType";
 import { buildWhatsAppLink } from "@/lib/whatsapp";
 import { speedBand, type SpeedKind, type StoredSpeed } from "@/lib/speedWatch";
-import { explainError, slowestMoments, speedByScreen, USER_DAYS, userReport } from "@/lib/adminUsers";
+import { explainError, isSlow, partsText, slowestMoments, speedByScreen, USER_DAYS, userReport } from "@/lib/adminUsers";
 import { loadUser } from "@/lib/adminUsersData";
 import { CopyReportButton } from "./CopyReportButton";
 
@@ -35,11 +35,11 @@ export default async function AdminUserPage({ params }: { params: Promise<{ id: 
   const { id } = await params;
   const user = await loadUser(id);
   if (!user) return <p className="text-sm text-gray-300">Shop not found.</p>;
-  const { row, people, errors, events } = user;
+  const { row, people, errors, events, slowSaves } = user;
   const trade = BUSINESS_TYPES.find((b) => b.value === row.trade)?.label ?? row.trade;
   const screens = speedByScreen(events);
   const moments = slowestMoments(events);
-  const report = userReport({ shopName: row.name, trade, shopId: row.id, items: row.items, customers: row.customers, bills: row.bills, errors, events });
+  const report = userReport({ shopName: row.name, trade, shopId: row.id, items: row.items, customers: row.customers, bills: row.bills, errors, events, slowSaves });
 
   return (
     <div className="flex flex-col gap-4">
@@ -145,6 +145,15 @@ export default async function AdminUserPage({ params }: { params: Promise<{ id: 
         </ul>
       </section>
 
+      <section className="flex flex-col gap-1 rounded-xl border border-gray-800 bg-gray-900 p-3">
+        <h2 className="text-sm font-semibold">Bill saves: phone or server?</h2>
+        <p className="text-xs text-gray-300">
+          {events.filter((e) => e.k === "save" && isSlow(e)).length} slow on the phone · {slowSaves.length} where the server itself took over 2 s
+          {slowSaves.length > 0 ? ` (slowest ${(Math.max(...slowSaves.map((x) => x.ms)) / 1000).toFixed(1)} s)` : ""}
+        </p>
+        <p className="text-[11px] text-gray-500">Many slow on the phone and few on the server points at the internet. Counted since this was added.</p>
+      </section>
+
       <section className="flex flex-col gap-2 rounded-xl border border-gray-800 bg-gray-900 p-3">
         <h2 className="text-sm font-semibold">Slowest moments</h2>
         {moments.length === 0 && <p className="text-xs text-emerald-400">Nothing slow.</p>}
@@ -166,6 +175,7 @@ export default async function AdminUserPage({ params }: { params: Promise<{ id: 
                 {e.ttfb !== undefined ? ` · server answered in ${e.ttfb} ms` : ""}
                 {e.sv !== undefined ? ` · server took ${e.sv} ms` : ""}
               </span>
+              {partsText(e) && <span className="text-[11px] text-amber-200">Time went on: {partsText(e)}</span>}
             </li>
           ))}
         </ul>

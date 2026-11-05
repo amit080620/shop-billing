@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { istDay, keepWarmSource, screenOf, speedBand, speedStats } from "../speedWatch";
+import { istDay, keepWarmSource, screenOf, speedBand, speedStats, speedParts } from "../speedWatch";
 
 describe("screenOf", () => {
   it("counts every bill or customer as one screen", () => {
@@ -46,5 +46,15 @@ describe("keepWarmSource", () => {
     expect(keepWarmSource(null)).toBe("db");
     expect(keepWarmSource("curl/8.5.0")).toBe("github");
     expect(keepWarmSource("Mozilla/5.0 (Linux; Android 14) TheRayApp/1.0.4")).toBeNull();
+  });
+
+  it("splits a request into where its time went", () => {
+    const timing = { startTime: 100, domainLookupStart: 100, domainLookupEnd: 150, connectStart: 150, connectEnd: 21150, requestStart: 21200, responseStart: 21600, responseEnd: 21700 };
+    expect(speedParts(timing)).toEqual({ dn: 50, cn: 21000, st: 50, wt: 400, dl: 100 });
+  });
+
+  it("gives no parts when the browser doesn't say", () => {
+    const hidden = { startTime: 100, domainLookupStart: 0, domainLookupEnd: 0, connectStart: 0, connectEnd: 0, requestStart: 0, responseStart: 0, responseEnd: 500 };
+    expect(speedParts(hidden)).toBeNull();
   });
 });

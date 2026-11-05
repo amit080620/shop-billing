@@ -3,6 +3,9 @@
 import { redirect } from "next/navigation";
 import { billLimitError, customerLimitError } from "../planLimits";
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
+import { getRedis } from "../redis";
+import { istDay, SLOW_SAVE_MS, slowSaveKey, SPEED_KEEP_DAYS, type SlowSave } from "../speedWatch";
 import { requireSession, hasPermission, type SessionContext } from "../auth";
 import { createSupabaseAdminClient } from "../supabase/admin";
 import { billSchema, calculateTransactionTotals, type BillInput } from "../validation/schemas";
@@ -709,10 +712,32 @@ export async function createBillCore(
   return { billId: bill.id, invoiceNumber };
 }
 
+/** A save the server itself was slow over, for Admin → Users; written after the answer has gone out,
+ * so it never slows the save. Set against the phone's timing, it tells a slow server from a slow internet. */
+function noteSlowSave(shopId: string, ms: number) {
+  if (ms < SLOW_SAVE_MS || !process.env.VERCEL) return;
+  try {
+    after(async () => {
+      const redis = getRedis();
+      if (!redis) return;
+      const key = slowSaveKey(istDay());
+      await redis
+        .pipeline()
+        .rpush(key, JSON.stringify({ s: shopId, at: Math.floor(Date.now() / 1000), ms } satisfies SlowSave))
+        .expire(key, SPEED_KEEP_DAYS * 86400)
+        .exec()
+        .catch(() => undefined);
+    });
+  } catch {
+    // Only a note; never a reason for a bill to fail.
+  }
+}
+
 export async function createBillAction(
   _prev: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
+  const started = Date.now();
   const session = await requireSession();
 
   const raw = formData.get("payload");
@@ -763,6 +788,7 @@ export async function createBillAction(
   revalidatePath("/bills/new");
   revalidatePath("/fast-billing");
   revalidatePath("/dashboard");
+  noteSlowSave(session.shopId, Date.now() - started);
   redirect(`/print/bill/${result.billId}?new=1`);
 }
 

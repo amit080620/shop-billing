@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
-import { screenOf, type SpeedContext, type SpeedEvent } from "@/lib/speedWatch";
+import { screenOf, speedBand, speedParts, type SpeedContext, type SpeedEvent, type SpeedKind, type SpeedParts } from "@/lib/speedWatch";
 
 const PENDING_KEY = "ray-speed-pending";
 const FLUSH_AT = 10;
@@ -76,6 +76,23 @@ function serverTimeFor(path: string, since: number): number | undefined {
   return hit ? Math.round(hit.responseStart - hit.startTime) : undefined;
 }
 
+/** Where the time went, for a moment that wasn't quick: the request a tap made for the new screen, or
+ * the one a save sent from the screen it was on. Nothing is worked out for a quick moment. */
+function partsFor(kind: SpeedKind, ms: number, from: string, path: string, since: number): SpeedParts | undefined {
+  if (speedBand(kind, ms) === "quick") return undefined;
+  const start = since - performance.timeOrigin - 100;
+  const entries = performance.getEntriesByType("resource") as PerformanceResourceTiming[];
+  const hit = entries
+    .filter((e) => e.startTime >= start && e.initiatorType === "fetch")
+    .filter((e) => {
+      if (kind !== "save") return e.name.includes(`${path}?_rsc=`);
+      const url = new URL(e.name);
+      return url.pathname === from && !url.searchParams.has("_rsc");
+    })
+    .pop();
+  return (hit && speedParts(hit)) ?? undefined;
+}
+
 /** Calls fn once the screen shows its real content: no loading outline ([data-loading-screen], the
  * loading.tsx skeletons) left, painted. A tap on a screen that isn't loaded ahead shows the outline
  * at once while its data comes from the server; timing only to the outline made a slow screen look
@@ -145,14 +162,17 @@ export function SpeedWatch() {
         // The page was loaded fresh: the app opened, a reload, or a tap that became a full load.
         if (document.visibilityState === "visible") {
           const nav = performance.getEntriesByType("navigation")[0] as PerformanceNavigationTiming | undefined;
-          record({ k: "load", p: screenOf(pathname), ms: Math.round(performance.now()), c: 1, ...(nav ? { ttfb: Math.round(nav.responseStart) } : {}) });
+          const ms = Math.round(performance.now());
+          const parts = nav && speedBand("load", ms) !== "quick" ? speedParts(nav) : null;
+          record({ k: "load", p: screenOf(pathname), ms, c: 1, ...(nav ? { ttfb: Math.round(nav.responseStart) } : {}), ...parts });
         }
         if (pending && waited !== null) record({ k: pending.kind, f: screenOf(pending.from), p: screenOf(pathname), ms: waited, full: 1, c: 1 });
         return;
       }
       if (pending && waited !== null) {
         const sv = serverTimeFor(pathname, pending.at);
-        record({ k: pending.kind, f: screenOf(pending.from), p: screenOf(pathname), ms: waited, c: 1, ...(sv !== undefined ? { sv } : {}) });
+        const parts = partsFor(pending.kind, waited, pending.from, pathname, pending.at);
+        record({ k: pending.kind, f: screenOf(pending.from), p: screenOf(pathname), ms: waited, c: 1, ...(sv !== undefined ? { sv } : {}), ...parts });
         try {
           performance.clearResourceTimings();
         } catch {

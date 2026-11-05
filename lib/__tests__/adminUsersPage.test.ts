@@ -92,7 +92,7 @@ beforeEach(() => {
   stored.length = 0;
   // The same list comes back for each of the week's days, so one timing a day shows as seven.
   stored.push(
-    { s: REAL, k: "open", f: "/dashboard", p: "/bills/new", ms: 9000, d: "Android browser", n: "4g", m: 2, at },
+    { s: REAL, k: "open", f: "/dashboard", p: "/bills/new", ms: 9000, d: "Android browser", n: "4g", m: 2, at, cn: 8000, wt: 700 },
     { s: DEMO, k: "open", f: "/dashboard", p: "/products", ms: 9000, d: "Computer", at },
   );
 });
@@ -128,6 +128,7 @@ describe("Admin → Users", () => {
     expect(html).toContain("/bills/new");
     expect(html).toContain("9.0 s");
     expect(html).toContain("2 GB RAM");
+    expect(html).toContain("connecting 8.0 s, waiting for the server 700 ms");
     expect(html).toContain("Copy report");
     expect(html).toContain(`/admin/shops/${REAL}`);
     expect(html).not.toContain("/products");

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { explainError, lastSeen, parseSpeedRows, slowestMoments, speedByScreen, userReport, type UserError } from "../adminUsers";
+import { explainError, lastSeen, partsText, parseSpeedRows, slowestMoments, speedByScreen, userReport, type UserError } from "../adminUsers";
 import type { StoredSpeed } from "../speedWatch";
 
 const timing = (over: Partial<StoredSpeed>): StoredSpeed => ({ k: "open", p: "/products", ms: 500, d: "Android browser", s: "shop-1", at: 1_790_000_000, ...over });
@@ -50,6 +50,20 @@ describe("admin users", () => {
     const text = userReport({ ...base, errors: [], events: [] });
     expect(text).not.toMatch(/phone|email|gstin|@/i);
     expect(text).toContain("0 timings");
+  });
+
+  it("names where a slow moment's time went, the biggest first, and skips the small parts", () => {
+    expect(partsText({ dn: 5, cn: 21000, st: 50, wt: 900, dl: 300 })).toBe("connecting 21.0 s, waiting for the server 900 ms, downloading 300 ms");
+    expect(partsText({ dn: 5, cn: 20, wt: 100 })).toBe("");
+    expect(partsText({})).toBe("");
+  });
+
+  it("sets slow saves on the phone against the server's own", () => {
+    const events = [timing({ k: "save", p: "/print/bill/:id", ms: 21000, cn: 20500 }), timing({ k: "save", p: "/print/bill/:id", ms: 500 })];
+    const text = userReport({ ...base, errors: [], events, slowSaves: [{ s: "shop-1", at: 1_790_000_000, ms: 2500 }] });
+    expect(text).toContain("BILL SAVES: 1 slow on the device, 1 where the server itself took over 2 s, slowest 2.5 s");
+    expect(text).toContain("{connecting 20.5 s}");
+    expect(userReport({ ...base, errors: [], events: [] })).toContain("BILL SAVES: 0 slow on the device, 0 where the server");
   });
 
   it("keeps a long error short", () => {

@@ -1,6 +1,6 @@
 /** Admin → Users: what the panel works out from a shop's errors and speed timings, and the report the
  * owner can pass on when something needs fixing. Pure, so it can be checked without a database. */
-import { SPEED_LIMITS, speedBand, speedStats, type SpeedKind, type StoredSpeed } from "./speedWatch";
+import { SPEED_LIMITS, speedBand, speedStats, type SlowSave, type SpeedKind, type SpeedParts, type StoredSpeed } from "./speedWatch";
 
 export const USER_DAYS = 7;
 
@@ -62,6 +62,16 @@ export function lastSeen(times: (string | number | null | undefined)[]): number 
   return ms.length ? Math.max(...ms) : null;
 }
 
+/** Where a slow moment's time went, the parts worth a mention (over 0.2 s), the biggest first. */
+export function partsText(e: SpeedParts): string {
+  const parts: [string, number | undefined][] = [["address lookup", e.dn], ["connecting", e.cn], ["waiting in the browser", e.st], ["waiting for the server", e.wt], ["downloading", e.dl]];
+  return parts
+    .filter((p): p is [string, number] => (p[1] ?? 0) >= 200)
+    .sort((a, b) => b[1] - a[1])
+    .map(([name, ms]) => `${name} ${ms >= 1000 ? `${(ms / 1000).toFixed(1)} s` : `${ms} ms`}`)
+    .join(", ");
+}
+
 const when = (ms: number) => new Date(ms).toLocaleString("en-IN", { timeZone: "Asia/Kolkata", day: "numeric", month: "short", hour: "numeric", minute: "2-digit" });
 const seconds = (ms: number) => (ms >= 1000 ? `${(ms / 1000).toFixed(1)} s` : `${ms} ms`);
 const clip = (text: string, max: number) => (text.length > max ? `${text.slice(0, max)}…` : text);
@@ -77,6 +87,7 @@ export function userReport(input: {
   bills: number;
   errors: UserError[];
   events: StoredSpeed[];
+  slowSaves?: SlowSave[];
   now?: Date;
 }): string {
   const lines = [`The Ray report: ${input.shopName}`, `Shop id: ${input.shopId}`, `Trade: ${input.trade}`, `Items ${input.items} · Customers ${input.customers} · Bills ${input.bills}`, `Made ${when((input.now ?? new Date()).getTime())} IST, covering the last ${USER_DAYS} days`, ""];
@@ -90,9 +101,14 @@ export function userReport(input: {
     for (const e of slow) {
       const phone = [e.d, e.n, e.m ? `${e.m} GB` : "", e.l ? "Lite" : "", e.b ? `build ${e.b.slice(0, 8)}` : ""].filter(Boolean).join(", ");
       const server = e.ttfb !== undefined ? `, server ${e.ttfb} ms` : e.sv !== undefined ? `, server ${e.sv} ms` : "";
-      lines.push(`- ${when(e.at * 1000)} ${e.k} ${e.f ? `${e.f} -> ` : ""}${e.p}: ${seconds(e.ms)}${e.full ? " (full reload)" : ""}${server} [${phone}]`);
+      const parts = partsText(e);
+      lines.push(`- ${when(e.at * 1000)} ${e.k} ${e.f ? `${e.f} -> ` : ""}${e.p}: ${seconds(e.ms)}${e.full ? " (full reload)" : ""}${server}${parts ? ` {${parts}}` : ""} [${phone}]`);
     }
   }
+
+  const saves = input.slowSaves ?? [];
+  const slowOnPhone = input.events.filter((e) => e.k === "save" && isSlow(e)).length;
+  lines.push("", `BILL SAVES: ${slowOnPhone} slow on the device, ${saves.length} where the server itself took over 2 s${saves.length ? `, slowest ${seconds(Math.max(...saves.map((x) => x.ms)))}` : ""}`);
 
   const real = input.errors.filter((e) => !explainError(e.message, e.details));
   lines.push("", `ERRORS: ${input.errors.length} logged, ${real.length} need a look`);

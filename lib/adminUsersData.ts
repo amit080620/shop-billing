@@ -3,7 +3,7 @@ import { createSupabaseAdminClient } from "./supabase/admin";
 import { getRedis } from "./redis";
 import { isDemoShopName } from "./demo/config";
 import { effectivePlan, type PlanKey } from "./plans";
-import { istDay, speedKey, type StoredSpeed } from "./speedWatch";
+import { istDay, slowSaveKey, speedKey, type SlowSave, type StoredSpeed } from "./speedWatch";
 import { isSlow, lastSeen, parseSpeedRows, USER_DAYS, type UserError } from "./adminUsers";
 
 type Admin = ReturnType<typeof createSupabaseAdminClient>;
@@ -46,6 +46,24 @@ async function weekOfSpeed(): Promise<StoredSpeed[]> {
   const days = Array.from({ length: USER_DAYS }, (_, i) => istDay(new Date(Date.now() - i * 86400_000)));
   const lists = await Promise.all(days.map((d) => redis.lrange<unknown>(speedKey(d), 0, -1).catch(() => [] as unknown[])));
   return parseSpeedRows(lists.flat());
+}
+
+/** The week's bill saves the server itself was slow over (lib/actions/bills). */
+async function weekOfSlowSaves(shopId: string): Promise<SlowSave[]> {
+  const redis = getRedis();
+  if (!redis) return [];
+  const days = Array.from({ length: USER_DAYS }, (_, i) => istDay(new Date(Date.now() - i * 86400_000)));
+  const lists = await Promise.all(days.map((d) => redis.lrange<unknown>(slowSaveKey(d), 0, -1).catch(() => [] as unknown[])));
+  return lists
+    .flat()
+    .map((r) => {
+      try {
+        return (typeof r === "string" ? JSON.parse(r) : r) as SlowSave;
+      } catch {
+        return null;
+      }
+    })
+    .filter((x): x is SlowSave => !!x && x.s === shopId && typeof x.ms === "number");
 }
 
 /** Every sign-in's email and last sign-in, for one read rather than one for each person. */
@@ -132,18 +150,19 @@ export async function loadUsers(): Promise<{ users: UserRow[]; loginCount: numbe
 }
 
 /** One shop in full, for its page. Null when it doesn't exist. */
-export async function loadUser(shopId: string): Promise<{ row: UserRow; people: UserLogin[]; errors: UserError[]; events: StoredSpeed[] } | null> {
+export async function loadUser(shopId: string): Promise<{ row: UserRow; people: UserLogin[]; errors: UserError[]; events: StoredSpeed[]; slowSaves: SlowSave[] } | null> {
   const admin = createSupabaseAdminClient();
   const columns = "id, name, legal_name, business_type, created_at, subscription_valid_until";
   const withPlans = await admin.from("shops").select(`${columns}, plan, trial_ends_at, owner_phone`).eq("id", shopId).maybeSingle();
   const shop = (withPlans.error ? (await admin.from("shops").select(columns).eq("id", shopId).maybeSingle()).data : withPlans.data) as unknown as ShopCols | null;
   if (!shop) return null;
-  const [{ data: staff }, { data: errors }, logins, allEvents, figures] = await Promise.all([
+  const [{ data: staff }, { data: errors }, logins, allEvents, figures, slowSaves] = await Promise.all([
     admin.from("staff").select("id, name, role").eq("shop_id", shopId),
     admin.from("error_logs").select("id, context, message, details, created_at").eq("shop_id", shopId).gte("created_at", daysAgoIso(USER_DAYS)).order("created_at", { ascending: false }).limit(100),
     allLogins(admin),
     weekOfSpeed(),
     shopFigures(admin, shopId),
+    weekOfSlowSaves(shopId),
   ]);
   const events = allEvents.filter((e) => e.s === shopId);
   const list = staff ?? [];
@@ -152,5 +171,6 @@ export async function loadUser(shopId: string): Promise<{ row: UserRow; people: 
     people: list.map((s) => ({ ...s, email: logins.get(s.id)?.email ?? null, lastSignIn: logins.get(s.id)?.lastSignIn ?? null })),
     errors: (errors ?? []) as UserError[],
     events,
+    slowSaves,
   };
 }

@@ -12,7 +12,8 @@ const num = (v: unknown, max: number) => (typeof v === "number" && Number.isFini
 export async function POST(request: Request) {
   const session = await requireSession();
   const redis = getRedis();
-  if (!redis) return new Response(null, { status: 204 });
+  // A test server on a computer shares this Redis; its timings aren't the shops'.
+  if (!redis || !process.env.VERCEL) return new Response(null, { status: 204 });
 
   let body: { ctx?: Partial<SpeedContext>; events?: Partial<SpeedEvent>[] };
   try {
@@ -29,7 +30,7 @@ export async function POST(request: Request) {
       const ms = num(e.ms, 120_000);
       const p = text(e.p, 60);
       if (!e.k || !KINDS.has(e.k) || ms === undefined || !p) return null;
-      return JSON.stringify({ k: e.k, f: text(e.f, 60), p, ms, full: e.full === 1 ? 1 : undefined, c: e.c === 1 ? 1 : undefined, sv: num(e.sv, 120_000), ttfb: num(e.ttfb, 120_000), ...ctx, s: session.shopId, at });
+      return JSON.stringify({ k: e.k, f: text(e.f, 60), p, ms, full: e.full === 1 ? 1 : undefined, c: e.c === 1 ? 1 : undefined, sv: num(e.sv, 120_000), ttfb: num(e.ttfb, 120_000), dn: num(e.dn, 120_000), cn: num(e.cn, 120_000), st: num(e.st, 120_000), wt: num(e.wt, 120_000), dl: num(e.dl, 120_000), ...ctx, s: session.shopId, at });
     })
     .filter((row): row is string => row !== null);
   if (!rows.length) return new Response(null, { status: 204 });

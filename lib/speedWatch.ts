@@ -24,7 +24,40 @@ export type SpeedEvent = {
   /** A tap: how long the server took to answer its request, from asking to the first byte (network
    * included). Missing when the screen came from the copy loaded ahead, with no request at all. */
   sv?: number;
+} & SpeedParts;
+
+/** Where a slow request's time went, in ms: the first three are this phone's internet before the
+ * server is even asked, wt is asking until the first byte (the server's work and the way there and
+ * back), dl is the rest of the answer. Sent only for moments that weren't quick. */
+export type SpeedParts = {
+  /** Looking up the site's address. */
+  dn?: number;
+  /** Opening a connection. */
+  cn?: number;
+  /** Waiting in the browser before it could ask. */
+  st?: number;
+  /** Asked, waiting for the first byte. */
+  wt?: number;
+  /** First byte to last. */
+  dl?: number;
 };
+
+type RequestTiming = Pick<PerformanceResourceTiming, "startTime" | "domainLookupStart" | "domainLookupEnd" | "connectStart" | "connectEnd" | "requestStart" | "responseStart" | "responseEnd">;
+
+/** The parts of one request, or null when the browser doesn't say. */
+export function speedParts(e: RequestTiming): SpeedParts | null {
+  if (!e.requestStart || !e.responseStart) return null;
+  const ms = (n: number) => Math.max(0, Math.round(n));
+  const dn = e.domainLookupEnd - e.domainLookupStart;
+  const cn = e.connectEnd - e.connectStart;
+  return { dn: ms(dn), cn: ms(cn), st: ms(e.requestStart - e.startTime - dn - cn), wt: ms(e.responseStart - e.requestStart), dl: ms(e.responseEnd - e.responseStart) };
+}
+
+/** Bill saves that took the server itself over this long are noted (see SLOW_SAVE_KEY): set against
+ * the phone's timing, they tell a slow server from a slow internet. */
+export const SLOW_SAVE_MS = 2000;
+export const slowSaveKey = (day: string) => `speed:save:${day}`;
+export type SlowSave = { s: string; at: number; ms: number };
 
 /** About the phone, sent once per batch. */
 export type SpeedContext = {
