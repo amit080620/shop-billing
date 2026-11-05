@@ -85,9 +85,22 @@ function getDb() {
   return dbPromise;
 }
 
+/** What must change to turn the kept rows into the fresh ones: rows new or different, and ids gone. */
+export function offlineCopyChanges<T extends { id: string }>(kept: T[], fresh: T[]): { put: T[]; remove: string[] } {
+  const keptById = new Map(kept.map((row) => [row.id, row as Record<string, unknown>]));
+  const put = fresh.filter((row) => {
+    const old = keptById.get(row.id);
+    if (!old) return true;
+    return Object.entries(row).some(([key, value]) => (old[key] ?? null) !== (value ?? null));
+  });
+  const freshIds = new Set(fresh.map((row) => row.id));
+  return { put, remove: kept.filter((row) => !freshIds.has(row.id)).map((row) => row.id) };
+}
+
 /** Called during normal online use (e.g. every time the New Bill page loads
  * successfully) so there's always a reasonably fresh local copy to work
- * from if the connection drops. */
+ * from if the connection drops. Only what changed is written: rewriting every row held a big shop's
+ * phone still for over 3 s each time New Bill opened, and this copy has no stock, so it rarely changes. */
 export async function cacheForOffline(
   shop: ShopContext,
   products: CachedProduct[],
@@ -97,11 +110,22 @@ export async function cacheForOffline(
   const tx = db.transaction(["shopContext", "products", "customers"], "readwrite");
   // A fresh copy replaces the old one entirely: items since deleted go, and another shop's items
   // (someone else logged in on this phone before) never mix in.
-  await Promise.all([tx.objectStore("shopContext").clear(), tx.objectStore("products").clear(), tx.objectStore("customers").clear()]);
+  const productStore = tx.objectStore("products");
+  const customerStore = tx.objectStore("customers");
+  const [contexts, keptProducts, keptCustomers] = await Promise.all([tx.objectStore("shopContext").getAll(), productStore.getAll(), customerStore.getAll()]);
+  // Rows kept from another shop go without being read one by one.
+  const sameShop = contexts.length === 1 && contexts[0].shopId === shop.shopId;
+  const productChanges = offlineCopyChanges(sameShop ? keptProducts : [], products);
+  const customerChanges = offlineCopyChanges(sameShop ? keptCustomers : [], customers);
+  const work: Promise<unknown>[] = [tx.objectStore("shopContext").clear()];
+  if (!sameShop) work.push(productStore.clear(), customerStore.clear());
+  await Promise.all(work);
   await tx.objectStore("shopContext").put({ ...shop, cachedAt: new Date().toISOString() });
   await Promise.all([
-    ...products.map((p) => tx.objectStore("products").put(p)),
-    ...customers.map((c) => tx.objectStore("customers").put(c)),
+    ...productChanges.remove.map((id) => productStore.delete(id)),
+    ...customerChanges.remove.map((id) => customerStore.delete(id)),
+    ...productChanges.put.map((p) => productStore.put(p)),
+    ...customerChanges.put.map((c) => customerStore.put(c)),
   ]);
   await tx.done;
 }
