@@ -7,6 +7,7 @@ import { isoDaysAgo, todayIso } from "@/lib/dateHelpers";
 import { formatStayDate, isIsoDate } from "@/lib/hotel/dates";
 import { sourceLabel } from "@/lib/hotel/constants";
 import { hotelSchemaReady, loadHotelReport } from "@/lib/hotel/server";
+import { hotelOpsReady, loadOpsReport } from "@/lib/hotel/ops";
 import { PageHeader } from "@/app/components/PageHeader";
 import { BackLink } from "@/app/components/BackLink";
 import { DateRangeControls } from "@/app/components/DateRangeControls";
@@ -22,7 +23,8 @@ export default async function HotelReportsPage({ searchParams }: { searchParams:
   const sp = await searchParams;
   const to = sp.to && isIsoDate(sp.to) ? sp.to : todayIso();
   const from = sp.from && isIsoDate(sp.from) && sp.from <= to ? sp.from : isoDaysAgo(29);
-  const r = await loadHotelReport(admin, session.shopId, from, to);
+  const opsTables = await hotelOpsReady(admin);
+  const [r, ops] = await Promise.all([loadHotelReport(admin, session.shopId, from, to), loadOpsReport(admin, session.shopId, from, to, todayIso(), opsTables)]);
   const s = r.summary;
   const received = Object.entries(r.receivedByMethod).filter(([, v]) => v !== 0);
 
@@ -38,6 +40,42 @@ export default async function HotelReportsPage({ searchParams }: { searchParams:
         <Stat label={t("ADR")} value={formatMoney(s.adr)} sub={t("average rate per room-night")} />
         <Stat label={t("RevPAR")} value={formatMoney(s.revPar)} sub={t("revenue per available room")} />
       </section>
+
+      {ops.byType.length > 0 && (
+        <section className="neu-card flex flex-col gap-2 p-4">
+          <div className="flex items-center justify-between gap-2">
+            <h2 className="text-sm font-semibold text-foreground">{t("By room type")}</h2>
+            <ExportCsvButton filename={`room-types-${from}-to-${to}.csv`} headers={["Room type", "Rooms", "Room-nights", "Revenue", "ADR", "Occupancy %"]} rows={ops.byType.map((x) => [x.name, x.rooms, x.roomNights, x.revenue, x.adr, x.occupancyPercent])} />
+          </div>
+          {ops.byType.map((x) => (
+            <div key={x.name} className="flex items-center justify-between gap-3 text-sm">
+              <div className="min-w-0">
+                <p className="break-words font-medium text-foreground">{x.name}</p>
+                <p className="text-xs text-muted">
+                  {x.roomNights} {t("room-nights")} · {x.occupancyPercent}% · {t("ADR")} {formatMoney(x.adr)}
+                </p>
+              </div>
+              <p className="shrink-0 font-semibold text-foreground">{formatMoney(x.revenue)}</p>
+            </div>
+          ))}
+        </section>
+      )}
+
+      {ops.forecast.length > 0 && (
+        <section className="neu-card flex flex-col gap-2 p-4">
+          <h2 className="text-sm font-semibold text-foreground">{t("Already on the books")}</h2>
+          <p className="text-xs text-muted">{t("Rooms booked ahead from today, before tax.")}</p>
+          <div className="grid grid-cols-3 gap-2 text-center">
+            {ops.forecast.map((x) => (
+              <div key={x.days} className="rounded-xl bg-surface-2 p-2.5">
+                <p className="text-[11px] text-muted">{t("Next {n} days", { n: x.days })}</p>
+                <p className="text-base font-bold text-foreground">{x.occupancyPercent}%</p>
+                <p className="break-words text-[11px] text-muted">{formatMoney(x.revenue)}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       <section className="neu-card flex flex-col gap-2 p-4">
         <h2 className="text-sm font-semibold text-foreground">{t("Revenue by booking source")}</h2>
@@ -75,6 +113,44 @@ export default async function HotelReportsPage({ searchParams }: { searchParams:
         <Line label={t("Cancelled bookings")} value={String(r.cancelled)} />
         <Line label={t("No-shows")} value={String(r.noShows)} />
       </section>
+
+      {ops.byAccount.length > 0 && (
+        <section className="neu-card flex flex-col gap-2 p-4">
+          <h2 className="text-sm font-semibold text-foreground">{t("Companies & agents")}</h2>
+          {ops.byAccount.map((a) => (
+            <div key={a.name} className="flex items-center justify-between gap-3 text-sm">
+              <div className="min-w-0">
+                <p className="break-words font-medium text-foreground">{a.name}</p>
+                <p className="text-xs text-muted">
+                  {a.bookings} {a.bookings === 1 ? t("booking") : t("bookings")} · {a.roomNights} {t("room-nights")}
+                </p>
+              </div>
+              <p className="shrink-0 font-semibold text-foreground">{formatMoney(a.revenue)}</p>
+            </div>
+          ))}
+        </section>
+      )}
+
+      {(ops.events.count > 0 || ops.events.received !== 0) && (
+        <section className="neu-card flex flex-col gap-1.5 p-4 text-sm">
+          <h2 className="mb-1 text-sm font-semibold text-foreground">{t("Banquet & events")}</h2>
+          <Line label={t("Events")} value={String(ops.events.count)} />
+          <Line label={t("Value (before tax)")} value={formatMoney(ops.events.taxable)} />
+          <Line label={t("Received in this period")} value={formatMoney(ops.events.received)} />
+        </section>
+      )}
+
+      {(ops.cleaned.length > 0 || ops.tickets.opened > 0 || ops.tickets.closed > 0) && (
+        <section className="neu-card flex flex-col gap-1.5 p-4 text-sm">
+          <h2 className="mb-1 text-sm font-semibold text-foreground">{t("Housekeeping and repairs")}</h2>
+          {ops.cleaned.map((c) => (
+            <Line key={c.name} label={`${t("Rooms cleaned")}: ${c.name === "Not recorded" ? t("Not recorded") : c.name}`} value={String(c.rooms)} />
+          ))}
+          <Line label={t("Repairs reported")} value={String(ops.tickets.opened)} />
+          <Line label={t("Repairs closed")} value={String(ops.tickets.closed)} />
+          {ops.tickets.cost > 0 && <Line label={t("Repair cost")} value={formatMoney(ops.tickets.cost)} />}
+        </section>
+      )}
 
       {received.length > 0 && (
         <section className="neu-card flex flex-col gap-1.5 p-4 text-sm">

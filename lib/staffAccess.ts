@@ -35,7 +35,7 @@ const BILLING = ["/no-access", "/bills/new", "/fast-billing", "/print", "/offlin
 /** A trade's own billing counter (its home screen) — part of billing for that trade. */
 const TRADE_BILLING: Record<string, { exact?: string[]; prefixes?: string[] }> = {
   restaurant: { exact: ["/restaurant"], prefixes: ["/restaurant/orders", "/restaurant-kds"] },
-  hotel: { exact: ["/hotel"], prefixes: ["/hotel/bookings"] },
+  hotel: { exact: ["/hotel"], prefixes: ["/hotel/bookings", "/hotel/housekeeping"] },
   clinic: { prefixes: ["/clinic/prescriptions"] },
   gym: { prefixes: ["/gym/members/new", "/gym/attendance"] },
   lab: { prefixes: ["/lab/orders"] },

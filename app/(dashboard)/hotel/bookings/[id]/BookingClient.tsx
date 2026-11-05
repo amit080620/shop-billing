@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import Link from "@/lib/link";
 import { useRouter } from "next/navigation";
-import { BedDouble, ConciergeBell, FileText, LogIn, LogOut, MessageCircle, Pencil, Phone, Plus, Printer, Trash2, Wallet, X } from "lucide-react";
+import { BedDouble, ConciergeBell, FileText, IdCard, LogIn, LogOut, MessageCircle, Package, Pencil, Phone, Plus, Printer, Trash2, Wallet, X } from "lucide-react";
 import { addChargeAction, assignRoomAction, changeStayDatesAction, checkInAction, removeChargeAction, setRoomRateAction, updateGuestAction } from "@/lib/actions/hotel";
 import { startOrderAction } from "@/lib/actions/restaurant";
 import { CHARGE_KINDS, ID_PROOF_TYPES, BOOKING_SOURCES, MEAL_PLANS, sourceIsOta, sourceTakesCommission, type MealPlan } from "@/lib/hotel/constants";
@@ -16,10 +16,11 @@ import { useToast } from "@/app/components/Toast";
 import { Sheet } from "../../Sheet";
 import { HOTEL_INPUT, HOTEL_LABEL, SourceChip, StatusChip } from "../../ui";
 import { CancelSheet, CheckOutSheet, PaymentSheet } from "./MoneySheets";
+import { ItemChargeSheet } from "./ItemChargeSheet";
 import { ErrorLine, useRun } from "./sheetUtils";
 
 type FreeRoom = { id: string; roomNumber: string; dirty: boolean };
-type SheetName = "checkin" | "charge" | "payment" | "dates" | "guest" | "checkout" | "cancel" | "roomservice";
+type SheetName = "checkin" | "charge" | "item" | "payment" | "dates" | "guest" | "checkout" | "cancel" | "roomservice";
 
 export function BookingClient({
   booking: b,
@@ -29,6 +30,9 @@ export function BookingClient({
   canManage,
   canDiscount,
   b2bAvailable = false,
+  billTo = null,
+  canPostItems = false,
+  guestDetails = false,
 }: {
   booking: BookingDetail;
   freeByBookingRoom: Record<string, FreeRoom[]>;
@@ -38,6 +42,11 @@ export function BookingClient({
   /** Company GST invoice at check-out — needs migration 0042. */
   b2bAvailable?: boolean;
   canDiscount: boolean;
+  billTo?: { name: string; gstin: string; address: string } | null;
+  /** Minibar and other items from the shop's list on the guest's account. */
+  canPostItems?: boolean;
+  /** Address, passport and visa details and Form C — need migration 0065. */
+  guestDetails?: boolean;
 }) {
   const { t } = useT();
   const router = useRouter();
@@ -117,6 +126,11 @@ export function BookingClient({
               <a href={whatsapp} target="_blank" rel="noopener noreferrer" aria-label="WhatsApp" className="rounded-full border border-border p-2 text-success">
                 <MessageCircle size={15} />
               </a>
+            )}
+            {guestDetails && (
+              <Link href={`/hotel/form-c/${b.id}`} aria-label={t("Guest details and Form C")} title={t("Guest details and Form C")} className="rounded-full border border-border p-2 text-foreground">
+                <IdCard size={15} />
+              </Link>
             )}
             {open && (
               <button type="button" onClick={() => setSheet("guest")} aria-label={t("Edit guest")} className="rounded-full border border-border p-2 text-foreground">
@@ -204,9 +218,16 @@ export function BookingClient({
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-semibold text-foreground">{t("Guest account")}</h2>
           {open && (
-            <button type="button" onClick={() => setSheet("charge")} className="flex items-center gap-1 rounded-full border border-brand px-2.5 py-1 text-xs font-medium text-brand-text">
-              <Plus size={12} /> {t("Add charge")}
-            </button>
+            <div className="flex flex-wrap justify-end gap-1.5">
+              {canPostItems && (
+                <button type="button" onClick={() => setSheet("item")} className="flex items-center gap-1 rounded-full border border-border px-2.5 py-1 text-xs font-medium text-foreground">
+                  <Package size={12} /> {t("Add item")}
+                </button>
+              )}
+              <button type="button" onClick={() => setSheet("charge")} className="flex items-center gap-1 rounded-full border border-brand px-2.5 py-1 text-xs font-medium text-brand-text">
+                <Plus size={12} /> {t("Add charge")}
+              </button>
+            </div>
           )}
         </div>
 
@@ -332,10 +353,11 @@ export function BookingClient({
 
       {sheet === "checkin" && <CheckInSheet booking={b} free={freeByBookingRoom} onClose={() => setSheet(null)} />}
       {sheet === "charge" && <ChargeSheet bookingId={b.id} onClose={() => setSheet(null)} />}
+      {sheet === "item" && <ItemChargeSheet bookingId={b.id} onClose={() => setSheet(null)} />}
       {sheet === "payment" && <PaymentSheet booking={b} canRefund={canManage} onClose={() => setSheet(null)} />}
       {sheet === "dates" && <DatesSheet booking={b} onClose={() => setSheet(null)} />}
       {sheet === "guest" && <GuestSheet booking={b} onClose={() => setSheet(null)} />}
-      {sheet === "checkout" && <CheckOutSheet booking={b} canDiscount={canDiscount} b2bAvailable={b2bAvailable} onClose={() => setSheet(null)} />}
+      {sheet === "checkout" && <CheckOutSheet booking={b} canDiscount={canDiscount} b2bAvailable={b2bAvailable} billTo={billTo} onClose={() => setSheet(null)} />}
       {sheet === "cancel" && <CancelSheet booking={b} onClose={() => setSheet(null)} />}
       {sheet === "roomservice" && (
         <Sheet title={t("Room service — which room?")} onClose={() => setSheet(null)}>

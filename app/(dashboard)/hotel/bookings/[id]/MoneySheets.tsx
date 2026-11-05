@@ -76,7 +76,7 @@ export function PaymentSheet({ booking: b, canRefund, onClose }: { booking: Book
 type PayRow = { key: number; method: PaymentMethod; amount: string };
 let rowSeq = 0;
 
-export function CheckOutSheet({ booking: b, canDiscount, b2bAvailable = false, onClose }: { booking: BookingDetail; canDiscount: boolean; b2bAvailable?: boolean; onClose: () => void }) {
+export function CheckOutSheet({ booking: b, canDiscount, b2bAvailable = false, billTo = null, onClose }: { booking: BookingDetail; canDiscount: boolean; b2bAvailable?: boolean; /** The booking's company, ready on the invoice. */ billTo?: { name: string; gstin: string; address: string } | null; onClose: () => void }) {
   const { t } = useT();
   const router = useRouter();
   const { showToast } = useToast();
@@ -87,8 +87,8 @@ export function CheckOutSheet({ booking: b, canDiscount, b2bAvailable = false, o
   const [leaveUnpaid, setLeaveUnpaid] = useState(false);
   const [refundMethod, setRefundMethod] = useState<PaymentMethod>("cash");
   // A corporate guest: the stay invoice made out to their company and its GSTIN.
-  const [companyBill, setCompanyBill] = useState(false);
-  const [company, setCompany] = useState({ name: "", gstin: "", address: "" });
+  const [companyBill, setCompanyBill] = useState(!!billTo);
+  const [company, setCompany] = useState(billTo ?? { name: "", gstin: "", address: "" });
 
   const discountNumber = Math.max(0, Number(discount) || 0);
   const newPayments = rows.filter((r) => Number(r.amount) > 0).map((r) => ({ method: r.method, amount: Number(r.amount) }));

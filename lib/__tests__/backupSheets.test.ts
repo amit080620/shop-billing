@@ -17,6 +17,13 @@ describe("backup sheets", () => {
     }
   });
 
+  it("keeps the hotel's own records in its backup", () => {
+    const tables = BACKUP_TABLES.map((x) => x.table);
+    for (const table of ["hotel_accounts", "hotel_rate_rules", "hotel_maintenance_tickets", "hotel_housekeeping_log", "hotel_night_audits", "hotel_booking_requests", "hotel_public_pages", "hotel_halls", "hotel_events", "hotel_event_payments"]) expect(tables).toContain(table);
+    // This one has no id column, and reading by a column it lacks would silently drop it.
+    expect(BACKUP_TABLES.find((x) => x.table === "hotel_public_pages")?.order).toBe("shop_id");
+  });
+
   it("never writes PINs or the shop id", () => {
     const row = flattenRow({ id: "a", shop_id: "s", manager_pin: "1234", name: "Ram", total: 10, paid: true, meta: { a: 1 }, tags: ["x"], none: null });
     expect(row).toEqual({ id: "a", name: "Ram", total: 10, paid: true, meta: '{"a":1}', tags: '["x"]', none: null });

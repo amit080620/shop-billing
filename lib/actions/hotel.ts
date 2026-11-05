@@ -20,6 +20,10 @@ import { allocateUnpaid, computeFolio, toFolioRooms, type FolioInvoiceItem } fro
 import { roomGstPercent, accommodationGstPercent } from "../hotel/gst";
 import { parseRoomNumbers } from "../hotel/roomNumbers";
 import { hotelSchemaReady, loadActiveBookedRooms, loadBookingDetail, loadInventory, toRoomLite, currentGuestForRoom, type Admin } from "../hotel/server";
+import { hotelOpsReady, loadRateRules, loose, quotesForStay } from "../hotel/ops";
+import { moveStock } from "../stockMoves";
+import { invalidateCache } from "../cache";
+import { isModuleEnabled } from "../modules";
 
 export type HotelResult = { error?: string };
 
@@ -241,14 +245,25 @@ export async function getAvailabilityAction(input: { checkIn: string; checkOut: 
   const freeByType: Record<string, { id: string; roomNumber: string }[]> = {};
   const numberById = new Map(rooms.map((r) => [r.id, r.roomNumber]));
   for (const r of free) (freeByType[r.roomTypeId] ??= []).push({ id: r.id, roomNumber: numberById.get(r.id) ?? "" });
+  // What the rate rules suggest for these dates. A suggestion: the desk can type another rate.
+  const rules = isModuleEnabled(session.enabledModules, "hotel_operations") ? await loadRateRules(admin, session.shopId) : [];
+  const quotes = rules.length ? quotesForStay({ rules, types, rooms: toRoomLite(rooms), booked, checkIn: input.checkIn, checkOut: input.checkOut }) : {};
   return {
-    types: types.map((t) => ({ id: t.id, name: t.name, baseRate: t.baseRate, gstPercent: t.gstPercent, maxAdults: t.maxAdults, available: byType[t.id]?.available ?? 0, total: byType[t.id]?.total ?? 0, freeRooms: freeByType[t.id] ?? [] })),
+    types: types.map((t) => {
+      const q = quotes[t.id];
+      return { id: t.id, name: t.name, baseRate: t.baseRate, gstPercent: t.gstPercent, maxAdults: t.maxAdults, available: byType[t.id]?.available ?? 0, total: byType[t.id]?.total ?? 0, freeRooms: freeByType[t.id] ?? [], suggested: q?.average ?? t.baseRate, applied: q?.applied ?? [], minStayShort: q?.minStayShort ?? null, closedToArrival: q?.closedToArrival ?? null };
+    }),
   };
 }
 
 // ─── Bookings ──────────────────────────────────────────────────────────
 
 export type NewBookingInput = {
+  accountId?: string | null;
+  groupName?: string;
+  expectedArrival?: string;
+  /** The online request this booking accepts. */
+  requestId?: string | null;
   guestName: string;
   guestPhone?: string;
   guestEmail?: string;
@@ -385,6 +400,14 @@ export async function createBookingAction(input: NewBookingInput): Promise<Hotel
       reference: input.advanceReference?.trim() || null,
       created_by: session.userId,
     });
+  }
+
+  // The company or agent, group and arrival time, and the online request this came from.
+  if ((input.accountId || input.groupName?.trim() || input.expectedArrival?.trim() || input.requestId) && (await hotelOpsReady(admin))) {
+    const db = loose(admin);
+    const { data: account } = input.accountId ? await db.from("hotel_accounts").select("id").eq("id", input.accountId).eq("shop_id", session.shopId).maybeSingle() : { data: null };
+    await db.from("hotel_bookings").update({ account_id: account?.id ?? null, group_name: input.groupName?.trim() || null, expected_arrival: input.expectedArrival?.trim() || null }).eq("id", booking.id).eq("shop_id", session.shopId);
+    if (input.requestId) await db.from("hotel_booking_requests").update({ status: "accepted", booking_id: booking.id }).eq("id", input.requestId).eq("shop_id", session.shopId);
   }
 
   await logAuditEvent({ admin, shopId: session.shopId, staffId: session.userId, action: "hotel_booking_created", entityType: "hotel_booking", entityId: booking.id, details: { bookingNumber, source: input.source } });
@@ -614,12 +637,22 @@ export async function removeChargeAction(chargeId: string): Promise<HotelResult>
   const ctx = await open();
   if ("error" in ctx) return ctx;
   const { session, admin } = ctx;
-  const { data: charge } = await admin.from("hotel_charges").select("id, booking_id").eq("id", chargeId).eq("shop_id", session.shopId).maybeSingle();
+  const { data: found } = await admin.from("hotel_charges").select("*").eq("id", chargeId).eq("shop_id", session.shopId).maybeSingle();
+  const charge = found as { id: string; booking_id: string; product_id?: string | null; quantity?: number | null } | null;
   if (!charge) return { error: "Charge not found" };
   const { data: booking } = await admin.from("hotel_bookings").select("status").eq("id", charge.booking_id).maybeSingle();
   if (!booking || (booking.status !== "reserved" && booking.status !== "checked_in")) return { error: "This booking is closed." };
   const { error } = await admin.from("hotel_charges").delete().eq("id", chargeId);
   if (error) return { error: "Could not remove the charge" };
+  // An item from the shop's list goes back into stock.
+  if (charge.product_id && charge.quantity) {
+    const { data: item } = await admin.from("products").select("track_inventory").eq("id", charge.product_id).eq("shop_id", session.shopId).maybeSingle();
+    if (item?.track_inventory) {
+      const moved = await moveStock(admin, { shopId: session.shopId, staffId: session.userId, source: "restaurant", sourceId: chargeId, give: [{ productId: charge.product_id, quantity: Number(charge.quantity) }], allowShort: true });
+      if (!moved.ok) console.error("Hotel item charge removed: stock not returned", chargeId, moved.error);
+      await invalidateCache(`ray:cache:products:${session.shopId}`);
+    }
+  }
   refreshHotel(charge.booking_id);
   return {};
 }

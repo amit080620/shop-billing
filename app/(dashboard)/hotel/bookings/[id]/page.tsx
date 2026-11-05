@@ -5,6 +5,8 @@ import { requireSession, hasPermission } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { freeRooms } from "@/lib/hotel/availability";
 import { hotelSchemaReady, loadActiveBookedRooms, loadBookingDetail, loadInventory, toRoomLite } from "@/lib/hotel/server";
+import { hotelOpsReady, loadAccounts } from "@/lib/hotel/ops";
+import { isModuleEnabled } from "@/lib/modules";
 import { BackLink } from "@/app/components/BackLink";
 import { PageHeader } from "@/app/components/PageHeader";
 import { HotelSetupNotice } from "../../HotelSetupNotice";
@@ -34,6 +36,10 @@ export default async function BookingPage({ params }: { params: Promise<{ id: st
     }
   }
 
+  const opsReady = await hotelOpsReady(admin);
+  const account = booking.accountId ? (await loadAccounts(admin, session.shopId)).find((a) => a.id === booking.accountId) : null;
+  const billTo = account?.kind === "company" && account.gstin ? { name: account.name, gstin: account.gstin, address: account.address ?? "" } : null;
+
   const roomIds = booking.rooms.map((r) => r.roomId).filter(Boolean) as string[];
   const { data: tables } = roomIds.length ? await admin.from("restaurant_tables").select("id, hotel_room_id").eq("shop_id", session.shopId).eq("is_deleted", false).in("hotel_room_id", roomIds) : { data: [] as { id: string; hotel_room_id: string | null }[] };
   const tableByRoom: Record<string, string> = {};
@@ -51,6 +57,9 @@ export default async function BookingPage({ params }: { params: Promise<{ id: st
         canManage={session.role === "owner" || session.role === "manager"}
         canDiscount={hasPermission(session, "give_discounts")}
         b2bAvailable={await buyerSchemaReady(admin)}
+        billTo={billTo}
+        canPostItems={opsReady && isModuleEnabled(session.enabledModules, "hotel_operations")}
+        guestDetails={opsReady}
       />
     </div>
   );

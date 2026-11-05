@@ -1,11 +1,14 @@
 import Link from "@/lib/link";
-import { BedDouble, CalendarDays, ChefHat, ClipboardList, LogIn, LogOut, Settings2, LayoutGrid, BarChart3, TriangleAlert } from "lucide-react";
+import { after } from "next/server";
+import { BedDouble, Brush, Building2, CalendarDays, ChefHat, ClipboardList, FileSpreadsheet, Globe, IdCard, LogIn, LogOut, Moon, PartyPopper, Settings2, LayoutGrid, BarChart3, Tags, TriangleAlert, Wrench } from "lucide-react";
 import { requireSession } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { getTranslator } from "@/lib/i18n/server";
 import { formatMoney } from "@/lib/format";
 import { todayIso } from "@/lib/dateHelpers";
 import { hotelSchemaReady, loadFrontDesk } from "@/lib/hotel/server";
+import { loadDeskAlerts, syncStaleIcalFeeds } from "@/lib/hotel/ops";
+import { isModuleEnabled } from "@/lib/modules";
 import { PageHeader } from "@/app/components/PageHeader";
 import { EmptyState } from "@/app/components/EmptyState";
 import { BookingRow } from "./ui";
@@ -18,16 +21,26 @@ export default async function FrontDeskPage() {
 
   if (!(await hotelSchemaReady(admin))) return <HotelSetupNotice />;
 
-  const fd = await loadFrontDesk(admin, session.shopId, todayIso());
+  const [fd, alerts] = await Promise.all([loadFrontDesk(admin, session.shopId, todayIso()), loadDeskAlerts(admin, session.shopId)]);
+  // Booking sites' calendars are read after the page has gone out, so opening it never waits for them.
+  if (isModuleEnabled(session.enabledModules, "hotel_direct")) after(() => syncStaleIcalFeeds(admin, session.shopId));
   const hasRooms = fd.sellableRooms + fd.blockedRooms > 0;
   const stayingOn = fd.inHouse.filter((b) => b.checkOut > fd.today);
 
   const nav = [
     { href: "/hotel/rooms", label: t("Rooms"), icon: LayoutGrid },
     { href: "/hotel/calendar", label: t("Calendar"), icon: CalendarDays },
+    { href: "/hotel/housekeeping", label: t("Housekeeping"), icon: Brush },
+    { href: "/hotel/night-audit", label: t("Night audit"), icon: Moon },
+    { href: "/hotel/rates", label: t("Rates"), icon: Tags },
+    { href: "/hotel/accounts", label: t("Companies & agents"), icon: Building2 },
+    { href: "/hotel/events", label: t("Banquet"), icon: PartyPopper },
+    { href: "/hotel/online", label: t("Online"), icon: Globe },
+    { href: "/hotel/form-c", label: t("Form C"), icon: IdCard },
     { href: "/hotel/bookings", label: t("All bookings"), icon: ClipboardList },
     { href: "/restaurant-kds", label: t("Kitchen display"), icon: ChefHat },
     { href: "/hotel/reports", label: t("Reports"), icon: BarChart3 },
+    { href: "/hotel/import", label: t("Import / export"), icon: FileSpreadsheet },
     { href: "/hotel/setup", label: t("Set-up"), icon: Settings2 },
   ];
 
@@ -81,6 +94,17 @@ export default async function FrontDeskPage() {
                 {fd.dirtyRooms > 0 && fd.blockedRooms > 0 && " · "}
                 {fd.blockedRooms > 0 && `${fd.blockedRooms} ${t("out of service")}`}
               </span>
+            </Link>
+          )}
+
+          {alerts.newRequests > 0 && (
+            <Link href="/hotel/online" className="flex items-center gap-2 rounded-xl border border-info/40 bg-info-soft px-3.5 py-3 text-sm font-medium text-foreground">
+              <Globe size={16} className="shrink-0 text-info" /> {t("{n} new booking request(s) from your page", { n: alerts.newRequests })}
+            </Link>
+          )}
+          {alerts.urgentTickets > 0 && (
+            <Link href="/hotel/housekeeping?tab=repairs" className="flex items-center gap-2 rounded-xl border border-danger/30 bg-danger-soft px-3.5 py-3 text-sm font-medium text-foreground">
+              <Wrench size={16} className="shrink-0 text-danger" /> {t("{n} urgent repair(s) open", { n: alerts.urgentTickets })}
             </Link>
           )}
 

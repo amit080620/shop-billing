@@ -14,30 +14,35 @@ import { useT } from "@/lib/i18n/LangContext";
 import { useToast } from "@/app/components/Toast";
 import { HOTEL_INPUT, HOTEL_LABEL } from "../../ui";
 
-type AvailType = { id: string; name: string; baseRate: number; gstPercent: number | null; maxAdults: number; available: number; total: number; freeRooms: { id: string; roomNumber: string }[] };
+type AvailType = { id: string; name: string; baseRate: number; gstPercent: number | null; maxAdults: number; available: number; total: number; freeRooms: { id: string; roomNumber: string }[]; suggested: number; applied: string[]; minStayShort: number | null; closedToArrival: string | null };
+type AccountLite = { id: string; kind: "company" | "agent"; name: string; discountPercent: number; commissionPercent: number };
+type RequestPreset = { id: string; guestName: string; phone: string; email: string; adults: number; children: number; checkOut: string; roomTypeId: string | null; rooms: number; message: string };
 type Line = { key: string; roomTypeId: string; roomId: string; rate: string };
 
 let lineSeq = 0;
 
-export function NewBookingClient({ today, initialCheckIn, presetRoom }: { today: string; initialCheckIn: string; presetRoom: { id: string; roomTypeId: string } | null }) {
+export function NewBookingClient({ today, initialCheckIn, presetRoom, accounts = [], request = null }: { today: string; initialCheckIn: string; presetRoom: { id: string; roomTypeId: string } | null; accounts?: AccountLite[]; request?: RequestPreset | null }) {
   const { t } = useT();
   const router = useRouter();
   const { showToast } = useToast();
   const [isPending, startTransition] = useTransition();
 
   const [checkIn, setCheckIn] = useState(initialCheckIn);
-  const [checkOut, setCheckOut] = useState(addDays(initialCheckIn, 1));
+  const [checkOut, setCheckOut] = useState(request?.checkOut ?? addDays(initialCheckIn, 1));
   const [avail, setAvail] = useState<AvailType[] | null>(null);
   const [availError, setAvailError] = useState<string | null>(null);
   const [lines, setLines] = useState<Line[]>([]);
   const [presetApplied, setPresetApplied] = useState(false);
 
-  const [guestName, setGuestName] = useState("");
-  const [phone, setPhone] = useState("");
-  const [email, setEmail] = useState("");
-  const [adults, setAdults] = useState(2);
-  const [children, setChildren] = useState(0);
-  const [source, setSource] = useState("walk_in");
+  const [guestName, setGuestName] = useState(request?.guestName ?? "");
+  const [phone, setPhone] = useState(request?.phone ?? "");
+  const [email, setEmail] = useState(request?.email ?? "");
+  const [adults, setAdults] = useState(request?.adults ?? 2);
+  const [children, setChildren] = useState(request?.children ?? 0);
+  const [source, setSource] = useState(request ? "website" : "walk_in");
+  const [accountId, setAccountId] = useState("");
+  const [groupName, setGroupName] = useState("");
+  const [expectedArrival, setExpectedArrival] = useState("");
   const [sourceRef, setSourceRef] = useState("");
   const [agentName, setAgentName] = useState("");
   const [commission, setCommission] = useState("");
@@ -45,7 +50,8 @@ export function NewBookingClient({ today, initialCheckIn, presetRoom }: { today:
   const [advance, setAdvance] = useState("");
   const [advanceMethod, setAdvanceMethod] = useState<PaymentMethod>("cash");
   const [advanceRef, setAdvanceRef] = useState("");
-  const [requests, setRequests] = useState("");
+  const [requests, setRequests] = useState(request?.message ?? "");
+  const [requestApplied, setRequestApplied] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const datesOk = isIsoDate(checkIn) && isIsoDate(checkOut) && checkOut > checkIn;
@@ -75,10 +81,18 @@ export function NewBookingClient({ today, initialCheckIn, presetRoom }: { today:
     if (presetApplied || !presetRoom || !avail) return;
     const type = avail.find((a) => a.id === presetRoom.roomTypeId);
     if (type && type.freeRooms.some((r) => r.id === presetRoom.id)) {
-      setLines([{ key: `l${++lineSeq}`, roomTypeId: type.id, roomId: presetRoom.id, rate: String(type.baseRate) }]);
+      setLines([{ key: `l${++lineSeq}`, roomTypeId: type.id, roomId: presetRoom.id, rate: String(type.suggested) }]);
     }
     setPresetApplied(true);
   }, [avail, presetApplied, presetRoom]);
+
+  // Accepting an online request: its rooms, up to what is free.
+  useEffect(() => {
+    if (requestApplied || !request || !avail) return;
+    const type = avail.find((a) => a.id === request.roomTypeId);
+    if (type) setLines(Array.from({ length: Math.min(request.rooms, type.available) }, () => ({ key: `l${++lineSeq}`, roomTypeId: type.id, roomId: "", rate: String(type.suggested) })));
+    setRequestApplied(true);
+  }, [avail, requestApplied, request]);
 
   // A returning guest: fill in the name from the phone number.
   useEffect(() => {
@@ -94,8 +108,26 @@ export function NewBookingClient({ today, initialCheckIn, presetRoom }: { today:
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phone]);
 
+  const account = accounts.find((a) => a.id === accountId) ?? null;
+  /** The rate for a room: the rules' suggestion, less the company's agreed discount. */
+  const rateFor = (type: AvailType, from: AccountLite | null = account) => (from?.kind === "company" && from.discountPercent > 0 ? Math.round(type.suggested * (1 - from.discountPercent / 100)) : type.suggested);
+
   function addLine(type: AvailType) {
-    setLines((prev) => [...prev, { key: `l${++lineSeq}`, roomTypeId: type.id, roomId: "", rate: String(type.baseRate) }]);
+    setLines((prev) => [...prev, { key: `l${++lineSeq}`, roomTypeId: type.id, roomId: "", rate: String(rateFor(type)) }]);
+  }
+  function pickAccount(id: string) {
+    setAccountId(id);
+    const next = accounts.find((a) => a.id === id) ?? null;
+    if (next?.kind === "company") setSource("corporate");
+    if (next?.kind === "agent") {
+      setSource("agent");
+      setAgentName(next.name);
+      setCommission(next.commissionPercent ? String(next.commissionPercent) : "");
+    }
+    setLines((prev) => prev.map((l) => {
+      const type = typeById.get(l.roomTypeId);
+      return type ? { ...l, rate: String(rateFor(type, next)) } : l;
+    }));
   }
   function removeLastOf(typeId: string) {
     setLines((prev) => {
@@ -134,6 +166,10 @@ export function NewBookingClient({ today, initialCheckIn, presetRoom }: { today:
     if (lines.length === 0) return setError(t("Pick at least one room"));
     startTransition(async () => {
       const r = await createBookingAction({
+        accountId: accountId || null,
+        groupName,
+        expectedArrival,
+        requestId: request?.id ?? null,
         guestName,
         guestPhone: phone,
         guestEmail: email,
@@ -205,11 +241,14 @@ export function NewBookingClient({ today, initialCheckIn, presetRoom }: { today:
                 <div className="min-w-0">
                   <p className="truncate text-sm font-semibold text-foreground">{a.name}</p>
                   <p className="text-xs text-muted">
-                    {formatMoney(a.baseRate)} / {t("night")} ·{" "}
+                    {formatMoney(a.suggested)} / {t("night")} ·{" "}
                     <span className={a.available === 0 ? "font-medium text-danger" : "font-medium text-success"}>
                       {a.available} {t("free")}
                     </span>
                   </p>
+                  {a.applied.length > 0 && <p className="break-words text-[11px] text-info">{t("Rate rule")}: {a.applied.join(", ")} ({t("usual")} {formatMoney(a.baseRate)})</p>}
+                  {a.minStayShort && <p className="text-[11px] text-warning">{t("Minimum stay on these dates: {n} nights", { n: a.minStayShort })}</p>}
+                  {a.closedToArrival && <p className="break-words text-[11px] text-warning">{t("Arrivals are closed on this date")} ({a.closedToArrival})</p>}
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
                   <button type="button" onClick={() => removeLastOf(a.id)} disabled={count === 0} aria-label={t("Fewer")} className="flex h-8 w-8 items-center justify-center rounded-full border border-border text-foreground disabled:opacity-30">
@@ -287,6 +326,21 @@ export function NewBookingClient({ today, initialCheckIn, presetRoom }: { today:
 
       <section className="neu-card flex flex-col gap-3 p-4">
         <h2 className="text-sm font-semibold text-foreground">{t("Where did this booking come from?")}</h2>
+        {accounts.length > 0 && (
+          <label className={HOTEL_LABEL}>
+            {t("Company or agent")}
+            <select value={accountId} onChange={(e) => pickAccount(e.target.value)} className={HOTEL_INPUT}>
+              <option value="">{t("None")}</option>
+              {accounts.map((a) => (
+                <option key={a.id} value={a.id}>
+                  {a.name}
+                  {a.kind === "company" && a.discountPercent > 0 ? ` · ${a.discountPercent}% ${t("off")}` : ""}
+                  {a.kind === "agent" && a.commissionPercent > 0 ? ` · ${a.commissionPercent}% ${t("commission")}` : ""}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
         <div className="flex flex-wrap gap-2">
           {BOOKING_SOURCES.map((s) => (
             <button
@@ -351,6 +405,16 @@ export function NewBookingClient({ today, initialCheckIn, presetRoom }: { today:
             </label>
           </>
         )}
+        <div className="grid grid-cols-1 gap-3 min-[340px]:grid-cols-2">
+          <label className={HOTEL_LABEL}>
+            {t("Group name (optional)")}
+            <input value={groupName} onChange={(e) => setGroupName(e.target.value)} placeholder={t("e.g. Sharma wedding")} className={HOTEL_INPUT} />
+          </label>
+          <label className={HOTEL_LABEL}>
+            {t("Expected arrival (optional)")}
+            <input type="time" value={expectedArrival} onChange={(e) => setExpectedArrival(e.target.value)} className={HOTEL_INPUT} />
+          </label>
+        </div>
         <label className={HOTEL_LABEL}>
           {t("Special requests (optional)")}
           <textarea value={requests} onChange={(e) => setRequests(e.target.value)} rows={2} className={HOTEL_INPUT} />

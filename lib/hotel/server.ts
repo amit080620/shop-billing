@@ -6,6 +6,8 @@ import { computeFolio, toFolioRooms, type FolioCharge, type FolioPayment, type F
 import { availabilityByType, type BookedRoomLite, type RoomLite } from "./availability";
 import type { BookingStatus } from "./constants";
 import { summarizeStays } from "./reports";
+import { hkNormal } from "./housekeeping";
+import { loadIcalBlocks } from "./ops";
 
 export type Admin = ReturnType<typeof createSupabaseAdminClient>;
 
@@ -41,7 +43,9 @@ export type RoomRow = {
   floor: string | null;
   roomTypeId: string;
   roomTypeName: string;
+  /** Ready to sell or not; see `stage` for where the cleaning has got to. */
   housekeeping: "clean" | "dirty";
+  stage: string;
   isBlocked: boolean;
   blockReason: string | null;
 };
@@ -86,7 +90,8 @@ export async function loadInventory(admin: Admin, shopId: string): Promise<{ typ
       floor: r.floor,
       roomTypeId: r.room_type_id,
       roomTypeName: typeName.get(r.room_type_id) ?? "Room",
-      housekeeping: r.housekeeping,
+      housekeeping: hkNormal(r.housekeeping),
+      stage: r.housekeeping as string,
       isBlocked: r.is_blocked,
       blockReason: r.block_reason,
     }))
@@ -100,13 +105,17 @@ export function toRoomLite(rooms: RoomRow[]): RoomLite[] {
 
 /** Every room on a booking that still holds inventory (reserved or in-house). */
 export async function loadActiveBookedRooms(admin: Admin, shopId: string): Promise<BookedRoomLite[]> {
-  const { data } = await admin
-    .from("hotel_booking_rooms")
-    .select("booking_id, room_type_id, room_id, hotel_bookings!inner ( check_in_date, check_out_date, status )")
-    .eq("shop_id", shopId)
-    .in("hotel_bookings.status", ["reserved", "checked_in"]);
+  const [{ data }, sold] = await Promise.all([
+    admin
+      .from("hotel_booking_rooms")
+      .select("booking_id, room_type_id, room_id, hotel_bookings!inner ( check_in_date, check_out_date, status )")
+      .eq("shop_id", shopId)
+      .in("hotel_bookings.status", ["reserved", "checked_in"]),
+    // Dates booking sites have sold take a room of the type, as a booking with no room number does.
+    loadIcalBlocks(admin, shopId),
+  ]);
 
-  return (data ?? []).map((row) => {
+  const own = (data ?? []).map((row) => {
     const b = Array.isArray(row.hotel_bookings) ? row.hotel_bookings[0] : row.hotel_bookings;
     return {
       bookingId: row.booking_id,
@@ -116,6 +125,7 @@ export async function loadActiveBookedRooms(admin: Admin, shopId: string): Promi
       checkOut: b.check_out_date,
     };
   });
+  return [...own, ...sold];
 }
 
 export type BookingRoomView = {
@@ -158,6 +168,10 @@ export type BookingDetail = {
   cancelReason: string | null;
   billId: string | null;
   createdAt: string;
+  /** From migration 0065; null before it. */
+  accountId: string | null;
+  groupName: string | null;
+  expectedArrival: string | null;
   rooms: BookingRoomView[];
   charges: (FolioCharge & { kind: string; createdAt: string })[];
   payments: (FolioPayment & { reference: string | null; createdAt: string })[];
@@ -209,7 +223,7 @@ export async function loadBookingDetail(admin: Admin, shopId: string, bookingId:
       roomNumber: room?.room_number ?? null,
       ratePerNight: rate,
       gstPercent: roomGstPercent(rate, type?.gst_percent == null ? null : Number(type.gst_percent)),
-      housekeeping: room?.housekeeping ?? null,
+      housekeeping: room ? hkNormal(room.housekeeping) : null,
     };
   });
 
@@ -270,6 +284,9 @@ export async function loadBookingDetail(admin: Admin, shopId: string, bookingId:
     cancelReason: b.cancel_reason,
     billId: b.bill_id,
     createdAt: b.created_at,
+    accountId: (b as { account_id?: string | null }).account_id ?? null,
+    groupName: (b as { group_name?: string | null }).group_name ?? null,
+    expectedArrival: (b as { expected_arrival?: string | null }).expected_arrival ?? null,
     rooms,
     charges: chargeRows,
     payments: paymentRows,
@@ -522,7 +539,7 @@ export async function loadCalendar(admin: Admin, shopId: string, from: string, d
   endExclusive.setUTCDate(endExclusive.getUTCDate() + 1);
   const end = endExclusive.toISOString().slice(0, 10);
 
-  const { types, rooms } = await loadInventory(admin, shopId);
+  const [{ types, rooms }, sold] = await Promise.all([loadInventory(admin, shopId), loadIcalBlocks(admin, shopId)]);
   const calendarSelect = "booking_id, room_type_id, room_id, hotel_bookings!inner ( id, guest_name, status, source, check_in_date, check_out_date )";
   const today = todayIso();
   const windowQuery = admin
@@ -547,7 +564,7 @@ export async function loadCalendar(admin: Admin, shopId: string, from: string, d
   const typeName = new Map(types.map((t) => [t.id, t.name]));
   const barsByRoom: Record<string, CalendarBar[]> = {};
   const unassigned: Calendar["unassigned"] = [];
-  const active: BookedRoomLite[] = [];
+  const active: BookedRoomLite[] = [...sold];
   for (const row of data ?? []) {
     const b = Array.isArray(row.hotel_bookings) ? row.hotel_bookings[0] : row.hotel_bookings;
     // Shown (and counted as occupied) through tonight while the guest is still in.

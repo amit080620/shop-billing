@@ -137,6 +137,14 @@ export async function MoreMenu() {
             <MenuLink href="/hotel/bookings" label="All bookings" sub="Search and filter every reservation" icon={ClipboardList} />
             <MenuLink href="/hotel/calendar" label="Room calendar" sub="14-day chart of every room and guest" icon={CalendarDays} />
             <MenuLink href="/hotel/rooms" label="Room board" sub="Vacant, occupied, needs cleaning" icon={BedDouble} />
+            <MenuLink href="/hotel/housekeeping" label={t("Housekeeping")} sub={t("Rooms to clean, who does which, and repairs")} icon={ClipboardCheck} locked={lock("hotel_operations")} />
+            <MenuLink href="/hotel/night-audit" label={t("Night audit")} sub={t("Close the day and share the flash report")} icon={ClipboardCheck} locked={lock("hotel_operations")} />
+            <MenuLink href="/hotel/rates" label={t("Rates")} sub={t("Weekend, season and full-house prices, minimum stay")} icon={CalendarDays} locked={lock("hotel_operations")} />
+            <MenuLink href="/hotel/accounts" label={t("Companies & agents")} sub={t("Agreed rates, GST details and commission")} icon={ClipboardList} locked={lock("hotel_operations")} />
+            <MenuLink href="/hotel/events" label={t("Banquet & events")} sub={t("Halls, event bookings, advances and invoices")} icon={CalendarClock} locked={lock("hotel_events")} />
+            <MenuLink href="/hotel/online" label={t("Booking page & calendars")} sub={t("Your own booking link and booking sites' calendars")} icon={MonitorPlay} locked={lock("hotel_direct")} />
+            <MenuLink href="/hotel/form-c" label={t("Form C")} sub={t("Foreign guests' details, to print and file")} icon={ClipboardList} />
+            <MenuLink href="/hotel/import" label={t("Hotel import / export")} sub={t("Rooms and bookings in Excel")} icon={Settings} locked={lock("bulk_import_export")} />
             <MenuLink href="/hotel/reports" label="Hotel reports" sub="Occupancy, ADR, commissions, guest register" icon={BarChart3} />
             <MenuLink href="/hotel/setup" label="Rooms & rates set-up" sub="Room types, room numbers, tariffs, GST" icon={Settings} />
             <MenuLink href="/restaurant" label="Restaurant & room service" sub="Tables, kitchen and orders charged to rooms" icon={ChefHat} />

@@ -14,7 +14,7 @@ export type SearchResult = {
 // Genuine app destinations — settings, quick actions, and common pages
 // that aren't database records but people still expect to find by
 // typing their name ("theme", "sell", "language" etc.).
-const STATIC_PAGES: { title: string; subtitle: string; href: string; keywords: string[] }[] = [
+const STATIC_PAGES: { title: string; subtitle: string; href: string; keywords: string[]; hotelOnly?: boolean }[] = [
   { title: "Language", subtitle: "English, Hindi, Marathi", href: "/more", keywords: ["language", "hindi", "marathi", "bhasha"] },
   { title: "Theme", subtitle: "Light or dark mode", href: "/more", keywords: ["theme", "dark", "light", "mode"] },
   { title: "Floating calculator", subtitle: "On or off, auto-fills with the bill total", href: "/more", keywords: ["calculator", "calc", "math"] },
@@ -76,6 +76,14 @@ const STATIC_PAGES: { title: string; subtitle: string; href: string; keywords: s
   { title: "Hotel bookings", subtitle: "Search every reservation", href: "/hotel/bookings", keywords: ["bookings", "reservations", "hotel booking"] },
   { title: "Room board", subtitle: "Vacant, occupied and dirty rooms", href: "/hotel/rooms", keywords: ["rooms", "housekeeping", "room board", "vacant"] },
   { title: "Room calendar", subtitle: "Tape chart of every room, 14 days", href: "/hotel/calendar", keywords: ["calendar", "tape chart", "availability"] },
+  { title: "Housekeeping", subtitle: "Rooms to clean, who does which, and repairs", hotelOnly: true, href: "/hotel/housekeeping", keywords: ["housekeeping", "cleaning", "repair", "maintenance", "ticket"] },
+  { title: "Night audit", subtitle: "Close the day and share the flash report", hotelOnly: true, href: "/hotel/night-audit", keywords: ["night audit", "flash report", "day close"] },
+  { title: "Room rates", subtitle: "Weekend, season and full-house prices, minimum stay", hotelOnly: true, href: "/hotel/rates", keywords: ["rate rule", "season", "weekend rate", "minimum stay", "dynamic pricing"] },
+  { title: "Companies & agents", subtitle: "Agreed rates, GST details and commission", hotelOnly: true, href: "/hotel/accounts", keywords: ["corporate", "company", "travel agent"] },
+  { title: "Form C", subtitle: "Foreign guests' details, to print and file", hotelOnly: true, href: "/hotel/form-c", keywords: ["form c", "frro", "passport", "visa", "foreign guest"] },
+  { title: "Banquet & events", subtitle: "Halls, event bookings, advances and invoices", hotelOnly: true, href: "/hotel/events", keywords: ["banquet", "hall", "wedding", "event"] },
+  { title: "Booking page & calendars", subtitle: "Your own booking link and booking sites' calendars", hotelOnly: true, href: "/hotel/online", keywords: ["booking page", "online booking", "ical", "airbnb", "channel"] },
+  { title: "Hotel import / export", subtitle: "Rooms and bookings in Excel", hotelOnly: true, href: "/hotel/import", keywords: ["hotel import", "hotel export", "excel rooms"] },
   { title: "Hotel reports", subtitle: "Occupancy, ADR, commissions, guest register", href: "/hotel/reports", keywords: ["occupancy", "adr", "revpar", "commission", "guest register", "hotel report"] },
   { title: "Rooms & rates set-up", subtitle: "Room types, room numbers, tariffs", href: "/hotel/setup", keywords: ["room type", "tariff", "room rate", "hotel setup"] },
   { title: "Service jobs", subtitle: "Repair job tracking", href: "/service", keywords: ["job", "repair", "service"] },
@@ -111,10 +119,10 @@ const STATIC_PAGES: { title: string; subtitle: string; href: string; keywords: s
   { title: "Rental history", subtitle: "Past & active rentals", href: "/rentals/history", keywords: ["rental history"] },
 ];
 
-function searchStaticPages(query: string): SearchResult[] {
+function searchStaticPages(query: string, businessType: string): SearchResult[] {
   const q = query.toLowerCase();
   return STATIC_PAGES.filter(
-    (p) => p.title.toLowerCase().includes(q) || p.keywords.some((k) => k.includes(q)),
+    (p) => (!p.hotelOnly || businessType === "hotel") && (p.title.toLowerCase().includes(q) || p.keywords.some((k) => k.includes(q))),
   )
     .slice(0, 6)
     .map((p) => ({ group: "Pages" as const, id: p.href + p.title, title: p.title, subtitle: p.subtitle, href: p.href }));
@@ -264,6 +272,6 @@ export async function universalSearchAction(query: string): Promise<SearchResult
   }
 
   const results = await Promise.all(queries);
-  return [...results.flat(), ...searchStaticPages(q)];
+  return [...results.flat(), ...searchStaticPages(q, session.businessType)];
 }
 

@@ -31,6 +31,7 @@ function route(request: NextRequest) {
     !pathname.startsWith("/shop/") &&
     !pathname.startsWith("/order/") &&
     !pathname.startsWith("/book/") &&
+    !pathname.startsWith("/stay/") &&
     !pathname.startsWith("/gym-checkin/") &&
     !pathname.match(/\.(png|jpg|jpeg|svg|ico|webmanifest|json)$/);
 
