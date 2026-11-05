@@ -308,17 +308,18 @@ export function GarmentPurchaseGrid({
           {step === "grid" && (
             <div className="flex flex-col gap-3">
               <div className="grid grid-cols-3 gap-2">
-                <label className="text-xs font-medium text-muted">
+                <label className="flex flex-col justify-end text-xs font-medium text-muted">
                   {t("Rate a piece (before GST)")}
                   <input autoFocus type="number" min={0} step="any" inputMode="decimal" value={rate} onChange={(e) => setRate(e.target.value)} placeholder="₹" className={`${FIELD} text-right ${!bySize && !(num(rate) > 0) ? "border-danger/60" : ""}`} />
                 </label>
-                <label className="text-xs font-medium text-muted">
+                {/* Left empty on a style that exists, each item keeps its own rates. */}
+                <label className="flex flex-col justify-end text-xs font-medium text-muted">
                   {t("Sale rate")}
-                  <input type="number" min={0} step="any" inputMode="decimal" value={saleRate} onChange={(e) => setSaleRate(e.target.value)} placeholder={style ? t("each item's own") : ""} className={`${FIELD} text-right`} />
+                  <input type="number" min={0} step="any" inputMode="decimal" value={saleRate} onChange={(e) => setSaleRate(e.target.value)} placeholder={style ? t("unchanged") : ""} className={`${FIELD} text-right`} />
                 </label>
-                <label className="text-xs font-medium text-muted">
+                <label className="flex flex-col justify-end text-xs font-medium text-muted">
                   MRP
-                  <input type="number" min={0} step="any" inputMode="decimal" value={mrp} onChange={(e) => setMrp(e.target.value)} placeholder={style ? t("each item's own") : ""} className={`${FIELD} text-right`} />
+                  <input type="number" min={0} step="any" inputMode="decimal" value={mrp} onChange={(e) => setMrp(e.target.value)} placeholder={style ? t("unchanged") : ""} className={`${FIELD} text-right`} />
                 </label>
               </div>
               <label className="flex items-center gap-2 text-xs text-foreground">

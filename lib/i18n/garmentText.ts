@@ -425,7 +425,7 @@ export const GARMENT_TEXT: Record<string, [hi: string, mr: string]> = {
   "No style matches — make it new above.": ["कोई स्टाइल नहीं मिली — ऊपर से नई बनाएं।", "कोणतीही स्टाइल सापडली नाही — वर नवीन तयार करा."],
   "No styles yet — make the first one above.": ["अभी कोई स्टाइल नहीं — ऊपर से पहली बनाएं।", "अजून स्टाइल नाही — वर पहिली तयार करा."],
   "Rate a piece (before GST)": ["एक पीस का रेट (GST से पहले)", "एका नगाचा दर (GST आधी)"],
-  "each item's own": ["हर आइटम का अपना", "प्रत्येक आयटमचा स्वतःचा"],
+  "unchanged": ["जैसा है", "जसे आहे"],
   "A different rate for each size": ["हर साइज़ का अलग रेट", "प्रत्येक साइजचा वेगळा दर"],
   "One size": ["एक साइज़", "एक साइज"],
   "One colour": ["एक रंग", "एकच रंग"],

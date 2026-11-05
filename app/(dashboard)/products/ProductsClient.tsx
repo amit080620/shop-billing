@@ -440,13 +440,18 @@ export function ProductsClient({
       )}
 
       {showCategoryForm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setShowCategoryForm(false)}>
-        <div className="ray-pop w-full max-w-sm rounded-2xl bg-surface p-4 shadow-lg" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+        <div className="ray-pop flex w-full max-w-sm flex-col gap-3 rounded-2xl bg-surface p-4 shadow-lg">
         <form
           action={categoryAction}
           className="flex flex-col gap-3"
         >
-          <p className="text-sm font-semibold text-foreground">{t("products.addCategory")}</p>
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-sm font-semibold text-foreground">{t("products.addCategory")}</p>
+            <button type="button" onClick={() => setShowCategoryForm(false)} aria-label={t("Close")} className="text-muted">
+              <X size={18} />
+            </button>
+          </div>
           <input
             name="name"
             required
@@ -459,16 +464,16 @@ export function ProductsClient({
           )}
           <SubmitButton label={t("products.saveCategory")} pendingLabel={t("products.saving")} hasError={!!categoryState?.error} />
         </form>
+        {/* In the popup: behind it, Rename and Delete couldn't be reached. */}
+        {categories.length > 0 && (
+          <ul className="flex max-h-[45vh] flex-col gap-1.5 overflow-y-auto">
+            {categories.map((c) => (
+              <CategoryRow key={c.id} category={c} onChanged={() => router.refresh()} />
+            ))}
+          </ul>
+        )}
         </div>
         </div>
-      )}
-
-      {showCategoryForm && categories.length > 0 && (
-        <ul className="flex flex-col gap-1.5">
-          {categories.map((c) => (
-            <CategoryRow key={c.id} category={c} onChanged={() => router.refresh()} />
-          ))}
-        </ul>
       )}
 
       {showForm && (
