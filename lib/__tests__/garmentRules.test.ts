@@ -59,6 +59,9 @@ describe("sizes and variants", () => {
     expect(parseList("Red, Blue,red / Green")).toEqual(["Red", "Blue", "Green"]);
     expect(parseSizes("XL S  M L")).toEqual(["S", "M", "L", "XL"]);
     expect(parseSizes("28, 30, 32")).toEqual(["28", "30", "32"]);
+    // The New style form's "Free size" button: one size, not "Free" and "Size".
+    expect(parseSizes("Free Size")).toEqual(["Free Size"]);
+    expect(parseSizes("M free  size L")).toEqual(["M", "L", "Free Size"]);
   });
   it("every colour × size, named and coded", () => {
     const m = variantMatrix(["Red", "Blue"], ["L", "M"]);

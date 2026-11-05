@@ -409,13 +409,19 @@ export function ProductsClient({
           <Link href="/products/labels" className="flex shrink-0 items-center gap-1.5 rounded-full border border-border bg-surface px-3 py-1.5 text-xs font-medium text-foreground hover:bg-surface-2">
             {t("products.printLabels")}
           </Link>
-          {bulkImportExportEnabled && (
-            <BulkImportExport
-              businessType={businessType}
-              products={initialProducts}
-              onImported={() => router.refresh()}
-            />
-          )}
+          {/* A garment shop's file has its own columns (style, colour, size), on its own screen. */}
+          {bulkImportExportEnabled &&
+            (businessType === "garment" ? (
+              <Link href="/garment/import" className="flex shrink-0 items-center rounded-full border border-border bg-surface px-3 py-1.5 text-xs font-medium text-foreground hover:bg-surface-2">
+                {t("Import / export")}
+              </Link>
+            ) : (
+              <BulkImportExport
+                businessType={businessType}
+                products={initialProducts}
+                onImported={() => router.refresh()}
+              />
+            ))}
         </div>
       </div>
 

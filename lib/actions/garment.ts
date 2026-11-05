@@ -1,7 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { randomInt, randomUUID } from "node:crypto";
+import { randomUUID } from "node:crypto";
+import { inStoreEan13, postOpeningCount } from "../garment/opening";
 import { requireSession, type SessionContext } from "../auth";
 import { hasArea } from "../staffAccess";
 import { createSupabaseAdminClient } from "../supabase/admin";
@@ -134,13 +135,6 @@ export async function saveGarmentSettingsAction(settings: { transferApproval: bo
 }
 
 // ─── Styles and variants ───────────────────────────────────────────────────────
-/** An in-store EAN-13 (prefix 29: valid only inside the shop), with its check digit. */
-function inStoreEan13(): string {
-  const body = `29${String(randomInt(0, 10_000_000_000)).padStart(10, "0")}`;
-  const sum = body.split("").reduce((s, d, i) => s + Number(d) * (i % 2 === 0 ? 1 : 3), 0);
-  return body + ((10 - (sum % 10)) % 10);
-}
-
 type VariantInput = { colour: string | null; size: string | null; price?: number; mrp?: number | null; barcode?: string | null };
 
 async function insertVariants(session: SessionContext, style: { id: string; name: string; code: string | null; hsn: string | null; gst: number; categoryId: string | null; unit: string; price: number; mrp: number | null; lowStock: number; autoBarcode: boolean }, variants: VariantInput[]): Promise<Result> {
@@ -373,24 +367,11 @@ export async function openingStockAction(godownId: string, lines: Line[]): Promi
   const ids = clean.map((l) => l.product_id);
   // Opening adds to what is there (an item already counted keeps it).
   const current = await Promise.all(ids.map((id) => admin.rpc("gd_available", { p_shop: g.session.shopId, p_godown: godownId, p_product: id })));
-  const { data: number } = await admin.rpc("next_godown_doc_number", { p_shop: g.session.shopId, p_kind: "count", p_prefix: "OP" });
-  const { data: count, error } = await admin
-    .from("godown_counts")
-    .insert({ shop_id: g.session.shopId, number: number ?? `OP/${Date.now()}`, godown_id: godownId, purpose: "opening", created_by: g.session.userId })
-    .select("id")
-    .single();
-  if (error || !count) return { error: "Couldn't start the opening stock entry." };
   const physical = clean.map((l, i) => ({ product_id: l.product_id, physical: Math.max(0, Number(current[i].data ?? 0)) + l.quantity }));
-  for (const [fn, args] of [
-    ["count_submit", { p_shop: g.session.shopId, p_count: count.id, p_lines: physical, p_staff: g.session.userId }],
-    ["count_action", { p_shop: g.session.shopId, p_count: count.id, p_action: "approve", p_staff: g.session.userId }],
-    ["count_action", { p_shop: g.session.shopId, p_count: count.id, p_action: "post", p_staff: g.session.userId, p_note: "Opening stock" }],
-  ] as const) {
-    const { error: e } = await admin.rpc(fn as "count_submit", args as never);
-    if (e) return { error: refused(e) };
-  }
+  const refusal = await postOpeningCount(admin, { shopId: g.session.shopId, staffId: g.session.userId, godownId, lines: physical, note: "Opening stock" });
+  if (refusal) return { error: refusal.message === "Couldn't start the opening stock entry." ? refusal.message : refused({ message: refusal.message, details: refusal.details }) };
   refreshGarment("/garment/styles");
-  return { id: count.id };
+  return {};
 }
 
 export async function moveNowAction(fromId: string, toId: string, lines: Line[], kind: "move" | "put_away" | "return_to_godown", note: string): Promise<Result> {

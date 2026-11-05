@@ -204,7 +204,9 @@ export function parseList(text: string): string[] {
 
 /** Sizes typed with single spaces ("S M L XL") split on spaces too. */
 export function parseSizes(text: string): string[] {
-  return parseList(text.includes(",") || text.includes("\n") ? text : text.replace(/\s+/g, ",")).sort(compareSizes);
+  // "Free Size" is one size, though a list without commas splits on its spaces.
+  const spaced = text.includes(",") || text.includes("\n") ? text : text.replace(/\bfree\s+size\b/gi, "Free_Size").replace(/\s+/g, ",");
+  return parseList(spaced).map((s) => s.replace("Free_Size", "Free Size")).sort(compareSizes);
 }
 
 export type Variant = { colour: string | null; size: string | null };

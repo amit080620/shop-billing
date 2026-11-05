@@ -18,13 +18,16 @@ import {
   Lightbulb,
   Receipt,
   Repeat,
+  Ruler,
   Scale,
   ShieldAlert,
+  Shirt,
   Trash2,
   TrendingUp,
   Truck,
   Users,
   UtensilsCrossed,
+  Warehouse,
   Wrench,
   type LucideIcon,
 } from "lucide-react";
@@ -141,7 +144,9 @@ export default async function ReportsPage() {
                             ? "Jewellery"
                             : session.businessType === "salon"
                               ? "Salon"
-                              : "Sales")}
+                              : session.businessType === "garment"
+                                ? "Garments"
+                                : "Sales")}
         </h2>
         <div className="neu-card flex flex-col divide-y divide-border overflow-hidden">
           {session.businessType === "hotel" && (
@@ -241,13 +246,22 @@ export default async function ReportsPage() {
             session.businessType === "general") && (
             <ReportLink href="/reports/sales" label="Sales report" sub="Every bill by date range" />
           )}
+          {session.businessType === "garment" && (
+            <>
+              <ReportLink href="/reports/sales" label="Sales report" sub="Every bill by date range" />
+              <ReportLink href="/garment/sales" label="Sales by style" sub="Which styles sell, the margin, and how much of each is left" locked={!advanced} />
+              <ReportLink href="/garment/sales?r=size" label="Sizes and colours" sub="Which sizes and colours sell — what to buy more of" locked={!advanced} />
+              <ReportLink href="/garment/sales?r=slow" label="Slow stock" sub="Stock that isn't selling, and the money in it" locked={!advanced} />
+              <ReportLink href="/garment/reports" label="Godown reports" sub="Registers, movements and valuation" locked={!isModuleEnabled(session.enabledModules, "garment_godowns")} />
+            </>
+          )}
           {/* Genuinely generic — any shop that ticks "Track with batch
               & expiry date" on a product (available to every business
               type) has real use for these, not just pharmacies. The
               pharmacy block above already has its own copy alongside
               its pharmacy-specific reports, so this is skipped there
               to avoid listing it twice. */}
-          {!["restaurant", "hotel", "transport", "rental", "pharmacy"].includes(session.businessType) && (
+          {!["restaurant", "hotel", "transport", "rental", "pharmacy", "garment"].includes(session.businessType) && (
             <>
               <ReportLink href="/pharmacy/expiry" label="Expiry alerts" sub="Batches expiring soon — act before it's stock loss" />
               <ReportLink href="/pharmacy/write-offs" label="Write-off history" sub="Stock lost to expiry or damage" />
@@ -332,6 +346,10 @@ const REPORT_ICONS: Record<string, LucideIcon> = {
   "/salon/appointments": CalendarDays,
   "/gym/attendance": ClipboardCheck,
   "/jewellery/exchanges": Repeat,
+  "/garment/sales": Shirt,
+  "/garment/sales?r=size": Ruler,
+  "/garment/sales?r=slow": Hourglass,
+  "/garment/reports": Warehouse,
 };
 
 async function ReportLink({ href, label, sub, locked = false }: { href: string; label: string; sub: string; locked?: boolean }) {

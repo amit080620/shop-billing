@@ -8,6 +8,7 @@ import { latestUnitCosts, loadGodowns, loadStockGrid } from "@/lib/garment/data"
 import { BUCKET_LABEL, DAMAGE_REASON_LABEL, DISCREPANCY_KIND_LABEL, MOVEMENT_LABEL, STATUS_LABEL, pendingOf, type DamageReason, type DiscrepancyKind } from "@/lib/garment/rules";
 import { garmentGate } from "../gate";
 import { CsvButton } from "../ui";
+import { ReportTable } from "../ReportTable";
 
 const TABS = [
   { key: "movements", label: "Movements" },
@@ -53,7 +54,7 @@ export default async function GarmentReportsPage({ searchParams }: { searchParam
           <p className="text-xs text-muted">{rows.length >= 1000 ? t("Showing the latest 1,000 — narrow the dates for more.") : t("{n} entries", { n: rows.length })}</p>
           <CsvButton filename={`godown-movements-${from}-${to}.csv`} headers={["Time", "Item", "Godown", "Stock", "Quantity", "Movement", "Document", "Note"]} rows={rows.map((r) => [r.created_at, r.product_name, r.godown_name ?? "", r.bucket, Number(r.quantity), r.kind, r.ref_number ?? "", r.note ?? ""])} />
         </div>
-        <Table
+        <ReportTable
           head={[t("When"), t("Item"), t("Godown"), t("Quantity"), t("Movement"), t("Document")]}
           rows={rows.map((r) => [
             formatDateTime(r.created_at),
@@ -64,7 +65,7 @@ export default async function GarmentReportsPage({ searchParams }: { searchParam
             r.ref_number ?? "—",
           ])}
         />
-        <p className="text-[11px] text-muted">{t("Sales and purchases change the shop floor through bills and purchases; this register shows godown movements.")}</p>
+        <p className="text-[11px] text-muted">{t("Sales change the shop floor through bills; this register shows purchases and godown movements.")}</p>
       </>
     );
   } else if (tab === "transit") {
@@ -86,7 +87,7 @@ export default async function GarmentReportsPage({ searchParams }: { searchParam
         <div className="flex justify-end">
           <CsvButton filename="stock-in-transit.csv" headers={["Transfer", "From", "To", "Item", "On the way", "Dispatched", "Days"]} rows={rows.map((x) => [x.tr.number, gname.get(x.tr.from_godown_id) ?? "", gname.get(x.tr.to_godown_id) ?? "", x.name, x.pending, x.tr.dispatched_at ?? "", x.tr.dispatched_at ? Math.floor((now - Date.parse(x.tr.dispatched_at)) / 86400000) : ""])} />
         </div>
-        <Table
+        <ReportTable
           head={[t("Transfer"), t("Route"), t("Item"), t("On the way"), t("Days")]}
           rows={rows.map((x) => {
             const days = x.tr.dispatched_at ? Math.floor((now - Date.parse(x.tr.dispatched_at)) / 86400000) : 0;
@@ -116,11 +117,11 @@ export default async function GarmentReportsPage({ searchParams }: { searchParam
     }
     body = (
       <>
-        <Table head={[t("Cause"), t("Reports"), t("Quantity"), t("Est. loss")]} rows={[...byReason.entries()].map(([k, s]) => [t(DAMAGE_REASON_LABEL[k as DamageReason] ?? k), s.n, Math.round(s.qty * 1000) / 1000, formatMoney(Math.round(s.value * 100) / 100)])} />
+        <ReportTable head={[t("Cause"), t("Reports"), t("Quantity"), t("Est. loss")]} rows={[...byReason.entries()].map(([k, s]) => [t(DAMAGE_REASON_LABEL[k as DamageReason] ?? k), s.n, Math.round(s.qty * 1000) / 1000, formatMoney(Math.round(s.value * 100) / 100)])} />
         <div className="flex justify-end">
           <CsvButton filename={`damage-register-${from}-${to}.csv`} headers={["Number", "Date", "Godown", "Item", "Quantity", "Reason", "Estimated value", "Status", "Disposition"]} rows={rows.map((r) => [r.number, r.report_date, gname.get(r.godown_id) ?? "", r.product_name, Number(r.quantity), r.reason, Number(r.estimated_value), r.status, r.disposition ?? ""])} />
         </div>
-        <Table head={[t("No."), t("Date"), t("Item"), t("Quantity"), t("Status")]} rows={rows.map((r) => [r.number, r.report_date, `${r.product_name} · ${gname.get(r.godown_id) ?? ""}`, Number(r.quantity), t(STATUS_LABEL[r.status] ?? r.status)])} />
+        <ReportTable head={[t("No."), t("Date"), t("Item"), t("Quantity"), t("Status")]} rows={rows.map((r) => [r.number, r.report_date, `${r.product_name} · ${gname.get(r.godown_id) ?? ""}`, Number(r.quantity), t(STATUS_LABEL[r.status] ?? r.status)])} />
       </>
     );
   } else if (tab === "missing") {
@@ -138,11 +139,11 @@ export default async function GarmentReportsPage({ searchParams }: { searchParam
     }
     body = (
       <>
-        <Table head={[t("Kind"), t("Records"), t("Net difference"), t("Value")]} rows={[...byKind.entries()].map(([k, s]) => [t(DISCREPANCY_KIND_LABEL[k as DiscrepancyKind] ?? k), s.n, Math.round(s.diff * 1000) / 1000, formatMoney(Math.round(s.value * 100) / 100)])} />
+        <ReportTable head={[t("Kind"), t("Records"), t("Net difference"), t("Value")]} rows={[...byKind.entries()].map(([k, s]) => [t(DISCREPANCY_KIND_LABEL[k as DiscrepancyKind] ?? k), s.n, Math.round(s.diff * 1000) / 1000, formatMoney(Math.round(s.value * 100) / 100)])} />
         <div className="flex justify-end">
           <CsvButton filename={`missing-stock-${from}-${to}.csv`} headers={["Number", "Date", "Godown", "Item", "Kind", "System", "Found", "Difference", "Value", "Status", "Resolution"]} rows={rows.map((r) => [r.number, r.report_date, gname.get(r.godown_id) ?? "", r.product_name, r.kind, Number(r.system_qty), Number(r.physical_qty), Number(r.difference), Number(r.estimated_value), r.status, r.resolution ?? ""])} />
         </div>
-        <Table head={[t("No."), t("Date"), t("Item"), t("Difference"), t("Status")]} rows={rows.map((r) => [r.number, r.report_date, `${r.product_name} · ${gname.get(r.godown_id) ?? ""}`, Number(r.difference), t(STATUS_LABEL[r.status] ?? r.status)])} />
+        <ReportTable head={[t("No."), t("Date"), t("Item"), t("Difference"), t("Status")]} rows={rows.map((r) => [r.number, r.report_date, `${r.product_name} · ${gname.get(r.godown_id) ?? ""}`, Number(r.difference), t(STATUS_LABEL[r.status] ?? r.status)])} />
       </>
     );
   } else if (tab === "valuation") {
@@ -168,7 +169,7 @@ export default async function GarmentReportsPage({ searchParams }: { searchParam
     }
     body = (
       <>
-        <Table head={[t("Godown"), t("Saleable"), t("Damaged"), t("Value at latest cost")]} rows={[...byGodown.entries()].map(([k, s]) => [k, Math.round(s.saleable * 1000) / 1000, Math.round(s.damaged * 1000) / 1000, formatMoney(Math.round(s.value * 100) / 100)])} />
+        <ReportTable head={[t("Godown"), t("Saleable"), t("Damaged"), t("Value at latest cost")]} rows={[...byGodown.entries()].map(([k, s]) => [k, Math.round(s.saleable * 1000) / 1000, Math.round(s.damaged * 1000) / 1000, formatMoney(Math.round(s.value * 100) / 100)])} />
         <div className="flex justify-end">
           <CsvButton filename={`stock-valuation-${todayIso()}.csv`} headers={["Godown", "Item", "SKU", "Stock", "Quantity", "Unit cost", "Value"]} rows={out.map((x) => [x.godown, x.item, x.sku, x.bucket, x.qty, x.cost, Math.round(x.qty * x.cost * 100) / 100])} />
         </div>
@@ -186,7 +187,7 @@ export default async function GarmentReportsPage({ searchParams }: { searchParam
         <div className="flex justify-end">
           <CsvButton filename={`supplier-returns-${from}-${to}.csv`} headers={["Number", "Date", "Vendor", "Vendor GSTIN", "Taxable", "GST", "Total"]} rows={rows.map((r) => [r.number, r.return_date, vendor.get(r.vendor_id)?.name ?? "", vendor.get(r.vendor_id)?.gstin ?? "", Number(r.taxable_value), Number(r.gst_amount), Number(r.total)])} />
         </div>
-        <Table head={[t("No."), t("Date"), t("Supplier"), t("Taxable value"), t("GST"), t("Total")]} rows={rows.map((r) => [r.number, r.return_date, vendor.get(r.vendor_id)?.name ?? "—", formatMoney(Number(r.taxable_value)), formatMoney(Number(r.gst_amount)), formatMoney(Number(r.total))])} />
+        <ReportTable head={[t("No."), t("Date"), t("Supplier"), t("Taxable value"), t("GST"), t("Total")]} rows={rows.map((r) => [r.number, r.return_date, vendor.get(r.vendor_id)?.name ?? "—", formatMoney(Number(r.taxable_value)), formatMoney(Number(r.gst_amount)), formatMoney(Number(r.total))])} />
       </>
     );
   }
@@ -265,35 +266,5 @@ export default async function GarmentReportsPage({ searchParams }: { searchParam
       )}
       {body}
     </div>
-  );
-}
-
-function Table({ head, rows }: { head: string[]; rows: React.ReactNode[][] }) {
-  if (!rows.length) return <p className="neu-card p-4 text-sm text-muted">—</p>;
-  return (
-    <section className="neu-card overflow-x-auto p-0">
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="bg-surface-2 text-left text-xs text-muted">
-            {head.map((h) => (
-              <th key={h} className="whitespace-nowrap px-3 py-2">
-                {h}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-border">
-          {rows.map((r, i) => (
-            <tr key={i}>
-              {r.map((c, j) => (
-                <td key={j} className="px-3 py-2">
-                  {c}
-                </td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </section>
   );
 }
