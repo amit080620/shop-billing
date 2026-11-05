@@ -335,6 +335,48 @@ describe("guards", () => {
   });
 });
 
+// The admin panel's Delete shop on a garment shop: migration 0054's function stopped at the ledger,
+// which refuses deletes while its shop exists; 0064 lets the shop's cascade remove it.
+describe("deleting a garment shop", () => {
+  const GONE = "00000000-0000-0000-0000-00000000000c";
+  async function shopWithHistory() {
+    await db.exec(`
+      create schema if not exists auth;
+      create table if not exists auth.users (id uuid primary key);
+      create table if not exists staff (id uuid primary key, shop_id uuid);
+    `);
+    await db.query("insert into shops (id, name) values ($1, 'Closing shop') on conflict do nothing", [GONE]);
+    const floor = (await one<{ id: string }>("insert into godowns (shop_id, name, code, kind, is_default) values ($1, 'Floor', 'F', 'shop_floor', true) returning id", [GONE])).id;
+    const store = (await one<{ id: string }>("insert into godowns (shop_id, name, code, kind) values ($1, 'Store', 'S', 'main') returning id", [GONE])).id;
+    const p = (await one<{ id: string }>("insert into products (shop_id, name, stock_quantity) values ($1, 'Shirt', 0) returning id", [GONE])).id;
+    await db.query("select gd_saleable_in($1, $2, $3, 5, 'purchase', 'purchase', null, 'B-1', null, null)", [GONE, store, p]);
+    await db.query("select godown_move_now($1, $2, $3, $4::jsonb, 'move', null, null)", [GONE, store, floor, JSON.stringify([{ product_id: p, quantity: 2 }])]);
+  }
+  const ledgerRows = async (shop: string) => Number((await one<{ n: string }>("select count(*) as n from inventory_ledger where shop_id = $1", [shop])).n);
+
+  it("the old function stops at the ledger, 0064 deletes the shop and only that shop", async () => {
+    await shopWithHistory();
+    expect(await ledgerRows(GONE)).toBeGreaterThan(0);
+    await db.exec(read("0054_force_delete_shop.sql"));
+    const before = await one<{ r: { ok: boolean; blocked: string[] } }>("select force_delete_shop($1) as r", [GONE]);
+    expect(before.r.ok).toBe(false);
+    expect(before.r.blocked).toContain("inventory_ledger");
+
+    const others = await ledgerRows(SHOP);
+    await db.exec(read("0064_force_delete_garment_shop.sql"));
+    const after = await one<{ r: { ok: boolean; error?: string } }>("select force_delete_shop($1) as r", [GONE]);
+    expect(after.r).toMatchObject({ ok: true });
+    expect(await one("select 1 from shops where id = $1", [GONE])).toBeUndefined();
+    expect(await ledgerRows(GONE)).toBe(0);
+    expect(await ledgerRows(SHOP)).toBe(others);
+  });
+
+  it("the ledger still refuses a delete or change while its shop exists", async () => {
+    expect((await fails("delete from inventory_ledger where shop_id = $1", [SHOP])).message).toBe("ledger_append_only");
+    expect((await fails("update inventory_ledger set quantity = 1 where shop_id = $1", [SHOP])).message).toBe("ledger_append_only");
+  });
+});
+
 // The app's purchase path for garment shops (lib/garment/purchaseReceive): each line goes through
 // gd_saleable_in into the godown picked on the purchase, marked with the purchase.
 describe("purchase into a godown", () => {
