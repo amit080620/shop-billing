@@ -8,21 +8,9 @@ import { ModuleBlocked } from "@/app/components/ModuleBlocked";
 import { AlertTriangle } from "lucide-react";
 import { getTranslator } from "@/lib/i18n/server";
 import { BackLink } from "@/app/components/BackLink";
+import { explainError as explain } from "@/lib/adminUsers";
 
 const CONTEXT_LABEL: Record<string, string> = { "client-crash": "Screen error" };
-
-/** Plain words for the errors that aren't a fault in a screen, so only the
- * ones worth a look stay red. */
-function explain(message: string, details: Record<string, unknown> | null): string | null {
-  const text = `${message} ${String(details?.stack ?? "")}`;
-  if (details?.oldCode || /reading 'call'|Loading chunk|ChunkLoadError|Server Action .* was not found/i.test(text)) {
-    return "An update went live while this screen was still open on the older version. The app reloads itself; nothing saved is lost.";
-  }
-  if (/network error|Load failed|Failed to fetch|Connection closed|NetworkError/i.test(text)) {
-    return "The internet dropped while the screen was loading. It works again once the connection is back.";
-  }
-  return null;
-}
 
 export default async function ErrorLogPage() {
   const { t } = await getTranslator();

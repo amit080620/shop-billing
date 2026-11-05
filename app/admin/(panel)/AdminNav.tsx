@@ -4,8 +4,12 @@ import Link from "@/lib/link";
 import { usePathname } from "next/navigation";
 import { useKeepReady } from "@/lib/useKeepReady";
 
+/** Read only when opened: it adds up every shop, so it is never loaded ahead or kept fresh behind the scenes. */
+const ON_OPEN_ONLY = "/admin/users";
+
 const TABS = [
   { href: "/admin", label: "Shops", badge: null },
+  { href: "/admin/users", label: "Users", badge: null },
   { href: "/admin/support", label: "Support", badge: "support" },
   { href: "/admin/enquiries", label: "Enquiries", badge: "enquiries" },
   { href: "/admin/videos", label: "Videos", badge: null },
@@ -18,7 +22,7 @@ export function AdminNav({ counts }: { counts: { support: number; enquiries: num
   const pathname = usePathname();
   const active = TABS.filter((t) => pathname === t.href || pathname.startsWith(`${t.href}/`)).sort((a, b) => b.href.length - a.href.length)[0]?.href;
   useKeepReady(
-    TABS.map((t) => t.href),
+    TABS.map((t) => t.href).filter((href) => href !== ON_OPEN_ONLY),
     pathname,
   );
 
@@ -30,6 +34,7 @@ export function AdminNav({ counts }: { counts: { support: number; enquiries: num
           <Link
             key={tab.href}
             href={tab.href}
+            data-no-prefetch={tab.href === ON_OPEN_ONLY ? "" : undefined}
             aria-current={tab.href === active ? "page" : undefined}
             className={`flex items-center rounded-lg px-2.5 py-1.5 ${tab.href === active ? "bg-gray-800 text-white" : "text-gray-300 hover:bg-gray-800"}`}
           >
