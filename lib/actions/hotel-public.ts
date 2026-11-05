@@ -1,7 +1,6 @@
 "use server";
 
 import { headers } from "next/headers";
-import { revalidatePath } from "next/cache";
 import { createSupabaseAdminClient } from "../supabase/admin";
 import { checkRateLimitAsync } from "../rateLimit";
 import { isIsoDate, nightsBetween } from "../hotel/dates";
@@ -74,7 +73,5 @@ export async function requestStayAction(token: string, input: StayRequestInput):
     message: input.message?.trim().slice(0, 500) || null,
   });
   if (error) return { error: "Could not send your request. Please try again." };
-  revalidatePath("/hotel");
-  revalidatePath("/hotel/online");
   return { rate: option.rate };
 }

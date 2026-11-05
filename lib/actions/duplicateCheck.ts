@@ -40,6 +40,8 @@ export async function findDuplicateProductAI(
   try {
     const response = await fetch(GROQ_URL, {
       method: "POST",
+      // Similar names are everyday in some trades (Red Shirt, Blue Shirt): the save never waits long for this.
+      signal: AbortSignal.timeout(1500),
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
       body: JSON.stringify({
         model: GROQ_MODEL,

@@ -1,7 +1,6 @@
 "use server";
 
 import { randomBytes } from "node:crypto";
-import { revalidatePath } from "next/cache";
 import { requireSession, type SessionContext } from "../auth";
 import { createSupabaseAdminClient } from "../supabase/admin";
 import { isModuleEnabled, MODULES, type ModuleKey } from "../modules";
@@ -48,9 +47,7 @@ async function owns(ctx: Ctx, table: "hotel_rooms" | "hotel_room_types" | "hotel
 }
 
 const clean = (v: unknown, max = 200) => (typeof v === "string" && v.trim() ? v.trim().replace(/\s+/g, " ").slice(0, max) : null);
-const refresh = (...paths: string[]) => {
-  for (const p of ["/hotel", ...paths]) revalidatePath(p);
-};
+// Saves answer at once and the screen refreshes itself: a page in the reply held each save ~1 s.
 
 // ─── Housekeeping ──────────────────────────────────────────────────────────────
 export async function setHousekeepingAction(roomId: string, stage: HkStage): Promise<OpsResult> {
@@ -59,7 +56,6 @@ export async function setHousekeepingAction(roomId: string, stage: HkStage): Pro
   if (!HK_STAGES.includes(stage)) return { error: "Pick a state." };
   const { error } = await loose(ctx.admin).from("hotel_rooms").update({ housekeeping: stage, housekeeping_by: ctx.session.userId }).eq("id", roomId).eq("shop_id", ctx.session.shopId);
   if (error) return { error: "Could not update the room." };
-  refresh("/hotel/housekeeping", "/hotel/rooms");
   return {};
 }
 
@@ -73,7 +69,6 @@ export async function assignRoomsAction(roomIds: string[], staffId: string | nul
   }
   const { error } = await loose(ctx.admin).from("hotel_rooms").update({ assigned_to: staffId }).in("id", roomIds).eq("shop_id", ctx.session.shopId);
   if (error) return { error: "Could not assign the rooms." };
-  refresh("/hotel/housekeeping");
   return {};
 }
 
@@ -104,7 +99,6 @@ export async function createTicketAction(input: { roomId: string | null; categor
   if (input.blockRoom && input.roomId) {
     await loose(admin).from("hotel_rooms").update({ is_blocked: true, block_reason: title, blocked_until: input.backOn && isIsoDate(input.backOn) ? input.backOn : null }).eq("id", input.roomId).eq("shop_id", session.shopId);
   }
-  refresh("/hotel/housekeeping", "/hotel/rooms", "/hotel/calendar");
   return { id: data.id };
 }
 
@@ -126,7 +120,6 @@ export async function ticketStepAction(id: string, status: "in_progress" | "done
   if (closing && ticket.blocks_room && ticket.room_id) {
     await db.from("hotel_rooms").update({ is_blocked: false, block_reason: null, blocked_until: null, housekeeping: "dirty", housekeeping_by: session.userId }).eq("id", ticket.room_id).eq("shop_id", session.shopId);
   }
-  refresh("/hotel/housekeeping", "/hotel/rooms", "/hotel/calendar");
   return {};
 }
 
@@ -166,7 +159,6 @@ export async function saveRateRuleAction(id: string | null, input: RateRuleInput
   const db = loose(ctx.admin).from("hotel_rate_rules");
   const { error } = id ? await db.update(row).eq("id", id).eq("shop_id", ctx.session.shopId) : await db.insert(row);
   if (error) return { error: "Could not save the rule." };
-  refresh("/hotel/rates");
   return {};
 }
 
@@ -175,7 +167,6 @@ export async function setRateRuleActiveAction(id: string, active: boolean): Prom
   if ("error" in ctx) return ctx;
   const { error } = await loose(ctx.admin).from("hotel_rate_rules").update({ is_active: active }).eq("id", id).eq("shop_id", ctx.session.shopId);
   if (error) return { error: "Could not change the rule." };
-  refresh("/hotel/rates");
   return {};
 }
 
@@ -184,7 +175,6 @@ export async function deleteRateRuleAction(id: string): Promise<OpsResult> {
   if ("error" in ctx) return ctx;
   const { error } = await loose(ctx.admin).from("hotel_rate_rules").delete().eq("id", id).eq("shop_id", ctx.session.shopId);
   if (error) return { error: "Could not delete the rule." };
-  refresh("/hotel/rates");
   return {};
 }
 
@@ -199,7 +189,6 @@ export async function closeNightAuditAction(date: string, figures: unknown, note
     .upsert({ shop_id: ctx.session.shopId, business_date: date, figures, note: clean(note, 500), closed_by: ctx.session.userId, closed_at: new Date().toISOString() }, { onConflict: "shop_id,business_date" });
   if (error) return { error: "Could not close the day." };
   await logAuditEvent({ admin: ctx.admin, shopId: ctx.session.shopId, staffId: ctx.session.userId, action: "hotel_night_audit", entityType: "hotel_night_audit", details: { date } });
-  refresh("/hotel/night-audit");
   return {};
 }
 
@@ -230,7 +219,6 @@ export async function saveAccountAction(id: string | null, input: AccountInput):
   const db = loose(ctx.admin).from("hotel_accounts");
   const { error } = id ? await db.update(row).eq("id", id).eq("shop_id", ctx.session.shopId) : await db.insert(row);
   if (error) return { error: error.code === "23505" ? "There is already an account with that name." : "Could not save the account." };
-  refresh("/hotel/accounts", "/hotel/bookings/new");
   return {};
 }
 
@@ -239,7 +227,6 @@ export async function archiveAccountAction(id: string): Promise<OpsResult> {
   if ("error" in ctx) return ctx;
   const { error } = await loose(ctx.admin).from("hotel_accounts").update({ is_active: false }).eq("id", id).eq("shop_id", ctx.session.shopId);
   if (error) return { error: "Could not remove the account." };
-  refresh("/hotel/accounts");
   return {};
 }
 
@@ -264,7 +251,6 @@ export async function saveGuestDetailsAction(bookingId: string, input: GuestDeta
   if (nationality) patch.nationality = nationality;
   const { error } = await loose(ctx.admin).from("hotel_bookings").update(patch).eq("id", bookingId).eq("shop_id", ctx.session.shopId);
   if (error) return { error: "Could not save the guest's details." };
-  refresh(`/hotel/bookings/${bookingId}`, "/hotel/form-c");
   return {};
 }
 
@@ -278,7 +264,6 @@ export async function markFormCFiledAction(bookingId: string, filed: boolean, re
     .eq("id", bookingId)
     .eq("shop_id", ctx.session.shopId);
   if (error) return { error: "Could not save that." };
-  refresh("/hotel/form-c");
   return {};
 }
 
@@ -316,7 +301,6 @@ export async function addItemChargeAction(input: { bookingId: string; productId:
     if (!moved.ok) console.error("Hotel item charge: stock not taken", charge.id, moved.error);
     await invalidateCache(`ray:cache:products:${session.shopId}`);
   }
-  refresh(`/hotel/bookings/${input.bookingId}`);
   return {};
 }
 
@@ -328,7 +312,6 @@ export async function savePublicPageAction(input: { enabled: boolean; about: str
   const { data: existing } = await db.select("token").eq("shop_id", ctx.session.shopId).maybeSingle();
   const { error } = await db.upsert({ shop_id: ctx.session.shopId, token: existing?.token ?? randomBytes(12).toString("base64url"), is_enabled: !!input.enabled, about: clean(input.about, 800), policies: clean(input.policies, 800), contact_phone: clean(input.contactPhone, 20) });
   if (error) return { error: "Could not save the page." };
-  refresh("/hotel/online");
   return {};
 }
 
@@ -337,7 +320,6 @@ export async function declineRequestAction(id: string): Promise<OpsResult> {
   if ("error" in ctx) return ctx;
   const { error } = await loose(ctx.admin).from("hotel_booking_requests").update({ status: "declined" }).eq("id", id).eq("shop_id", ctx.session.shopId).eq("status", "new");
   if (error) return { error: "Could not update the request." };
-  refresh("/hotel/online");
   return {};
 }
 
@@ -354,7 +336,6 @@ export async function addIcalFeedAction(input: { roomTypeId: string; label: stri
   const { data, error } = await loose(ctx.admin).from("hotel_ical_feeds").insert({ shop_id: ctx.session.shopId, room_type_id: input.roomTypeId, label, url: input.url.trim() }).select("id").single();
   if (error || !data) return { error: error?.code === "23505" ? "That calendar is already added." : "Could not add the calendar." };
   const synced = await syncIcalFeed(ctx.admin, ctx.session.shopId, data.id);
-  refresh("/hotel/online", "/hotel/calendar");
   return synced.error ? { error: `Added, but it couldn't be read: ${synced.error}` } : {};
 }
 
@@ -363,7 +344,6 @@ export async function removeIcalFeedAction(id: string): Promise<OpsResult> {
   if ("error" in ctx) return ctx;
   const { error } = await loose(ctx.admin).from("hotel_ical_feeds").delete().eq("id", id).eq("shop_id", ctx.session.shopId);
   if (error) return { error: "Could not remove the calendar." };
-  refresh("/hotel/online", "/hotel/calendar");
   return {};
 }
 
@@ -373,7 +353,6 @@ export async function syncIcalFeedsAction(): Promise<OpsResult> {
   const { data: feeds } = await loose(ctx.admin).from("hotel_ical_feeds").select("id, label").eq("shop_id", ctx.session.shopId);
   const failed: string[] = [];
   for (const f of feeds ?? []) if ((await syncIcalFeed(ctx.admin, ctx.session.shopId, f.id)).error) failed.push(f.label);
-  refresh("/hotel/online", "/hotel/calendar", "/hotel/rates");
   return failed.length ? { error: `Couldn't read: ${failed.join(", ")}` } : {};
 }
 
@@ -387,7 +366,6 @@ export async function saveHallAction(id: string | null, input: { name: string; c
   const db = loose(ctx.admin).from("hotel_halls");
   const { error } = id ? await db.update(row).eq("id", id).eq("shop_id", ctx.session.shopId) : await db.insert(row);
   if (error) return { error: "Could not save the hall." };
-  refresh("/hotel/events");
   return {};
 }
 
@@ -470,13 +448,11 @@ export async function saveEventAction(id: string | null, input: EventInput): Pro
     if (existing.bill_id) return { error: "This event is invoiced; it can't be changed." };
     const { error } = await db.update(row).eq("id", id);
     if (error) return { error: error.code === "23505" ? "This hall is already booked in that session." : "Could not save the event." };
-    refresh("/hotel/events");
     return { id };
   }
   const { count } = await db.select("id", { count: "exact", head: true }).eq("shop_id", session.shopId);
   const { data, error } = await db.insert({ ...row, event_number: `EV/${financialYearFor(new Date())}/${String((count ?? 0) + 1).padStart(4, "0")}`, created_by: session.userId }).select("id").single();
   if (error || !data) return { error: error?.code === "23505" ? (error.message.includes("event_number") ? "Please press Save again." : "This hall is already booked in that session.") : "Could not save the event." };
-  refresh("/hotel/events");
   return { id: data.id };
 }
 
@@ -489,7 +465,6 @@ export async function cancelEventAction(id: string): Promise<OpsResult> {
   if (e.bill_id) return { error: "This event is invoiced; cancel its bill from Bills instead." };
   const { error } = await db.update({ status: "cancelled" }).eq("id", id);
   if (error) return { error: "Could not cancel the event." };
-  refresh("/hotel/events");
   return {};
 }
 
@@ -509,7 +484,6 @@ export async function addEventPaymentAction(input: { eventId: string; kind: "adv
   const { error } = await loose(admin).from("hotel_event_payments").insert({ shop_id: session.shopId, event_id: e.id, kind: input.kind, amount, payment_method: input.method, reference: clean(input.reference, 80), created_by: session.userId });
   if (error) return { error: "Could not record the payment." };
   await recordCashMovement(admin, { shopId: session.shopId, staffId: session.userId, kind: input.kind === "refund" ? "refund_given" : "advance_received", source: "reservation", sourceId: e.id, method: input.method, amount, note: `Event: ${e.event_name}` });
-  refresh("/hotel/events", "/daily-summary");
   return {};
 }
 
@@ -586,6 +560,5 @@ export async function invoiceEventAction(id: string): Promise<OpsResult & { bill
   for (const [method, amount] of net) {
     if (amount > 0) await recordCashMovement(admin, { shopId: session.shopId, staffId: session.userId, kind: "advance_applied", source: "reservation", sourceId: id, method: method as PaymentMethod, amount: round2(amount), note: `Event invoice ${issued.invoiceNumber}`, billId });
   }
-  refresh("/hotel/events", "/daily-summary", "/reports/sales");
   return { billId };
 }

@@ -1,6 +1,5 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { randomUUID } from "node:crypto";
 import { inStoreEan13, postOpeningCount } from "../garment/opening";
 import { requireSession, type SessionContext } from "../auth";
@@ -50,9 +49,7 @@ const num = (v: unknown) => {
 };
 const text = (v: FormDataEntryValue | null | undefined) => (typeof v === "string" && v.trim() ? v.trim() : null);
 
-function refreshGarment(...paths: string[]) {
-  for (const p of ["/garment", "/garment/stock", ...paths]) revalidatePath(p);
-}
+// Saves answer at once and the screen refreshes itself (ActionButton): a page in the reply held each save ~1 s.
 
 // ─── Godowns ───────────────────────────────────────────────────────────────────
 export async function saveGodownAction(id: string | null, formData: FormData): Promise<Result> {
@@ -82,7 +79,6 @@ export async function saveGodownAction(id: string | null, formData: FormData): P
   if (id) {
     const { error } = await admin.from("godowns").update(row).eq("id", id).eq("shop_id", g.session.shopId);
     if (error) return { error: error.code === "23505" ? "Another godown already uses that code." : "Couldn't save the godown." };
-    refreshGarment("/garment/godowns");
     return { id };
   }
   const { count } = await admin.from("godowns").select("id", { count: "exact", head: true }).eq("shop_id", g.session.shopId);
@@ -92,7 +88,6 @@ export async function saveGodownAction(id: string | null, formData: FormData): P
     .select("id")
     .single();
   if (error || !data) return { error: error?.code === "23505" ? "Another godown already uses that code." : "Couldn't add the godown." };
-  refreshGarment("/garment/godowns");
   return { id: data.id };
 }
 
@@ -102,7 +97,6 @@ export async function setDefaultGodownAction(godownId: string): Promise<Result> 
   const admin = createSupabaseAdminClient();
   const { error } = await admin.rpc("godown_set_default", { p_shop: g.session.shopId, p_godown: godownId, p_staff: g.session.userId });
   if (error) return { error: refused(error) };
-  refreshGarment("/garment/godowns");
   return {};
 }
 
@@ -118,7 +112,6 @@ export async function setGodownActiveAction(godownId: string, active: boolean): 
   }
   const { error } = await admin.from("godowns").update({ is_active: active }).eq("id", godownId).eq("shop_id", g.session.shopId);
   if (error) return { error: "Couldn't change the godown." };
-  refreshGarment("/garment/godowns");
   return {};
 }
 
@@ -130,7 +123,6 @@ export async function saveGarmentSettingsAction(settings: { transferApproval: bo
     .from("garment_settings")
     .upsert({ shop_id: g.session.shopId, transfer_approval: !!settings.transferApproval, blind_count: !!settings.blindCount, updated_at: new Date().toISOString() });
   if (error) return { error: "Couldn't save the settings." };
-  refreshGarment("/garment/godowns");
   return {};
 }
 
@@ -217,8 +209,6 @@ export async function createStyleAction(formData: FormData): Promise<Result> {
     await admin.from("product_styles").delete().eq("id", style.id).eq("shop_id", g.session.shopId);
     return added;
   }
-  revalidatePath("/garment/styles");
-  revalidatePath("/products");
   return { id: style.id };
 }
 
@@ -240,8 +230,6 @@ export async function addVariantsAction(styleId: string, colours: string, sizes:
     variantMatrix(allColours, allSizes),
   );
   if (res.error) return res;
-  revalidatePath(`/garment/styles/${styleId}`);
-  revalidatePath("/products");
   return { id: styleId };
 }
 
@@ -329,8 +317,6 @@ export async function prepareStyleForPurchaseAction(input: {
     .eq("style_id", styleId)
     .order("name");
   if (error) return { error: "The sizes and colours were saved, but couldn't be loaded — open the purchase again." };
-  revalidatePath("/garment/styles");
-  revalidatePath("/products");
   return {
     styleId,
     variants: (rows ?? []).map((p) => ({
@@ -370,7 +356,6 @@ export async function openingStockAction(godownId: string, lines: Line[]): Promi
   const physical = clean.map((l, i) => ({ product_id: l.product_id, physical: Math.max(0, Number(current[i].data ?? 0)) + l.quantity }));
   const refusal = await postOpeningCount(admin, { shopId: g.session.shopId, staffId: g.session.userId, godownId, lines: physical, note: "Opening stock" });
   if (refusal) return { error: refusal.message === "Couldn't start the opening stock entry." ? refusal.message : refused({ message: refusal.message, details: refusal.details }) };
-  refreshGarment("/garment/styles");
   return {};
 }
 
@@ -383,7 +368,6 @@ export async function moveNowAction(fromId: string, toId: string, lines: Line[],
   const admin = createSupabaseAdminClient();
   const { data, error } = await admin.rpc("godown_move_now", { p_shop: g.session.shopId, p_from: fromId, p_to: toId, p_lines: clean, p_kind: kind, p_staff: g.session.userId, p_note: note.trim() || null });
   if (error) return { error: refused(error) };
-  refreshGarment();
   return { id: data ?? undefined };
 }
 
@@ -450,7 +434,6 @@ export async function createTransferAction(input: {
     await admin.from("stock_transfers").update({ status: "cancelled", cancel_reason: "Lines couldn't be saved", cancelled_at: new Date().toISOString() }).eq("id", t.id);
     return { error: "Couldn't save the transfer's items." };
   }
-  revalidatePath("/garment/transfers");
   return { id: t.id };
 }
 
@@ -469,7 +452,6 @@ export async function transferStepAction(id: string, step: "request" | "approve"
         ? await admin.rpc("transfer_close", { ...base, p_note: note.trim() || null })
         : await admin.rpc("transfer_action", { ...base, p_action: step, p_note: note.trim() || null });
   if (error) return { error: refused(error) };
-  refreshGarment(`/garment/transfers/${id}`, "/garment/transfers", "/garment/missing");
   return { id };
 }
 
@@ -483,7 +465,6 @@ export async function receiveTransferAction(id: string, lines: { itemId: string;
   const admin = createSupabaseAdminClient();
   const { error } = await admin.rpc("transfer_receive", { p_shop: g.session.shopId, p_transfer: id, p_lines: clean, p_staff: g.session.userId, p_client_ref: clientRef || randomUUID(), p_note: note.trim() || null });
   if (error) return { error: refused(error) };
-  refreshGarment(`/garment/transfers/${id}`, "/garment/transfers");
   return { id };
 }
 
@@ -515,7 +496,6 @@ export async function reportDamageAction(input: { godownId: string; productId: s
     .select("id")
     .single();
   if (error || !data) return { error: "Couldn't save the damage report." };
-  revalidatePath("/garment/damage");
   return { id: data.id };
 }
 
@@ -534,7 +514,6 @@ export async function damageStepAction(id: string, step: "review" | "approve" | 
     ({ error } = await admin.rpc("damage_action", { p_shop: g.session.shopId, p_report: id, p_action: step, p_staff: g.session.userId, p_note: note.trim() || null }));
   }
   if (error) return { error: refused(error) };
-  refreshGarment("/garment/damage");
   return { id };
 }
 
@@ -575,7 +554,6 @@ export async function reportDiscrepancyAction(input: { godownId: string; product
     .select("id")
     .single();
   if (error || !data) return { error: "Couldn't save the record." };
-  revalidatePath("/garment/missing");
   return { id: data.id };
 }
 
@@ -588,7 +566,6 @@ export async function discrepancyStepAction(id: string, step: "investigate" | "r
   const admin = createSupabaseAdminClient();
   const { error } = await admin.rpc("discrepancy_action", { p_shop: g.session.shopId, p_id: id, p_action: step, p_staff: g.session.userId, p_note: note.trim() || null, p_resolution: resolution || null });
   if (error) return { error: refused(error) };
-  refreshGarment("/garment/missing");
   return { id };
 }
 
@@ -604,7 +581,6 @@ export async function startCountAction(godownId: string, blind: boolean): Promis
     .select("id")
     .single();
   if (error || !data) return { error: "Couldn't start the count." };
-  revalidatePath("/garment/counts");
   return { id: data.id };
 }
 
@@ -616,7 +592,6 @@ export async function submitCountAction(id: string, lines: { productId: string; 
   const admin = createSupabaseAdminClient();
   const { error } = await admin.rpc("count_submit", { p_shop: g.session.shopId, p_count: id, p_lines: clean, p_staff: g.session.userId });
   if (error) return { error: refused(error) };
-  revalidatePath(`/garment/counts/${id}`);
   return { id };
 }
 
@@ -627,7 +602,6 @@ export async function countStepAction(id: string, step: "approve" | "reject" | "
   const admin = createSupabaseAdminClient();
   const { error } = await admin.rpc("count_action", { p_shop: g.session.shopId, p_count: id, p_action: step, p_staff: g.session.userId, p_note: note.trim() || null });
   if (error) return { error: refused(error) };
-  refreshGarment(`/garment/counts/${id}`, "/garment/counts");
   return { id };
 }
 
@@ -682,7 +656,6 @@ export async function createPurchaseReturnAction(input: {
     await admin.from("purchase_returns").update({ status: "cancelled", cancelled_at: new Date().toISOString() }).eq("id", r.id);
     return { error: "Couldn't save the return's lines." };
   }
-  revalidatePath("/garment/supplier-returns");
   return { id: r.id };
 }
 
@@ -692,7 +665,6 @@ export async function postPurchaseReturnAction(id: string): Promise<Result> {
   const admin = createSupabaseAdminClient();
   const { error } = await admin.rpc("purchase_return_post", { p_shop: g.session.shopId, p_return: id, p_staff: g.session.userId });
   if (error) return { error: refused(error) };
-  refreshGarment(`/garment/supplier-returns/${id}`, "/garment/supplier-returns", "/vendors");
   return { id };
 }
 
@@ -708,7 +680,6 @@ export async function cancelPurchaseReturnAction(id: string): Promise<Result> {
     .eq("status", "draft")
     .select("id");
   if (error || !data?.length) return { error: "Only a draft return can be cancelled." };
-  revalidatePath("/garment/supplier-returns");
   return { id };
 }
 
@@ -727,7 +698,6 @@ export async function dispositionReturnAction(returnItemId: string, quantity: nu
     p_note: note.trim() || null,
   });
   if (error) return { error: refused(error) };
-  refreshGarment("/garment/returns", "/garment/damage");
   return { id: data ?? undefined };
 }
 
@@ -740,7 +710,6 @@ export async function closeYearAction(fy: string, closingDate: string, note: str
   const admin = createSupabaseAdminClient();
   const { data, error } = await admin.rpc("fy_close", { p_shop: g.session.shopId, p_fy: fy, p_closing_date: closingDate, p_staff: g.session.userId, p_note: note.trim() || null });
   if (error) return { error: refused(error) };
-  revalidatePath("/garment/year-end");
   return { id: data ?? undefined };
 }
 
@@ -751,6 +720,5 @@ export async function carryForwardAction(closingId: string, openingDate: string)
   const admin = createSupabaseAdminClient();
   const { error } = await admin.rpc("fy_carry_forward", { p_shop: g.session.shopId, p_closing: closingId, p_opening_date: openingDate, p_staff: g.session.userId });
   if (error) return { error: refused(error) };
-  revalidatePath("/garment/year-end");
   return { id: closingId };
 }

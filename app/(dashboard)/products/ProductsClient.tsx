@@ -202,6 +202,7 @@ export function ProductsClient({
       if (!result?.error) {
         setShowCategoryForm(false);
         showToast("Category added");
+        setSavedCount((n) => n + 1);
       }
       return result;
     }),
@@ -282,7 +283,10 @@ export function ProductsClient({
       const result = await deleteProductAction(p.id);
       setDeleteError(result?.error ?? null);
       setBlockedProductId(result?.error ? p.id : null);
-      if (!result?.error) showToast("Item deleted", "info");
+      if (!result?.error) {
+        showToast("Item deleted", "info");
+        setSavedCount((n) => n + 1);
+      }
     });
   }
 
@@ -1197,6 +1201,7 @@ export function ProductsClient({
                             const result = await forceDeleteProductAction(p.id);
                             setDeleteError(result?.error ?? null);
                             setBlockedProductId(result?.error ? p.id : null);
+                            if (!result?.error) setSavedCount((n) => n + 1);
                           });
                         }}
                         className="text-xs font-medium text-danger underline disabled:opacity-50"

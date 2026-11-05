@@ -1,7 +1,6 @@
 "use server";
 
 import { demoLocked } from "../demo/guard";
-import { revalidatePath } from "next/cache";
 import { requireSession, requireOwner, requireArea } from "../auth";
 import { createSupabaseAdminClient } from "../supabase/admin";
 import { productLimitError } from "../planLimits";
@@ -326,7 +325,6 @@ export async function deleteProductAction(productId: string): Promise<{ error?: 
     details: { items: [itemSnapshot(was)] },
     by: { name: session.staffName, role: session.role },
   });
-  revalidatePath("/products");
   await invalidateCache(`ray:cache:products:${session.shopId}`);
   return {};
 }
@@ -375,7 +373,6 @@ export async function forceDeleteProductAction(productId: string): Promise<{ err
     by: { name: session.staffName, role: session.role },
   });
 
-  revalidatePath("/products");
   await invalidateCache(`ray:cache:products:${session.shopId}`);
   return {};
 }
@@ -397,7 +394,6 @@ export async function createCategoryAction(
     .insert({ shop_id: session.shopId, name: parsed.data.name });
   if (error) return { error: "That category already exists" };
 
-  revalidatePath("/products");
   await invalidateCache(`ray:cache:products:${session.shopId}`);
   return null;
 }
@@ -416,7 +412,6 @@ export async function addCategoryAction(name: string): Promise<{ error?: string;
   if (same?.length) return { category: same[0] };
   const { data, error } = await admin.from("categories").insert({ shop_id: session.shopId, name: clean }).select("id, name").single();
   if (error || !data) return { error: "Couldn't add the category." };
-  revalidatePath("/products");
   await invalidateCache(`ray:cache:products:${session.shopId}`);
   return { category: data };
 }
@@ -437,7 +432,6 @@ export async function renameCategoryAction(categoryId: string, newName: string):
     if (error.code === "23505") return { error: "A category with that name already exists" };
     return { error: "Could not rename category" };
   }
-  revalidatePath("/products");
   await invalidateCache(`ray:cache:products:${session.shopId}`);
   return {};
 }
@@ -454,7 +448,6 @@ export async function deleteCategoryAction(categoryId: string): Promise<{ error?
     console.error("Could not delete category", error);
     return { error: "Could not delete category" };
   }
-  revalidatePath("/products");
   await invalidateCache(`ray:cache:products:${session.shopId}`);
   return {};
 }
@@ -515,7 +508,6 @@ export async function quickCreateProductAction(
     return { error: "Could not save product" };
   }
 
-  revalidatePath("/products");
   await invalidateCache(`ray:cache:products:${session.shopId}`);
   return {
     product: {
@@ -567,7 +559,6 @@ export async function generateBarcodeAction(
       console.error("Could not save generated barcode", error);
       return { error: "Could not save barcode" };
     }
-    revalidatePath("/products");
   await invalidateCache(`ray:cache:products:${session.shopId}`);
     return { barcode: candidate };
   }
@@ -631,7 +622,6 @@ export async function uploadProductImageAction(productId: string, formData: Form
     return { error: "Uploaded, but could not save. Try again." };
   }
 
-  revalidatePath("/products");
   await invalidateCache(`ray:cache:products:${session.shopId}`);
   return { imageUrl };
 }
@@ -682,7 +672,6 @@ export async function deleteProductsAction(productIds: string[], managerPin: str
       by: { name: session.staffName, role: session.role },
     });
   }
-  revalidatePath("/products");
   await invalidateCache(`ray:cache:products:${session.shopId}`);
   return { deleted: deleted.length, kept };
 }

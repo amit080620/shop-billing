@@ -41,6 +41,8 @@ function isManager(session: SessionContext) {
   return session.role === "owner" || session.role === "manager";
 }
 
+/** Only for a restaurant order charged to a room. Hotel screens refresh themselves after a save: a
+ * refresh here would put the whole screen in the reply and hold the save (about 100 KB, ~1 s more). */
 function refreshHotel(bookingId?: string) {
   for (const path of ["/hotel", "/hotel/rooms", "/hotel/bookings", "/hotel/calendar", "/hotel/reports", "/dashboard"]) revalidatePath(path);
   if (bookingId) revalidatePath(`/hotel/bookings/${bookingId}`);
@@ -99,14 +101,10 @@ export async function saveRoomTypeAction(input: {
   if (input.id) {
     const { error } = await admin.from("hotel_room_types").update(row).eq("id", input.id).eq("shop_id", session.shopId);
     if (error) return { error: "Could not save the room type" };
-    refreshHotel();
-    revalidatePath("/hotel/setup");
     return { id: input.id };
   }
   const { data, error } = await admin.from("hotel_room_types").insert({ ...row, shop_id: session.shopId }).select("id").single();
   if (error || !data) return { error: "Could not add the room type" };
-  refreshHotel();
-  revalidatePath("/hotel/setup");
   return { id: data.id };
 }
 
@@ -124,7 +122,6 @@ export async function archiveRoomTypeAction(id: string): Promise<HotelResult> {
   if ((count ?? 0) > 0) return { error: "Remove this type's rooms first (or move them to another type)." };
   const { error } = await admin.from("hotel_room_types").update({ is_active: false }).eq("id", id).eq("shop_id", session.shopId);
   if (error) return { error: "Could not remove the room type" };
-  revalidatePath("/hotel/setup");
   return {};
 }
 
@@ -163,9 +160,6 @@ export async function addRoomsAction(input: { roomTypeId: string; numbers: strin
   if (error || !created) return { error: "Could not add the rooms" };
 
   await Promise.all(created.map((r) => ensureRoomTable(admin, session.shopId, r.id, r.room_number)));
-  refreshHotel();
-  revalidatePath("/hotel/setup");
-  revalidatePath("/restaurant");
   return { added: created.length, skipped };
 }
 
@@ -187,8 +181,6 @@ export async function updateRoomAction(input: { id: string; roomNumber: string; 
     .eq("shop_id", session.shopId);
   if (error) return { error: "Could not save the room" };
   await ensureRoomTable(admin, session.shopId, input.id, number);
-  refreshHotel();
-  revalidatePath("/hotel/setup");
   return {};
 }
 
@@ -202,9 +194,6 @@ export async function archiveRoomAction(id: string): Promise<HotelResult> {
   const { error } = await admin.from("hotel_rooms").update({ is_active: false }).eq("id", id).eq("shop_id", session.shopId);
   if (error) return { error: "Could not remove the room" };
   await admin.from("restaurant_tables").update({ is_deleted: true }).eq("shop_id", session.shopId).eq("hotel_room_id", id);
-  refreshHotel();
-  revalidatePath("/hotel/setup");
-  revalidatePath("/restaurant");
   return {};
 }
 
@@ -228,7 +217,6 @@ export async function setRoomStateAction(input: { roomId: string; housekeeping?:
   if (Object.keys(patch).length === 0) return {};
   const { error } = await admin.from("hotel_rooms").update(patch).eq("id", input.roomId).eq("shop_id", session.shopId);
   if (error) return { error: "Could not update the room" };
-  refreshHotel();
   return {};
 }
 
@@ -411,7 +399,6 @@ export async function createBookingAction(input: NewBookingInput): Promise<Hotel
   }
 
   await logAuditEvent({ admin, shopId: session.shopId, staffId: session.userId, action: "hotel_booking_created", entityType: "hotel_booking", entityId: booking.id, details: { bookingNumber, source: input.source } });
-  refreshHotel(booking.id);
   return { bookingId: booking.id };
 }
 
@@ -471,7 +458,6 @@ export async function updateGuestAction(input: {
     })
     .eq("id", input.bookingId);
   if (error) return { error: "Could not save the changes" };
-  refreshHotel(input.bookingId);
   return {};
 }
 
@@ -504,7 +490,6 @@ export async function changeStayDatesAction(input: { bookingId: string; checkIn:
 
   const { error } = await admin.from("hotel_bookings").update({ check_in_date: input.checkIn, check_out_date: input.checkOut }).eq("id", input.bookingId).eq("shop_id", session.shopId);
   if (error) return { error: "Could not change the dates" };
-  refreshHotel(input.bookingId);
   return {};
 }
 
@@ -521,7 +506,6 @@ export async function setRoomRateAction(input: { bookingRoomId: string; ratePerN
   if (!booking || booking.status === "checked_out" || booking.status === "cancelled" || booking.status === "no_show") return { error: "This booking is closed." };
   const { error } = await admin.from("hotel_booking_rooms").update({ rate_per_night: rate }).eq("id", br.id);
   if (error) return { error: "Could not change the rate" };
-  refreshHotel(br.booking_id);
   return {};
 }
 
@@ -551,7 +535,6 @@ export async function assignRoomAction(input: { bookingRoomId: string; roomId: s
     const { error } = await admin.from("hotel_booking_rooms").update({ room_id: null }).eq("id", br.id);
     if (error) return { error: "Could not change the room" };
   }
-  refreshHotel(br.booking_id);
   return {};
 }
 
@@ -599,8 +582,6 @@ export async function checkInAction(input: {
     .eq("status", "reserved");
   if (error) return { error: "Could not check the guest in" };
   await logAuditEvent({ admin, shopId: session.shopId, staffId: session.userId, action: "hotel_check_in", entityType: "hotel_booking", entityId: input.bookingId });
-  refreshHotel(input.bookingId);
-  revalidatePath("/restaurant");
   return {};
 }
 
@@ -629,7 +610,6 @@ export async function addChargeAction(input: { bookingId: string; kind: string; 
     posted_by: session.userId,
   });
   if (error) return { error: "Could not add the charge" };
-  refreshHotel(input.bookingId);
   return {};
 }
 
@@ -653,7 +633,6 @@ export async function removeChargeAction(chargeId: string): Promise<HotelResult>
       await invalidateCache(`ray:cache:products:${session.shopId}`);
     }
   }
-  refreshHotel(charge.booking_id);
   return {};
 }
 
@@ -677,7 +656,6 @@ export async function addPaymentAction(input: { bookingId: string; kind: "advanc
     created_by: session.userId,
   });
   if (error) return { error: "Could not record the payment" };
-  refreshHotel(input.bookingId);
   return {};
 }
 
@@ -952,9 +930,6 @@ export async function checkOutAction(input: {
     entityId: detail.id,
     details: { invoiceNumber, total: folio.grandTotal, unpaid: owed },
   });
-  refreshHotel(detail.id);
-  revalidatePath("/restaurant");
-  revalidatePath("/daily-summary");
   return { billId: billId ?? undefined };
 }
 
@@ -1032,7 +1007,6 @@ export async function cancelBookingAction(input: {
     .eq("shop_id", session.shopId);
   if (error) return { error: "Could not cancel the booking" };
   await logAuditEvent({ admin, shopId: session.shopId, staffId: session.userId, action: `hotel_${input.outcome}`, entityType: "hotel_booking", entityId: detail.id, details: { keep, refund } });
-  refreshHotel(detail.id);
   return {};
 }
 

@@ -1,6 +1,5 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { requireSession } from "../auth";
 import { hasArea } from "../staffAccess";
 import { createSupabaseAdminClient } from "../supabase/admin";
@@ -338,7 +337,6 @@ export async function bulkImportGarmentAction(rows: GarmentRow[], duplicates: Ga
     });
   }
   await invalidateCache(`ray:cache:products:${session.shopId}`);
-  for (const path of ["/products", "/garment", "/garment/styles", "/garment/stock", "/garment/import"]) revalidatePath(path);
   errors.sort((a, b) => a.row - b.row);
   return { inserted: insertedIds.length, updated, stylesMade, stockLeft, errors, insertedIds };
 }

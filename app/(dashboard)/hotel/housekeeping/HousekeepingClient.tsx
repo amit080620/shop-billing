@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, UserRound, Wrench } from "lucide-react";
 import { assignRoomsAction, createTicketAction, setHousekeepingAction, ticketStepAction } from "@/lib/actions/hotel-ops";
@@ -53,7 +53,7 @@ export function HousekeepingClient({ rooms, tickets, staff, me, canManage, initi
   );
 }
 
-function Rooms({ rooms, staff, me, canManage }: { rooms: HkCard[]; staff: { id: string; name: string }[]; me: string; canManage: boolean }) {
+function Rooms({ rooms: fromServer, staff, me, canManage }: { rooms: HkCard[]; staff: { id: string; name: string }[]; me: string; canManage: boolean }) {
   const { t } = useT();
   const router = useRouter();
   const { showToast } = useToast();
@@ -61,6 +61,11 @@ function Rooms({ rooms, staff, me, canManage }: { rooms: HkCard[]; staff: { id: 
   const [filter, setFilter] = useState<Filter>("todo");
   const [picked, setPicked] = useState<Set<string>>(new Set());
   const staffName = useMemo(() => new Map(staff.map((s) => [s.id, s.name])), [staff]);
+  // A tap shows at once, and the server's list replaces it when the refresh arrives.
+  const [tapped, setTapped] = useState<Record<string, HkStage>>({});
+  const saving = useRef(0);
+  useEffect(() => setTapped({}), [fromServer]);
+  const rooms = useMemo(() => fromServer.map((r) => (tapped[r.id] ? { ...r, stage: tapped[r.id] } : r)), [fromServer, tapped]);
 
   const toDo = (r: HkCard) => !r.blocked && (r.stage === "dirty" || r.stage === "cleaning");
   const counts = { todo: rooms.filter(toDo).length, mine: rooms.filter((r) => r.assignedTo === me && toDo(r)).length, ready: rooms.filter((r) => !r.blocked && !toDo(r)).length, all: rooms.length };
@@ -69,12 +74,21 @@ function Rooms({ rooms, staff, me, canManage }: { rooms: HkCard[]; staff: { id: 
     // A room with a guest arriving today comes first: it is the one the desk is waiting on.
     .sort((a, b) => Number(b.arrivingToday) - Number(a.arrivingToday));
 
-  function step(id: string, stage: HkStage) {
-    startTransition(async () => {
-      const r = await setHousekeepingAction(id, stage);
-      if (r.error) return showToast(r.error, "error");
-      router.refresh();
-    });
+  async function step(id: string, stage: HkStage) {
+    setTapped((prev) => ({ ...prev, [id]: stage }));
+    saving.current += 1;
+    const r = await setHousekeepingAction(id, stage).catch(() => ({ error: t("Could not reach the server — try again.") }));
+    saving.current -= 1;
+    if (r.error) {
+      setTapped((prev) => {
+        const next = { ...prev };
+        delete next[id];
+        return next;
+      });
+      showToast(r.error, "error");
+    }
+    // Several rooms tapped in a row refresh once, after the last.
+    if (saving.current === 0) router.refresh();
   }
   function assign(staffId: string) {
     startTransition(async () => {
@@ -172,7 +186,7 @@ function Rooms({ rooms, staff, me, canManage }: { rooms: HkCard[]; staff: { id: 
             {!r.blocked && (
               <div className="flex gap-2">
                 {hkNext(r.stage).map((next, i) => (
-                  <button key={next} type="button" disabled={isPending} onClick={() => step(r.id, next)} className={`flex-1 rounded-lg px-3 py-2.5 text-sm font-semibold disabled:opacity-60 ${i === 0 && next !== "dirty" ? "bg-brand text-white" : "border border-border text-foreground"}`}>
+                  <button key={next} type="button" onClick={() => void step(r.id, next)} className={`flex-1 rounded-lg px-3 py-2.5 text-sm font-semibold ${i === 0 && next !== "dirty" ? "bg-brand text-white" : "border border-border text-foreground"}`}>
                     {t(STEP_LABEL[next])}
                   </button>
                 ))}
