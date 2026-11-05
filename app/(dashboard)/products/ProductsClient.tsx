@@ -212,6 +212,10 @@ export function ProductsClient({
   useEffect(() => {
     if (savedCount > 0) router.refresh();
   }, [savedCount, router]);
+  // `?categories=1` (the garment Stock screen's Categories link) opens the categories panel.
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).has("categories")) setShowCategoryForm(true);
+  }, []);
   const [generatingBarcodeFor, setGeneratingBarcodeFor] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [blockedProductId, setBlockedProductId] = useState<string | null>(null);

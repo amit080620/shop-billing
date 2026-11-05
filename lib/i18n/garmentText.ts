@@ -440,6 +440,12 @@ export const GARMENT_TEXT: Record<string, [hi: string, mr: string]> = {
   "Add to purchase": ["खरीद में जोड़ें", "खरेदीत जोडा"],
   "Close without adding to the purchase? What you typed here will be lost.": ["खरीद में जोड़े बिना बंद करें? यहाँ लिखा सब मिट जाएगा।", "खरेदीत न जोडता बंद करायचे? इथे लिहिलेले सर्व जाईल."],
 
+  // ─── Category picker (New style, Sizes × colours) and its Stock home link ─────
+  "+ New category": ["+ नई कैटेगरी", "+ नवीन श्रेणी"],
+  "New category name": ["नई कैटेगरी का नाम", "नवीन श्रेणीचे नाव"],
+  "Couldn't add the category.": ["कैटेगरी नहीं जुड़ पाई।", "श्रेणी जोडता आली नाही."],
+  "Add, rename or remove": ["जोड़ें, नाम बदलें या हटाएं", "जोडा, नाव बदला किंवा काढा"],
+
   // ─── Stock home: stock in through purchases ───────────────────────────────────
   "Stock in: purchases": ["स्टॉक आया: खरीद", "स्टॉक आला: खरेदी"],
   "Buy stock by size and colour": ["साइज़ और रंग से माल खरीदें", "साइज आणि रंगानुसार माल खरेदी करा"],

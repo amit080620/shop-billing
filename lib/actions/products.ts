@@ -12,6 +12,7 @@ import { changedFields, itemSnapshot } from "../auditChanges";
 import { findDuplicateProductAI } from "./duplicateCheck";
 import { invalidateCache } from "../cache";
 import { stockEditError } from "../stockRule";
+import { hasArea } from "../staffAccess";
 
 export type ActionState = { error?: string; productId?: string } | null;
 
@@ -399,6 +400,25 @@ export async function createCategoryAction(
   revalidatePath("/products");
   await invalidateCache(`ray:cache:products:${session.shopId}`);
   return null;
+}
+
+/** A category made from a picker (garment New style, purchase entry's sizes × colours): hands it
+ * back to select at once. A name the shop already has is that category, not an error. Anyone who
+ * manages items or records purchases may add one — the two places it is offered. */
+export async function addCategoryAction(name: string): Promise<{ error?: string; category?: { id: string; name: string } }> {
+  const session = await requireSession();
+  if (!hasArea(session, "manage_products") && !hasArea(session, "purchases")) return { error: "You don't have access to this — ask the owner." };
+  const parsed = categorySchema.safeParse({ name });
+  if (!parsed.success) return { error: parsed.error.issues[0].message };
+  const clean = parsed.data.name.replace(/\s+/g, " ");
+  const admin = createSupabaseAdminClient();
+  const { data: same } = await admin.from("categories").select("id, name").eq("shop_id", session.shopId).ilike("name", clean.replace(/[\\%_]/g, (c) => `\\${c}`)).limit(1);
+  if (same?.length) return { category: same[0] };
+  const { data, error } = await admin.from("categories").insert({ shop_id: session.shopId, name: clean }).select("id, name").single();
+  if (error || !data) return { error: "Couldn't add the category." };
+  revalidatePath("/products");
+  await invalidateCache(`ray:cache:products:${session.shopId}`);
+  return { category: data };
 }
 
 export async function renameCategoryAction(categoryId: string, newName: string): Promise<{ error?: string }> {

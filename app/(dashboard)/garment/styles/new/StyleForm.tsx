@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useT } from "@/lib/i18n/LangContext";
 import { createStyleAction } from "@/lib/actions/garment";
 import { parseList, parseSizes, variantMatrix, variantName } from "@/lib/garment/rules";
+import { CategoryPicker } from "../../CategoryPicker";
 
 const FIELD = "w-full rounded-lg px-3 py-2 text-sm";
 const SIZE_SETS = [
@@ -20,6 +21,7 @@ export function StyleForm({ categories }: { categories: { id: string; name: stri
   const [name, setName] = useState("");
   const [colours, setColours] = useState("");
   const [sizes, setSizes] = useState("");
+  const [categoryId, setCategoryId] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
   const preview = useMemo(() => variantMatrix(parseList(colours), parseSizes(sizes)), [colours, sizes]);
@@ -27,14 +29,18 @@ export function StyleForm({ categories }: { categories: { id: string; name: stri
   return (
     <form
       className="flex flex-col gap-4"
-      action={(fd) =>
+      // Submitted by hand: React clears a <form action> after it runs, which wiped the form when the
+      // server refused it (a style code already used, say).
+      onSubmit={(e) => {
+        e.preventDefault();
+        const fd = new FormData(e.currentTarget);
         start(async () => {
           setError(null);
           const r = await createStyleAction(fd);
           if (r.error) setError(r.error);
           else router.push(`/garment/styles/${r.id}`);
-        })
-      }
+        });
+      }}
     >
       <section className="neu-card flex flex-col gap-2.5 p-4">
         <p className="text-sm font-bold text-foreground">{t("Style")}</p>
@@ -42,14 +48,7 @@ export function StyleForm({ categories }: { categories: { id: string; name: stri
         <div className="grid grid-cols-2 gap-2">
           <input name="code" placeholder={t("Style code (e.g. KUR-101)")} className={FIELD} />
           <input name="brand" placeholder={t("Brand")} className={FIELD} />
-          <select name="categoryId" defaultValue="" className={FIELD} aria-label={t("Garment category")}>
-            <option value="">{t("No category")}</option>
-            {categories.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
-          </select>
+          <CategoryPicker name="categoryId" categories={categories} value={categoryId} onChange={setCategoryId} className={FIELD} />
           <input name="hsnCode" placeholder={t("HSN (e.g. 6204)")} className={FIELD} />
           <input name="fabric" placeholder={t("Fabric")} className={FIELD} />
           <input name="season" placeholder={t("Season / collection")} className={FIELD} />

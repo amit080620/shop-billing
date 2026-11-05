@@ -1,5 +1,5 @@
 import Link from "@/lib/link";
-import { AlertTriangle, ArrowLeftRight, Boxes, CalendarCheck, ClipboardList, FileBarChart, Lock, PackageMinus, PackagePlus, PackageX, RotateCcw, Shirt, Truck, Warehouse } from "lucide-react";
+import { AlertTriangle, ArrowLeftRight, Boxes, CalendarCheck, ClipboardList, FileBarChart, Lock, PackageMinus, PackagePlus, PackageX, RotateCcw, Shirt, Tags, Truck, Warehouse } from "lucide-react";
 import { PageHeader } from "@/app/components/PageHeader";
 import { formatMoney } from "@/lib/format";
 import { isModuleEnabled } from "@/lib/modules";
@@ -39,6 +39,7 @@ export default async function GarmentHome() {
   ];
   const links = [
     { href: "/garment/styles", icon: Shirt, title: t("Styles, sizes & colours"), sub: t("{n} styles", { n: styleCount ?? 0 }), locked: false },
+    { href: "/products?categories=1", icon: Tags, title: t("Categories"), sub: t("Add, rename or remove"), locked: false },
     { href: "/garment/stock", icon: Boxes, title: t("Stock by godown"), sub: t("Every size and colour, every place"), locked: !godownsOn },
     { href: "/garment/transfers", icon: Truck, title: t("Transfers"), sub: t("{n} open", { n: openTransfers.count ?? 0 }), locked: !godownsOn },
     { href: "/garment/move", icon: ArrowLeftRight, title: t("Move on the spot"), sub: t("Shop floor ↔ godown"), locked: !godownsOn },

@@ -133,6 +133,7 @@ export function NewPurchaseClient({
     return [...products.filter((p) => !fresh.has(p.id)), ...made.products];
   }, [products, made.products]);
   const byId = useMemo(() => new Map(allProducts.map((p) => [p.id, p])), [allProducts]);
+  const [madeCategories, setMadeCategories] = useState<{ id: string; name: string }[]>([]);
   const [gridFor, setGridFor] = useState<{ name: string | null } | null>(null);
   const [godownId, setGodownId] = useState<string | null>(garment?.godowns.find((g) => g.isDefault)?.id ?? null);
   const [vendor, setVendor] = useState<Vendor | null>(vendors.find((v) => v.id === preselectedVendorId) ?? null);
@@ -840,7 +841,8 @@ export function NewPurchaseClient({
         <Suspense fallback={null}>
           <GarmentPurchaseGrid
             styles={[...garment.styles, ...made.styles]}
-            categories={garment.categories}
+            categories={[...garment.categories, ...madeCategories]}
+            onCategoryAdded={(c) => setMadeCategories((m) => (m.some((x) => x.id === c.id) ? m : [...m, c]))}
             items={allProducts.flatMap((p) => (p.styleId ? [{ id: p.id, styleId: p.styleId, colour: p.colour ?? null, size: p.size ?? null, stock: p.stock, price: p.price, mrp: p.mrp, last: p.last }] : []))}
             startNew={gridFor.name}
             onAdd={addGridLines}

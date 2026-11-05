@@ -7,6 +7,7 @@ import { formatMoney } from "@/lib/format";
 import { prepareStyleForPurchaseAction, type PurchaseVariant } from "@/lib/actions/garment";
 import { parseList, parseSizes, variantMatrix } from "@/lib/garment/rules";
 import { cellKey, gridLines, styleGrid } from "@/lib/garment/purchaseGrid";
+import { CategoryPicker } from "../CategoryPicker";
 
 export type GridStyle = { id: string; name: string; code: string | null; brand: string | null; gstPercent: number };
 export type GridItem = { id: string; styleId: string; colour: string | null; size: string | null; stock: number | null; price: number; mrp: number | null; last: { rate: number; date: string } | null };
@@ -34,6 +35,7 @@ export function GarmentPurchaseGrid({
   items,
   startNew,
   onAdd,
+  onCategoryAdded,
   onClose,
 }: {
   styles: GridStyle[];
@@ -42,6 +44,8 @@ export function GarmentPurchaseGrid({
   startNew: string | null;
   /** `made`: the style when this grid created it, so a second grid on the same bill can find it. */
   onAdd: (variants: PurchaseVariant[], lines: GridAdd[], made: GridStyle | null) => void;
+  /** A category made here, so the popup still lists it when opened again on this bill. */
+  onCategoryAdded?: (category: { id: string; name: string }) => void;
   onClose: () => void;
 }) {
   const { t } = useT();
@@ -151,7 +155,7 @@ export function GarmentPurchaseGrid({
               style: { ...draft, price: num(draft.price), mrp: draft.mrp.trim() ? num(draft.mrp) : null, colours: parseList(draft.colours), sizes: parseSizes(draft.sizes) },
               cells: [],
             },
-      );
+      ).catch(() => ({ error: undefined, variants: undefined })); // a dropped connection keeps the popup and what is typed
       if (r.error || !r.variants) return setError(r.error ?? t("Couldn't add the style."));
       finish(r.variants);
     });
@@ -259,14 +263,7 @@ export function GarmentPurchaseGrid({
               <div className="grid grid-cols-2 gap-2">
                 <input value={draft.code} onChange={(e) => setDraft({ ...draft, code: e.target.value })} placeholder={t("Style code (e.g. KUR-101)")} className={FIELD} />
                 <input value={draft.brand} onChange={(e) => setDraft({ ...draft, brand: e.target.value })} placeholder={t("Brand")} className={FIELD} />
-                <select value={draft.categoryId} onChange={(e) => setDraft({ ...draft, categoryId: e.target.value })} className={FIELD} aria-label={t("Garment category")}>
-                  <option value="">{t("No category")}</option>
-                  {categories.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}
-                    </option>
-                  ))}
-                </select>
+                <CategoryPicker categories={categories} value={draft.categoryId} onChange={(categoryId) => setDraft((d) => ({ ...d, categoryId }))} onCreated={onCategoryAdded} className={FIELD} />
                 <input value={draft.hsnCode} onChange={(e) => setDraft({ ...draft, hsnCode: e.target.value })} placeholder={t("HSN (e.g. 6204)")} className={FIELD} />
                 <input value={draft.fabric} onChange={(e) => setDraft({ ...draft, fabric: e.target.value })} placeholder={t("Fabric")} className={FIELD} />
                 <input value={draft.season} onChange={(e) => setDraft({ ...draft, season: e.target.value })} placeholder={t("Season / collection")} className={FIELD} />
