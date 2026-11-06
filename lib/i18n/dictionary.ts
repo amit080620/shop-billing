@@ -7,6 +7,7 @@ import { PURCHASE_TEXT } from "./purchaseText";
 import { NEW_HOME_TEXT } from "./newHomeText";
 import { NEW_POS_TEXT } from "./newPosText";
 import { HOTEL_OPS_TEXT } from "./hotelOpsText";
+import { VAN_TEXT } from "./vanText";
 import en from "./en";
 import hi from "./hi";
 import mr from "./mr";
@@ -25,7 +26,7 @@ for (const [key, [enText, hiText, mrText]] of Object.entries(SCREEN_STRINGS)) {
 }
 // Menu/report text is keyed by its English wording (English falls back to the key).
 // Garment and purchase text come last, so they only fill words the other tables don't have.
-for (const [english, [hiText, mrText]] of [...Object.entries(MENU_TEXT), ...Object.entries(PAGE_TEXT), ...Object.entries(HOTEL_TEXT), ...Object.entries(GARMENT_TEXT), ...Object.entries(PURCHASE_TEXT), ...Object.entries(NEW_HOME_TEXT), ...Object.entries(NEW_POS_TEXT), ...Object.entries(HOTEL_OPS_TEXT)]) {
+for (const [english, [hiText, mrText]] of [...Object.entries(MENU_TEXT), ...Object.entries(PAGE_TEXT), ...Object.entries(HOTEL_TEXT), ...Object.entries(GARMENT_TEXT), ...Object.entries(PURCHASE_TEXT), ...Object.entries(NEW_HOME_TEXT), ...Object.entries(NEW_POS_TEXT), ...Object.entries(HOTEL_OPS_TEXT), ...Object.entries(VAN_TEXT)]) {
   translations.hi[english] ??= hiText;
   translations.mr[english] ??= mrText;
 }

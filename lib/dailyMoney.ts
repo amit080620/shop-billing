@@ -171,9 +171,9 @@ export async function computeDailyMoney(admin: Admin, shopId: string, date: stri
       .gt("security_deposit_returned", 0)
       .gte("actual_return_date", startOfDay.toISOString())
       .lte("actual_return_date", endOfDay.toISOString()),
-    // Salary, advances and bonuses handed to staff today (migration 0046).
+    // Salary, advances and bonuses handed to staff today (migration 0046). A deduction moves no money.
     (await payrollReady(admin))
-      ? admin.from("worker_payments").select("payment_method, amount").eq("shop_id", shopId).gte("created_at", startOfDay.toISOString()).lte("created_at", endOfDay.toISOString())
+      ? admin.from("worker_payments").select("payment_method, amount").eq("shop_id", shopId).neq("kind", "deduction" as never).gte("created_at", startOfDay.toISOString()).lte("created_at", endOfDay.toISOString())
       : Promise.resolve({ data: [] as never[] }),
     // Diesel, toll, driver bhatta… paid for the vehicles on this day (migration 0049).
     (await transportExtrasReady(admin))

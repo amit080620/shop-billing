@@ -1,5 +1,5 @@
 import Link from "@/lib/link";
-import { MapPinned } from "lucide-react";
+import { FileUp, MapPinned } from "lucide-react";
 import { PageHeader } from "@/app/components/PageHeader";
 import { BackLink } from "@/app/components/BackLink";
 import { DateRangeControls } from "@/app/components/DateRangeControls";
@@ -8,6 +8,7 @@ import { formatMoney } from "@/lib/format";
 import { loadTracks, loadTrips, loadVisitsBetween, tripSummaries } from "@/lib/van/data";
 import { idleStops, OUTCOME_LABEL, routeKm, type VisitOutcome } from "@/lib/van/geo";
 import { vanGate } from "../gate";
+import { vanPhotoLinks } from "@/lib/van/photos";
 
 const iso = (v?: string) => (v && /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : null);
 const time = (at: string | null) => (at ? new Date(at).toLocaleTimeString("en-IN", { timeZone: "Asia/Kolkata", hour: "numeric", minute: "2-digit" }) : "—");
@@ -32,6 +33,8 @@ export default async function VanVisitsPage({ searchParams }: { searchParams: Pr
     trips.length ? (admin as unknown as { from: (t: string) => ReturnType<typeof admin.from> }).from("van_expenses").select("trip_id, kind, amount").in("trip_id", trips.map((x) => x.id)) : Promise.resolve({ data: [] }),
   ]);
   const beatParties = (parties ?? []) as unknown as { id: string; name: string; beat: string }[];
+  // A visit's photo (migration 0067), opened through a short-lived link.
+  const photoOf = await vanPhotoLinks(admin, visits.map((v) => v.photoPath));
   const byBeat = new Map<string, { id: string; name: string }[]>();
   for (const c of beatParties) byBeat.set(c.beat.trim().toLowerCase(), [...(byBeat.get(c.beat.trim().toLowerCase()) ?? []), c]);
   const diesel = (tripId: string) => ((expenses ?? []) as { trip_id: string; kind: string; amount: number }[]).filter((e) => e.trip_id === tripId && e.kind === "diesel").reduce((s, e) => s + Number(e.amount), 0);
@@ -73,6 +76,9 @@ export default async function VanVisitsPage({ searchParams }: { searchParams: Pr
       <BackLink fallback="/van" />
       <PageHeader title={t("Route reports")} subtitle={t("Visits, missed shops, km and time")} icon={<MapPinned size={18} strokeWidth={1.8} />} />
       <DateRangeControls from={from} to={to} basePath="/van/visits" />
+      <a href={`/api/van/export?report=visits&from=${from}&to=${to}`} download className="flex items-center gap-1.5 self-start rounded-lg border border-border px-3 py-1.5 text-xs font-semibold text-foreground">
+        <FileUp size={14} /> {t("Download Excel")}
+      </a>
 
       <section className="neu-card flex flex-col gap-1 p-4 text-sm">
         <h2 className="mb-1 text-sm font-semibold text-foreground">{t("Km by van")}</h2>
@@ -164,6 +170,11 @@ export default async function VanVisitsPage({ searchParams }: { searchParams: Pr
                     <td className="px-2 py-1.5 text-muted">
                       {t(OUTCOME_LABEL[v.outcome as VisitOutcome] ?? v.outcome)}
                       {v.note ? ` · ${v.note}` : ""}
+                      {v.photoPath && photoOf.get(v.photoPath) ? (
+                        <a href={photoOf.get(v.photoPath)} target="_blank" rel="noopener noreferrer" className="ml-1 font-semibold text-brand-text underline">
+                          {t("Photo")}
+                        </a>
+                      ) : null}
                     </td>
                     <td className={`px-3 py-1.5 ${v.verified === false ? "font-semibold text-danger" : "text-muted"}`}>{v.verified === null ? t("No pin or reading") : v.verified ? t("Yes") : `${t("No")} · ${v.distance} m`}</td>
                   </tr>

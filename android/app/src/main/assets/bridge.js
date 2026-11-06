@@ -175,5 +175,5 @@
   setInterval(syncBars, 1200);
   document.addEventListener("DOMContentLoaded", syncBars);
 
-  window.RayApp = { platform: "android", version: cfg.version, features: { barcode: !!cfg.barcode, contacts: true }, call, on, toBase64, saveUrl };
+  window.RayApp = { platform: "android", version: cfg.version, features: { barcode: !!cfg.barcode, contacts: true, location: !!cfg.location }, call, on, toBase64, saveUrl };
 })();

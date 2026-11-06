@@ -1,10 +1,12 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "@/lib/link";
-import { MapPin, Navigation, Plus } from "lucide-react";
+import { Camera, MapPin, Navigation, Plus } from "lucide-react";
 import { useT } from "@/lib/i18n/LangContext";
-import { addShopOnRouteAction, checkInAction, saveShopPinAction } from "@/lib/actions/van";
+import { addShopOnRouteAction, checkInAction, saveShopPinAction, uploadVanPhotoAction } from "@/lib/actions/van";
+import { flushVisits, queueVisit, queuedVisits } from "@/lib/van/offlineVan";
+import { photoForm } from "@/lib/van/photoShrink";
 import { distanceM, nearestOrder, navigateTo, OUTCOME_LABEL, routeLinks, VISIT_OUTCOMES, type VisitOutcome } from "@/lib/van/geo";
 import { queuePing, type Fix, type TrackerState } from "@/lib/van/useTripTracker";
 import type { RouteShop, Visit } from "@/lib/van/data";
@@ -21,7 +23,7 @@ const STATE_TEXT: Record<TrackerState, string> = {
 /** Today's route for the salesman: the beat's shops nearest-next from where he is, each with its
  * status, distance, one-tap navigation in Google Maps (a free link) and "Reached shop" with what came of
  * it; the whole remaining route as links; a new shop met on the way. */
-export function RouteSection({ tripId, shops, visits, fix, state, onRoute }: { tripId: string; shops: RouteShop[]; visits: Visit[]; fix: Fix | null; state: TrackerState; onRoute: boolean }) {
+export function RouteSection({ tripId, shops, visits, fix, state, onRoute, photos = false }: { tripId: string; shops: RouteShop[]; visits: Visit[]; fix: Fix | null; state: TrackerState; onRoute: boolean; photos?: boolean }) {
   const { t } = useT();
   const { run, pending, error } = useRun();
   const [open, setOpen] = useState<string | null>(null);
@@ -30,6 +32,17 @@ export function RouteSection({ tripId, shops, visits, fix, state, onRoute }: { t
   const [adding, setAdding] = useState(false);
   const [newName, setNewName] = useState("");
   const [newPhone, setNewPhone] = useState("");
+  const [visitPhoto, setVisitPhoto] = useState<File | null>(null);
+  const [note2, setNote2] = useState<string | null>(null);
+  const [kept, setKept] = useState(0);
+  // Visits saved on the phone with no internet go up now (and when it comes back).
+  useEffect(() => {
+    setKept(queuedVisits(tripId).length);
+    const send = () => void flushVisits(tripId).then(() => setKept(queuedVisits(tripId).length));
+    send();
+    window.addEventListener("online", send);
+    return () => window.removeEventListener("online", send);
+  }, [tripId]);
 
   const lastVisit = useMemo(() => {
     const m = new Map<string, Visit>();
@@ -96,16 +109,43 @@ export function RouteSection({ tripId, shops, visits, fix, state, onRoute }: { t
             ))}
           </div>
           <input value={note} onChange={(e) => setNote(e.target.value)} placeholder={t("Note (optional)")} className="rounded-lg px-3 py-2 text-sm" />
+          {photos && (
+            <label className="flex cursor-pointer items-center gap-2 self-start rounded-lg border border-dashed border-border px-3 py-1.5 text-xs font-medium text-foreground">
+              <Camera size={14} /> {visitPhoto ? t("Photo added") : t("Photo (optional)")}
+              <input type="file" accept="image/*" capture="environment" className="hidden" onChange={(e) => setVisitPhoto(e.target.files?.[0] ?? null)} />
+            </label>
+          )}
           <div className="flex gap-2">
             <button
               type="button"
               disabled={pending}
-              onClick={() =>
-                run(() => checkInAction(tripId, { customerId: s.id, outcome, note, fix }), () => {
+              onClick={() => {
+                setNote2(null);
+                // No internet: the visit is kept on the phone and goes up by itself later (without its photo).
+                if (photos && typeof navigator !== "undefined" && !navigator.onLine) {
+                  queueVisit(tripId, { customerId: s.id, outcome, note: note.trim().slice(0, 200), fix });
+                  setKept(queuedVisits(tripId).length);
+                  setNote2(visitPhoto ? t("No internet: the visit is kept on this phone and sent later, without its photo.") : t("No internet: the visit is kept on this phone and sent later."));
                   setOpen(null);
                   setNote("");
-                })
-              }
+                  setVisitPhoto(null);
+                  return;
+                }
+                run(
+                  async () => {
+                    const saved = await checkInAction(tripId, { customerId: s.id, outcome, note, fix });
+                    if (saved.error || !saved.id || !visitPhoto) return saved;
+                    const up = await uploadVanPhotoAction("visit", saved.id, await photoForm(visitPhoto));
+                    if (up.error) setNote2(t("The visit is saved, but its photo didn't go up: {why}", { why: up.error }));
+                    return saved;
+                  },
+                  () => {
+                    setOpen(null);
+                    setNote("");
+                    setVisitPhoto(null);
+                  },
+                );
+              }}
               className="btn-primary-sm disabled:opacity-60"
             >
               {t("Save visit")}
@@ -128,6 +168,8 @@ export function RouteSection({ tripId, shops, visits, fix, state, onRoute }: { t
         </Link>
       </div>
       {onRoute && <p className={`rounded-lg px-3 py-1.5 text-[11px] ${state === "on" ? "bg-success-soft text-foreground" : "bg-warning-soft text-foreground"}`}>{t(STATE_TEXT[state])}</p>}
+      {kept > 0 && <p className="text-[11px] text-credit">{t("{n} visit(s) kept on this phone, waiting for the internet.", { n: kept })}</p>}
+      {note2 && <p className="text-[11px] text-muted">{note2}</p>}
       {shops.length === 0 && <p className="text-xs text-muted">{t("No shops on this route. Set the trip's route to a beat your parties have, or add shops on the way.")}</p>}
       {onRoute && links.length > 0 && (
         <div className="flex flex-wrap gap-2">

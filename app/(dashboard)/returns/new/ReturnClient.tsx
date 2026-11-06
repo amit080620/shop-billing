@@ -40,7 +40,10 @@ export function ReturnClient({
   needsPin,
   canAdjust,
   items,
+  van = null,
 }: {
+  /** Taken on a wholesale van's trip (Van sales): the goods go back onto the van, or to damaged stock. */
+  van?: { tripId: string; vehicle: string; trip: string } | null;
   billId: string;
   invoiceNumber: string;
   customerName: string | null;
@@ -55,6 +58,7 @@ export function ReturnClient({
 }) {
   const [quantities, setQuantities] = useState<Record<string, number>>({});
   const [reason, setReason] = useState("");
+  const [vanDamaged, setVanDamaged] = useState(false);
   // The ways this bill can be refunded: the modes it took money in, and its customer's udhaar.
   const ways = [...refundModes.map((r) => r.method), ...(canAdjust ? (["credit_adjustment"] as const) : [])];
   const [refundMethod, setRefundMethod] = useState<"cash" | "card" | "upi" | "online" | "other" | "credit_adjustment" | "">(ways[0] ?? "");
@@ -102,6 +106,8 @@ export function ReturnClient({
       <input type="hidden" name="billId" value={billId} />
       <input type="hidden" name="lines" value={lines} />
       <input type="hidden" name="clientRef" value={clientRef} />
+      {van && <input type="hidden" name="vanTripId" value={van.tripId} />}
+      {van && <input type="hidden" name="vanDamaged" value={vanDamaged ? "1" : "0"} />}
 
       <div className="flex items-center justify-between">
         <div>
@@ -112,6 +118,20 @@ export function ReturnClient({
           ← Bill
         </Link>
       </div>
+
+      {van && (
+        <div className="flex flex-col gap-2 rounded-lg border border-brand/40 bg-brand-soft px-3 py-2.5">
+          <p className="text-xs font-medium text-brand-text">Taken on {van.vehicle} · trip {van.trip}. Where do the goods go?</p>
+          <div className="grid grid-cols-2 gap-1 rounded-full bg-surface p-1 text-xs font-semibold">
+            <button type="button" onClick={() => setVanDamaged(false)} className={`rounded-full px-3 py-1.5 ${!vanDamaged ? "bg-brand text-white" : "text-muted"}`}>
+              Good: back on the van
+            </button>
+            <button type="button" onClick={() => setVanDamaged(true)} className={`rounded-full px-3 py-1.5 ${vanDamaged ? "bg-brand text-white" : "text-muted"}`}>
+              Broken: damaged stock
+            </button>
+          </div>
+        </div>
+      )}
 
       <p className="text-sm text-muted">Set how many of each item are being returned.</p>
 

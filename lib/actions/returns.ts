@@ -7,7 +7,10 @@ import { createSupabaseAdminClient } from "../supabase/admin";
 import { financialYearFor, round2 } from "../gst";
 import { NO_FIGURES, returnFigures, sumReturned, type LineFigures } from "../returnMath";
 import { buyerSchemaReady } from "../gstBuyer";
-import { giveBackReturn, recordReturn } from "../stockMoves";
+import { giveBackReturn, recordReturn, vanRecordReturn } from "../stockMoves";
+import { isModuleEnabled } from "../modules";
+import { vanMoreReady } from "../van/server";
+import { mayWorkTrip } from "../van/rules";
 import { missingColumn } from "../stockRule";
 import { logAuditEvent } from "../audit";
 import { loadRefundRoom } from "../billPayments";
@@ -145,6 +148,10 @@ export async function createReturnAction(
   if (!room) return { error: "Couldn't check this bill's earlier refunds — check the connection and try again." };
   const refundRefused = refundError(room, method, total, !!bill.customer_id);
   if (refundRefused) return { error: refundRefused };
+  // Taken on a wholesale van's trip (Van sales): the goods go back onto the van, or broken into
+  // damaged stock. Checked before a credit-note number is used up, like the refund.
+  const van = await vanForReturn(admin, session, formData.get("vanTripId"));
+  if (van && "error" in van) return { error: van.error };
 
   const financialYear = financialYearFor(new Date());
   const { data: issuedNumber, error: numberError } = await admin.rpc("next_return_number", {
@@ -185,7 +192,7 @@ export async function createReturnAction(
   // never more returned than sold, even by two staff at once; nothing against a bill voided
   // meanwhile; the goods, their batch and the udhaar adjustment with it or not at all; and this form's
   // request (clientRef) saved once, so pressing Save again after a lost answer is safe.
-  const recorded = await recordReturn(admin, {
+  const returnArgs: Parameters<typeof recordReturn>[1] = {
     shopId: session.shopId,
     billId,
     staffId: session.userId,
@@ -203,7 +210,10 @@ export async function createReturnAction(
       line_total: row.line_total,
     })),
     creditNote,
-  });
+  };
+  const recorded = van
+    ? await vanRecordReturn(admin, { ...returnArgs, tripId: van.tripId, damaged: formData.get("vanDamaged") === "1" })
+    : await recordReturn(admin, returnArgs);
   if (recorded.kind === "saved") return done(recorded.returnId);
   if (recorded.kind === "voided") return { error: "This bill was voided just now — its goods are already back in stock, so nothing was returned." };
   if (recorded.kind === "too_many") {
@@ -235,6 +245,22 @@ export async function createReturnAction(
 }
 
 type Admin = ReturnType<typeof createSupabaseAdminClient>;
+
+/** The van trip a return is taken on, when the form names one: a wholesale shop with Van sales and
+ * migration 0067, the trip open (on the route or back, not settled), and its salesman, the owner or a
+ * manager. Null when the form names none. */
+async function vanForReturn(admin: Admin, session: SessionContext, raw: FormDataEntryValue | null): Promise<{ tripId: string } | { error: string } | null> {
+  if (typeof raw !== "string" || !raw) return null;
+  if (!/^[0-9a-f-]{36}$/i.test(raw) || session.businessType !== "wholesale" || !isModuleEnabled(session.enabledModules, "van_sales") || !(await vanMoreReady(admin))) {
+    return { error: "Returns onto a van aren't on for this shop." };
+  }
+  const { data } = await admin.from("van_trips" as never).select("status, salesman_id").eq("id", raw).eq("shop_id", session.shopId).maybeSingle();
+  const trip = data as { status: string; salesman_id: string | null } | null;
+  if (!trip || !mayWorkTrip(session.role, session.userId, trip.salesman_id)) return { error: "That van trip wasn't found." };
+  if (trip.status !== "loaded" && trip.status !== "returned") return { error: "This van trip is settled, so returns can't go onto it now. Take the return from the counter." };
+  return { tripId: raw };
+}
+
 type ItemRow = { bill_item_id: string; product_id: string | null; product_name: string; quantity: number; unit_price: number; gst_percent: number; line_subtotal: number; cgst_amount: number; sgst_amount: number; igst_amount: number; line_total: number };
 
 /** A return saved but not wanted any more (its lines failed, or its bill was voided meanwhile): taken

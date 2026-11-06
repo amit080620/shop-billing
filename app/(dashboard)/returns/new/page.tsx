@@ -4,14 +4,17 @@ import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { ReturnClient } from "./ReturnClient";
 import { NO_FIGURES, sumReturned, type LineFigures } from "@/lib/returnMath";
 import { loadRefundRoom } from "@/lib/billPayments";
+import { isModuleEnabled } from "@/lib/modules";
+import { vanMoreReady } from "@/lib/van/server";
+import { mayWorkTrip } from "@/lib/van/rules";
 
 export default async function NewReturnPage({
   searchParams,
 }: {
-  searchParams: Promise<{ billId?: string }>;
+  searchParams: Promise<{ billId?: string; trip?: string }>;
 }) {
   const session = await requireSession();
-  const { billId } = await searchParams;
+  const { billId, trip } = await searchParams;
 
   if (!billId) {
     return <p className="text-sm text-muted">No bill selected.</p>;
@@ -65,6 +68,18 @@ export default async function NewReturnPage({
 
   const customer = Array.isArray(bill.customers) ? bill.customers[0] : bill.customers;
 
+  // Taken on a wholesale van's trip (Van sales, migration 0067): only for that trip's salesman, the
+  // owner or a manager, while the trip is open. Otherwise the plain return, as before.
+  let van: { tripId: string; vehicle: string; trip: string } | null = null;
+  if (trip && /^[0-9a-f-]{36}$/i.test(trip) && session.businessType === "wholesale" && isModuleEnabled(session.enabledModules, "van_sales") && (await vanMoreReady(admin))) {
+    const { data } = await admin.from("van_trips" as never).select("id, trip_number, status, salesman_id, vehicle_id").eq("id", trip).eq("shop_id", session.shopId).maybeSingle();
+    const tr = data as { id: string; trip_number: string; status: string; salesman_id: string | null; vehicle_id: string } | null;
+    if (tr && (tr.status === "loaded" || tr.status === "returned") && mayWorkTrip(session.role, session.userId, tr.salesman_id)) {
+      const { data: g } = await admin.from("godowns" as never).select("name").eq("id", tr.vehicle_id).maybeSingle();
+      van = { tripId: tr.id, vehicle: (g as { name?: string } | null)?.name ?? "Van", trip: tr.trip_number };
+    }
+  }
+
   return (
     <ReturnClient
       billId={bill.id}
@@ -74,6 +89,7 @@ export default async function NewReturnPage({
       refundModes={refundModes ?? []}
       needsPin={!!pinRow?.manager_pin}
       canAdjust={!!bill.customer_id}
+      van={van}
       items={(billItems ?? [])
         .map((item) => {
           const returned = returnedByItem.get(item.id) ?? NO_FIGURES;

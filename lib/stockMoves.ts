@@ -481,13 +481,42 @@ export async function recordReturn(
     p_credit_note: args.creditNote,
   });
   if (noteFunctionResult("record_return", error)) return { kind: "missing" };
+  return returnReply(args.billId, data, error);
+}
+
+/** A shop return made from a wholesale van (migration 0067): the same return, in the same transaction
+ * its goods go onto the van — or, broken, into the trip godown's damaged stock. */
+export async function vanRecordReturn(
+  admin: Admin,
+  args: Parameters<typeof recordReturn>[1] & { tripId: string; damaged: boolean },
+): Promise<RecordReturnResult> {
+  const { data, error } = await admin.rpc("van_record_return" as "record_return", {
+    p_shop_id: args.shopId,
+    p_trip_id: args.tripId,
+    p_bill_id: args.billId,
+    p_staff_id: args.staffId,
+    p_client_ref: args.clientRef,
+    p_header: args.header,
+    p_lines: args.lines,
+    p_credit_note: args.creditNote,
+    p_damaged: args.damaged,
+  } as never);
+  if (error && ["trip_not_open", "no_default_godown", "insufficient_godown_stock"].includes(error.message)) {
+    const { vanError } = await import("./van/rules");
+    return { kind: "refused", error: vanError(error.message, typeof error.details === "string" ? error.details : null) };
+  }
+  return returnReply(args.billId, data, error);
+}
+
+/** record_return's answer (or its refusal) in plain words. */
+function returnReply(billId: string, data: unknown, error: { message: string; details?: string | null } | null): RecordReturnResult {
   if (error) {
     if (error.message === "unknown_item") return { kind: "refused", error: "An item on this bill is no longer in this shop's list, so its stock can't go back — nothing was returned." };
     if (error.message === "batch_mismatch") return { kind: "refused", error: "A returned medicine's batch is missing or doesn't match the item, so it can't go back to its batch — nothing was returned." };
     if (error.message === "invalid_stock_move") return { kind: "refused", error: "This return couldn't be saved — refresh the bill and try again." };
     if (error.message === "refund_exceeds_mode") return { kind: "refused", error: "This refund is more than the bill received in that payment mode — pick another mode the bill was paid in, or a smaller amount." };
     if (error.message === "request_conflict") return { kind: "refused", error: "This return form was already used for another bill — reload the page and try again." };
-    console.error("Could not record a return", args.billId, error);
+    console.error("Could not record a return", billId, error);
     return { kind: "failed" };
   }
   const d = (data ?? {}) as { result?: string; return_id?: string; bill_item_id?: string; left?: number };

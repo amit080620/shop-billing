@@ -41,12 +41,13 @@ export function countResult(lines: CountLine[]): { lines: CountResult[]; shortag
 /** The money a trip should hand over. Cash: what it set out with, the cash taken on its bills and
  * collections, less its expenses (paid from that cash). UPI and the rest went straight to the shop's
  * account, so they are checked, not handed over. */
-export type TripMoney = { openingCash: number; cashBills: number; upiBills: number; otherBills: number; creditBills: number; cashCollections: number; upiCollections: number; expenses: number };
+export type TripMoney = { openingCash: number; cashBills: number; upiBills: number; otherBills: number; creditBills: number; cashCollections: number; upiCollections: number; expenses: number; cashRefunds: number; upiRefunds: number };
 
+/** Shop returns taken on the trip refunded in cash come out of the van's cash; in UPI, off the UPI. */
 export function moneyDue(m: TripMoney): { cashExpected: number; upiExpected: number; sold: number } {
   return {
-    cashExpected: money(m.openingCash + m.cashBills + m.cashCollections - m.expenses),
-    upiExpected: money(m.upiBills + m.upiCollections),
+    cashExpected: money(m.openingCash + m.cashBills + m.cashCollections - m.expenses - m.cashRefunds),
+    upiExpected: money(m.upiBills + m.upiCollections - m.upiRefunds),
     sold: money(m.cashBills + m.upiBills + m.otherBills + m.creditBills),
   };
 }
@@ -59,6 +60,16 @@ export const canRunVans = (role: string) => role === "owner" || role === "manage
 
 /** A trip's salesman may bill from it, add expenses and bring it back; so may the owner or a manager. */
 export const mayWorkTrip = (role: string, userId: string, salesmanId: string | null) => canRunVans(role) || (!!salesmanId && salesmanId === userId);
+
+/** How far below the rate list a bill is, as a % of it: what the salesman took off (a lower rate typed
+ * in, a bill discount) — compared before round-off, so rounding never counts as a discount. */
+export function discountGiven(listTotal: number, billTotal: number): number {
+  if (!(listTotal > 0)) return 0;
+  return Math.max(0, Math.round(((listTotal - billTotal) / listTotal) * 10000) / 100);
+}
+
+/** What a party may still take on udhaar under its limit (null: no limit). */
+export const creditRoom = (limit: number | null, owed: number): number | null => (limit === null ? null : money(Math.max(0, limit - Math.max(0, owed))));
 
 /** Error codes from the database's van functions, in plain words. */
 export function vanError(message: string | undefined, detail?: string | null): string {
@@ -95,6 +106,10 @@ export function vanError(message: string | undefined, detail?: string | null): s
       return `Switch on "Track stock" for ${d.name ?? "the item"} before loading it.`;
     case "inactive_godown":
       return `${d.name ?? "That van or godown"} is switched off.`;
+    case "no_salary_record":
+      return "The salesman has no Staff salary record linked to his login. Add him under Staff attendance & salary, or settle without taking it off the salary.";
+    case "no_default_godown":
+      return "Set up the main godown first (adding a van does it).";
     case "unknown_vehicle":
     case "unknown_trip":
       return "That van or trip wasn't found.";

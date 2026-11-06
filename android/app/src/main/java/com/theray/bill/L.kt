@@ -75,5 +75,19 @@ object L {
         "cant_read" to arrayOf("Couldn't read the file", "फ़ाइल पढ़ी नहीं जा सकी", "फाइल वाचता आली नाही"),
         "allow_storage" to arrayOf("Allow storage permission to save files", "फ़ाइल सेव करने के लिए स्टोरेज की अनुमति दें", "फाइल सेव्ह करण्यासाठी स्टोरेज परवानगी द्या"),
         "downloading" to arrayOf("Downloading %s…", "%s डाउनलोड हो रहा है…", "%s डाउनलोड होत आहे…"),
+
+        // Van trip tracking with the screen off
+        "trip_channel" to arrayOf("Van trip", "वैन ट्रिप", "व्हॅन ट्रिप"),
+        "trip_title" to arrayOf("Trip in progress", "ट्रिप चल रही है", "ट्रिप सुरू आहे"),
+        "trip_text" to arrayOf(
+            "The van's route is being recorded. It stops when the van is back.",
+            "वैन का रास्ता रिकॉर्ड हो रहा है। वैन वापस आने पर रुक जाएगा।",
+            "व्हॅनचा मार्ग नोंदवला जात आहे. व्हॅन परत आल्यावर थांबेल.",
+        ),
+        "allow_location" to arrayOf(
+            "Allow location for The Ray to record the trip's route.",
+            "ट्रिप का रास्ता रिकॉर्ड करने के लिए The Ray को लोकेशन की अनुमति दें।",
+            "ट्रिपचा मार्ग नोंदवण्यासाठी The Ray ला लोकेशनची परवानगी द्या.",
+        ),
     )
 }

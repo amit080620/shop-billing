@@ -233,7 +233,7 @@ export async function loadNewBillScreen(
     const van = await vanBillingStock(admin, session, params.trip);
     if (van) {
       props.products = props.products.flatMap((p) => (van.stock.has(p.id) ? [{ ...p, trackInventory: true, stockQuantity: van.stock.get(p.id)! }] : []));
-      props.vanTrip = { id: van.tripId, number: van.number, vehicle: van.vehicle };
+      props.vanTrip = { id: van.tripId, number: van.number, vehicle: van.vehicle, numbers: van.numbers, maxDiscount: van.maxDiscount };
     }
   }
   return { props, fastBillingEnabled: !!shop?.fast_billing_enabled };

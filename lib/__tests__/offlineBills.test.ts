@@ -60,7 +60,7 @@ describe("syncing waiting bills", () => {
     store.set("OFFLINE-1-a", bill("OFFLINE-1-a", "shop-a", "2026-10-20T09:00:00Z"));
     store.set("OFFLINE-3-c", bill("OFFLINE-3-c", "shop-b", "2026-10-20T08:00:00Z"));
     action.mockResolvedValue({ billId: "x", invoiceNumber: "2026-27/00001" });
-    expect(await syncPendingBills("shop-a")).toEqual({ synced: 2, failed: 0, stillOffline: false });
+    expect(await syncPendingBills("shop-a")).toEqual({ synced: 2, failed: 0, stillOffline: false, renumbered: [] });
     expect(action.mock.calls.map(([p]) => [p.clientRef, p.createdAt])).toEqual([
       ["OFFLINE-1-a", "2026-10-20T09:00:00Z"],
       ["OFFLINE-2-b", "2026-10-20T10:00:00Z"],
@@ -73,7 +73,7 @@ describe("syncing waiting bills", () => {
     store.set("OFFLINE-1-a", bill("OFFLINE-1-a", "shop-a", "2026-10-20T09:00:00Z"));
     store.set("OFFLINE-2-b", bill("OFFLINE-2-b", "shop-a", "2026-10-20T10:00:00Z"));
     action.mockResolvedValueOnce({ error: "Product not found" }).mockRejectedValueOnce(new TypeError("Failed to fetch"));
-    expect(await syncPendingBills("shop-a")).toEqual({ synced: 0, failed: 1, stillOffline: true });
+    expect(await syncPendingBills("shop-a")).toEqual({ synced: 0, failed: 1, stillOffline: true, renumbered: [] });
     expect(store.get("OFFLINE-1-a")?.status).toBe("failed");
     expect(store.get("OFFLINE-1-a")?.syncError).toBe("Product not found");
     expect(store.get("OFFLINE-2-b")?.status).toBe("pending");

@@ -1,5 +1,5 @@
 import Link from "@/lib/link";
-import { BarChart3 } from "lucide-react";
+import { BarChart3, FileUp } from "lucide-react";
 import { PageHeader } from "@/app/components/PageHeader";
 import { BackLink } from "@/app/components/BackLink";
 import { DateRangeControls } from "@/app/components/DateRangeControls";
@@ -32,6 +32,9 @@ export default async function VanReportsPage({ searchParams }: { searchParams: P
       <BackLink fallback="/van" />
       <PageHeader title={t("Van reports")} subtitle={t("Van-wise sales, money and shortages")} icon={<BarChart3 size={18} strokeWidth={1.8} />} />
       <DateRangeControls from={from} to={to} basePath="/van/reports" />
+      <a href={`/api/van/export?report=trips&from=${from}&to=${to}`} download className="flex items-center gap-1.5 self-start rounded-lg border border-border px-3 py-1.5 text-xs font-semibold text-foreground">
+        <FileUp size={14} /> {t("Download Excel")}
+      </a>
 
       {trips.length === 0 && <p className="rounded-xl border border-dashed border-border px-4 py-6 text-center text-sm text-muted">{t("No trips in these dates.")}</p>}
 

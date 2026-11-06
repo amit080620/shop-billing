@@ -2,13 +2,18 @@ import { notFound } from "next/navigation";
 import { Truck } from "lucide-react";
 import { PageHeader } from "@/app/components/PageHeader";
 import { BackLink } from "@/app/components/BackLink";
-import { loadRouteShops, loadStockByPlace, loadTracks, loadTrip } from "@/lib/van/data";
+import { loadRouteShops, loadStockByPlace, loadTracks, loadTrip, vanOfflinePack } from "@/lib/van/data";
 import { mayWorkTrip } from "@/lib/van/rules";
+import { vanMoreReady } from "@/lib/van/server";
+import { isModuleEnabled } from "@/lib/modules";
+import { payrollReady } from "@/lib/payrollData";
 import { vanGate, Notice } from "../../gate";
 import { TripClient } from "./TripClient";
 
-/** One trip: its load, the van's stock, bills and expenses, and the settlement. The salesman sees and
- * does his part (bill, expenses, back); the owner or a manager loads, tops up and settles. */
+/** One trip: its load, the van's stock, bills, shop returns and expenses, and the settlement. The
+ * salesman sees and does his part (bill, returns, expenses, back); the owner or a manager loads, tops
+ * up and settles. While the trip is on the route, the salesman's phone keeps what it needs to bill
+ * from the van with no internet. */
 export default async function TripPage({ params }: { params: Promise<{ id: string }> }) {
   const gate = await vanGate(false);
   if ("blocked" in gate) return gate.blocked;
@@ -28,11 +33,31 @@ export default async function TripPage({ params }: { params: Promise<{ id: strin
     const stock = await loadStockByPlace(admin, session.shopId);
     loadItems = stock.rows.map((r) => ({ id: r.id, name: r.name, unit: r.unit, barcode: null, available: r.byPlace.get(full.trip.sourceId) ?? 0 })).filter((i) => i.available > 0);
   }
+  const open = full.trip.status === "loaded" || full.trip.status === "returned";
+  const more = await vanMoreReady(admin);
+  // For billing with no internet: the van's items, the route's parties and the trip's kept numbers.
+  const pack = await vanOfflinePack(admin, session, full.trip, full.vehicle, full.items, shops);
+  // Settling: the charge can be taken off the salesman's salary when he has a Staff salary record.
+  let salaryLinked = false;
+  if (canManage && open && more && full.trip.salesmanId && isModuleEnabled(session.enabledModules, "staff_payroll") && (await payrollReady(admin))) {
+    const { data: worker } = await admin.from("workers").select("id").eq("shop_id", session.shopId).eq("staff_id", full.trip.salesmanId).eq("is_active", true).limit(1).maybeSingle();
+    salaryLinked = !!worker;
+  }
   return (
     <div className="flex flex-col gap-4">
       <BackLink fallback="/van" />
       <PageHeader title={`${full.trip.vehicleName} · ${full.trip.number}`} subtitle={[full.trip.salesmanName, full.trip.route].filter(Boolean).join(" · ") || t("Van trip")} icon={<Truck size={18} strokeWidth={1.8} />} />
-      <TripClient data={JSON.parse(JSON.stringify(full))} canManage={canManage} loadItems={loadItems} shops={shops} visits={visits} />
+      <TripClient
+        data={JSON.parse(JSON.stringify(full))}
+        canManage={canManage}
+        loadItems={loadItems}
+        shops={shops}
+        visits={visits}
+        pack={pack}
+        more={more}
+        salaryLinked={salaryLinked}
+        isSalesman={full.trip.salesmanId === session.userId}
+      />
     </div>
   );
 }

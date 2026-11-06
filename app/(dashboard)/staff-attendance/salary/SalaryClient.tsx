@@ -10,7 +10,7 @@ import { formatMoney, formatDateTime, paymentMethodLabel } from "@/lib/format";
 import { buildWhatsAppLink } from "@/lib/whatsapp";
 import { useT } from "@/lib/i18n/LangContext";
 
-type Row = { worker: Worker; pay: ReturnType<typeof monthPay>; advances: number; bonuses: number; salaryPaid: number; payments: Payment[] };
+type Row = { worker: Worker; pay: ReturnType<typeof monthPay>; advances: number; bonuses: number; salaryPaid: number; deductions?: number; payments: Payment[] };
 type Kind = "advance" | "salary" | "bonus";
 type Method = "cash" | "upi" | "card" | "online" | "other";
 
@@ -60,13 +60,14 @@ export function SalaryClient({ month, monthLabel, shopName, isOwner, rows }: { m
       `*${t("Earned")}: ${formatMoney(p.earned)}*`,
       r.bonuses ? `${t("Bonus")}: +${formatMoney(r.bonuses)}` : "",
       r.advances ? `${t("Advance")}: −${formatMoney(r.advances)}` : "",
+      r.deductions ? `${t("Deducted")}: −${formatMoney(r.deductions)}` : "",
       r.salaryPaid ? `${t("Paid")}: −${formatMoney(r.salaryPaid)}` : "",
       `*${t("Balance")}: ${formatMoney(p.due)}*`,
     ].filter(Boolean);
     return r.worker.phone ? buildWhatsAppLink(r.worker.phone, lines.join("\n")) : null;
   }
 
-  const kindLabel = (k: Kind) => (k === "advance" ? t("Advance") : k === "salary" ? t("Salary") : t("Bonus"));
+  const kindLabel = (k: Kind | "deduction") => (k === "advance" ? t("Advance") : k === "salary" ? t("Salary") : k === "deduction" ? t("Deducted") : t("Bonus"));
 
   return (
     <ul className="flex flex-col gap-2">
@@ -109,6 +110,7 @@ export function SalaryClient({ month, monthLabel, shopName, isOwner, rows }: { m
                 <p className="font-semibold text-foreground">{formatMoney(r.salaryPaid)}</p>
               </div>
             </div>
+            {(r.deductions ?? 0) > 0 && <p className="text-[11px] font-medium text-danger">{t("Deducted")}: −{formatMoney(r.deductions ?? 0)}</p>}
 
             {open?.workerId === r.worker.id ? (
               <div className="flex flex-col gap-2 rounded-lg bg-background p-2.5">

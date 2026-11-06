@@ -172,7 +172,7 @@ export function NewBillClient({
   /** Wholesale: a salesman can save the cart as an order, billed later. */
   ordersAvailable?: boolean;
   /** Wholesale Van sales: billing from a van's trip — only the van's stock is offered and the bill takes it from the van. */
-  vanTrip?: { id: string; number: string; vehicle: string } | null;
+  vanTrip?: { id: string; number: string; vehicle: string; numbers?: { prefix: string; from: number; to: number; next: number } | null; maxDiscount?: number | null } | null;
   /** Opened from an appointment: the customer and stylist to start with. */
   initialCustomerId?: string | null;
   initialProvider?: string;
@@ -491,6 +491,8 @@ export function NewBillClient({
   const [state, formAction] = useActionState(keepValuesOnError(createBillAction), null);
   // A van's bill (Van sales route tracking): where the phone is goes with the bill; nothing else waits on it.
   const [vanFix, setVanFix] = useState<VanFix | null>(null);
+  // …and the number the phone gives it from the trip's kept block (migration 0067).
+  const [vanNumber, setVanNumber] = useState<number | null>(null);
   // Set the moment the bill form is sent (this form's own pending status never shows here), cleared
   // when an answer comes back — an error; a saved bill moves on to its page instead.
   const [saving, setSaving] = useState(false);
@@ -961,12 +963,13 @@ export function NewBillClient({
       <div className="flex flex-col gap-3">
         {vanTrip && (
           <Suspense fallback={null}>
-            <VanBillTracker tripId={vanTrip.id} onFix={setVanFix} />
+            <VanBillTracker tripId={vanTrip.id} numbers={vanTrip.numbers ?? null} onFix={setVanFix} onNumber={setVanNumber} />
           </Suspense>
         )}
         {vanTrip && (
           <Link href={`/van/trips/${vanTrip.id}`} className="rounded-lg border border-brand/40 bg-brand-soft px-3 py-2 text-xs font-medium text-brand-text">
-            {t("Billing from {van} · trip {trip}. Only what is on the van can be sold.", { van: vanTrip.vehicle, trip: vanTrip.number })} →
+            {t("Billing from {van} · trip {trip}. Only what is on the van can be sold.", { van: vanTrip.vehicle, trip: vanTrip.number })}
+            {vanTrip.maxDiscount != null ? ` ${t("Discount up to {n}%.", { n: vanTrip.maxDiscount })}` : ""} →
           </Link>
         )}
         {!isOnline && (
@@ -1417,6 +1420,7 @@ export function NewBillClient({
     quotationId: fromQuote?.id ?? null,
     vanTripId: vanTrip?.id ?? null,
     vanFix: vanTrip && vanFix ? vanFix : null,
+    vanNumber: vanTrip ? vanNumber : null,
     challanIds: fromChallans?.ids,
     goldSchemeId: fromScheme?.id ?? null,
     walletAmount: walletUse > 0 ? walletUse : null,

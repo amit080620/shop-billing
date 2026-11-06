@@ -6,10 +6,10 @@ import { saveVanAction } from "@/lib/actions/van";
 import type { Van } from "@/lib/van/data";
 import { ErrorNote, useRun } from "../ui";
 
-type Form = { name: string; code: string; vehicleNumber: string; defaultStaffId: string; defaultRoute: string; isActive: boolean };
-const empty: Form = { name: "", code: "", vehicleNumber: "", defaultStaffId: "", defaultRoute: "", isActive: true };
+type Form = { name: string; code: string; vehicleNumber: string; defaultStaffId: string; defaultRoute: string; isActive: boolean; maxDiscount: string };
+const empty: Form = { name: "", code: "", vehicleNumber: "", defaultStaffId: "", defaultRoute: "", isActive: true, maxDiscount: "" };
 
-export function VansClient({ vans, staff }: { vans: Van[]; staff: { id: string; name: string }[] }) {
+export function VansClient({ vans, staff, more = false }: { vans: Van[]; staff: { id: string; name: string }[]; more?: boolean }) {
   const { t } = useT();
   const { run, pending, error } = useRun();
   const [editing, setEditing] = useState<string | null>(null);
@@ -17,9 +17,9 @@ export function VansClient({ vans, staff }: { vans: Van[]; staff: { id: string; 
   const set = (k: keyof Form) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => setForm((f) => ({ ...f, [k]: k === "isActive" ? (e.target as HTMLInputElement).checked : e.target.value }));
   const edit = (v: Van) => {
     setEditing(v.id);
-    setForm({ name: v.name, code: v.code, vehicleNumber: v.vehicleNumber ?? "", defaultStaffId: v.defaultStaffId ?? "", defaultRoute: v.defaultRoute ?? "", isActive: v.isActive });
+    setForm({ name: v.name, code: v.code, vehicleNumber: v.vehicleNumber ?? "", defaultStaffId: v.defaultStaffId ?? "", defaultRoute: v.defaultRoute ?? "", isActive: v.isActive, maxDiscount: v.maxDiscount === null ? "" : String(v.maxDiscount) });
   };
-  const save = () => run(() => saveVanAction(editing, form), () => { setEditing(null); setForm(empty); });
+  const save = () => run(() => saveVanAction(editing, { ...form, maxDiscount: more ? form.maxDiscount : null }), () => { setEditing(null); setForm(empty); });
   const staffName = new Map(staff.map((s) => [s.id, s.name]));
 
   return (
@@ -54,6 +54,13 @@ export function VansClient({ vans, staff }: { vans: Van[]; staff: { id: string; 
             {t("Usual route (beat)")}
             <input value={form.defaultRoute} onChange={set("defaultRoute")} placeholder={t("e.g. Station road, Market yard")} className="rounded-lg px-3 py-2 text-sm" />
           </label>
+          {more && (
+            <label className="col-span-2 flex flex-col gap-1 text-xs font-medium text-muted">
+              {t("Most discount a salesman may give (% of the rate list)")}
+              <input type="number" inputMode="decimal" min={0} max={100} step="0.5" value={form.maxDiscount} onChange={set("maxDiscount")} placeholder={t("Blank: no limit")} className="rounded-lg px-3 py-2 text-sm" />
+              <span className="font-normal">{t("Udhaar stays within each party's own limit. The owner or a manager can go past both.")}</span>
+            </label>
+          )}
         </div>
         {editing && (
           <label className="flex items-center gap-2 text-sm text-foreground">
@@ -81,7 +88,7 @@ export function VansClient({ vans, staff }: { vans: Van[]; staff: { id: string; 
                 {v.name} <span className="text-xs font-normal text-muted">{v.code}</span>
               </span>
               <span className="text-xs text-muted">
-                {[v.vehicleNumber, v.defaultStaffId ? staffName.get(v.defaultStaffId) : null, v.defaultRoute].filter(Boolean).join(" · ") || t("Tap to add details")}
+                {[v.vehicleNumber, v.defaultStaffId ? staffName.get(v.defaultStaffId) : null, v.defaultRoute, v.maxDiscount !== null ? t("Discount up to {n}%.", { n: v.maxDiscount }) : null].filter(Boolean).join(" · ") || t("Tap to add details")}
                 {!v.isActive ? ` · ${t("Not in use")}` : ""}
               </span>
             </button>

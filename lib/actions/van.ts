@@ -1,11 +1,14 @@
 "use server";
 
+import { createHash, randomBytes } from "node:crypto";
 import { requireSession, type SessionContext } from "../auth";
 import { createSupabaseAdminClient } from "../supabase/admin";
 import { isModuleEnabled } from "../modules";
 import { moduleLockMessage } from "../plans";
 import { logAuditEvent } from "../audit";
-import { vanSchemaReady } from "../van/server";
+import { vanMoreReady, vanSchemaReady } from "../van/server";
+import { ensureVanPhotoBucket, VAN_PHOTO_BUCKET, VAN_PHOTO_MAX_BYTES, VAN_PHOTO_TYPES } from "../van/photos";
+import { demoLocked } from "../demo/guard";
 import { canRunVans, countResult, EXPENSE_KINDS, mayWorkTrip, vanError, type ExpenseKind } from "../van/rules";
 import { loadTrip } from "../van/data";
 import { visitCheck, VISIT_OUTCOMES } from "../van/geo";
@@ -43,7 +46,7 @@ async function ensureMainGodown(admin: Admin, shopId: string): Promise<void> {
   await db(admin).from("godowns").insert({ shop_id: shopId, name: "Main Godown", code: "MAIN", kind: "main", is_default: true });
 }
 
-export async function saveVanAction(id: string | null, input: { name: string; code: string; vehicleNumber: string; defaultStaffId: string; defaultRoute: string; isActive: boolean }): Promise<Result> {
+export async function saveVanAction(id: string | null, input: { name: string; code: string; vehicleNumber: string; defaultStaffId: string; defaultRoute: string; isActive: boolean; maxDiscount?: string | number | null }): Promise<Result> {
   const ctx = await open(true);
   if ("error" in ctx) return ctx;
   const { session, admin } = ctx;
@@ -56,8 +59,22 @@ export async function saveVanAction(id: string | null, input: { name: string; co
     const { data: s } = await admin.from("staff").select("id").eq("id", staffId).eq("shop_id", session.shopId).maybeSingle();
     if (!s) return { error: "That salesman isn't on this shop's staff." };
   }
+  // The most a salesman may take off this van's bills, as a % of the rate list (blank: no limit).
+  const limitText = input.maxDiscount === null || input.maxDiscount === undefined ? "" : String(input.maxDiscount).trim();
+  const maxDiscount = limitText === "" ? null : Math.round(Number(limitText) * 100) / 100;
+  if (maxDiscount !== null && !(maxDiscount >= 0 && maxDiscount <= 100)) return { error: "Enter the discount limit as a % between 0 and 100, or leave it blank." };
+  const more = await vanMoreReady(admin);
+  if (maxDiscount !== null && !more) return { error: "The discount limit needs a database update on the server first." };
   await ensureMainGodown(admin, session.shopId);
-  const row = { name, code, vehicle_number: clean(input.vehicleNumber, 20).toUpperCase() || null, default_staff_id: staffId, default_route: clean(input.defaultRoute, 60) || null, is_active: input.isActive !== false };
+  const row = {
+    name,
+    code,
+    vehicle_number: clean(input.vehicleNumber, 20).toUpperCase() || null,
+    default_staff_id: staffId,
+    default_route: clean(input.defaultRoute, 60) || null,
+    is_active: input.isActive !== false,
+    ...(more ? { van_max_discount: maxDiscount } : {}),
+  };
   const q = id
     ? db(admin).from("godowns").update(row).eq("id", id).eq("shop_id", session.shopId).eq("kind", "vehicle").select("id").maybeSingle()
     : db(admin).from("godowns").insert({ ...row, shop_id: session.shopId, kind: "vehicle" }).select("id").single();
@@ -129,7 +146,59 @@ export async function returnTripAction(tripId: string): Promise<Result> {
   if (!trip) return { error: "That trip wasn't found." };
   if (!mayWorkTrip(session.role, session.userId, trip.salesman_id)) return { error: "Only this trip's salesman, the owner or a manager can do this." };
   const { error } = await db(admin).rpc("van_trip_return", { p_shop: session.shopId, p_trip: tripId, p_staff: session.userId });
-  return error ? { error: failed(error)! } : {};
+  if (error) return { error: failed(error)! };
+  if (await vanMoreReady(admin)) await db(admin).from("van_trips").update({ ping_token_hash: null }).eq("id", tripId).eq("shop_id", session.shopId);
+  return {};
+}
+
+/** A key for the Android app to record the trip's route with the screen off (route tracking, phase
+ * two). Given to the trip's salesman (or the owner or a manager) while the trip is on the route; a new
+ * key replaces the old one, and it stops working when the van comes back. Only its SHA-256 is kept. */
+export async function trackingKeyAction(tripId: string): Promise<{ error?: string; key?: string }> {
+  const ctx = await open(false);
+  if ("error" in ctx) return ctx;
+  const { session, admin } = ctx;
+  if (!(await vanMoreReady(admin))) return { error: "Background tracking needs a database update on the server first." };
+  const trip = await tripFor(admin, session, tripId);
+  if (!trip || !mayWorkTrip(session.role, session.userId, trip.salesman_id)) return { error: "That trip wasn't found." };
+  if (trip.status !== "loaded") return { error: "Tracking runs only while the trip is on the route." };
+  const key = randomBytes(24).toString("base64url");
+  const { error } = await db(admin).from("van_trips").update({ ping_token_hash: createHash("sha256").update(key).digest("hex") }).eq("id", tripId).eq("shop_id", session.shopId);
+  return error ? { error: "Couldn't start tracking. Try again." } : { key };
+}
+
+/** A photo for a trip expense (the diesel slip) or a shop visit (the shop shut), sent after the row is
+ * saved. Shrunk on the phone first; kept privately. */
+export async function uploadVanPhotoAction(kind: "expense" | "visit", id: string, formData: FormData): Promise<Result> {
+  const ctx = await open(false);
+  if ("error" in ctx) return ctx;
+  const { session, admin } = ctx;
+  const demoBlock = demoLocked(session);
+  if (demoBlock) return { error: demoBlock };
+  if (!(await vanMoreReady(admin))) return { error: "Photos need a database update on the server first." };
+  if ((kind !== "expense" && kind !== "visit") || !/^[0-9a-f-]{36}$/i.test(id)) return { error: "Nothing to add the photo to." };
+  const table = kind === "expense" ? "van_expenses" : "van_visits";
+  const { data: row } = await db(admin).from(table).select("trip_id, photo_path").eq("id", id).eq("shop_id", session.shopId).maybeSingle();
+  const found = row as { trip_id: string; photo_path: string | null } | null;
+  const trip = found ? await tripFor(admin, session, found.trip_id) : null;
+  if (!found || !trip || !mayWorkTrip(session.role, session.userId, trip.salesman_id)) return { error: "Nothing to add the photo to." };
+  if (trip.status !== "loaded" && trip.status !== "returned") return { error: "Photos are added while the trip is open." };
+  const file = formData.get("photo");
+  if (!(file instanceof File) || file.size === 0) return { error: "Take or choose a photo." };
+  if (file.size > VAN_PHOTO_MAX_BYTES) return { error: "The photo must be under 2 MB." };
+  if (!VAN_PHOTO_TYPES.includes(file.type)) return { error: "Use a JPG, PNG or WEBP photo." };
+  await ensureVanPhotoBucket(admin);
+  const ext = file.type === "image/png" ? "png" : file.type === "image/webp" ? "webp" : "jpg";
+  const path = `${session.shopId}/${found.trip_id}/${kind}-${id}-${Date.now()}.${ext}`;
+  const { error: uploadError } = await admin.storage.from(VAN_PHOTO_BUCKET).upload(path, file, { contentType: file.type });
+  if (uploadError) return { error: "Couldn't upload the photo. Try again." };
+  const { error } = await db(admin).from(table).update({ photo_path: path }).eq("id", id).eq("shop_id", session.shopId);
+  if (error) {
+    await admin.storage.from(VAN_PHOTO_BUCKET).remove([path]);
+    return { error: "Couldn't save the photo. Try again." };
+  }
+  if (found.photo_path) await admin.storage.from(VAN_PHOTO_BUCKET).remove([found.photo_path]);
+  return {};
 }
 
 export async function addExpenseAction(tripId: string, input: { kind: string; amount: number; note: string }): Promise<Result> {
@@ -143,8 +212,8 @@ export async function addExpenseAction(tripId: string, input: { kind: string; am
   const kind = (EXPENSE_KINDS as readonly string[]).includes(input.kind) ? (input.kind as ExpenseKind) : "other";
   const amount = Math.round(Number(input.amount) * 100) / 100;
   if (!(amount > 0) || amount > 1e7) return { error: "Enter the amount." };
-  const { error } = await db(admin).from("van_expenses").insert({ shop_id: session.shopId, trip_id: tripId, kind, amount, note: clean(input.note, 200) || null, staff_id: session.userId });
-  return error ? { error: "Couldn't save the expense." } : {};
+  const { data, error } = await db(admin).from("van_expenses").insert({ shop_id: session.shopId, trip_id: tripId, kind, amount, note: clean(input.note, 200) || null, staff_id: session.userId }).select("id").single();
+  return error ? { error: "Couldn't save the expense." } : { id: (data as { id: string } | null)?.id };
 }
 
 export async function removeExpenseAction(expenseId: string): Promise<Result> {
@@ -160,7 +229,7 @@ export async function removeExpenseAction(expenseId: string): Promise<Result> {
 
 /** Settlement: the count of every item and the money handed over. The expected figures are worked out
  * here from the trip's own records, never taken from the screen. */
-export async function settleTripAction(tripId: string, input: { lines: { productId: string; counted: number; damaged: number }[]; cashHanded: number; upiReceived: number; chargeSalesman: boolean; note: string }): Promise<Result> {
+export async function settleTripAction(tripId: string, input: { lines: { productId: string; counted: number; damaged: number }[]; cashHanded: number; upiReceived: number; chargeSalesman: boolean; deductFromSalary?: boolean; note: string }): Promise<Result> {
   const ctx = await open(true);
   if ("error" in ctx) return ctx;
   const { session, admin } = ctx;
@@ -176,6 +245,10 @@ export async function settleTripAction(tripId: string, input: { lines: { product
   const upiReceived = Math.round(Math.max(0, Number(input.upiReceived) || 0) * 100) / 100;
   const cashShort = Math.max(0, Math.round((full.money.cashExpected - cashHanded) * 100) / 100);
   const charge = input.chargeSalesman ? Math.round((cashShort + result.shortageValue) * 100) / 100 : 0;
+  // Taken off the salary: Staff salary (its plan module) must be on, and 0067 run.
+  const deduct = !!input.deductFromSalary && charge > 0;
+  if (deduct && !isModuleEnabled(session.enabledModules, "staff_payroll")) return { error: moduleLockMessage("staff_payroll") };
+  if (deduct && !(await vanMoreReady(admin))) return { error: "Taking it off the salary needs a database update on the server first." };
   const { error } = await db(admin).rpc("van_trip_settle", {
     p_shop: session.shopId,
     p_trip: tripId,
@@ -187,6 +260,7 @@ export async function settleTripAction(tripId: string, input: { lines: { product
       upi_received: upiReceived,
       shortage_value: result.shortageValue,
       salesman_charge: charge,
+      deduct_from_salary: deduct,
       note: clean(input.note, 300),
     },
     p_staff: session.userId,
@@ -199,7 +273,7 @@ export async function settleTripAction(tripId: string, input: { lines: { product
     action: "van_trip_settled",
     entityType: "van_trip",
     entityId: tripId,
-    details: { cashExpected: full.money.cashExpected, cashHanded, upiReceived, shortageValue: result.shortageValue, damaged: result.damaged, excess: result.excess, salesmanCharge: charge },
+    details: { cashExpected: full.money.cashExpected, cashHanded, upiReceived, shortageValue: result.shortageValue, damaged: result.damaged, excess: result.excess, salesmanCharge: charge, deductedFromSalary: deduct },
   });
   return {};
 }
@@ -229,7 +303,7 @@ export async function checkInAction(tripId: string, input: { customerId: string;
   const fix = fixOf(input.fix);
   const check = await visitAgainstPin(admin, session.shopId, input.customerId, fix);
   await closeOpenVisit(admin, tripId);
-  const { error } = await db(admin).from("van_visits").insert({
+  const { data: made, error } = await db(admin).from("van_visits").insert({
     shop_id: session.shopId,
     trip_id: tripId,
     customer_id: input.customerId,
@@ -241,10 +315,10 @@ export async function checkInAction(tripId: string, input: { customerId: string;
     outcome,
     note: clean(input.note, 200) || null,
     staff_id: session.userId,
-  });
+  }).select("id").single();
   if (error) return { error: "Couldn't record the visit." };
   if (fix) await db(admin).from("van_pings").insert({ shop_id: session.shopId, trip_id: tripId, staff_id: session.userId, latitude: fix.lat, longitude: fix.lng, accuracy_m: fix.accuracy, source: "checkin" });
-  return { verified: check.verified, needsPin: check.noPin };
+  return { id: (made as { id: string } | null)?.id, verified: check.verified, needsPin: check.noPin };
 }
 
 async function visitAgainstPin(admin: Admin, shopId: string, customerId: string, fix: ReturnType<typeof fixOf>) {

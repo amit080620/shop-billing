@@ -30,6 +30,8 @@ import { thermalFormatFor } from "@/lib/print/thermalFormat";
 import { getThermalPrintSettingsAction } from "@/lib/actions/settings";
 import { A4Renderer } from "@/lib/print/A4Renderer";
 import { loadBillInvoice } from "@/lib/print/billInvoice";
+import { isModuleEnabled } from "@/lib/modules";
+import VanNumberNote from "./VanNumberNote";
 
 export default async function PrintBillPage({
   params,
@@ -57,6 +59,11 @@ export default async function PrintBillPage({
     redirect(`/no-access?from=${encodeURIComponent("/bills")}`);
   }
   const { bill, shop, invoiceSettings, items, customer, party, isIntra, placeOfSupply, paymentLabel, discountLabel, exchangeLabel, exchangeAmount, cashPaid, upiLink, totalMrpSavings, warrantyText, hotelBookingId, a4Data } = invoice;
+  // A van bill (Van sales): the salesman's phone moves its next kept bill number past it. Wholesale shops with vans only.
+  const vanTripId =
+    session.businessType === "wholesale" && isModuleEnabled(session.enabledModules, "van_sales")
+      ? ((((await admin.from("bills").select("van_trip_id" as never).eq("id", bill.id).maybeSingle()).data ?? null) as { van_trip_id?: string | null } | null)?.van_trip_id ?? null)
+      : null;
 
   // Genuinely fall back to the shop's own default print format only
   // when no explicit ?format= was given — tapping a format pill on
@@ -285,6 +292,7 @@ export default async function PrintBillPage({
           <SharePdfButton invoiceNumber={bill.invoice_number} shopName={shop.name} upiLink={upiLink} isThermal={isThermal} />
         </div>
         <BillPageKeys newBillHref={homePathFor(session.businessType, session.fastBillingEnabled)} />
+        {vanTripId && <VanNumberNote tripId={vanTripId} invoiceNumber={bill.invoice_number} />}
 
         <div className="flex items-center justify-between gap-2">
           <span className="text-xs font-medium text-muted">{t("billPage.paperSize")}</span>

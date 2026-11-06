@@ -41,7 +41,7 @@ export async function loadWorkers(admin: Admin, shopId: string, includeInactive 
   }));
 }
 
-export type Payment = { id: string; kind: "advance" | "salary" | "bonus"; amount: number; method: string; note: string | null; createdAt: string };
+export type Payment = { id: string; kind: "advance" | "salary" | "bonus" | "deduction"; amount: number; method: string; note: string | null; createdAt: string };
 
 /** The salary sheet for a month: every worker's marks, pay and what was already given. */
 export async function loadMonthSheet(admin: Admin, shopId: string, month: string, withCommission = true) {
@@ -79,9 +79,10 @@ export async function loadMonthSheet(admin: Admin, shopId: string, month: string
         bonuses: sum("bonus"),
         salaryPaid: sum("salary"),
         commission: commissionOf.get(personKey(w.name)) ?? 0,
+        deductions: sum("deduction"),
       });
       const payments: Payment[] = own.map((p) => ({ id: p.id, kind: p.kind, amount: Number(p.amount), method: p.payment_method, note: p.note, createdAt: p.created_at }));
-      return { worker: w, pay, advances: sum("advance"), bonuses: sum("bonus"), salaryPaid: sum("salary"), payments };
+      return { worker: w, pay, advances: sum("advance"), bonuses: sum("bonus"), salaryPaid: sum("salary"), deductions: sum("deduction"), payments };
     })
     // Former workers only while this month still concerns them.
     .filter((r) => r.worker.isActive || r.payments.length > 0);

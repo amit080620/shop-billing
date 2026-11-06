@@ -21,6 +21,9 @@ import { determineSupplyType } from "@/lib/gst";
 import { useOnlineStatus } from "@/lib/useOnlineStatus";
 import { OFFLINE_BILLS_EVENT, belongsTo, offlineSlipData, printOfflineSlip, syncPendingBills } from "@/lib/offlineSync";
 import { useT } from "@/lib/i18n/LangContext";
+import { flushVisits, packShop, readPack } from "@/lib/van/offlineVan";
+import type { VanOfflinePack } from "@/lib/van/data";
+import { VanOffline } from "./VanOffline";
 
 function formatMoney(n: number) {
   return `₹${n.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -49,6 +52,9 @@ export default function OfflineBillPage() {
   const [syncLog, setSyncLog] = useState<string | null>(null);
   const [lastSaved, setLastSaved] = useState<PendingBill | null>(null);
   const [printNote, setPrintNote] = useState<string | null>(null);
+  // A wholesale van's trip kept on this phone (Van sales): billing from the van, or from the shop.
+  const [pack, setPack] = useState<VanOfflinePack | null>(null);
+  const [mode, setMode] = useState<"van" | "shop">("van");
 
   useEffect(() => {
     async function load() {
@@ -58,10 +64,13 @@ export default function OfflineBillPage() {
         getCachedCustomers(),
         getPendingBills(),
       ]);
-      setShop(s ?? null);
+      // A salesman's phone may only ever have billed from a van: the van pack knows the shop then.
+      const shopNow = s ?? packShop() ?? null;
+      setShop(shopNow);
+      if (shopNow) setPack(readPack(shopNow.shopId));
       setProducts(p);
       setCustomers(c);
-      setPending(s ? pb.filter((b) => belongsTo(b, s.shopId)) : pb);
+      setPending(shopNow ? pb.filter((b) => belongsTo(b, shopNow.shopId)) : pb);
       setLoading(false);
     }
     load();
@@ -79,8 +88,9 @@ export default function OfflineBillPage() {
   const pendingCount = pending.filter((b) => b.status !== "failed").length;
   useEffect(() => {
     if (isOnline && shop && pendingCount > 0) void syncNow(false);
+    if (isOnline && pack) void flushVisits(pack.tripId);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- syncNow reads the latest state itself
-  }, [isOnline, shop, pendingCount]);
+  }, [isOnline, shop, pendingCount, pack]);
 
   const selectedCustomer = customers.find((c) => c.id === customerId) ?? null;
   const supplyType = shop
@@ -194,7 +204,7 @@ export default function OfflineBillPage() {
     setSyncing(false);
     if (r.synced || r.failed || r.stillOffline) {
       setSyncLog(
-        `Synced ${r.synced} bill(s)${r.failed ? `, ${r.failed} need attention` : ""}${r.stillOffline ? " — connection dropped, will continue when it's back" : ""}.`,
+        `Synced ${r.synced} bill(s)${r.failed ? `, ${r.failed} need attention` : ""}${r.stillOffline ? " — connection dropped, will continue when it's back" : ""}.${r.renumbered.map((x) => ` ${x.from} was already used, so it became ${x.to}.`).join("")}`,
       );
     }
   }
@@ -263,6 +273,7 @@ export default function OfflineBillPage() {
               <li key={b.localId} className="flex flex-col gap-0.5 border-t border-credit/20 pt-1.5 text-xs text-credit first:border-0 first:pt-0">
                 <div className="flex justify-between gap-2">
                   <span>
+                    {b.van?.invoice ? `${b.van.invoice} · ` : ""}
                     {b.customerName ?? "Walk-in"} · {b.items.length} item(s) · {new Date(b.createdAt).toLocaleString("en-IN", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" })}
                   </span>
                   <span className="font-semibold">{formatMoney(b.items.reduce((s, i) => s + i.quantity * i.unitPrice, 0))}</span>
@@ -272,9 +283,12 @@ export default function OfflineBillPage() {
                   <button onClick={() => void printSlip(b)} className="underline">
                     Print slip
                   </button>
-                  <button onClick={() => void discard(b)} className="text-danger underline">
-                    Delete
-                  </button>
+                  {/* A van bill keeps its number and its goods left the van: it can't be deleted here (void it once synced). */}
+                  {!b.van && (
+                    <button onClick={() => void discard(b)} className="text-danger underline">
+                      Delete
+                    </button>
+                  )}
                 </div>
               </li>
             ))}
@@ -299,6 +313,33 @@ export default function OfflineBillPage() {
       )}
       {printNote && <p className="text-xs text-muted">{printNote}</p>}
 
+      {pack && (
+        <div className="grid grid-cols-2 gap-1 rounded-full bg-surface-2 p-1 text-sm font-semibold">
+          {(["van", "shop"] as const).map((m) => (
+            <button key={m} type="button" onClick={() => setMode(m)} className={`rounded-full px-3 py-1.5 ${mode === m ? "bg-brand text-white" : "text-muted"}`}>
+              {m === "van" ? t("Van billing") : t("Shop billing")}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {pack && mode === "van" && (
+        <VanOffline
+          shop={shop}
+          pack={pack}
+          customers={customers}
+          pending={pending}
+          onSaved={(bill, note) => {
+            setPending((prev) => [...prev, bill]);
+            setLastSaved(bill);
+            setSavedNotice(note);
+            setPack(readPack(shop.shopId));
+          }}
+        />
+      )}
+
+      {(!pack || mode === "shop") && (
+      <>
       <section className="flex flex-col gap-2">
         <p className="text-sm font-medium text-foreground">Customer</p>
         {selectedCustomer ? (
@@ -409,6 +450,9 @@ export default function OfflineBillPage() {
             Save bill (provisional)
           </button>
         </section>
+      )}
+
+      </>
       )}
 
       <Link href="/dashboard" className="text-center text-xs text-muted underline">

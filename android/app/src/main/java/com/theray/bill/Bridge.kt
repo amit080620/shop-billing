@@ -1,6 +1,8 @@
 package com.theray.bill
 
+import android.Manifest
 import android.graphics.Color
+import android.os.Build
 import android.speech.SpeechRecognizer
 import android.util.Base64
 import android.webkit.WebView
@@ -45,6 +47,7 @@ class Bridge(private val activity: MainActivity, private val files: Files) {
             .put("version", BuildConfig.VERSION_NAME)
             .put("speech", SpeechRecognizer.isRecognitionAvailable(activity))
             .put("barcode", scanner.available)
+            .put("location", true)
         val js = activity.assets.open("bridge.js").bufferedReader().use { it.readText() }
         return "window.__RAY_NATIVE_CONFIG=$config;\n$js"
     }
@@ -85,6 +88,35 @@ class Bridge(private val activity: MainActivity, private val files: Files) {
                 if (err != null) done(null, err) else done(JSONObject().put("code", code ?: JSONObject.NULL), null)
             }
             "contacts.pick" -> contacts.pick { contact, err -> done(contact, err) }
+            // Van trip route with the screen off: only to this app's own server, only with a trip key.
+            "location.start" -> {
+                val url = args.optString("url")
+                val tripId = args.optString("tripId")
+                val key = args.optString("key")
+                if (!url.startsWith("$origin/api/van/ping") || !Regex("^[0-9a-fA-F-]{36}$").matches(tripId) || key.length < 20) {
+                    done(null, "Can't start tracking")
+                } else {
+                    val perms = mutableListOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION)
+                    if (Build.VERSION.SDK_INT >= 33) perms += Manifest.permission.POST_NOTIFICATIONS
+                    activity.withPermissions(perms.toTypedArray()) { _ ->
+                        if (!activity.hasPermission(Manifest.permission.ACCESS_FINE_LOCATION) && !activity.hasPermission(Manifest.permission.ACCESS_COARSE_LOCATION)) {
+                            done(null, L.t("allow_location"))
+                        } else {
+                            try {
+                                Tracker.start(activity, Tracker.State(tripId, key, url, args.optLong("everyMs", 120_000L).coerceIn(30_000L, 600_000L), args.optDouble("minMoveM", 30.0).toFloat().coerceIn(5f, 500f)))
+                                done(JSONObject().put("running", true), null)
+                            } catch (e: Exception) {
+                                done(null, e.message ?: "Can't start tracking")
+                            }
+                        }
+                    }
+                }
+            }
+            "location.stop" -> { Tracker.stop(activity); done(null, null) }
+            "location.status" -> {
+                val s = Tracker.state(activity)
+                done(JSONObject().put("running", s != null).put("tripId", s?.tripId ?: JSONObject.NULL), null)
+            }
             "ui.bars" -> {
                 try { activity.setBarColor(Color.parseColor(args.optString("color"))) } catch (_: IllegalArgumentException) {}
                 done(null, null)

@@ -167,6 +167,9 @@ export const billSchema = z.object({
   vanTripId: z.string().uuid().nullable().optional(),
   /** Where the phone was when a van bill was made (route tracking): never needed for the bill itself. */
   vanFix: z.object({ lat: z.number().min(-90).max(90), lng: z.number().min(-180).max(180), accuracy: z.number().min(0).nullable() }).nullable().optional(),
+  /** The van bill number the phone gave it from the trip's kept block (migration 0067): always for a
+   * bill made offline, whose slip already shows it; used when still free. */
+  vanNumber: z.number().int().positive().max(9_999_999).nullable().optional(),
   /** The quotation this bill was made from (marked converted once the bill exists). */
   quotationId: z.string().uuid().nullable().optional(),
   /** Delivery challans this bill is for (marked billed once the bill exists). */

@@ -25,8 +25,9 @@ import { freeFollowUp } from "../followUp";
 import { gapsReady } from "../gapsData";
 import { isClientRef, offlineBillsReady, offlineIssuedAt } from "../offlineBills";
 import { issueInvoiceNumber } from "../invoiceNumber";
-import { vanSchemaReady } from "../van/server";
-import { mayWorkTrip } from "../van/rules";
+import { vanMoreReady, vanSchemaReady } from "../van/server";
+import { canRunVans, creditRoom, discountGiven, mayWorkTrip } from "../van/rules";
+import { getCustomerBalances } from "../moneyBalances";
 import { noteVanBill } from "../van/billVisit";
 import { missingColumn, oversellError, shopBlocksOversell } from "../stockRule";
 import { dueDateFor, partyTerms } from "../wholesaleData";
@@ -65,19 +66,71 @@ async function takeBillBack(admin: ReturnType<typeof createSupabaseAdminClient>,
   return `Bill ${invoiceNumber} could not be removed — void it from All bills before billing again.`;
 }
 
+type VanForBill = { tripId: string; vehicleId: string; code: string; maxDiscount: number | null; more: boolean };
+
 /** A wholesale van's trip a bill is made on (Van sales, migration 0066): it must be on the route, and
- * the one billing must be its salesman, the owner or a manager. */
-async function vanTripForBill(admin: ReturnType<typeof createSupabaseAdminClient>, session: SessionContext, tripId: string): Promise<{ tripId: string; vehicleId: string; code: string } | { error: string }> {
+ * the one billing must be its salesman, the owner or a manager. A bill made offline on the route may
+ * still arrive once the van is back, until the trip is settled (migration 0067). */
+async function vanTripForBill(admin: ReturnType<typeof createSupabaseAdminClient>, session: SessionContext, tripId: string, offline: boolean): Promise<VanForBill | { error: string }> {
   if (session.businessType !== "wholesale" || !isModuleEnabled(session.enabledModules, "van_sales") || !(await vanSchemaReady(admin))) {
     return { error: "Van sales isn't on for this shop." };
   }
+  const more = await vanMoreReady(admin);
   const { data } = await admin.from("van_trips" as never).select("id, status, salesman_id, vehicle_id").eq("id", tripId).eq("shop_id", session.shopId).maybeSingle();
   const trip = data as { id: string; status: string; salesman_id: string | null; vehicle_id: string } | null;
   if (!trip) return { error: "That van trip wasn't found." };
-  if (trip.status !== "loaded") return { error: "This van trip isn't on the route, so it can't be billed from." };
+  if (offline && !more) return { error: "Van bills made offline need a database update on the server first. Make this bill again online." };
+  if (trip.status !== "loaded" && !(offline && trip.status === "returned")) {
+    return { error: offline ? "This van trip was settled before this bill reached the server. Make the bill again from the counter, or ask the owner." : "This van trip isn't on the route, so it can't be billed from." };
+  }
   if (!mayWorkTrip(session.role, session.userId, trip.salesman_id)) return { error: "Only this trip's salesman, the owner or a manager can bill from this van." };
-  const { data: van } = await admin.from("godowns" as never).select("code").eq("id", trip.vehicle_id).eq("shop_id", session.shopId).maybeSingle();
-  return { tripId: trip.id, vehicleId: trip.vehicle_id, code: (van as { code: string } | null)?.code ?? "VAN" };
+  const { data: van } = await admin.from("godowns" as never).select(more ? "code, van_max_discount" : "code").eq("id", trip.vehicle_id).eq("shop_id", session.shopId).maybeSingle();
+  const v = van as { code: string; van_max_discount?: number | null } | null;
+  return { tripId: trip.id, vehicleId: trip.vehicle_id, code: v?.code ?? "VAN", maxDiscount: v?.van_max_discount == null ? null : Number(v.van_max_discount), more };
+}
+
+/** A van bill's number: the trip's kept block (migration 0067) — the phone's own number when it is
+ * still free — else, before that migration, the van's next number as before. */
+async function vanBillNumber(admin: ReturnType<typeof createSupabaseAdminClient>, shopId: string, van: VanForBill, wanted: number | null): Promise<string | null> {
+  const rpc = admin.rpc as unknown as (fn: string, args: Record<string, unknown>) => Promise<{ data: unknown; error: { message?: string } | null }>;
+  if (van.more) {
+    const { data, error } = await rpc("van_bill_number", { p_shop: shopId, p_trip: van.tripId, p_wanted: wanted });
+    return error || !data ? null : String(data);
+  }
+  const { data, error } = await rpc("next_godown_doc_number", { p_shop: shopId, p_kind: `vanbill:${van.vehicleId}`, p_prefix: van.code });
+  return error || !data ? null : String(data);
+}
+
+/** A salesman's van bill within the van's limits (the owner or a manager may go past them): no more
+ * off the rate list than the van allows, and no more udhaar than the party's limit leaves. */
+async function vanLimitError(
+  admin: ReturnType<typeof createSupabaseAdminClient>,
+  session: SessionContext,
+  van: VanForBill,
+  bill: { listTotal: number; total: number; udhaar: number; customerId: string | null; customerName: string | null },
+): Promise<string | null> {
+  if (canRunVans(session.role)) return null;
+  if (van.maxDiscount !== null) {
+    const given = discountGiven(bill.listTotal, bill.total);
+    if (given > van.maxDiscount + 0.05) return `Salesmen can give up to ${van.maxDiscount}% off on this van's bills; this bill is ${given}% below the rate list. Bring it within the limit, or ask the owner.`;
+  }
+  if (bill.customerId && bill.udhaar > 0 && (await gapsReady(admin))) {
+    const { data: c } = await admin.from("customers").select("credit_limit").eq("id", bill.customerId).eq("shop_id", session.shopId).maybeSingle();
+    if (c?.credit_limit != null) {
+      // A balance that can't be read right now doesn't stop the bill: the limit is checked when it can be.
+      const balances = await getCustomerBalances(admin, session.shopId, [bill.customerId]).catch((e) => {
+        console.error("Van bill: udhaar balance not read", e);
+        return null;
+      });
+      if (!balances) return null;
+      const owed = Math.round((balances.get(bill.customerId) ?? 0) * 100) / 100;
+      const room = creditRoom(Number(c.credit_limit), owed) ?? 0;
+      if (bill.udhaar > room + 0.005) {
+        return `${bill.customerName ?? "This party"}'s udhaar limit is ${formatMoney(Number(c.credit_limit))} and they already owe ${formatMoney(Math.max(0, owed))}, so at most ${formatMoney(room)} can go on udhaar. Take more payment now, or ask the owner to raise the limit.`;
+      }
+    }
+  }
+  return null;
 }
 
 /** The actual bill-creation logic, shared by the normal online form
@@ -359,8 +412,27 @@ export async function createBillCore(
   // stops at zero and the shortfall is written down.
   // A bill from a van (Van sales): its stock comes off the van — more than the van holds is refused in
   // the database — and it takes the van's own number series, e.g. V1/2026-27/0001.
-  const van = parsedData.vanTripId && !offline ? await vanTripForBill(admin, session, parsedData.vanTripId) : null;
+  const van = parsedData.vanTripId ? await vanTripForBill(admin, session, parsedData.vanTripId, !!offline) : null;
   if (van && "error" in van) return { error: van.error };
+  // A bill made offline was handed over already: the phone kept it within the limits it knew.
+  if (van && !offline) {
+    const listTotals = calculateTransactionTotals({
+      items: verifiedItems.map((l) => ({ ...l, unitPrice: l.listUnitPrice })),
+      discountType: "flat",
+      discountValue: 0,
+      paidAmount: 0,
+      supplyType,
+      priceMode: session.priceIncludesGst ? "inclusive" : "exclusive",
+    });
+    const limited = await vanLimitError(admin, session, van, {
+      listTotal: round2(listTotals.total - listTotals.roundOffAmount),
+      total: round2(totals.total - totals.roundOffAmount),
+      udhaar: totals.balanceAmount,
+      customerId,
+      customerName: customer?.name ?? null,
+    });
+    if (limited) return { error: limited };
+  }
   const blocksOversell = !offline && !van && (await oversellP);
   if (blocksOversell) {
     const short = oversellError(verifiedItems, productMap, await recipeDishesP);
@@ -369,8 +441,8 @@ export async function createBillCore(
 
   const issued = van
     ? await (async () => {
-        const { data: number, error: numberError } = await admin.rpc("next_godown_doc_number" as never, { p_shop: session.shopId, p_kind: `vanbill:${van.vehicleId}`, p_prefix: van.code } as never);
-        return numberError || !number ? null : { invoiceNumber: String(number), financialYear: financialYearFor(new Date()) };
+        const number = await vanBillNumber(admin, session.shopId, van, parsedData.vanNumber ?? null);
+        return number ? { invoiceNumber: number, financialYear: financialYearFor(offline?.issuedAt ?? new Date()) } : null;
       })()
     : await issueInvoiceNumber(admin, session.shopId, offline?.issuedAt ?? new Date());
   if (!issued) {
@@ -744,7 +816,7 @@ export async function createBillCore(
   if (van) {
     const vanTrip = van.tripId;
     try {
-      after(() => noteVanBill(admin, { shopId: session.shopId, staffId: session.userId, tripId: vanTrip, billId: bill.id, customerId, fix: parsedData.vanFix ?? null }).catch((e) => console.error("Van bill visit not noted", e)));
+      after(() => noteVanBill(admin, { shopId: session.shopId, staffId: session.userId, tripId: vanTrip, billId: bill.id, customerId, fix: parsedData.vanFix ?? null, at: offline?.issuedAt }).catch((e) => console.error("Van bill visit not noted", e)));
     } catch {
       // Outside a request (tests): nothing to note.
     }

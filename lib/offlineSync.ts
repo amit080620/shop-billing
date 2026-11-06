@@ -13,7 +13,9 @@ export const OFFLINE_BILLS_EVENT = "ray:offline-bills";
 
 let running: Promise<SyncResult> | null = null;
 
-export type SyncResult = { synced: number; failed: number; stillOffline: boolean };
+/** renumbered: van bills whose kept number was taken meanwhile (another phone billed the same trip),
+ * so the invoice has another number than the slip. */
+export type SyncResult = { synced: number; failed: number; stillOffline: boolean; renumbered: { from: string; to: string }[] };
 
 /** Bills made with no internet belong to the shop they were made in; one queued before bills were
  * tagged belongs to whichever shop syncs it. */
@@ -26,7 +28,7 @@ export const belongsTo = (bill: PendingBill, shopId: string) => (bill.shopId ?? 
 export function syncPendingBills(shopId: string, { retryFailed = false } = {}): Promise<SyncResult> {
   if (running) return running;
   running = (async () => {
-    const result: SyncResult = { synced: 0, failed: 0, stillOffline: false };
+    const result: SyncResult = { synced: 0, failed: 0, stillOffline: false, renumbered: [] };
     try {
       for (const bill of await getPendingBills()) {
         if (!belongsTo(bill, shopId)) continue;
@@ -51,6 +53,7 @@ export function syncPendingBills(shopId: string, { retryFailed = false } = {}): 
               paidAmount: bill.paidAmount,
               paymentMethod: bill.paymentMethod,
               ...(bill.payments ? { payments: bill.payments } : {}),
+              ...(bill.van ? { vanTripId: bill.van.tripId, vanNumber: bill.van.number, vanFix: bill.van.fix } : {}),
             },
           });
         } catch {
@@ -63,6 +66,7 @@ export function syncPendingBills(shopId: string, { retryFailed = false } = {}): 
           await updatePendingBill({ ...bill, status: "failed", syncError: reply.error });
         } else {
           result.synced++;
+          if (bill.van?.invoice && reply.invoiceNumber !== bill.van.invoice) result.renumbered.push({ from: bill.van.invoice, to: reply.invoiceNumber });
           await removePendingBill(bill.localId);
         }
       }
@@ -89,7 +93,8 @@ export function offlineSlipData(bill: PendingBill, shopName: string, priceInclud
   const at = new Date(bill.createdAt);
   return {
     shopName,
-    invoiceNumber: `PROVISIONAL ${bill.localId.slice(-6).toUpperCase()}`,
+    // A van bill made offline already has its final number, kept for the trip.
+    invoiceNumber: bill.van?.invoice ?? `PROVISIONAL ${bill.localId.slice(-6).toUpperCase()}`,
     dateText: at.toLocaleDateString("en-IN", { day: "2-digit", month: "2-digit", year: "numeric" }),
     timeText: at.toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit", hour12: true }),
     customerName: bill.customerName,
@@ -101,7 +106,7 @@ export function offlineSlipData(bill: PendingBill, shopName: string, priceInclud
     total: totals.total,
     paidAmount: totals.paidAmount,
     creditAmount: totals.balanceAmount || undefined,
-    footerText: "Provisional slip - GST invoice number follows once synced",
+    footerText: bill.van?.invoice ? "Full GST invoice follows once synced" : "Provisional slip - GST invoice number follows once synced",
   };
 }
 

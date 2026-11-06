@@ -64,6 +64,17 @@ export async function priceLines(
     const overridden = !!product && item.priceOverride === true && item.unitPrice > 0 && hasPermission(session, "give_discounts");
     const promise = product ? quoted?.get(product.id) : undefined;
     const quotedPrice = promise && promise.loose === loose ? promise.unitPrice : null;
+    // The rate list: a quotation's promise, the party's wholesale rate, else the catalogue price.
+    const listPrice =
+      quotedPrice != null
+        ? quotedPrice
+        : product && wholesale.has(product.id)
+          ? loose && Number(product.units_per_pack) > 1
+            ? round2(wholesale.get(product.id)! / Number(product.units_per_pack))
+            : wholesale.get(product.id)!
+          : product
+            ? productLinePrice(product, { quantity: item.quantity, loose })
+            : item.unitPrice;
     return {
       // Which of the given items this line came from (a free line shares its paid line's item).
       sourceIndex,
@@ -72,17 +83,9 @@ export async function priceLines(
       hsnCode: product?.hsn_code ?? item.hsnCode ?? null,
       quantity: item.quantity,
       stockQuantity: product && loose ? round2(item.quantity / Number(product.units_per_pack)) : product ? item.quantity : (item.stockQuantity ?? item.quantity),
-      unitPrice: overridden
-        ? item.unitPrice
-        : quotedPrice != null
-          ? quotedPrice
-          : product && wholesale.has(product.id)
-            ? loose && Number(product.units_per_pack) > 1
-              ? round2(wholesale.get(product.id)! / Number(product.units_per_pack))
-              : wholesale.get(product.id)!
-            : product
-              ? productLinePrice(product, { quantity: item.quantity, loose })
-              : item.unitPrice,
+      unitPrice: overridden ? item.unitPrice : listPrice,
+      /** What the line sells at without a typed-in rate (a van's discount limit is measured from it). */
+      listUnitPrice: listPrice,
       gstPercent: isComposition ? 0 : product ? Number(product.gst_percent) : item.gstPercent,
       warrantyMonths: product?.has_warranty ? product.warranty_months : null,
       mrp: product?.mrp ? Number(product.mrp) : null,
@@ -97,7 +100,7 @@ export async function priceLines(
     const paid = round2(line.quantity - free);
     return [
       { ...line, quantity: paid, stockQuantity: paid },
-      { ...line, productName: `${line.productName} (free — buy ${offer.buy} get ${offer.free})`, quantity: free, stockQuantity: free, unitPrice: 0 },
+      { ...line, productName: `${line.productName} (free — buy ${offer.buy} get ${offer.free})`, quantity: free, stockQuantity: free, unitPrice: 0, listUnitPrice: 0 },
     ];
   });
   return { productMap, lines };

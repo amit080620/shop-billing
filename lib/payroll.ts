@@ -28,6 +28,8 @@ export function monthPay(input: {
   bonuses: number;
   salaryPaid: number;
   commission?: number;
+  /** Taken off the pay (a van shortage charged to the salesman). */
+  deductions?: number;
 }) {
   const days = daysInMonth(input.month);
   const count = (s: AttendanceStatus) => input.marks.filter((m) => m === s).length;
@@ -49,6 +51,6 @@ export function monthPay(input: {
   }
   const commission = round2(input.commission ?? 0);
   earned = round2(earned + commission);
-  const due = round2(earned + input.bonuses - input.advances - input.salaryPaid);
+  const due = round2(earned + input.bonuses - input.advances - (input.deductions ?? 0) - input.salaryPaid);
   return { days, present, half, absent, leave: count("leave"), off: count("off"), perDay: round2(perDay), beforeJoining, commission, earned, due };
 }

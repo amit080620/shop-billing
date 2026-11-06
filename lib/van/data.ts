@@ -2,14 +2,19 @@ import "server-only";
 import type { createSupabaseAdminClient } from "../supabase/admin";
 import type { SessionContext } from "../auth";
 import { allRows } from "../supabase/allRows";
-import { mayWorkTrip, moneyDue, type TripMoney, type TripStatus } from "./rules";
+import { canRunVans, mayWorkTrip, moneyDue, type TripMoney, type TripStatus } from "./rules";
+import { vanMoreReady } from "./server";
+import { vanPhotoLinks } from "./photos";
+import { wholesalePrices, wholesaleReady } from "../wholesaleData";
+import { getCustomerBalances } from "../moneyBalances";
+import { gapsReady } from "../gapsData";
 
 type Admin = ReturnType<typeof createSupabaseAdminClient>;
 
 // The van tables come from migration 0066 and aren't in the generated types yet.
 const db = (admin: Admin) => admin as unknown as { from: (t: string) => ReturnType<Admin["from"]> };
 
-export type Van = { id: string; name: string; code: string; vehicleNumber: string | null; defaultStaffId: string | null; defaultRoute: string | null; isActive: boolean };
+export type Van = { id: string; name: string; code: string; vehicleNumber: string | null; defaultStaffId: string | null; defaultRoute: string | null; isActive: boolean; maxDiscount: number | null };
 export type Place = { id: string; name: string; code: string; kind: string; isDefault: boolean };
 export type TripRow = {
   id: string;
@@ -33,6 +38,8 @@ export type TripRow = {
   shortageValue: number | null;
   salesmanCharge: number;
   settleNote: string | null;
+  /** The charge was taken off the salesman's salary (migration 0067). */
+  salaryDeducted: boolean;
 };
 
 const num = (v: unknown) => (v === null || v === undefined ? null : Number(v));
@@ -47,7 +54,16 @@ export async function loadPlaces(admin: Admin, shopId: string): Promise<{ main: 
     places,
     vans: rows
       .filter((g) => g.kind === "vehicle")
-      .map((g) => ({ id: g.id as string, name: g.name as string, code: g.code as string, vehicleNumber: (g.vehicle_number as string) ?? null, defaultStaffId: (g.default_staff_id as string) ?? null, defaultRoute: (g.default_route as string) ?? null, isActive: g.is_active !== false })),
+      .map((g) => ({
+        id: g.id as string,
+        name: g.name as string,
+        code: g.code as string,
+        vehicleNumber: (g.vehicle_number as string) ?? null,
+        defaultStaffId: (g.default_staff_id as string) ?? null,
+        defaultRoute: (g.default_route as string) ?? null,
+        isActive: g.is_active !== false,
+        maxDiscount: g.van_max_discount === null || g.van_max_discount === undefined ? null : Number(g.van_max_discount),
+      })),
   };
 }
 
@@ -79,6 +95,7 @@ function toTrip(t: Record<string, unknown>, vanName: Map<string, string>, staffN
     shortageValue: num(t.shortage_value),
     salesmanCharge: Number(t.salesman_charge ?? 0),
     settleNote: (t.settle_note as string) ?? null,
+    salaryDeducted: !!t.salary_deduction_id,
   };
 }
 
@@ -105,10 +122,11 @@ export async function loadOpenTrips(admin: Admin, session: SessionContext): Prom
   return ((data ?? []) as Record<string, unknown>[]).map((t) => toTrip(t, new Map(vans.map((v) => [v.id, v.name])), new Map(staff.map((s) => [s.id, s.name]))));
 }
 
-export type TripItem = { productId: string; name: string; unit: string; price: number; loaded: number; sold: number; onVan: number };
+export type TripItem = { productId: string; name: string; unit: string; price: number; loaded: number; sold: number; returned: number; onVan: number };
 export type TripBill = { id: string; number: string; customer: string | null; total: number; paid: number; credit: number; status: string; createdAt: string };
-export type TripExpense = { id: string; kind: string; amount: number; note: string | null; createdAt: string };
-export type TripCount = { productId: string; name: string; loaded: number; sold: number; expected: number; counted: number; damaged: number; shortage: number; excess: number };
+export type TripExpense = { id: string; kind: string; amount: number; note: string | null; createdAt: string; photo: string | null };
+export type TripReturn = { id: string; number: string; customer: string | null; total: number; refundMethod: string; createdAt: string };
+export type TripCount = { productId: string; name: string; loaded: number; sold: number; returned: number; expected: number; counted: number; damaged: number; shortage: number; excess: number };
 
 /** One trip in full: its items (loaded, sold, still on the van), bills, money and expenses, and the
  * settlement count once settled. Null when it isn't this shop's. */
@@ -118,29 +136,33 @@ export async function loadTrip(admin: Admin, session: SessionContext, tripId: st
   const [{ vans, places }, staff] = await Promise.all([loadPlaces(admin, session.shopId), loadStaff(admin, session.shopId)]);
   const trip = toTrip(raw as Record<string, unknown>, new Map(vans.map((v) => [v.id, v.name])), new Map(staff.map((s) => [s.id, s.name])));
 
-  const [{ data: ledger }, { data: onVanRows }, { data: billRows }, { data: expenseRows }, { data: countRows }] = await Promise.all([
+  const more = await vanMoreReady(admin);
+  const [{ data: ledger }, { data: onVanRows }, { data: billRows }, { data: expenseRows }, { data: countRows }, { data: returnRows }] = await Promise.all([
     allRows((from, to) =>
       db(admin)
         .from("inventory_ledger")
         .select("id, product_id, product_name, quantity, kind, ref_type, ref_id, note")
         .eq("shop_id", session.shopId)
         .eq("godown_id", trip.vehicleId)
-        .in("kind", ["van_load", "van_topup", "van_sale", "van_sale_back"])
-        .or(`and(ref_type.eq.van_trip,ref_id.eq.${trip.id}),and(ref_type.eq.bill,note.eq.${trip.number})`)
+        .in("kind", ["van_load", "van_topup", "van_sale", "van_sale_back", "van_return"])
+        .or(`and(ref_type.eq.van_trip,ref_id.eq.${trip.id}),and(ref_type.eq.bill,note.eq.${trip.number}),and(ref_type.eq.return,note.eq.${trip.number})`)
         .order("id")
         .range(from, to),
     ),
     db(admin).from("godown_stock").select("product_id, saleable").eq("godown_id", trip.vehicleId).gt("saleable", 0),
     db(admin).from("bills").select("id, invoice_number, total, paid_amount, credit_amount, status, created_at, customers ( name )").eq("shop_id", session.shopId).eq("van_trip_id", trip.id).order("created_at"),
-    db(admin).from("van_expenses").select("id, kind, amount, note, created_at").eq("trip_id", trip.id).order("created_at"),
+    db(admin).from("van_expenses").select(more ? "id, kind, amount, note, created_at, photo_path" : "id, kind, amount, note, created_at").eq("trip_id", trip.id).order("created_at"),
     db(admin).from("van_trip_lines").select("*").eq("trip_id", trip.id),
+    more
+      ? db(admin).from("returns").select("id, return_number, total, refund_method, created_at, customers ( name )").eq("shop_id", session.shopId).eq("van_trip_id", trip.id).order("created_at")
+      : Promise.resolve({ data: [] }),
   ]);
 
   const items = new Map<string, TripItem>();
   const ensure = (id: string, name: string) => {
     let i = items.get(id);
     if (!i) {
-      i = { productId: id, name, unit: "", price: 0, loaded: 0, sold: 0, onVan: 0 };
+      i = { productId: id, name, unit: "", price: 0, loaded: 0, sold: 0, returned: 0, onVan: 0 };
       items.set(id, i);
     }
     return i;
@@ -148,6 +170,7 @@ export async function loadTrip(admin: Admin, session: SessionContext, tripId: st
   for (const l of (ledger ?? []) as { product_id: string; product_name: string; quantity: number; kind: string }[]) {
     const i = ensure(l.product_id, l.product_name);
     if (l.kind === "van_load" || l.kind === "van_topup") i.loaded += Number(l.quantity);
+    else if (l.kind === "van_return") i.returned += Number(l.quantity);
     else i.sold -= Number(l.quantity);
   }
   if (trip.status === "loaded" || trip.status === "returned" || trip.status === "draft") {
@@ -174,12 +197,23 @@ export async function loadTrip(admin: Admin, session: SessionContext, tripId: st
     status: b.status as string,
     createdAt: b.created_at as string,
   }));
-  const expenses: TripExpense[] = ((expenseRows ?? []) as Record<string, unknown>[]).map((e) => ({ id: e.id as string, kind: e.kind as string, amount: Number(e.amount), note: (e.note as string) ?? null, createdAt: e.created_at as string }));
+  const expenseList = (expenseRows ?? []) as Record<string, unknown>[];
+  const photoOf = await vanPhotoLinks(admin, expenseList.map((e) => e.photo_path as string | null));
+  const expenses: TripExpense[] = expenseList.map((e) => ({ id: e.id as string, kind: e.kind as string, amount: Number(e.amount), note: (e.note as string) ?? null, createdAt: e.created_at as string, photo: photoOf.get(e.photo_path as string) ?? null }));
+  const returns: TripReturn[] = ((returnRows ?? []) as Record<string, unknown>[]).map((r) => ({
+    id: r.id as string,
+    number: r.return_number as string,
+    customer: ((r.customers as { name?: string } | null)?.name as string) ?? null,
+    total: Number(r.total),
+    refundMethod: r.refund_method as string,
+    createdAt: r.created_at as string,
+  }));
   const counts: TripCount[] = ((countRows ?? []) as Record<string, unknown>[]).map((c) => ({
     productId: c.product_id as string,
     name: c.product_name as string,
     loaded: Number(c.loaded),
     sold: Number(c.sold),
+    returned: Number(c.returned ?? 0),
     expected: Number(c.expected),
     counted: Number(c.counted),
     damaged: Number(c.damaged),
@@ -194,17 +228,30 @@ export async function loadTrip(admin: Admin, session: SessionContext, tripId: st
     items: [...items.values()].sort((a, b) => a.name.localeCompare(b.name)),
     bills,
     expenses,
+    returns,
     counts,
-    money: await tripMoney(admin, session.shopId, trip, bills, expenses),
+    money: await tripMoney(admin, session.shopId, trip, bills, expenses, returns),
   };
 }
 
 /** The money side of a trip. Bills: by their payment rows (migration 0061) where they have them, else
  * by their single mode. Collections: old dues the trip's salesman took while the trip was out. */
-export async function tripMoney(admin: Admin, shopId: string, trip: TripRow, bills: TripBill[], expenses: TripExpense[]): Promise<TripMoney & ReturnType<typeof moneyDue> & { collections: number }> {
+export async function tripMoney(admin: Admin, shopId: string, trip: TripRow, bills: TripBill[], expenses: TripExpense[], returns: TripReturn[] = []): Promise<TripMoney & ReturnType<typeof moneyDue> & { collections: number }> {
   const active = bills.filter((b) => b.status === "active");
   const ids = active.map((b) => b.id);
-  const m: TripMoney = { openingCash: trip.openingCash, cashBills: 0, upiBills: 0, otherBills: 0, creditBills: 0, cashCollections: 0, upiCollections: 0, expenses: expenses.reduce((s, e) => s + e.amount, 0) };
+  const refunds = (method: string) => returns.filter((r) => r.refundMethod === method).reduce((s, r) => s + r.total, 0);
+  const m: TripMoney = {
+    openingCash: trip.openingCash,
+    cashBills: 0,
+    upiBills: 0,
+    otherBills: 0,
+    creditBills: 0,
+    cashCollections: 0,
+    upiCollections: 0,
+    expenses: expenses.reduce((s, e) => s + e.amount, 0),
+    cashRefunds: refunds("cash"),
+    upiRefunds: refunds("upi"),
+  };
   if (ids.length) {
     const [{ data: rows }, { data: heads }] = await Promise.all([
       db(admin).from("bill_payments").select("bill_id, payment_method, amount").in("bill_id", ids),
@@ -245,19 +292,101 @@ export async function tripMoney(admin: Admin, shopId: string, trip: TripRow, bil
 
 /** What New Bill offers when it bills from a van: only what is on the van, at the van's quantities.
  * Null when the trip isn't on the route or this person may not bill from it. */
-export async function vanBillingStock(admin: Admin, session: SessionContext, tripId: string): Promise<{ tripId: string; number: string; vehicle: string; stock: Map<string, number> } | null> {
+export type KeptNumbers = { prefix: string; from: number; to: number; next: number };
+
+/** The trip's kept bill numbers (migration 0067), keeping more when few are left. Null off the route. */
+export async function tripNumbers(admin: Admin, shopId: string, tripId: string): Promise<KeptNumbers | null> {
+  if (!(await vanMoreReady(admin))) return null;
+  const { data, error } = await (admin.rpc as unknown as (fn: string, args: Record<string, unknown>) => Promise<{ data: unknown; error: unknown }>)("van_trip_numbers", { p_shop: shopId, p_trip: tripId });
+  if (error || !data) return null;
+  const n = data as KeptNumbers;
+  return { prefix: String(n.prefix), from: Number(n.from), to: Number(n.to), next: Number(n.next) };
+}
+
+export async function vanBillingStock(admin: Admin, session: SessionContext, tripId: string): Promise<{ tripId: string; number: string; vehicle: string; stock: Map<string, number>; numbers: KeptNumbers | null; maxDiscount: number | null } | null> {
   const { data } = await db(admin).from("van_trips").select("id, trip_number, status, salesman_id, vehicle_id").eq("id", tripId).eq("shop_id", session.shopId).maybeSingle();
   const t = data as { id: string; trip_number: string; status: string; salesman_id: string | null; vehicle_id: string } | null;
   if (!t || t.status !== "loaded" || !mayWorkTrip(session.role, session.userId, t.salesman_id)) return null;
-  const [{ data: van }, { data: rows }] = await Promise.all([
-    db(admin).from("godowns").select("name").eq("id", t.vehicle_id).maybeSingle(),
+  const more = await vanMoreReady(admin);
+  const [{ data: van }, { data: rows }, numbers] = await Promise.all([
+    db(admin).from("godowns").select(more ? "name, van_max_discount" : "name").eq("id", t.vehicle_id).maybeSingle(),
     db(admin).from("godown_stock").select("product_id, saleable").eq("godown_id", t.vehicle_id).gt("saleable", 0),
+    tripNumbers(admin, session.shopId, t.id),
   ]);
+  const v = van as { name?: string; van_max_discount?: number | null } | null;
   return {
     tripId: t.id,
     number: t.trip_number,
-    vehicle: ((van as { name?: string } | null)?.name as string) ?? "Van",
+    vehicle: v?.name ?? "Van",
     stock: new Map(((rows ?? []) as { product_id: string; saleable: number }[]).map((r) => [r.product_id, Number(r.saleable)])),
+    numbers,
+    maxDiscount: v?.van_max_discount == null ? null : Number(v.van_max_discount),
+  };
+}
+
+/** What the salesman's phone keeps to bill from the van with no internet (Offline billing's van mode):
+ * the van's items at their rates, the route's parties with their rate level and udhaar room, the shop
+ * pins, and the trip's kept bill numbers. Only for a trip on the route. */
+export type VanOfflinePack = {
+  v: 1;
+  shopId: string;
+  /** The shop's own details, so Offline billing works on a phone that never opened the counter's New Bill. */
+  shop: { name: string; stateCode: string; priceIncludesGst: boolean; staffId: string; staffName: string };
+  tripId: string;
+  tripNumber: string;
+  vehicle: string;
+  manager: boolean;
+  maxDiscount: number | null;
+  numbers: KeptNumbers | null;
+  items: { id: string; name: string; unit: string; price: number; bulkMin: number | null; bulkPrice: number | null; wholesale: number | null; gst: number; hsn: string | null; onVan: number }[];
+  parties: { id: string; name: string; phone: string | null; wholesale: boolean; limit: number | null; owed: number; lat: number | null; lng: number | null }[];
+  savedAt: string;
+};
+
+export async function vanOfflinePack(admin: Admin, session: SessionContext, trip: TripRow, vehicle: Van | null, items: TripItem[], shops: RouteShop[]): Promise<VanOfflinePack | null> {
+  if (trip.status !== "loaded" || !(await vanMoreReady(admin))) return null;
+  const onVan = items.filter((i) => i.onVan > 0);
+  const ids = onVan.map((i) => i.productId);
+  const partyIds = shops.map((s) => s.id);
+  const [{ data: prods }, wholesale, numbers, { data: terms }, { data: limits }, owed] = await Promise.all([
+    ids.length ? admin.from("products").select("id, name, unit, price, offer_price, bulk_min_qty, bulk_price, gst_percent, hsn_code").eq("shop_id", session.shopId).in("id", ids) : Promise.resolve({ data: [] }),
+    wholesalePrices(admin, ids),
+    tripNumbers(admin, session.shopId, trip.id),
+    partyIds.length && (await wholesaleReady(admin)) ? admin.from("customers").select("id, price_level").eq("shop_id", session.shopId).in("id", partyIds) : Promise.resolve({ data: [] }),
+    partyIds.length && (await gapsReady(admin)) ? admin.from("customers").select("id, credit_limit").eq("shop_id", session.shopId).in("id", partyIds) : Promise.resolve({ data: [] }),
+    partyIds.length ? getCustomerBalances(admin, session.shopId, partyIds).catch(() => new Map<string, number>()) : Promise.resolve(new Map<string, number>()),
+  ]);
+  const levelOf = new Map(((terms ?? []) as { id: string; price_level: string | null }[]).map((c) => [c.id, c.price_level]));
+  const limitOf = new Map(((limits ?? []) as { id: string; credit_limit: number | null }[]).map((c) => [c.id, c.credit_limit]));
+  const onVanOf = new Map(onVan.map((i) => [i.productId, i.onVan]));
+  type Prod = { id: string; name: string; unit: string; price: number; offer_price: number | null; bulk_min_qty: number | null; bulk_price: number | null; gst_percent: number; hsn_code: string | null };
+  return {
+    v: 1,
+    shopId: session.shopId,
+    shop: { name: session.shopName, stateCode: session.shopStateCode ?? "", priceIncludesGst: session.priceIncludesGst, staffId: session.userId, staffName: session.staffName },
+    tripId: trip.id,
+    tripNumber: trip.number,
+    vehicle: vehicle?.name ?? trip.vehicleName,
+    manager: canRunVans(session.role),
+    maxDiscount: vehicle?.maxDiscount ?? null,
+    numbers,
+    items: ((prods ?? []) as Prod[]).map((p) => ({
+      id: p.id,
+      name: p.name,
+      unit: p.unit,
+      price: p.offer_price != null && Number(p.offer_price) > 0 ? Number(p.offer_price) : Number(p.price),
+      bulkMin: p.bulk_min_qty ? Number(p.bulk_min_qty) : null,
+      bulkPrice: p.bulk_price ? Number(p.bulk_price) : null,
+      wholesale: wholesale.get(p.id) ?? null,
+      gst: session.gstScheme === "composition" ? 0 : Number(p.gst_percent),
+      hsn: p.hsn_code,
+      onVan: onVanOf.get(p.id) ?? 0,
+    })),
+    parties: shops.map((s) => {
+      const limit = limitOf.get(s.id);
+      return { id: s.id, name: s.name, phone: s.phone, wholesale: levelOf.get(s.id) === "wholesale", limit: limit == null ? null : Number(limit), owed: Math.round((owed.get(s.id) ?? 0) * 100) / 100, lat: s.lat, lng: s.lng };
+    }),
+    savedAt: new Date().toISOString(),
   };
 }
 
@@ -346,7 +475,7 @@ export async function tripSummaries(admin: Admin, shopId: string, trips: TripRow
 // ─── Route tracking ────────────────────────────────────────────────────────────
 
 export type RouteShop = { id: string; name: string; phone: string | null; beat: string | null; lat: number | null; lng: number | null; radius: number; pinVerified: boolean };
-export type Visit = { id: string; tripId: string; customerId: string | null; customer: string | null; checkInAt: string; checkOutAt: string | null; outcome: string; note: string | null; billId: string | null; distance: number | null; verified: boolean | null; lat: number | null; lng: number | null };
+export type Visit = { id: string; tripId: string; customerId: string | null; customer: string | null; checkInAt: string; checkOutAt: string | null; outcome: string; note: string | null; billId: string | null; distance: number | null; verified: boolean | null; lat: number | null; lng: number | null; photoPath: string | null };
 export type PingRow = { lat: number; lng: number; accuracy: number | null; at: string; source: string; tripId: string };
 
 /** Shop pins for some or all parties. */
@@ -391,6 +520,7 @@ function toVisit(v: Record<string, unknown>, names: Map<string, string>): Visit 
     verified: (v.verified as boolean | null) ?? null,
     lat: v.latitude === null || v.latitude === undefined ? null : Number(v.latitude),
     lng: v.longitude === null || v.longitude === undefined ? null : Number(v.longitude),
+    photoPath: (v.photo_path as string) ?? null,
   };
 }
 

@@ -57,6 +57,9 @@ export type PendingBill = {
   createdAt: string; // client clock — used to preserve chronological sync order
   status: "pending" | "syncing" | "failed";
   syncError?: string;
+  /** Made from a wholesale van on the route (Van sales, migration 0067): its trip, the kept number the
+   * slip shows (null when the trip's block was used up — it gets one on sync) and where the phone was. */
+  van?: { tripId: string; number: number | null; invoice: string | null; fix: { lat: number; lng: number; accuracy: number | null } | null };
 };
 
 interface OfflineDB extends DBSchema {

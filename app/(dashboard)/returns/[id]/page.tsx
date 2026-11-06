@@ -35,15 +35,27 @@ export default async function ReturnDetailPage({
   const waiting = backsError || whole?.client_ref ? [] : (backs ?? []).filter((b) => b.product_id && b.stock_back === 0).map((b) => b.product_id as string);
   const { data: counted } = waiting.length ? await admin.from("products").select("id").eq("shop_id", session.shopId).eq("track_inventory", true).in("id", waiting) : { data: [] };
   const stockNotBack = (counted ?? []).length > 0;
+  // Taken on a wholesale van's trip (Van sales, migration 0067): back to the trip.
+  const vanTripId =
+    session.businessType === "wholesale"
+      ? ((((await admin.from("returns").select("van_trip_id" as never).eq("id", id).maybeSingle()).data ?? null) as { van_trip_id?: string | null } | null)?.van_trip_id ?? null)
+      : null;
 
   const bill = Array.isArray(ret.bills) ? ret.bills[0] : ret.bills;
   const customer = Array.isArray(ret.customers) ? ret.customers[0] : ret.customers;
 
   return (
     <div className="flex flex-col gap-4">
-      <Link href={`/print/bill/${ret.bill_id}`} className="text-sm text-muted">
-        ← Original bill
-      </Link>
+      <div className="flex flex-wrap gap-4">
+        <Link href={`/print/bill/${ret.bill_id}`} className="text-sm text-muted">
+          ← Original bill
+        </Link>
+        {vanTripId && (
+          <Link href={`/van/trips/${vanTripId}`} className="text-sm font-medium text-brand-text">
+            ← Back to the van trip
+          </Link>
+        )}
+      </div>
 
       <div className="flex items-start justify-between gap-3">
         <div>
