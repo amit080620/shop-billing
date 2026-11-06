@@ -6,7 +6,11 @@ import { SplitPayments, splitSum, splitToSend, type SplitRow } from "@/app/compo
 import { keepValuesOnError } from "@/lib/keepValuesOnError";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "@/lib/link";
-import { useActionState } from "react";
+import { lazy, Suspense, useActionState } from "react";
+import type { Fix as VanFix } from "@/lib/van/useTripTracker";
+
+// The van route tracker loads only on a van bill (React.lazy keeps it out of every other New Bill).
+const VanBillTracker = lazy(() => import("./VanBillTracker"));
 import { useFormStatus } from "react-dom";
 import { pressWhenReady, rememberBillingScreen, savePresser, SETTLE_MS } from "@/lib/keyboardBilling";
 import { useBillingKeys } from "@/lib/useBillingKeys";
@@ -146,6 +150,7 @@ export function NewBillClient({
   fromChallans = null,
   scaleBarcode = null,
   ordersAvailable = false,
+  vanTrip = null,
   fromScheme = null,
   stylists = [],
   extrasAvailable = false,
@@ -166,6 +171,8 @@ export function NewBillClient({
   scaleBarcode?: ScaleSettings | null;
   /** Wholesale: a salesman can save the cart as an order, billed later. */
   ordersAvailable?: boolean;
+  /** Wholesale Van sales: billing from a van's trip — only the van's stock is offered and the bill takes it from the van. */
+  vanTrip?: { id: string; number: string; vehicle: string } | null;
   /** Opened from an appointment: the customer and stylist to start with. */
   initialCustomerId?: string | null;
   initialProvider?: string;
@@ -226,6 +233,8 @@ export function NewBillClient({
   // always a reasonably fresh local copy of products/customers to work
   // from in the offline billing flow.
   useEffect(() => {
+    // A van's bill sees only the van's items: the offline copy keeps the whole shop's.
+    if (vanTrip) return;
     import("@/lib/offline-db").then(({ cacheForOffline }) => {
       cacheForOffline(
         { ...shopContext, cachedAt: new Date().toISOString() },
@@ -480,6 +489,8 @@ export function NewBillClient({
   }, 0);
 
   const [state, formAction] = useActionState(keepValuesOnError(createBillAction), null);
+  // A van's bill (Van sales route tracking): where the phone is goes with the bill; nothing else waits on it.
+  const [vanFix, setVanFix] = useState<VanFix | null>(null);
   // Set the moment the bill form is sent (this form's own pending status never shows here), cleared
   // when an answer comes back — an error; a saved bill moves on to its page instead.
   const [saving, setSaving] = useState(false);
@@ -948,6 +959,16 @@ export function NewBillClient({
       // bill summary on the right. Phones keep the bar pinned above the nav.
       <div className="md:grid md:grid-cols-[minmax(0,1fr)_300px] md:items-start md:gap-6">
       <div className="flex flex-col gap-3">
+        {vanTrip && (
+          <Suspense fallback={null}>
+            <VanBillTracker tripId={vanTrip.id} onFix={setVanFix} />
+          </Suspense>
+        )}
+        {vanTrip && (
+          <Link href={`/van/trips/${vanTrip.id}`} className="rounded-lg border border-brand/40 bg-brand-soft px-3 py-2 text-xs font-medium text-brand-text">
+            {t("Billing from {van} · trip {trip}. Only what is on the van can be sold.", { van: vanTrip.vehicle, trip: vanTrip.number })} →
+          </Link>
+        )}
         {!isOnline && (
           <Link
             href="/offline-bill"
@@ -1394,6 +1415,8 @@ export function NewBillClient({
   const payload = JSON.stringify({
     customerId: customerMode === "existing" ? selectedCustomer?.id ?? null : null,
     quotationId: fromQuote?.id ?? null,
+    vanTripId: vanTrip?.id ?? null,
+    vanFix: vanTrip && vanFix ? vanFix : null,
     challanIds: fromChallans?.ids,
     goldSchemeId: fromScheme?.id ?? null,
     walletAmount: walletUse > 0 ? walletUse : null,

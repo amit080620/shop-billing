@@ -317,6 +317,33 @@ export async function takeBillStock(
   return moveStock(admin, { ...origin, take: lines.filter((l) => l.quantity > 0).map((l) => ({ productId: l.productId, quantity: l.quantity })), allowShort: opts.allowShort });
 }
 
+/** A bill from a wholesale van (migration 0066): the van's own stock comes off and then the bill's
+ * normal stock step runs, in one transaction — more than the van holds is refused, whatever the shop's
+ * other stock is. The lines are the same as takeBillStock's. */
+export async function vanTakeBillStock(
+  admin: Admin,
+  opts: { shopId: string; staffId: string | null; tripId: string; billId: string; lines: BillStockLine[] },
+): Promise<StockMoveResult & { recorded?: true }> {
+  const origin: Origin = { shopId: opts.shopId, staffId: opts.staffId, source: "bill", sourceId: opts.billId };
+  const lines = opts.lines.map((l) => ({ ...l, quantity: round3(Number(l.quantity)), covered: round3(Number(l.covered)), perUnit: Math.round(Number(l.perUnit) * 1e6) / 1e6 }));
+  if (lines.some((l) => !Number.isFinite(l.quantity + l.covered + l.perUnit) || l.quantity < 0 || l.covered < 0 || !(l.perUnit > 0))) {
+    return { ok: false, refused: true, error: "A quantity must be a number greater than 0." };
+  }
+  const send = lines.filter((l) => l.quantity > 0 || l.covered > 0);
+  const { error } = await admin.rpc("van_take_bill_stock" as never, {
+    p_shop_id: opts.shopId,
+    p_trip_id: opts.tripId,
+    p_bill_id: opts.billId,
+    p_lines: send.map((l) => ({ bill_item_id: l.billItemId, quantity: l.quantity, covered: l.covered, per_unit: l.perUnit })),
+  } as never);
+  if (!error) return { ok: true, recorded: true };
+  if (error.message === "insufficient_vehicle_stock" || error.message === "trip_not_on_route") {
+    const { vanError } = await import("./van/rules");
+    return { ok: false, refused: true, error: vanError(error.message, typeof error.details === "string" ? error.details : null) };
+  }
+  return moveFailed(admin, origin, error);
+}
+
 /** Was this bill's stock taken (its lines carry their record)? For a take whose answer was lost: the
  * database may have done it all. Null when that can't be told either. */
 export async function billStockTaken(admin: Admin, billId: string): Promise<boolean | null> {
@@ -475,10 +502,11 @@ export async function recordReturn(
  * moment can't make it twice. "missing": the function isn't there; the caller voids the old way. */
 export async function voidBillStock(
   admin: Admin,
-  opts: { shopId: string; staffId: string; billId: string; reason: string; lines: { billItemId: string; productId: string; quantity: number }[] },
-): Promise<"ok" | "already_voided" | "has_credit_adjustment" | "missing" | "failed"> {
+  opts: { shopId: string; staffId: string; billId: string; reason: string; lines: { billItemId: string; productId: string; quantity: number }[]; van?: boolean },
+): Promise<"ok" | "already_voided" | "has_credit_adjustment" | "missing" | "failed" | "trip_settled"> {
   if (functionMissing("void_bill_stock")) return "missing";
-  const { data, error } = await admin.rpc("void_bill_stock", {
+  // A bill from a wholesale van (migration 0066) goes back onto the van, and only until its trip is settled.
+  const { data, error } = await admin.rpc((opts.van ? "van_void_bill_stock" : "void_bill_stock") as "void_bill_stock", {
     p_shop_id: opts.shopId,
     p_bill_id: opts.billId,
     p_staff_id: opts.staffId,
@@ -486,6 +514,7 @@ export async function voidBillStock(
     p_lines: opts.lines.filter((l) => Number(l.quantity) > 0).map((l) => ({ bill_item_id: l.billItemId, product_id: l.productId, quantity: Number(l.quantity) })),
   });
   if (noteFunctionResult("void_bill_stock", error)) return "missing";
+  if (error?.message === "trip_settled") return "trip_settled";
   if (error) {
     console.error("Could not void a bill", opts.billId, error);
     return "failed";

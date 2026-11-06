@@ -34,6 +34,7 @@ export const MODULES = [
   { key: "hotel_direct", label: "Direct booking & calendars", description: "Hotel: your own booking page, and iCal calendars with booking sites", href: "/hotel/online", businessTypes: ["hotel"] },
   { key: "garment_godowns", label: "Godowns & stock control", description: "Stock by godown, transfers with stock in transit, damage and missing-stock registers, godown counts, year-end carry forward", href: "/garment", businessTypes: ["garment"] },
   { key: "supplier_returns", label: "Supplier returns", description: "Send purchased goods back to the vendor with a debit note — the vendor is owed less", href: "/garment/supplier-returns", businessTypes: ["garment"] },
+  { key: "van_sales", label: "Van sales", description: "Wholesale: delivery vans as godowns on wheels — morning load, bills from the van's stock, evening return and settlement of stock and cash, van-wise reports", href: "/van", businessTypes: ["wholesale"] },
 ] as const satisfies readonly { key: string; label: string; description: string; href: string; businessTypes?: readonly string[] }[];
 
 export type ModuleKey = (typeof MODULES)[number]["key"];

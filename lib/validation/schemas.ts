@@ -163,6 +163,10 @@ export const billSchema = z.object({
       name: optionalText(120),
     })
     .optional(),
+  /** A wholesale van's trip this bill is made on: its stock comes off the van (migration 0066). */
+  vanTripId: z.string().uuid().nullable().optional(),
+  /** Where the phone was when a van bill was made (route tracking): never needed for the bill itself. */
+  vanFix: z.object({ lat: z.number().min(-90).max(90), lng: z.number().min(-180).max(180), accuracy: z.number().min(0).nullable() }).nullable().optional(),
   /** The quotation this bill was made from (marked converted once the bill exists). */
   quotationId: z.string().uuid().nullable().optional(),
   /** Delivery challans this bill is for (marked billed once the bill exists). */

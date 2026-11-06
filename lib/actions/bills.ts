@@ -9,7 +9,7 @@ import { istDay, SLOW_SAVE_MS, slowSaveKey, SPEED_KEEP_DAYS, type SlowSave } fro
 import { requireSession, hasPermission, type SessionContext } from "../auth";
 import { createSupabaseAdminClient } from "../supabase/admin";
 import { billSchema, calculateTransactionTotals, type BillInput } from "../validation/schemas";
-import { determineSupplyType, isPastGstPeriod, round2 } from "../gst";
+import { determineSupplyType, financialYearFor, isPastGstPeriod, round2 } from "../gst";
 import { logAuditEvent } from "../audit";
 import { findOrCreateCustomerByPhone, awardLoyaltyPoints } from "./customers";
 import { invalidateCache } from "../cache";
@@ -25,6 +25,9 @@ import { freeFollowUp } from "../followUp";
 import { gapsReady } from "../gapsData";
 import { isClientRef, offlineBillsReady, offlineIssuedAt } from "../offlineBills";
 import { issueInvoiceNumber } from "../invoiceNumber";
+import { vanSchemaReady } from "../van/server";
+import { mayWorkTrip } from "../van/rules";
+import { noteVanBill } from "../van/billVisit";
 import { missingColumn, oversellError, shopBlocksOversell } from "../stockRule";
 import { dueDateFor, partyTerms } from "../wholesaleData";
 import { loadPackages, packageUsable, salonExtrasReady, walletBalance } from "../salonExtras";
@@ -34,7 +37,7 @@ import { moduleLockMessage } from "../plans";
 import { dishesWithRecipes, recipesReady, takeForSale } from "../recipeData";
 import { recordBillPayments } from "../billPayments";
 import { singleModeRows, splitError, splitPaid } from "../billPaymentSplit";
-import { billHasCreditAdjustment, billStockTaken, editBillStock, logStockProblem, moveStock, returnedBack, round3, takeBillStock, voidBillStock, type StockLine } from "../stockMoves";
+import { billHasCreditAdjustment, billStockTaken, editBillStock, logStockProblem, moveStock, returnedBack, round3, takeBillStock, vanTakeBillStock, voidBillStock, type StockLine } from "../stockMoves";
 
 export type ActionState = { error?: string } | null;
 
@@ -60,6 +63,21 @@ async function takeBillBack(admin: ReturnType<typeof createSupabaseAdminClient>,
   console.error("Could not void an incomplete bill", billId, voidError);
   await logAuditEvent({ admin, shopId: session.shopId, staffId: session.userId, action: "bill_cleanup_failed", entityType: "bill", entityId: billId, details: { invoiceNumber, reason: why } });
   return `Bill ${invoiceNumber} could not be removed — void it from All bills before billing again.`;
+}
+
+/** A wholesale van's trip a bill is made on (Van sales, migration 0066): it must be on the route, and
+ * the one billing must be its salesman, the owner or a manager. */
+async function vanTripForBill(admin: ReturnType<typeof createSupabaseAdminClient>, session: SessionContext, tripId: string): Promise<{ tripId: string; vehicleId: string; code: string } | { error: string }> {
+  if (session.businessType !== "wholesale" || !isModuleEnabled(session.enabledModules, "van_sales") || !(await vanSchemaReady(admin))) {
+    return { error: "Van sales isn't on for this shop." };
+  }
+  const { data } = await admin.from("van_trips" as never).select("id, status, salesman_id, vehicle_id").eq("id", tripId).eq("shop_id", session.shopId).maybeSingle();
+  const trip = data as { id: string; status: string; salesman_id: string | null; vehicle_id: string } | null;
+  if (!trip) return { error: "That van trip wasn't found." };
+  if (trip.status !== "loaded") return { error: "This van trip isn't on the route, so it can't be billed from." };
+  if (!mayWorkTrip(session.role, session.userId, trip.salesman_id)) return { error: "Only this trip's salesman, the owner or a manager can bill from this van." };
+  const { data: van } = await admin.from("godowns" as never).select("code").eq("id", trip.vehicle_id).eq("shop_id", session.shopId).maybeSingle();
+  return { tripId: trip.id, vehicleId: trip.vehicle_id, code: (van as { code: string } | null)?.code ?? "VAN" };
 }
 
 /** The actual bill-creation logic, shared by the normal online form
@@ -339,13 +357,22 @@ export async function createBillCore(
   // dish made from a recipe takes its ingredients instead, so it isn't counted against its own stock.
   // A bill made offline was already handed over, so it is recorded whatever the stock says: stock then
   // stops at zero and the shortfall is written down.
-  const blocksOversell = !offline && (await oversellP);
+  // A bill from a van (Van sales): its stock comes off the van — more than the van holds is refused in
+  // the database — and it takes the van's own number series, e.g. V1/2026-27/0001.
+  const van = parsedData.vanTripId && !offline ? await vanTripForBill(admin, session, parsedData.vanTripId) : null;
+  if (van && "error" in van) return { error: van.error };
+  const blocksOversell = !offline && !van && (await oversellP);
   if (blocksOversell) {
     const short = oversellError(verifiedItems, productMap, await recipeDishesP);
     if (short) return { error: short };
   }
 
-  const issued = await issueInvoiceNumber(admin, session.shopId, offline?.issuedAt ?? new Date());
+  const issued = van
+    ? await (async () => {
+        const { data: number, error: numberError } = await admin.rpc("next_godown_doc_number" as never, { p_shop: session.shopId, p_kind: `vanbill:${van.vehicleId}`, p_prefix: van.code } as never);
+        return numberError || !number ? null : { invoiceNumber: String(number), financialYear: financialYearFor(new Date()) };
+      })()
+    : await issueInvoiceNumber(admin, session.shopId, offline?.issuedAt ?? new Date());
   if (!issued) {
     return { error: "Could not generate an invoice number. Please try again." };
   }
@@ -366,6 +393,7 @@ export async function createBillCore(
       branch_id: staffRow?.branch_id ?? null,
       invoice_number: invoiceNumber,
       financial_year: financialYear,
+      ...(van ? ({ van_trip_id: van.tripId } as object) : {}),
       subtotal: totals.subtotal,
       discount_type: discountType,
       discount_value: discountValue,
@@ -493,14 +521,17 @@ export async function createBillCore(
   // A dish made from a recipe takes its raw materials in the same transaction (the sale is made, so a
   // short one stops at zero and is written down), its line marked as sold by its recipe.
   const dishLines = verifiedItems.flatMap((item, i) => (item.productId && recipeDishes.has(item.productId) ? [lineIds[i]] : []));
-  const stock = await takeBillStock(admin, {
-    shopId: session.shopId,
-    staffId: session.userId,
-    billId: bill.id,
-    lines: counted.map((l) => ({ billItemId: l.billItemId, productId: l.product.id, quantity: l.quantity, covered: l.covered, perUnit: l.item.stockQuantity / Number(l.item.quantity) })),
-    dishes: dishLines,
-    allowShort: !blocksOversell,
-  });
+  const stockLines = counted.map((l) => ({ billItemId: l.billItemId, productId: l.product.id, quantity: l.quantity, covered: l.covered, perUnit: l.item.stockQuantity / Number(l.item.quantity) }));
+  const stock = van
+    ? await vanTakeBillStock(admin, { shopId: session.shopId, staffId: session.userId, tripId: van.tripId, billId: bill.id, lines: stockLines })
+    : await takeBillStock(admin, {
+        shopId: session.shopId,
+        staffId: session.userId,
+        billId: bill.id,
+        lines: stockLines,
+        dishes: dishLines,
+        allowShort: !blocksOversell,
+      });
   // The answer was lost, but the database may have done it all: then the bill stands, with its stock —
   // never a bill taken back while its stock, batches and raw materials stay taken.
   const recorded = stock.ok ? !!stock.recorded : !stock.refused && (await billStockTaken(admin, bill.id)) === true;
@@ -709,6 +740,15 @@ export async function createBillCore(
     }
   }
 
+  // A van bill: where it was made and the shop visit, after the answer (route tracking).
+  if (van) {
+    const vanTrip = van.tripId;
+    try {
+      after(() => noteVanBill(admin, { shopId: session.shopId, staffId: session.userId, tripId: vanTrip, billId: bill.id, customerId, fix: parsedData.vanFix ?? null }).catch((e) => console.error("Van bill visit not noted", e)));
+    } catch {
+      // Outside a request (tests): nothing to note.
+    }
+  }
   return { billId: bill.id, invoiceNumber };
 }
 
@@ -894,7 +934,9 @@ export async function voidBillAction(
   // Voided, and its stock given back less what its returns already gave back, in one database
   // transaction holding the bill (lib/stockMoves voidBillStock): two voids, or a void and a return at
   // the same moment, give the same goods back once.
-  const result = await voidBillStock(admin, { shopId: session.shopId, staffId: session.userId, billId, reason: reason.trim(), lines });
+  const van = (await vanSchemaReady(admin)) && !!((await admin.from("bills").select("van_trip_id" as never).eq("id", billId).single()).data as { van_trip_id?: string | null } | null)?.van_trip_id;
+  const result = await voidBillStock(admin, { shopId: session.shopId, staffId: session.userId, billId, reason: reason.trim(), lines, van });
+  if (result === "trip_settled") return { error: "This bill's van trip is settled, so the bill can't be voided now." };
   if (result === "already_voided") return { error: "This bill is already voided" };
   if (result === "has_credit_adjustment") return { error: CREDIT_ADJUSTMENT_BLOCKS_VOID };
   if (result === "failed") return { error: "Could not void bill" };
@@ -961,6 +1003,10 @@ export async function editBillQuantitiesAction(
   if (!reason.trim()) return { error: "Enter a reason for this edit" };
 
   const admin = createSupabaseAdminClient();
+  if (await vanSchemaReady(admin)) {
+    const { data: vanBill } = await admin.from("bills").select("van_trip_id" as never).eq("id", billId).eq("shop_id", session.shopId).maybeSingle();
+    if ((vanBill as { van_trip_id?: string | null } | null)?.van_trip_id) return { error: "A bill made from a van can't be edited. Void it before the trip is settled and make it again." };
+  }
 
   const { data: bill } = await admin
     .from("bills")

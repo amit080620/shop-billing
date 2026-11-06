@@ -1,3 +1,5 @@
+import { vanSchemaReady } from "@/lib/van/server";
+import { vanBillingStock } from "@/lib/van/data";
 import "server-only";
 import type { ComponentProps } from "react";
 import { hasPermission, type SessionContext } from "@/lib/auth";
@@ -20,13 +22,13 @@ import { mergeChallanLines } from "@/lib/challans";
 import { wholesaleReady } from "@/lib/wholesaleData";
 import type { NewBillClient } from "@/app/(dashboard)/bills/new/NewBillClient";
 
-export type NewBillParams = { customer?: string; provider?: string; quote?: string; scheme?: string; challans?: string };
+export type NewBillParams = { customer?: string; provider?: string; quote?: string; scheme?: string; challans?: string; trip?: string };
 export type NewBillProps = ComponentProps<typeof NewBillClient>;
 export type NewBillScreen = { props: NewBillProps; fastBillingEnabled: boolean };
 
 /** Opened with nothing to fill in (no customer, quotation, scheme or challans): the screen can be
  * shown from the copy kept on the phone while a fresh one loads. */
-export const isPlainNewBill = (p: NewBillParams) => !p.customer && !p.provider && !p.quote && !p.scheme && !p.challans;
+export const isPlainNewBill = (p: NewBillParams) => !p.customer && !p.provider && !p.quote && !p.scheme && !p.challans && !p.trip;
 
 /** Everything the New Bill screen shows, read for one shop. The shop must have its state set. */
 export async function loadNewBillScreen(
@@ -225,5 +227,14 @@ export async function loadNewBillScreen(
     extrasAvailable: await extrasP,
     initialProvider: providerParam?.slice(0, 80) ?? "",
   };
+  // Billing from a wholesale van (Van sales): only what is on the van, at the van's quantities. The
+  // server takes the stock from the van again when the bill is saved, and refuses more than it holds.
+  if (params.trip && /^[0-9a-f-]{36}$/i.test(params.trip) && session.businessType === "wholesale" && on("van_sales") && (await vanSchemaReady(admin))) {
+    const van = await vanBillingStock(admin, session, params.trip);
+    if (van) {
+      props.products = props.products.flatMap((p) => (van.stock.has(p.id) ? [{ ...p, trackInventory: true, stockQuantity: van.stock.get(p.id)! }] : []));
+      props.vanTrip = { id: van.tripId, number: van.number, vehicle: van.vehicle };
+    }
+  }
   return { props, fastBillingEnabled: !!shop?.fast_billing_enabled };
 }

@@ -24,7 +24,7 @@ export const STAFF_AREAS: StaffArea[] = [
   { key: "manage_expenses", label: "Petty cash", description: "Day-to-day cash expenses", prefixes: ["/petty-cash"] },
   { key: "marketing", label: "Offers & marketing", description: "Offers, festival posters, WhatsApp reminders", prefixes: ["/offers", "/festivals", "/festival-poster", "/reminders"] },
   { key: "orders", label: "Quotations, orders & challans", description: "Quotations, online and party orders, delivery challans, requests", prefixes: ["/quotations", "/orders", "/challans", "/catalog-orders", "/requests"] },
-  { key: "trade_screens", label: "Your trade's other screens", description: "Menu & recipes, rooms, members, tests, appointments, rentals, rates and the like", prefixes: ["/restaurant", "/hotel", "/clinic", "/gym", "/lab", "/salon", "/rentals", "/jewellery", "/pharmacy", "/transport", "/service", "/warranty"] },
+  { key: "trade_screens", label: "Your trade's other screens", description: "Menu & recipes, rooms, members, tests, appointments, rentals, rates and the like", prefixes: ["/restaurant", "/hotel", "/clinic", "/gym", "/lab", "/salon", "/rentals", "/jewellery", "/pharmacy", "/transport", "/service", "/warranty", "/van"] },
   { key: "manage_staff", label: "Staff & attendance", description: "Staff accounts, attendance and salary", prefixes: ["/staff", "/staff-attendance"] },
   { key: "manage_settings", label: "Shop settings & plan", description: "GST profile, bill design, printers, branches, plan, backup", prefixes: ["/settings", "/invoice-settings", "/thermal-print-settings", "/fast-billing-settings", "/catalog-settings", "/branches", "/plans", "/backup", "/audit-log", "/error-log", "/redis-status", "/import-sales-history"] },
 ];
@@ -40,6 +40,7 @@ const TRADE_BILLING: Record<string, { exact?: string[]; prefixes?: string[] }> =
   gym: { prefixes: ["/gym/members/new", "/gym/attendance"] },
   lab: { prefixes: ["/lab/orders"] },
   salon: { prefixes: ["/salon/appointments"] },
+  wholesale: { prefixes: ["/van/trips"] },
 };
 
 const under = (path: string, prefix: string) => path === prefix || path.startsWith(prefix + "/");

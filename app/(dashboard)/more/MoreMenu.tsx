@@ -194,6 +194,7 @@ export async function MoreMenu() {
             <MenuLink href="/reports/dues" label={t("Payments due")} sub={t("Bill by bill against credit days, beat by beat")} icon={CalendarClock} />
             <MenuLink href="/reports/schemes" label={t("Scheme report")} sub={t("Free goods in, free goods out, what you kept")} icon={Gift} locked={lock("advanced_reports")} />
             <MenuLink href="/challans" label={t("Delivery challans")} sub={t("Goods go first, the bill follows — one bill for many challans")} icon={Warehouse} locked={lock("delivery_challan")} />
+            <MenuLink href="/van" label={t("Van sales")} sub={t("Load the vans, bill from the van, settle stock and cash every evening")} icon={Truck} locked={lock("van_sales")} />
           </MenuGroup>
         )}
 
