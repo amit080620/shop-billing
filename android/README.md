@@ -45,8 +45,10 @@ or a lower `versionCode`.
 
 ## Getting a new version to shops
 
-1. Copy the APK to `TheRay-v<version>.apk` and upload it to the public `app`
-   bucket in Supabase Storage under that same name.
+1. Copy the signed APK to `android/releases/TheRay-v<version>.apk` and commit it.
+   GitHub serves it from this public repository:
+   `https://github.com/amit080620/shop-billing/raw/main/android/releases/TheRay-v<version>.apk`
+   (versions up to 1.0.5 were in the public `app` bucket in Supabase Storage).
 2. Raise `LATEST_APP_VERSION` in `lib/nativeApp.ts` and deploy the web app.
 
 Phones on an older version then see a "New app version ready — Update" banner
