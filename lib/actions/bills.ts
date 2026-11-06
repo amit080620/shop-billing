@@ -92,12 +92,13 @@ async function vanTripForBill(admin: ReturnType<typeof createSupabaseAdminClient
 /** A van bill's number: the trip's kept block (migration 0067) — the phone's own number when it is
  * still free — else, before that migration, the van's next number as before. */
 async function vanBillNumber(admin: ReturnType<typeof createSupabaseAdminClient>, shopId: string, van: VanForBill, wanted: number | null): Promise<string | null> {
-  const rpc = admin.rpc as unknown as (fn: string, args: Record<string, unknown>) => Promise<{ data: unknown; error: { message?: string } | null }>;
+  // Called on the client itself (a detached rpc loses the client and throws).
+  const db = admin as unknown as { rpc: (fn: string, args: Record<string, unknown>) => Promise<{ data: unknown; error: { message?: string } | null }> };
   if (van.more) {
-    const { data, error } = await rpc("van_bill_number", { p_shop: shopId, p_trip: van.tripId, p_wanted: wanted });
+    const { data, error } = await db.rpc("van_bill_number", { p_shop: shopId, p_trip: van.tripId, p_wanted: wanted });
     return error || !data ? null : String(data);
   }
-  const { data, error } = await rpc("next_godown_doc_number", { p_shop: shopId, p_kind: `vanbill:${van.vehicleId}`, p_prefix: van.code });
+  const { data, error } = await db.rpc("next_godown_doc_number", { p_shop: shopId, p_kind: `vanbill:${van.vehicleId}`, p_prefix: van.code });
   return error || !data ? null : String(data);
 }
 
