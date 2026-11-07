@@ -442,7 +442,7 @@ function Settle({ tripId, items, money, salaryLinked, salesman }: { tripId: stri
   const set = (id: string, k: "counted" | "damaged", v: string) => setCount((c) => ({ ...c, [id]: { ...c[id], [k]: v } }));
 
   return (
-    <section className="neu-card flex flex-col gap-3 border-2 border-brand/30 p-4">
+    <section id="settle" className="neu-card flex scroll-mt-24 flex-col gap-3 border-2 border-brand/30 p-4">
       <div>
         <h2 className="text-sm font-semibold text-foreground">{t("Settle the trip")}</h2>
         <p className="text-xs text-muted">{t("Count what came back. Good pieces go to the godown, broken ones to damaged stock, and what is missing is written off.")}</p>

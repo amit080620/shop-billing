@@ -56,7 +56,10 @@ export async function NewRetailHome({
   planBanner,
   scoreCard,
   festival,
+  vanCard = null,
 }: {
+  /** A wholesale shop that runs vans: today's vans (VanDayCard), first on Home. */
+  vanCard?: React.ReactNode;
   data: NewHomeData;
   t: T;
   shop: { shopId: string; shopName: string; staffName: string; fastBillingEnabled: boolean };
@@ -103,6 +106,7 @@ export async function NewRetailHome({
   return (
     <div className="flex flex-col gap-4 md:gap-5">
       {planBanner}
+      {vanCard}
       <HomeKeys keys={Object.fromEntries(quick.map((q) => [q.kbd, q.href]))} />
 
       <NPageHead

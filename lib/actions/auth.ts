@@ -13,6 +13,10 @@ import { garmentSchemaReady } from "../garment/server";
 import { notifyTeam } from "../push";
 import { getTranslator } from "../i18n/server";
 import { createClient } from "@supabase/supabase-js";
+import { accessRemoved } from "../staffAccess";
+
+/** A person the owner removed from the shop (Staff → Remove) trying to log in. */
+const REMOVED_MESSAGE = "Your access to this shop was removed by the owner. Ask the owner if you need it back.";
 
 /** redirectTo: where the browser should go next. Login/signup finish with
  * a full page load instead of a server-action redirect — the redirect path
@@ -180,6 +184,8 @@ export async function loginAction(
   await admin.from("login_attempts").insert({ email, succeeded: !error && !!authData?.user });
 
   if (error || !authData.user) {
+    // Staff → Remove blocks the login; say so rather than "wrong password".
+    if (error && (error.code === "user_banned" || /banned/i.test(error.message))) return { error: REMOVED_MESSAGE };
     return { error: "Incorrect email or password" };
   }
 
@@ -193,6 +199,10 @@ export async function loginAction(
     .single();
   const shop = staffRow ? (Array.isArray(staffRow.shops) ? staffRow.shops[0] : staffRow.shops) : null;
   const permissions = (staffRow?.permissions as string[] | null) ?? [];
+  if (accessRemoved(permissions)) {
+    await supabase.auth.signOut({ scope: "local" });
+    return { error: REMOVED_MESSAGE };
+  }
   const cookieStore = await cookies();
   if (staffRow?.role !== "owner" && permissions.includes("kitchen_only")) {
     cookieStore.set("kitchen_only", "1", { path: "/", maxAge: 60 * 60 * 24 * 30 });

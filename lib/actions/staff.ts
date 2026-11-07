@@ -1,7 +1,7 @@
 "use server";
 
 import { PERMISSIONS } from "../permissions";
-import { ACCESS_V2, STAFF_AREAS } from "../staffAccess";
+import { ACCESS_REMOVED, ACCESS_V2, STAFF_AREAS, accessRemoved } from "../staffAccess";
 import { revalidatePath } from "next/cache";
 import { requireOwner, revalidateStaffCache } from "../auth";
 import { createSupabaseAdminClient } from "../supabase/admin";
@@ -130,6 +130,9 @@ export async function updateStaffAction(
   return null;
 }
 
+/** Removes a person from the shop without removing anything they did: their bills, trips, payments
+ * and log entries keep their name. Their login is blocked (in Supabase, and in the app at once), and
+ * the owner can give the access back later. */
 export async function removeStaffAction(staffId: string): Promise<{ error?: string }> {
   const session = await requireOwner();
   const demoBlock = demoLocked(session);
@@ -137,22 +140,21 @@ export async function removeStaffAction(staffId: string): Promise<{ error?: stri
   if (staffId === session.userId) return { error: "You can't remove yourself." };
 
   const admin = createSupabaseAdminClient();
-  const { data: existing } = await admin.from("staff").select("name, role").eq("id", staffId).eq("shop_id", session.shopId).single();
+  const { data: existing } = await admin.from("staff").select("name, role, permissions").eq("id", staffId).eq("shop_id", session.shopId).single();
+  if (!existing) return { error: "Staff member not found" };
+  const permissions = (existing.permissions as string[] | null) ?? [];
+  if (accessRemoved(permissions)) return {};
 
-  const { error } = await admin.from("staff").delete().eq("id", staffId).eq("shop_id", session.shopId);
+  const { error } = await admin.from("staff").update({ permissions: [...permissions, ACCESS_REMOVED] }).eq("id", staffId).eq("shop_id", session.shopId);
   if (error) {
-    // Foreign key violation — this staff member has bills, orders, or
-    // purchases on record. Deleting the row would orphan that history,
-    // so Postgres blocks it — and critically, their login must NOT be
-    // removed either in this case, or the row would be left stuck with
-    // no way to ever authenticate again.
-    if (error.code === "23503") {
-      return { error: "This staff member has billing history and can't be removed — change their role instead if you want to limit what they can do." };
-    }
     console.error("Could not remove staff", error);
     return { error: "Could not remove staff member" };
   }
-  await admin.auth.admin.deleteUser(staffId);
+  // No new login, and no renewed one: Supabase refuses the account (about 100 years); the app itself
+  // already refuses them on their very next screen (requireSession).
+  const { error: banError } = await admin.auth.admin.updateUserById(staffId, { ban_duration: "876000h" });
+  if (banError) console.error("Could not block the removed staff member's login", staffId, banError);
+  await revalidateStaffCache(staffId);
 
   await logAuditEvent({
     admin,
@@ -161,7 +163,47 @@ export async function removeStaffAction(staffId: string): Promise<{ error?: stri
     action: "staff_removed",
     entityType: "staff",
     entityId: staffId,
-    details: { name: existing?.name, role: existing?.role },
+    details: { name: existing.name, role: existing.role, loginBlocked: !banError, recordsKept: true },
+  });
+
+  revalidatePath("/staff");
+  return {};
+}
+
+/** Gives a removed person their access back, with the permissions they had. */
+export async function restoreStaffAction(staffId: string): Promise<{ error?: string }> {
+  const session = await requireOwner();
+  const demoBlock = demoLocked(session);
+  if (demoBlock) return { error: demoBlock };
+  const admin = createSupabaseAdminClient();
+  const { data: existing } = await admin.from("staff").select("name, role, permissions").eq("id", staffId).eq("shop_id", session.shopId).single();
+  if (!existing) return { error: "Staff member not found" };
+  const permissions = (existing.permissions as string[] | null) ?? [];
+  if (!accessRemoved(permissions)) return {};
+  // They count to the plan's staff again.
+  const overLimit = await staffLimitError(session);
+  if (overLimit) return { error: overLimit };
+
+  const { error } = await admin.from("staff").update({ permissions: permissions.filter((p) => p !== ACCESS_REMOVED) }).eq("id", staffId).eq("shop_id", session.shopId);
+  if (error) {
+    console.error("Could not restore staff", error);
+    return { error: "Could not give the access back — try again." };
+  }
+  const { error: unbanError } = await admin.auth.admin.updateUserById(staffId, { ban_duration: "none" });
+  if (unbanError) {
+    console.error("Could not unblock the staff member's login", staffId, unbanError);
+    return { error: "Access is back in the app, but their login is still blocked — try again in a moment." };
+  }
+  await revalidateStaffCache(staffId);
+
+  await logAuditEvent({
+    admin,
+    shopId: session.shopId,
+    staffId: session.userId,
+    action: "staff_restored",
+    entityType: "staff",
+    entityId: staffId,
+    details: { name: existing.name, role: existing.role },
   });
 
   revalidatePath("/staff");

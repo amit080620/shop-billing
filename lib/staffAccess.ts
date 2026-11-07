@@ -10,6 +10,10 @@
 
 /** Marks a staff member's permissions as following this list. */
 export const ACCESS_V2 = "access_v2";
+/** The owner removed this person (Staff → Remove): every bill, trip and log of theirs stays, but they
+ * can't log in or open any screen until the owner gives their access back. */
+export const ACCESS_REMOVED = "access_removed";
+export const accessRemoved = (permissions: string[] | null | undefined) => !!permissions?.includes(ACCESS_REMOVED);
 
 export type StaffArea = { key: string; label: string; description: string; prefixes: string[] };
 
@@ -40,7 +44,8 @@ const TRADE_BILLING: Record<string, { exact?: string[]; prefixes?: string[] }> =
   gym: { prefixes: ["/gym/members/new", "/gym/attendance"] },
   lab: { prefixes: ["/lab/orders"] },
   salon: { prefixes: ["/salon/appointments"] },
-  wholesale: { prefixes: ["/van/trips"] },
+  // A salesman opens the Van desk (his van today) and his trips; the owner's van screens stay owner/manager-only.
+  wholesale: { exact: ["/van"], prefixes: ["/van/trips"] },
 };
 
 const under = (path: string, prefix: string) => path === prefix || path.startsWith(prefix + "/");

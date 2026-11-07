@@ -3,7 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 /** Routes a kitchen_only account should never leave — everything else
  * under the dashboard bounces back here, even via direct URL/bookmark,
  * not just at the moment of login. */
-const KITCHEN_ALLOWED = ["/restaurant-kds", "/login", "/api"];
+const KITCHEN_ALLOWED = ["/restaurant-kds", "/login", "/api", "/access-removed"];
 
 const BUILD = process.env.NEXT_PUBLIC_BUILD_ID ?? "";
 

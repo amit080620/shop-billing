@@ -10,7 +10,7 @@ export default async function NewTripPage({ searchParams }: { searchParams: Prom
   if ("blocked" in gate) return gate.blocked;
   const { session, admin, t } = gate;
   const { van } = await searchParams;
-  const [{ vans, main }, staff, open, stock] = await Promise.all([loadPlaces(admin, session.shopId), loadStaff(admin, session.shopId), loadOpenTrips(admin, session), loadStockByPlace(admin, session.shopId)]);
+  const [{ vans, main }, staff, open, stock] = await Promise.all([loadPlaces(admin, session.shopId), loadStaff(admin, session.shopId).then((list) => list.filter((s) => !s.removed)), loadOpenTrips(admin, session), loadStockByPlace(admin, session.shopId)]);
   const busy = new Set(open.map((x) => x.vehicleId));
   const free = vans.filter((v) => v.isActive && !busy.has(v.id));
   if (!main || vans.length === 0) return <Notice title={t("Add a van first")} text={t("Vans → Add a van. That also sets up your main godown.")} />;

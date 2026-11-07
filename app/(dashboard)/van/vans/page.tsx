@@ -10,7 +10,7 @@ export default async function VansPage() {
   const gate = await vanGate(true);
   if ("blocked" in gate) return gate.blocked;
   const { session, admin, t } = gate;
-  const [{ vans, main }, staff, more] = await Promise.all([loadPlaces(admin, session.shopId), loadStaff(admin, session.shopId), vanMoreReady(admin)]);
+  const [{ vans, main }, staff, more] = await Promise.all([loadPlaces(admin, session.shopId), loadStaff(admin, session.shopId).then((list) => list.filter((s) => !s.removed)), vanMoreReady(admin)]);
   return (
     <div className="flex flex-col gap-4">
       <BackLink fallback="/van" />

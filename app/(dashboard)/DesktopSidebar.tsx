@@ -24,7 +24,10 @@ export function DesktopSidebar({
   fastBillingEnabled = false,
   plan,
   onTrial = false,
+  van = false,
 }: {
+  /** A wholesale shop that runs vans: the Van desk gets its own link. */
+  van?: boolean;
   lang: Lang;
   businessType: string;
   shopName: string;
@@ -38,7 +41,7 @@ export function DesktopSidebar({
 }) {
   const pathname = usePathname();
   const { t } = useTranslation(lang);
-  const tabs = tabsFor(businessType, t, permissions, fastBillingEnabled);
+  const tabs = tabsFor(businessType, t, permissions, fastBillingEnabled, van);
   const activeHref = activeTabHref(pathname, tabs.map((tab) => tab.href));
 
   return (

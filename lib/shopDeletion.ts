@@ -5,8 +5,20 @@ type Admin = ReturnType<typeof createSupabaseAdminClient>;
 
 /** Tables whose rows point at a shop's bills, products, customers or vendors without cascading.
  * Deleting the shop in one statement fails as soon as any of them has a row (a single stock count
- * was enough to keep a demo shop down), so they are emptied first, in this order. */
-const BLOCKING_TABLES = [
+ * was enough to keep a demo shop down), so they are emptied first, in this order.
+ * The godown ledger's papers (migration 0063) come first: a return's placement (return_dispositions,
+ * also written by a van's shop return) holds its return and return lines, damage reports and
+ * transfers hold their godown, and godown stock refuses to let its godown go — on 2026-11-07 one van
+ * return kept the wholesale demo from being refreshed. */
+export const BLOCKING_TABLES = [
+  "return_dispositions",
+  "purchase_returns",
+  "stock_discrepancies",
+  "stock_transfers",
+  "godown_moves",
+  "damage_reports",
+  "godown_counts",
+  "godown_stock",
   "stock_audits",
   "batch_writeoffs",
   "table_order_requests",

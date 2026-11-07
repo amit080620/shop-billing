@@ -29,12 +29,13 @@ import { mobileTabs } from "@/lib/mobileTabs";
 import { useKeepReady } from "@/lib/useKeepReady";
 import type { Lang } from "@/lib/i18n/dictionary";
 
-/** The tabs this person may open: a staff member sees only those the owner gave them (lib/staffAccess). */
-export function tabsFor(businessType: string, t: (key: string) => string, permissions: string[] = [], fastBillingEnabled = false) {
-  return allTabsFor(businessType, t, permissions, fastBillingEnabled).filter((tab) => canOpen({ role: "staff", businessType, permissions }, tab.href));
+/** The tabs this person may open: a staff member sees only those the owner gave them (lib/staffAccess).
+ * `van`: a wholesale shop that runs vans (Van sales) — the Van desk gets a tab of its own. */
+export function tabsFor(businessType: string, t: (key: string) => string, permissions: string[] = [], fastBillingEnabled = false, van = false) {
+  return allTabsFor(businessType, t, permissions, fastBillingEnabled, van).filter((tab) => canOpen({ role: "staff", businessType, permissions }, tab.href));
 }
 
-function allTabsFor(businessType: string, t: (key: string) => string, permissions: string[] = [], fastBillingEnabled = false) {
+function allTabsFor(businessType: string, t: (key: string) => string, permissions: string[] = [], fastBillingEnabled = false, van = false) {
   if (permissions.includes("kitchen_only")) {
     return [{ href: "/restaurant-kds", label: t("nav.kitchen"), icon: KitchenIcon }];
   }
@@ -146,6 +147,17 @@ function allTabsFor(businessType: string, t: (key: string) => string, permission
     ...fastBillingTab,
   ];
 
+  // Wholesale with vans: the Van desk (today's vans, the evening's cash and stock) right after Sell
+  // and Customers. On a phone Reports then moves to More (it is also on Home).
+  const WHOLESALE_VAN_TABS = [
+    { href: "/bills/new", label: t("nav.sell"), icon: SellIcon },
+    { href: "/van", label: t("Van"), icon: TruckNavIcon },
+    { href: "/purchases", label: t("nav.buy"), icon: BuyIcon },
+    reportsTab,
+    ...fastBillingTab,
+  ];
+
+  if (businessType === "wholesale" && van) return WHOLESALE_VAN_TABS;
   if (businessType === "garment") return GARMENT_TABS;
   if (businessType === "restaurant") return RESTAURANT_TABS;
   if (businessType === "hotel") return HOTEL_TABS;
@@ -160,11 +172,11 @@ function allTabsFor(businessType: string, t: (key: string) => string, permission
   return RETAIL_TABS;
 }
 
-export function BottomNav({ lang, businessType, permissions = [], fastBillingEnabled = false }: { lang: Lang; businessType: string; permissions?: string[]; fastBillingEnabled?: boolean }) {
+export function BottomNav({ lang, businessType, permissions = [], fastBillingEnabled = false, van = false }: { lang: Lang; businessType: string; permissions?: string[]; fastBillingEnabled?: boolean; van?: boolean }) {
   const pathname = usePathname();
   const { t } = useTranslation(lang);
   // Home and Customers too only when this person may open them (lib/staffAccess).
-  const tabs = mobileTabs(tabsFor(businessType, t, permissions, fastBillingEnabled), {
+  const tabs = mobileTabs(tabsFor(businessType, t, permissions, fastBillingEnabled, van), {
     home: { href: "/dashboard", label: t("nav.home"), icon: HomeIcon },
     customers: { href: "/customers", label: t("nav.customers"), icon: CustomersIcon },
   }).filter((tab) => canOpen({ role: "staff", businessType, permissions }, tab.href));
@@ -208,7 +220,7 @@ export function BottomNav({ lang, businessType, permissions = [], fastBillingEna
   );
 }
 
-export const READY_AHEAD = new Set(["/dashboard", "/bills/new", "/fast-billing", "/restaurant"]);
+export const READY_AHEAD = new Set(["/dashboard", "/bills/new", "/fast-billing", "/restaurant", "/van"]);
 
 function HomeIcon({ active }: { active: boolean }) {
   return <House size={22} strokeWidth={active ? 2.3 : 1.8} />;

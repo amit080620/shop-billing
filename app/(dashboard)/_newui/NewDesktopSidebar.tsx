@@ -29,7 +29,10 @@ export function NewDesktopSidebar({
   fastBillingEnabled = false,
   plan,
   onTrial = false,
+  van = false,
 }: {
+  /** A wholesale shop that runs vans: the Van desk gets its own link. */
+  van?: boolean;
   lang: Lang;
   businessType: string;
   shopName: string;
@@ -45,7 +48,7 @@ export function NewDesktopSidebar({
   const pathname = usePathname();
   const { t } = useTranslation(lang);
   const tabs = sidebarTabs(
-    tabsFor(businessType, t, permissions, fastBillingEnabled),
+    tabsFor(businessType, t, permissions, fastBillingEnabled, van),
     {
       home: { href: "/dashboard", label: t("nav.home"), icon: HomeIcon },
       customers: { href: "/customers", label: t("nav.customers"), icon: CustomersIcon },

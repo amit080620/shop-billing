@@ -6,7 +6,7 @@ import { createSupabaseAdminClient } from "../supabase/admin";
 import { isModuleEnabled } from "../modules";
 import { moduleLockMessage } from "../plans";
 import { logAuditEvent } from "../audit";
-import { vanMoreReady, vanSchemaReady } from "../van/server";
+import { noteShopUsesVans, vanMoreReady, vanSchemaReady } from "../van/server";
 import { ensureVanPhotoBucket, VAN_PHOTO_BUCKET, VAN_PHOTO_MAX_BYTES, VAN_PHOTO_TYPES } from "../van/photos";
 import { demoLocked } from "../demo/guard";
 import { canRunVans, countResult, EXPENSE_KINDS, mayWorkTrip, vanError, type ExpenseKind } from "../van/rules";
@@ -80,6 +80,7 @@ export async function saveVanAction(id: string | null, input: { name: string; co
     : db(admin).from("godowns").insert({ ...row, shop_id: session.shopId, kind: "vehicle" }).select("id").single();
   const { data, error } = await q;
   if (error) return { error: error.code === "23505" ? "Another van or godown already has that code." : "Couldn't save the van." };
+  noteShopUsesVans(session.shopId);
   await logAuditEvent({ admin, shopId: session.shopId, staffId: session.userId, action: id ? "van_updated" : "van_added", entityType: "godown", entityId: (data as { id: string } | null)?.id ?? id ?? null, details: { name, code } });
   return { id: (data as { id: string } | null)?.id };
 }

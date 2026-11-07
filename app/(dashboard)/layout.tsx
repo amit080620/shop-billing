@@ -16,6 +16,8 @@ import { WelcomeTour } from "./WelcomeTour";
 import { UniversalSearch } from "@/app/components/UniversalSearch";
 import { CatalogOrderAlert } from "@/app/components/CatalogOrderAlert";
 import { isModuleEnabled } from "@/lib/modules";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { shopUsesVans } from "@/lib/van/server";
 import { HamburgerToggle } from "./HamburgerToggle";
 import { LazyFloatingWidgets } from "@/app/components/LazyFloatingWidgets";
 import { getCalculatorEnabled, getAssistantEnabled } from "@/lib/theme";
@@ -44,6 +46,9 @@ export default async function DashboardLayout({
   const roleLabel = session.role === "owner" ? translate(lang, "role.owner") : translate(lang, "role.staff");
   // Classic for every shop not on the New-look allowlist, whatever its cookie says (lib/uiVersion).
   const newUi = (await getUiVersion(session)) === "new";
+  // A wholesale shop that runs vans (Van sales, a van added): the Van desk gets a tab. Checked only for
+  // those shops, and kept a couple of minutes (lib/van/server shopUsesVans).
+  const van = session.businessType === "wholesale" && isModuleEnabled(session.enabledModules, "van_sales") && (await shopUsesVans(createSupabaseAdminClient(), session.shopId));
 
   return (
     <ShopLangProvider lang={lang}>
@@ -66,6 +71,7 @@ export default async function DashboardLayout({
             fastBillingEnabled={fastBillingEnabled}
             plan={session.plansReady ? session.plan : undefined}
             onTrial={session.plansReady && session.onTrial}
+            van={van}
           />
           <NewHeader
             lang={lang}
@@ -94,6 +100,7 @@ export default async function DashboardLayout({
             fastBillingEnabled={fastBillingEnabled}
             plan={session.plansReady ? session.plan : undefined}
             onTrial={session.plansReady && session.onTrial}
+            van={van}
           />
 
           {/* One sticky top bar for both breakpoints. On mobile it carries the
@@ -155,9 +162,9 @@ export default async function DashboardLayout({
       </main>
 
       {newUi ? (
-        <NewBottomNav lang={lang} businessType={session.businessType} permissions={session.permissions} fastBillingEnabled={fastBillingEnabled} />
+        <NewBottomNav lang={lang} businessType={session.businessType} permissions={session.permissions} fastBillingEnabled={fastBillingEnabled} van={van} />
       ) : (
-        <BottomNav lang={lang} businessType={session.businessType} permissions={session.permissions} fastBillingEnabled={fastBillingEnabled} />
+        <BottomNav lang={lang} businessType={session.businessType} permissions={session.permissions} fastBillingEnabled={fastBillingEnabled} van={van} />
       )}
       <WelcomeTour storageKey={`tour-seen-${session.shopId}`} businessType={session.businessType} />
       {isModuleEnabled(session.enabledModules, "public_catalog") && <CatalogOrderAlert />}

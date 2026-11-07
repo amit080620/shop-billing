@@ -8,6 +8,7 @@ import { vanPhotoLinks } from "./photos";
 import { wholesalePrices, wholesaleReady } from "../wholesaleData";
 import { getCustomerBalances } from "../moneyBalances";
 import { gapsReady } from "../gapsData";
+import { boardOrder, boardTotals, boardTrip, type BoardTotals, type BoardTrip } from "./dayBoard";
 
 type Admin = ReturnType<typeof createSupabaseAdminClient>;
 
@@ -67,9 +68,9 @@ export async function loadPlaces(admin: Admin, shopId: string): Promise<{ main: 
   };
 }
 
-export async function loadStaff(admin: Admin, shopId: string): Promise<{ id: string; name: string; role: string }[]> {
-  const { data } = await admin.from("staff").select("id, name, role").eq("shop_id", shopId).order("name");
-  return (data ?? []).map((s) => ({ id: s.id, name: s.name, role: s.role }));
+export async function loadStaff(admin: Admin, shopId: string): Promise<{ id: string; name: string; role: string; removed: boolean }[]> {
+  const { data } = await admin.from("staff").select("id, name, role, permissions").eq("shop_id", shopId).order("name");
+  return (data ?? []).map((s) => ({ id: s.id, name: s.name, role: s.role, removed: ((s.permissions as string[] | null) ?? []).includes("access_removed") }));
 }
 
 function toTrip(t: Record<string, unknown>, vanName: Map<string, string>, staffName: Map<string, string>): TripRow {
@@ -113,6 +114,50 @@ export async function loadTrips(admin: Admin, session: SessionContext, opts: { f
   if (opts.mine) q = q.eq("salesman_id", session.userId);
   const { data } = await q;
   return ((data ?? []) as Record<string, unknown>[]).map((t) => toTrip(t, new Map(vans.map((v) => [v.id, v.name])), new Map(staff.map((s) => [s.id, s.name]))));
+}
+
+/** The day's trips (Van desk): every trip still open, whatever day it started, and those settled
+ * today (India). A salesman sees his own. */
+export async function loadDayTrips(admin: Admin, session: SessionContext, opts: { mine?: boolean } = {}): Promise<TripRow[]> {
+  const [{ vans }, staff] = await Promise.all([loadPlaces(admin, session.shopId), loadStaff(admin, session.shopId)]);
+  const today = new Date(`${new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" })}T00:00:00+05:30`).toISOString();
+  let q = db(admin).from("van_trips").select("*").eq("shop_id", session.shopId).or(`status.in.(loaded,returned),and(status.eq.settled,settled_at.gte.${today})`).order("created_at", { ascending: false }).limit(100);
+  if (opts.mine) q = q.eq("salesman_id", session.userId);
+  const { data } = await q;
+  return ((data ?? []) as Record<string, unknown>[]).map((t) => toTrip(t, new Map(vans.map((v) => [v.id, v.name])), new Map(staff.map((s) => [s.id, s.name]))));
+}
+
+/** Today's board (Van desk, Home): each of the day's trips with its money and the stock still on its
+ * van, and the totals. A few reads for all the vans together. */
+export async function loadVanDay(admin: Admin, session: SessionContext, opts: { mine?: boolean } = {}): Promise<{ trips: BoardTrip[]; totals: BoardTotals }> {
+  const trips = await loadDayTrips(admin, session, opts);
+  if (!trips.length) return { trips: [], totals: boardTotals([]) };
+  const vehicleIds = [...new Set(trips.filter((x) => x.status !== "settled").map((x) => x.vehicleId))];
+  const [summaries, { data: stockRows }] = await Promise.all([
+    tripSummaries(admin, session.shopId, trips),
+    vehicleIds.length ? db(admin).from("godown_stock").select("godown_id, product_id, saleable").in("godown_id", vehicleIds).gt("saleable", 0) : Promise.resolve({ data: [] }),
+  ]);
+  const rows = (stockRows ?? []) as { godown_id: string; product_id: string; saleable: number }[];
+  const ids = [...new Set(rows.map((r) => r.product_id))];
+  const { data: prices } = ids.length ? await admin.from("products").select("id, price").eq("shop_id", session.shopId).in("id", ids) : { data: [] };
+  const priceOf = new Map((prices ?? []).map((p) => [p.id, Number(p.price)]));
+  const stockOf = new Map<string, { pieces: number; value: number; items: number }>();
+  for (const r of rows) {
+    const s = stockOf.get(r.godown_id) ?? { pieces: 0, value: 0, items: 0 };
+    s.pieces = Math.round((s.pieces + Number(r.saleable)) * 1000) / 1000;
+    s.value += Number(r.saleable) * (priceOf.get(r.product_id) ?? 0);
+    s.items += 1;
+    stockOf.set(r.godown_id, s);
+  }
+  const board = summaries
+    .map((x) =>
+      boardTrip({
+        ...x,
+        stock: x.status === "settled" ? { pieces: 0, value: 0, items: 0 } : (stockOf.get(x.vehicleId) ?? { pieces: 0, value: 0, items: 0 }),
+      }),
+    )
+    .sort(boardOrder);
+  return { trips: board, totals: boardTotals(board) };
 }
 
 /** Trips still open (any date): what the vans are doing now. */
@@ -421,7 +466,7 @@ export async function loadStockByPlace(admin: Admin, shopId: string) {
   };
 }
 
-export type TripSummary = TripRow & { bills: number; sold: number; cash: number; upi: number; credit: number; collections: number; expenses: number; damaged: number };
+export type TripSummary = TripRow & { bills: number; sold: number; cash: number; upi: number; credit: number; collections: number; expenses: number; damaged: number; cashCollections: number; upiCollections: number; cashRefunds: number; upiRefunds: number };
 
 /** The report's figures for many trips at once: a few reads, not a few per trip. */
 export async function tripSummaries(admin: Admin, shopId: string, trips: TripRow[]): Promise<TripSummary[]> {
@@ -439,7 +484,12 @@ export async function tripSummaries(admin: Admin, shopId: string, trips: TripRow
 
   const salesmen = [...new Set(trips.map((x) => x.salesmanId).filter((x): x is string => !!x))];
   const earliest = trips.map((x) => x.loadedAt).filter((x): x is string => !!x).sort()[0];
-  const { data: pays } = salesmen.length && earliest ? await admin.from("payments").select("staff_id, amount, created_at").eq("shop_id", shopId).in("staff_id", salesmen).gte("created_at", earliest) : { data: [] };
+  const [{ data: pays }, { data: refundRows }] = await Promise.all([
+    salesmen.length && earliest ? admin.from("payments").select("staff_id, amount, payment_method, created_at").eq("shop_id", shopId).in("staff_id", salesmen).gte("created_at", earliest) : Promise.resolve({ data: [] as { staff_id: string; amount: number; payment_method: string; created_at: string }[] }),
+    // Shop returns taken on the trips (migration 0067): their refunds come out of the trip's money.
+    (await vanMoreReady(admin)) ? db(admin).from("returns").select("van_trip_id, total, refund_method").eq("shop_id", shopId).in("van_trip_id", ids) : Promise.resolve({ data: [] }),
+  ]);
+  const refunds = (refundRows ?? []) as { van_trip_id: string; total: number; refund_method: string }[];
 
   const round = (n: number) => Math.round(n * 100) / 100;
   return trips.map((trip) => {
@@ -457,7 +507,10 @@ export async function tripSummaries(admin: Admin, shopId: string, trips: TripRow
       else if (b.payment_method === "upi") upi += Number(b.paid_amount);
     }
     const end = trip.returnedAt ?? trip.settledAt ?? new Date().toISOString();
-    const collections = trip.salesmanId && trip.loadedAt ? (pays ?? []).filter((p) => p.staff_id === trip.salesmanId && p.created_at >= trip.loadedAt! && p.created_at <= end).reduce((s, p) => s + Number(p.amount), 0) : 0;
+    const ownPays = trip.salesmanId && trip.loadedAt ? (pays ?? []).filter((p) => p.staff_id === trip.salesmanId && p.created_at >= trip.loadedAt! && p.created_at <= end) : [];
+    const collections = ownPays.reduce((s, p) => s + Number(p.amount), 0);
+    const paidBy = (m: string) => ownPays.filter((p) => p.payment_method === m).reduce((s, p) => s + Number(p.amount), 0);
+    const refundedBy = (m: string) => refunds.filter((r) => r.van_trip_id === trip.id && r.refund_method === m).reduce((s, r) => s + Number(r.total), 0);
     return {
       ...trip,
       bills: own.length,
@@ -466,6 +519,10 @@ export async function tripSummaries(admin: Admin, shopId: string, trips: TripRow
       upi: round(upi),
       credit: round(own.reduce((s, b) => s + Number(b.credit_amount), 0)),
       collections: round(collections),
+      cashCollections: round(paidBy("cash")),
+      upiCollections: round(paidBy("upi")),
+      cashRefunds: round(refundedBy("cash")),
+      upiRefunds: round(refundedBy("upi")),
       expenses: round(((expenses ?? []) as { trip_id: string; amount: number }[]).filter((e) => e.trip_id === trip.id).reduce((s, e) => s + Number(e.amount), 0)),
       damaged: ((lines ?? []) as { trip_id: string; damaged: number }[]).filter((l) => l.trip_id === trip.id).reduce((s, l) => s + Number(l.damaged), 0),
     };

@@ -65,8 +65,12 @@ export async function staffLimitError(session: SessionContext): Promise<string |
   const limit = session.planLimits.staff;
   if (limit === null) return null;
   const admin = createSupabaseAdminClient();
-  const { count } = await admin.from("staff").select("id", { count: "exact", head: true }).eq("shop_id", session.shopId);
-  if ((count ?? 0) < limit) return null;
+  // People removed from the shop (Staff → Remove) keep their records but don't count.
+  const [{ count }, { count: removed }] = await Promise.all([
+    admin.from("staff").select("id", { count: "exact", head: true }).eq("shop_id", session.shopId),
+    admin.from("staff").select("id", { count: "exact", head: true }).eq("shop_id", session.shopId).contains("permissions", ["access_removed"]),
+  ]);
+  if ((count ?? 0) - (removed ?? 0) < limit) return null;
   return limitMessage("staff", limit, session.plan, session.businessType);
 }
 

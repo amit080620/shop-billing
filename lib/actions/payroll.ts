@@ -82,11 +82,11 @@ export async function addLoginStaffToListAction(): Promise<{ error?: string; add
   if ("error" in ctx) return { error: ctx.error };
   const { session, admin } = ctx;
   const [{ data: logins }, { data: existing }] = await Promise.all([
-    admin.from("staff").select("id, name, role").eq("shop_id", session.shopId),
+    admin.from("staff").select("id, name, role, permissions").eq("shop_id", session.shopId),
     admin.from("workers").select("staff_id").eq("shop_id", session.shopId).not("staff_id", "is", null),
   ]);
   const have = new Set((existing ?? []).map((w) => w.staff_id));
-  const toAdd = (logins ?? []).filter((s) => s.role !== "owner" && !have.has(s.id));
+  const toAdd = (logins ?? []).filter((s) => s.role !== "owner" && !have.has(s.id) && !((s.permissions as string[] | null) ?? []).includes("access_removed"));
   if (toAdd.length) {
     const { error } = await admin.from("workers").insert(toAdd.map((s) => ({ shop_id: session.shopId, staff_id: s.id, name: s.name, pay_type: "monthly" as const, monthly_salary: 0 })));
     if (error) return { error: "Could not add — try again." };

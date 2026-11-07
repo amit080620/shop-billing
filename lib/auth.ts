@@ -3,7 +3,7 @@ import "server-only";
 import { AsyncLocalStorage } from "node:async_hooks";
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
-import { STAFF_AREAS, canOpen, hasArea } from "./staffAccess";
+import { STAFF_AREAS, accessRemoved, canOpen, hasArea } from "./staffAccess";
 import { after } from "next/server";
 import { firstRequestHere, INSTANCE_ID } from "./instance";
 import { istDay } from "./speedWatch";
@@ -203,6 +203,10 @@ export async function requireSession(): Promise<SessionContext> {
 
   if (error || !staff) {
     redirect("/login");
+  }
+  // The owner removed this person's access (Staff → Remove): their records stay, but nothing opens.
+  if (accessRemoved(staff.permissions as string[] | null)) {
+    redirect("/access-removed");
   }
 
   const session = sessionFromStaff(user.id, user.email ?? null, staff);

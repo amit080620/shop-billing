@@ -13,10 +13,10 @@ import { tabsFor, READY_AHEAD } from "../BottomNav";
 
 /** The New look's bottom bar on a phone (lib/uiVersion): exactly the Classic bar's tabs (BottomNav),
  * kept ready ahead the same way, with the open tab in the brand colour over the design's ray line. */
-export function NewBottomNav({ lang, businessType, permissions = [], fastBillingEnabled = false }: { lang: Lang; businessType: string; permissions?: string[]; fastBillingEnabled?: boolean }) {
+export function NewBottomNav({ lang, businessType, permissions = [], fastBillingEnabled = false, van = false }: { lang: Lang; businessType: string; permissions?: string[]; fastBillingEnabled?: boolean; van?: boolean }) {
   const pathname = usePathname();
   const { t } = useTranslation(lang);
-  const tabs = mobileTabs(tabsFor(businessType, t, permissions, fastBillingEnabled), {
+  const tabs = mobileTabs(tabsFor(businessType, t, permissions, fastBillingEnabled, van), {
     home: { href: "/dashboard", label: t("nav.home"), icon: HomeIcon },
     customers: { href: "/customers", label: t("nav.customers"), icon: CustomersIcon },
   }).filter((tab) => canOpen({ role: "staff", businessType, permissions }, tab.href));

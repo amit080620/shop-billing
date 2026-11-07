@@ -4,7 +4,8 @@ import { keepValuesOnError } from "@/lib/keepValuesOnError";
 import { useState, useTransition } from "react";
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
-import { addStaffAction, removeStaffAction } from "@/lib/actions/staff";
+import { addStaffAction, removeStaffAction, restoreStaffAction } from "@/lib/actions/staff";
+import { accessRemoved } from "@/lib/staffAccess";
 import { useToast } from "@/app/components/Toast";
 import { Popup } from "@/app/components/Popup";
 import { EditStaffButton } from "./EditStaffButton";
@@ -122,7 +123,7 @@ export function StaffClient({
       {removeError && <p className="rounded-lg bg-credit-soft px-3.5 py-2.5 text-sm text-credit">{removeError}</p>}
 
       <ul className="flex flex-col gap-2 md:grid md:grid-cols-2 md:gap-3">
-        {initialStaff.map((s) => (
+        {initialStaff.filter((s) => !accessRemoved(s.permissions)).map((s) => (
           <li
             key={s.id}
             className={`neu-card flex items-center justify-between gap-3 px-3.5 py-3 ${deletingId === s.id ? "animate-delete" : ""}`}
@@ -137,11 +138,12 @@ export function StaffClient({
               <button
                 disabled={isPending}
                 onClick={() => {
+                  if (!window.confirm(`Remove ${s.name}? They won't be able to log in any more. Their bills, trips and records stay as they are, and you can give the access back later.`)) return;
                   setDeletingId(s.id);
                   startTransition(async () => {
                     const result = await removeStaffAction(s.id);
                     setRemoveError(result?.error ?? null);
-                    if (!result?.error) showToast("Staff member removed", "info");
+                    if (!result?.error) showToast("Removed — they can't log in now", "info");
                   });
                 }}
                 className="shrink-0 text-xs font-medium text-danger disabled:opacity-50"
@@ -152,6 +154,42 @@ export function StaffClient({
           </li>
         ))}
       </ul>
+
+      {initialStaff.some((s) => accessRemoved(s.permissions)) && (
+        <section className="flex flex-col gap-2">
+          <h2 className="text-sm font-semibold text-foreground">Removed — can&apos;t log in</h2>
+          <p className="text-xs text-muted">Their bills, trips and records are kept under their name. Give the access back if they return.</p>
+          <ul className="flex flex-col gap-2 md:grid md:grid-cols-2 md:gap-3">
+            {initialStaff
+              .filter((s) => accessRemoved(s.permissions))
+              .map((s) => (
+                <li key={s.id} className="flex items-center justify-between gap-3 rounded-xl border border-dashed border-border px-3.5 py-3">
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium text-muted">{s.name}</p>
+                    <p className="text-xs text-muted capitalize">
+                      {s.role}
+                      {s.email ? ` · ${s.email}` : ""}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    disabled={isPending}
+                    onClick={() =>
+                      startTransition(async () => {
+                        const result = await restoreStaffAction(s.id);
+                        setRemoveError(result?.error ?? null);
+                        if (!result?.error) showToast(`${s.name} can log in again`);
+                      })
+                    }
+                    className="shrink-0 rounded-lg border border-border px-3 py-1.5 text-xs font-semibold text-foreground disabled:opacity-50"
+                  >
+                    Give access back
+                  </button>
+                </li>
+              ))}
+          </ul>
+        </section>
+      )}
     </div>
   );
 }

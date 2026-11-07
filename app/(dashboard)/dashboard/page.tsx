@@ -20,6 +20,9 @@ import { hotelSchemaReady, loadFrontDesk } from "@/lib/hotel/server";
 import { getUiVersion } from "@/lib/uiVersion";
 import { HOME_PERIODS, loadNewHome, type HomePeriod } from "@/lib/newui/home";
 import { NewRetailHome } from "./NewRetailHome";
+import { Suspense } from "react";
+import { VanDayCard, vanCardShown } from "./VanDayCard";
+import { shopUsesVans } from "@/lib/van/server";
 import {
   Plus,
   AlertTriangle,
@@ -58,6 +61,13 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   const session = await requireSession();
   const { t, lang } = await getTranslator();
   const admin = createSupabaseAdminClient();
+  // A wholesale shop that runs vans: today's vans first, streamed so Home never waits for them.
+  const vanCard =
+    vanCardShown(session) && (await shopUsesVans(admin, session.shopId)) ? (
+      <Suspense fallback={<div className="neu-card h-40 animate-pulse" aria-hidden="true" />}>
+        <VanDayCard session={session} t={t} />
+      </Suspense>
+    ) : null;
   // The New look's Home (THERAY_FINAL_DESIGN dashboard) for the shops it is drawn for.
   const newHome = NEW_HOME_TYPES.has(session.businessType) && (await getUiVersion(session)) === "new";
 
@@ -126,6 +136,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
         setup={{ steps: setupSteps, next: nextStep }}
         pendingOnlineOrders={pendingCatalogOrders ?? 0}
         planBanner={<PlanBanner />}
+        vanCard={vanCard}
         scoreCard={<RayScoreCard shopId={session.shopId} businessType={session.businessType} lang={lang} t={t} />}
         festival={
           nextFestival
@@ -146,6 +157,8 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
       </div>
 
       <PlanBanner />
+
+      {vanCard}
 
       <RayScoreCard shopId={session.shopId} businessType={session.businessType} lang={lang} t={t} />
 
